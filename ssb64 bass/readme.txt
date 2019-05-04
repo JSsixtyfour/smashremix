@@ -13,3 +13,5 @@ The model data is located within gnd.bin in the src folder.
 armor generates suped up version of Yoshi Armor when Ganondorf does a Warlock Punch.
 
 slowattack changes the attack speeds of Ganondorf's attacks.
+
+gnd.obj and gnd.mtl are the current model and materials used for Ganondorf (these are not utilized in the Assembly).
