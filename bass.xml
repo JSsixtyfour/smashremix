@@ -1,0 +1,64 @@
+<NotepadPlus>
+    <UserLang name="bass" ext=".asm" udlVersion="2.1">
+        <Settings>
+            <Global caseIgnored="yes" allowFoldOfComments="no" foldCompact="no" forcePureLC="0" decimalSeparator="0" />
+            <Prefix Keywords1="yes" Keywords2="no" Keywords3="no" Keywords4="no" Keywords5="yes" Keywords6="yes" Keywords7="no" Keywords8="no" />
+        </Settings>
+        <KeywordLists>
+            <Keywords name="Comments">00// 01 02 03 04</Keywords>
+            <Keywords name="Numbers, prefix1"></Keywords>
+            <Keywords name="Numbers, prefix2"></Keywords>
+            <Keywords name="Numbers, extras1"></Keywords>
+            <Keywords name="Numbers, extras2"></Keywords>
+            <Keywords name="Numbers, suffix1"></Keywords>
+            <Keywords name="Numbers, suffix2"></Keywords>
+            <Keywords name="Numbers, range"></Keywords>
+            <Keywords name="Operators1">-</Keywords>
+            <Keywords name="Operators2"></Keywords>
+            <Keywords name="Folders in code1, open"></Keywords>
+            <Keywords name="Folders in code1, middle"></Keywords>
+            <Keywords name="Folders in code1, close"></Keywords>
+            <Keywords name="Folders in code2, open"></Keywords>
+            <Keywords name="Folders in code2, middle"></Keywords>
+            <Keywords name="Folders in code2, close"></Keywords>
+            <Keywords name="Folders in comment, open"></Keywords>
+            <Keywords name="Folders in comment, middle"></Keywords>
+            <Keywords name="Folders in comment, close"></Keywords>
+            <Keywords name="Keywords1">~bassDirectives&#x000D;&#x000A;arch&#x000D;&#x000A;variable&#x000D;&#x000A;constant&#x000D;&#x000A;include&#x000D;&#x000A;ouput&#x000D;&#x000A;endian&#x000D;&#x000A;origin&#x000D;&#x000A;base&#x000D;&#x000A;insert&#x000D;&#x000A;fille&#x000D;&#x000A;map&#x000D;&#x000A;db&#x000D;&#x000A;dw&#x000D;&#x000A;dl&#x000D;&#x000A;dd&#x000D;&#x000A;dq&#x000D;&#x000A;float&#x000D;&#x000A;print&#x000D;&#x000A;notice&#x000D;&#x000A;warning&#x000D;&#x000A;error&#x000D;&#x000A;fill&#x000D;&#x000A;pc&#x000D;&#x000A;base</Keywords>
+            <Keywords name="Keywords2">~mipsInsturctions&#x000D;&#x000A;LA LB LBU SB LH LHU SH LW LWU SW LD SD LWL LWR SWL SWR LDL LDR SDL SDR LL SC LLD SCD LWC1 SWC1 LDC1 SDC1 LWXC1 SWXC1 LDXC1 SDXC1 ADDI ADDIU SLTI SLTIU ANDI ORI XORI LUI DADDI DADDIU ADD ADDU SUB SUBU DADD DADDU DSUB DSUBU SLT SLTU AND OR XOR NOR SLL SRL SRA SLLV SRLV SRAV DSLL DSRL DSRA DSLL32 DSRL32 DSRA32 DSLLV DSRLV DSRAV MULT MULTU DIV DIVU DMULT DMULTU DDIV DDIVU MFHI MTHI MFLO MTLO J JAL JR JALR BEQ BNE BLEZ BGTZ BNEL BLEZL BGTZL BLTZ BGEZ BLTZAL BGEZAL BLTZL BGEZL BLTZALL BGEZALL SYSCALL BREAK TGE TGEU TLT TLTU TEQ TNE TGEI TGEIU TLTI TLTIU TEQI TNEI SYNC MOVN MOVZ PREF PREFX LWC2 SWC2 LDC2 SDC2 LWC3 SWC3 LDC3 SDC3 COP0 COP1 COP2 COP3 NOP DB DW DH writehex LI BEQL MOV DIV.D MOV.D C.LE.D BC1F C.LT.D MTC1 CVT.D.W CACHE SUB.D ADD.D MUL.D C.EQ.D MFC0 ABS.S ABS.D ADD.S ADD.D BC1T BC1FL BC1TL C.F.S C.UN.S C.EQ.S C.UEQ.S C.OLT.S C.ULT.S C.OLE.S C.ULE.S C.SF.S C.NGLE.S C.SEQ.S C.NGL.S C.LT.S C.NGE.S C.LE.S C.NGT.S C.F.D C.UN.D C.EQ.D C.UEQ.D C.OLT.D C.ULT.D C.OLE.D C.ULE.D C.SF.D C.NGLE.D C.SEQ.D C.NGL.D C.LT.D C.NGE.D C.LE.D C.NGT.D CEIL.W.S CEIL.W.D CEIL.L.S CEIL.L.D CVT.S.W CVT.S.L CVT.S.D CVT.W.S CVT.W.D CVT.D.S CVT.D.L CVT.L.S CVT.L.D DIV.S MOV.S FLOOR.L.S FLOOR.L.D FLOOR.W.S FLOOR.W.D DMTC1 MFC1 DMFC1 MUL.S NEG.S NEG.D ROUND.L.S ROUND.L.D SUB.S SQRT.S SQRT.D ROUND.W.S ROUND.W.D TRUNC.L.S TRUNC.L.D TRUNC.W.S TRUNC.W.D BGE BLT BLE BGT B BAL CL BEQZ BNEZ SUBI SUBIU BEQI BNEI BGTI BLTI BGEI BLEI VMULF VMULU VRNDP VMULQ VMUDL VMUDM VMUDN VMUDH VMACF VMACU VRNDN VMACQ VMADL VMADN VMADM VMADH VADD VSUB VSUT VABS VADDC VSUBC VADDB VSUBB VACCB VSUCB VSAD VSAC VSUM VSAW VLT VEQ VNE VGE VCL VCH VCR VMRG VAND VNAND VOR VNOR VXOR VNXOR VRCP VRCPL VRCPH VMOV VRSQ VRSQL VRSQH MFC2 MTC2 LBV LSV LLV LDV LQV LRV LPV LUV LHV LFV LWV LTV SBV SSV SLV SDV SQV SRV SPV SUV SHV SFV SWV STV</Keywords>
+            <Keywords name="Keywords3">~bassExecution&#x000D;&#x000A;scope&#x000D;&#x000A;define&#x000D;&#x000A;macro</Keywords>
+            <Keywords name="Keywords4"></Keywords>
+            <Keywords name="Keywords5">~mipsRegisters&#x000D;&#x000A;R0 AT V0 V1 V2 V3 V4 V5 V6 V7 V8 V9 V10 V11 V12 V13 V14 V15 V16 V17 V18 V19 V20 V21 V22 V23 V24 V25 V26 V27 V28 V29 V30 V31 A0 A1 A2 A3 T0 T1 T2 T3 T4 T5 T6 T7 S0 S1 S2 S3 S4 S5 S6 S7 S8 T8 T9 K0 K1 GP SP FP RA LO HI F0 F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12 F13 F14 F15 F16 F17 F18 F19 F20 F21 F22 F23 F24 F25 F26 F27 F28 F29 F30 F31</Keywords>
+            <Keywords name="Keywords6">~baseNumberFormats&#x000D;&#x000A;% $ 0x</Keywords>
+            <Keywords name="Keywords7"></Keywords>
+            <Keywords name="Keywords8"></Keywords>
+            <Keywords name="Delimiters">00( 01 02) 03&apos; 04 05&apos; 06[ 07 08] 09&quot; 10 11&quot; 12scope 13 14} 15 16 17 18 19 20 21 22 23</Keywords>
+        </KeywordLists>
+        <Styles>
+            <WordsStyle name="DEFAULT" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="COMMENTS" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="LINE COMMENTS" fgColor="008000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="NUMBERS" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="KEYWORDS1" fgColor="0080FF" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="KEYWORDS2" fgColor="FF8000" bgColor="FFFFFF" fontStyle="1" nesting="0" />
+            <WordsStyle name="KEYWORDS3" fgColor="800080" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="KEYWORDS4" fgColor="0080FF" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="KEYWORDS5" fgColor="FF0000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="KEYWORDS6" fgColor="0000FF" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="KEYWORDS7" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="KEYWORDS8" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="OPERATORS" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="FOLDER IN CODE1" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="FOLDER IN CODE2" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="FOLDER IN COMMENT" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="DELIMITERS1" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="49162" />
+            <WordsStyle name="DELIMITERS2" fgColor="C0C0C0" bgColor="FFFFFF" fontStyle="0" nesting="49152" />
+            <WordsStyle name="DELIMITERS3" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="49152" />
+            <WordsStyle name="DELIMITERS4" fgColor="C0C0C0" bgColor="FFFFFF" fontStyle="0" nesting="49152" />
+            <WordsStyle name="DELIMITERS5" fgColor="800080" bgColor="FFFFFF" fontStyle="0" nesting="17039103" />
+            <WordsStyle name="DELIMITERS6" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="DELIMITERS7" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+            <WordsStyle name="DELIMITERS8" fgColor="000000" bgColor="FFFFFF" fontStyle="0" nesting="0" />
+        </Styles>
+    </UserLang>
+</NotepadPlus>
