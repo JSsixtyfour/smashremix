@@ -159,8 +159,8 @@ j _end							// jump to end
 nop
 
 _falconuptilt:
-lui a3, 0x3F4C
-addiu a3, a3, 0xCCCD					// set to 80%
+lui a3, 0x3F00
+addiu a3, a3, 0x0000					// set to 50%
 j _end							// jump to end
 nop
 
@@ -200,7 +200,7 @@ j _end							// jump to end
 nop
 
 _falconfair:
-lui a3, 0x3FC0					// set to 150%
+lui a3, 0x3FA7					// set to 130ish%
 j _end							// jump to end
 nop
 
