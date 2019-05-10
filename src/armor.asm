@@ -31,7 +31,7 @@ j _endarmor							// jump to end because no falcon attacks needs armor
 nop
 
 _armor:
-lui t0, 0x4461					// load the value of 900 to t0
+lui t0, 0x4320					// load the value of 160 to t0 (slightly higher than Yoshi's Armor - 140)
 sw 	t0, 0x07E8(s1)				// move value of t0 to f6, which will be saved by the standard code to armor spot
 j _endarmor
 nop
