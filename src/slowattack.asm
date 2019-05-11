@@ -100,14 +100,14 @@ addiu t1, r0, 0x00D4							// load the value of an upsmash to t1
 beq t1, a1, _falconuair							// if current action = upsmash, jump to upsmash
 nop
 
-_falconpunchgroundcheck:
-addiu t1, r0, 0x00E4							// load the value of an upsmash to t1
-beq t1, a1, _falconpunchground					// if current action = upsmash, jump to upsmash
+_falconkickgroundcheck:
+addiu t1, r0, 0x00E6							// load the value of an upsmash to t1
+beq t1, a1, _falconkickground					// if current action = upsmash, jump to upsmash
 nop
 
-_falconpunchaircheck:
-addiu t1, r0, 0x00E5							// load the value of an upsmash to t1
-beq t1, a1, _falconpunchair						// if current action = upsmash, jump to upsmash
+_falconkickgroundaircheck:
+addiu t1, r0, 0x00E7							// load the value of an upsmash to t1
+beq t1, a1, _falconkickgroundairconnect			// if current action = upsmash, jump to upsmash
 nop
 
 //end of falcon attack checks
@@ -206,17 +206,17 @@ nop
 
 _falconuair:
 lui a3, 0x3F4C
-addiu a3, a3, 0xCCCD					// set to 80%
+addiu a3, a3, 0xCCCD			// set to 80%
 j _end							// jump to end
 nop
 
-_falconpunchground:
-lui a3, 0x3F80					// set to 100%
+_falconkickground:
+lui a3, 0x3F59					// set to 85ish%
 j _end									// jump to end
 nop
 
-_falconpunchair:
-lui a3, 0x3F80					// set to 100%
+_falconkickgroundairconnect:
+lui a3, 0x3F59					// set to 85ish%
 j _end									// jump to end
 nop
 

@@ -42,7 +42,7 @@ dw 0x007F0C90
 // change fair animation to Donkey Kong Punch animation
 origin 0x0009D53C
 base 0x80121D3C
-dw 0x000003A8
+dw 0x000003AB
 
 // change Captain Falcon's text name to Ganon, this changes his victory screen name (unclear if has other effects)
 origin 0x001589A8
