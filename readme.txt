@@ -1,5 +1,7 @@
 The Smash Remix xdelta will generate the current version of the Ganondorf mod of Smash 64. No further patch is necessary. For those uninterested in the messing around with the source code, this is all you will need to play the mod. Use the xdelta UI (provided) and put your legally acquired rom in the original box and the xdelta in the patch box of the program. You will then have the Smash Remix/Ganondorf Mod.
 
+If you would like to play it on netplay, please replace your "Project64.rdb" file with the one that is also provided in the link above.
+
 The information below is only for those interested in the code/how I did this.
 
 The original xdelta will generate a smash rom that is compatible with my ASM code. Much of my edits are done within
