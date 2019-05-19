@@ -1,6 +1,6 @@
 In order to use this hack you will need to utilize the xdelta pack. Everything you will need is provided if you download all the files.
 
-Step 1: Make sure you have an unaltered Super Smash 64 ROM that is a .z64 file (.n64 or .v64 will not work!). You can easily convert one of these files to .z64 via Tool64 (download here: https://www.zophar.net/utilities/n64aud/tool-n64.html). After conversion, ensure that the conversion was succesful by opening the new file in Tool64.).
+Step 1: Make sure you have a legal unaltered Super Smash 64 ROM that is a .z64 file (.n64 or .v64 will not work!). You can easily convert one of these files to .z64 via Tool64 (download here: https://www.zophar.net/utilities/n64aud/tool-n64.html). After conversion, ensure that the conversion was succesful by opening the new file in Tool64.).
 
 Step 2: Start the Delta UI Program. In the Patch box click "Open", then select the your ROM file (make sure it is .z64)
 
