@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 YOU DON'T BELONG HERE IF YOU ARE NOT A HACKER OR INTEREST IN THE CODE. PLEASE DOWNLOAD THE RELEASE VERSION BY CLICKING THE RELEASE TAB.
 =======
 In order to use this hack you will need to utilize the xdelta pack. Everything you will need is provided if you download all the files.
