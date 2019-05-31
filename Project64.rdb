@@ -153,9 +153,9 @@ Bad ROM?.AutoFullScreen=False
 
 // ---- END OF HEADER, START OF ROM ENTRIES --------------------------
 
-[D5033E34-FAC5795E-C:45]
-Good Name=SmashRemix0.5
-Internal Name=SmashRemix0.5
+[916b85b-780b85a4-C:45]
+Good Name=SmashRemix0.6
+Internal Name=SmashRemix0.6
 Status=Compatible
 Counter Factor=1
 Culling=1
