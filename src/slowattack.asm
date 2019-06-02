@@ -151,8 +151,8 @@ j _end							// jump to end
 nop
 
 _falconupsmash:
-lui a3, 0x3F19
-addiu a3, a3, 0x999A			// set to 60%
+lui a3, 0x3F80
+addiu a3, a3, 0x0000			// set to 100%
 j _end							// jump to end
 nop
 

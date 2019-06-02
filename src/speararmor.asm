@@ -1,8 +1,7 @@
 // Spear.asm
 
 // This file adds a new model form falcon's right hand and also grants armor!
-// The model form can be set with the moveset data instruction A0800003
-// The armor is added with the moveset data instruction A0800004 (armor) will switch armor on
+// The armor is added with the moveset data instruction A0800004 (armor) will switch armor on, unless specified by the code below.
 // The armor is removed with the moveset data instruction A0800000 (close fist). This instruction gets ignored if already in closed fist state.
 // originally created by Fray and bastardized by JS!
 
@@ -37,23 +36,23 @@ scope spear_: {
 	
 	_armor:
 	lhu t2, 0x0026(s1)                			// load player struct address into t2
-	addiu t1, r0, 0x00CA							// load the value of an upsmash to t1
-	beq t1, t2, _trident				// if current action = upsmash, jump to upsmash
+	addiu t1, r0, 0x00CA						// load the value of an forward smash to t1
+	beq t1, t2, _trident						// if current action = forwardsmash, jump to trident
 	nop
-	addiu t1, r0, 0x00CB							// load the value of an upsmash to t1
-	beq t1, t2, _trident				// if current action = upsmash, jump to upsmash
+	addiu t1, r0, 0x00CB							// load the value of an forwardsmash to t1
+	beq t1, t2, _trident							// if current action = forwardsmash, jump to trident
 	nop
-	addiu t1, r0, 0x00CC							// load the value of an upsmash to t1
-	beq t1, t2, _trident			// if current action = upsmash, jump to upsmash
+	addiu t1, r0, 0x00CC						// load the value of an forward smash to t1
+	beq t1, t2, _trident						// if current action = forwardsmash, jump to trident
 	nop
-	addiu t1, r0, 0x00CC							// load the value of an upsmash to t1
-	beq t1, t2, _trident			// if current action = upsmash, jump to upsmash
+	addiu t1, r0, 0x00CC							// load the value of an forward smash to t1
+	beq t1, t2, _trident						// if current action = forwardsmash, jump to trident
 	nop
-	addiu t1, r0, 0x00CE							// load the value of an upsmash to t1
-	beq t1, t2, _trident				// if current action = upsmash, jump to upsmash
+	addiu t1, r0, 0x00CE							// load the value of an forward smash to t1
+	beq t1, t2, _trident				// if current action = forwardsmash, jump to trident
 	nop
-	addiu t1, r0, 0x00BD							// load the value of an upsmash to t1
-	beq t1, t2, _trident				// if current action = upsmash, jump to upsmash
+	addiu t1, r0, 0x00BD				// load the value of an taunt to t1
+	beq t1, t2, _trident				// if current action = taunt, jump to add trident
 	nop
 	lui 	t0, 0x4479					// load the value of 999ish to t0
 	sw 		t0, 0x07E8(s1)				// saves 999 armor to armor spot, effectively unbreakable

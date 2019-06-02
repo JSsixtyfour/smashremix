@@ -27,7 +27,7 @@ base    0x80000438
 
 jal     0x80002CA0
 addiu   a2, r0, 0x0100
-lui     a0, 0x00F6          // load rom address (0x01000000)
+lui     a0, 0x0100          // load rom address (0x01000000)
 lui     a1, 0x8040          // load ram address (0x80400000)
 jal     0x80002CA0          // dmaCopy
 lui     a2, 0x000A          // load length of 4 MB
@@ -99,6 +99,11 @@ origin 0x0009D624
 base 0x802F9864
 dw 0x0000019DC
 
+// remove Captain Falcon animation flag for upsmash
+origin 0x0009D520
+base 0x80121D20
+dw 0x00000000
+
 // link up b turn around
 origin 0x000A5E54
 base 0x8012A654
@@ -155,7 +160,7 @@ nop
 spear_return:
 
 // add asm to rom
-origin  0x00F60000
+origin  0x01000000
 base    0x80400000
 insert "src/gnd.bin"
 insert "src/spear.bin"
@@ -169,4 +174,4 @@ include "src/speararmor.asm"
 
 
 
-fill    0x1000000 - origin(), 0xFF  
+fill    0x2000000 - origin(), 0xFF  
