@@ -39,10 +39,10 @@ origin 0x00042B3A
 base 0x800A3DEA
 dw 0x007F0C90
 
-// change fair animation to replaced falcon nair animation
+// change fair animation to new fair move
 origin 0x0009D53C
 base 0x80121D3C
-dw 0x000003AB
+dw 0x00000857
 
 // change cfalcon's nair animation to fair animation
 origin 0x0009D530
@@ -104,6 +104,26 @@ origin 0x0009D520
 base 0x80121D20
 dw 0x00000000
 
+// change start point of Captain Falcon's upsmash
+origin 0x0009D51C
+base 0x80121D1C
+dw 0x000014F0
+
+// change animation of Captain Falcon's upsmash
+origin 0x0009D518
+base 0x80121D18
+dw 0x00000854
+
+// change animation of Captain Falcon's downsmash
+origin 0x0009D524
+base 0x80121D24
+dw 0x00000855
+
+// change startpoint of Captain Falcon's downsmash
+origin 0x0009D528
+base 0x80121D28
+dw 0x00001588
+
 // link up b turn around
 origin 0x000A5E54
 base 0x8012A654
@@ -164,6 +184,7 @@ origin  0x01000000
 base    0x80400000
 insert "src/gnd.bin"
 insert "src/spear.bin"
+insert "src/ylink.bin"
 include "src/slowattack.asm"
 include "src/resist.asm"
 include "src/rightresist.asm"

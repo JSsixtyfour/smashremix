@@ -28,12 +28,12 @@ beq t1, a1, _falconupsmash						// if current action = upsmash, jump to upsmash
 nop
 
 _falcondashcheck:
-addiu t1, r0, 0x00C0							// load the value of an upsmash to t1
+addiu t1, r0, 0x00C0							// load the value of a dash to t1
 beq t1, a1, _falcondash							// if current action = upsmash, jump to upsmash
 nop
 
 _falconforwardtiltupcheck:
-addiu t1, r0, 0x00C1							// load the value of an upsmash to t1
+addiu t1, r0, 0x00C1							// load the value of a forward tilt to t1
 beq t1, a1, _falconforwardtiltup				// if current action = upsmash, jump to upsmash
 nop
 

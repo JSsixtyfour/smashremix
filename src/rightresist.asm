@@ -22,8 +22,8 @@ nop
 
 // end of link attack checks
 _rightresistance:
-lui t2, 0x3F8D
-mtc1 t2, f10				// load the FP value of 1.1ish, which will give greater air resistance to link when in up B
+lui t2, 0x3F91
+mtc1 t2, f10				// load the FP value of 1.14, which will give greater air resistance to link when in up B
 
 _endrightresistance:
 sub.s f16, f0, f10

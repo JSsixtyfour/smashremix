@@ -6,9 +6,10 @@
 // originally created by Fray and bastardized by JS!
 
 scope spear_: {
-    constant DLIST_SPEAR(0x80411B78)
+    constant DLIST_SPEAR(0x80412AD8)
 	constant DLIST_RHAND(0x80409710)
 	constant DLIST_OPEN(0x80406178)
+	constant DLIST_DUMMY(0x8040FE98)
     // struct in s1
     // model form in a2
     // display list in t3
@@ -45,14 +46,17 @@ scope spear_: {
 	addiu t1, r0, 0x00CC						// load the value of an forward smash to t1
 	beq t1, t2, _trident						// if current action = forwardsmash, jump to trident
 	nop
-	addiu t1, r0, 0x00CC							// load the value of an forward smash to t1
+	addiu t1, r0, 0x00CD							// load the value of an forward smash to t1
 	beq t1, t2, _trident						// if current action = forwardsmash, jump to trident
 	nop
 	addiu t1, r0, 0x00CE							// load the value of an forward smash to t1
 	beq t1, t2, _trident				// if current action = forwardsmash, jump to trident
 	nop
-	addiu t1, r0, 0x00BD				// load the value of an taunt to t1
-	beq t1, t2, _trident				// if current action = taunt, jump to add trident
+	addiu t1, r0, 0x00CF							// load the value of an up smash to t1
+	beq t1, t2, _trident				// if current action = forwardsmash, jump to trident
+	nop
+	addiu t1, r0, 0x00D0				// load the value of a down smash to t1
+	beq t1, t2, _trident				// if current action = down smash, jump to add trident
 	nop
 	lui 	t0, 0x4479					// load the value of 999ish to t0
 	sw 		t0, 0x07E8(s1)				// saves 999 armor to armor spot, effectively unbreakable

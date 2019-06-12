@@ -25,10 +25,10 @@ nop
 // end of link attack checks
 
 _resistance:
-lui t2, 0x3F8D
-mtc1 t2, f4					// load the FP value of 1.1, which will give greater air resistance to link
-lui t2, 0x3F8D
-mtc1 t2, f10				// load the FP value of 1.1, which will give greater air resistance to link
+lui t2, 0x3F91
+mtc1 t2, f4					// load the FP value of 1.14, which will give greater air resistance to link
+lui t2, 0x3F91
+mtc1 t2, f10				// load the FP value of 1.14, which will give greater air resistance to link
 
 _endresistance:
 add.s f6, f0, f4
