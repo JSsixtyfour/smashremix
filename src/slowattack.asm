@@ -17,6 +17,10 @@ nop
 addiu t1, r0, 0x0005
 beq t1, t0, _linkdashcheck
 nop
+addiu t1, r0, 0x0001
+beq t1, t0, _foxruncheck
+nop
+
 j _end										// jump to end
 nop
 
@@ -454,6 +458,33 @@ nop
 _linkupspecialair:
 lui a3, 0x3FB3
 addiu a3, a3, 0x3333			// set to 140%
+j _end							// jump to end
+nop
+
+// fox attack checks
+
+_foxruncheck:
+addiu t1, r0, 0x0010					// load the value of an attack to t1
+beq t1, a1, _foxrun		// if current action = attack, jump to attack
+nop
+
+_foxdashcheck:
+addiu t1, r0, 0x000F					// load the value of an attack to t1
+beq t1, a1, _foxdash		// if current action = attack, jump to attack
+nop
+
+j _end							// jump to end because attack checks are over
+nop
+
+// fox speed changes
+
+_foxrun:
+lui a3, 0x3F40
+j _end							// jump to end
+nop
+
+_foxdash:
+lui a3, 0x3F58
 j _end							// jump to end
 nop
 

@@ -34,6 +34,20 @@ lui     a2, 0x000A          // load length of 4 MB
 j       0x8000063C          // original line
 nop
 
+constant GAME_MODE(0x03)
+    constant TIME(0x08)
+    constant STOCKS(0x03)
+    constant TEAM_ATTACK(0x01)
+    constant ITEM_FREQUENCY(0x00)
+	constant vsgame_mode(0x800A4D0B)
+	constant vsstocks_(0x800A4D0F)
+	constant vstimer_(0x800A4D1C)
+	constant vstime(0x800A4D0E)
+	constant calculate_time_score_(0x801373F4)
+	constant calculate_stock_score_(0x801373CC)
+	constant vsteam_attack(0x800A4D11)
+	constant vsitem_frequency(0x800A4D24)
+
 // unlock all
 origin 0x00042B3A
 base 0x800A3DEA
@@ -179,17 +193,81 @@ j spear_
 nop
 spear_return:
 
+    // phantasm hooks
+    // phantasm action subroutine
+    origin	0x5D1CC
+    base	0x800E19CC
+    j		action_sub
+    nop
+    action_sub_return:
+    // phantasm landing fsm
+    origin	0xD0E10
+    base	0x801563D0
+    j		phantasm_land
+    nop
+    phantasm_land_return:
+    // phantasm moveset data
+    origin	0x63140
+    base	0x800E7940
+    j		moveset_data
+    nop
+    origin	0x6316C
+    base	0x800E796C
+    moveset_data_return:
+    // action frame counter fix
+    origin	0x5CA88
+    base	0x800E1288
+    j		action_frame_count
+    nop
+    action_frame_count_return:
+    
+    // change up special distance & delay
+    origin  0xD6A03
+    db      0x1A                // up special delay
+    origin  0xD6FFA
+    dh      0x42CC              // up special velocity
+    origin  0xD7132
+    dh      0x42CC              // up special velocity
+    origin  0xD7156
+    dh      0x42CC              // up special velocity
+
+    // change phantasm assembly subroutines
+    origin	0xA5A7C
+    dw		0x800D94C4			// ground ending data
+    dw		0x00000000			// ground interruptibility
+    origin	0xA5A90
+    dw		0x8015C750			// air ending data
+    dw		0x00000000			// air interruptibility
+    dw		0x800D91EC			// air movement data
+    dw		0x80156358			// air collision data
+
+    // change phantasm animation/data pointers
+    origin	0x94E10
+    dw		0x000002E9			// ground animation
+    origin	0x94E1C
+    dw		0x000002E9			// air animation
+    dw		0x000017B4			// air data (02/06/2019 - no idea why this change is needed just leave it in I guess)
+//
+
+origin 0x00040898
+base   0x800A1B48
+j       set_vs_settings_
+nop
+_set_vs_settings_return:
+
 // add asm to rom
 origin  0x01000000
 base    0x80400000
 insert "src/gnd.bin"
 insert "src/spear.bin"
 insert "src/ylink.bin"
+insert "src/falcoparts.bin"
 include "src/slowattack.asm"
 include "src/resist.asm"
 include "src/rightresist.asm"
 include "src/speararmor.asm"
-
+include "src/phantasm.asm"
+include "src/settings.asm"
 
 
 
