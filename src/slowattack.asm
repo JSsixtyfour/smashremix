@@ -61,36 +61,6 @@ addiu t1, r0, 0x00C5							// load the value of an upsmash to t1
 beq t1, a1, _falconforwardtiltdown				// if current action = upsmash, jump to upsmash
 nop
 
-_falconuptiltcheck:
-addiu t1, r0, 0x00C7							// load the value of an upsmash to t1
-beq t1, a1, _falconuptilt						// if current action = upsmash, jump to upsmash
-nop
-
-_falconforwardsmashupcheck:
-addiu t1, r0, 0x00CA							// load the value of an upsmash to t1
-beq t1, a1, _falconforwardsmashup				// if current action = upsmash, jump to upsmash
-nop
-
-_falconforwardsmashmidupcheck:
-addiu t1, r0, 0x00CB							// load the value of an upsmash to t1
-beq t1, a1, _falconforwardsmashmidup				// if current action = upsmash, jump to upsmash
-nop
-
-_falconforwardsmashsidecheck:
-addiu t1, r0, 0x00CC							// load the value of an upsmash to t1
-beq t1, a1, _falconforwardsmashside				// if current action = upsmash, jump to upsmash
-nop
-
-_falconforwardsmashmiddowncheck:
-addiu t1, r0, 0x00CC							// load the value of an upsmash to t1
-beq t1, a1, _falconforwardsmashmiddown			// if current action = upsmash, jump to upsmash
-nop
-
-_falconforwardsmashdowncheck:
-addiu t1, r0, 0x00CE							// load the value of an upsmash to t1
-beq t1, a1, _falconforwardsmashdown				// if current action = upsmash, jump to upsmash
-nop
-
 _falconnaircheck:
 addiu t1, r0, 0x00D1							// load the value of an upsmash to t1
 beq t1, a1, _falconnair							// if current action = upsmash, jump to upsmash
@@ -104,16 +74,6 @@ nop
 _falconuaircheck:
 addiu t1, r0, 0x00D4							// load the value of an upsmash to t1
 beq t1, a1, _falconuair							// if current action = upsmash, jump to upsmash
-nop
-
-_falconkickgroundcheck:
-addiu t1, r0, 0x00E6							// load the value of an upsmash to t1
-beq t1, a1, _falconkickground					// if current action = upsmash, jump to upsmash
-nop
-
-_falconkickgroundaircheck:
-addiu t1, r0, 0x00E7							// load the value of an falconkickground to t1
-beq t1, a1, _falconkickgroundairconnect			// if current action = upsmash, jump to upsmash
 nop
 
 _falconruncheck:
@@ -196,41 +156,6 @@ addiu a3, a3, 0x6666			// set to 90%
 j _end							// jump to end
 nop
 
-_falconuptilt:
-lui a3, 0x3F0C					// set to 55ish%
-j _end							// jump to end
-nop
-
-_falconforwardsmashup:
-lui a3, 0x3F33
-addiu a3, a3, 0x3333			// set to 70%
-j _end							// jump to end
-nop
-
-_falconforwardsmashmidup:
-lui a3, 0x3F33
-addiu a3, a3, 0x3333			// set to 70%
-j _end							// jump to end
-nop
-
-_falconforwardsmashside:
-lui a3, 0x3F33
-addiu a3, a3, 0x3333			// set to 70%
-j _end							// jump to end
-nop
-
-_falconforwardsmashmiddown:
-lui a3, 0x3F33
-addiu a3, a3, 0x3333			// set to 70%
-j _end							// jump to end
-nop
-
-_falconforwardsmashdown:
-lui a3, 0x3F33
-addiu a3, a3, 0x3333			// set to 70%
-j _end							// jump to end
-nop
-
 _falconnair:
 lui a3, 0x3f67					// set to 90ish%
 j _end							// jump to end
@@ -245,18 +170,6 @@ _falconuair:
 lui a3, 0x3F4C
 addiu a3, a3, 0xCCCD			// set to 80%
 j _end							// jump to end
-nop
-
-_falconkickground:
-lui a3, 0x3F5E
-addiu a3, a3, 0xB852			// set to 87%
-j _end									// jump to end
-nop
-
-_falconkickgroundairconnect:
-lui a3, 0x3F5E
-addiu a3, a3, 0xB852			// set to 87%
-j _end									// jump to end
 nop
 
 _falconrun:
@@ -311,16 +224,6 @@ addiu t1, r0, 0x00D0					// load the value of an attack to t1
 beq t1, a1, _linkdsmash					// if current action = attack, jump to attack
 nop
 
-_linkfaircheck:
-addiu t1, r0, 0x00D2					// load the value of an attack to t1
-beq t1, a1, _linkfair					// if current action = attack, jump to attack
-nop
-
-_linkbaircheck:
-addiu t1, r0, 0x00D3					// load the value of an attack to t1
-beq t1, a1, _linkbair					// if current action = attack, jump to attack
-nop
-
 _linkuaircheck:
 addiu t1, r0, 0x00D4					// load the value of an attack to t1
 beq t1, a1, _linkuair					// if current action = attack, jump to attack
@@ -339,21 +242,6 @@ nop
 _linkboomerangcheck:
 addiu t1, r0, 0x00E5					// load the value of an attack to t1
 beq t1, a1, _linkboomerang				// if current action = attack, jump to attack
-nop
-
-_linkupspecialcheck:
-addiu t1, r0, 0x00E2					// load the value of an attack to t1
-beq t1, a1, _linkupspecial				// if current action = attack, jump to attack
-nop
-
-_linkupspecialfinishcheck:
-addiu t1, r0, 0x00E3					// load the value of an attack to t1
-beq t1, a1, _linkupspecialfinish		// if current action = attack, jump to attack
-nop
-
-_linkupspecialaircheck:
-addiu t1, r0, 0x00E4					// load the value of an attack to t1
-beq t1, a1, _linkupspecialair		// if current action = attack, jump to attack
 nop
 
 //end of link attack checks
@@ -416,18 +304,6 @@ addiu a3, a3, 0xCCCD			// set to 110%
 j _end							// jump to end
 nop
 
-_linkbair:
-lui a3, 0x3F93
-addiu a3, a3, 0x3333			// set to 115%
-j _end							// jump to end
-nop
-
-_linkdair:
-lui a3, 0x3F86
-addiu a3, a3, 0x6666			// set to 105%
-j _end							// jump to end
-nop
-
 _linkboomerang:
 lui a3, 0x3F86
 addiu a3, a3, 0x6666			// set to 105%
@@ -439,25 +315,9 @@ lui a3, 0x3f80					// set to 100%
 j _end							// jump to end
 nop
 
-_linkupspecial:
-lui a3, 0x3f80					// set to 100%
-j _end							// jump to end
-nop
-
-_linkupspecialfinish:
-lui a3, 0x3f80					// set to 100%
-j _end							// jump to end
-nop
-
 _linkgrab:
 lui a3, 0x3f99
 addiu a3, a3, 0x999A			// set to 120%
-j _end							// jump to end
-nop
-
-_linkupspecialair:
-lui a3, 0x3FB3
-addiu a3, a3, 0x3333			// set to 140%
 j _end							// jump to end
 nop
 
