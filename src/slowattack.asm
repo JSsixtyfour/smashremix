@@ -292,15 +292,15 @@ addiu a3, a3, 0x6666			// set to 105%
 j _end							// jump to end
 nop
 
-_linkfair:
+_linkuair:
 lui a3, 0x3F8C
 addiu a3, a3, 0xCCCD			// set to 110%
 j _end							// jump to end
 nop
 
-_linkuair:
-lui a3, 0x3F8C
-addiu a3, a3, 0xCCCD			// set to 110%
+_linkdair:
+lui a3, 0x3F86
+addiu a3, a3, 0x6666			// set to 105%
 j _end							// jump to end
 nop
 
