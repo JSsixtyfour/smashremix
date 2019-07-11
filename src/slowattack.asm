@@ -96,6 +96,12 @@ addiu t1, r0, 0x00E5							// load the value of jab to t1
 beq t1, a1, _falconpunchair							// if current action = jab, jump to jab
 nop
 
+_falconidlecheck:
+addiu t1, r0, 0x000A							// load the value of jab to t1
+beq t1, a1, _falconidle							// if current action = jab, jump to jab
+nop
+
+
 //end of falcon attack checks
 j _end							// jump to end because no falcon attacks need to be slowed
 nop
@@ -181,6 +187,11 @@ _falconjab:
 lui a3, 0x3F8C
 addiu a3, a3, 0xCCCD			// set to 110%
 j _end							// jump to end
+nop
+
+_falconidle:
+lui a3, 0x3f33					// set to 70ish%
+j _end									// jump to end
 nop
 
 // link attack checks
