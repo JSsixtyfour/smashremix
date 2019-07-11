@@ -49,6 +49,9 @@ scope moveset_data_: {
     
     // replace moveset data
     scope gnd {
+        // taunt
+        origin  0x9D444
+        dw      GND_TAUNT 
         // up tilt
         origin  0x9D4BC
         dw      GND_UTILT
@@ -100,6 +103,18 @@ scope moveset_data_: {
     }
     
     scope falco {
+        // taunt
+        origin  0x94C60
+        dw      0x0000085B                  // animation
+        dw      FALCO_TAUNT
+        // up tilt
+        origin  0x94CD8
+        dw      0x0000085C                  // animation
+        dw      FALCO_UTILT
+        // forward smash
+        origin  0x94D14
+        dw      0x0000085D                  // animation
+        dw      FALCO_FSMASH
         // jab 1
         origin  0x94C70
         dw      FALCO_JAB_1
@@ -155,6 +170,7 @@ scope moveset_data_: {
     
     
     // insert files
+    insert  GND_TAUNT,"moveset/gnd/TAUNT.bin"
     insert  GND_UTILT,"moveset/gnd/UP_TILT.bin"
     insert  GND_FSMASH,"moveset/gnd/FORWARD_SMASH.bin"
     insert  GND_USMASH,"moveset/gnd/UP_SMASH.bin"
@@ -175,9 +191,13 @@ scope moveset_data_: {
     dw      GND_USP_THROWDATA               // throw data pointer
     insert  "moveset/gnd/UP_SPECIAL_AIR.bin"
     
+    
+    insert  FALCO_TAUNT,"moveset/falco/TAUNT.bin"
     insert  FALCO_JAB_1,"moveset/falco/JAB_1.bin"
     insert  FALCO_JAB_2,"moveset/falco/JAB_2.bin"
     insert  FALCO_DASH_ATTACK,"moveset/falco/DASH_ATTACK.bin"
+    insert  FALCO_UTILT,"moveset/falco/UP_TILT.bin"
+    insert  FALCO_FSMASH,"moveset/falco/FORWARD_SMASH.bin"
     insert  FALCO_USMASH,"moveset/falco/UP_SMASH.bin"
     insert  FALCO_BAIR,"moveset/falco/BACK_AERIAL.bin"
     insert  FALCO_UAIR,"moveset/falco/UP_AERIAL.bin"
