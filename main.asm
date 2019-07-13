@@ -118,6 +118,11 @@ origin 0x001589B4
 base 0x80139814
 dw 0x31200000
 
+// change Fox's text name to FLC, this changes his victory screen name (unclear if has other effects)
+origin 0x0015897C
+base 0x801397DC
+dw 0x464C4300
+
 // slowattack
 origin 0x0006272C
 base 0x800E6F2C
