@@ -169,10 +169,10 @@ _set_vs_settings_return:
 // add asm to rom
 origin  0x01000000
 base    0x80400000
+insert "src/model/falcoparts.bin"
 insert "src/model/gnd.bin"
 insert "src/model/spear.bin"
 insert "src/model/ylink.bin"
-insert "src/model/falcoparts.bin"
 include "src/os.asm"
 include "src/slowattack.asm"
 include "src/resist.asm"
