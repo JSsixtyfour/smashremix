@@ -6,10 +6,9 @@
 // originally created by Fray and bastardized by JS!
 
 scope spear_: {
-    constant DLIST_SPEAR(0x80412AD8)
-	constant DLIST_RHAND(0x80409710)
-	constant DLIST_OPEN(0x80406178)
-	constant DLIST_DUMMY(0x8040FE98)
+    constant DLIST_SPEAR(0x8040C830)
+	constant DLIST_RHAND(0x804060A8)
+	constant DLIST_OPEN(0x804089B8)
     // struct in s1
     // model form in a2
     // display list in t3
