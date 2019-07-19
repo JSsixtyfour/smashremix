@@ -7,8 +7,8 @@
 
 scope spear_: {
     constant DLIST_SPEAR(0x8040C830)
-	constant DLIST_RHAND(0x804060A8)
-	constant DLIST_OPEN(0x804089B8)
+	constant DLIST_RHAND(0x80408F78)
+	constant DLIST_OPEN(0x80408B40)
     // struct in s1
     // model form in a2
     // display list in t3
