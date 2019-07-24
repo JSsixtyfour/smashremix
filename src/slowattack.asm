@@ -101,7 +101,6 @@ addiu t1, r0, 0x000A							// load the value of jab to t1
 beq t1, a1, _falconidle							// if current action = jab, jump to jab
 nop
 
-
 //end of falcon attack checks
 j _end							// jump to end because no falcon attacks need to be slowed
 nop
