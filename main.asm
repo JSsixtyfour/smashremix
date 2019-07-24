@@ -152,26 +152,6 @@ origin 0x0009D440
 base 0x80121C40
 dw 0x00000861
 
-// change the offset the game goes to to load mario's forward smash midup
-origin 0x00092EDC
-base 0x801176DC
-dw 0x000001108
-
-// change the offset the game goes to to load mario's forward smash mid
-origin 0x00092EE8
-base 0x801176E8
-dw 0x000001174
-
-// change the offset the game goes to to load mario's forward smash middown
-origin 0x00092EF4
-base 0x801176F4
-dw 0x0000011E0
-
-// change the offset the game goes to to load mario's forward smash down
-origin 0x00092F00
-base 0x80117700
-dw 0x00000124C
-
 // change mario fair to custom
 origin 0x00092F2C
 base 0x8011772C
