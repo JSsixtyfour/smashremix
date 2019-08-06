@@ -201,6 +201,8 @@ include "src/moveset.asm"
 include "src/command.asm"
 include "src/timeouts.asm"
 include "src/resultsscreen.asm"
+include "src/global.asm"
+include "src/fireball.asm"
 include "src/midi.asm"
 
 // rom size = 40MB
