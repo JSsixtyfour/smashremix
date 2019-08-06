@@ -2,7 +2,8 @@
 
 // This file allows for copies of Mario's fireball projectile to be generated.
 
-include "global.asm"
+include "OS.asm"
+include "Global.asm"
 
 scope Fireball: {
     constant FIREBALL_BASE(0x80188E30)    

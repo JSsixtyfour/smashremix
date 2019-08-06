@@ -3,6 +3,8 @@
 constant phantasm_move_start(16)
 constant phantasm_move_end(20)
 
+include "OS.asm"
+
 scope Phantasm {
     constant X_SPEED(0x43E6)                // current setting - float:460.0
     constant X_SPEED_END_AIR(0x41F0)        // current setting - float:30.0

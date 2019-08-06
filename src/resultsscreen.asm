@@ -2,7 +2,7 @@
 // thanks to tehzz for providing documentation
 // this file is most likely temporary
 
-include "os.asm"
+include "OS.asm"
 
 scope ResultsScreen {
     pushvar origin, base

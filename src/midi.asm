@@ -4,8 +4,10 @@
 // For converting MIDI files, it's reccomended to use GE Editor.
 // Tools > Extra Tools > MIDI Tools > Convert Midi to GE Format and Loop
 
+include "OS.asm"
+
 scope MIDI {
-    constant MUSIC_TABLE(0x00B3F660)                // start of the music table, copy this value from 0x3D768
+    constant MUSIC_TABLE(0x00C14820)                // start of the music table, copy this value from 0x3D768
     variable MUSIC_TABLE_END(MUSIC_TABLE + 0x17C)   // variable containing the current end of the music table
     constant MIDI_BANK(0x2400000)                   // defines the start of the additional MIDI bank
     variable MIDI_BANK_END(MIDI_BANK)               // variable containing the current end of the MIDI bank
@@ -67,12 +69,13 @@ scope MIDI {
     // define new MIDI bank
     print "=============================== MIDI FILES =============================== \n"
     move_dream_land_midi()                  // move dream land midi
-    insert_midi(ganondorf_battle)
-    insert_midi(corneria)
-    insert_midi(kokiri_forest)
-    insert_midi(dr_mario)
-    insert_midi(kalos)
-    insert_midi(smashville)
-    insert_midi(wario_ware)
+    insert_midi(GANONDORF_BATTLE)
+    insert_midi(CORNERIA)
+    insert_midi(KOKIRI_FOREST)
+    insert_midi(DR_MARIO)
+    insert_midi(KALOS)
+    insert_midi(SMASHVILLE)
+    insert_midi(WARIO_WARE)
+    insert_midi(FIRST_DESTINATION)
     print "========================================================================== \n"
 }

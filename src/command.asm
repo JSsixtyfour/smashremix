@@ -2,6 +2,8 @@
 
 // This file adds support for new commands in the moveset microcode
 
+include "OS.asm"
+
 scope Command {
     // @ Description
     // function which executes a custom moveset command (0xD0-0xFF) 
@@ -10,38 +12,65 @@ scope Command {
         // s2 = player struct
         // v0 = current commmand offset
         // 0x86C = current command in struct
-        OS.save_registers()                  // full register save
-        lbu     a3, 0x0000(v0)                  // a3 = command byte
-        addiu   t0, a3, -0x00D0                 // ~
-        bltz    t0, _skip                       // skip if command < 0xD0
+        OS.save_registers()                 // full register save
+        lbu     a3, 0x0000(v0)              // a3 = command byte
+        addiu   t0, a3, -0x00D0             // ~
+        bltz    t0, _skip                   // skip if command < 0xD0
         nop
         
         _load:
-        sll     t1, t0, 0x2                     // t1 = offset ((command - 0xD0) * 4))
-        li      t2, command_table               // t2 = command_table
-        addu    t1, t1, t2                      // t1 = command_table + offset
-        lw      t1, 0x0000(t1)                  // t1 = command asm address
-        beq     t1, r0, _end                    // skip if t1 = NULL
-        ori     t8, r0, 0x0004                  // next command = 0x0004
-        jalr    t1                              // jump to custom command
+        sll     t1, t0, 0x2                 // t1 = offset ((command - 0xD0) * 4))
+        li      t2, command_table           // t2 = command_table
+        addu    t1, t1, t2                  // t1 = command_table + offset
+        lw      t1, 0x0000(t1)              // t1 = command asm address
+        beq     t1, r0, _end                // skip if t1 = NULL
+        ori     t8, r0, 0x0004              // next command = 0x0004
+        jalr    t1                          // jump to custom command
         nop
         
         _end:
         // t8 = next command offset/current command length
         // v0 = current command
-        lw      v0, 0x0008(sp)                  // ~
-        lw      s0, 0x0048(sp)                  // load v0, s0
-        addu    v0, v0, t8                      // v0 = next command
-        sw      v0, 0x0004(s0)                  // store next command in player struct
-        sw      v0, 0x0008(sp)                  // store next command in stack
+        lw      v0, 0x0008(sp)              // ~
+        lw      s0, 0x0048(sp)              // load v0, s0
+        addu    v0, v0, t8                  // v0 = next command
+        sw      v0, 0x0004(s0)              // store next command in player struct
+        sw      v0, 0x0008(sp)              // store next command in stack
         
         _skip:
-        OS.restore_registers()                  // full register load
-        lw      a3, 0x0000(v0)                  // original line 1
-        srl     a3, a3, 0x1A                    // original line 2
-        jr      ra                              // return
+        OS.restore_registers()              // full register load
+        lw      a3, 0x0000(v0)              // original line 1
+        srl     a3, a3, 0x1A                // original line 2
+        jr      ra                          // return
         nop
     }
+    
+    
+    // @ Description
+    // General purpose. Runs when a character changes actions.
+    scope change_action_: {
+        sw  s1, 0x0018(sp)                  // original line 1
+        sw  s0, 0x0014(sp)                  // original line 2
+        j   SlowAttack._slow_attack         // jump to slowattack (TEMPORARY)
+        nop
+        _slow_attack_return:
+        OS.save_registers()                 // full register save
+        
+        _reset_translation_multiplier:
+        lw      t2, 0x0074(a0)              // t2 = first bone struct
+        lw      t2, 0x0048(t2)              // t2 = translation multiplier (bone 1 size multiplier)
+        lw      t3, 0x0084(a0)              // t3 = player struct      
+        li      t0, translation_multiplier_.multiplier_table
+        lbu     t1, 0x000D(t3)              // t1 = player port
+        sll     t1, t1, 0x2                 // ~
+        addu    t0, t0, t1                  // t0 = multiplier_table + (port * 4)
+        sw      t2, 0x0000(t0)              // store default translation multiplier
+        
+        OS.restore_registers()              // full register load
+        j   _change_action_return           // return
+        nop
+    }
+    
     
     // CUSTOM COMMANDS
     // s2 = player struct
@@ -145,41 +174,41 @@ scope Command {
             // 0x07FC(s5) = hit direction
             constant HITBOX_STRUCT_BASE(0x294)
             constant HITBOX_STRUCT_SIZE(0xC4)
-            li      at, hitbox_dir_table        // at = hitbox_dir_table
-            lbu     a0, 0x000D(s1)              // a0 = player port
-            sll     a0, a0, 0x2                 // ~
-            addu    at, at, a0                  // at = hitbox_dir_table + (port * 4)
-            lw      at, 0x0000(at)              // at = px_hitbox_dir
+            li      at, hitbox_dir_table    // at = hitbox_dir_table
+            lbu     a0, 0x000D(s1)          // a0 = player port
+            sll     a0, a0, 0x2             // ~
+            addu    at, at, a0              // at = hitbox_dir_table + (port * 4)
+            lw      at, 0x0000(at)          // at = px_hitbox_dir
             
             _get_hitbox_id:
-            subu    a0, s0, s1                  // a0 = hitbox struct offset
-            subiu   a0, a0, HITBOX_STRUCT_BASE  // a0 = hitbox struct offset - HITBOX_STRUCT_BASE
-            ori     t8, r0, HITBOX_STRUCT_SIZE  // t8 = HITBOX_STRUCT_SIZE
-            divu    a0, t8                      // ~
-            mflo    a0                          // a0 = hitbox id
+            subu    a0, s0, s1              // a0 = hitbox struct offset
+            subiu   a0, a0, HITBOX_STRUCT_BASE// a0 = hitbox struct offset - HITBOX_STRUCT_BASE
+            ori     t8, r0, HITBOX_STRUCT_SIZE// t8 = HITBOX_STRUCT_SIZE
+            divu    a0, t8                  // ~
+            mflo    a0                      // a0 = hitbox id
             // hitbox id = ((hitbox struct address - player struct address) - HITBOX_STRUCT_BASE) / HITBOX_STRUCT_SIZE
             
             _get_direction:
-            sll     a0, a0, 0x2                 // ~
-            addu    at, at, a0                  // at = px_hitbox_dir + (hitbox id * 4)
-            lw      a0, 0x0000(at)              // a0 = hitbox direction
-            beq     a0, r0, _end                // skip if hitbox direction = 0 (don't override)
+            sll     a0, a0, 0x2             // ~
+            addu    at, at, a0              // at = px_hitbox_dir + (hitbox id * 4)
+            lw      a0, 0x0000(at)          // a0 = hitbox direction
+            beq     a0, r0, _end            // skip if hitbox direction = 0 (don't override)
             nop
-            lw      at, 0x0044(s1)              // at = direction
-            ori     t8, r0, FORCE_BACKWARD      // t8 = FORCE_BACKWARD
-            beql    a0, t8, _end                // end and force reverse hit if hitbox direction = FORCE_BACKWARD
-            sw      at, 0x07FC(s5)              // store direction (reverse hit)
-            ori     t8, r0, FORCE_FORWARD       // t8 = FORCE_FORWARD
-            bne     a0, t8, _end                // skip if hitbox direction != FORCE_FORWARD
+            lw      at, 0x0044(s1)          // at = direction
+            ori     t8, r0, FORCE_BACKWARD  // t8 = FORCE_BACKWARD
+            beql    a0, t8, _end            // end and force reverse hit if hitbox direction = FORCE_BACKWARD
+            sw      at, 0x07FC(s5)          // store direction (reverse hit)
+            ori     t8, r0, FORCE_FORWARD   // t8 = FORCE_FORWARD
+            bne     a0, t8, _end            // skip if hitbox direction != FORCE_FORWARD
             nop
-            addiu   t8, r0,-0x0002              // t8 = bitmask (0xFFFFFFFE)
-            xor     at, at, t8                  // at = direction (flipped)
-            sw      at, 0x07FC(s5)              // store direction (forward hit)
+            addiu   t8, r0,-0x0002          // t8 = bitmask (0xFFFFFFFE)
+            xor     at, at, t8              // at = direction (flipped)
+            sw      at, 0x07FC(s5)          // store direction (forward hit)
             
             _end:
-            lw      t8, 0x0018(s2)              // original line 1
-            addiu   at, r0, 0xFBFF              // original line 2
-            j       _apply_direction_return     // return
+            lw      t8, 0x0018(s2)          // original line 1
+            addiu   at, r0, 0xFBFF          // original line 2
+            j       _apply_direction_return // return
             nop
             
             hitbox_dir_table:
@@ -189,13 +218,13 @@ scope Command {
             dw p4_hitbox_dir
             
             p1_hitbox_dir:
-            dw 0; dw 0; dw 0; dw 0              // hitbox 1/2/3/4
+            dw 0; dw 0; dw 0; dw 0          // hitbox 1/2/3/4
             p2_hitbox_dir:
-            dw 0; dw 0; dw 0; dw 0              // hitbox 1/2/3/4
+            dw 0; dw 0; dw 0; dw 0          // hitbox 1/2/3/4
             p3_hitbox_dir:
-            dw 0; dw 0; dw 0; dw 0              // hitbox 1/2/3/4
+            dw 0; dw 0; dw 0; dw 0          // hitbox 1/2/3/4
             p4_hitbox_dir:
-            dw 0; dw 0; dw 0; dw 0              // hitbox 1/2/3/4
+            dw 0; dw 0; dw 0; dw 0          // hitbox 1/2/3/4
             
             pushvar origin, base 
             // apply_direction_ hook
@@ -211,24 +240,24 @@ scope Command {
         // expands the existing end hitbox function to include resetting the directional override
         scope end_hitbox_: {
             // v0 = player struct
-            addiu   sp, sp,-0x0010              // allocate stack space
-            sw      t0, 0x0004(sp)              // store t0
-            sw      t1, 0x0008(sp)              // store t1
+            addiu   sp, sp,-0x0010          // allocate stack space
+            sw      t0, 0x0004(sp)          // store t0
+            sw      t1, 0x0008(sp)          // store t1
             li      t0, apply_direction_.hitbox_dir_table
-            lbu     t1, 0x000D(v0)              // t1 = player port
-            sll     t1, t1, 0x2                 // ~
-            addu    t0, t0, t1                  // a0 = hitbox_dir_table + (port * 4))
-            lw      t0, 0x0000(t0)              // t0 = px_hitbox_dir
-            sw      r0, 0x0000(t0)              // ~
-            sw      r0, 0x0004(t0)              // ~
-            sw      r0, 0x0008(t0)              // ~
-            sw      r0, 0x000C(t0)              // disable directional override for all hitboxes
-            lw      t0, 0x0004(sp)              // ~
-            lw      t1, 0x0008(sp)              // load t0, t1
-            sw      r0, 0x04E0(v0)              // original line 1 (disable hitbox 4)
-            sw      r0, 0x0294(v0)              // original line 2 (disable hitbox 1)
-            addiu   sp, sp, 0x0010              // deallocate stack space
-            j       _end_hitbox_return          // return
+            lbu     t1, 0x000D(v0)          // t1 = player port
+            sll     t1, t1, 0x2             // ~
+            addu    t0, t0, t1              // a0 = hitbox_dir_table + (port * 4))
+            lw      t0, 0x0000(t0)          // t0 = px_hitbox_dir
+            sw      r0, 0x0000(t0)          // ~
+            sw      r0, 0x0004(t0)          // ~
+            sw      r0, 0x0008(t0)          // ~
+            sw      r0, 0x000C(t0)          // disable directional override for all hitboxes
+            lw      t0, 0x0004(sp)          // ~
+            lw      t1, 0x0008(sp)          // load t0, t1
+            sw      r0, 0x04E0(v0)          // original line 1 (disable hitbox 4)
+            sw      r0, 0x0294(v0)          // original line 2 (disable hitbox 1)
+            addiu   sp, sp, 0x0010          // deallocate stack space
+            j       _end_hitbox_return      // return
             nop
             
             pushvar origin, base 
@@ -242,11 +271,71 @@ scope Command {
         }
     }
     
+    // @ Description
+    // Sets a multiplier for animations which use topjoint translation (dash attacks, rolls, etc.)
+    // Traditionally, this value is fixed as the character's size multiplier, but with this command
+    // it can be set to any value.
+    // CC00XXXX
+    // XXXX0000 = multiplier
+    scope translation_multiplier_: {
+        constant COMMAND_LENGTH(0x4)
+        li      t2, multiplier_table        // t2 = multiplier_table
+        lbu     t1, 0x000D(s2)              // t1 = player port
+        sll     t1, t1, 0x2                 // ~
+        addu    t2, t2, t1                  // t2 = multiplier_table + (port * 4)
+        lhu     t0, 0x0002(v0)              // t0 = translation multiplier parameter value
+        sll     t0, t0, 0x0010              // shift multiplier value 2 bytes left
+        sw      t0, 0x0000(t2)              // store translation multiplier value
+        ori     t8, r0, COMMAND_LENGTH      // set command length
+        jr      ra                          // return
+        nop
+        
+        apply_multiplier_: {
+            // v0 = player struct
+            addiu   sp, sp,-0x0010          // allocate stack space
+            sw      t0, 0x0004(sp)          // ~
+            sw      t1, 0x0008(sp)          // ~
+            sw      t2, 0x000C(sp)          // store t0-t2
+            li      t0, multiplier_table    // t0 = multiplier_table
+            lbu     t1, 0x000D(v0)          // t1 = player port
+            sll     t1, t1, 0x2             // ~
+            addu    t0, t0, t1              // t0 = multiplier_table + (port * 4)
+            
+            _load_multiplier:
+            lwc1    f10, 0x0000(t0)         // f10 = translation multiplier
+            mul.s   f16, f8, f10            // original line 1
+            mtc1    t7, f8                  // original line 2
+            lw      t0, 0x0004(sp)          // ~
+            lw      t1, 0x0008(sp)          // ~
+            lw      t2, 0x000C(sp)          // load t0-t2
+            addiu   sp, sp, 0x0010          // deallocate stack space
+            j       _apply_multiplier_return
+            nop
+            
+            pushvar origin, base 
+            // apply_multiplier_ hook
+            origin	0x54444
+            base	0x800D8C44
+            j		apply_multiplier_
+            nop
+            _apply_multiplier_return:
+            pullvar base, origin
+        }
+        
+        
+        multiplier_table:
+        float32 0                    // p1 translation multiplier
+        float32 0                    // p2 translation multiplier              
+        float32 0                    // p3 translation multiplier
+        float32 0                    // p4 translation multiplier
+        
+    }
+    
     command_table:
     dw      fsm_                            // 0xD0 SET FRAME SPEED MULTIPLIER
     dw      armour_                         // 0xD1 SET ARMOUR
-    dw      hitbox_direction_                // 0xD2 OVERRIDE HITBOX DIRECTION
-    dw      OS.NULL                         // 0xD3 
+    dw      hitbox_direction_               // 0xD2 OVERRIDE HITBOX DIRECTION
+    dw      translation_multiplier_         // 0xD3 TOPJOINT TRANSLATION MULTIPLIER
     dw      OS.NULL                         // 0xD4
     dw      OS.NULL                         // 0xD5
     dw      OS.NULL                         // 0xD6
@@ -307,6 +396,12 @@ scope Command {
     base    0x800E072C
     jal     load_command_
     nop
+    // change_action_ hook
+    origin  0x6272C
+    base    0x800E6F2C
+    j       change_action_
+    nop
+    _change_action_return:
     pullvar base, origin
 }
     

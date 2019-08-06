@@ -99,36 +99,14 @@ origin 0x000DEDC8
 base 0x80164388
 dw 0x3C014240
 
+// link up b landing animation fsm
+origin 0x107468
+float32 0.33                // 25 frames of landing lag
+
 // link boomerang return damage decrease to 7%
 origin 0x000E7814
 base 0x8016CDD4
 dw 0x24180007
-
-// slowattack
-origin 0x0006272C
-base 0x800E6F2C
-j _slowattack
-nop
-_codereturn:
-
-// resistance
-origin 0x0005488C
-base 0x800D908C
-j _upbsetup
-nop
-_resistancereturn:
-
-origin 0x000548B8
-base 0x800D90B8
-j _rightairresistance
-nop
-_rightresistancereturn:
-
-origin  0x0006453C
-base    0x800E8D3C
-j spear_
-nop
-spear_return:
 
 // change up special distance & delay (fox/falco)
 origin  0xD6A03
@@ -140,47 +118,30 @@ dh      0x42CC              // up special velocity
 origin  0xD7156
 dh      0x42CC              // up special velocity
 
+// resistance
+origin 0x0005488C
+base 0x800D908C
+j Resist._upbsetup
+nop
+_resistancereturn:
+
+origin 0x000548B8
+base 0x800D90B8
+j RightResist._rightairresistance
+nop
+_rightresistancereturn:
+
+origin  0x0006453C
+base    0x800E8D3C
+j spear_
+nop
+spear_return:
 
 origin 0x00040898
 base   0x800A1B48
-j       set_vs_settings_
+j      Settings.set_vs_settings_
 nop
 _set_vs_settings_return:
-
-// falcons taunt to custom
-origin 0x0009D440
-base 0x80121C40
-dw 0x00000861
-
-// change mario fair to custom
-origin 0x00092F2C
-base 0x8011772C
-dw 0x00000859
-
-// change mario dair to custom
-origin 0x00092F50
-base 0x80117750
-dw 0x00000858
-
-// change the mario dair animation modifier
-origin 0x00092F58
-base 0x80117758
-dw 0x00000000
-
-// change fox's forward smash to custom
-origin 0x00094D14
-base 0x80119514
-dw 0x00000867
-
-// change fox's taunt to custom
-origin 0x00094C60
-base 0x80119460
-dw 0x00000868
-
-// change fox's up tilt to custom
-origin 0x00094CD8
-base 0x801194D8
-dw 0x00000869
 
 // add asm to rom
 origin  0x02000000
@@ -190,20 +151,30 @@ insert "src/model/gnd.bin"
 insert "src/model/spear.bin"
 insert "src/model/ylink.bin"
 insert "src/model/drmhead.bin"
-include "src/os.asm"
-include "src/slowattack.asm"
-include "src/resist.asm"
-include "src/rightresist.asm"
-include "src/speararmor.asm"
-include "src/phantasm.asm"
-include "src/settings.asm"
-include "src/moveset.asm"
-include "src/command.asm"
-include "src/timeouts.asm"
-include "src/resultsscreen.asm"
-include "src/global.asm"
-include "src/fireball.asm"
-include "src/midi.asm"
+include "src/OS.asm"
+include "src/Slowattack.asm"
+include "src/Resist.asm"
+include "src/Rightresist.asm"
+include "src/Speararmor.asm"
+include "src/Phantasm.asm"
+include "src/Settings.asm"
+include "src/Moveset.asm"
+include "src/Command.asm"
+include "src/Timeouts.asm"
+include "src/Resultsscreen.asm"
+include "src/Fireball.asm"
+// partial 19XX merge
+include "src/Color.asm"
+include "src/FGM.asm"
+include "src/Global.asm"
+include "src/Joypad.asm"
+include "src/Overlay.asm"
+include "src/RCP.asm"
+include "src/Stages.asm"
+include "src/String.asm"
+include "src/Texture.asm"
+// MIDI
+include "src/MIDI.asm"
 
 // rom size = 40MB
 origin 0x27FFFFF

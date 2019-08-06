@@ -1,9 +1,9 @@
-// @ Description
+scope Settings {    
+    // @ Description
     // This function sets VS. Mode settings to tournament settings. This hook was selected because
     // it occurs directly after VS. Mode settings are written. This should not be called. ALL CREDIT TO CYJORG.
 	// lifted directly from TE.
-    set_vs_settings_:
-
+    set_vs_settings_: {
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // save registers
@@ -36,3 +36,5 @@
         lui     t6, 0x800A                  // original line 2
         j       _set_vs_settings_return     // return 
         nop
+    }
+ }

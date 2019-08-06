@@ -98,7 +98,8 @@ scope moveset_data_: {
         origin  0x9D690
         dw      GND_USP_AIR  
         // taunt
-        origin  0x9D444
+        origin  0x9D440
+        dw      0x00000861                  // animation
         dw      GND_TAUNT 
     }
     
@@ -156,6 +157,10 @@ scope moveset_data_: {
         // ground up special
         origin  0x9ACAC
         dw      YLINK_USP_GROUND_END
+        // dash attack
+        origin  0x9AB04
+        dw      0x000004B2                  // animation
+        dw      YLINK_DASH_ATTACK
         // ylink fair
         origin  0x9ABE0
         dw      YLINK_FAIR
@@ -192,16 +197,19 @@ scope moveset_data_: {
         base    0x801177E4
         dw      DRM_USP
         // drm down air
-        origin  0x92F54
-        base    0x80117754
+        origin  0x92F50
+        base    0x80117750
+        dw      0x00000858                  // animation
         dw      DRM_DAIR
+        dw      0x00000000                  // animation flags
         // drm up smash
         origin  0x92F0C
         base    0x8011770C
         dw      DRM_UP_SMASH
         // drm fair
-        origin  0x92F30
-        base    0x80117730
+        origin  0x92F2C
+        base    0x8011772C
+        dw      0x00000859                  // animation
         dw      DRM_FAIR
         // drm dash attack
         origin  0x92E58
@@ -303,6 +311,7 @@ scope moveset_data_: {
     insert  YLINK_USP_AIR,"moveset/ylink/UP_SPECIAL_AIR.bin"
     insert  YLINK_USP_GROUND,"moveset/ylink/UP_SPECIAL_GROUND.bin"
     insert  YLINK_USP_GROUND_END,"moveset/ylink/UP_SPECIAL_GROUND_END.bin"
+    insert  YLINK_DASH_ATTACK, "moveset/ylink/DASH_ATTACK.bin"
     insert  YLINK_FAIR,"moveset/ylink/FORWARD_AERIAL.bin"
     insert  YLINK_BAIR,"moveset/ylink/BACK_AERIAL.bin"
     insert  YLINK_DAIR,"moveset/ylink/DOWN_AERIAL.bin"
