@@ -137,13 +137,13 @@ scope moveset_data_: {
         origin  0x94D84
         dw      FALCO_DAIR
         // ground neutral special
-        origin	0x94E10
-        dw		0x000002E9                  // animation
+        origin  0x94E10
+        dw      0x000002E9                  // animation
         dw      FALCO_NSP_GROUND
         // air neutral special
-        origin	0x94E1C
-        dw		0x000002E9                  // animation
-        dw		FALCO_NSP_AIR
+        origin  0x94E1C
+        dw      0x000002E9                  // animation
+        dw      FALCO_NSP_AIR
     }
     
     scope ylink {
@@ -167,6 +167,14 @@ scope moveset_data_: {
         dw      YLINK_DAIR
     }
     scope drm {
+        // drm neutral special ground
+        origin  0x92FCC
+        base    0x801177CC
+        dw      DRM_NSP_GROUND
+        // drm neutral special air
+        origin  0x92FD8
+        base    0x801177D8
+        dw      DRM_NSP_AIR
         // drm down special ground
         origin  0x92FFC
         base    0x801177FC
@@ -211,6 +219,7 @@ scope moveset_data_: {
         origin  0x92EAC
         base    0x801176AC
         dw      DRM_UTILT
+        // fsmash
         origin  0x92ED0
         base    0x801176D0
         dw      DRM_FSMASHU
@@ -226,6 +235,7 @@ scope moveset_data_: {
         origin  0x92F00
         base    0x80117700
         dw      DRM_FSMASHD
+        // ftilt
         origin  0x92E64
         base    0x80117664
         dw      DRM_FTILTUP
@@ -235,15 +245,19 @@ scope moveset_data_: {
         origin  0x92E94
         base    0x80117694
         dw      DRM_FTILTDOWN
+        // jab 1
         origin  0x92E40
         base    0x80117640
         dw      DRM_NEUTRAL1
+        // jab 2
         origin  0x92E4C
         base    0x8011764C
         dw      DRM_NEUTRAL2
         origin  0x92FA8
         base    0x801177A8
+        // jab 2
         dw      DRM_NEUTRAL3
+        // dtilt
         origin  0x92EC4
         base    0x801176C4
         dw      DRM_DTILT
@@ -293,6 +307,8 @@ scope moveset_data_: {
     insert  YLINK_BAIR,"moveset/ylink/BACK_AERIAL.bin"
     insert  YLINK_DAIR,"moveset/ylink/DOWN_AERIAL.bin"
     
+    insert  DRM_NSP_GROUND, "moveset/drm/NEUTRAL_SPECIAL_GROUND.bin"
+    insert  DRM_NSP_AIR, "moveset/drm/NEUTRAL_SPECIAL_AIR.bin"
     insert  DRM_DSP_GROUND, "moveset/drm/DOWN_SPECIAL_GROUND.bin"
     insert  DRM_DSP_AIR, "moveset/drm/DOWN_SPECIAL_AIR.bin"
     insert  DRM_USP, "moveset/drm/UP_SPECIAL.bin"
