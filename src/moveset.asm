@@ -195,10 +195,10 @@ scope moveset_data_: {
         origin  0x92F30
         base    0x80117730
         dw      DRM_FAIR
-        // drm dash
+        // drm dash attack
         origin  0x92E58
         base    0x80117658
-        dw      DRM_DASH
+        dw      DRM_DASH_ATTACK
         // drm bair
         origin  0x92F3C
         base    0x8011773C
@@ -301,7 +301,7 @@ scope moveset_data_: {
     insert  DRM_BAIR, "moveset/drm/BAIR.bin"
     insert  DRM_UAIR, "moveset/drm/UAIR.bin"
     insert  DRM_UP_SMASH, "moveset/drm/UP_SMASH.bin"
-    insert  DRM_DASH, "moveset/drm/DASH.bin"
+    insert  DRM_DASH_ATTACK, "moveset/drm/DASH_ATTACK.bin"
     insert  DRM_UTILT, "moveset/drm/UP_TILT.bin"
     insert  DRM_FSMASHD, "moveset/drm/FSMASHDOWN.bin"
     insert  DRM_FSMASHMD, "moveset/drm/FSMASHMIDDOWN.bin"

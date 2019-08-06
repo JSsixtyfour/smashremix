@@ -26,7 +26,7 @@ base    0x80000438
 
 jal     0x80002CA0
 addiu   a2, r0, 0x0100
-lui     a0, 0x0100          // load rom address (0x01000000)
+lui     a0, 0x0200          // load rom address (0x01000000)
 lui     a1, 0x8040          // load ram address (0x80400000)
 jal     0x80002CA0          // dmaCopy
 lui     a2, 0x000A          // load length of 4 MB
@@ -183,7 +183,7 @@ base 0x801194D8
 dw 0x00000869
 
 // add asm to rom
-origin  0x01000000
+origin  0x02000000
 base    0x80400000
 insert "src/model/falcoparts.bin"
 insert "src/model/gnd.bin"
@@ -201,6 +201,8 @@ include "src/moveset.asm"
 include "src/command.asm"
 include "src/timeouts.asm"
 include "src/resultsscreen.asm"
+include "src/midi.asm"
 
-
-fill    0x2000000 - origin(), 0xFF  
+// rom size = 40MB
+origin 0x27FFFFF
+db 0x00
