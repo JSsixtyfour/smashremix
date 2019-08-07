@@ -199,7 +199,7 @@ scope Stages {
     // 8013C2BC - same as above except does not alter gameset/failure. unsure of what this does
     // solution: same as above, probably won't hurt
     scope id_fix_6_: {
-        OS.patch_start(0x000904A0, 0x8013C2C0)
+        OS.patch_start(0x000B6F90, 0x8013C2C0)
         j       id_fix_6_
         nop
         nop
