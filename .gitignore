@@ -1,0 +1,9 @@
+# ROMs
+*.z64
+
+# Saves
+*.sra
+
+# Dev Info
+*.log
+*.sym
