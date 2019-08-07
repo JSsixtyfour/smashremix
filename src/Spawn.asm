@@ -13,6 +13,52 @@ include "Stages.asm"
 
 scope Spawn {
 
+    // @ Description
+    // hook to load respawn point. This fixes the lack of respawn points on the beta stages.
+    scope load_respawn_point_: {
+        OS.patch_start(0x000780B0, 0x800FC8B0)
+        j       load_respawn_point_
+        nop
+        _load_respawn_point_return:
+        OS.patch_end()
+
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      at, 0x0004(sp)              // ~
+        sw      t0, 0x0008(sp)              // save registers
+
+        // this block gets stage_id (mode dependent)
+        li      at, Global.match_info       // ~
+        lw      at, 0x0000(at)              // at = address of match info
+        lbu     at, 0x0001(at)              // at = stage_id
+
+        // this block checks for dream land beta 1 and 2
+        lli     t0, Stages.id.DREAM_LAND_BETA_1
+        beq     t0, at, _fix
+        nop
+        lli     t0, Stages.id.DREAM_LAND_BETA_2
+        beq     t0, at, _fix
+        nop
+
+        _original:
+        lh      t8, 0x0002(t7)              // original line 1
+        mtc1    r0, f16                     // original line 2
+        lw      at, 0x0004(sp)              // ~
+        lw      t0, 0x0008(sp)              // restore registers
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        j       _load_respawn_point_return  // return
+        nop
+
+        _fix:
+        sw      r0, 0x0000(a1)              // update x
+        li      t0, 0x451DE000              // t0 = (float) 2526, from dream land
+        sw      t0, 0x0004(a1)              // update y
+        lw      at, 0x0004(sp)              // ~
+        lw      t0, 0x0008(sp)              // restore registers
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        jr      ra                          // scrap the rest of the function
+        nop
+    }
+    
     // Currently only used for temporary How to Play fix
     scope load_spawn_: {
         // a0 holds player
