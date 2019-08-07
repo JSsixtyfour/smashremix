@@ -108,6 +108,10 @@ origin 0x000E7814
 base 0x8016CDD4
 dw 0x24180007
 
+// mario uses costume 0x2 for red team (TEMPORARY)
+origin  0xA7034
+db      0x02
+
 // change up special distance & delay (fox/falco)
 origin  0xD6A03
 db      0x1A                // up special delay
