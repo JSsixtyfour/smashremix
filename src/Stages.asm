@@ -1812,7 +1812,6 @@ scope Stages {
     float32 0.5                         // Corneria City
     float32 0.5                         // Dr. Mario
 
-    // TODO: fix update colors
     background_table:
     db id.PEACHS_CASTLE                 // Peach's Castle
     db id.SECTOR_Z                      // Sector Z
@@ -1858,11 +1857,11 @@ scope Stages {
     db id.PEACHS_CASTLE                 // Deku Tree
     db id.PEACHS_CASTLE                 // First Destination
     db id.SECTOR_Z                      // Ganon's Tower
-    db id.PEACHS_CASTLE                 // Kalos Pokemon League
-    db id.PEACHS_CASTLE                 // Pokemon Stadium
+    db id.SECTOR_Z                      // Kalos Pokemon League
+    db id.SECTOR_Z                      // Pokemon Stadium
     db id.PEACHS_CASTLE                 // Skyloft
     db id.PEACHS_CASTLE                 // Smashville
-    db id.PEACHS_CASTLE                 // WarioWare
+    db id.SECTOR_Z                      // WarioWare
     db id.PEACHS_CASTLE                 // Batlefield
     db id.PEACHS_CASTLE                 // Corneria City
     db id.PEACHS_CASTLE                 // Dr. Mario
