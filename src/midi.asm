@@ -7,7 +7,7 @@
 include "OS.asm"
 
 scope MIDI {
-    constant MUSIC_TABLE(0x00C14820)                // start of the music table, copy this value from 0x3D768
+    constant MUSIC_TABLE(0x00C14840)                // start of the music table, copy this value from 0x3D768
     variable MUSIC_TABLE_END(MUSIC_TABLE + 0x17C)   // variable containing the current end of the music table
     constant MIDI_BANK(0x2400000)                   // defines the start of the additional MIDI bank
     variable MIDI_BANK_END(MIDI_BANK)               // variable containing the current end of the MIDI bank
