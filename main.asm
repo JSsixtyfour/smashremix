@@ -165,6 +165,8 @@ include "src/Resultsscreen.asm"
 include "src/Fireball.asm"
 // partial 19XX merge
 include "src/Color.asm"
+include "src/Crash.asm"
+include "src/FD.asm"
 include "src/FGM.asm"
 include "src/Global.asm"
 include "src/Joypad.asm"
