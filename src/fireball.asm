@@ -126,7 +126,6 @@ scope Fireball: {
     // @ Description
     // Setup for Dr. Mario's capsule.
     scope Capsule {
-        constant DATA_CAPSULE(0x80130E3C)   // projectile data file pointer
         constant FIREBALL_SUBROUTINE(0x80155E64)
         constant TYPE(0x4)                  // damage type to use for capsule effects
         constant FGM(0x1B5)                 // fgm to play when capsule hits an opponent
@@ -210,18 +209,22 @@ scope Fireball: {
         }    
             
         // Initialize capsule struct
-        struct(struct_capsule, 0, 140, 60, 25, 1.5, 0.95, 0.3, -0.4, -0.4, 40, DATA_CAPSULE, 0) 
-
+        struct(struct_capsule, 0, 140, 60, 25, 1.5, 0.95, 0.3, -0.4, -0.4, 40, CAPSULE_DATA_POINTER, 0) 
+        
+        // Define CAPSULE_DATA_POINTER
+        CAPSULE_DATA_POINTER:
+        dw      OS.NULL                     //CAPSULE_DATA_FILE pointer, assigned in-game
         // write changes to rom
         pushvar origin, base
         constant CAPSULE_DATA_FILE(0x86F)
         constant CAPSULE_GRAPHIC_FILE(0x870)
         
-        // change projectile data & graphic files for Mario
-        origin  0x93024
-        dw      CAPSULE_DATA_FILE
-        origin  0x9302C
-        dw      CAPSULE_GRAPHIC_FILE
+        // add CAPSULE_DATA_FILE and CAPSULE_DATA_POINTER to Mario's character struct (TEMPORARY)
+        // NOTE: CAPSULE_DATA_FILE has also been temporarily added to Mario's req list.
+        origin  0x93030
+        dw      CAPSULE_DATA_FILE           // check for this file when mario is loaded
+        origin  0x93058
+        dw      CAPSULE_DATA_POINTER        // write CAPSULE_DATA_FILE pointer to this address
         
         // change id subroutine for Mario
         origin  0x107070
