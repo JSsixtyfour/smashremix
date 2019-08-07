@@ -53,11 +53,11 @@ scope FD {
     }
 
 
-    // @ Description
-    // Sets track to 0x18 (FD battle music)
-    OS.patch_start(0x640CD2, 0x00000000)
-    dh 0xC33E
-    OS.patch_end()
+    ///// @ Description
+    ////// Sets track to 0x18 (FD battle music)
+    /////OS.patch_start(0x640CD2, 0x00000000)
+    //////dh 0xC33E
+    //////OS.patch_end()
 }
 
 } // __FD__
