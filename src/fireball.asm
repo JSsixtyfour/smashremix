@@ -216,7 +216,9 @@ scope Fireball: {
         dw      data                        //CAPSULE_DATA_FILE pointer (TEMPORARY while reqlist issue is unsolved)
         
         // TEMPORARY: INSERT CAPSULE FILES WHILE REQLIST ISSUE IS UNRESOLVED
+        OS.align(16)
         insert data, "capsule/086F.bin"
+        OS.align(16)
         insert graphic, "capsule/0870.bin"
 
         // write changes to rom
