@@ -213,18 +213,24 @@ scope Fireball: {
         
         // Define CAPSULE_DATA_POINTER
         CAPSULE_DATA_POINTER:
-        dw      OS.NULL                     //CAPSULE_DATA_FILE pointer, assigned in-game
-        // write changes to rom
-        pushvar origin, base
-        constant CAPSULE_DATA_FILE(0x86F)
-        constant CAPSULE_GRAPHIC_FILE(0x870)
+        dw      data                        //CAPSULE_DATA_FILE pointer (TEMPORARY while reqlist issue is unsolved)
         
+        // TEMPORARY: INSERT CAPSULE FILES WHILE REQLIST ISSUE IS UNRESOLVED
+        insert data, "capsule/086F.bin"
+        insert graphic, "capsule/0870.bin"
+
+        // write changes to rom
+        //constant CAPSULE_DATA_FILE(0x86F)
+        //constant CAPSULE_GRAPHIC_FILE(0x870)
+        
+        pushvar origin, base
         // add CAPSULE_DATA_FILE and CAPSULE_DATA_POINTER to Mario's character struct (TEMPORARY)
         // NOTE: CAPSULE_DATA_FILE has also been temporarily added to Mario's req list.
-        origin  0x93030
-        dw      CAPSULE_DATA_FILE           // check for this file when mario is loaded
-        origin  0x93058
-        dw      CAPSULE_DATA_POINTER        // write CAPSULE_DATA_FILE pointer to this address
+        // EDIT: REMOVED WHILE REQLIST ISSUE IS UNRESOLVED
+        //origin  0x93030
+        //dw      CAPSULE_DATA_FILE           // check for this file when mario is loaded
+        //origin  0x93058
+        //dw      CAPSULE_DATA_POINTER        // write CAPSULE_DATA_FILE pointer to this address
         
         // change id subroutine for Mario
         origin  0x107070

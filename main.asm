@@ -30,7 +30,8 @@ lui     a0, 0x0200          // load rom address (0x01000000)
 lui     a1, 0x8040          // load ram address (0x80400000)
 jal     0x80002CA0          // dmaCopy
 lui     a2, 0x000A          // load length of 4 MB
-j       0x8000063C          // original line
+j       boot_               // run additional boot functions
+//j       0x8000063C          // original line
 nop
 
 constant GAME_MODE(0x03)
@@ -180,6 +181,8 @@ include "src/Spawn.asm"
 include "src/Stages.asm"
 include "src/String.asm"
 include "src/Texture.asm"
+// BOOT
+include "src/boot.asm"
 // MIDI
 include "src/MIDI.asm"
 
