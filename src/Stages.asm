@@ -1647,9 +1647,10 @@ scope Stages {
         jal     Global.get_random_int_      // v0 = (0, N-1)
         nop
         li      t0, random_table            // t0 = random_table
-        sll     v0, v0, 0x0002              // v0 = offset = random_int * 4
+//      sll     v0, v0, 0x0002              // v0 = offset = random_int * 4
         addu    t0, t0, v0                  // t0 = random_table + offset
-        lw      v0, 0x0000(t0)              // v0 = stage_id
+//      lw      v0, 0x0000(t0)              // v0 = stage_id
+        lbu     v0, 0x0000(t0)              // v0 = stage_id
         b       _end                        // get a new stage id based off of random offset
         nop
 
