@@ -56,7 +56,7 @@ scope Overlay {
 
         // HOOKS GO HERE
         lli     a0, Joypad.DEADZONE         // a0 - min coordinate (deadzone)
-        jal     Joypad.update_stick_        // update stick
+//      jal     Joypad.update_stick_        // update stick
         nop
 
         li      t0, Global.current_screen   // ~
