@@ -158,7 +158,7 @@ scope RCP {
         // a0 = 000000bb
         // a1 = aaaaaaaa (already fine)
 
-        or      a0, a0, (G_DL << 8)         // a0 = upper = 0000DEbb
+        ori     a0, a0, (G_DL << 8)         // a0 = upper = 0000DEbb
         sll     a0, a0, 000016              // a0 = upper = DEbb0000
         j       append_                     // append dlist
         nop
