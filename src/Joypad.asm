@@ -268,15 +268,18 @@ scope Joypad {
     // @ Arguments
     // a0 - POSITIVE/uint min coordinate (deadzone)
     scope update_stick_: {
-        addiu   sp, sp,-0x0018              // allocate stack space
-        sw      t0, 0x0004(sp)              // ~
-        sw      t1, 0x0008(sp)              // ~
-        sw      ra, 0x000C(sp)              // ~
-        sw      a0, 0x0010(sp)              // ~
-        sw      a1, 0x0014(sp)              // save registers
+        OS.save_registers()                 // allocate stack space, save registers
+        addiu   sp, sp,-0x0008              // deallocate stack space
+        sw      a0, 0x0004(sp)              // restore a0
+
+        // make sure the functions are in RAM
+        li      t0, check_stick_x_          // ~
+        lw      t0, 0x0000(t0)              // binary of first instruction
+        beqz    t0, _not_loaded             // skip!
+        nop
 
         _left:
-//      lw      a0, 0x0010(sp)              // a0 - min coordinate (deadzone)
+//      lw      a0, 0x0004(sp)              // a0 - min coordinate (deadzone)
         subu    a0, r0, a0                  // a0 - min coordinate (deadzone) (negated)
         lli     a1, 0x0000                  // a1 - enum left/right
         jal     check_stick_x_              // check stick x
@@ -289,7 +292,7 @@ scope Joypad {
         sw      t1, 0x0000(t0)              // frames_held.left++
 
         _right:
-        lw      a0, 0x0010(sp)              // a0 - min coordinate (deadzone)
+        lw      a0, 0x0004(sp)              // a0 - min coordinate (deadzone)
         lli     a1, 0x0001                  // a1 - enum left/right
         jal     check_stick_x_              // check stick x
         nop
@@ -301,7 +304,7 @@ scope Joypad {
         sw      t1, 0x0004(t0)              // frames_held.right++
 
         _down:
-        lw      a0, 0x0010(sp)              // a0 - min coordinate (deadzone)
+        lw      a0, 0x0004(sp)              // a0 - min coordinate (deadzone)
         subu    a0, r0, a0                  // a0 - min coordinate (deadzone) (negated)
         lli     a1, 0x0000                  // a1 - enum down/up
         jal     check_stick_y_              // check stick y
@@ -314,7 +317,7 @@ scope Joypad {
         sw      t1, 0x0008(t0)              // frames_held.down++
 
         _up:
-        lw      a0, 0x0010(sp)              // a0 - min coordinate (deadzone)
+        lw      a0, 0x0004(sp)              // a0 - min coordinate (deadzone)
         lli     a1, 0x0001                  // a1 - enum down/up
         jal     check_stick_y_              // check stick y
         nop
@@ -324,14 +327,20 @@ scope Joypad {
         lw      t1, 0x000C(t0)              // t1 = frames_held.up
         addiu   t1, t1, 0x0001              // ~
         sw      t1, 0x000C(t0)              // frames_held.up++
+        b       _end                        // skip not loaded stuff
+        nop
+
+        _not_loaded:
+        li      t0, frames_held             // t0 = address of frames_held
+        sw      r0, 0x0000(t0)              // ~
+        sw      r0, 0x0004(t0)              // ~
+        sw      r0, 0x0008(t0)              // ~
+        sw      r0, 0x000C(t0)              // set all directions of frames_held to 0
 
         _end:
-        lw      t0, 0x0004(sp)              // ~
-        lw      t1, 0x0008(sp)              // ~
-        lw      ra, 0x000C(sp)              // ~
-        lw      a0, 0x0010(sp)              // ~ 
-        lw      a1, 0x0014(sp)              // restore registers
-        addiu   sp, sp, 0x0018              // deallocate stack space
+        lw      a0, 0x0004(sp)              // restore a0
+        addiu   sp, sp, 0x0008              // deallocate stack space
+        OS.restore_registers()              // restore registers/deallocate stack space
         jr      ra                          // return
         nop
     }
