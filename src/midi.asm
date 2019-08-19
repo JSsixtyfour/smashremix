@@ -7,10 +7,11 @@
 include "OS.asm"
 
 scope MIDI {
-    constant MUSIC_TABLE(0x00C14840)                // start of the music table, copy this value from 0x3D768
+    read32 MUSIC_TABLE, "../roms/original.z64", 0x3D768
     variable MUSIC_TABLE_END(MUSIC_TABLE + 0x17C)   // variable containing the current end of the music table
     constant MIDI_BANK(0x2400000)                   // defines the start of the additional MIDI bank
     variable MIDI_BANK_END(MIDI_BANK)               // variable containing the current end of the MIDI bank
+    
     
     // @ Description
     // moves the Dream Land midi to our new MIDI bank to clear space for expanding MUSIC_TABLE
@@ -40,11 +41,13 @@ scope MIDI {
         
         // defines
         define  path_MIDI_{file_name}(../src/music/{file_name}.bin)
+        evaluate offset_MIDI_{file_name}(MIDI_BANK_END)
         evaluate MIDI_{file_name}_ID((MUSIC_TABLE_END - MUSIC_TABLE) / 0x8)
         
         // print message
         print "Added MIDI_{file_name}({path_MIDI_{file_name}})\n"
-        print "MIDI_{file_name}_ID: {MIDI_{file_name}_ID}(decimal)\n\n"
+        print "ROM Offset: 0x"; OS.print_hex({offset_MIDI_{file_name}}); print "\n"
+        print "MIDI_{file_name}_ID: 0x"; OS.print_hex({MIDI_{file_name}_ID}); print "\n\n"
         
         // add the new midi to the music table and update MUSIC_TABLE_END
         origin  MUSIC_TABLE_END
@@ -68,7 +71,12 @@ scope MIDI {
     
     // define new MIDI bank
     print "=============================== MIDI FILES =============================== \n"
-    move_dream_land_midi()                  // move dream land midi
+    // print music table offset
+    evaluate music_table_offset(MUSIC_TABLE)
+    print "Music Table: 0x"; OS.print_hex({music_table_offset}); print "\n"
+    // move dream land midi
+    move_dream_land_midi()
+    // insert custom midi files
     insert_midi(GANONDORF_BATTLE)
     insert_midi(CORNERIA)
     insert_midi(KOKIRI_FOREST)

@@ -26,6 +26,14 @@ scope OS {
         pullvar base, origin
     }
 
+    macro print_hex(variable value) {
+    if value > 15 {
+    OS.print_hex(value >> 4)
+    }
+    value = value & 15
+    putchar(value < 10 ? '0' + value : 'a' + value - 10)
+    }
+    
     macro save_registers() {
         addiu   sp, sp,-0x0070              // allocate stack space
         sw      at, 0x0004(sp)              // ~
@@ -110,7 +118,7 @@ scope OS {
         jr      ra                          // return
         nop
     }
-
+    
     // @ Description
     // This function takes an integer and returns a float. v0 is not conserved.
     // @ Arguments

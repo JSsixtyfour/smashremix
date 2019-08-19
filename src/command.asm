@@ -56,15 +56,48 @@ scope Command {
         _slow_attack_return:
         OS.save_registers()                 // full register save
         
-        _reset_translation_multiplier:
-        lw      t2, 0x0074(a0)              // t2 = first bone struct
-        lw      t2, 0x0048(t2)              // t2 = translation multiplier (bone 1 size multiplier)
-        lw      t3, 0x0084(a0)              // t3 = player struct      
-        li      t0, translation_multiplier_.multiplier_table
-        lbu     t1, 0x000D(t3)              // t1 = player port
-        sll     t1, t1, 0x2                 // ~
-        addu    t0, t0, t1                  // t0 = multiplier_table + (port * 4)
-        sw      t2, 0x0000(t0)              // store default translation multiplier
+        scope _reset_translation_multiplier: {
+            lw      t2, 0x0074(a0)          // t2 = first bone struct
+            lw      t2, 0x0048(t2)          // t2 = translation multiplier (bone 1 size multiplier)
+            lw      t3, 0x0084(a0)          // t3 = player struct      
+            li      t0, translation_multiplier_.multiplier_table
+            lbu     t1, 0x000D(t3)          // t1 = player port
+            sll     t1, t1, 0x2             // ~
+            addu    t0, t0, t1              // t0 = multiplier_table + (port * 4)
+            sw      t2, 0x0000(t0)          // store default translation multiplier
+        }
+        
+        scope _reset_saved_display_lists: {
+            lw      t0, 0x0084(a0)          // t0 = player struct
+            li      t1, model_part.table_save
+            lbu     t2, 0x000D(t0)          // ~
+            sll     t2, t2, 0x3             // t2 = player port * 8
+            addu    t1, t1, t2              // t1 = table_save + (port * 8)
+            lw      t1, 0x0000(t1)          // t1 = table_temp_px
+            addiu   t2, t0, 0x08E8          // t2 = bone_table
+            ori     t3, r0, model_part.TABLE_SIZE
+            or      t4, r0, r0              // t4 = table_current
+            
+            _loop:
+            beq     t3, t4, _exit_loop      // exit loop if table_current = TABLE_SIZE
+            nop
+            lw      t5, 0x0000(t1)          // t5 = saved dlist
+            beq     t5, r0, _loop_end       // skip if t5 = NULL
+            nop
+            lw      t6, 0x0000(t2)          // t6 = bone struct
+            sw      t5, 0x0050(t6)          // store dlist
+            sw      r0, 0x0000(t1)          // reset saved dlist
+            
+            
+            _loop_end:
+            addiu   t1, t1, 0x0004          // increment table_temp_px
+            addiu   t2, t2, 0x0004          // increment bone_table
+            addiu   t4, t4, 0x0001          // increment table_current
+            b       _loop
+            nop
+            
+            _exit_loop:
+        }
         
         OS.restore_registers()              // full register load
         j   _change_action_return           // return
@@ -324,10 +357,165 @@ scope Command {
         
         
         multiplier_table:
-        float32 0                    // p1 translation multiplier
-        float32 0                    // p2 translation multiplier              
-        float32 0                    // p3 translation multiplier
-        float32 0                    // p4 translation multiplier
+        float32 0                           // p1 translation multiplier
+        float32 0                           // p2 translation multiplier              
+        float32 0                           // p3 translation multiplier
+        float32 0                           // p4 translation multiplier
+        
+    }
+    
+    
+    // @ Description
+    // Commands used to save, load, and set display lists for model parts.
+    // A table of bone structs can be found in the player struct at 0x8E8.
+    // The display list pointer can be found in a bone struct at 0x50.
+    scope model_part {
+        // TODO
+        // some idiot forgot to include player port logic in this code
+        constant TABLE_SIZE(0x24)
+        // @ Description
+        // Save a display list pointer for a given bone struct.
+        // CCXXYYYY
+        // XX = ID for bone struct table (0x00 - 0x23)
+        // YYYY = save type: 0x0000 = temporary, !0x0000 = permanent
+        scope save_: {
+            constant COMMAND_LENGTH(0x4)
+            addiu   t0, s2, 0x8E8           // t0 = bone_table
+            lbu     t3, 0x0001(v0)          // ~
+            sll     t3, t3, 0x2             // t3 = bone ID * 4
+            addu    t0, t0, t3              // t0 = bone struct pointer (bone_table + bone ID * 4)
+            lw      t0, 0x0000(t0)          // t0 = bone struct
+            beq     t0, r0, _end            // skip if bone struct pointer = NULL
+            nop
+            lw      t2, 0x0050(t0)          // t2 = display list pointer
+            beq     t2, r0, _end            // skip if display list pointer = NULL
+            nop
+            
+            _get_table:
+            li      t0, table_save          // t0 = table_save
+            lbu     t1, 0x000D(s2)          // ~  
+            sll     t1, t1, 0x3             // t1 = player port * 8
+            addu    t0, t0, t1              // t0 = table_save + (port * 8)
+            lhu     t1, 0x0002(v0)          // t1 = save type
+            beq     t1, r0, _store          // branch if save type = temporary
+            nop
+            addiu   t0, t0, 0x0004          // table_perm offset
+            
+            _store:
+            lw      t0, 0x0000(t0)          // ~
+            addu    t0, t0, t3              // t0 = table + bone ID * 4
+            lw      t1, 0x0000(t0)          // t1 = saved display list
+            bnez    t1, _end                // skip if saved display list != NULL
+            nop
+            sw      t2, 0x0000(t0)          // store display list
+            
+            _end:
+            ori     t8, r0, COMMAND_LENGTH  // set command length
+            jr      ra                      // return
+            nop
+        }
+        
+        // @ Description
+        // Load a display list pointer for a given bone struct.
+        // CCXXYYYY
+        // XX = ID for bone struct table (0x00 - 0x23)
+        // YYYY = load type: 0x0000 = temporary, !0x0000 = permanent
+        scope load_: {
+            constant COMMAND_LENGTH(0x4)
+            li      t0, table_save          // t0 = table_save
+            lbu     t1, 0x000D(s2)          // ~  
+            sll     t1, t1, 0x3             // t1 = player port * 8
+            addu    t0, t0, t1              // t0 = table_save + (port * 8)
+            lhu     t1, 0x0002(v0)          // t1 = save type
+            beq     t1, r0, _load           // branch if save type = temporary
+            nop
+            addiu   t0, t0, 0x0004          // table_perm offset
+            
+            _load:
+            lbu     t3, 0x0001(v0)          // ~
+            sll     t3, t3, 0x2             // t3 = bone ID * 4
+            lw      t0, 0x0000(t0)          // ~
+            addu    t0, t0, t3              // t0 = table + bone ID * 4
+            lw      t2, 0x0000(t0)          // t2 = saved display list
+            beq     t2, r0, _end            // skip if saved display list = NULL
+            nop
+            
+            _store:
+            sw      r0, 0x0000(t0)          // reset saved display list
+            addiu   t0, s2, 0x8E8           // t0 = bone_table
+            addu    t0, t0, t3              // t0 = bone struct pointer (bone_table + bone ID * 4)
+            lw      t0, 0x0000(t0)          // t0 = bone struct
+            beq     t0, r0, _end            // skip if bone struct pointer = NULL
+            nop
+            sw      t2, 0x0050(t0)          // restore saved display list
+            
+            _end:
+            ori     t8, r0, COMMAND_LENGTH  // set command length
+            jr      ra                      // return
+            nop
+        }
+        
+        // @ Description
+        // Set the display list pointer for a given bone struct.
+        // CCXXYYYY
+        // XX = ID for bone struct table (0x00 - 0x23)
+        // YYYY = ID for display list table (0x0000 = NULL)
+        scope set_: {
+            constant COMMAND_LENGTH(0x4)
+            addiu   t0, s2, 0x8E8           // t0 = bone_table
+            lbu     t3, 0x0001(v0)          // ~
+            sll     t3, t3, 0x2             // t3 = bone ID * 4
+            addu    t0, t0, t3              // t0 = bone struct pointer (bone_table + bone ID * 4)
+            lw      t2, 0x0000(t0)          // t2 = bone struct
+            beq     t2, r0, _end            // skip if bone struct pointer = NULL
+            nop
+            
+            _get_dlist:
+            li      t0, table_dlist         // t0 = table_dlist
+            lhu     t1, 0x0002(v0)          // ~
+            sll     t1, 0x2                 // t1 = dlist ID * 4
+            addu    t0, t0, t1              // t0 = table_dlist + dlist ID * 4
+            lw      t0, 0x0000(t0)          // t0 = dlist pointer
+            sw      t0, 0x0050(t2)          // store dlist pointer
+            
+            _end:
+            ori     t8, r0, COMMAND_LENGTH  // set command length
+            jr      ra                      // return
+            nop
+        }
+        
+        table_save:
+        dw  table_temp_p1
+        dw  table_perm_p1
+        dw  table_temp_p2
+        dw  table_perm_p2
+        dw  table_temp_p3
+        dw  table_perm_p3
+        dw  table_temp_p4
+        dw  table_perm_p4
+        
+        table_temp_p1:                      // temporary save table (reset on action change)
+        fill TABLE_SIZE * 4
+        table_temp_p2:                      // temporary save table (reset on action change)
+        fill TABLE_SIZE * 4
+        table_temp_p3:                      // temporary save table (reset on action change)
+        fill TABLE_SIZE * 4
+        table_temp_p4:                      // temporary save table (reset on action change)
+        fill TABLE_SIZE * 4
+        
+        table_perm_p1:                      // permanent save table (don't reset on action change)
+        fill TABLE_SIZE * 4
+        table_perm_p2:                      // permanent save table (don't reset on action change)
+        fill TABLE_SIZE * 4
+        table_perm_p3:                      // permanent save table (don't reset on action change)
+        fill TABLE_SIZE * 4
+        table_perm_p4:                      // permanent save table (don't reset on action change)
+        fill TABLE_SIZE * 4
+        
+        table_dlist:                        // table of pointers to custom display lists
+        constant DLIST_SPEAR(0x8040C830)
+        dw  OS.NULL                         // 0x00 - NULL
+        dw  DLIST_SPEAR                     // 0x01 - Ganondorf's Spear/Trident
         
     }
     
@@ -336,9 +524,9 @@ scope Command {
     dw      armour_                         // 0xD1 SET ARMOUR
     dw      hitbox_direction_               // 0xD2 OVERRIDE HITBOX DIRECTION
     dw      translation_multiplier_         // 0xD3 TOPJOINT TRANSLATION MULTIPLIER
-    dw      OS.NULL                         // 0xD4
-    dw      OS.NULL                         // 0xD5
-    dw      OS.NULL                         // 0xD6
+    dw      model_part.save_                // 0xD4 MODEL PART SAVE
+    dw      model_part.set_                 // 0xD5 MODEL PART SET
+    dw      model_part.load_                // 0xD6 MODEL PART LOAD
     dw      OS.NULL                         // 0xD7
     dw      OS.NULL                         // 0xD8
     dw      OS.NULL                         // 0xD9
