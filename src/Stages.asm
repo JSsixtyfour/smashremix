@@ -147,12 +147,12 @@ scope Stages {
     dw function.CLONE                       // Battlefield
     dw function.CLONE                       // Corneria City
     dw function.CLONE                       // Dr. Mario
-	dw function.CLONE						// Cool Cool Mountain
-	dw function.CLONE						// Dragon King
-	dw function.CLONE						// Great Bay
-	dw function.CLONE						// Fray' Stage
-	dw function.CLONE						// Tower of Heaven
-	
+    dw function.CLONE                       // Cool Cool Mountain
+    dw function.CLONE                       // Dragon King
+    dw function.CLONE                       // Great Bay
+    dw function.CLONE                       // Fray' Stage
+    dw function.CLONE                       // Tower of Heaven
+    
 
     // TODO
     // 80116AE0 - i have NO idea (v hacky memory access)
@@ -267,11 +267,11 @@ scope Stages {
     insert icon_battlefield,            "../textures/icon_battlefield.rgba5551"
     insert icon_corneria_city,          "../textures/icon_corneria_city.rgba5551"
     insert icon_dr_mario,               "../textures/icon_dr_mario.rgba5551"
-	insert icon_cool_cool_mountain,		"../textures/icon_cool_cool_mountain.rgba5551"
-	insert icon_dragon_king,			"../textures/icon_dragon_king.rgba5551"
-	insert icon_great_bay,				"../textures/icon_great_bay.rgba5551"
-	insert icon_frays_stage,			"../textures/icon_frays_stage.rgba5551"
-	insert icon_toh,					"../textures/icon_toh.rgba5551"
+    insert icon_cool_cool_mountain,     "../textures/icon_cool_cool_mountain.rgba5551"
+    insert icon_dragon_king,            "../textures/icon_dragon_king.rgba5551"
+    insert icon_great_bay,              "../textures/icon_great_bay.rgba5551"
+    insert icon_frays_stage,            "../textures/icon_frays_stage.rgba5551"
+    insert icon_toh,                    "../textures/icon_toh.rgba5551"
     
 
     // @ Description
@@ -334,11 +334,11 @@ scope Stages {
         constant BATTLEFIELD(0x31)
         constant CORNERIA_CITY(0x32)
         constant DR_MARIO(0x33)
-		constant COOLCOOL(0x34)
-		constant DRAGONKING(0x35)
-		constant GREAT_BAY(0x36)
-		constant FRAYS_STAGE(0x37)
-		constant TOH(0x38)
+        constant COOLCOOL(0x34)
+        constant DRAGONKING(0x35)
+        constant GREAT_BAY(0x36)
+        constant FRAYS_STAGE(0x37)
+        constant TOH(0x38)
 
         // not an actual id, some arbitary number Sakurai picked(?)
         constant RANDOM(0xDE)
@@ -429,11 +429,11 @@ scope Stages {
         constant BATTLEFIELD(0x0871)
         constant CORNERIA_CITY(0x088C)
         constant DR_MARIO(0x088F)
-		constant COOLCOOL(0x892)
-		constant DRAGONKING(0x895)
-		constant GREAT_BAY(0x89B)
-		constant FRAYS_STAGE(0x898)
-		constant TOH(0x89E)
+        constant COOLCOOL(0x892)
+        constant DRAGONKING(0x895)
+        constant GREAT_BAY(0x89B)
+        constant FRAYS_STAGE(0x898)
+        constant TOH(0x89E)
     }
 
     scope function {
@@ -467,8 +467,8 @@ scope Stages {
     // Page 3
     // [14] [15] [16] [17] [18]
     // [19] [1A] [1B] [1C] [1D]
-	// Page 4
-	// [1E] [1F] [20] [21] [22]
+    // Page 4
+    // [1E] [1F] [20] [21] [22]
     // [23] [24] [25] [26] [27]
 
     constant NUM_ROWS(2)
@@ -506,23 +506,23 @@ scope Stages {
     // page 3 (custom and better 1P Stages)
     db id.FIRST_DESTINATION                 // 14
     db id.BATTLEFIELD                       // 15
-	db id.COOLCOOL							// 16
-	db id.DRAGONKING						// 17
-	db id.GREAT_BAY							// 18
-	db id.FRAYS_STAGE						// 19
-	db id.TOH								// 1A
+    db id.COOLCOOL                          // 16
+    db id.DRAGONKING                        // 17
+    db id.GREAT_BAY                         // 18
+    db id.FRAYS_STAGE                       // 19
+    db id.TOH                               // 1A
     db id.FINAL_DESTINATION                 // 1B
     db id.MINI_YOSHIS_ISLAND                // 1C
     db id.RANDOM                            // 1D
-	
-	// page 4 (the bad stages)
-	db id.META_CRYSTAL                      // 1E
-	db id.DUEL_ZONE                         // 1F
-	db id.DREAM_LAND_BETA_1                 // 20
+    
+    // page 4 (the bad stages)
+    db id.META_CRYSTAL                      // 1E
+    db id.DUEL_ZONE                         // 1F
+    db id.DREAM_LAND_BETA_1                 // 20
     db id.DREAM_LAND_BETA_2                 // 21
     db id.HOW_TO_PLAY                       // 22
-	db id.RANDOM                            // 23
-	
+    db id.RANDOM                            // 23
+    
     OS.align(4)
 
     // @ Description
@@ -596,11 +596,11 @@ scope Stages {
     dw icon_battlefield                     // Batlefield
     dw icon_corneria_city                   // Corneria City
     dw icon_dr_mario                        // Dr. Mario
-	dw icon_cool_cool_mountain				// Cool Cool Mountain
-	dw icon_dragon_king						// Dragon King
-	dw icon_great_bay						// Great Bay
-	dw icon_frays_stage						// Fray's Stage
-	dw icon_toh								// Tower of Heaven
+    dw icon_cool_cool_mountain              // Cool Cool Mountain
+    dw icon_dragon_king                     // Dragon King
+    dw icon_great_bay                       // Great Bay
+    dw icon_frays_stage                     // Fray's Stage
+    dw icon_toh                             // Tower of Heaven
 
     // @ Description
     // Row the cursor is on
@@ -1732,21 +1732,21 @@ scope Stages {
     // page 3 (custom and better 1P Stages)
     db id.FIRST_DESTINATION                 // 13
     db id.BATTLEFIELD                       // 14
-	db id.COOLCOOL							// 15
-	db id.DRAGONKING						// 16
-	db id.GREAT_BAY							// 17
-	db id.FRAYS_STAGE						// 18
-	db id.TOH								// 19
+    db id.COOLCOOL                          // 15
+    db id.DRAGONKING                        // 16
+    db id.GREAT_BAY                         // 17
+    db id.FRAYS_STAGE                       // 18
+    db id.TOH                               // 19
     db id.FINAL_DESTINATION                 // 1A
     db id.MINI_YOSHIS_ISLAND                // 1B
-	
-	// page 4 (the bad stages)
-	db id.META_CRYSTAL                      // 1C
-	db id.DUEL_ZONE                         // 1D
-	db id.DREAM_LAND_BETA_1                 // 1E
+    
+    // page 4 (the bad stages)
+    db id.META_CRYSTAL                      // 1C
+    db id.DUEL_ZONE                         // 1D
+    db id.DREAM_LAND_BETA_1                 // 1E
     db id.DREAM_LAND_BETA_2                 // 1F
     db id.HOW_TO_PLAY                       // 20
-	
+    
     OS.align(4)
 
     // @ Description
@@ -1761,7 +1761,8 @@ scope Stages {
     // This function fixes a bug that does not allow single player stages to be loaded in training.
     // SSB typically uses *0x800A50E8 to get the stage id. The stage id is then used to find the bg
     // file. This function switches gets a working stage id based on *0x800A50E8 and stores it in
-    // expansion memory. That value is read from in two places
+    // expansion memory. That value is read from in three known places
+    // TODO: keep an eye out for more uses of this value
     scope training_id_fix_: {
         OS.patch_start(0x001145D0, 0x8018DDB0)
         addiu   sp, sp, 0xFFE8              // original line 3
@@ -1778,6 +1779,15 @@ scope Stages {
         lbu     t3, 0x0001(t6)              // original line 5 modified
         OS.patch_end()
 
+        // fix for magnifying glass colour and crashes
+        OS.patch_start(0x00114680, 0x8018DE60)
+        addiu   sp, sp, 0xFFE8              // original line 3
+        sw      ra, 0x0014(sp)              // original line 4
+        jal     training_id_fix_
+        nop
+        lbu     t8, 0x0001(t6)              // original line 5 modified
+        OS.patch_end()
+        
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // ~
@@ -1860,9 +1870,9 @@ scope Stages {
     float32 0.5                         // Dr. Mario
     float32 0.5                         // Cool Cool Mountain
     float32 0.5                         // Dragon King
-	float32 0.5                         // Great Bay
+    float32 0.5                         // Great Bay
     float32 0.5                         // Fray's Stage
-	float32 0.5                         // Tower of Heaven
+    float32 0.5                         // Tower of Heaven
 
     background_table:
     db id.PEACHS_CASTLE                 // Peach's Castle
@@ -1917,11 +1927,11 @@ scope Stages {
     db id.PEACHS_CASTLE                 // Battlefield
     db id.PEACHS_CASTLE                 // Corneria City
     db id.PEACHS_CASTLE                 // Dr. Mario
-	db id.PEACHS_CASTLE                 // Cool Cool Mountain
-	db id.PEACHS_CASTLE                 // Dragon King
-	db id.PEACHS_CASTLE                 // Great Bay
-	db id.PEACHS_CASTLE                 // Fray's Stage
-	db id.SECTOR_Z						// Tower of Heaven
+    db id.PEACHS_CASTLE                 // Cool Cool Mountain
+    db id.PEACHS_CASTLE                 // Dragon King
+    db id.PEACHS_CASTLE                 // Great Bay
+    db id.YOSHIS_ISLAND                 // Fray's Stage
+    db id.SECTOR_Z                      // Tower of Heaven
     OS.align(4)
 
     // @ Description
@@ -1984,11 +1994,11 @@ scope Stages {
     dw header.BATTLEFIELD,            type.CLONE
     dw header.CORNERIA_CITY,          type.CLONE
     dw header.DR_MARIO,               type.CLONE
-    dw header.COOLCOOL,				  type.CLONE
+    dw header.COOLCOOL,               type.CLONE
     dw header.DRAGONKING,             type.CLONE
-	dw header.GREAT_BAY,              type.CLONE
+    dw header.GREAT_BAY,              type.CLONE
     dw header.FRAYS_STAGE,            type.CLONE
-	dw header.TOH,                    type.CLONE
+    dw header.TOH,                    type.CLONE
 
 
     string_peachs_castle:;          String.insert("Peach's Castle")
@@ -2020,11 +2030,11 @@ scope Stages {
     string_battlefield:;            String.insert("Battlefield")
     string_corneria_city:;          String.insert("Corneria City")
     string_dr_mario:;               String.insert("Dr. Mario")
-	string_cool_cool_mountain:;		String.insert("Cool Cool Mountain")
-	string_dragon_king:;			String.insert("Dragon King")
-	string_great_bay:;				String.insert("Great Bay")
-	string_frays_stage:;			String.insert("Fray's Stage")
-	string_toh:;					String.insert("Tower of Heaven")
+    string_cool_cool_mountain:;     String.insert("Cool Cool Mountain")
+    string_dragon_king:;            String.insert("Dragon King")
+    string_great_bay:;              String.insert("Great Bay")
+    string_frays_stage:;            String.insert("Fray's Stage")
+    string_toh:;                    String.insert("Tower of Heaven")
 
     string_table:
     dw string_peachs_castle
@@ -2079,11 +2089,11 @@ scope Stages {
     dw string_battlefield
     dw string_corneria_city
     dw string_dr_mario
-	dw string_cool_cool_mountain
-	dw string_dragon_king
-	dw string_great_bay
-	dw string_frays_stage
-	dw string_toh
+    dw string_cool_cool_mountain
+    dw string_dragon_king
+    dw string_great_bay
+    dw string_frays_stage
+    dw string_toh
 
 }
 

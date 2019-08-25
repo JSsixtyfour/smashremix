@@ -34,6 +34,18 @@ scope OS {
     putchar(value < 10 ? '0' + value : 'a' + value - 10)
     }
     
+    macro copy_segment(offset, length) {
+    insert  "../roms/original.z64", {offset}, {length}
+    }
+    
+    macro move_segment(offset, length) {
+    pushvar origin, base
+    OS.copy_segment({offset}, {length})
+    origin  {offset}
+    fill    {length}, 0x00
+    pullvar base, origin
+    }
+    
     macro save_registers() {
         addiu   sp, sp,-0x0070              // allocate stack space
         sw      at, 0x0004(sp)              // ~
