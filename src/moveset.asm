@@ -114,6 +114,12 @@ scope moveset_data_: {
 		origin 0x0009D530
 		base 0x80121D30
 		dw 0x00000667
+		// neutral special ground
+		origin 0x0009D618
+		dw      GND_NEUTRAL_SPECIAL_GROUND
+		// neutral special air
+		origin 0x0009D624
+		dw      GND_NEUTRAL_SPECIAL_AIR
     }
     
     scope falco {
@@ -313,6 +319,8 @@ scope moveset_data_: {
     dw      GND_USP_THROWDATA               // throw data pointer
     insert  "moveset/gnd/UP_SPECIAL_AIR.bin"
 	insert	GND_DOWN_SMASH,"moveset/gnd/DOWN_SMASH.bin"
+	insert 	GND_NEUTRAL_SPECIAL_GROUND,"moveset/gnd/NEUTRAL_SPECIAL_GROUND.bin"
+	insert 	GND_NEUTRAL_SPECIAL_AIR,"moveset/gnd/NEUTRAL_SPECIAL_AIR.bin"
     
     insert  FALCO_TAUNT,"moveset/falco/TAUNT.bin"
     insert  FALCO_JAB_1,"moveset/falco/JAB_1.bin"
