@@ -282,6 +282,11 @@ scope moveset_data_: {
         origin  0x92EC4
         base    0x801176C4
         dw      DRM_DTILT
+		// taunt
+        origin  0x92E30
+		base	0x80117630
+        dw 		0x0000085A					// animation
+		dw      DRM_TAUNT
     }
     pullvar base, origin
     
