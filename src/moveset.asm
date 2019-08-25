@@ -101,6 +101,19 @@ scope moveset_data_: {
         origin  0x9D440
         dw      0x00000861                  // animation
         dw      GND_TAUNT 
+		// down smash
+        origin  0x9D524
+		base	0x80121D24
+        dw 		0x00000855					// animation
+		dw      GND_DOWN_SMASH 
+		// fair
+		origin 0x0009D53C
+		base 0x80121D3C
+		dw 0x00000857
+		// nair
+		origin 0x0009D530
+		base 0x80121D30
+		dw 0x00000667
     }
     
     scope falco {
@@ -294,6 +307,7 @@ scope moveset_data_: {
     dw      0x30000000                      // throw data pointer command
     dw      GND_USP_THROWDATA               // throw data pointer
     insert  "moveset/gnd/UP_SPECIAL_AIR.bin"
+	insert	GND_DOWN_SMASH,"moveset/gnd/DOWN_SMASH.bin"
     
     insert  FALCO_TAUNT,"moveset/falco/TAUNT.bin"
     insert  FALCO_JAB_1,"moveset/falco/JAB_1.bin"

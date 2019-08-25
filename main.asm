@@ -65,31 +65,6 @@ origin 0x0017EE54
 base 0x80131C94
 ori     t1, r0, 0x0001
 
-// change falcon fair animation to new fair move
-origin 0x0009D53C
-base 0x80121D3C
-dw 0x00000857
-
-// change cfalcon nair animation to fair animation
-origin 0x0009D530
-base 0x80121D30
-dw 0x00000667
-
-// change the offset the game goes to to load aerial falcon punch
-origin 0x0009D624
-base 0x802F9864
-dw 0x0000019DC
-
-// change animation of Captain Falcon's downsmash
-origin 0x0009D524
-base 0x80121D24
-dw 0x00000855
-
-// change startpoint of Captain Falcon's downsmash
-origin 0x0009D528
-base 0x80121D28
-dw 0x00001588
-
 // link up b turn around
 origin 0x000A5E54
 base 0x8012A654
@@ -136,12 +111,6 @@ j RightResist._rightairresistance
 nop
 _rightresistancereturn:
 
-origin  0x0006453C
-base    0x800E8D3C
-j spear_
-nop
-spear_return:
-
 origin 0x00040898
 base   0x800A1B48
 j      Settings.set_vs_settings_
@@ -160,7 +129,6 @@ include "src/OS.asm"
 include "src/Slowattack.asm"
 include "src/Resist.asm"
 include "src/Rightresist.asm"
-include "src/Speararmor.asm"
 include "src/Phantasm.asm"
 include "src/Settings.asm"
 include "src/Moveset.asm"

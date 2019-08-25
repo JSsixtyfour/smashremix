@@ -3,7 +3,7 @@ if !{defined __STAGES__} {
 define __STAGES__()
 print "included Stages.asm\n"
 
-// @ Descirption
+// @ Description
 // This file expands the stage select screen.
 
 include "Color.asm"
@@ -147,6 +147,12 @@ scope Stages {
     dw function.CLONE                       // Battlefield
     dw function.CLONE                       // Corneria City
     dw function.CLONE                       // Dr. Mario
+	dw function.CLONE						// Cool Cool Mountain
+	dw function.CLONE						// Dragon King
+	dw function.CLONE						// Great Bay
+	dw function.CLONE						// Fray' Stage
+	dw function.CLONE						// Tower of Heaven
+	
 
     // TODO
     // 80116AE0 - i have NO idea (v hacky memory access)
@@ -261,9 +267,14 @@ scope Stages {
     insert icon_battlefield,            "../textures/icon_battlefield.rgba5551"
     insert icon_corneria_city,          "../textures/icon_corneria_city.rgba5551"
     insert icon_dr_mario,               "../textures/icon_dr_mario.rgba5551"
+	insert icon_cool_cool_mountain,		"../textures/icon_cool_cool_mountain.rgba5551"
+	insert icon_dragon_king,			"../textures/icon_dragon_king.rgba5551"
+	insert icon_great_bay,				"../textures/icon_great_bay.rgba5551"
+	insert icon_frays_stage,			"../textures/icon_frays_stage.rgba5551"
+	insert icon_toh,					"../textures/icon_toh.rgba5551"
     
 
-    // @ Descirption
+    // @ Description
     // Stage ID's. Used in various loading sequences.
     scope id {
         // original stages
@@ -323,13 +334,18 @@ scope Stages {
         constant BATTLEFIELD(0x31)
         constant CORNERIA_CITY(0x32)
         constant DR_MARIO(0x33)
+		constant COOLCOOL(0x34)
+		constant DRAGONKING(0x35)
+		constant GREAT_BAY(0x36)
+		constant FRAYS_STAGE(0x37)
+		constant TOH(0x38)
 
         // not an actual id, some arbitary number Sakurai picked(?)
         constant RANDOM(0xDE)
     }
 
 
-    // @ Descirption
+    // @ Description
     // type controls a branch that executes code for single player modes when 0x00 or skips that
     // entirely for 0x14. This branch can be found at 0x(TODO). (pulled from table @ 0xA7D20)
     scope type {
@@ -413,6 +429,11 @@ scope Stages {
         constant BATTLEFIELD(0x0871)
         constant CORNERIA_CITY(0x088C)
         constant DR_MARIO(0x088F)
+		constant COOLCOOL(0x892)
+		constant DRAGONKING(0x895)
+		constant GREAT_BAY(0x89B)
+		constant FRAYS_STAGE(0x898)
+		constant TOH(0x89E)
     }
 
     scope function {
@@ -446,12 +467,15 @@ scope Stages {
     // Page 3
     // [14] [15] [16] [17] [18]
     // [19] [1A] [1B] [1C] [1D]
+	// Page 4
+	// [1E] [1F] [20] [21] [22]
+    // [23] [24] [25] [26] [27]
 
     constant NUM_ROWS(2)
     constant NUM_COLUMNS(5)
     constant NUM_ICONS(NUM_ROWS * NUM_COLUMNS)
 
-    // @ Descirption
+    // @ Description
     // Stage IDs in order
     // Viable Stage (Most Viable at the Top)
     stage_table:
@@ -479,20 +503,29 @@ scope Stages {
     db id.DR_MARIO                          // 12
     db id.RANDOM                            // 13
 
-    // page 3 (custom and inaccessible stages)
+    // page 3 (custom and better 1P Stages)
     db id.FIRST_DESTINATION                 // 14
     db id.BATTLEFIELD                       // 15
-    db id.DREAM_LAND_BETA_1                 // 16
-    db id.DREAM_LAND_BETA_2                 // 17
-    db id.HOW_TO_PLAY                       // 18
-    db id.FINAL_DESTINATION                 // 19
-    db id.DUEL_ZONE                         // 1A
-    db id.META_CRYSTAL                      // 1B
+	db id.COOLCOOL							// 16
+	db id.DRAGONKING						// 17
+	db id.GREAT_BAY							// 18
+	db id.FRAYS_STAGE						// 19
+	db id.TOH								// 1A
+    db id.FINAL_DESTINATION                 // 1B
     db id.MINI_YOSHIS_ISLAND                // 1C
     db id.RANDOM                            // 1D
+	
+	// page 4 (the bad stages)
+	db id.META_CRYSTAL                      // 1E
+	db id.DUEL_ZONE                         // 1F
+	db id.DREAM_LAND_BETA_1                 // 20
+    db id.DREAM_LAND_BETA_2                 // 21
+    db id.HOW_TO_PLAY                       // 22
+	db id.RANDOM                            // 23
+	
     OS.align(4)
 
-    // @ Descirption
+    // @ Description
     // Coordinates of stage icons in vanilla Super Smash Bros.
     position_table:
     // row 0
@@ -563,18 +596,23 @@ scope Stages {
     dw icon_battlefield                     // Batlefield
     dw icon_corneria_city                   // Corneria City
     dw icon_dr_mario                        // Dr. Mario
+	dw icon_cool_cool_mountain				// Cool Cool Mountain
+	dw icon_dragon_king						// Dragon King
+	dw icon_great_bay						// Great Bay
+	dw icon_frays_stage						// Fray's Stage
+	dw icon_toh								// Tower of Heaven
 
-    // @ Descirption
+    // @ Description
     // Row the cursor is on
     row:
     dw 0
 
-    // @ Descirption
+    // @ Description
     // column the cursor is on
     column:
     dw 0
 
-    // @ Descirption
+    // @ Description
     // Toggle for frozen mode.
     frozen_mode:
     dw OS.FALSE
@@ -584,7 +622,7 @@ scope Stages {
     page_number:
     dw 0x00000000
 
-    constant NUM_PAGES(0x03)
+    constant NUM_PAGES(0x04)
 
     // @ Description
     // Disable original L and R button behavior [bit]
@@ -596,7 +634,7 @@ scope Stages {
     lli     a0, 0x0101
     OS.patch_end()
 
-    // @ Descirption
+    // @ Description
     // Prevents series logo from being drawn on wood circle
     OS.patch_start(0x0014E418, 0x801328A8)
     jr      ra                              // return immediately
@@ -624,7 +662,7 @@ scope Stages {
 //  nop
     OS.patch_end()
 
-    // @ Descirption
+    // @ Description
     // Prevents stage name text from being drawn.
     OS.patch_start(0x0014E2A8, 0x80132738)
     jr      ra                              // return immediately
@@ -643,7 +681,7 @@ scope Stages {
     nop
     OS.patch_end()
 
-    // @ Descirption
+    // @ Description
     // These following functions are designed to fix get_header_ for RANDOM.
     scope random_fix_1_: {
         OS.patch_start(0x0014EF2C, 0x801333BC)
@@ -739,7 +777,7 @@ scope Stages {
         nop
     }
 
-    // @ Descirption
+    // @ Description
     // Modifies the zoom of the model previews.
     scope set_zoom_: {
         OS.patch_start(0x0014ECE4, 0x80133174)
@@ -771,7 +809,7 @@ scope Stages {
         nop
     }
 
-    // @ Descirption
+    // @ Description
     // This functions modifies which header file is drawn based on stage_table
     scope get_header_: {
         OS.patch_start(0x0014E708, 0x80132B98)
@@ -803,7 +841,7 @@ scope Stages {
         nop
     }
 
-    // @ Descirption
+    // @ Description
     // This functions modifies which preview type is used based on stage_table
     scope get_type_: {
         OS.patch_start(0x0014E720, 0x80132BB0)
@@ -914,7 +952,7 @@ scope Stages {
         Texture.info(ICON_WIDTH, ICON_HEIGHT)
     }
 
-    // @ Descirption
+    // @ Description
     // This replaces the previous the original draw cursor function. The new function draws based on
     // the Stages.row and Stages.column variables as well as the position_table. It also replaces
     // the cursor itself with a filled rectangle
@@ -1093,7 +1131,7 @@ scope Stages {
         nop
     }
 
-    // @ Descirption
+    // @ Description
     // returns a stage id based on cursor position
     // @ Returns
     // v0 - stage_id
@@ -1125,7 +1163,7 @@ scope Stages {
         nop
     }
 
-    // @ Descirption
+    // @ Description
     // This is what Overlay.HOOKS_GO_HERE_ calls. It is the main() of Stages.asm
     scope run_: {
         addiu   sp, sp,-0x0028              // allocate stack space
@@ -1338,7 +1376,7 @@ scope Stages {
     sw      v0, 0x0020(sp)                  // original line 2
     OS.patch_end()
 
-    // @ Descirption
+    // @ Description
     // The following update_<direction>_ functions update Stages.row/Stages.column. They also set
     // preview_is_outdated to OS.TRUE
     scope update_right_: {
@@ -1539,7 +1577,7 @@ scope Stages {
 
     }
 
-    // @ Descirption
+    // @ Description
     // Adds a stage to the random list if it's toggled on.
     // @ Arguments
     // a0 - address of entry (random stage entry)
@@ -1584,7 +1622,7 @@ scope Stages {
         nop
     }
 
-    // @ Descirption
+    // @ Description
     // Macro to (maybe) add a stage to the random list.
     macro add_to_list(entry, stage_id) {
         li      a0, {entry}                 // a0 - address of entry
@@ -1593,7 +1631,7 @@ scope Stages {
         nop
     }
 
-    // @ Descirption
+    // @ Description
     // This function replaces the logic to convert the default cursor_id to a stage_id.
     // @ Returns
     // v0 - stage_id
@@ -1691,19 +1729,27 @@ scope Stages {
     db id.CORNERIA_CITY                     // 11
     db id.DR_MARIO                          // 12
 
-    // page 3 (custom and inaccessible stages)
-    db id.FIRST_DESTINATION                 // 14
-    db id.BATTLEFIELD                       // 15
-    db id.DREAM_LAND_BETA_1                 // 16
-    db id.DREAM_LAND_BETA_2                 // 17
-    db id.HOW_TO_PLAY                       // 18
-    db id.FINAL_DESTINATION                 // 19
-    db id.DUEL_ZONE                         // 1A
-    db id.META_CRYSTAL                      // 1B
-    db id.MINI_YOSHIS_ISLAND                // 1C
+    // page 3 (custom and better 1P Stages)
+    db id.FIRST_DESTINATION                 // 13
+    db id.BATTLEFIELD                       // 14
+	db id.COOLCOOL							// 15
+	db id.DRAGONKING						// 16
+	db id.GREAT_BAY							// 17
+	db id.FRAYS_STAGE						// 18
+	db id.TOH								// 19
+    db id.FINAL_DESTINATION                 // 1A
+    db id.MINI_YOSHIS_ISLAND                // 1B
+	
+	// page 4 (the bad stages)
+	db id.META_CRYSTAL                      // 1C
+	db id.DUEL_ZONE                         // 1D
+	db id.DREAM_LAND_BETA_1                 // 1E
+    db id.DREAM_LAND_BETA_2                 // 1F
+    db id.HOW_TO_PLAY                       // 20
+	
     OS.align(4)
 
-    // @ Descirption
+    // @ Description
     // number of stages in random_table.
     //random_count:
     //dw 0
@@ -1812,6 +1858,11 @@ scope Stages {
     float32 0.5                         // Batlefield
     float32 0.5                         // Corneria City
     float32 0.5                         // Dr. Mario
+    float32 0.5                         // Cool Cool Mountain
+    float32 0.5                         // Dragon King
+	float32 0.5                         // Great Bay
+    float32 0.5                         // Fray's Stage
+	float32 0.5                         // Tower of Heaven
 
     background_table:
     db id.PEACHS_CASTLE                 // Peach's Castle
@@ -1863,9 +1914,14 @@ scope Stages {
     db id.PEACHS_CASTLE                 // Skyloft
     db id.PEACHS_CASTLE                 // Smashville
     db id.SECTOR_Z                      // WarioWare
-    db id.PEACHS_CASTLE                 // Batlefield
+    db id.PEACHS_CASTLE                 // Battlefield
     db id.PEACHS_CASTLE                 // Corneria City
     db id.PEACHS_CASTLE                 // Dr. Mario
+	db id.PEACHS_CASTLE                 // Cool Cool Mountain
+	db id.PEACHS_CASTLE                 // Dragon King
+	db id.PEACHS_CASTLE                 // Great Bay
+	db id.PEACHS_CASTLE                 // Fray's Stage
+	db id.SECTOR_Z						// Tower of Heaven
     OS.align(4)
 
     // @ Description
@@ -1928,6 +1984,11 @@ scope Stages {
     dw header.BATTLEFIELD,            type.CLONE
     dw header.CORNERIA_CITY,          type.CLONE
     dw header.DR_MARIO,               type.CLONE
+    dw header.COOLCOOL,				  type.CLONE
+    dw header.DRAGONKING,             type.CLONE
+	dw header.GREAT_BAY,              type.CLONE
+    dw header.FRAYS_STAGE,            type.CLONE
+	dw header.TOH,                    type.CLONE
 
 
     string_peachs_castle:;          String.insert("Peach's Castle")
@@ -1959,6 +2020,11 @@ scope Stages {
     string_battlefield:;            String.insert("Battlefield")
     string_corneria_city:;          String.insert("Corneria City")
     string_dr_mario:;               String.insert("Dr. Mario")
+	string_cool_cool_mountain:;		String.insert("Cool Cool Mountain")
+	string_dragon_king:;			String.insert("Dragon King")
+	string_great_bay:;				String.insert("Great Bay")
+	string_frays_stage:;			String.insert("Fray's Stage")
+	string_toh:;					String.insert("Tower of Heaven")
 
     string_table:
     dw string_peachs_castle
@@ -2013,6 +2079,11 @@ scope Stages {
     dw string_battlefield
     dw string_corneria_city
     dw string_dr_mario
+	dw string_cool_cool_mountain
+	dw string_dragon_king
+	dw string_great_bay
+	dw string_frays_stage
+	dw string_toh
 
 }
 

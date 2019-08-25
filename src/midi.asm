@@ -85,5 +85,9 @@ scope MIDI {
     insert_midi(SMASHVILLE)
     insert_midi(WARIO_WARE)
     insert_midi(FIRST_DESTINATION)
+	insert_midi(COOLCOOLMOUNTAIN)
+	insert_midi(GODDESSBALLAD)
+	insert_midi(GREATBAY)
+	insert_midi(TOWEROFHEAVEN)
     print "========================================================================== \n"
 }
