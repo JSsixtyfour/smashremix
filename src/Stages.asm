@@ -273,7 +273,7 @@ scope Stages {
     insert icon_great_bay,              "../textures/icon_great_bay.rgba5551"
     insert icon_frays_stage,            "../textures/icon_frays_stage.rgba5551"
     insert icon_toh,                    "../textures/icon_toh.rgba5551"
-	insert icon_fod,					"../textures/icon_toh.rgba5551"
+	insert icon_fod,					"../textures/icon_fod.rgba5551"
     
 
     // @ Description
@@ -437,7 +437,7 @@ scope Stages {
         constant GREAT_BAY(0x89B)
         constant FRAYS_STAGE(0x898)
         constant TOH(0x89E)
-		constant FOD(0x89E)
+		constant FOD(0x8A1)
     }
 
     scope function {
