@@ -359,5 +359,5 @@ scope moveset_data_: {
     insert  DRM_NEUTRAL2, "moveset/drm/NEUTRAL2.bin"
     insert  DRM_NEUTRAL3, "moveset/drm/NEUTRAL3.bin"
     insert  DRM_DTILT, "moveset/drm/DTILT.bin"
-    insert  DRM_TAUNT, "moveset/drm/TAUNT.bin"
+	insert  DRM_TAUNT, "moveset/drm/TAUNT.bin"
 }
