@@ -273,7 +273,7 @@ scope Stages {
     insert icon_great_bay,              "../textures/icon_great_bay.rgba5551"
     insert icon_frays_stage,            "../textures/icon_frays_stage.rgba5551"
     insert icon_toh,                    "../textures/icon_toh.rgba5551"
-	insert icon_fod,					"../textures/icon_fod.rgba5551"
+    insert icon_fod,					"../textures/icon_fod.rgba5551"
     
 
     // @ Description
