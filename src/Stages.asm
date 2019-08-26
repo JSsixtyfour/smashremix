@@ -606,7 +606,7 @@ scope Stages {
     dw icon_great_bay                       // Great Bay
     dw icon_frays_stage                     // Fray's Stage
     dw icon_toh                             // Tower of Heaven
-	dw icon_fod								// Fountain of Dreams
+    dw icon_fod								// Fountain of Dreams
 
     // @ Description
     // Row the cursor is on
