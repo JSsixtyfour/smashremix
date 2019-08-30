@@ -189,6 +189,10 @@ scope moveset_data_: {
         // ylink dair
         origin  0x9AC04
         dw      YLINK_DAIR
+         // ylink taunt
+        origin  0x9AAE0
+        dw      0x000008A4
+        dw      YLINK_TAUNT
     }
     scope drm {
         // drm neutral special ground
@@ -342,6 +346,7 @@ scope moveset_data_: {
     insert  YLINK_FAIR,"moveset/ylink/FORWARD_AERIAL.bin"
     insert  YLINK_BAIR,"moveset/ylink/BACK_AERIAL.bin"
     insert  YLINK_DAIR,"moveset/ylink/DOWN_AERIAL.bin"
+    insert  YLINK_TAUNT,"moveset/ylink/TAUNT.bin"
     
     insert  DRM_NSP_GROUND, "moveset/drm/NEUTRAL_SPECIAL_GROUND.bin"
     insert  DRM_NSP_AIR, "moveset/drm/NEUTRAL_SPECIAL_AIR.bin"

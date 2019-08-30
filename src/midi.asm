@@ -90,5 +90,7 @@ scope MIDI {
 	insert_midi(GREATBAY)
 	insert_midi(TOWEROFHEAVEN)
 	insert_midi(FOD)
+    insert_midi(MUDA)
+    insert_midi(MEMENTOS)
     print "========================================================================== \n"
 }
