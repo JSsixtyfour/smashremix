@@ -515,7 +515,7 @@ scope Command {
         table_dlist:                        // table of pointers to custom display lists
         constant DLIST_SPEAR(0x8040C830)
 		constant DLIST_DRMPILLHAND(0x804262A0)
-        constant DLIST_YLINKBOTTLEHAND(804262A0)
+        constant DLIST_YLINKBOTTLEHAND(0x80427848)
         dw  OS.NULL                         // 0x00 - NULL
         dw  DLIST_SPEAR                     // 0x01 - Ganondorf's Spear/Trident
 		dw	DLIST_DRMPILLHAND				// 0x02 - Doctor Mario's Pill Hand
