@@ -153,6 +153,8 @@ scope Stages {
     dw function.CLONE                       // Fray' Stage
     dw function.CLONE                       // Tower of Heaven
 	dw function.CLONE                       // Fountain of Dreams
+    dw function.CLONE                       // Muda Kingdom
+    dw function.CLONE                       // Mementos
     
 
     // TODO
@@ -273,7 +275,9 @@ scope Stages {
     insert icon_great_bay,              "../textures/icon_great_bay.rgba5551"
     insert icon_frays_stage,            "../textures/icon_frays_stage.rgba5551"
     insert icon_toh,                    "../textures/icon_toh.rgba5551"
-    insert icon_fod,					"../textures/icon_fod.rgba5551"
+	insert icon_fod,					"../textures/icon_fod.rgba5551"
+    insert icon_muda,                   "../textures/icon_muda.rgba5551"
+    insert icon_mementos,               "../textures/icon_mementos.rgba5551"
     
 
     // @ Description
@@ -342,6 +346,8 @@ scope Stages {
         constant FRAYS_STAGE(0x37)
         constant TOH(0x38)
 		constant FOD(0x39)
+        constant MUDA(0x3A)
+        constant MEMENTOS(0x3B)
 
         // not an actual id, some arbitary number Sakurai picked(?)
         constant RANDOM(0xDE)
@@ -438,6 +444,8 @@ scope Stages {
         constant FRAYS_STAGE(0x898)
         constant TOH(0x89E)
 		constant FOD(0x8A1)
+        constant MUDA(0x8A5)
+        constant MEMENTOS(0x8A8)
     }
 
     scope function {
@@ -516,17 +524,19 @@ scope Stages {
     db id.FRAYS_STAGE                       // 19
     db id.TOH                               // 1A
     db id.FOD								// 1B
-	db id.FINAL_DESTINATION                 // 1C				
+	db id.MUDA				                // 1C
     db id.RANDOM                            // 1D
     
     // page 4 (the bad stages)
-    db id.MINI_YOSHIS_ISLAND                // 1E
-	db id.META_CRYSTAL                      // 1F
-    db id.DUEL_ZONE                         // 20
-    db id.DREAM_LAND_BETA_1                 // 21
-    db id.DREAM_LAND_BETA_2                 // 22
-    db id.HOW_TO_PLAY                       // 23
-    db id.RANDOM                            // 24
+    db id.MEMENTOS                          // 1E
+    db id.FINAL_DESTINATION                 // 1F
+    db id.MINI_YOSHIS_ISLAND                // 20
+	db id.META_CRYSTAL                      // 21
+    db id.DUEL_ZONE                         // 22
+    db id.DREAM_LAND_BETA_1                 // 23
+    db id.DREAM_LAND_BETA_2                 // 24
+    db id.HOW_TO_PLAY                       // 25
+    db id.RANDOM                            // 26
     
     OS.align(4)
 
@@ -606,7 +616,9 @@ scope Stages {
     dw icon_great_bay                       // Great Bay
     dw icon_frays_stage                     // Fray's Stage
     dw icon_toh                             // Tower of Heaven
-    dw icon_fod								// Fountain of Dreams
+	dw icon_fod								// Fountain of Dreams
+    dw icon_muda                            // Muda Kingdom
+    dw icon_mementos                        // Mementos
 
     // @ Description
     // Row the cursor is on
@@ -1110,7 +1122,7 @@ scope Stages {
         String.insert("Previous Page: Z, Next Page: R")
     }
 
-    // @ Descirption
+    // @ Description
     // Returns an index based on column and row
     // @ Returns
     // v0 - index
@@ -1744,16 +1756,18 @@ scope Stages {
     db id.FRAYS_STAGE                       // 18
     db id.TOH                               // 19
 	db id.FOD								// 1A
-	db id.FINAL_DESTINATION                 // 1B
+	db id.MUDA                              // 1B
     
     
     // page 4 (the bad stages)
-    db id.MINI_YOSHIS_ISLAND                // 1C
-	db id.META_CRYSTAL                      // 1D
-    db id.DUEL_ZONE                         // 1E
-    db id.DREAM_LAND_BETA_1                 // 1F
-    db id.DREAM_LAND_BETA_2                 // 20
-    db id.HOW_TO_PLAY                       // 21
+    db id.MEMENTOS                          // 1C
+    db id.FINAL_DESTINATION                 // 1D
+    db id.MINI_YOSHIS_ISLAND                // 1E
+	db id.META_CRYSTAL                      // 1F
+    db id.DUEL_ZONE                         // 20
+    db id.DREAM_LAND_BETA_1                 // 21
+    db id.DREAM_LAND_BETA_2                 // 22
+    db id.HOW_TO_PLAY                       // 23
     
     OS.align(4)
 
@@ -1882,6 +1896,8 @@ scope Stages {
     float32 0.5                         // Fray's Stage
     float32 0.5                         // Tower of Heaven
 	float32 0.5							// Fountain of Dreams
+    float32 0.5                         // Muda Kingdom
+    float32 0.5                         // Mementos
 
     background_table:
     db id.PEACHS_CASTLE                 // Peach's Castle
@@ -1942,6 +1958,8 @@ scope Stages {
     db id.YOSHIS_ISLAND                 // Fray's Stage
     db id.SECTOR_Z                      // Tower of Heaven
 	db id.SECTOR_Z						// Fountain of Dreams
+    db id.YOSHIS_ISLAND                 // Muda Kingdom
+    db id.SECTOR_Z                      // Mementos
     OS.align(4)
 
     // @ Description
@@ -2010,6 +2028,8 @@ scope Stages {
     dw header.FRAYS_STAGE,            type.CLONE
     dw header.TOH,                    type.CLONE
 	dw header.FOD,					  type.CLONE
+    dw header.MUDA,                   type.CLONE
+    dw header.MEMENTOS,                type.CLONE
 
 
     string_peachs_castle:;          String.insert("Peach's Castle")
@@ -2047,6 +2067,8 @@ scope Stages {
     string_frays_stage:;            String.insert("Fray's Stage")
     string_toh:;                    String.insert("Tower of Heaven")
 	string_fod:;					String.insert("Fountain of Dreams")
+    string_muda:;                   String.insert("Muda Kingdom")
+    string_mementos:;               String.insert("Mementos")
 
     string_table:
     dw string_peachs_castle
@@ -2107,6 +2129,8 @@ scope Stages {
     dw string_frays_stage
     dw string_toh
 	dw string_fod
+    dw string_muda
+    dw string_mementos
 
 }
 
