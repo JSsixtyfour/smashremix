@@ -51,9 +51,6 @@ scope Command {
     scope change_action_: {
         sw  s1, 0x0018(sp)                  // original line 1
         sw  s0, 0x0014(sp)                  // original line 2
-        j   SlowAttack._slow_attack         // jump to slowattack (TEMPORARY)
-        nop
-        _slow_attack_return:
         OS.save_registers()                 // full register save
         
         scope _reset_translation_multiplier: {
@@ -370,8 +367,6 @@ scope Command {
     // A table of bone structs can be found in the player struct at 0x8E8.
     // The display list pointer can be found in a bone struct at 0x50.
     scope model_part {
-        // TODO
-        // some idiot forgot to include player port logic in this code
         constant TABLE_SIZE(0x24)
         // @ Description
         // Save a display list pointer for a given bone struct.

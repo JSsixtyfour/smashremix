@@ -30,8 +30,8 @@ lui     a0, 0x0200          // load rom address (0x01000000)
 lui     a1, 0x8040          // load ram address (0x80400000)
 jal     0x80002CA0          // dmaCopy
 lui     a2, 0x000A          // load length of 4 MB
-j       boot_               // run additional boot functions
-//j       0x8000063C          // original line
+//j       boot_               // run additional boot functions
+j       0x8000063C          // original line
 nop
 
 constant GAME_MODE(0x03)
@@ -65,52 +65,6 @@ origin 0x0017EE54
 base 0x80131C94
 ori     t1, r0, 0x0001
 
-// link up b turn around
-origin 0x000A5E54
-base 0x8012A654
-dw 0x80160370
-
-// link up b velocity
-origin 0x000DEDC8
-base 0x80164388
-dw 0x3C014240
-
-// link up b landing animation fsm
-origin 0x107468
-float32 0.33                // 25 frames of landing lag
-
-// link boomerang return damage decrease to 7%
-origin 0x000E7814
-base 0x8016CDD4
-dw 0x24180007
-
-// mario uses costume 0x2 for red team (TEMPORARY)
-origin  0xA7034
-db      0x02
-
-// change up special distance & delay (fox/falco)
-origin  0xD6A03
-db      0x1A                // up special delay
-origin  0xD6FFA
-dh      0x42CC              // up special velocity
-origin  0xD7132
-dh      0x42CC              // up special velocity
-origin  0xD7156
-dh      0x42CC              // up special velocity
-
-// resistance
-origin 0x0005488C
-base 0x800D908C
-j Resist._upbsetup
-nop
-_resistancereturn:
-
-origin 0x000548B8
-base 0x800D90B8
-j RightResist._rightairresistance
-nop
-_rightresistancereturn:
-
 origin 0x00040898
 base   0x800A1B48
 j      Settings.set_vs_settings_
@@ -128,16 +82,11 @@ insert "src/model/drmhead.bin"
 insert "src/model/drmpillhand.bin"
 insert "src/model/ylinkbottlehand.bin"
 include "src/OS.asm"
-include "src/Slowattack.asm"
-include "src/Resist.asm"
-include "src/Rightresist.asm"
-include "src/Phantasm.asm"
 include "src/Settings.asm"
 include "src/Moveset.asm"
 include "src/Command.asm"
 include "src/Timeouts.asm"
 include "src/Resultsscreen.asm"
-include "src/Fireball.asm"
 // partial 19XX merge
 include "src/Color.asm"
 include "src/Crash.asm"
@@ -151,8 +100,22 @@ include "src/Spawn.asm"
 include "src/Stages.asm"
 include "src/String.asm"
 include "src/Texture.asm"
-// BOOT
-include "src/boot.asm"
+// CONSTANTS
+include "src/Action.asm"
+include "src/File.asm"
+// CHARACTER
+include "src/Character.asm"
+include "src/Fireball.asm"
+// FALCO
+include "src/Falco/Phantasm.asm"
+include "src/Falco/Falco.asm"
+// GANONDORF
+include "src/Ganondorf/Ganondorf.asm"
+// YOUNG LINK
+include "src/YoungLink/YoungLink.asm"
+// DR MARIO
+include "src/DrMario/DrMario.asm"
+
 // MIDI
 include "src/MIDI.asm"
 
