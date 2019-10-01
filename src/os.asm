@@ -39,8 +39,8 @@ scope OS {
     }
     
     macro move_segment(offset, length) {
-    OS.copy_segment({offset}, {length})
     pushvar origin, base
+    OS.copy_segment({offset}, {length})
     origin  {offset}
     fill    {length}, 0x00
     pullvar base, origin

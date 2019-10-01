@@ -1,0 +1,49 @@
+00CA Mario Moveset Data
+0164 
+00CC 
+086F Capsule (THIS IS TEMPORARY)
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+0128 Mario Character
+012A 
+012A 
+012A 
+012A 
+012A 
+012A 
+012A 
+012A 
+012A 
+END OF REQ LIST
