@@ -129,8 +129,6 @@ scope Fireball: {
         constant FIREBALL_SUBROUTINE(0x80155E64)
         constant TYPE(0x4)                  // damage type to use for capsule effects
         constant FGM(0x1B5)                 // fgm to play when capsule hits an opponent
-        constant DOC_ID(0x00)               // character id being used for Dr. Mario
-
         
         // @ Description
         // Subroutine which randomizes the palette index used by Dr. Mario's capsule when the
@@ -194,9 +192,9 @@ scope Fireball: {
             sw      t1, 0x0008(sp)          // store t0, t1
 
             li      t6, FIREBALL_SUBROUTINE // t6 = FIREBALL_SUBROUTINE (original lines 1&2)
-            ori     t0, r0, DOC_ID          // t0 = DOC_ID
+            ori     t0, r0, Character.id.DRM// t0 = id.DRM
             lbu     t1, 0x000B(v0)          // t1 = current char id
-            bne     t0, t1, _end            // skip if char id != DOC_ID
+            bne     t0, t1, _end            // skip if char id != DRM
             nop
             li      t6, capsule_subroutine_ // t6 = capsule subroutine
             
@@ -209,35 +207,11 @@ scope Fireball: {
         }    
             
         // Initialize capsule struct
-        struct(struct_capsule, 0, 140, 60, 25, 1.5, 0.95, 0.3, -0.4, -0.4, 40, CAPSULE_DATA_POINTER, 0) 
+        struct(struct_capsule, 0, 140, 60, 25, 1.5, 0.95, 0.3, -0.4, -0.4, 40, Character.DRM_file_6_ptr, 0) 
         
-        // Define CAPSULE_DATA_POINTER
-        CAPSULE_DATA_POINTER:
-        dw      data                        //CAPSULE_DATA_FILE pointer (TEMPORARY while reqlist issue is unsolved)
-        
-        // TEMPORARY: INSERT CAPSULE FILES WHILE REQLIST ISSUE IS UNRESOLVED
-        OS.align(16)
-        insert data, "capsule/086F.bin"
-        OS.align(16)
-        insert graphic, "capsule/0870.bin"
-
-        // write changes to rom
-        //constant CAPSULE_DATA_FILE(0x86F)
-        //constant CAPSULE_GRAPHIC_FILE(0x870)
-        
-        pushvar origin, base
-        // add CAPSULE_DATA_FILE and CAPSULE_DATA_POINTER to Mario's character struct (TEMPORARY)
-        // NOTE: CAPSULE_DATA_FILE has also been temporarily added to Mario's req list.
-        // EDIT: REMOVED WHILE REQLIST ISSUE IS UNRESOLVED
-        //origin  0x93030
-        //dw      CAPSULE_DATA_FILE           // check for this file when mario is loaded
-        //origin  0x93058
-        //dw      CAPSULE_DATA_POINTER        // write CAPSULE_DATA_FILE pointer to this address
-        
-        // change id subroutine for Mario
-        origin  0x107070
+        // change id subroutine for Dr. Mario
+        Character.table_patch_start(fireball, Character.id.DRM, 0x4)
         dw      load_capsule_id_
-        
-        pullvar base, origin
+        OS.patch_end()
     }
 }
