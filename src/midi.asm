@@ -92,5 +92,8 @@ scope MIDI {
 	insert_midi(FOD)
     insert_midi(MUDA)
     insert_midi(MEMENTOS)
+    insert_midi(SPIRAL_MOUNTAIN)
+    insert_midi(MORAY_TOWERS)
+    insert_midi(MUTE_CITY)
     print "========================================================================== \n"
 }

@@ -155,6 +155,10 @@ scope Stages {
 	dw function.CLONE                       // Fountain of Dreams
     dw function.CLONE                       // Muda Kingdom
     dw function.CLONE                       // Mementos
+    dw function.CLONE                       // Showdown
+    dw function.CLONE                       // Spiral Mountain
+    dw function.CLONE                       // Moray Towers
+    dw function.CLONE                       // Mute City
     
 
     // TODO
@@ -278,6 +282,10 @@ scope Stages {
 	insert icon_fod,					"../textures/icon_fod.rgba5551"
     insert icon_muda,                   "../textures/icon_muda.rgba5551"
     insert icon_mementos,               "../textures/icon_mementos.rgba5551"
+    insert icon_showdown,               "../textures/icon_showdown.rgba5551"
+    insert icon_spiralm,                "../textures/icon_spiralm.rgba5551"
+    insert icon_moray,                  "../textures/icon_moray.rgba5551"
+    insert icon_mute,                   "../textures/icon_mute.rgba5551"
     
 
     // @ Description
@@ -348,6 +356,10 @@ scope Stages {
 		constant FOD(0x39)
         constant MUDA(0x3A)
         constant MEMENTOS(0x3B)
+        constant SHOWDOWN(0x3C)
+        constant SPIRALM(0x3D)
+        constant MORAY(0x3E)
+        constant MUTE(0x3F)
 
         // not an actual id, some arbitary number Sakurai picked(?)
         constant RANDOM(0xDE)
@@ -446,6 +458,10 @@ scope Stages {
 		constant FOD(0x8A1)
         constant MUDA(0x8A5)
         constant MEMENTOS(0x8A8)
+        constant SHOWDOWN(0x8B6)
+        constant SPIRALM(0x8B9)
+        constant MORAY(0x8BC)
+        constant MUTE(0x8BF)
     }
 
     scope function {
@@ -464,8 +480,8 @@ scope Stages {
         constant CLONE(0x801056F8)
     }
 
-    constant ICON_WIDTH(48)
-    constant ICON_HEIGHT(36)
+    constant ICON_WIDTH(40)
+    constant ICON_HEIGHT(30)
 
     // Layout
     // Page 1
@@ -483,15 +499,14 @@ scope Stages {
     // [1E] [1F] [20] [21] [22]
     // [23] [24] [25] [26] [27]
 
-    constant NUM_ROWS(2)
-    constant NUM_COLUMNS(5)
+    constant NUM_ROWS(3)
+    constant NUM_COLUMNS(6)
     constant NUM_ICONS(NUM_ROWS * NUM_COLUMNS)
 
     // @ Description
     // Stage IDs in order
-    // Viable Stage (Most Viable at the Top)
     stage_table:
-    // page 1 (original stages)
+    // page 1 (mostly original stages)
     db id.PEACHS_CASTLE                     // 00
     db id.CONGO_JUNGLE                      // 01
     db id.HYRULE_CASTLE                     // 02
@@ -501,61 +516,75 @@ scope Stages {
     db id.DREAM_LAND                        // 06
     db id.SECTOR_Z                          // 07
     db id.SAFFRON_CITY                      // 08
-    db id.RANDOM                            // 09
+    db id.FINAL_DESTINATION                 // 09
+    db id.MINI_YOSHIS_ISLAND                // 0A
+	db id.META_CRYSTAL                      // 0B
+    db id.DUEL_ZONE                         // 0C
+    db id.BATTLEFIELD                       // 0D
+    db id.DEKU_TREE                         // 0E
+    db id.GANONS_TOWER                      // 0F
+    db id.KALOS_POKEMON_LEAGUE              // 10
+    db id.RANDOM                            // 11
 
     // page 2 (custom stages)
-    db id.DEKU_TREE                         // 0A
-    db id.GANONS_TOWER                      // 0B
-    db id.KALOS_POKEMON_LEAGUE              // 0C
-    db id.POKEMON_STADIUM_2                 // 0D
-    db id.SKYLOFT                           // 0E
-    db id.SMASHVILLE                        // 0F
-    db id.WARIOWARE                         // 10
-    db id.CORNERIA_CITY                     // 11
-    db id.DR_MARIO                          // 12
-    db id.RANDOM                            // 13
-
-    // page 3 (custom and better 1P Stages)
-    db id.FIRST_DESTINATION                 // 14
-    db id.BATTLEFIELD                       // 15
-    db id.COOLCOOL                          // 16
-    db id.DRAGONKING                        // 17
-    db id.GREAT_BAY                         // 18
-    db id.FRAYS_STAGE                       // 19
-    db id.TOH                               // 1A
-    db id.FOD								// 1B
-	db id.MUDA				                // 1C
-    db id.RANDOM                            // 1D
     
-    // page 4 (the bad stages)
-    db id.MEMENTOS                          // 1E
-    db id.FINAL_DESTINATION                 // 1F
-    db id.MINI_YOSHIS_ISLAND                // 20
-	db id.META_CRYSTAL                      // 21
-    db id.DUEL_ZONE                         // 22
-    db id.DREAM_LAND_BETA_1                 // 23
-    db id.DREAM_LAND_BETA_2                 // 24
-    db id.HOW_TO_PLAY                       // 25
-    db id.RANDOM                            // 26
+    db id.POKEMON_STADIUM_2                 // 12
+    db id.SKYLOFT                           // 13
+    db id.SMASHVILLE                        // 14
+    db id.WARIOWARE                         // 15
+    db id.CORNERIA_CITY                     // 16
+    db id.DR_MARIO                          // 17
+    db id.FIRST_DESTINATION                 // 18
+    db id.COOLCOOL                          // 19
+    db id.DRAGONKING                        // 1A
+    db id.GREAT_BAY                         // 1B
+    db id.FRAYS_STAGE                       // 1C
+    db id.TOH                               // 1D
+    db id.FOD								// 1E
+	db id.MUDA				                // 1F
+    db id.MEMENTOS                          // 20
+    db id.SHOWDOWN                          // 21
+    db id.SPIRALM                           // 22
+    db id.RANDOM                            // 23
+
+    // page 3 (custom and beta)
+    
+    db id.MORAY                             // 24
+    db id.MUTE                              // 25
+    db id.DREAM_LAND_BETA_1                 // 26
+    db id.DREAM_LAND_BETA_2                 // 27
+    db id.HOW_TO_PLAY                       // 28
+    db id.RANDOM                            // 29
     
     OS.align(4)
 
     // @ Description
     // Coordinates of stage icons in vanilla Super Smash Bros.
     position_table:
+    
     // row 0
-    dw 035, 020                             // 00
-    dw 085, 020                             // 01
-    dw 135, 020                             // 02
-    dw 185, 020                             // 03
-    dw 235, 020                             // 04
+    dw 033, 020                             // 00
+    dw 075, 020                             // 01
+    dw 117, 020                             // 02
+    dw 159, 020                             // 03
+    dw 201, 020                             // 04
+    dw 243, 020                             // 05
+
+    // row 1
+    dw 033, 052                             // 06
+    dw 075, 052                             // 07
+    dw 117, 052                             // 08
+    dw 159, 052                             // 09
+    dw 201, 052                             // 0A
+    dw 243, 052                             // 0B
 
     // row 2
-    dw 035, 058                             // 05
-    dw 085, 058                             // 06
-    dw 135, 058                             // 07
-    dw 185, 058                             // 08
-    dw 235, 058                             // 0A
+    dw 033, 084                             // 0C
+    dw 075, 084                             // 0D
+    dw 117, 084                             // 0E
+    dw 159, 084                             // 0F
+    dw 201, 084                             // 10
+    dw 243, 084                             // 11
 
     // sorted by stage id
     icon_table:
@@ -619,6 +648,10 @@ scope Stages {
 	dw icon_fod								// Fountain of Dreams
     dw icon_muda                            // Muda Kingdom
     dw icon_mementos                        // Mementos
+    dw icon_showdown                        // Showdown
+    dw icon_spiralm                         // Spiral Mountain
+    dw icon_moray                           // Moray Towers
+    dw icon_mute                            // Mute City
 
     // @ Description
     // Row the cursor is on
@@ -640,7 +673,7 @@ scope Stages {
     page_number:
     dw 0x00000000
 
-    constant NUM_PAGES(0x04)
+    constant NUM_PAGES(0x03)
 
     // @ Description
     // Disable original L and R button behavior [bit]
@@ -666,7 +699,7 @@ scope Stages {
     nop
     OS.patch_end()
 
-    // @ Descirption
+    // @ Description
     // Prevents "Stage Select" texture from being drawn.
     OS.patch_start(0x0014DDF8, 0x80132288)
     jr      ra                              // return immediately
@@ -927,7 +960,7 @@ scope Stages {
         addu    t4, t3, t2                  // t4 = address of stage_table[index]
         lbu     t4, 0x0000(t4)              // t4 = stage_id
 
-        // this intereupts flow to check for random
+        // this interupts flow to check for random
         lli     at, id.RANDOM               // at = id.RANDOM
         bne     t4, at, _not_random         // if (stage_id != id.RANDOM), skip
         nop
@@ -1059,7 +1092,7 @@ scope Stages {
         nop
         sll     v0, v0, 0x0002              // v0 = offset = stage_id * 4
         lli     a0, 232                     // a0 - x
-        lli     a1, 195                     // a1 - uly
+        lli     a1, 210                     // a1 - uly
         li      a2, string_table            // a2 = address of string_table
         addu    a2, a2, v0                  // a2 = address of string_table + offset
         lw      a2, 0x0000(a2)              // a2 - adress of string
@@ -1090,7 +1123,7 @@ scope Stages {
 
         // this block draws ""<< Z Page   R >>""
         lli     a0, 160                     // a0 - x
-        lli     a1, 100                     // a1 - uly
+        lli     a1, 117                     // a1 - uly
         li      a2, string_page             // a2 - address of string
         jal     Overlay.draw_centered_str_  // draw string
         nop
@@ -1103,7 +1136,7 @@ scope Stages {
         jal     String.itoa_                // v0 = (string) page_number
         nop
         lli     a0, 160                     // a0 - x
-        lli     a1, 100                     // a1 - uly
+        lli     a1, 117                     // a1 - uly
         move    a2, v0                      // a2 - address of string
 //      jal     Overlay.draw_centered_str_  // draw string
         nop
@@ -1735,39 +1768,42 @@ scope Stages {
     db id.DREAM_LAND                        // 06
     db id.SECTOR_Z                          // 07
     db id.SAFFRON_CITY                      // 08
+    db id.FINAL_DESTINATION                 // 09
+    db id.MINI_YOSHIS_ISLAND                // 0A
+	db id.META_CRYSTAL                      // 0B
+    db id.DUEL_ZONE                         // 0C
+    db id.BATTLEFIELD                       // 0D
+    db id.DEKU_TREE                         // 0E
+    db id.GANONS_TOWER                      // 0F
+    db id.KALOS_POKEMON_LEAGUE              // 10
 
     // page 2 (custom stages)
-    db id.DEKU_TREE                         // 0A
-    db id.GANONS_TOWER                      // 0B
-    db id.KALOS_POKEMON_LEAGUE              // 0C
-    db id.POKEMON_STADIUM_2                 // 0D
-    db id.SKYLOFT                           // 0E
-    db id.SMASHVILLE                        // 0F
-    db id.WARIOWARE                         // 10
-    db id.CORNERIA_CITY                     // 11
-    db id.DR_MARIO                          // 12
+    
+    db id.POKEMON_STADIUM_2                 // 11
+    db id.SKYLOFT                           // 12
+    db id.SMASHVILLE                        // 13
+    db id.WARIOWARE                         // 14
+    db id.CORNERIA_CITY                     // 15
+    db id.DR_MARIO                          // 16
+    db id.FIRST_DESTINATION                 // 17
+    db id.COOLCOOL                          // 18
+    db id.DRAGONKING                        // 19
+    db id.GREAT_BAY                         // 1A
+    db id.FRAYS_STAGE                       // 1B
+    db id.TOH                               // 1C
+    db id.FOD								// 1D
+	db id.MUDA				                // 1E
+    db id.MEMENTOS                          // 1F
+    db id.SHOWDOWN                          // 20
+    db id.SPIRALM                           // 21
+    db id.MORAY                             // 22
 
-    // page 3 (custom and better 1P Stages)
-    db id.FIRST_DESTINATION                 // 13
-    db id.BATTLEFIELD                       // 14
-    db id.COOLCOOL                          // 15
-    db id.DRAGONKING                        // 16
-    db id.GREAT_BAY                         // 17
-    db id.FRAYS_STAGE                       // 18
-    db id.TOH                               // 19
-	db id.FOD								// 1A
-	db id.MUDA                              // 1B
+    // page 3 (custom and beta)
     
-    
-    // page 4 (the bad stages)
-    db id.MEMENTOS                          // 1C
-    db id.FINAL_DESTINATION                 // 1D
-    db id.MINI_YOSHIS_ISLAND                // 1E
-	db id.META_CRYSTAL                      // 1F
-    db id.DUEL_ZONE                         // 20
-    db id.DREAM_LAND_BETA_1                 // 21
-    db id.DREAM_LAND_BETA_2                 // 22
-    db id.HOW_TO_PLAY                       // 23
+    db id.MUTE                              // 23
+    db id.DREAM_LAND_BETA_1                 // 24
+    db id.DREAM_LAND_BETA_2                 // 25
+    db id.HOW_TO_PLAY                       // 26
     
     OS.align(4)
 
@@ -1898,6 +1934,10 @@ scope Stages {
 	float32 0.5							// Fountain of Dreams
     float32 0.5                         // Muda Kingdom
     float32 0.5                         // Mementos
+    float32 0.5                         // Showdown
+    float32 0.5                         // Spiral Mountain
+    float32 0.5                         // Moray Towers
+    float32 0.5                         // Mute City
 
     background_table:
     db id.PEACHS_CASTLE                 // Peach's Castle
@@ -1960,6 +2000,10 @@ scope Stages {
 	db id.SECTOR_Z						// Fountain of Dreams
     db id.YOSHIS_ISLAND                 // Muda Kingdom
     db id.SECTOR_Z                      // Mementos
+    db id.SECTOR_Z                      // Showdown
+    db id.PEACHS_CASTLE                 // Spiral Mountain
+    db id.PEACHS_CASTLE                 // Moray Towers
+    db id.PEACHS_CASTLE                 // Mute City
     OS.align(4)
 
     // @ Description
@@ -2029,7 +2073,11 @@ scope Stages {
     dw header.TOH,                    type.CLONE
 	dw header.FOD,					  type.CLONE
     dw header.MUDA,                   type.CLONE
-    dw header.MEMENTOS,                type.CLONE
+    dw header.MEMENTOS,               type.CLONE
+    dw header.SHOWDOWN,               type.CLONE
+    dw header.SPIRALM,                type.CLONE
+    dw header.MORAY,                  type.CLONE
+    dw header.MUTE,                   type.CLONE
 
 
     string_peachs_castle:;          String.insert("Peach's Castle")
@@ -2069,6 +2117,10 @@ scope Stages {
 	string_fod:;					String.insert("Fountain of Dreams")
     string_muda:;                   String.insert("Muda Kingdom")
     string_mementos:;               String.insert("Mementos")
+    string_showdown:;               String.insert("Showdown")
+    string_spiralm:;                String.insert("Spiral Mountain")
+    string_moray:;                  String.insert("Moray Towers")
+    string_mute:;                   String.insert("Mute City")
 
     string_table:
     dw string_peachs_castle
@@ -2131,6 +2183,10 @@ scope Stages {
 	dw string_fod
     dw string_muda
     dw string_mementos
+    dw string_showdown
+    dw string_spiralm
+    dw string_moray
+    dw string_mute
 
 }
 
