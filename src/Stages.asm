@@ -506,56 +506,63 @@ scope Stages {
     // @ Description
     // Stage IDs in order
     stage_table:
-    // page 1 (mostly original stages)
-    db id.PEACHS_CASTLE                     // 00
-    db id.CONGO_JUNGLE                      // 01
-    db id.HYRULE_CASTLE                     // 02
-    db id.PLANET_ZEBES                      // 03
-    db id.MUSHROOM_KINGDOM                  // 04
-    db id.YOSHIS_ISLAND                     // 05
-    db id.DREAM_LAND                        // 06
-    db id.SECTOR_Z                          // 07
-    db id.SAFFRON_CITY                      // 08
-    db id.FINAL_DESTINATION                 // 09
-    db id.MINI_YOSHIS_ISLAND                // 0A
-	db id.META_CRYSTAL                      // 0B
-    db id.DUEL_ZONE                         // 0C
-    db id.BATTLEFIELD                       // 0D
-    db id.DEKU_TREE                         // 0E
-    db id.GANONS_TOWER                      // 0F
-    db id.KALOS_POKEMON_LEAGUE              // 10
-    db id.RANDOM                            // 11
-
-    // page 2 (custom stages)
-    
-    db id.POKEMON_STADIUM_2                 // 12
-    db id.SKYLOFT                           // 13
-    db id.SMASHVILLE                        // 14
-    db id.WARIOWARE                         // 15
-    db id.CORNERIA_CITY                     // 16
-    db id.DR_MARIO                          // 17
-    db id.FIRST_DESTINATION                 // 18
-    db id.COOLCOOL                          // 19
-    db id.DRAGONKING                        // 1A
-    db id.GREAT_BAY                         // 1B
-    db id.FRAYS_STAGE                       // 1C
-    db id.TOH                               // 1D
-    db id.FOD								// 1E
-	db id.MUDA				                // 1F
-    db id.MEMENTOS                          // 20
-    db id.SHOWDOWN                          // 21
-    db id.SPIRALM                           // 22
+    // page 1 (vanilla and "smash" stages)
+    db id.PEACHS_CASTLE                     // 00  
+    db id.CONGO_JUNGLE                      // 01  
+    db id.HYRULE_CASTLE                     // 02  
+    db id.PLANET_ZEBES                      // 03  
+    db id.MUSHROOM_KINGDOM                  // 04 
+	db id.META_CRYSTAL                      // 05 
+    db id.YOSHIS_ISLAND                     // 06 
+    db id.DREAM_LAND                        // 07  
+    db id.SECTOR_Z                          // 08  
+    db id.SAFFRON_CITY                      // 09 
+    db id.DUEL_ZONE                         // 0A 
+    db id.FINAL_DESTINATION                 // 0B    
+    db id.RANDOM                            // 0C 
+    db id.MINI_YOSHIS_ISLAND                // 0D 
+    db id.FIRST_DESTINATION                 // 0E 
+    db id.SHOWDOWN                          // 0F 
+    db id.BATTLEFIELD                       // 10 
+    db id.RANDOM                            // 11 
+    // page 2 (original design stages and beta)
+    db id.RANDOM                            // 12
+    db id.GANONS_TOWER                      // 13
+    db id.SPIRALM                           // 14
+    db id.COOLCOOL                          // 15
+    db id.DR_MARIO                          // 16
+    db id.RANDOM                            // 17
+    db id.RANDOM                            // 18
+    db id.DEKU_TREE                         // 19
+    db id.MUTE                              // 1A
+    db id.MUDA			                    // 1B
+    db id.DRAGONKING                        // 1C
+    db id.RANDOM                            // 1D
+    db id.RANDOM                            // 1E
+    db id.FRAYS_STAGE                       // 1F
+    db id.DREAM_LAND_BETA_1                 // 20
+    db id.DREAM_LAND_BETA_2                 // 21
+    db id.HOW_TO_PLAY                       // 22
     db id.RANDOM                            // 23
-
-    // page 3 (custom and beta)
-    
-    db id.MORAY                             // 24
-    db id.MUTE                              // 25
-    db id.DREAM_LAND_BETA_1                 // 26
-    db id.DREAM_LAND_BETA_2                 // 27
-    db id.HOW_TO_PLAY                       // 28
+    // page 3 (guest stages)
+    db id.RANDOM                            // 24
+    db id.KALOS_POKEMON_LEAGUE              // 25
+    db id.POKEMON_STADIUM_2                 // 26
+    db id.SKYLOFT                           // 27
+    db id.SMASHVILLE                        // 28
     db id.RANDOM                            // 29
-    
+    db id.RANDOM                            // 2A
+    db id.WARIOWARE                         // 2B
+    db id.MEMENTOS                          // 2C
+    db id.MORAY                             // 2D
+    db id.TOH                               // 2E
+    db id.RANDOM                            // 2F
+    db id.RANDOM                            // 30
+    db id.CORNERIA_CITY                     // 31
+    db id.GREAT_BAY                         // 32
+    db id.FOD					            // 33
+    db id.RANDOM                            // 34
+    db id.RANDOM                            // 35
     OS.align(4)
 
     // @ Description
