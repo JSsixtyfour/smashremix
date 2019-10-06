@@ -112,4 +112,7 @@ scope File {
     constant STG_MUTE_HEADER(0x8BF)
     constant STG_MUTE(0x8C0)
     constant STG_MUTE_BG(0x8C1)
+    constant STG_MADMM_HEADER(0x8C2)
+    constant STG_MADMM(0x8C3)
+    constant STG_MADMM_BG(0x8C4)
 }

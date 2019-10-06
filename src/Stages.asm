@@ -159,6 +159,7 @@ scope Stages {
     dw function.CLONE                       // Spiral Mountain
     dw function.CLONE                       // Moray Towers
     dw function.CLONE                       // Mute City
+    dw function.CLONE                       // Mad Monster Mansion
     
 
     // TODO
@@ -286,6 +287,7 @@ scope Stages {
     insert icon_spiralm,                "../textures/icon_spiralm.rgba5551"
     insert icon_moray,                  "../textures/icon_moray.rgba5551"
     insert icon_mute,                   "../textures/icon_mute.rgba5551"
+    insert icon_madmm,                   "../textures/icon_madmm.rgba5551"
     
 
     // @ Description
@@ -360,6 +362,7 @@ scope Stages {
         constant SPIRALM(0x3D)
         constant MORAY(0x3E)
         constant MUTE(0x3F)
+        constant MADMM(0x40)
 
         // not an actual id, some arbitary number Sakurai picked(?)
         constant RANDOM(0xDE)
@@ -462,6 +465,7 @@ scope Stages {
         constant SPIRALM(0x8B9)
         constant MORAY(0x8BC)
         constant MUTE(0x8BF)
+        constant MADMM(0x8C2)
     }
 
     scope function {
@@ -537,7 +541,7 @@ scope Stages {
     db id.MUTE                              // 1A
     db id.MUDA			                    // 1B
     db id.DRAGONKING                        // 1C
-    db id.RANDOM                            // 1D
+    db id.MADMM                             // 1D
     db id.RANDOM                            // 1E
     db id.FRAYS_STAGE                       // 1F
     db id.DREAM_LAND_BETA_1                 // 20
@@ -659,6 +663,7 @@ scope Stages {
     dw icon_spiralm                         // Spiral Mountain
     dw icon_moray                           // Moray Towers
     dw icon_mute                            // Mute City
+    dw icon_madmm                           // Mad Monster Mansion
 
     // @ Description
     // Row the cursor is on
@@ -1811,6 +1816,7 @@ scope Stages {
     db id.DREAM_LAND_BETA_1                 // 24
     db id.DREAM_LAND_BETA_2                 // 25
     db id.HOW_TO_PLAY                       // 26
+    db id.MADMM                             // 27
     
     OS.align(4)
 
@@ -1945,6 +1951,7 @@ scope Stages {
     float32 0.5                         // Spiral Mountain
     float32 0.5                         // Moray Towers
     float32 0.5                         // Mute City
+    float32 0.5                         // Mad Monster Mansion
 
     background_table:
     db id.PEACHS_CASTLE                 // Peach's Castle
@@ -2011,6 +2018,7 @@ scope Stages {
     db id.PEACHS_CASTLE                 // Spiral Mountain
     db id.PEACHS_CASTLE                 // Moray Towers
     db id.PEACHS_CASTLE                 // Mute City
+    db id.SECTOR_Z                      // Mad Monster Mansion
     OS.align(4)
 
     // @ Description
@@ -2085,6 +2093,7 @@ scope Stages {
     dw header.SPIRALM,                type.CLONE
     dw header.MORAY,                  type.CLONE
     dw header.MUTE,                   type.CLONE
+    dw header.MADMM,                  type.CLONE
 
 
     string_peachs_castle:;          String.insert("Peach's Castle")
@@ -2128,6 +2137,7 @@ scope Stages {
     string_spiralm:;                String.insert("Spiral Mountain")
     string_moray:;                  String.insert("Moray Towers")
     string_mute:;                   String.insert("Mute City")
+    string_madmm:;                  String.insert("Mad Monster Mansion")
 
     string_table:
     dw string_peachs_castle
@@ -2194,6 +2204,7 @@ scope Stages {
     dw string_spiralm
     dw string_moray
     dw string_mute
+    dw string_madmm
 
 }
 

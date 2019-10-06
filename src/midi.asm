@@ -96,5 +96,6 @@ scope MIDI {
     insert_midi(MORAY_TOWERS)
     insert_midi(MUTE_CITY)
     insert_midi(BATTLEFIELD)
+    insert_midi(MADMONSTER)
     print "========================================================================== \n"
 }
