@@ -78,17 +78,10 @@ scope Overlay {
         nop
 
         _sss:
-        lli     t1, 0x0010                  // t1 = stage select screen
+        lli     t1, 0x0015                  // t1 = stage select screen
         bne     t0, t1, _finish             // if (screen_id != stage_select), skip
         nop
         jal     Stages.run_                 //
-        nop
-
-        _css:
-        lli     t1, 0x0010                  // t1 = versus stage select screen
-        bne     t0, t1, _finish             // if (screen_id != stage_select), skip
-        nop
-        jal     CharacterSelect.run_        // run
         nop
 
         _finish:
