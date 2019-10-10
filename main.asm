@@ -48,11 +48,6 @@ constant calculate_stock_score_(0x801373CC)
 constant vsteam_attack(0x800A4D11)
 constant vsitem_frequency(0x800A4D24)
 
-// unlock all
-origin 0x00042B3A
-base 0x800A3DEA
-dw 0x007F0C90
-
 // Nintendo 64 logo cannot be skipped (Cyjorg)
 // Instead of checking for a button press, the check has been disabled.
 origin 0x0017EE18
@@ -101,6 +96,7 @@ include "src/Stages.asm"
 include "src/String.asm"
 include "src/Texture.asm"
 include "src/Costumes.asm"
+include "src/Cheats.asm"
 // CONSTANTS
 include "src/Action.asm"
 include "src/File.asm"
