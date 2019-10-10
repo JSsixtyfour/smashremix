@@ -100,6 +100,7 @@ include "src/Spawn.asm"
 include "src/Stages.asm"
 include "src/String.asm"
 include "src/Texture.asm"
+include "src/Costumes.asm"
 // CONSTANTS
 include "src/Action.asm"
 include "src/File.asm"
