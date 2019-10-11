@@ -97,6 +97,7 @@ include "src/String.asm"
 include "src/Texture.asm"
 include "src/Costumes.asm"
 include "src/Cheats.asm"
+include "src/TimedStock.asm"
 // CONSTANTS
 include "src/Action.asm"
 include "src/File.asm"
