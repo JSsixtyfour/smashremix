@@ -97,5 +97,7 @@ scope MIDI {
     insert_midi(MUTE_CITY)
     insert_midi(BATTLEFIELD)
     insert_midi(MADMONSTER)
+    insert_midi(GANON_VICTORY)
+    insert_midi(YOUNGLINK_VICTORY)
     print "========================================================================== \n"
 }
