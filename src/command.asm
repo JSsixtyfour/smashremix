@@ -54,6 +54,7 @@ scope Command {
         OS.save_registers()                 // full register save
         
         scope _reset_translation_multiplier: {
+            lw      a0, 0x0010(sp)          // ~
             lw      t2, 0x0074(a0)          // t2 = first bone struct
             lw      t2, 0x0048(t2)          // t2 = translation multiplier (bone 1 size multiplier)
             lw      t3, 0x0084(a0)          // t3 = player struct      
@@ -64,7 +65,32 @@ scope Command {
             sw      t2, 0x0000(t0)          // store default translation multiplier
         }
         
+        scope _check_destroy_display_lists: {
+            li      t0, previous_screen     // ~
+            lw      t0, 0x0000(t0)          // t0 = previous_screen
+            li      t1, Global.current_screen
+            lbu     t1, 0x0000(t1)          // t1 = current_screen
+            beq     t0, t1, _skip           // skip if previous_screen = current_screen
+            nop
+            
+            // destroy saved display lists for p1
+            jal     destroy_saved_display_lists_
+            ori     a0, r0, 0x0000
+            // destroy saved display lists for p2
+            jal     destroy_saved_display_lists_
+            ori     a0, r0, 0x0001
+            // destroy saved display lists for p3
+            jal     destroy_saved_display_lists_
+            ori     a0, r0, 0x0002
+            // destroy saved display lists for p4
+            jal     destroy_saved_display_lists_
+            ori     a0, r0, 0x0003
+
+            _skip:
+        }
+        
         scope _reset_saved_display_lists: {
+            lw      a0, 0x0010(sp)          // ~
             lw      t0, 0x0084(a0)          // t0 = player struct
             li      t1, model_part.table_save
             lbu     t2, 0x000D(t0)          // ~
@@ -96,11 +122,60 @@ scope Command {
             _exit_loop:
         }
         
+        scope _update_screen: {
+            li      t0, previous_screen     // t0 = previous_screen address
+            li      t1, Global.current_screen
+            lbu     t1, 0x0000(t1)          // t1 = current_screen
+            sw      t1, 0x0000(t0)          // update previous_screen
+        }
+        
         OS.restore_registers()              // full register load
         j   _change_action_return           // return
         nop
+        
+        // holds the screen id from the previous change_action_
+        previous_screen:
+        dw 0
     }
     
+    // @ Description
+    // Erases all saved display lists for a given player.
+    // @ Arguments
+    // a0 - player (p1 = 0, p4 = 3)
+    scope destroy_saved_display_lists_: {
+        addiu   sp, sp,-0x0018              // allocate stack space
+        sw      t0, 0x0004(sp)              // ~
+        sw      t1, 0x0008(sp)              // ~
+        sw      t2, 0x000C(sp)              // ~
+        sw      t3, 0x0010(sp)              // store t0-t3
+        li      t0, model_part.table_save   // ~
+        sll     t1, a0, 0x3                 // ~
+        addu    t1, t1, t0                  // t1 = table_save + (player * 8)
+        lw      t0, 0x0000(t1)              // t0 = table_temp_px
+        lw      t1, 0x0004(t1)              // t1 = table_perm_px
+        ori     t2, r0, model_part.TABLE_SIZE
+        or      t3, r0, r0                  // t2 = table_current
+        
+        _loop:
+        beq     t2, t3, _exit_loop          // exit loop if table_current = TABLE_SIZE
+        nop
+        sw      r0, 0x0000(t0)              // destroy table_temp_px dlist
+        sw      r0, 0x0000(t1)              // destroy table_perm_px dlist
+        addiu   t0, t0, 0x0004              // increment table_temp_px
+        addiu   t1, t1, 0x0004              // increment table_perm_px
+        addiu   t3, t3, 0x0001              // increment table_current
+        b       _loop
+        nop
+
+        _exit_loop:
+        lw      t0, 0x0004(sp)              // ~
+        lw      t1, 0x0008(sp)              // ~
+        lw      t2, 0x000C(sp)              // ~
+        lw      t3, 0x0010(sp)              // load t0-t3
+        addiu   sp, sp, 0x0018              // deallocate stack space
+        jr      ra
+        nop
+    }
     
     // CUSTOM COMMANDS
     // s2 = player struct
