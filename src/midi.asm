@@ -99,5 +99,7 @@ scope MIDI {
     insert_midi(MADMONSTER)
     insert_midi(GANON_VICTORY)
     insert_midi(YOUNGLINK_VICTORY)
+    insert_midi(FALCO_VICTORY)
+    insert_midi(DRMARIO_VICTORY)
     print "========================================================================== \n"
 }
