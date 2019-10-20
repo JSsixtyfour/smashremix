@@ -84,6 +84,10 @@ scope FGM {
     constant ORIGINAL_SFX_FGM_COUNT(0x1D0)
     constant ORIGINAL_SAMPLE_COUNT(0x142)
     variable new_sample_count(0)
+    
+    // Sample rate constants
+    constant SAMPLE_RATE_32000(0x60)
+    constant SAMPLE_RATE_16000(0x20)
 
     OS.align(16)
     default_sound_parameters_moved:
@@ -115,12 +119,12 @@ scope FGM {
     // Adds a new sound file to the sound bank.
     // @ Arguments
     // name - Name of the file located in ../src, without the extension and including directory e.g. DrMario/sounds/B65
-    // pitch - The desired pitch
-    macro add_sound(name, pitch) {
+    // sample rate - The desired sample rate, for now 16000 Hz and 32000 Hz are supported
+    macro add_sound(name, sample_rate) {
         global variable new_sample_count(new_sample_count + 1)
         evaluate num(new_sample_count)
         global define SOUND_NAME_{num}({name})
-        global define SOUND_PITCH_{num}({pitch})
+        global evaluate SOUND_SAMPLE_RATE_{num}({sample_rate})
         print "Added {SOUND_NAME_{num}}\nFGM_ID: 0x"; OS.print_hex(ORIGINAL_FGM_COUNT - 1 + {num})
         print "\nSound Test Voice ID: ", 244 + {num}, "\n\n"
     }
@@ -220,7 +224,7 @@ scope FGM {
         }
         evaluate microcode_blocks({n})
         fill total_microcode_size, 0x00 // moved ones
-        fill new_sample_count * 0x18, 0x00 // TODO: maybe not all should be 0x18?
+        fill new_sample_count * 0x1C, 0x00 // TODO: maybe not all should be 0x1C?
         OS.align(4)
 
         extended_voice_map_table:
@@ -330,8 +334,7 @@ scope FGM {
         // TODO: set up with more arguments once we understand this better
         // @ Arguments
         // sfx_fgm_index - The index in the SFX to FGM table
-        // pitch - The desired pitch
-        macro add_microcode(sfx_fgm_index, pitch) {
+        macro add_microcode(sfx_fgm_index) {
             dh  0xDE00
             db  0xD1
             // If next byte is < 0x80, then it is the SFX_ID
@@ -341,15 +344,12 @@ scope FGM {
             dh  {sfx_fgm_index}
             //db  0x01 // would do this instead of the above line if the sfx_fgm_index was 0x1, for example
             dh  0xD2FF
-            dh  0xD344
-            dh  0xD221
-            db  0xD5
-            db  0xDC
-            db  {pitch}
-            db  0x14
-            dw  0xD3322F1E
-            dw  0xD3142F55
-            db  0xD0
+            db  0xD3
+            dw  0x55D224D5
+            dw  0xEC6F64D3
+            dw  0x4B6F64D3
+            dw  0x416F64D3
+            dw  0x3C6F1ED0
         }
 
         // now make room for adding more fgm_ids by moving the first fgm_id microcodes
@@ -382,8 +382,7 @@ scope FGM {
 
             // add the microcode
             origin microcode_origin
-            evaluate m({n}+1)
-            add_microcode(0x1D0 + {n}, {SOUND_PITCH_{m}})
+            add_microcode(0x1D0 + {n})
             variable microcode_origin(origin())
             variable microcode_pc(pc())
             evaluate n({n}+1)
@@ -394,14 +393,21 @@ scope FGM {
         // TODO: set up with more arguments once we understand this better
         // @ Arguments
         // sfx_index - The index in the SFX table
-        macro add_sfx_fgm(sfx_index, sfx_fgm_origin) {
+        // sample_rate - Sample of the SFX, for now 16000 Hz and 32000 Hz are supported.
+        macro add_sfx_fgm(sfx_index, sample_rate) {
             // TODO: May not always use 0x3C as the block size - look into manually building this block
+            // Block size of 0x3C is no longer filled
             db      0x60                                        // always starts with 60
-            insert  "../roms/original.z64", SFX_FGM_TABLE, 0x3C // we're adding the first record, which points to a low sfx id
-            pushvar base, origin
-            origin  {sfx_fgm_origin} + 1                          // so adjust halfword here to point to our new sound
-            dh      {sfx_index}                                 // adjust the pointer to the sfx id we added
-            pullvar origin, base
+            dh      {sfx_index}                                 // add the pointer to the sfx id we added
+            db      {sample_rate}                               // set sample rate (0x20 = 16000 Hz, 0x60 = 32000 Hz)
+            dw      0xFB500564
+            dw      0x05690574
+            dw      0x080A7208
+            dw      0x19690832
+            dw      0x5F083255
+            dw      0x08324608
+            dw      0x3C3C083C
+            dw      0x32700000
         }
 
         // now make room for adding other sfx_id to fgm_id records by moving the first sfx_id to fgm_id blocks
@@ -434,8 +440,8 @@ scope FGM {
 
             // add the sfx to fgm block
             origin sfx_fgm_origin
-            evaluate o(sfx_fgm_origin)
-            add_sfx_fgm(0x8142 + {n}, {o})
+            evaluate s({n}+1)
+            add_sfx_fgm(0x8142 + {n}, {SOUND_SAMPLE_RATE_{s}})
             variable sfx_fgm_origin(origin())
             variable sfx_fgm_pc(pc())
             evaluate n({n}+1)
@@ -464,61 +470,61 @@ scope FGM {
     }
 
     // Add the sounds here
-    add_sound(Ganondorf/sounds/34 chant, 0x2F)
-    add_sound(Ganondorf/sounds/53 deflectsound2, 0x2F)
-    add_sound(Ganondorf/sounds/54 hurtcut3, 0x2F)
-    add_sound(Ganondorf/sounds/55 hurt2cut2, 0x2F)
-    add_sound(Ganondorf/sounds/56 attacklike6cut3 seems unused, 0x2F)
-    add_sound(Ganondorf/sounds/57 middle size attackcut6, 0x2F)
-    add_sound(Ganondorf/sounds/58 attacklike2cut7, 0x2F)
-    add_sound(Ganondorf/sounds/5A true, 0x2F)
-    add_sound(Ganondorf/sounds/5B true, 0x2F)
-    add_sound(Ganondorf/sounds/5C Goodattacksound, 0x2F)
-    add_sound(Ganondorf/sounds/5D attacklike6, 0x2F)
-    add_sound(Ganondorf/sounds/5E shortenedlaugh, 0x2F)
-    add_sound(Ganondorf/sounds/5F attacklike5cut4, 0x2F)
-    add_sound(Ganondorf/sounds/62 deathlikecut1, 0x2F)
-    add_sound(Ganondorf/sounds/91_2 (speed), 0x2F)
-    add_sound(Ganondorf/sounds/91_2(pitch), 0x2F)
-    add_sound(Ganondorf/sounds/C4 Ganondorf AnnouncerLowpitch, 0x2F)
+    add_sound(Ganondorf/sounds/34 chant, SAMPLE_RATE_16000)
+    add_sound(Ganondorf/sounds/53 deflectsound2, SAMPLE_RATE_16000)
+    add_sound(Ganondorf/sounds/54 hurtcut3, SAMPLE_RATE_16000)
+    add_sound(Ganondorf/sounds/55 hurt2cut2, SAMPLE_RATE_16000)
+    add_sound(Ganondorf/sounds/56 attacklike6cut3 seems unused, SAMPLE_RATE_16000)
+    add_sound(Ganondorf/sounds/57 middle size attackcut6, SAMPLE_RATE_16000)
+    add_sound(Ganondorf/sounds/58 attacklike2cut7, SAMPLE_RATE_16000)
+    add_sound(Ganondorf/sounds/5A true, SAMPLE_RATE_16000)
+    add_sound(Ganondorf/sounds/5B true, SAMPLE_RATE_16000)
+    add_sound(Ganondorf/sounds/5C Goodattacksound, SAMPLE_RATE_16000)
+    add_sound(Ganondorf/sounds/5D attacklike6, SAMPLE_RATE_16000)
+    add_sound(Ganondorf/sounds/5E shortenedlaugh, SAMPLE_RATE_16000)
+    add_sound(Ganondorf/sounds/5F attacklike5cut4, SAMPLE_RATE_16000)
+    add_sound(Ganondorf/sounds/62 deathlikecut1, SAMPLE_RATE_16000)
+    add_sound(Ganondorf/sounds/91_2 (speed), SAMPLE_RATE_16000)
+    add_sound(Ganondorf/sounds/91_2(pitch), SAMPLE_RATE_16000)
+    add_sound(Ganondorf/sounds/C4 Ganondorf AnnouncerLowpitch, SAMPLE_RATE_16000)
     // TODO: which Falco chant to keep?
-    add_sound(Falco/sounds/35_chant(shortened), 0x2F)
-    //add_sound(Falco/sounds/35_chant, 0x2F)
-    add_sound(Falco/sounds/66, 0x2F)
-    add_sound(Falco/sounds/67, 0x2F)
-    add_sound(Falco/sounds/68, 0x2F)
-    add_sound(Falco/sounds/69, 0x2F)
-    add_sound(Falco/sounds/6a, 0x2F)
-    add_sound(Falco/sounds/6B, 0x2F)
-    add_sound(Falco/sounds/6C, 0x2F)
-    add_sound(Falco/sounds/6D, 0x2F)
-    add_sound(Falco/sounds/6E, 0x2F)
-    add_sound(Falco/sounds/6F, 0x2F)
-    add_sound(Falco/sounds/70, 0x2F)
-    add_sound(Falco/sounds/71, 0x2F)
-    add_sound(Falco/sounds/72, 0x2F)
+    add_sound(Falco/sounds/35_chant(shortened), SAMPLE_RATE_16000)
+    //add_sound(Falco/sounds/35_chant, SAMPLE_RATE_16000)
+    add_sound(Falco/sounds/66, SAMPLE_RATE_16000)
+    add_sound(Falco/sounds/67, SAMPLE_RATE_16000)
+    add_sound(Falco/sounds/68, SAMPLE_RATE_16000)
+    add_sound(Falco/sounds/69, SAMPLE_RATE_16000)
+    add_sound(Falco/sounds/6a, SAMPLE_RATE_16000)
+    add_sound(Falco/sounds/6B, SAMPLE_RATE_16000)
+    add_sound(Falco/sounds/6C, SAMPLE_RATE_16000)
+    add_sound(Falco/sounds/6D, SAMPLE_RATE_16000)
+    add_sound(Falco/sounds/6E, SAMPLE_RATE_16000)
+    add_sound(Falco/sounds/6F, SAMPLE_RATE_16000)
+    add_sound(Falco/sounds/70, SAMPLE_RATE_16000)
+    add_sound(Falco/sounds/71, SAMPLE_RATE_16000)
+    add_sound(Falco/sounds/72, SAMPLE_RATE_16000)
     // TODO: which BD to keep?
-    //add_sound(Falco/sounds/BD_announcer-slow, 0x2F)
-    //add_sound(Falco/sounds/BD_announcer-slow2, 0x2F)
-    //add_sound(Falco/sounds/BD_announcer-slow3, 0x2F)
-    add_sound(Falco/sounds/BD_announcer, 0x2F)
-    add_sound(YoungLink/sounds/37 Young Link Chant, 0x2F)
-    add_sound(YoungLink/sounds/8A2, 0x2F)
-    add_sound(YoungLink/sounds/8B Hup!short3, 0x6F)
-    add_sound(YoungLink/sounds/8C5, 0x2F)
-    add_sound(YoungLink/sounds/8D2, 0x2F)
-    add_sound(YoungLink/sounds/8E2, 0x2F)
-    add_sound(YoungLink/sounds/8F(speed), 0x2F)
-    add_sound(YoungLink/sounds/90_2, 0x2F)
-    add_sound(YoungLink/sounds/91_2 (25speed), 0x2F)
-    add_sound(YoungLink/sounds/92_OOT_YoungLink_Jump3, 0x2F)
-    add_sound(YoungLink/sounds/93_jump2_highpitch, 0x2F)
-    add_sound(YoungLink/sounds/95_highpitch2, 0x2F)
-    add_sound(YoungLink/sounds/95, 0x2F)
-    add_sound(YoungLink/sounds/96 (speed), 0x2F)
-    add_sound(YoungLink/sounds/Announcer4, 0x2F)
-    add_sound(DrMario/sounds/65, 0x2F)
-    add_sound(DrMario/sounds/B5, 0x2F)
+    //add_sound(Falco/sounds/BD_announcer-slow, SAMPLE_RATE_16000)
+    //add_sound(Falco/sounds/BD_announcer-slow2, SAMPLE_RATE_16000)
+    //add_sound(Falco/sounds/BD_announcer-slow3, SAMPLE_RATE_16000)
+    add_sound(Falco/sounds/BD_announcer, SAMPLE_RATE_16000)
+    add_sound(YoungLink/sounds/37 Young Link Chant, SAMPLE_RATE_16000)
+    add_sound(YoungLink/sounds/8A2, SAMPLE_RATE_16000)
+    add_sound(YoungLink/sounds/8B Hup!short3, SAMPLE_RATE_16000)
+    add_sound(YoungLink/sounds/8C5, SAMPLE_RATE_16000)
+    add_sound(YoungLink/sounds/8D2, SAMPLE_RATE_16000)
+    add_sound(YoungLink/sounds/8E2, SAMPLE_RATE_16000)
+    add_sound(YoungLink/sounds/8F(speed), SAMPLE_RATE_16000)
+    add_sound(YoungLink/sounds/90_2, SAMPLE_RATE_16000)
+    add_sound(YoungLink/sounds/91_2 (25speed), SAMPLE_RATE_16000)
+    add_sound(YoungLink/sounds/92_OOT_YoungLink_Jump3, SAMPLE_RATE_16000)
+    add_sound(YoungLink/sounds/93_jump2_highpitch, SAMPLE_RATE_16000)
+    add_sound(YoungLink/sounds/95_highpitch2, SAMPLE_RATE_16000)
+    add_sound(YoungLink/sounds/95, SAMPLE_RATE_16000)
+    add_sound(YoungLink/sounds/96 (speed), SAMPLE_RATE_16000)
+    add_sound(YoungLink/sounds/Announcer4, SAMPLE_RATE_16000)
+    add_sound(DrMario/sounds/65, SAMPLE_RATE_16000)
+    add_sound(DrMario/sounds/B5, SAMPLE_RATE_16000)
 
     // This is always last
     write_sounds()
