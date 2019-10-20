@@ -7,8 +7,39 @@ print "included FGM.asm\n"
 // This file allows FGM (forground music) to be played.
 
 include "OS.asm"
+include "MIDI.asm"
 
 scope FGM {
+    // @ Description
+    // Modifies the routine that maps Sound Test screen choices to FGM IDs
+    scope augment_sound_test_voice_: {
+        OS.patch_start(0x18858C, 0x801321BC)
+        j       augment_sound_test_voice_
+        nop
+        OS.patch_end()
+
+        lui     t4, 0x8013                        // original line 1
+        lw      t4, 0x4350(t4)                    // original line 2
+        slti    a0, t4, 0xF4                      // check if this is one we added (so >= 0xF4)
+        bnez    a0, _normal                       // if (original fgm_id) then skip to _normal
+        nop
+        // If we're here, then the voice ID is > 0xF3 which means it's
+        // one we added. So we need to set up a0 as the extended sfx
+        // table address and offset:
+        li      a0, extended_voice_map_table      // a0 = address of extended table
+        addiu   t5, t4, -0x00F4                   // t5 = slot in extended table
+        sll     t5, t5, 0x2                       // t5 = offset for fgm_id in extended table
+        addu    a0, a0, t5                        // a0 = adress for fgm_id
+        lhu     a0, 0x0002(a0)                    // a0 = fgm_id
+        jal     0x800269C0                        // call sound routine
+        nop
+        j       0x801321D8                        // return
+        nop
+
+        _normal:
+        j       0x801321C4                        // continue with original line 3
+        nop
+    }
 
     // @ Description
     // Plays a sound effect (safe)
@@ -23,6 +54,476 @@ scope FGM {
         nop
     }
 
+    // Extended Sound Effects
+
+    print "=============================== SOUND FILES ==============================\n"
+
+    // The CTL_TABLE is the base for a lot of sound related offsets
+    read32 CTL_TABLE, "../roms/original.z64", 0x3D750
+    constant BANK_MAP(CTL_TABLE + 0x0028) // 0x0028(CTL_TABLE)
+    read32 RAW_SAMPLE_DATA, "../roms/original.z64", 0x3D754
+    read32 PARAMETERS_MAP_OFFSET, "../roms/original.z64", BANK_MAP
+    constant PARAMETERS_MAP(CTL_TABLE + PARAMETERS_MAP_OFFSET)
+    read32 DEFAULT_SOUND_PARAMETERS_OFFSET, "../roms/original.z64", PARAMETERS_MAP
+    constant DEFAULT_SOUND_PARAMETERS(CTL_TABLE + DEFAULT_SOUND_PARAMETERS_OFFSET)
+    constant BANK_TABLE(DEFAULT_SOUND_PARAMETERS + 0x10)
+    constant PREDICTORS(BANK_TABLE + 0xA10) // 0x142 * 8
+    read32 SFX_FGM_MAP, "../roms/original.z64", 0x3D790
+    constant SFX_FGM_TABLE(SFX_FGM_MAP + 0x744) // 0x1D0 * 4 + 4
+    read32 FGM_MICROCODE_MAP, "../roms/original.z64", 0x3D798
+    constant FGM_MICROCODE(FGM_MICROCODE_MAP + 0xAE0) // 0x2B7 * 4 + 4
+
+    // The following help determine correct offsets
+    constant ORIGINAL_MIDI_SEGMENT_SIZE(0x35C0)
+    constant DIFFERENCE(((MIDI.midi_count * 8 + 0xF) & 0xFFF0) + ((MIDI.largest_midi + 0xF) & 0xFFF0) - ORIGINAL_MIDI_SEGMENT_SIZE)
+    constant FGM_MICROCODE_MAP_PC(0x80076D50 + DIFFERENCE)
+    constant SFX_FGM_MAP_PC(0x80073F80 + DIFFERENCE)
+    constant CTL_TABLE_PC(0x8004D9F0)
+
+    constant ORIGINAL_FGM_COUNT(0x2B7)
+    constant ORIGINAL_SFX_FGM_COUNT(0x1D0)
+    constant ORIGINAL_SAMPLE_COUNT(0x142)
+    variable new_sample_count(0)
+
+    OS.align(16)
+    default_sound_parameters_moved:
+    variable default_sound_parameters_moved_origin(origin())
+    dw 0x00
+    dw 0x00
+    dw 0x00
+    dw 0x00
+
+    // @ Description
+    // Inserts the predictors for the given new sound number
+    // @ Arguments
+    // num - the new sound number
+    macro insert_predictors(num) {
+        dw     0x00000002
+        dw     0x00000004
+        insert SOUND_PREDICTORS_{num}, "../src/{SOUND_NAME_{num}}.aifc", 0x70, 0x80
+    }
+
+    // @ Description
+    // Inserts the raw data for the given new sound number
+    // @ Arguments
+    // num - the new sound number
+    macro insert_raw_data(num) {
+        insert SOUND_RAW_{num}, "../src/{SOUND_NAME_{num}}.aifc", 0x100
+    }
+
+    // @ Description
+    // Adds a new sound file to the sound bank.
+    // @ Arguments
+    // name - Name of the file located in ../src, without the extension and including directory e.g. DrMario/sounds/B65
+    // pitch - The desired pitch
+    macro add_sound(name, pitch) {
+        global variable new_sample_count(new_sample_count + 1)
+        evaluate num(new_sample_count)
+        global define SOUND_NAME_{num}({name})
+        global define SOUND_PITCH_{num}({pitch})
+        print "Added {SOUND_NAME_{num}}\nFGM_ID: 0x"; OS.print_hex(ORIGINAL_FGM_COUNT - 1 + {num})
+        print "\nSound Test Voice ID: ", 244 + {num}, "\n\n"
+    }
+
+    // @ Description
+    // Adds a new FGM ID
+    // TODO: it would be nice to be able to add new FGM_IDs referencing existing sounds
+    macro add_fgm() {
+
+    }
+
+    // @ Description
+    // Loops through the new sounds and FGMs and writes to the ROM.
+    macro write_sounds() {
+        parameters_map_extended:
+        global variable parameters_map_extended_origin(origin())
+        fill new_sample_count * 0x10, 0x00
+
+        bank_table_extended:
+        global variable bank_table_extended_origin(origin())
+        // move bank table entries when new_sample_count > 4
+        variable moved_bank_table_slots(0)
+        if new_sample_count > 4 {
+            variable moved_bank_table_slots((new_sample_count - 3) / 2) // 1 slot holds 2 words, bass rounds down
+
+            // first move the slots
+            insert  "../roms/original.z64", BANK_TABLE, moved_bank_table_slots * 0x8
+
+            // then update the pointers
+            define n(0)
+            while {n} < moved_bank_table_slots {
+                origin  PARAMETERS_MAP + 0x4 + ({n} * 0x10)       // need to update 2nd word in each 0x10 slot
+                dw      bank_table_extended - CTL_TABLE_PC                                                                      // always this - when loaded to ram, it is 0x3F7E0104
+                evaluate n({n}+1)
+            }
+
+            origin bank_table_extended_origin + (moved_bank_table_slots * 0x8)
+        }
+        fill new_sample_count * 0x8, 0x00
+
+        predictors_extended:
+        global variable predictors_extended_origin(origin())
+        define n(1)
+        while {n} <= new_sample_count {
+            insert_predictors({n})
+            evaluate size(SOUND_PREDICTORS_{n}.size)
+            // Seems like A8 and D8 are the 2 valid sizes - we added 0x2 and 0x4 (words) and we'll add some words later as well
+            if {size} < 0xA0 {
+                fill 0xA0 - {size}, 0x00
+            } else {
+                fill 0xD0 - {size}, 0x00
+            }
+            evaluate n({n}+1)
+        }
+
+		pushvar origin, base
+		origin MIDI.MIDI_BANK_END
+        raw_sample_data_extended:
+        global variable raw_sample_data_extended_origin(origin())
+        define n(1)
+        while {n} <= new_sample_count {
+            insert_raw_data({n})
+            evaluate n({n}+1)
+        }
+        OS.align(4)
+		pullvar base, origin
+
+        sfx_fgm_table_extended:
+        global variable sfx_fgm_table_extended_origin(origin())
+        constant SPACE_REQUIRED(new_sample_count * 0x4) // need a word for each new sound
+        variable total_sfx_fgm_size(0)
+        define n(1)
+        while total_sfx_fgm_size < SPACE_REQUIRED {
+            read32   sfx_fgm_curr_pointer_{n}, "../roms/original.z64", SFX_FGM_MAP + ({n} * 4)
+            evaluate next({n} + 1)
+            read32   sfx_fgm_next_pointer_{n}, "../roms/original.z64", SFX_FGM_MAP + ({next} * 4)
+            constant SFX_FGM_SIZE_{n}(sfx_fgm_next_pointer_{n} - sfx_fgm_curr_pointer_{n})
+            variable total_sfx_fgm_size(total_sfx_fgm_size + SFX_FGM_SIZE_{n})
+            evaluate n({n} + 1)
+        }
+        evaluate sfx_fgm_blocks({n})
+        fill total_sfx_fgm_size, 0x00 // moved ones
+        fill new_sample_count * 0x3D, 0x00 // TODO: maybe not all should be 0x3D?
+        OS.align(4)
+
+        fgm_microcode_extended:
+        global variable fgm_microcode_extended_origin(origin())
+        variable total_microcode_size(0)
+        define n(1)
+        while total_microcode_size < SPACE_REQUIRED {
+            read32   microcode_curr_pointer_{n}, "../roms/original.z64", FGM_MICROCODE_MAP + ({n} * 4)
+            evaluate next({n} + 1)
+            read32   microcode_next_pointer_{n}, "../roms/original.z64", FGM_MICROCODE_MAP + ({next} * 4)
+            constant MICROCODE_SIZE_{n}(microcode_next_pointer_{n} - microcode_curr_pointer_{n})
+            variable total_microcode_size(total_microcode_size + MICROCODE_SIZE_{n})
+            evaluate n({n} + 1)
+        }
+        evaluate microcode_blocks({n})
+        fill total_microcode_size, 0x00 // moved ones
+        fill new_sample_count * 0x18, 0x00 // TODO: maybe not all should be 0x18?
+        OS.align(4)
+
+        extended_voice_map_table:
+        global variable extended_voice_map_table_origin(origin())
+        fill new_sample_count * 0x4, 0x00
+
+        // @ Description
+        // Moves the default sound parameters to clear space for expanding BANK_MAP.
+        // I'm not sure that these are ever used, though...
+        macro move_default_sound_parameters() {
+            pushvar origin, base
+
+            // define a new offset for the default sound parameters
+            origin  PARAMETERS_MAP
+            while (origin() < RAW_SAMPLE_DATA) {
+                dw      default_sound_parameters_moved - CTL_TABLE_PC           // first word in each entry is the offset
+                origin origin() + 0xC
+            }
+
+            // remove the sound parameters - this makes room for 4 new sounds
+            origin  DEFAULT_SOUND_PARAMETERS
+            fill    0x10, 0x00
+
+            // insert the default sound parameters
+            origin  default_sound_parameters_moved_origin
+            insert  "../roms/original.z64", DEFAULT_SOUND_PARAMETERS, 0x10
+
+            pullvar base, origin
+        }
+
+        move_default_sound_parameters()
+
+        pushvar origin, base
+
+        // update bank size
+        origin  CTL_TABLE + 0x26
+        dh      0x0142 + new_sample_count
+
+        // now augment bank with offsets
+        origin  DEFAULT_SOUND_PARAMETERS
+        define n(0)
+        while {n} < new_sample_count {
+            dw      parameters_map_extended - CTL_TABLE_PC + ({n} * 0x10)
+            evaluate n({n}+1)
+        }
+
+        // now populate extended parameters map
+        origin  parameters_map_extended_origin
+        define n(0)
+        while {n} < new_sample_count {
+            dw      default_sound_parameters_moved - CTL_TABLE_PC                                     // offset to default sound params
+            dw      bank_table_extended + (moved_bank_table_slots * 0x8) - CTL_TABLE_PC + ({n} * 0x8) // offset to bank table
+            // TODO: predictors can be 0xA8 or 0xD8, so need to account for that properly
+            // For now assuming always 0xA8
+            dw      predictors_extended + 0x90 - CTL_TABLE_PC + ({n} * 0xA8)                          // offset to predictors block's raw sample data pointer
+            dw      0x3F7E0004                                                                        // always this - when loaded to ram, it is 0x3F7E0104
+            evaluate n({n}+1)
+        }
+
+        // now populate extended bank table
+        origin  bank_table_extended_origin + moved_bank_table_slots * 0x8
+        define n(0)
+        while {n} < new_sample_count {
+            // TODO: first two bytes should increment for each sound added until we get to 7F...
+            // ...then it should increment the 0202 to 0303 for example and restart the first two at 0000
+            dw      0x42420202 + ({n} * 0x01010000)
+            // TODO: may need to put E180 or 0AF0 as the last halfword for every other one - unclear
+            dw      0x00
+            evaluate n({n}+1)
+        }
+
+        // now populate pointers in extended predictors table
+        origin  predictors_extended_origin
+        define n(0)
+        variable added_raw_data_size(0)
+        while {n} < new_sample_count {
+            global evaluate num({n} + 1)
+
+            // TODO: predictors can be 0xA8 or 0xD8, so need to account for that properly
+            // For now assuming always 0xA8
+            origin  predictors_extended_origin + 0x88 + ({n} * 0xA8)
+            dw      0x00
+            dw      0x00
+            dw      raw_sample_data_extended_origin + added_raw_data_size - RAW_SAMPLE_DATA
+            dw      SOUND_RAW_{num}.size
+            variable added_raw_data_size(added_raw_data_size + SOUND_RAW_{num}.size)
+            dw      0x0570
+            dw      0x0000
+            // TODO: predictors can be 0xA8 or 0xD8, so need to account for that properly
+            // For now assuming always 0xA8
+            dw      predictors_extended - CTL_TABLE_PC + ({n} * 0xA8)
+            dw      0x0000
+
+            evaluate n({n}+1)
+        }
+
+        // update fgm bank size
+        origin  SFX_FGM_MAP
+        dw      0x01D0 + new_sample_count
+
+        // update fgm bank size
+        origin  FGM_MICROCODE_MAP
+        dw      0x02B7 + new_sample_count
+
+        // @ Description
+        // Adds SFX microcode
+        // TODO: set up with more arguments once we understand this better
+        // @ Arguments
+        // sfx_fgm_index - The index in the SFX to FGM table
+        // pitch - The desired pitch
+        macro add_microcode(sfx_fgm_index, pitch) {
+            dh  0xDE00
+            db  0xD1
+            // If next byte is < 0x80, then it is the SFX_ID
+            // If not, then the following byte is checked and combined with the first to get the SFX to FGM table's index
+            // TODO: handle any sfx_fgm_index appropriately - for now, assume > 0x1D0 and < 0x180
+            evaluate sfx_fgm_index({sfx_fgm_index}+0x8000)
+            dh  {sfx_fgm_index}
+            //db  0x01 // would do this instead of the above line if the sfx_fgm_index was 0x1, for example
+            dh  0xD2FF
+            dh  0xD344
+            dh  0xD221
+            db  0xD5
+            db  0xDC
+            db  {pitch}
+            db  0x14
+            dw  0xD3322F1E
+            dw  0xD3142F55
+            db  0xD0
+        }
+
+        // now make room for adding more fgm_ids by moving the first fgm_id microcodes
+        define x(1)
+        origin  fgm_microcode_extended_origin
+        variable microcode_origin(origin())
+        variable start(FGM_MICROCODE)
+        while {x} < {microcode_blocks} {
+            origin  microcode_origin
+            variable microcode_pc(pc())
+            insert  "../roms/original.z64", start, MICROCODE_SIZE_{x}
+            variable start(start + MICROCODE_SIZE_{x})
+            variable microcode_origin(origin())
+
+            // now fix the pointer to the microcode
+            origin  FGM_MICROCODE_MAP + ({x} * 4)
+            dw      microcode_pc - FGM_MICROCODE_MAP_PC
+            evaluate x({x} + 1)
+        }
+
+        // now add microcode for new sounds
+        origin  fgm_microcode_extended_origin + total_microcode_size
+        variable microcode_origin(origin())
+        variable microcode_pc(pc())
+        define n(0)
+        while {n} < new_sample_count {
+            // add the new fgm_id
+            origin  FGM_MICROCODE + ({n} * 4)
+	        dw      microcode_pc - FGM_MICROCODE_MAP_PC
+
+            // add the microcode
+            origin microcode_origin
+            evaluate m({n}+1)
+            add_microcode(0x1D0 + {n}, {SOUND_PITCH_{m}})
+            variable microcode_origin(origin())
+            variable microcode_pc(pc())
+            evaluate n({n}+1)
+        }
+
+        // @ Description
+        // Adds SFX to FGM blocks
+        // TODO: set up with more arguments once we understand this better
+        // @ Arguments
+        // sfx_index - The index in the SFX table
+        macro add_sfx_fgm(sfx_index, sfx_fgm_origin) {
+            // TODO: May not always use 0x3C as the block size - look into manually building this block
+            db      0x60                                        // always starts with 60
+            insert  "../roms/original.z64", SFX_FGM_TABLE, 0x3C // we're adding the first record, which points to a low sfx id
+            pushvar base, origin
+            origin  {sfx_fgm_origin} + 1                          // so adjust halfword here to point to our new sound
+            dh      {sfx_index}                                 // adjust the pointer to the sfx id we added
+            pullvar origin, base
+        }
+
+        // now make room for adding other sfx_id to fgm_id records by moving the first sfx_id to fgm_id blocks
+        define x(1)
+        origin  sfx_fgm_table_extended_origin
+        variable sfx_fgm_origin(origin())
+        variable start(SFX_FGM_TABLE)
+        while {x} < {sfx_fgm_blocks} {
+            origin  sfx_fgm_origin
+            variable sfx_fgm_pc(pc())
+            insert  "../roms/original.z64", start, SFX_FGM_SIZE_{x}
+            variable start(start + SFX_FGM_SIZE_{x})
+            variable sfx_fgm_origin(origin())
+
+            // now fix the pointer to the sfx_fgm record
+            origin  SFX_FGM_MAP + ({x} * 4)
+            dw      sfx_fgm_pc - SFX_FGM_MAP_PC
+            evaluate x({x} + 1)
+        }
+
+        // now add sfx_fgm records for new sounds
+        origin  sfx_fgm_table_extended_origin + total_sfx_fgm_size
+        variable sfx_fgm_origin(origin())
+        variable sfx_fgm_pc(pc())
+        define n(0)
+        while {n} < new_sample_count {
+            // add the new sfx_fgm_id
+            origin  SFX_FGM_TABLE + ({n} * 4)
+	        dw      sfx_fgm_pc - SFX_FGM_MAP_PC
+
+            // add the sfx to fgm block
+            origin sfx_fgm_origin
+            evaluate o(sfx_fgm_origin)
+            add_sfx_fgm(0x8142 + {n}, {o})
+            variable sfx_fgm_origin(origin())
+            variable sfx_fgm_pc(pc())
+            evaluate n({n}+1)
+        }
+
+        // add voice ID 244's fgm_id to our extended voice ID map table
+        origin  extended_voice_map_table_origin
+        define n(0)
+        while {n} < new_sample_count {
+            dw      0x2B7 + {n}
+            evaluate n({n}+1)
+        }
+
+        // Extend Sound Test Voice numbers so we can test in game easier
+        origin  0x188422
+        dh      0xF4 + new_sample_count
+        origin  0x18842A
+        dh      0xF4 + new_sample_count
+        origin  0x188436
+        dh      0xF3 + new_sample_count
+        origin  0x18829E
+        dh      0xF3 + new_sample_count
+
+        pullvar base, origin
+        OS.align(4)
+    }
+
+    // Add the sounds here
+    add_sound(Ganondorf/sounds/34 chant, 0x2F)
+    add_sound(Ganondorf/sounds/53 deflectsound2, 0x2F)
+    add_sound(Ganondorf/sounds/54 hurtcut3, 0x2F)
+    add_sound(Ganondorf/sounds/55 hurt2cut2, 0x2F)
+    add_sound(Ganondorf/sounds/56 attacklike6cut3 seems unused, 0x2F)
+    add_sound(Ganondorf/sounds/57 middle size attackcut6, 0x2F)
+    add_sound(Ganondorf/sounds/58 attacklike2cut7, 0x2F)
+    add_sound(Ganondorf/sounds/5A true, 0x2F)
+    add_sound(Ganondorf/sounds/5B true, 0x2F)
+    add_sound(Ganondorf/sounds/5C Goodattacksound, 0x2F)
+    add_sound(Ganondorf/sounds/5D attacklike6, 0x2F)
+    add_sound(Ganondorf/sounds/5E shortenedlaugh, 0x2F)
+    add_sound(Ganondorf/sounds/5F attacklike5cut4, 0x2F)
+    add_sound(Ganondorf/sounds/62 deathlikecut1, 0x2F)
+    add_sound(Ganondorf/sounds/91_2 (speed), 0x2F)
+    add_sound(Ganondorf/sounds/91_2(pitch), 0x2F)
+    add_sound(Ganondorf/sounds/C4 Ganondorf AnnouncerLowpitch, 0x2F)
+    // TODO: which Falco chant to keep?
+    add_sound(Falco/sounds/35_chant(shortened), 0x2F)
+    //add_sound(Falco/sounds/35_chant, 0x2F)
+    add_sound(Falco/sounds/66, 0x2F)
+    add_sound(Falco/sounds/67, 0x2F)
+    add_sound(Falco/sounds/68, 0x2F)
+    add_sound(Falco/sounds/69, 0x2F)
+    add_sound(Falco/sounds/6a, 0x2F)
+    add_sound(Falco/sounds/6B, 0x2F)
+    add_sound(Falco/sounds/6C, 0x2F)
+    add_sound(Falco/sounds/6D, 0x2F)
+    add_sound(Falco/sounds/6E, 0x2F)
+    add_sound(Falco/sounds/6F, 0x2F)
+    add_sound(Falco/sounds/70, 0x2F)
+    add_sound(Falco/sounds/71, 0x2F)
+    add_sound(Falco/sounds/72, 0x2F)
+    // TODO: which BD to keep?
+    //add_sound(Falco/sounds/BD_announcer-slow, 0x2F)
+    //add_sound(Falco/sounds/BD_announcer-slow2, 0x2F)
+    //add_sound(Falco/sounds/BD_announcer-slow3, 0x2F)
+    add_sound(Falco/sounds/BD_announcer, 0x2F)
+    add_sound(YoungLink/sounds/37 Young Link Chant, 0x2F)
+    add_sound(YoungLink/sounds/8A2, 0x2F)
+    add_sound(YoungLink/sounds/8B Hup!short3, 0x6F)
+    add_sound(YoungLink/sounds/8C5, 0x2F)
+    add_sound(YoungLink/sounds/8D2, 0x2F)
+    add_sound(YoungLink/sounds/8E2, 0x2F)
+    add_sound(YoungLink/sounds/8F(speed), 0x2F)
+    add_sound(YoungLink/sounds/90_2, 0x2F)
+    add_sound(YoungLink/sounds/91_2 (25speed), 0x2F)
+    add_sound(YoungLink/sounds/92_OOT_YoungLink_Jump3, 0x2F)
+    add_sound(YoungLink/sounds/93_jump2_highpitch, 0x2F)
+    add_sound(YoungLink/sounds/95_highpitch2, 0x2F)
+    add_sound(YoungLink/sounds/95, 0x2F)
+    add_sound(YoungLink/sounds/96 (speed), 0x2F)
+    add_sound(YoungLink/sounds/Announcer4, 0x2F)
+    add_sound(DrMario/sounds/65, 0x2F)
+    add_sound(DrMario/sounds/B5, 0x2F)
+
+    // This is always last
+    write_sounds()
+
+    print "========================================================================== \n"
 
     // item sounds
     scope item {
@@ -79,7 +580,7 @@ scope FGM {
             constant DRAW_GAME(484)                 // unused
             constant NO_CONTEST(502)
             constant WINS(533)
-            constant THIS_GAMES_WINNER_IS(533)
+            constant THIS_GAMES_WINNER_IS(534)
         }
 
         scope singleplayer {
@@ -111,7 +612,7 @@ scope FGM {
             constant HOW_TO_PLAY(494)
             constant ARE_YOU_READY(509)
             constant SUPER_SMASH_BROTHERS(528)
-            constant INCREDIBLE(533)
+            constant INCREDIBLE(466)
             constant SHINE(189)
             constant MARIO_POWERUP(212)
             constant MARIO_POWERDOWN(213)
@@ -127,5 +628,3 @@ scope FGM {
 }
 
 } // __FGM__ 
-
-

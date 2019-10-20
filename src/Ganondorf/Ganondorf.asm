@@ -6,6 +6,11 @@ scope Ganondorf {
     // Insert Moveset files
     insert IDLE,"moveset/IDLE.bin"
     insert RUN,"moveset/RUN.bin"; Moveset.GO_TO(RUN)            // loops
+    insert JUMP2, "moveset/JUMP2.bin"
+    insert TECHSTAND, "moveset/TECHSTAND.bin"
+    insert TECHROLL, "moveset/TECHFROLL.bin"
+    insert EDGEATTACKF, "moveset/EDGEATTACKF.bin"
+    insert EDGEATTACKS, "moveset/EDGEATTACKS.bin"
     insert TAUNT,"moveset/TAUNT.bin"
     insert JAB_1,"moveset/JAB_1.bin"
     insert DASH_ATTACK,"moveset/DASH_ATTACK.bin"
@@ -39,6 +44,15 @@ scope Ganondorf {
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(GND,   Action.Idle,            -1,                         IDLE,                       -1)
     Character.edit_action_parameters(GND,   Action.Run,             -1,                         RUN,                        -1)
+    Character.edit_action_parameters(GND,   Action.JumpAerialF,     -1,                         JUMP2,                      -1)
+    Character.edit_action_parameters(GND,   Action.JumpAerialB,     -1,                         JUMP2,                      -1)
+    Character.edit_action_parameters(GND,   Action.TechF,           -1,                         TECHROLL,                   -1)
+    Character.edit_action_parameters(GND,   Action.TechB,           -1,                         TECHROLL,                   -1)
+    Character.edit_action_parameters(GND,   Action.Tech,            -1,                         TECHSTAND,                  -1)
+    Character.edit_action_parameters(GND,   Action.CliffAttackQuick1, -1,                       EDGEATTACKF,                -1)
+    Character.edit_action_parameters(GND,   Action.CliffAttackQuick2, -1,                       EDGEATTACKF,                -1)
+    Character.edit_action_parameters(GND,   Action.CliffAttackSlow1, -1,                        EDGEATTACKS,                -1)
+    Character.edit_action_parameters(GND,   Action.CliffAttackSlow2, -1,                        EDGEATTACKS,                -1)
     Character.edit_action_parameters(GND,   Action.Taunt,           File.GND_TAUNT,             TAUNT,                      -1)
     Character.edit_action_parameters(GND,   Action.Jab1,            -1,                         JAB_1,                      -1)
     Character.edit_action_parameters(GND,   Action.DashAttack,      -1,                         DASH_ATTACK,                -1)
