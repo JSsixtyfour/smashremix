@@ -6,6 +6,15 @@ scope Falco {
     // Insert Moveset files
     insert RUN,"moveset/RUN.bin"; Moveset.GO_TO(RUN)            // loops
     insert DASH,"moveset/DASH.bin"
+    insert JUMP2, "moveset/JUMP2.bin"
+    insert FROLL, "moveset/FROLL.bin"
+    insert BROLL, "moveset/BROLL.bin"
+    insert TECH_STAND, "moveset/TECH_STAND.bin"
+    insert TECH_ROLL, "moveset/TECH_FROLL.bin"
+    insert FTHROWDATA, "moveset/FTHROWDATA.bin"
+    FTHROW:; Moveset.THROW_DATA(FTHROWDATA); insert "moveset/FTHROW.bin"
+    insert BTHROWDATA, "moveset/BTHROWDATA.bin"
+    BTHROW:; Moveset.THROW_DATA(BTHROWDATA); insert "moveset/BTHROW.bin"
     insert GRAB_RELEASE_DATA,"moveset/GRAB_RELEASE_DATA.bin"
     GRAB:; Moveset.THROW_DATA(GRAB_RELEASE_DATA); insert "moveset/GRAB.bin"
     insert TAUNT,"moveset/TAUNT.bin"
@@ -34,7 +43,16 @@ scope Falco {
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(FALCO, Action.Run,              -1,                        RUN,                        -1)
     Character.edit_action_parameters(FALCO, Action.Dash,             -1,                        DASH,                       -1)
+    Character.edit_action_parameters(FALCO, Action.JumpAerialF,      -1,                        JUMP2,                      -1)
+    Character.edit_action_parameters(FALCO, Action.JumpAerialB,      -1,                        JUMP2,                      -1)
     Character.edit_action_parameters(FALCO, Action.Catch,            -1,                        GRAB,                       -1)
+    Character.edit_action_parameters(FALCO, Action.ThrowF,           -1,                        FTHROW,                     -1)
+    Character.edit_action_parameters(FALCO, Action.ThrowB,           -1,                        BTHROW,                     -1)
+    Character.edit_action_parameters(FALCO, Action.RollF,            -1,                        FROLL,                      -1)
+    Character.edit_action_parameters(FALCO, Action.RollB,            -1,                        BROLL,                      -1)
+    Character.edit_action_parameters(FALCO, Action.TechF,            -1,                        TECH_ROLL,                  -1)
+    Character.edit_action_parameters(FALCO, Action.TechB,            -1,                        TECH_ROLL,                  -1)
+    Character.edit_action_parameters(FALCO, Action.Tech,             -1,                        TECH_STAND,                 -1)
     Character.edit_action_parameters(FALCO, Action.Taunt,           File.FALCO_TAUNT,           TAUNT,                      -1)
     Character.edit_action_parameters(FALCO, Action.Jab1,            -1,                         JAB_1,                      -1)
     Character.edit_action_parameters(FALCO, Action.Jab2,            -1,                         JAB_2,                      -1)

@@ -4,8 +4,13 @@
 
 scope YoungLink {
     // Insert Moveset files
+    insert JUMP, "moveset/JUMP.bin"
+    insert JUMP2, "moveset/JUMP2.bin"
     insert GRAB_RELEASE_DATA,"moveset/GRAB_RELEASE_DATA.bin"
     GRAB:; Moveset.THROW_DATA(GRAB_RELEASE_DATA); insert "moveset/GRAB.bin"
+    insert EDGEATTACKF, "moveset/EDGEATTACKF.bin"
+    insert EDGEATTACKS, "moveset/EDGEATTACKS.bin"
+    insert TECHSTAND, "moveset/TECHSTAND.bin"
     insert TAUNT,"moveset/TAUNT.bin"
     insert JAB_1,"moveset/JAB_1.bin"
     insert JAB_2,"moveset/JAB_2.bin"
@@ -28,6 +33,10 @@ scope YoungLink {
     insert USP_AIR, "moveset/UP_SPECIAL_AIR.bin"
     
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
+    Character.edit_action_parameters(YLINK, Action.JumpF,            -1,                        JUMP,                       -1)
+    Character.edit_action_parameters(YLINK, Action.JumpB,            -1,                        JUMP,                       -1)
+    Character.edit_action_parameters(YLINK, Action.JumpAerialF,      -1,                        JUMP2,                      -1)
+    Character.edit_action_parameters(YLINK, Action.JumpAerialB,      -1,                        JUMP2,                      -1)
     Character.edit_action_parameters(YLINK, Action.Catch,            -1,                        GRAB,                       -1)
     Character.edit_action_parameters(YLINK, Action.Taunt,           File.YLINK_TAUNT,           TAUNT,                      -1)
     Character.edit_action_parameters(YLINK, Action.Jab1,            -1,                         JAB_1,                      -1)
