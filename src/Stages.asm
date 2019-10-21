@@ -1995,7 +1995,7 @@ scope Stages {
     db id.SECTOR_Z                      // BTP Pikachu
     db id.SECTOR_Z                      // BTP Jigglypuff
     db id.SECTOR_Z                      // BTP Ness
-    db id.PEACHS_CASTLE                 // Deku Tree
+    db id.YOSHIS_ISLAND                 // Deku Tree
     db id.PEACHS_CASTLE                 // First Destination
     db id.SECTOR_Z                      // Ganon's Tower
     db id.SECTOR_Z                      // Kalos Pokemon League
