@@ -125,8 +125,8 @@ scope FGM {
         evaluate num(new_sample_count)
         global define SOUND_NAME_{num}({name})
         global evaluate SOUND_SAMPLE_RATE_{num}({sample_rate})
-        print "Added {SOUND_NAME_{num}}\nFGM_ID: 0x"; OS.print_hex(ORIGINAL_FGM_COUNT - 1 + {num})
-        print "\nSound Test Voice ID: ", 244 + {num}, "\n\n"
+        print "Added {SOUND_NAME_{num}}\nFGM_ID: 0x"; OS.print_hex(ORIGINAL_FGM_COUNT - 1 + {num}); print " (", ORIGINAL_FGM_COUNT - 1 + {num},")\n"
+        print "Sound Test Voice ID: ", 244 + {num}, "\n\n"
     }
 
     // @ Description
@@ -552,6 +552,7 @@ scope FGM {
             constant FOX(486)
             constant GIANT_DONKEY_KONG(489)
             constant GDK(489)
+            constant METAL_MARIO(462)
             constant KIRBY(496)
             constant LINK(497)
             constant LUIGI(498)
@@ -560,7 +561,11 @@ scope FGM {
             constant PIKACHU(507)
             constant JIGGLYPUFF(508)
             constant SAMUS(513)
-            constant YOSHI(536)
+            constant YOSHI(535)
+            constant FALCO(726)
+            constant GANONDORF(709)
+            constant YOUNG_LINK(741)
+            constant DR_MARIO(742)
         }
 
         scope css {

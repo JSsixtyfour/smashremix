@@ -687,26 +687,26 @@ scope CharacterSelect {
     
     // other sound fx
     dh FGM.announcer.names.MARIO           // Master Hand
-    dh FGM.announcer.names.FOX             // Metal Mario
-    dh FGM.announcer.names.DONKEY_KONG     // Polygon Mario
-    dh FGM.announcer.names.SAMUS           // Polygon Fox
-    dh FGM.announcer.names.LUIGI           // Polygon Donkey Kong
-    dh FGM.announcer.names.LINK            // Polygon Samus
-    dh FGM.announcer.names.YOSHI           // Polygon Luigi
-    dh FGM.announcer.names.CAPTAIN_FALCON  // Polygon Link
-    dh FGM.announcer.names.KIRBY           // Polygon Yoshi
-    dh FGM.announcer.names.PIKACHU         // Polygon Captain Falcon
-    dh FGM.announcer.names.JIGGLYPUFF      // Polygon Kirby
-    dh FGM.announcer.names.NESS            // Polygon Pikachu
-    dh FGM.announcer.names.MARIO           // Polygon Jigglypuff
-    dh FGM.announcer.names.FOX             // Polygon Ness
-    dh FGM.announcer.names.DONKEY_KONG     // Giant Donkey Kong
+    dh FGM.announcer.names.METAL_MARIO     // Metal Mario
+    dh FGM.announcer.names.MARIO           // Polygon Mario
+    dh FGM.announcer.names.FOX             // Polygon Fox
+    dh FGM.announcer.names.DONKEY_KONG     // Polygon Donkey Kong
+    dh FGM.announcer.names.SAMUS           // Polygon Samus
+    dh FGM.announcer.names.LUIGI           // Polygon Luigi
+    dh FGM.announcer.names.LINK            // Polygon Link
+    dh FGM.announcer.names.YOSHI           // Polygon Yoshi
+    dh FGM.announcer.names.CAPTAIN_FALCON  // Polygon Captain Falcon
+    dh FGM.announcer.names.KIRBY           // Polygon Kirby
+    dh FGM.announcer.names.PIKACHU         // Polygon Pikachu
+    dh FGM.announcer.names.JIGGLYPUFF      // Polygon Jigglypuff
+    dh FGM.announcer.names.NESS            // Polygon Ness
+    dh FGM.announcer.names.GDK             // Giant Donkey Kong
     dh FGM.announcer.names.SAMUS           // (Placeholder)
     dh FGM.announcer.names.LUIGI           // None (Placeholder)
-    dh FGM.announcer.names.LINK            // Falco
-    dh FGM.announcer.names.YOSHI           // Ganondorf
-    dh FGM.announcer.names.CAPTAIN_FALCON  // Young Link
-    dh FGM.announcer.names.KIRBY           // Dr. Mario
+    dh FGM.announcer.names.FALCO           // Falco
+    dh FGM.announcer.names.GANONDORF       // Ganondorf
+    dh FGM.announcer.names.YOUNG_LINK      // Young Link
+    dh FGM.announcer.names.DR_MARIO        // Dr. Mario
     OS.align(4)
 
     // @ Description
