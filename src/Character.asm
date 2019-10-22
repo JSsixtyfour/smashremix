@@ -222,6 +222,18 @@ scope Character {
         add_to_table(crowd_chant_fgm, id.{name}, id.{parent}, 0x2)
         add_to_table(yoshi_egg, id.{name}, id.{parent}, 0x1C)
         
+        // Copy parent character for menu tables  
+        add_to_id_table(vs_record, id.{name}, id.{parent})
+        add_to_table(winner_fgm, id.{name}, id.{parent}, 0x4)
+        add_to_id_table(winner_logo, id.{name}, id.{parent})
+        add_to_id_table(label_height, id.{name}, id.{parent})
+        add_to_table(str_wins_lx, id.{name}, id.{parent}, 0x4)
+        add_to_table(str_winner_ptr, id.{name}, id.{parent}, 0x4)
+        add_to_table(str_winner_lx, id.{name}, id.{parent}, 0x4)
+        add_to_table(str_winner_scale, id.{name}, id.{parent}, 0x4)
+        add_to_table(winner_bgm, id.{name}, id.{parent}, 0x4)
+        add_to_table(menu_zoom, id.{name}, id.{parent}, 0x4)
+        
         // Copy parent character for projectile tables
         add_to_table(fireball, id.{name}, id.{parent}, 0x4)
 
@@ -424,6 +436,31 @@ scope Character {
             OS.align(4)
         }
     }
+    
+    // @ Description
+    // moves and extends a standard character related table, allowing for more characters to be
+    // added to it, used for 12 character tables
+    macro move_table_12(table_name, original_offset, entry_size) {
+        scope {table_name} {
+            constant ORIGINAL_TABLE({original_offset})
+            OS.align(16)
+            table:
+            constant TABLE_ORIGIN(origin())
+            // copy ORIGINAL_TABLE
+            OS.copy_segment(ORIGINAL_TABLE, (12 * {entry_size}))
+            // master hand
+            OS.copy_segment(ORIGINAL_TABLE, (1 * {entry_size}))
+            // metal mario
+            OS.copy_segment(ORIGINAL_TABLE, (1 * {entry_size}))
+            // polygon fighters
+            OS.copy_segment(ORIGINAL_TABLE, (12 * {entry_size}))
+            // giant dk
+            OS.copy_segment(ORIGINAL_TABLE + (id.DONKEY * {entry_size}), (1 * {entry_size}))
+            // pad table for new characters
+            fill (table + (NUM_CHARACTERS * {entry_size})) - pc()
+            OS.align(4)
+        }
+    }
 
     // @ Description
     // adds an ID based table which can be used when it isn't feasible to move an original table,
@@ -462,6 +499,48 @@ scope Character {
             dw id.NJIGGLY
             dw id.NNESS
             dw id.GDONKEY
+            // pad table for new characters
+            fill (table + (NUM_CHARACTERS * 0x4)) - pc()
+        }
+    }
+    
+    // @ Description
+    // adds an ID based table which can be used when it isn't feasible to move an original table,
+    // and can instead be used to override the character ID before the offset for the original
+    // table is calculated, use when only the original 12's IDs will work.
+    macro id_table_12(table_name) {
+        scope {table_name} {
+            OS.align(16)
+            table:
+            constant TABLE_ORIGIN(origin())
+            // add original 27 to table
+            dw id.MARIO
+            dw id.FOX
+            dw id.DONKEY
+            dw id.SAMUS
+            dw id.LUIGI
+            dw id.LINK
+            dw id.YOSHI
+            dw id.CAPTAIN
+            dw id.KIRBY
+            dw id.PIKACHU
+            dw id.JIGGLY
+            dw id.NESS
+            dw id.MARIO
+            dw id.MARIO
+            dw id.MARIO
+            dw id.FOX
+            dw id.DONKEY
+            dw id.SAMUS
+            dw id.LUIGI
+            dw id.LINK
+            dw id.YOSHI
+            dw id.CAPTAIN
+            dw id.KIRBY
+            dw id.PIKACHU
+            dw id.JIGGLY
+            dw id.NESS
+            dw id.DONKEY
             // pad table for new characters
             fill (table + (NUM_CHARACTERS * 0x4)) - pc()
         }
@@ -1038,6 +1117,20 @@ scope Character {
         pullvar base, origin
 
         // @ Description
+        // Patches which redirect from the original zoom table to the extended one.
+        scope menu_zoom_patches {
+            // character select screen
+            OS.patch_start(0x00132E58, 0x80134BD8)
+            li      t2, menu_zoom.table     // original line 1/3
+            cvt.s.w f10, f8                 // original line 2
+            OS.patch_end()
+            // results screen
+            OS.patch_start(0x152A8C, 0x801338EC)
+            li      t7, menu_zoom.table     // original line 1/2
+            OS.patch_end()
+        }
+        
+        // @ Description
         // When a character is thrown, the throwing character's ID is used for a redirect table
         // which applies a hitbox to the thrown character. As this redirect table is located in the
         // shared moveset file (0xC9), it cannot be extended to accommodate additional characters
@@ -1413,6 +1506,18 @@ scope Character {
     move_table(crowd_chant_fgm, 0xA81A8, 0x2)
     move_table(yoshi_egg, 0x103160, 0x1C)
     
+    // menu tables
+    id_table_12(vs_record)
+    move_table_12(winner_fgm, 0x158148, 0x4)
+    id_table_12(winner_logo)
+    id_table_12(label_height)
+    move_table_12(str_wins_lx, 0x158654, 0x4)
+    move_table_12(str_winner_ptr, 0x158690, 0x4)
+    move_table_12(str_winner_lx, 0x1586C0, 0x4)
+    move_table_12(str_winner_scale, 0x1586F0, 0x4)
+    move_table_12(winner_bgm, 0x158A08, 0x4)
+    move_table_12(menu_zoom, 0x108370, 0x4)
+    
     // projectile tables
     move_table(fireball, 0x107070, 0x4)
 
@@ -1420,7 +1525,7 @@ scope Character {
     id_table(thrown_hitbox)
     id_table(f_thrown_action)
     id_table(b_thrown_action)
-    id_table(falcon_dive_id)                // may need to be revisited
+    id_table(falcon_dive_id)                // TODO: may need to be revisited
     id_table(inhale_copy)
     id_table(inhale_star_damage)
     id_table(inhale_star_size)

@@ -81,7 +81,6 @@ include "src/Settings.asm"
 include "src/Moveset.asm"
 include "src/Command.asm"
 include "src/Timeouts.asm"
-include "src/Resultsscreen.asm"
 // partial 19XX merge
 include "src/Color.asm"
 include "src/Crash.asm"
@@ -104,6 +103,7 @@ include "src/File.asm"
 // CHARACTER
 include "src/Character.asm"
 include "src/Fireball.asm"
+include "src/ResultsScreen.asm"
 // FALCO
 include "src/Falco/Phantasm.asm"
 include "src/Falco/Falco.asm"
