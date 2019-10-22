@@ -865,10 +865,9 @@ scope CharacterSelect {
     dw 0x00010001                           // Giant Donkey Kong
     dw 0x00010001                           // (Placeholder)
     dw 0x00010001                           // None (Placeholder)
-    // TODO: revert these action swaps once the array isn't shared
     dw 0x00010004                           // Falco
     dw 0x00010002                           // Ganondorf
-    dw 0x00010003                           // Young Link
+    dw 0x00010002                           // Young Link
     dw 0x00010001                           // Dr. Mario
     
     // @ Description
@@ -1098,11 +1097,5 @@ scope CharacterSelect {
     dw portrait_unknown                 // Young Link
     dw portrait_unknown                 // Dr. Mario
 }
-
-
-// costume addresses
-// 8012B830 
-// A7030 
-// C1C2C3C4 RRBBGG??
 
 } // __CHARACTER_SELECT__
