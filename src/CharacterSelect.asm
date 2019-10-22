@@ -25,143 +25,7 @@ include "Texture.asm"
 
 scope CharacterSelect {
 
-    // @ Description
-    // Subroutine which loads a character, but uses an alternate req list which loads only the main
-    // and model file, instead of all of the character's files. This is safe on the select screen.
-    scope load_character_model_: {
-        // a0 = character id
-        OS.save_registers()
-        addiu   sp, sp,-0x0010              // allocate stack space
-        sw      ra, 0x0008(sp)              // store ra
-        sll     t6, a0, 0x2                 // t6 = character id * 4
-        li      t7, alt_req_table           // t7 = alt_req_table
-        li      t8, alt_req_list            // t8 = alt_req_list address
-        addu    t7, t6, t7                  // t7 = alt req table + (character id * 4)
-        lw      t6, 0x0000(t7)              // t6 = req list ROM offset
-        bnel    t6, r0, _load               // branch if t6 != 0
-        sw      t6, 0x0000(t8)              // on branch, store alt_req_list
-        _load:
-        jal     0x800D786C                  // load character
-        nop
-        lw      ra, 0x0008(sp)              // load ra
-        addiu   sp, sp, 0x0010              // deallocate stack space
-        OS.restore_registers()
-        jr      ra                          // return
-        nop
-    }
-    
-    // @ Description
-    // Patch vs mode character select loading routine to use load_character_model_
-    OS.patch_start(0x139440, 0x8013B1C0)
-    jal     load_character_model_
-    OS.patch_end()
-    
-    // @ Description
-    // Patch which causes a character's files to be loaded at the end of the heap instead of
-    // updating the heap end with a fixed(?) address.
-    // TODO: understand why the character files are loaded at a seemingly fixed position rather
-    // than being loaded at the end of the heap under normal circumstances. (low priority)
-    scope file_load_fix_: {
-        OS.patch_start(0x52EC8, 0x800D76C8)
-        j       file_load_fix_
-        nop
-        _return:
-        OS.patch_end()
-        
-        // v0 = heap_end override
-        li      at, alt_req_list            // at = alt_req_list address
-        lw      at, 0x0000(at)              // at = alt_req_list
-        beq     at, r0, _end                // skip if alt_req_list = 0
-        nop
-        li      at, 0x800D6348              // at = heap_end address
-        lw      v0, 0x0000(at)              // v0 = heap_end
-        
-        _end:
-        // original lines 1/2
-        jal     0x800CDC88                  // load file (with heap_end override in a1)
-        or      a1, v0, r0                  // a1 = heap_end override
-        j       _return                     // return
-        nop
-    }
-    
-    // @ Description
-    // Patch which checks for an alternate req list, in theory this should always contain the ROM
-    // offset of the main file's req list the first time it runs after load_character_model_
-    get_alternate_req_list_: {
-        OS.patch_start(0x4934C, 0x800CD96C)
-        j       get_alternate_req_list_
-        nop
-        _return:
-        OS.patch_end()
-        
-        // s4 contains current req ROM offset
-        li      a0, alt_req_list            // a0 = alt_req_list address
-        lw      a1, 0x0000(a0)              // a1 = alt_req_list
-        beq     a1, r0, _end                // skip if alt_req_list = 0
-        nop
-        or      s4, a1, r0                  // move new ROM offset to s4
-        sw      r0, 0x0000(a0)              // destroy alt_req_list
-        
-        _end:
-        or      a0, s4, r0                  // move rom offset to a0 (original line 1)
-        or      a1, s0, r0                  // original line 2
-        j       _return                     // return
-        nop   
-    }
-    
-    // @ Description
-    // Holds the ROM offset of an alternate req list, used by get_alternate_req_list_
-    alt_req_list:
-    dw  0
-    
-    // @ Description
-    // Table of alternate req list ROM offsets.
-    alt_req_table:
-    constant alt_req_table_origin(origin())
-    fill Character.NUM_CHARACTERS * 0x4
-    
-    // @ Description
-    // Adds an alternate req list for a given character.
-    // @ Arguments
-    // character - ID of the character to add an alternate req list for
-    // filename - Name of a .req file in ..src, excluding extension 
-    variable alt_req_list_count(0)
-    macro add_alt_req_list(character, filename) {
-        global variable alt_req_list_count(alt_req_list_count + 1)
-        evaluate num(alt_req_list_count)
-        
-        // Insert new req list
-        // TODO: these req lists don't need to be in the DMA segment/RAM (low priority)
-        // but they don't take up much space
-        constant ALT_REQ_{num}(origin())
-        insert "../src/{filename}.req"
-        
-        // Add new req list to alt_req_table
-        pushvar origin, base
-        origin alt_req_table_origin + ({character} * 0x4)
-        dw ALT_REQ_{num}
-        pullvar base, origin
-    }
-    
-    
-    // ADD ALTERNATE REQ LISTS //
-    add_alt_req_list(Character.id.MARIO, req/MARIO_MODEL)
-    add_alt_req_list(Character.id.FOX, req/FOX_MODEL)
-    add_alt_req_list(Character.id.DONKEY, req/DONKEY_MODEL)
-    add_alt_req_list(Character.id.SAMUS, req/SAMUS_MODEL)
-    add_alt_req_list(Character.id.LUIGI, req/LUIGI_MODEL)
-    add_alt_req_list(Character.id.LINK, req/LINK_MODEL)
-    add_alt_req_list(Character.id.YOSHI, req/YOSHI_MODEL)
-    add_alt_req_list(Character.id.CAPTAIN, req/CAPTAIN_MODEL)
-    add_alt_req_list(Character.id.KIRBY, req/KIRBY_MODEL)
-    add_alt_req_list(Character.id.PIKACHU, req/PIKACHU_MODEL)
-    add_alt_req_list(Character.id.JIGGLY, req/JIGGLY_MODEL)
-    add_alt_req_list(Character.id.NESS, req/NESS_MODEL)
-    add_alt_req_list(Character.id.FALCO, req/FALCO_MODEL)
-    add_alt_req_list(Character.id.GND, req/GND_MODEL)
-    add_alt_req_list(Character.id.YLINK, req/YLINK_MODEL)
-    add_alt_req_list(Character.id.DRM, req/DRM_MODEL)
-    
+
 
     // @ Description
     // This function returns what character is selected by the token's position
@@ -493,18 +357,17 @@ scope CharacterSelect {
     nop
     OS.patch_end()
 
-
     // @ Description
     // 1. memory solution 
     scope move_filetable_: {
         OS.patch_start(0x000499F8, 0x800CE018)
 //      jr      ra                          // original line
 //      sw      t6, 0x002C(v0)              // original line
-        //j       move_filetable_
-        //nop
+        j       move_filetable_
+        nop
         OS.patch_end()
         
-        li      t3, 0x00000200              // t3 = hardcode filetable length
+        li      t3, 0x00000300              // t3 = hardcode filetable length
         sw      t3, 0x001C(v0)              // update filetable length
         li      t3, 0x80700000              // t3 = hardcoded filetable address
         sw      t3, 0x0020(v0)              // update filetable address
@@ -584,10 +447,11 @@ scope CharacterSelect {
         OS.patch_end()
 
         // for (char_id i = FACLO; i < DRM; i++)
-        lli     s0, Character.id.NMARIO      // s0 = index (and start character, skips polygons)
+        lli     s0, Character.id.NMARIO      // s0 = index (and start character, usually skips polygons)
         
         _loop:
-        jal     load_character_model_       // load character function
+        //jal     load_character_model_       // load character function
+        jal     0x800D786C
         or      a0, s0, r0                  // a0 = index
         slti    at, s0, Character.id.NNESS  // end on x character (Character.NUM_CHARACTERS - 1 should work usually)
         bnez    at, _loop
@@ -854,27 +718,27 @@ scope CharacterSelect {
     dw name_texture.PIKACHU                 // Pikachu
     dw name_texture.JIGGLYPUFF              // Jigglypuff
     dw name_texture.NESS                    // Ness
-    dw name_texture.BLANK                     // Master Hand
-    dw name_texture.BLANK                     // Metal Mario
-    dw name_texture.BLANK                     // Polygon Mario
-    dw name_texture.BLANK                     // Polygon Fox
-    dw name_texture.BLANK                     // Polygon Donkey Kong
-    dw name_texture.BLANK                     // Polygon Samus
-    dw name_texture.BLANK                     // Polygon Luigi
-    dw name_texture.BLANK                     // Polygon Link
-    dw name_texture.BLANK                     // Polygon Yoshi
-    dw name_texture.BLANK                     // Polygon Captain Falcon
-    dw name_texture.BLANK                     // Polygon Kirby
-    dw name_texture.BLANK                     // Polygon Pikachu
-    dw name_texture.BLANK                     // Polygon Jigglypuff
-    dw name_texture.BLANK                     // Polygon Ness
-    dw name_texture.BLANK                     // Giant Donkey Kong
-    dw name_texture.BLANK                     // (Placeholder)
-    dw name_texture.BLANK                     // None (Placeholder)
-    dw name_texture.BLANK                     // Falco
-    dw name_texture.BLANK                     // Ganondorf
-    dw name_texture.BLANK                     // Young Link
-    dw name_texture.BLANK                     // Dr. Mario
+    dw name_texture.BLANK                   // Master Hand
+    dw name_texture.BLANK                   // Metal Mario
+    dw name_texture.BLANK                   // Polygon Mario
+    dw name_texture.BLANK                   // Polygon Fox
+    dw name_texture.BLANK                   // Polygon Donkey Kong
+    dw name_texture.BLANK                   // Polygon Samus
+    dw name_texture.BLANK                   // Polygon Luigi
+    dw name_texture.BLANK                   // Polygon Link
+    dw name_texture.BLANK                   // Polygon Yoshi
+    dw name_texture.BLANK                   // Polygon Captain Falcon
+    dw name_texture.BLANK                   // Polygon Kirby
+    dw name_texture.BLANK                   // Polygon Pikachu
+    dw name_texture.BLANK                   // Polygon Jigglypuff
+    dw name_texture.BLANK                   // Polygon Ness
+    dw name_texture.BLANK                   // Giant Donkey Kong
+    dw name_texture.BLANK                   // (Placeholder)
+    dw name_texture.BLANK                   // None (Placeholder)
+    dw name_texture.BLANK                   // Falco
+    dw name_texture.BLANK                   // Ganondorf
+    dw name_texture.BLANK                   // Young Link
+    dw name_texture.BLANK                   // Dr. Mario
 
     constant START_X(22)
     constant START_Y(24)
@@ -908,14 +772,14 @@ scope CharacterSelect {
     db Character.id.JIGGLYPUFF
     db Character.id.FALCO
     // row 3
-    db Character.id.NONE
-    db Character.id.NONE
-    db Character.id.NONE
-    db Character.id.NONE
-    db Character.id.NONE
-    db Character.id.NONE
-    db Character.id.NONE
-    db Character.id.NONE
+    db Character.id.NLUIGI
+    db Character.id.NMARIO
+    db Character.id.NDONKEY
+    db Character.id.NLINK
+    db Character.id.NSAMUS
+    db Character.id.NCAPTAIN
+    db Character.id.NNESS
+    db Character.id.NYOSHI
     OS.align(4)
 
     // hands
@@ -965,30 +829,27 @@ scope CharacterSelect {
     dw portrait_pikachu                 // Pikachu
     dw portrait_jigglypuff              // Jigglypuff
     dw portrait_ness                    // Ness
-    dw portrait_mario                   // Mario
-    dw portrait_mario                   // Mario
-    dw portrait_mario                   // Mario
-    dw portrait_mario                   // Mario
-    dw portrait_mario                   // Mario
-    dw portrait_mario                   // Mario
-    dw portrait_mario                   // Mario
-    dw portrait_mario                   // Mario
-    dw portrait_mario                   // Mario
-    dw portrait_mario                   // Mario
-    dw portrait_mario                   // Mario
-    dw portrait_mario                   // Mario
-    dw portrait_mario                   // Mario
-    dw portrait_mario                   // Mario
-    dw portrait_mario                   // Mario
-    dw portrait_mario                   // Mario
-    dw portrait_mario                   // Mario
-    dw portrait_mario                   // Mario
-    dw portrait_mario                   // Mario
-    dw portrait_mario                   // Mario
-    dw portrait_mario                   // Mario
-    dw portrait_mario                   // Mario
-    dw portrait_mario                   // Mario
-
+    dw portrait_mario                   // Masterhand
+    dw portrait_mario                   // Metal Mario
+    dw portrait_mario                   // Polygon Mario
+    dw portrait_mario                   // Polygon Fox
+    dw portrait_mario                   // Polygon Donkey Kong
+    dw portrait_mario                   // Polygon Samus
+    dw portrait_mario                   // Polygon Luigi
+    dw portrait_mario                   // Polygon Link
+    dw portrait_mario                   // Polygon Yoshi
+    dw portrait_mario                   // Polygon Captain Falcon
+    dw portrait_mario                   // Polygon Kirby
+    dw portrait_mario                   // Polygon Pikachu
+    dw portrait_mario                   // Polygon Jigglypuff
+    dw portrait_mario                   // Polygon Ness
+    dw portrait_mario                   // Giant Donkey Kong
+    dw portrait_mario                   // (Placeholder)
+    dw portrait_mario                   // None (Placeholder)
+    dw portrait_mario                   // Falco
+    dw portrait_mario                   // Ganondorf
+    dw portrait_mario                   // Young Link
+    dw portrait_mario                   // Dr. Mario
 }
 
 
