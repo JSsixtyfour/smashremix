@@ -40,7 +40,7 @@ scope CharacterSelect {
         li      t8, alt_malloc_size         // t8 = alt_malloc_size address
         addu    t7, t6, t7                  // t7 = alt_malloc_table + (character id * 4)
         lw      t6, 0x0000(t7)              // t6 = alt_malloc_size for {character}
-        li      t6, 0xF000
+        addiu   t6, t6, 0x1000
         bnel    t6, r0, _end                // branch if t6 != 0
         sw      t6, 0x0000(t8)              // on branch, store alt_malloc_size
         _end:
