@@ -75,7 +75,7 @@ scope FGM {
 
     // The following help determine correct offsets
     constant ORIGINAL_MIDI_SEGMENT_SIZE(0x35C0)
-    constant DIFFERENCE(((MIDI.midi_count * 8 + 0xF) & 0xFFF0) + ((MIDI.largest_midi + 0xF) & 0xFFF0) - ORIGINAL_MIDI_SEGMENT_SIZE)
+    constant DIFFERENCE((((MIDI.midi_count + 1) * 8 + 0xF) & 0xFFF0) + ((MIDI.largest_midi + 0xF) & 0xFFF0) - ORIGINAL_MIDI_SEGMENT_SIZE)
     constant FGM_MICROCODE_MAP_PC(0x80076D50 + DIFFERENCE)
     constant SFX_FGM_MAP_PC(0x80073F80 + DIFFERENCE)
     constant CTL_TABLE_PC(0x8004D9F0)
@@ -382,7 +382,7 @@ scope FGM {
 
             // add the microcode
             origin microcode_origin
-            add_microcode(0x1D0 + {n})
+            add_microcode(ORIGINAL_SFX_FGM_COUNT + {n})
             variable microcode_origin(origin())
             variable microcode_pc(pc())
             evaluate n({n}+1)
@@ -451,7 +451,7 @@ scope FGM {
         origin  extended_voice_map_table_origin
         define n(0)
         while {n} < new_sample_count {
-            dw      0x2B7 + {n}
+            dw      ORIGINAL_FGM_COUNT + {n}
             evaluate n({n}+1)
         }
 
