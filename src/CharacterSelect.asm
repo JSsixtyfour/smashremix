@@ -439,6 +439,7 @@ scope CharacterSelect {
         OS.patch_end()
 
         // v0 = portrait_id (0-5 on the top row, 6-11 on bottom in original)
+        // s1 = player number
         // 0x0058(t8) = xpos
         // 0x005C(t8) = ypos
 
@@ -451,15 +452,13 @@ scope CharacterSelect {
         sw      v0, 0x0010(sp)              // ~
         sw      a0, 0x0014(sp)              // save registers
 
-        // get character
+        // get character (store in s0, used later)
         li      t0, id_table                // t0 = id_table
-        sll     t1, v0, 0x0002              // t1 = portrati_id * 4
-        addu    t0, t0, t1                  // t0 = id_table + offset
-        lbu     t0, 0x0000(t0)              // t0 = character_id
-
+        addu    t0, t0, v0                  // t0 = id_table + offset
+        lbu     s0, 0x0000(t0)              // s0 = character_id
 
         // get token location
-        lli     t0, NUM_COLUMNS - 1         // ~
+        lli     t0, NUM_COLUMNS             // ~
         divu    v0, t0                      // ~
         mfhi    t1                          // t1 = portrait_id % NUM_COLUMNS = column
         lli     t0, PORTRAIT_WIDTH          // ~
@@ -499,7 +498,26 @@ scope CharacterSelect {
         addiu   sp, sp, 0x0018              // deallocate stack space
 
     }
-    
+
+    // 80138894
+
+    // @ Description
+    // Use id_table to figure out which character should be loaded
+    scope fix_random_character_id_: {
+        OS.patch_start(0x00130424, 0x801321A4)
+//      sll     t1, a0, 0x0002              // original line 1
+//      addu    t2, v1, t1                  // original line 2
+        //j       fix_random_character_id_
+        //nop
+        _return:
+        //lbu     v0, 0x0000(t2)              // (modified for byes, not words)
+        OS.patch_end()
+
+        li      v1, id_table                // v1 = new table
+        addu    t2, v1, a0                  // original line 2 (modified for byes, not words)
+        j       _return                     // return
+        nop
+    }
 
     // @ Description
     // Bypasses CPU token being recalled when selecting a portrait with the
