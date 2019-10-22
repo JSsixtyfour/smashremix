@@ -157,9 +157,11 @@ scope Stages {
     dw function.CLONE                       // Mementos
     dw function.CLONE                       // Showdown
     dw function.CLONE                       // Spiral Mountain
-    dw function.CLONE                       // Moray Towers
+    dw function.CLONE                       // N64
     dw function.CLONE                       // Mute City
     dw function.CLONE                       // Mad Monster Mansion
+    dw function.CLONE                       // SMBBF
+    dw function.CLONE                       // SMBO
     
 
     // TODO
@@ -285,9 +287,11 @@ scope Stages {
     insert icon_mementos,               "../textures/icon_mementos.rgba5551"
     insert icon_showdown,               "../textures/icon_showdown.rgba5551"
     insert icon_spiralm,                "../textures/icon_spiralm.rgba5551"
-    insert icon_moray,                  "../textures/icon_moray.rgba5551"
+    insert icon_n64,                    "../textures/icon_n64.rgba5551"
     insert icon_mute,                   "../textures/icon_mute.rgba5551"
-    insert icon_madmm,                   "../textures/icon_madmm.rgba5551"
+    insert icon_madmm,                  "../textures/icon_madmm.rgba5551"
+    insert icon_smbbf,                  "../textures/icon_smbbf.rgba5551"
+    insert icon_smbo,                   "../textures/icon_smbo.rgba5551"
     
 
     // @ Description
@@ -360,9 +364,11 @@ scope Stages {
         constant MEMENTOS(0x3B)
         constant SHOWDOWN(0x3C)
         constant SPIRALM(0x3D)
-        constant MORAY(0x3E)
+        constant N64(0x3E)
         constant MUTE(0x3F)
         constant MADMM(0x40)
+        constant SMBBF(0x41)
+        constant SMBO(0x42)
 
         // not an actual id, some arbitary number Sakurai picked(?)
         constant RANDOM(0xDE)
@@ -463,9 +469,11 @@ scope Stages {
         constant MEMENTOS(0x8A8)
         constant SHOWDOWN(0x8B6)
         constant SPIRALM(0x8B9)
-        constant MORAY(0x8BC)
+        constant N64(0x8BC)
         constant MUTE(0x8BF)
         constant MADMM(0x8C2)
+        constant SMBBF(0x8C5)
+        constant SMBO(0x8C7)
     }
 
     scope function {
@@ -555,12 +563,12 @@ scope Stages {
     db id.SKYLOFT                           // 27
     db id.SMASHVILLE                        // 28
     db id.RANDOM                            // 29
-    db id.RANDOM                            // 2A
+    db id.SMBBF                             // 2A
     db id.WARIOWARE                         // 2B
     db id.MEMENTOS                          // 2C
-    db id.MORAY                             // 2D
+    db id.N64                               // 2D
     db id.TOH                               // 2E
-    db id.RANDOM                            // 2F
+    db id.SMBO                              // 2F
     db id.RANDOM                            // 30
     db id.CORNERIA_CITY                     // 31
     db id.GREAT_BAY                         // 32
@@ -661,9 +669,11 @@ scope Stages {
     dw icon_mementos                        // Mementos
     dw icon_showdown                        // Showdown
     dw icon_spiralm                         // Spiral Mountain
-    dw icon_moray                           // Moray Towers
+    dw icon_n64                             // N64
     dw icon_mute                            // Mute City
     dw icon_madmm                           // Mad Monster Mansion
+    dw icon_smbbf                           // Mushroom Kingdom BF
+    dw icon_smbo                            // Mushroom Kingdom Omega
 
     // @ Description
     // Row the cursor is on
@@ -1808,7 +1818,7 @@ scope Stages {
     db id.MEMENTOS                          // 1F
     db id.SHOWDOWN                          // 20
     db id.SPIRALM                           // 21
-    db id.MORAY                             // 22
+    db id.N64                               // 22
 
     // page 3 (custom and beta)
     
@@ -1817,6 +1827,8 @@ scope Stages {
     db id.DREAM_LAND_BETA_2                 // 25
     db id.HOW_TO_PLAY                       // 26
     db id.MADMM                             // 27
+    db id.SMBBF                             // 28
+    db id.SMBO                              // 29
     
     OS.align(4)
 
@@ -1949,9 +1961,11 @@ scope Stages {
     float32 0.5                         // Mementos
     float32 0.5                         // Showdown
     float32 0.5                         // Spiral Mountain
-    float32 0.5                         // Moray Towers
+    float32 0.5                         // N64
     float32 0.5                         // Mute City
     float32 0.5                         // Mad Monster Mansion
+    float32 0.5                         // Mushroom Kingdom BF
+    float32 0.5                         // Mushroom Kingdom Omega
 
     background_table:
     db id.PEACHS_CASTLE                 // Peach's Castle
@@ -2016,9 +2030,11 @@ scope Stages {
     db id.SECTOR_Z                      // Mementos
     db id.SECTOR_Z                      // Showdown
     db id.PEACHS_CASTLE                 // Spiral Mountain
-    db id.PEACHS_CASTLE                 // Moray Towers
+    db id.PEACHS_CASTLE                 // N64
     db id.PEACHS_CASTLE                 // Mute City
     db id.SECTOR_Z                      // Mad Monster Mansion
+    db id.MUSHROOM_KINGDOM              // Mushroom Kingdom BF
+    db id.MUSHROOM_KINGDOM              // Mushroom Kingdom Omega
     OS.align(4)
 
     // @ Description
@@ -2091,9 +2107,11 @@ scope Stages {
     dw header.MEMENTOS,               type.CLONE
     dw header.SHOWDOWN,               type.CLONE
     dw header.SPIRALM,                type.CLONE
-    dw header.MORAY,                  type.CLONE
+    dw header.N64,                    type.CLONE
     dw header.MUTE,                   type.CLONE
     dw header.MADMM,                  type.CLONE
+    dw header.SMBBF,                  type.CLONE
+    dw header.SMBO,                   type.CLONE
 
 
     string_peachs_castle:;          String.insert("Peach's Castle")
@@ -2135,9 +2153,12 @@ scope Stages {
     string_mementos:;               String.insert("Mementos")
     string_showdown:;               String.insert("Showdown")
     string_spiralm:;                String.insert("Spiral Mountain")
-    string_moray:;                  String.insert("Moray Towers")
+    string_n64:;                    String.insert("N64")
     string_mute:;                   String.insert("Mute City")
     string_madmm:;                  String.insert("Mad Monster Mansion")
+    string_smbbf:;                  String.insert("Mushroom Kingdom BF")
+    string_smbo:;                   String.insert("Mushroom Kingdom Omega")
+    
 
     string_table:
     dw string_peachs_castle
@@ -2202,9 +2223,11 @@ scope Stages {
     dw string_mementos
     dw string_showdown
     dw string_spiralm
-    dw string_moray
+    dw string_n64
     dw string_mute
     dw string_madmm
+    dw string_smbbf
+    dw string_smbo
 
 }
 

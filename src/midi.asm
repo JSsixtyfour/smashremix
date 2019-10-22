@@ -113,6 +113,7 @@ scope MIDI {
     insert_midi(YOUNGLINK_VICTORY)
     insert_midi(FALCO_VICTORY)
     insert_midi(DRMARIO_VICTORY)
+    insert_midi(N64)
 
     pushvar origin, base
 

@@ -120,15 +120,19 @@
 08B9 SpiralM Header
 08BA SpiralM Stage
 08BB SpiralM BG
-08BC Moray Header
-08BD Moray Stage
-08BE Moray BG
+08BC N64 Header
+08BD N64 Stage
+08BE N64 BG
 08BF Mute City Header
 08C0 Mute City Stage
 08C1 Mute City BG
 08C2 Mad Monster Mansion Header
 08C3 Mad Monster Mansion Stage
 08C4 Mad Monster Mansion BG
+08C5 Super Mario Bros BF Header
+08C6 Super Mario Bros BF Stage
+08C7 Super Mario Bros O Header
+08C8 Super Mario Bros O Stage
 0611 CAPTAIN DeadU
 0611 CAPTAIN ScreenKO
 05E8 CAPTAIN Entry
