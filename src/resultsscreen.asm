@@ -250,45 +250,71 @@ scope ResultsScreen {
         lw      ra, 0x0014(sp)              // original line 5
     }
     
-    pushvar origin, base
-    // change FOX to FALCO
-    origin  0x158658
-    float32 170                             // name rx
-    origin  0x158694
-    dw string_falco                         // pointer to name string 
-    origin  0x1586C4
-    float32 30                              // name lx
+    // @ Description
+    // Adds results screen parameters for a character.
+    // @ Arguments
+    // id - character id to modify
+    // fgm - announcer voice FGM id
+    // logo - character id to copy logo from (0-11)
+    // label_y - character id to copy label height from (0-11)
+    // wins_lx - float32 left x position of "WINS!" string
+    // string - character name string
+    // str_lx - float32 left x position of name string
+    // str_scale - float32 x scaling of name string
+    // bgm - victory BGM id
+    macro add_to_results_screen(id, fgm, logo, label_y, wins_lx, string, str_lx, str_scale, bgm) {
+        evaluate n({id})
+        
+        // add announcer FGM
+        Character.table_patch_start(winner_fgm, {id}, 0x4)
+        dw  {fgm}
+        OS.patch_end()
+        
+        // add logo character id
+        Character.table_patch_start(winner_logo, {id}, 0x4)
+        dw  {logo}
+        OS.patch_end()
+        
+        // add player label height
+        Character.table_patch_start(label_height, {id}, 0x4)
+        dw  {label_y}
+        OS.patch_end()
+        
+        // add "WINS!" string lx
+        Character.table_patch_start(str_wins_lx, {id}, 0x4)
+        float32 {wins_lx}
+        OS.patch_end()
+        
+        // add character name string
+        string_character_{n}:
+        db  "{string}"; db 0x00
+        OS.align(4)
+        
+        // add name string pointer, lx, scale
+        Character.table_patch_start(str_winner_ptr, {id}, 0x4)
+        dw  string_character_{n}
+        OS.patch_end()
+        Character.table_patch_start(str_winner_lx, {id}, 0x4)
+        float32 {str_lx}
+        OS.patch_end()
+        Character.table_patch_start(str_winner_scale, {id}, 0x4)
+        float32 {str_scale}
+        OS.patch_end()
+        
+        // add victory bgm routine
+        bgm_character_{n}:
+        add_victory_bgm({bgm})
+        
+        // add bgm routine pointer
+        Character.table_patch_start(winner_bgm, {id}, 0x4)
+        dw  bgm_character_{n}
+        OS.patch_end()
+    }
     
-    // change C.FALCON to GANONDORF
-    origin  0x158670
-    float32 185                             // name rx
-    origin  0x1586AC
-    dw string_ganondorf                     // pointer to name string
-    origin  0x1586DC
-    float32 20                              // name lx
-    origin  0x15870C
-    float32 0.6                             // name x scaling
-    
-    // change LINK to YOUNG LINK
-    origin  0x158668
-    float32 185                             // name rx
-    origin  0x1586A4
-    dw string_ylink                         // pointer to name string
-    origin  0x1586D4
-    float32 20                              // name lx
-    origin  0x158704
-    float32 0.65                            // name x scaling
-    pullvar base, origin
-    
-    // insert falco's text name
-    string_falco:
-    db  "FALCO"; db 0x00
-    OS.align(4)
-    string_ganondorf:
-    // insert ganondorf's text name
-    db  "GANONDORF"; db 0x00
-    OS.align(4)
-    string_ylink:
-    db  "YOUNG LINK"; db 0x00
-    OS.align(4)
+    // ADD CHARACTERS TO RESULTS SCREEN
+    add_to_results_screen(Character.id.FALCO, 0x2D6, Character.id.FOX, Character.id.FOX, 170, FALCO, 30, 1, 0x45)
+    add_to_results_screen(Character.id.GND, 0x2C5, Character.id.LINK, Character.id.CAPTAIN, 185, GANONDORF, 20, 0.6, 0x43)
+    add_to_results_screen(Character.id.YLINK, 0x2E5, Character.id.LINK, Character.id.LINK, 185, YOUNG LINK, 20, 0.65, 0x44)
+    // TODO: doc announcer voice
+    add_to_results_screen(Character.id.DRM, 0x1F3, Character.id.MARIO, Character.id.MARIO, 185, DR. MARIO, 20, 0.75, 0x46)
 }
