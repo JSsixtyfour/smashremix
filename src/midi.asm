@@ -105,7 +105,7 @@ scope MIDI {
     insert_midi(MUDA)
     insert_midi(MEMENTOS)
     insert_midi(SPIRAL_MOUNTAIN)
-    insert_midi(MORAY_TOWERS)
+    insert_midi(N64)
     insert_midi(MUTE_CITY)
     insert_midi(BATTLEFIELD)
     insert_midi(MADMONSTER)
@@ -113,7 +113,6 @@ scope MIDI {
     insert_midi(YOUNGLINK_VICTORY)
     insert_midi(FALCO_VICTORY)
     insert_midi(DRMARIO_VICTORY)
-    insert_midi(N64)
 
     pushvar origin, base
 
