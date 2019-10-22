@@ -484,7 +484,7 @@ scope FGM {
     add_sound(Ganondorf/sounds/5E shortenedlaugh, SAMPLE_RATE_16000)
     add_sound(Ganondorf/sounds/5F attacklike5cut4, SAMPLE_RATE_16000)
     add_sound(Ganondorf/sounds/62 deathlikecut1, SAMPLE_RATE_16000)
-    add_sound(Ganondorf/sounds/C4 Ganondorf AnnouncerLowpitch, SAMPLE_RATE_16000)
+    add_sound(Ganondorf/sounds/ANNOUNCER, SAMPLE_RATE_16000)
     add_sound(DrMario/sounds/65, SAMPLE_RATE_16000)
     add_sound(DrMario/sounds/B5, SAMPLE_RATE_16000)
     add_sound(Falco/sounds/35_chant, SAMPLE_RATE_16000)
@@ -501,7 +501,7 @@ scope FGM {
     add_sound(Falco/sounds/70, SAMPLE_RATE_16000)
     add_sound(Falco/sounds/71, SAMPLE_RATE_16000)
     add_sound(Falco/sounds/72, SAMPLE_RATE_16000)
-    add_sound(Falco/sounds/BD_announcer, SAMPLE_RATE_16000)
+    add_sound(Falco/sounds/ANNOUNCER, SAMPLE_RATE_16000)
     add_sound(YoungLink/sounds/37 Young Link Chant, SAMPLE_RATE_16000)
     add_sound(YoungLink/sounds/8A2, SAMPLE_RATE_32000)
     add_sound(YoungLink/sounds/8B Hup!short3, SAMPLE_RATE_32000)
@@ -517,7 +517,8 @@ scope FGM {
     add_sound(YoungLink/sounds/95, SAMPLE_RATE_32000)
     add_sound(YoungLink/sounds/95, SAMPLE_RATE_32000)
     add_sound(YoungLink/sounds/96, SAMPLE_RATE_32000)
-    add_sound(YoungLink/sounds/Announcer4, SAMPLE_RATE_16000)
+    add_sound(YoungLink/sounds/ANNOUNCER, SAMPLE_RATE_16000)
+    add_sound(DrMario/sounds/ANNOUNCER, SAMPLE_RATE_16000)
 
     // This is always last
     write_sounds()

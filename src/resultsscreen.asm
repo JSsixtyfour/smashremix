@@ -315,6 +315,5 @@ scope ResultsScreen {
     add_to_results_screen(Character.id.FALCO, 0x2D6, Character.id.FOX, Character.id.FOX, 170, FALCO, 30, 1, 0x45)
     add_to_results_screen(Character.id.GND, 0x2C5, Character.id.LINK, Character.id.CAPTAIN, 185, GANONDORF, 20, 0.6, 0x43)
     add_to_results_screen(Character.id.YLINK, 0x2E5, Character.id.LINK, Character.id.LINK, 185, YOUNG LINK, 20, 0.65, 0x44)
-    // TODO: doc announcer voice
-    add_to_results_screen(Character.id.DRM, 0x1F3, Character.id.MARIO, Character.id.MARIO, 185, DR. MARIO, 20, 0.75, 0x46)
+    add_to_results_screen(Character.id.DRM, 0x2E6, Character.id.MARIO, Character.id.MARIO, 185, DR. MARIO, 20, 0.75, 0x46)
 }
