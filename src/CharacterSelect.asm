@@ -590,6 +590,21 @@ scope CharacterSelect {
         j       _get_zoom_return            // return
         nop
     }
+    
+    // @ Description
+    // Patch which loads character selected action from selection_action_table.
+    // Originally a jump table was used here, but it's not necessary.
+    scope get_action_: {
+        OS.patch_start(0x132B6C, 0x801348EC)
+        // a0 = character id
+        sll     t6, a0, 0x2                 // t6 = character id * 4
+        li      at, selection_action_table  // at = selection_action_table
+        addu    at, at, t6                  // at = selection_action_table + (id * 4)
+        lw      v0, 0x0000(at)              // v0 = selection_action for {character}
+        jr      ra                          // return
+        nop
+        OS.patch_end()
+    }
 
     // @ Description
     // This is the hook for loading more characters. Located directly after the initial characters.
@@ -709,51 +724,6 @@ scope CharacterSelect {
     dh FGM.announcer.names.DR_MARIO        // Dr. Mario
     OS.align(4)
 
-    // @ Description
-    // This. loads the zoom table for each character so they all appear the same
-    // size. this table has been moved and extended [Fray]
-    // @ Note
-    // To be moved to Character.asm
-    OS.patch_start(0x00132E58, 0x80134BD8)
-    li      t2, character_zoom_table        // original line 1/3
-    cvt.s.w f10, f8                         // original line 2
-    OS.patch_end()
-
-    character_zoom_table:
-    float32 1.25                            // Mario
-    float32 1.15                            // Fox
-    float32 1.00                            // Donkey Kong
-    float32 1.03                            // Samus
-    float32 1.21                            // Luigi
-    float32 1.33                            // Link
-    float32 1.05                            // Yoshi
-    float32 1.07                            // Captain Falcon
-    float32 1.22                            // Kirby
-    float32 1.20                            // Pikachu
-    float32 1.25                            // Jigglypuff
-    float32 1.30                            // Ness
-    float32 1.00                            // Master Hand
-    float32 1.25                            // Metal Mario
-    float32 1.25                            // Polygon Mario
-    float32 1.15                            // Polygon Fox
-    float32 1.00                            // Polygon Donkey Kong
-    float32 1.03                            // Polygon Samus
-    float32 1.21                            // Polygon Luigi
-    float32 1.33                            // Polygon Link
-    float32 1.05                            // Polygon Yoshi
-    float32 1.07                            // Polygon Captain Falcon
-    float32 1.22                            // Polygon Kirby
-    float32 1.20                            // Polygon Pikachu
-    float32 1.25                            // Polygon Jigglypuff
-    float32 1.30                            // Polygon Ness
-    float32 1.25                            // Giant Donkey Kong
-    float32 0.00                            // (Placeholder)
-    float32 0.00                            // None (Placeholder)
-    float32 1.15                            // Falco
-    float32 1.04                            // Ganondorf
-    float32 1.15                            // Young Link
-    float32 1.27                            // Dr. Mario
-
     white_circle_size_table:
     float32 1.50                            // Mario
     float32 1.50                            // Fox
@@ -789,6 +759,43 @@ scope CharacterSelect {
     float32 1.50                            // Young Link
     float32 1.50                            // Dr. Mario
 
+    // @ Description
+    // New table for selection action
+    selection_action_table:
+    dw 0x00010003                           // Mario
+    dw 0x00010004                           // Fox
+    dw 0x00010001                           // Donkey Kong
+    dw 0x00010004                           // Samus
+    dw 0x00010001                           // Luigi
+    dw 0x00010001                           // Link
+    dw 0x00010002                           // Yoshi
+    dw 0x00010001                           // Captain Falcon
+    dw 0x00010003                           // Kirby
+    dw 0x00010001                           // Pikachu
+    dw 0x00010002                           // Jigglypuff
+    dw 0x00010002                           // Ness
+    dw 0x00010001                           // Master Hand
+    dw 0x00010001                           // Metal Mario
+    dw 0x00010001                           // Polygon Mario
+    dw 0x00010001                           // Polygon Fox
+    dw 0x00010001                           // Polygon Donkey Kong
+    dw 0x00010001                           // Polygon Samus
+    dw 0x00010001                           // Polygon Luigi
+    dw 0x00010001                           // Polygon Link
+    dw 0x00010001                           // Polygon Yoshi
+    dw 0x00010001                           // Polygon Captain Falcon
+    dw 0x00010001                           // Polygon Kirby
+    dw 0x00010001                           // Polygon Pikachu
+    dw 0x00010001                           // Polygon Jigglypuff
+    dw 0x00010001                           // Polygon Ness
+    dw 0x00010001                           // Giant Donkey Kong
+    dw 0x00010001                           // (Placeholder)
+    dw 0x00010001                           // None (Placeholder)
+    dw 0x00010004                           // Falco
+    dw 0x00010001                           // Ganondorf
+    dw 0x00010001                           // Young Link
+    dw 0x00010003                           // Dr. Mario
+    
     // @ Description
     // Logo offsets in file 0x14
     scope series_logo {
@@ -835,10 +842,10 @@ scope CharacterSelect {
     dw series_logo.DONKEY_KONG              
     dw 0x00000000                           
     dw 0x00000000                           
-    dw series_logo.STARFOX                  
-    dw series_logo.ZELDA                    
-    dw series_logo.ZELDA                    
-    dw series_logo.MARIO_BROS        
+    dw series_logo.STARFOX                  // Falco
+    dw series_logo.ZELDA                    // Ganondorf
+    dw series_logo.ZELDA                    // Young Link
+    dw series_logo.MARIO_BROS               // Dr. Mario
 
     // @ Description
     // Name texture offsets in file 0x11
