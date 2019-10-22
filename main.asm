@@ -102,6 +102,7 @@ include "src/Action.asm"
 include "src/File.asm"
 // CHARACTER
 include "src/Character.asm"
+include "src/CharacterSelect.asm"
 include "src/Fireball.asm"
 include "src/ResultsScreen.asm"
 // FALCO

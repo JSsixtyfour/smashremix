@@ -79,9 +79,16 @@ scope Overlay {
 
         _sss:
         lli     t1, 0x0015                  // t1 = stage select screen
-        bne     t0, t1, _finish             // if (screen_id != stage_select), skip
+        bne     t0, t1, _css                // if (screen_id != stage_select), skip
         nop
         jal     Stages.run_                 //
+        nop
+
+        _css:  
+        lli     t1, 0x0010                  // t1 = stage select screen
+        bne     t0, t1, _finish             // if (screen_id != stage_select), skip
+        nop
+        jal     CharacterSelect.run_        //
         nop
 
         _finish:
@@ -257,7 +264,7 @@ scope Overlay {
         jr      ra                          // return
         nop
     }
-
+1
     // @ Description
     // Adds f3dex2 to draw multiple textured rectangles (for one texture) to the framebuffer.
     // @ Arguments
