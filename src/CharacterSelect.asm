@@ -986,6 +986,7 @@ scope CharacterSelect {
     insert portrait_pikachu,        "../textures/portrait_pikachu.rgba5551"
     insert portrait_samus,          "../textures/portrait_samus.rgba5551"
     insert portrait_yoshi,          "../textures/portrait_yoshi.rgba5551"
+    insert portrait_unknown,        "../textures/portrait_unknown.rgba5551"
 
     portrait_table:
     dw portrait_mario                   // Mario
@@ -1000,27 +1001,27 @@ scope CharacterSelect {
     dw portrait_pikachu                 // Pikachu
     dw portrait_jigglypuff              // Jigglypuff
     dw portrait_ness                    // Ness
-    dw portrait_mario                   // Masterhand
-    dw portrait_mario                   // Metal Mario
-    dw portrait_mario                   // Polygon Mario
-    dw portrait_mario                   // Polygon Fox
-    dw portrait_mario                   // Polygon Donkey Kong
-    dw portrait_mario                   // Polygon Samus
-    dw portrait_mario                   // Polygon Luigi
-    dw portrait_mario                   // Polygon Link
-    dw portrait_mario                   // Polygon Yoshi
-    dw portrait_mario                   // Polygon Captain Falcon
-    dw portrait_mario                   // Polygon Kirby
-    dw portrait_mario                   // Polygon Pikachu
-    dw portrait_mario                   // Polygon Jigglypuff
-    dw portrait_mario                   // Polygon Ness
-    dw portrait_mario                   // Giant Donkey Kong
-    dw portrait_mario                   // (Placeholder)
-    dw portrait_mario                   // None (Placeholder)
-    dw portrait_mario                   // Falco
-    dw portrait_mario                   // Ganondorf
-    dw portrait_mario                   // Young Link
-    dw portrait_mario                   // Dr. Mario
+    dw portrait_unknown                 // Masterhand
+    dw portrait_unknown                 // Metal Mario
+    dw portrait_unknown                 // Polygon Mario
+    dw portrait_unknown                 // Polygon Fox
+    dw portrait_unknown                 // Polygon Donkey Kong
+    dw portrait_unknown                 // Polygon Samus
+    dw portrait_unknown                 // Polygon Luigi
+    dw portrait_unknown                 // Polygon Link
+    dw portrait_unknown                 // Polygon Yoshi
+    dw portrait_unknown                 // Polygon Captain Falcon
+    dw portrait_unknown                 // Polygon Kirby
+    dw portrait_unknown                 // Polygon Pikachu
+    dw portrait_unknown                 // Polygon Jigglypuff
+    dw portrait_unknown                 // Polygon Ness
+    dw portrait_unknown                 // Giant Donkey Kong
+    dw portrait_unknown                 // (Placeholder)
+    dw portrait_unknown                 // None (Placeholder)
+    dw portrait_unknown                 // Falco
+    dw portrait_unknown                 // Ganondorf
+    dw portrait_unknown                 // Young Link
+    dw portrait_unknown                 // Dr. Mario
 }
 
 
