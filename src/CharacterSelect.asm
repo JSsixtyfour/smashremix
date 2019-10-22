@@ -605,6 +605,47 @@ scope CharacterSelect {
         nop
         OS.patch_end()
     }
+    
+    // @ Description
+    // Patch default costume subroutines to use Character.default_costume.table
+    scope get_default_costume_: {
+        constant UPPER(Character.default_costume.table >> 16)
+        constant LOWER(Character.default_costume.table & 0xFFFF)
+        // returns "c-button" costume ids
+        OS.patch_start(0x678F4, 0x800EC0F4)
+        if LOWER > 0x7FFF {
+            lui     v0, (UPPER + 0x1)       // modified original line 1
+        } else {
+            lui     v0, UPPER               // modified original line 1
+        }
+        addu    v0, v0, t7                  // original line 2
+        jr      ra                          // original line 3
+        lbu     v0, LOWER(v0)               // modified original line 4    
+        OS.patch_end()
+        // returns team costume ids
+        OS.patch_start(0x6790C, 0x800EC10C)
+        if LOWER > 0x7FFF {
+            lui     v0, (UPPER + 0x1)       // modified original line 1
+        } else {
+            lui     v0, UPPER               // modified original line 1
+        }
+        addu    v0, v0, t7                  // original line 2
+        jr      ra                          // original line 3
+        lbu     v0, LOWER+4(v0)             // modified original line 4   
+        OS.patch_end()
+        // returns unknown costume id (byte after green team id)
+        // TODO: figure out what this costume id is for (low priority)
+        OS.patch_start(0x67920, 0x800EC120)
+        if LOWER > 0x7FFF {
+            lui     v0, (UPPER + 0x1)       // modified original line 1
+        } else {
+            lui     v0, UPPER               // modified original line 1
+        }
+        addu    v0, v0, t6                  // original line 2
+        jr      ra                          // original line 3
+        lbu     v0, LOWER+7(v0)             // modified original line 4  
+        OS.patch_end()
+    }
 
     // @ Description
     // This is the hook for loading more characters. Located directly after the initial characters.
@@ -791,10 +832,11 @@ scope CharacterSelect {
     dw 0x00010001                           // Giant Donkey Kong
     dw 0x00010001                           // (Placeholder)
     dw 0x00010001                           // None (Placeholder)
+    // TODO: revert these action swaps once the array isn't shared
     dw 0x00010004                           // Falco
-    dw 0x00010001                           // Ganondorf
-    dw 0x00010001                           // Young Link
-    dw 0x00010003                           // Dr. Mario
+    dw 0x00010002                           // Ganondorf
+    dw 0x00010003                           // Young Link
+    dw 0x00010001                           // Dr. Mario
     
     // @ Description
     // Logo offsets in file 0x14

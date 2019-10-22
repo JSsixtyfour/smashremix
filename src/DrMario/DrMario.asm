@@ -61,4 +61,7 @@ scope DrMario {
     Character.edit_action_parameters(DRM,   0xE2,                   -1,                         USP,                        -1)
     Character.edit_action_parameters(DRM,   0xE3,                   -1,                         DSP_GROUND,                 -1)
     Character.edit_action_parameters(DRM,   0xE4,                   -1,                         DSP_AIR,                    -1)    
+    
+    // Set default costumes
+    Character.set_default_costumes(Character.id.DRM, 0, 1, 2, 3, 2, 3, 4)
 }

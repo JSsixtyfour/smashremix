@@ -91,6 +91,9 @@ scope Ganondorf {
     float32 1.2
     OS.patch_end()
     
+    // Set default costumes
+    Character.set_default_costumes(Character.id.GND, 0, 1, 2, 3, 1, 4, 2)
+    
     kick_anim_struct:
     dw  0x060F0000
     dw  Character.GND_file_7_ptr

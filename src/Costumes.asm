@@ -115,18 +115,39 @@ scope Costumes {
         nop
 
         num_costumes:
-        db 0x04                             // mario
-        db 0x03                             // fox
-        db 0x04                             // dk
-        db 0x04                             // samus
-        db 0x03                             // luigi
-        db 0x03                             // link
-        db 0x05                             // yoshi
-        db 0x05                             // captain Falcon
-        db 0x04                             // kirby
-        db 0x03                             // pikachu
-        db 0x04                             // jigglypuff
-        db 0x03                             // ness
+        db 0x04                             // Mario
+        db 0x03                             // Fox
+        db 0x04                             // Donkey Kong
+        db 0x04                             // Samus
+        db 0x03                             // Luigi
+        db 0x03                             // Link
+        db 0x05                             // Yoshi
+        db 0x05                             // Captain Falcon
+        db 0x04                             // Kirby
+        db 0x03                             // Pikachu
+        db 0x04                             // Jigglypuff
+        db 0x03                             // Ness
+        db 0x00                             // Master Hand
+        db 0x00                             // Metal Mario
+        db 0x00                             // Polygon Mario
+        db 0x00                             // Polygon Fox
+        db 0x00                             // Polygon Donkey Kong
+        db 0x00                             // Polygon Samus
+        db 0x00                             // Polygon Luigi
+        db 0x00                             // Polygon Link
+        db 0x00                             // Polygon Yoshi
+        db 0x00                             // Polygon Captain Falcon
+        db 0x00                             // Polygon Kirby
+        db 0x00                             // Polygon Pikachu
+        db 0x00                             // Polygon Jigglypuff
+        db 0x00                             // Polygon Ness
+        db 0x00                             // Giant Donkey Kong
+        db 0x00                             // (Placeholder)
+        db 0x00                             // None (Placeholder)
+        db 0x03                             // Falco
+        db 0x05                             // Ganondorf
+        db 0x00                             // Young Link
+        db 0x04                             // Dr. Mario                
         OS.align(4)
 
         functions:

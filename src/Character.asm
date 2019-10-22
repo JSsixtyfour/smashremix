@@ -223,6 +223,8 @@ scope Character {
         add_to_table(yoshi_egg, id.{name}, id.{parent}, 0x1C)
         
         // Copy parent character for menu tables  
+        add_to_table(menu_zoom, id.{name}, id.{parent}, 0x4)
+        add_to_table(default_costume, id.{name}, id.{parent}, 0x8)
         add_to_id_table(vs_record, id.{name}, id.{parent})
         add_to_table(winner_fgm, id.{name}, id.{parent}, 0x4)
         add_to_id_table(winner_logo, id.{name}, id.{parent})
@@ -232,7 +234,7 @@ scope Character {
         add_to_table(str_winner_lx, id.{name}, id.{parent}, 0x4)
         add_to_table(str_winner_scale, id.{name}, id.{parent}, 0x4)
         add_to_table(winner_bgm, id.{name}, id.{parent}, 0x4)
-        add_to_table(menu_zoom, id.{name}, id.{parent}, 0x4)
+        
         
         // Copy parent character for projectile tables
         add_to_table(fireball, id.{name}, id.{parent}, 0x4)
@@ -343,6 +345,31 @@ scope Character {
     macro table_patch_start(table_name, id, entry_size) {
         pushvar origin, base
         origin  Character.{table_name}.TABLE_ORIGIN + ({id} * {entry_size})  
+    }
+    
+    // @ Description
+    // adds default costume ids to a character
+    // NOTE: this macro supports use outside of this file.
+    // @ Arguments
+    // id - character id to modify costumes for
+    // costume_1 - default costume, c-up
+    // costume_2 - second costume, c-right
+    // costume_3 - third costume, c-down
+    // costume_4 - fourth costume, c-left
+    // red_team - red team costume
+    // blue_team - blue team costume
+    // green_team - green team costume
+    macro set_default_costumes(id, costume_1, costume_2, costume_3, costume_4, red_team, blue_team, green_team) {
+        Character.table_patch_start(default_costume, {id}, 0x8)
+        // write costume ids
+        db  {costume_1}
+        db  {costume_2}
+        db  {costume_3}
+        db  {costume_4}
+        db  {red_team}
+        db  {blue_team}
+        db  {green_team}
+        OS.patch_end()
     }
     
     // @ Description
@@ -1507,6 +1534,10 @@ scope Character {
     move_table(yoshi_egg, 0x103160, 0x1C)
     
     // menu tables
+    move_table_12(menu_zoom, 0x108370, 0x4)
+    // character select
+    move_table_12(default_costume, 0xA7030, 0x8)
+    // results screen
     id_table_12(vs_record)
     move_table_12(winner_fgm, 0x158148, 0x4)
     id_table_12(winner_logo)
@@ -1516,7 +1547,7 @@ scope Character {
     move_table_12(str_winner_lx, 0x1586C0, 0x4)
     move_table_12(str_winner_scale, 0x1586F0, 0x4)
     move_table_12(winner_bgm, 0x158A08, 0x4)
-    move_table_12(menu_zoom, 0x108370, 0x4)
+    
     
     // projectile tables
     move_table(fireball, 0x107070, 0x4)
