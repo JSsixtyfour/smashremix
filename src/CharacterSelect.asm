@@ -8,15 +8,9 @@ print "included CharacterSelect.asm\n"
 
 // TODO
 // why is gdk crashing
-// animations for additonal characters 
 // costumes    
 // fire in the background/question marks 
-// memory issue mergew (in progress)
-// 1p/2p/cpu logo on hands
-// hiding token on tiles at the bottom
-// draw cpu token instead of player token (for default but removes value tbh?)
 // automatic token placement on cpu select (DONE) and character (NOT DONE)
-// ready to fight appearance
 
 include "Global.asm"
 include "OS.asm"
@@ -25,8 +19,6 @@ include "Texture.asm"
 
 scope CharacterSelect {
 
-    ////////////////////////////////////////////////////////////////////////////
-    // Start Fray's heap solution
     
     // @ Description
     // Subroutine which loads a character, but uses an alternate req list which loads only the main
@@ -40,9 +32,18 @@ scope CharacterSelect {
         li      t8, alt_req_list            // t8 = alt_req_list address
         addu    t7, t6, t7                  // t7 = alt req table + (character id * 4)
         lw      t6, 0x0000(t7)              // t6 = req list ROM offset
-        bnel    t6, r0, _load               // branch if t6 != 0
+        bnel    t6, r0, _malloc             // branch if t6 != 0
         sw      t6, 0x0000(t8)              // on branch, store alt_req_list
-        _load:
+        _malloc:
+        sll     t6, a0, 0x2                 // t6 = character id * 4
+        li      t7, alt_malloc_table        // t7 = alt_malloc_table
+        li      t8, alt_malloc_size         // t8 = alt_malloc_size address
+        addu    t7, t6, t7                  // t7 = alt_malloc_table + (character id * 4)
+        lw      t6, 0x0000(t7)              // t6 = alt_malloc_size for {character}
+        li      t6, 0xF000
+        bnel    t6, r0, _end                // branch if t6 != 0
+        sw      t6, 0x0000(t8)              // on branch, store alt_malloc_size
+        _end:
         jal     0x800D786C                  // load character
         nop
         lw      ra, 0x0008(sp)              // load ra
@@ -54,33 +55,36 @@ scope CharacterSelect {
     // @ Description
     // Patch vs mode character select loading routine to use load_character_model_
     OS.patch_start(0x139440, 0x8013B1C0)
-//  jal     load_character_model_
+    jal     load_character_model_
     OS.patch_end()
     
     // @ Description
-    // Patch which causes a character's files to be loaded at the end of the heap instead of
-    // updating the heap end with a fixed(?) address.
-    // TODO: understand why the character files are loaded at a seemingly fixed position rather
-    // than being loaded at the end of the heap under normal circumstances. (low priority)
-    scope file_load_fix_: {
-        OS.patch_start(0x52EC8, 0x800D76C8)
-//      j       file_load_fix_
-//      nop
+    // Patch which checks for an alternate malloc size, ensures that the right amount of space is
+    // allocated when an alternate req list is loaded.
+    scope get_alternate_malloc_size_: {
+        OS.patch_start(0x52EBC, 0x800D76BC)
+        j       get_alternate_malloc_size_
+        nop
         _return:
         OS.patch_end()
         
-        // v0 = heap_end override
-        li      at, alt_req_list            // at = alt_req_list address
-        lw      at, 0x0000(at)              // at = alt_req_list
-        beq     at, r0, _end                // skip if alt_req_list = 0
+        li      t6, alt_req_list            // t6 = alt_req_list address
+        lw      t7, 0x0000(t6)              // t7 = alt_req_list
+        beq     t7, r0, _end                // skip if alt_req_list = 0
         nop
-        li      at, 0x800D6348              // at = heap_end address
-        lw      v0, 0x0000(at)              // v0 = heap_end
+        
+        li      t6, alt_malloc_size         // t6 = alt_malloc_size address
+        lw      t7, 0x0000(t6)              // t7 = alt_malloc_size
+        beq     t7, r0, _end                // skip if alt_malloc_size = 0
+        nop
+        
+        or      a0, r0, t7                  // a0 = alt_malloc_size
+        sw      r0, 0x0000(t6)              // destroy alt_malloc_size
         
         _end:
         // original lines 1/2
-        jal     0x800CDC88                  // load file (with heap_end override in a1)
-        or      a1, v0, r0                  // a1 = heap_end override
+        jal     0x80004980                  // malloc (original line 1)
+        addiu   a1, r0, 0x0010              // original line 2
         j       _return                     // return
         nop
     }
@@ -90,8 +94,8 @@ scope CharacterSelect {
     // offset of the main file's req list the first time it runs after load_character_model_
     scope get_alternate_req_list_: {
         OS.patch_start(0x4934C, 0x800CD96C)
-//      j       get_alternate_req_list_
-//      nop
+        j       get_alternate_req_list_
+        nop
         _return:
         OS.patch_end()
         
@@ -110,6 +114,50 @@ scope CharacterSelect {
         nop   
     }
     
+    // @ Description
+    // Holds an alternate malloc size, used by get_alternate_malloc_size_
+    alt_malloc_size:
+    dw  0
+    
+    // @ Description
+    // Table of alternate malloc sizes.
+    // TODO: figure out if padding these segments by 0x200 is needed.
+    // TODO: get the segment size for characters 0xC to 0x1A if we want to use them.
+    alt_malloc_table:
+    dw  0x7710                              // 0x00 - MARIO
+    dw  0x8050                              // 0x01 - FOX
+    dw  0xD800                              // 0x02 - DONKEY
+    dw  0xE750                              // 0x03 - SAMUS
+    dw  0x8110                              // 0x04 - LUIGI
+    dw  0x12170                             // 0x05 - LINK
+    dw  0xAEE0                              // 0x06 - YOSHI
+    dw  0xCA90                              // 0x07 - CAPTAIN
+    dw  0x1FFD0                             // 0x08 - KIRBY
+    dw  0x9E30                              // 0x09 - PIKACHU
+    dw  0x7FE0                              // 0x0A - JIGGLY
+    dw  0xC5C0                              // 0x0B - NESS
+    dw  0                                   // 0x0C - BOSS
+    dw  0                                   // 0x0D - METAL
+    dw  0                                   // 0x0E - NMARIO
+    dw  0                                   // 0x0F - NFOX
+    dw  0                                   // 0x10 - NDONKEY
+    dw  0                                   // 0x11 - NSAMUS
+    dw  0                                   // 0x12 - NLUIGI
+    dw  0                                   // 0x13 - NLINK
+    dw  0                                   // 0x14 - NYOSHI
+    dw  0                                   // 0x15 - NCAPTAIN
+    dw  0                                   // 0x16 - NKIRBY
+    dw  0                                   // 0x17 - NPIKACHU
+    dw  0                                   // 0x18 - NJIGGLY
+    dw  0                                   // 0x19 - NNESS
+    dw  0                                   // 0x1A - GDONKEY
+    dw  0                                   // 0x1B - PLACEHOLDER
+    dw  0                                   // 0x1C - PLACEHOLDER
+    dw  0x8050                              // 0x1D - FALCO
+    dw  0x19270                             // 0x1E - GND
+    dw  0x12170                             // 0x1F - YLINK
+    dw  0x7710                              // 0x20 - DRM
+
     // @ Description
     // Holds the ROM offset of an alternate req list, used by get_alternate_req_list_
     alt_req_list:
@@ -163,9 +211,6 @@ scope CharacterSelect {
     add_alt_req_list(Character.id.YLINK, req/YLINK_MODEL)
     add_alt_req_list(Character.id.DRM, req/DRM_MODEL)
 
-    // End Fray's Heap solution
-    ////////////////////////////////////////////////////////////////////////////
-
     // @ Description
     // This function returns what character is selected by the token's position
     // this is purely based on token position, not hand position
@@ -177,64 +222,101 @@ scope CharacterSelect {
         nop
         OS.patch_end()
         
-        mfc1    v1, f10             // original line 1 (v1 = (int) ypos)
-        mfc1    a1, f6              // original line 2 (a1 = (int) xpos)
+        mfc1    v1, f10                     // original line 1 (v1 = (int) ypos)
+        mfc1    a1, f6                      // original line 2 (a1 = (int) xpos)
 
         // make the furthest left/up equal 0 for arithmetic purposes
-        addiu   a1, a1, -START_X    // a1 = xpos - X_START
-        addiu   v1, v1, -START_Y    // v1 = ypos - Y_START
+        addiu   a1, a1, -START_X            // a1 = xpos - X_START
+        addiu   v1, v1, -START_Y            // v1 = ypos - Y_START
 
-        addiu   sp, sp,-0x0010      // allocate stack space
-        sw      t0, 0x0004(sp)      // ~
-        sw      t1, 0x0008(sp)      // ~
-        sw      t2, 0x000C(sp)      // save registers
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      t0, 0x0004(sp)              // ~
+        sw      t1, 0x0008(sp)              // ~
+        sw      t2, 0x000C(sp)              // save registers
 
         // calculate id
-        lli     t0, PORTRAIT_WIDTH  // t0 = PORTRAIT_WIDTH
-        divu    a1, t0              // ~
-        mflo    t1                  // t1 = x index
-        lli     t0, PORTRAIT_HEIGHT // t0 = PORTRAIT_HEIGHT
-        divu    v1, t0              // ~
-        mflo    t2                  // t2 = y index
+        lli     t0, PORTRAIT_WIDTH          // t0 = PORTRAIT_WIDTH
+        divu    a1, t0                      // ~
+        mflo    t1                          // t1 = x index
+        lli     t0, PORTRAIT_HEIGHT         // t0 = PORTRAIT_HEIGHT
+        divu    v1, t0                      // ~
+        mflo    t2                          // t2 = y index
 
         // multi dimmensional array math
         // index = (row * NUM_COLUMNS) + column
-        lli     t0, NUM_COLUMNS     // ~
-        multu   t0, t2              // ~
-        mflo    t0                  // t0 = (row * NUM_COLUMNS)
-        addu    t0, t0, t1          // t0 = index
+        lli     t0, NUM_COLUMNS             // ~
+        multu   t0, t2                      // ~
+        mflo    t0                          // t0 = (row * NUM_COLUMNS)
+        addu    t0, t0, t1                  // t0 = index
 
         // return id.NONE if index is too large for table
-        lli     t1, NUM_PORTRAITS   // t1 = NUM_PORTRAITS
-        sltu    t2, t0, t1          // if (t0 < t1), t2 = 0
-        beqz    t2, _end            // explained above lol
-        lli     v0, Character.id.NONE // also explained above lol
+        lli     t1, NUM_PORTRAITS           // t1 = NUM_PORTRAITS
+        sltu    t2, t0, t1                  // if (t0 < t1), t2 = 0
+        beqz    t2, _end                    // explained above lol
+        lli     v0, Character.id.NONE       // also explained above lol
 
-        li      t1, id_table        // t1 = id_table
-        addu    t0, t0, t1          // t1 = id_table[index]
-        lbu     v0, 0x0000(t0)      // v0 = character id
+        li      t1, id_table                // t1 = id_table
+        addu    t0, t0, t1                  // t1 = id_table[index]
+        lbu     v0, 0x0000(t0)              // v0 = character id
         
         _end:
-        lw      t0, 0x0004(sp)      // ~
-        lw      t1, 0x0008(sp)      // ~
-        lw      t2, 0x000C(sp)      // save registers
-        addiu   sp, sp, 0x0010      // deallocate stack space
-        jr      ra                  // return (discard the rest of the function)
-        addiu   sp, sp, 0x0028      // deallocate stack space (original function)
+        lw      t0, 0x0004(sp)              // ~
+        lw      t1, 0x0008(sp)              // ~
+        lw      t2, 0x000C(sp)              // save registers
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        jr      ra                          // return (discard the rest of the function)
+        addiu   sp, sp, 0x0028              // deallocate stack space (original function)
     }
 
-
     // @ Description
-    // Overlay.asm hook for drawing things.
-    scope run_: {
-
-        // disable drawing of default portraits
-        OS.patch_start(0x001307A0, 0x80132520)
-        jr      ra 
+    // Highjacks the display list of the portraits
+    scope highjack_: {
+        OS.patch_start(0x00478E0, 0x800CBF00)
+        j       highjack_
         nop
+        _return:
         OS.patch_end()
 
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      at, 0x0004(sp)              // ~
+        sw      t0, 0x0008(sp)              // save registers
 
+        // lazy attempt to see if the character is mario        
+        lli     at, 000045                  // at = expected height
+        lhu     t0, 0x0000(s1)              // t0 = height
+        bne     at, t0, _skip               // if test fails, end
+        nop    
+
+        lli     at, 000048                  // at = expected height
+        lhu     t0, 0x0002(s1)              // t0 = width
+        bne     at, t0, _skip               // if test fails, end
+        nop
+
+        li      at, 0x801A1788              //
+        bne     s1, at, _skip               // the last s1 (puff, hopefully static lol)
+        nop
+
+        // highjack here
+        sw      r0, 0x0004(v1)              // original line 1 (modified)
+        
+        // init
+        li      t0, RCP.display_list_info_p // t0 = display list info pointer 
+        li      t1, display_list_info       // t1 = address of display list info
+        sw      t1, 0x0000(t0)              // update display list info pointer
+
+        // reset
+        li      t0, display_list            // t0 = address of display_list
+        li      t1, display_list_info       // t1 = address of display_list_info 
+        sw      t0, 0x0000(t1)              // ~
+        sw      t0, 0x0004(t1)              // update display list address each frame
+
+        // highjack
+        li      t0, 0xDE000000              // ~
+        sw      t0, 0x0000(v1)              // ~
+        li      t0, display_list            // ~ 
+        sw      t0, 0x0004(v1)              // highjack ssb display list
+
+        // draw
         addiu   sp, sp,-0x0030              // allocate stack space
         sw      ra, 0x0004(sp)              // ~
         sw      t0, 0x0008(sp)              // ~
@@ -254,7 +336,7 @@ scope CharacterSelect {
 
         lli     t0, NUM_ROWS                // init rows
         _outer_loop:
-        beqz    t0, _cursor                 // once every row complete, draw cursor (hand/token)
+        beqz    t0, _end                    // once every row complete, draw cursor (hand/token)
         nop
         addiu   t0, t0,-0x0001              // decrement outer loop
 
@@ -299,96 +381,10 @@ scope CharacterSelect {
 
         b       _inner_loop                 // loop
         nop
-
-
-        // draw difference
-        // 438AFFFF,  43867FFF
-        // holding, pointing/open
-        // ~278 ~269
-
-        // 0x0000(player data) = cursor
-        // 0x0000
-        _cursor:
-        lli     at, 0x0003                  // i = 3
-
-        _loop:
-        lli     a0, Color.BLUE
-        jal     Overlay.set_color_          // fill color = blue
-        nop
-
-        li      t0, player_data             // t0 = player_data_table
-        sll     t1, at, 0x0002              // t1 = i * 4
-        addu    t0, t0, t1                  // t0 = player_data_table[i]
-        lw      t1, 0x0000(t0)              // t1 = data
-
-
-        _token:
-        lw      t2, 0x0004(t1)              // t2 = p2 token
-        lw      a0, 0x00E0(t2)              // a0 = (float) p2 token x
-        jal     OS.float_to_int_            // v0 = (int) p2 token x
-        nop
-        or      v1, v0, r0                  // v1 = (int) p2 token x
-        lw      a0, 0x00E4(t2)              // a0 = (float) p2 token y
-        jal     OS.float_to_int_            // v0 = (int) p2 token y
-        nop
-
-        or      a0, v1, r0                  // a0 - ulx 
-        or      a1, v0, r0                  // a1 - uly
-        sll     t2, at, 0x0002              // t2 = index * 4
-        li      t3, token_textures          // ~
-        addu    t3, t3, t2                  // ~
-        lw      t3, 0x0000(t3)              // t3 = address of hand texture
-        li      a2, token_info              // a2 - address of texture struct
-        sw      t3, 0x00008(a2)             // update info image data
-        jal     Overlay.draw_texture_       // draw portrait
-        nop
-
-
-        _hand:
-        lw      t2, 0x0000(t1)              // t2 = hand
-        lw      a0, 0x0170(t2)              // a0 = (float) p2 hand x
-        jal     OS.float_to_int_            // v0 = (int) p2 hand x
-        nop
-        or      v1, v0, r0                  // v1 = (int) p2 hand x
-        lw      a0, 0x0174(t2)              // a0 = (float) p2 hand y
-        jal     OS.float_to_int_            // v0 = (int) p2 hand y
-        nop
-
-        or      a0, v1, r0                  // a0 - ulx 
-        or      a1, v0, r0                  // a1 - uly
-        addiu   a0, a0, 0x0001              // ulx correction
-        addiu   a0, a0, 0x0003              // uly correction
-        lw      t2, 0x0054(t1)              // t2 = hand state
-
-        _holding:
-        lli     t3, 0x0002                  // t1 = OPEN_HAND
-        bne     t2, t3, _hand_pointing      // if not OPEN_HAND, skip
-        nop
-        addiu   a0, a0,-000011              // ~
-        addiu   a1, a1,-000011              // hand correction
-
-        _hand_pointing:
-        lli     t3, 0x0000                  // t3 = HAND_POINTING
-        bne     t2, t3, _draw_hand          // if not HAND_POINTING, skip
-        nop
-        // TODO: hand pointing on windows
-        addiu   a1, a1,-000001              // hand correction
-
-        _draw_hand:
-        sll     t2, t2, 0x0002              // t1 = hand_state * 4
-        li      t3, hand_textures           // ~
-        addu    t3, t3, t2                  // ~
-        lw      t3, 0x0000(t3)              // t3 = address of hand texture
-        li      a2, hand_info               // a2 - address of texture struct
-        sw      t3, 0x00008(a2)             // update info image data
-        jal     Overlay.draw_texture_       // draw portrait
-        nop
-
-        bnez    at, _loop                   // draw for all cursors
-        addiu   at, at,-0x0001              // decrement i
-
-
+        
         _end:
+        jal     RCP.end_list_
+        nop
         lw      ra, 0x0004(sp)              // ~
         lw      t0, 0x0008(sp)              // ~
         lw      t1, 0x000C(sp)              // ~
@@ -401,10 +397,29 @@ scope CharacterSelect {
         lw      t4, 0x0028(sp)              // ~
         lw      v1, 0x002C(sp)              // restore registers
         addiu   sp, sp, 0x0030              // deallocate stack space
-        jr      ra                          // return
+        lw      at, 0x0004(sp)              // ~
+        lw      t0, 0x0008(sp)              // save registers
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        sw      t0, 0x0000(a0)              // original line 2
+        j       _return                     // return
         nop
 
+        _skip:
+        lw      at, 0x0004(sp)              // ~
+        lw      t0, 0x0008(sp)              // save registers
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        sw      t9, 0x0004(v1)              // original line 1
+        sw      t0, 0x0000(a0)              // original line 2
+        j       _return                     // return
+        nop
     }
+
+    display_list:
+    fill 0x8000
+
+    display_list_info:
+    RCP.display_list_info(display_list, 0x8000)
+
 
     // @ Description
     // Places the token when the HMN/CPU/NONE button is pressed
@@ -589,8 +604,7 @@ scope CharacterSelect {
         lli     s0, Character.id.FALCO      // s0 = index (and start character, usually skips polygons)
         
         _loop:
-//      jal     load_character_model_       // load character function
-        jal     0x800D786C                  // load character fucntion
+        jal     load_character_model_       // load character function
         or      a0, s0, r0                  // a0 = index
         slti    at, s0, Character.id.DRM    // end on x character (Character.NUM_CHARACTERS - 1 should work usually)
         bnez    at, _loop
