@@ -439,6 +439,7 @@ scope CharacterSelect {
         OS.patch_end()
 
         // v0 = portrait_id (0-5 on the top row, 6-11 on bottom in original)
+            // this value is garbage and was replaced with a random value
         // s1 = player number
         // 0x0058(t8) = xpos
         // 0x005C(t8) = ypos
@@ -449,10 +450,19 @@ scope CharacterSelect {
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // ~
         sw      t2, 0x000C(sp)              // ~
-        sw      v0, 0x0010(sp)              // ~
         sw      a0, 0x0014(sp)              // save registers
 
+        // original v0 is not saved but it's spot is reserved on the stack
+//      sw      v0, 0x0010(sp)              // don't save
+
+
         // get character (store in s0, used later)
+        lli     a0, 16                      // NUM_PORTRAITS when all portraits work
+        jal     Global.get_random_int_      // ~
+        nop
+        
+        // v0 now equals some portrait
+        sw      v0, 0x0010(sp)              // save v0
         li      t0, id_table                // t0 = id_table
         addu    t0, t0, v0                  // t0 = id_table + offset
         lbu     s0, 0x0000(t0)              // s0 = character_id
