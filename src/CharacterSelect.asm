@@ -234,6 +234,11 @@ scope CharacterSelect {
         sw      t1, 0x0008(sp)              // ~
         sw      t2, 0x000C(sp)              // save registers
 
+        // discard values right of certain given x value
+        sltiu   t0, a1, 250                 // if xpos less than given value
+        beqz    t0, _end                    // ...return
+        lli     v0, Character.id.NONE       // v0 = ret = NONE
+
         // calculate id
         lli     t0, PORTRAIT_WIDTH          // t0 = PORTRAIT_WIDTH
         divu    a1, t0                      // ~
