@@ -85,6 +85,11 @@ scope Ganondorf {
     Character.edit_action_parameters(GND,   0xEC,                   -1,                         USP_GRAB,                   -1)
     Character.edit_action_parameters(GND,   0xED,                   -1,                         USP_RELEASE,                -1)
     Character.edit_action_parameters(GND,   0xEE,                   -1,                         USP_AIR,                    -1)
+
+    // Set menu zoom size.
+    Character.table_patch_start(menu_zoom, Character.id.GND, 0x4)
+    float32 1.2
+    OS.patch_end()
     
     kick_anim_struct:
     dw  0x060F0000

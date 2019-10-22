@@ -88,6 +88,10 @@ scope YoungLink {
     // Modify Actions            // Action          // Staling ID   // Main ASM                 // Interrupt/Other ASM          // Movement/Physics ASM         // Collision ASM
     Character.edit_action(YLINK, 0xE4,              -1,             -1,                         up_special_direction_,          -1,                             -1)
 
+    // Set menu zoom size.
+    Character.table_patch_start(menu_zoom, Character.id.YLINK, 0x4)
+    float32 1.15
+    OS.patch_end()
     
     up_special_landing_fsm:
     float32 0.33                // 25 frames of landing lag

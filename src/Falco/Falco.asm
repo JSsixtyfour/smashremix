@@ -79,6 +79,11 @@ scope Falco {
     Character.edit_action(FALCO, 0xE1,              -1,             0x800D94C4,                 Phantasm.ground_subroutine_,    -1,                             -1)
     Character.edit_action(FALCO, 0xE2,              -1,             0x8015C750,                 Phantasm.air_subroutine_,       Phantasm.air_physics_,          0x80156358)
     
+    // Set menu zoom size.
+    Character.table_patch_start(menu_zoom, Character.id.FALCO, 0x4)
+    float32 1.2
+    OS.patch_end()
+    
     // @ Description
     // Replaces a small subroutine which usually sets the up special delay for Fox, extends to
     // include Falco.
