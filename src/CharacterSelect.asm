@@ -294,20 +294,20 @@ scope CharacterSelect {
         sw      at, 0x0004(sp)              // ~
         sw      t0, 0x0008(sp)              // save registers
 
-        // lazy attempt to see if the texture drawn is the "stock" or "time" texture 
+        // lazy attempt to see if the texture drawn is the "back" texture 
         li      t0, Global.current_screen   // ~
         lbu     t0, 0x0000(t0)              // t0 = screen id
         lli     at, 0x0010
         bne     at, t0, _skip               // if (screen_id != character_select), skip
         nop
 
-        lli     at, 000090                  // at = expected height
+        lli     at, 0x0030                  // at = expected height
         lhu     t0, 0x0014(s1)              // t0 = height
         bne     at, t0, _skip               // if test fails, end
         nop    
 
 
-        lli     at, 000013                  // at = expected height
+        lli     at, 0x000B                  // at = expected height
         lhu     t0, 0x0016(s1)              // t0 = width
         bne     at, t0, _skip               // if test fails, end
         nop
