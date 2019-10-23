@@ -515,7 +515,7 @@ scope FGM {
     add_sound(YoungLink/sounds/93, SAMPLE_RATE_32000)
     // TODO: add 94
     add_sound(YoungLink/sounds/95, SAMPLE_RATE_32000)
-    add_sound(YoungLink/sounds/95, SAMPLE_RATE_32000)
+    add_sound(YoungLink/sounds/yltaunt, SAMPLE_RATE_32000)
     add_sound(YoungLink/sounds/96, SAMPLE_RATE_32000)
     add_sound(YoungLink/sounds/ANNOUNCER, SAMPLE_RATE_16000)
     add_sound(DrMario/sounds/ANNOUNCER, SAMPLE_RATE_16000)
