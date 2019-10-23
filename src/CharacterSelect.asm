@@ -436,8 +436,31 @@ scope CharacterSelect {
     RCP.display_list_info(display_list, 0x8000)
 
     // @ Description
+    // Allows random character to include remix characters
+    scope get_random_char_id_: {
+        OS.patch_start(0x136AD8, 0x80138858)
+//      jal     0x80018A30                  // original line 1
+//      addiu   a0, r0, 0xC                 // original line 2
+        j       get_random_char_id_
+        nop
+        OS.patch_end()
+
+        _get_random_id:
+        jal     0x80018A30                  // original line 1
+        addiu   a0, r0, NUM_SLOTS           // original line 2 modified to include all slots
+        // v0 = random number between 0 and NUM_SLOTS
+        li      s0, id_table                // s0 = id_table
+        addu    s0, s0, v0                  // s0 = id_table + offset
+        lbu     v0, 0x0000(s0)              // v0 = character_id
+        lli     s0, Character.id.NONE       // s0 = Character.id.NONE
+        beq     s0, v0, _get_random_id      // if v0 is not a valid character then get a new random number
+        nop                                 // ~
+        j       0x80138860                  // return
+        nop                                 // ~
+    }
+
+    // @ Description
     // Places the token based on character id
-    // TODO: add new characters to random cpu
     scope place_token_from_id_: {
         OS.patch_start(0x00136A28, 0x801387A8)
 //      jal     0x80132168                  // original line 1
