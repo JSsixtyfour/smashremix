@@ -40,6 +40,9 @@ scope Ganondorf {
     insert DSP_FLIP,"moveset/DOWN_SPECIAL_FLIP.bin"
     insert DSP_LAND,"moveset/DOWN_SPECIAL_LANDING.bin"
     insert DSP_AIR,"moveset/DOWN_SPECIAL_AIR.bin"  
+    insert VICTORY_POSE_1,"moveset/VICTORY_POSE_1.bin"
+    insert VICTORY_POSE_2,"moveset/VICTORY_POSE_2.bin"
+    insert VICTORY_POSE_3,"moveset/VICTORY_POSE_3.bin"
 
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(GND,   Action.Idle,            -1,                         IDLE,                       -1)
@@ -86,6 +89,12 @@ scope Ganondorf {
     Character.edit_action_parameters(GND,   0xED,                   -1,                         USP_RELEASE,                -1)
     Character.edit_action_parameters(GND,   0xEE,                   -1,                         USP_AIR,                    -1)
 
+    // Modify Menu Action Parameters             // Action          // Animation                // Moveset Data             // Flags
+    Character.edit_menu_action_parameters(GND,   0x1,               -1,                         VICTORY_POSE_1,             -1)
+    Character.edit_menu_action_parameters(GND,   0x2,               -1,                         VICTORY_POSE_2,             -1)
+    Character.edit_menu_action_parameters(GND,   0x3,               -1,                         VICTORY_POSE_3,             -1)
+    Character.edit_menu_action_parameters(GND,   0x4,               -1,                         VICTORY_POSE_3,             -1)
+    
     // Set menu zoom size.
     Character.table_patch_start(menu_zoom, Character.id.GND, 0x4)
     float32 1.2

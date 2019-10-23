@@ -42,12 +42,17 @@ scope Character {
         read32 {name}_parent_param_array_ptr, "../roms/original.z64", ({name}_parent_struct + 0x64)
         read32 {name}_parent_param_array_size, "../roms/original.z64", ({name}_parent_struct + 0x6C)
         constant {name}_parent_param_array({name}_parent_param_array_ptr - 0x80084800)
+        
+        // Get menu array pointer and ROM offset of {parent}
+        read32 {name}_parent_menu_array_ptr, "../roms/original.z64", ({name}_parent_struct + 0x68)
+        constant {name}_parent_menu_array({name}_parent_menu_array_ptr - 0x80288A20)
 
         // Get action array pointer and Rom offset of {parent}
         read32 {name}_parent_action_array_ptr, "../roms/original.z64", (ACTION_ARRAY_TABLE_ORIGINAL + (id.{parent} * 0x4))
         global evaluate {name}_parent_action_array({name}_parent_action_array_ptr - 0x80084800)
+        
 
-        // Action parameter array 1 size
+        // Action parameter array size
         constant {name}_param_array_size({name}_parent_param_array_size + {add_actions})
 
         // CHARACTER ID
@@ -135,21 +140,19 @@ scope Character {
         OS.copy_segment(({name}_parent_struct + 0x4C), 0x14)
         // 0x60 - attribute data offset
         dw  {attrib_offset}
-        // 0x64 - action parameter array 1 address
+        // 0x64 - action parameter array address
         dw  {name}_param_array
-        // 0x68 - action parameter array 2 address
-        // TODO: implement unique version of array 2
-        OS.copy_segment(({name}_parent_struct + 0x68), 0x4)
-        //dw  {name}_array_2
-        // 0x6C - action parameter array 1 size
+        // 0x68 - menu action array address
+        dw  {name}_menu_array
+        // 0x6C - action parameter array size
         dw  {name}_param_array_size
-        OS.copy_segment(({name}_parent_struct + 0x70), 0x4)
-        //dw  array_2_size_address
+        // 0x70 - menu array size address
+        dw  {name}_menu_array_size
         // 0x74 - animation segment size (auto generated)
         dw  0
         OS.align(16)
 
-        // DEFINE ACTION PARAMETER ARRAY 1 ////////////////////////////////////////////////////////
+        // DEFINE ACTION PARAMETER ARRAY ////////////////////////////////////////////////////////
         {name}_param_array:
         global evaluate {name}_param_array_origin(origin())
         // copy array from parent character
@@ -162,6 +165,15 @@ scope Character {
         global evaluate {name}_action_array_origin(origin())
         // copy array from parent character
         OS.copy_segment({{name}_parent_action_array}, action_array_size.{parent} + ({add_actions} * 0x14))
+        OS.align(16)
+        
+        // DEFINE MENU ARRAY //////////////////////////////////////////////////////////////////////
+        {name}_menu_array:
+        global evaluate {name}_menu_array_origin(origin())
+        // copy array from parent character (fixed size of 15 actions)
+        OS.copy_segment({name}_parent_menu_array, 0xF * 0xC)
+        {name}_menu_array_size:
+        dw  0xF
 
         // ADD CHARACTER //////////////////////////////////////////////////////////////////////////
         pushvar origin, base
@@ -263,9 +275,9 @@ scope Character {
     if {action} >= 0xDC && ({action} - 0xDC) * 0x14 >= Character.action_array_size.{Character.{name}_parent} {
         print "\n\n WARNING: Action 0x" ; OS.print_hex({action}) ; print " does not exist for {{name}_parent}. edit_action_parameters aborted."
     } else {
-        // Define param_temp id (used to avoid constant declaration issues with read16)
-        if !{defined param_temp_id} {
-            evaluate param_temp_id(0)
+        // Define {num} (used to avoid constant declaration issues with read16)
+        if !{defined num} {
+            evaluate num(0)
         }
         // Get ROM offset for parent action struct
         if {action} >= 0xDC {
@@ -275,13 +287,36 @@ scope Character {
         }
 
         // Get offset for parameter struct
-        global evaluate param_temp_id({param_temp_id} + 1)
-        read16 param_temp_{param_temp_id}, "../roms/original.z64", PARENT_ACTION_STRUCT
-        variable param_offset(param_temp_{param_temp_id} >> 6)
+        global evaluate num({num} + 1)
+        read16 param_read_{num}, "../roms/original.z64", PARENT_ACTION_STRUCT
+        variable param_offset(param_read_{num} >> 6)
 
         // Modify parameter struct
         pushvar origin, base
         origin {Character.{name}_param_array_origin} + (param_offset * 0xC)
+        if {animation} != -1 {
+            dw {animation}                  // insert animation
+        } else {; origin origin() + 0x4; }
+        if {command} != -1 {
+            dw {command}                    // insert command offset
+        } else {; origin origin() + 0x4; }
+        if {flags} != -1 {
+            dw {flags}                      // insert flags
+        }
+        pullvar base, origin
+    }
+    }
+    
+    // @ Description
+    // modifies parameters for a menu action (animation id, command list offset, flags)
+    // NOTE: this macro supports use outside of this file.
+    macro edit_menu_action_parameters(name, action, animation, command, flags) {
+    if {action} > 0xF {
+        print "\n\n WARNING: Menu Action 0x" ; OS.print_hex({action}) ; print " is unsupported. edit_menu_action_parameters aborted."
+    } else {
+        // Modify menu parameter struct
+        pushvar origin, base
+        origin {Character.{name}_menu_array_origin} + ({action} * 0xC)
         if {animation} != -1 {
             dw {animation}                  // insert animation
         } else {; origin origin() + 0x4; }
@@ -304,17 +339,17 @@ scope Character {
     } else if {staling} > 0x1F {
         print "\n\n WARNING: UNSUPPORTED STALING ID! Max Staling ID = 0x1F. edit_action aborted."
     } else {
-        // Define param_temp id (used to avoid constant declaration issues with read16)
-        if !{defined param_temp_id} {
-            evaluate param_temp_id(0)
+        // Define {num} (used to avoid constant declaration issues with read16)
+        if !{defined num} {
+            evaluate num(0)
         }
         // Get ROM offset for parent action struct
         variable PARENT_ACTION_STRUCT({Character.{name}_parent_action_array} + (({action} - 0xDC) * 0x14))
 
         // Get offset for parameter struct
-        global evaluate param_temp_id({param_temp_id} + 1)
-        read16 param_temp_{param_temp_id}, "../roms/original.z64", PARENT_ACTION_STRUCT
-        variable param_offset(param_temp_{param_temp_id} >> 6)
+        global evaluate num({num} + 1)
+        read16 param_read_{num}, "../roms/original.z64", PARENT_ACTION_STRUCT
+        variable param_offset(param_read_{num} >> 6)
 
         // Modify action struct
         pushvar origin, base

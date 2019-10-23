@@ -123,26 +123,6 @@ scope ResultsScreen {
     }
     
     // @ Description
-    // Temporary replacement subroutine which makes Falco refuse to clap.
-    // TODO: remove this patch once menu arrays are added for custom characters.
-    scope falco_clap_fix_: {
-        OS.patch_start(0x15266C, 0x801334CC)
-        j       falco_clap_fix_
-        nop
-        OS.patch_end()
-        
-        lui     v0, 0x0001                  // original line 1
-        ori     t6, r0, Character.id.FALCO  // t6 = id.FALCO
-        bne     t6, a0, _return_clap        // if id != id.FALCO, _return_clap
-        sw      a0, 0x0000(sp)              // original line 2 (useless?)
-        jr      ra                          // return
-        ori     v0, v0, 0x0004              // v0 = character selected action
-        _return_clap:
-        jr      ra                          // return (original line 3)
-        ori     v0, v0, 0x0005              // v0 = clap action (original line 4)
-    }
-    
-    // @ Description
     // Patch which substitutes a working character id for determining the player label height.
     // TODO: add support for extending the label height tables, rather than using id substitution
     scope label_height_fix_: {

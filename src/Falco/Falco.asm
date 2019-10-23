@@ -39,6 +39,8 @@ scope Falco {
     insert USP_AIR_MOVE,"moveset/UP_SPECIAL_AIR_MOVE.bin" ; Moveset.GO_TO(USP_LOOP)
     insert DSP_GROUND_START,"moveset/DOWN_SPECIAL_GROUND_START.bin"
     insert DSP_AIR_START,"moveset/DOWN_SPECIAL_AIR_START.bin"
+    insert VICTORY_POSE_2,"moveset/VICTORY_POSE_2.bin"
+    insert VICTORY_POSE_3,"moveset/VICTORY_POSE_3.bin"
 
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(FALCO, Action.Run,              -1,                        RUN,                        -1)
@@ -78,6 +80,12 @@ scope Falco {
     // Modify Actions            // Action          // Staling ID   // Main ASM                 // Interrupt/Other ASM          // Movement/Physics ASM         // Collision ASM
     Character.edit_action(FALCO, 0xE1,              -1,             0x800D94C4,                 Phantasm.ground_subroutine_,    -1,                             -1)
     Character.edit_action(FALCO, 0xE2,              -1,             0x8015C750,                 Phantasm.air_subroutine_,       Phantasm.air_physics_,          0x80156358)
+    
+    // Modify Menu Action Parameters             // Action          // Animation                // Moveset Data             // Flags
+    Character.edit_menu_action_parameters(FALCO, 0x2,               -1,                         VICTORY_POSE_2,             -1)
+    Character.edit_menu_action_parameters(FALCO, 0x3,               -1,                         VICTORY_POSE_3,             -1)
+    Character.edit_menu_action_parameters(FALCO, 0x4,               -1,                         VICTORY_POSE_3,             -1)
+    Character.edit_menu_action_parameters(FALCO, 0x5,               0x174,                      VICTORY_POSE_3,             -1)
     
     // Set menu zoom size.
     Character.table_patch_start(menu_zoom, Character.id.FALCO, 0x4)
