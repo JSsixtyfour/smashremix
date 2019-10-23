@@ -272,38 +272,50 @@ scope CharacterSelect {
         jr      ra                          // return (discard the rest of the function)
         addiu   sp, sp, 0x0028              // deallocate stack space (original function)
     }
+   // disable drawing of default portraits
+    OS.patch_start(0x001307A0, 0x80132520)
+    jr      ra 
+    nop
+    OS.patch_end()
 
     // @ Description
     // Highjacks the display list of the portraits
     scope highjack_: {
-        OS.patch_start(0x00478E0, 0x800CBF00)
+        OS.patch_start(0x47AD0, 0x800CC0F0)
         j       highjack_
         nop
         _return:
         OS.patch_end()
 
+        sw      t7, 0x0000(v1)              // original line 1
+        sw      r0, 0x0004(v1)              // original line 2   
+
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      at, 0x0004(sp)              // ~
         sw      t0, 0x0008(sp)              // save registers
 
-        // lazy attempt to see if the character is mario        
-        lli     at, 000045                  // at = expected height
-        lhu     t0, 0x0000(s1)              // t0 = height
+        // lazy attempt to see if the texture drawn is the "stock" or "time" texture 
+        li      t0, Global.current_screen   // ~
+        lbu     t0, 0x0000(t0)              // t0 = screen id
+        lli     at, 0x0010
+        bne     at, t0, _skip               // if (screen_id != character_select), skip
+        nop
+
+        lli     at, 000090                  // at = expected height
+        lhu     t0, 0x0014(s1)              // t0 = height
         bne     at, t0, _skip               // if test fails, end
         nop    
 
-        lli     at, 000048                  // at = expected height
-        lhu     t0, 0x0002(s1)              // t0 = width
+
+        lli     at, 000013                  // at = expected height
+        lhu     t0, 0x0016(s1)              // t0 = width
         bne     at, t0, _skip               // if test fails, end
         nop
 
-        li      at, 0x801A1788              //
-        bne     s1, at, _skip               // the last s1 (puff, hopefully static lol)
-        nop
-
         // highjack here
-        sw      r0, 0x0004(v1)              // original line 1 (modified)
-        
+        addiu   v0, v0, 0x0008              // increment v0
+        addiu   v1, v1, 0x0008              // increment v1
+
         // init
         li      t0, RCP.display_list_info_p // t0 = display list info pointer 
         li      t1, display_list_info       // t1 = address of display list info
@@ -405,7 +417,6 @@ scope CharacterSelect {
         lw      at, 0x0004(sp)              // ~
         lw      t0, 0x0008(sp)              // save registers
         addiu   sp, sp, 0x0010              // deallocate stack space
-        sw      t0, 0x0000(a0)              // original line 2
         j       _return                     // return
         nop
 
@@ -413,8 +424,6 @@ scope CharacterSelect {
         lw      at, 0x0004(sp)              // ~
         lw      t0, 0x0008(sp)              // save registers
         addiu   sp, sp, 0x0010              // deallocate stack space
-        sw      t9, 0x0004(v1)              // original line 1
-        sw      t0, 0x0000(a0)              // original line 2
         j       _return                     // return
         nop
     }
@@ -425,7 +434,6 @@ scope CharacterSelect {
 
     display_list_info:
     RCP.display_list_info(display_list, 0x8000)
-
 
     // @ Description
     // Places the token based on character id
