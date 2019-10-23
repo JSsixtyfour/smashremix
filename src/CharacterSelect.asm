@@ -9,7 +9,6 @@ print "included CharacterSelect.asm\n"
 // TODO
 // why is gdk crashing
 // costumes    
-// fire in the background/question marks 
 // automatic token placement on cpu select (DONE) and character (NOT DONE)
 
 include "Global.asm"
@@ -235,7 +234,7 @@ scope CharacterSelect {
         sw      t2, 0x000C(sp)              // save registers
 
         // discard values right of certain given x value
-        sltiu   t0, a1, 250                 // if xpos less than given value
+        sltiu   t0, a1, 240                 // if xpos less than given value
         beqz    t0, _end                    // ...return
         lli     v0, Character.id.NONE       // v0 = ret = NONE
 
@@ -379,6 +378,13 @@ scope CharacterSelect {
         lli     a1, START_Y + START_VISUAL  // ~
         addu    a1, a1, t4                  // a1 - uly
 
+        // draw portrait background
+        li      a2, portrait_info           // a2 = address of texture struct
+        li      t4, portrait_fire           // t4 = address of fire portrait
+        sw      t4, 0x0008(a2)              // update texture to draw
+        jal     Overlay.draw_texture_       // draw portrait background
+        nop
+
         // draw character portrait
         lli     t2, NUM_COLUMNS             // ~
         multu   t0, t2                      // ~
@@ -498,7 +504,7 @@ scope CharacterSelect {
         lli     t0, PORTRAIT_WIDTH          // ~
         multu   t0, t1                      // ~
         mflo    t2                          // t2 = ulx
-        addiu   t2, t2, START_X + (PORTRAIT_WIDTH / 2)             // t2 = (int) ulx + offset
+        addiu   t2, t2, START_X + 12        // t2 = (int) ulx + offset
         move    a0, t2                      // ~
         jal     OS.int_to_float_            // ~
         nop
@@ -512,7 +518,7 @@ scope CharacterSelect {
         lli     t0, PORTRAIT_HEIGHT         // ~
         multu   t0, t1                      // ~
         mflo    t2                          // t2 = uly
-        addiu   t2, t2, START_Y + (PORTRAIT_HEIGHT / 2)             // t2 = (int) uly + offset
+        addiu   t2, t2, START_Y + 14        // t2 = (int) uly + offset
         move    a0, t2                      // ~
         jal     OS.int_to_float_            // ~
         nop
@@ -779,7 +785,7 @@ scope CharacterSelect {
     // @ Description
     // Structs for each of  type of texture mentioned above
     hand_info:;         Texture.info(HAND_WIDTH, HAND_HEIGHT)
-    portrait_info:;     Texture.info(PORTRAIT_WIDTH, PORTRAIT_HEIGHT)
+    portrait_info:;     Texture.info(PORTRAIT_WIDTH_FILE, PORTRAIT_HEIGHT_FILE)
     token_info:;        Texture.info(TOKEN_WIDTH, TOKEN_HEIGHT)
 
     // @ Description
@@ -993,14 +999,16 @@ scope CharacterSelect {
     // add space for new characters
     fill (name_texture_table + (Character.NUM_CHARACTERS * 0x4)) - pc()
 
-    constant START_X(22)
-    constant START_Y(24)
+    constant START_X(30)
+    constant START_Y(25)
     constant START_VISUAL(10)
     constant NUM_ROWS(3)
     constant NUM_COLUMNS(8)
     constant NUM_PORTRAITS(NUM_ROWS * NUM_COLUMNS)
-    constant PORTRAIT_WIDTH(32)
-    constant PORTRAIT_HEIGHT(31)
+    constant PORTRAIT_WIDTH_FILE(32)
+    constant PORTRAIT_HEIGHT_FILE(32)
+    constant PORTRAIT_WIDTH(30)
+    constant PORTRAIT_HEIGHT(30)
 
 
     // @ Description
@@ -1084,6 +1092,7 @@ scope CharacterSelect {
 
     // @ Description
     // Texture inserts for portraits
+    insert portrait_fire,           "../textures/portrait_fire.rgba5551"
     insert portrait_donkey_kong,    "../textures/portrait_donkey_kong.rgba5551"
     insert portrait_falcon,         "../textures/portrait_falcon.rgba5551"
     insert portrait_fox,            "../textures/portrait_fox.rgba5551"
@@ -1186,11 +1195,11 @@ scope CharacterSelect {
     
     
     // ADD CHARACTERS
-    // TODO: name textures and portraits
-    add_to_css(Character.id.FALCO, FGM.announcer.names.FALCO, 1.50, 0x00010004, series_logo.STARFOX, name_texture.BLANK, portrait_unknown)
-    add_to_css(Character.id.GND, FGM.announcer.names.GANONDORF, 1.50, 0x00010002, series_logo.ZELDA, name_texture.BLANK, portrait_unknown)
-    add_to_css(Character.id.YLINK, FGM.announcer.names.YOUNG_LINK, 1.50, 0x00010002, series_logo.ZELDA, name_texture.BLANK, portrait_unknown)
-    add_to_css(Character.id.DRM, FGM.announcer.names.DR_MARIO, 1.50, 0x00010001, series_logo.MARIO_BROS, name_texture.BLANK, portrait_unknown)
+    // TODO: name textures
+    add_to_css(Character.id.FALCO, FGM.announcer.names.FALCO, 1.50, 0x00010004, series_logo.STARFOX, name_texture.BLANK, portrait_falco)
+    add_to_css(Character.id.GND, FGM.announcer.names.GANONDORF, 1.50, 0x00010002, series_logo.ZELDA, name_texture.BLANK, portrait_ganondorf)
+    add_to_css(Character.id.YLINK, FGM.announcer.names.YOUNG_LINK, 1.50, 0x00010002, series_logo.ZELDA, name_texture.BLANK, portrait_young_link)
+    add_to_css(Character.id.DRM, FGM.announcer.names.DR_MARIO, 1.50, 0x00010001, series_logo.MARIO_BROS, name_texture.BLANK, portrait_dr_mario)
     
 }
 
