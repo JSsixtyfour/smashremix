@@ -428,46 +428,38 @@ scope CharacterSelect {
 
 
     // @ Description
-    // Places the token when the HMN/CPU/NONE button is pressed
-    // TODO: fix automatic character
+    // Places the token based on character id
+    // TODO: add new characters to random cpu
     scope place_token_from_id_: {
-        OS.patch_start(0x00136A30, 0x801387B0)
-//      slti    at, v0, 0x0006              // original line 1
-//      bnez    at, 0x801387FC              // original line 2
+        OS.patch_start(0x00136A28, 0x801387A8)
+//      jal     0x80132168                  // original line 1
+//      or      a0, a1, r0                  // original line 2
         j       place_token_from_id_
         nop
         _return:
         OS.patch_end()
 
-        // v0 = portrait_id (0-5 on the top row, 6-11 on bottom in original)
-            // this value is garbage and was replaced with a random value
-        // s1 = player number
+        // 80132168 originally returned portrait_id in v0 (0-5 on the top row, 6-11 on bottom)
         // 0x0058(t8) = xpos
         // 0x005C(t8) = ypos
+        // a0 = character id
 
         lw      t8, 0x0074(a2)              // original line ?
+        or      a0, a1, r0                  // original line 2
         
         addiu   sp, sp,-0x0020              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // ~
         sw      t2, 0x000C(sp)              // ~
+        // allocate stack space for v0
         sw      a0, 0x0014(sp)              // save registers
 
-        // original v0 is not saved but it's spot is reserved on the stack
-//      sw      v0, 0x0010(sp)              // don't save
-
-
-        // get character (store in s0, used later)
-        lli     a0, 16                      // NUM_PORTRAITS when all portraits work
-        jal     Global.get_random_int_      // ~
-        nop
+        // get portrait id
+        li      t0, portrait_id_table       // t0 = portrait_id_table
+        addu    t0, t0, a0                  // t0 = portrait_id_table + character id
+        lbu     v0, 0x0000(t0)              // v0 = portrait_id for character in a0
+        sw      v0, 0x0010(sp)              // store v0 in stack
         
-        // v0 now equals some portrait
-        sw      v0, 0x0010(sp)              // save v0
-        li      t0, id_table                // t0 = id_table
-        addu    t0, t0, v0                  // t0 = id_table + offset
-        lbu     s0, 0x0000(t0)              // s0 = character_id
-
         // get token location
         lli     t0, NUM_COLUMNS             // ~
         divu    v0, t0                      // ~
@@ -762,6 +754,7 @@ scope CharacterSelect {
     // @ Description
     // New table for sound fx (for each character)
     fgm_table:
+    constant fgm_table_origin(origin())
     dh FGM.announcer.names.MARIO           // Mario
     dh FGM.announcer.names.FOX             // Fox
     dh FGM.announcer.names.DONKEY_KONG     // Donkey Kong
@@ -791,15 +784,14 @@ scope CharacterSelect {
     dh FGM.announcer.names.JIGGLYPUFF      // Polygon Jigglypuff
     dh FGM.announcer.names.NESS            // Polygon Ness
     dh FGM.announcer.names.GDK             // Giant Donkey Kong
-    dh FGM.announcer.names.SAMUS           // (Placeholder)
-    dh FGM.announcer.names.LUIGI           // None (Placeholder)
-    dh FGM.announcer.names.FALCO           // Falco
-    dh FGM.announcer.names.GANONDORF       // Ganondorf
-    dh FGM.announcer.names.YOUNG_LINK      // Young Link
-    dh FGM.announcer.names.DR_MARIO        // Dr. Mario
+    dh FGM.announcer.names.MARIO           // (Placeholder)
+    dh FGM.announcer.names.MARIO           // None (Placeholder)
+    // add space for new characters
+    fill (fgm_table + (Character.NUM_CHARACTERS * 0x2)) - pc()
     OS.align(4)
 
     white_circle_size_table:
+    constant white_circle_size_table_origin(origin())
     float32 1.50                            // Mario
     float32 1.50                            // Fox
     float32 2.00                            // Donkey Kong
@@ -829,14 +821,13 @@ scope CharacterSelect {
     float32 2.00                            // Giant Donkey Kong
     float32 0.00                            // (Placeholder)
     float32 0.00                            // None (Placeholder)
-    float32 1.50                            // Falco
-    float32 1.50                            // Ganondorf
-    float32 1.50                            // Young Link
-    float32 1.50                            // Dr. Mario
-
+    // add space for new characters
+    fill (white_circle_size_table + (Character.NUM_CHARACTERS * 0x4)) - pc()
+    
     // @ Description
     // New table for selection action
     selection_action_table:
+    constant selection_action_table_origin(origin())
     dw 0x00010003                           // Mario
     dw 0x00010004                           // Fox
     dw 0x00010001                           // Donkey Kong
@@ -866,10 +857,8 @@ scope CharacterSelect {
     dw 0x00010001                           // Giant Donkey Kong
     dw 0x00010001                           // (Placeholder)
     dw 0x00010001                           // None (Placeholder)
-    dw 0x00010004                           // Falco
-    dw 0x00010002                           // Ganondorf
-    dw 0x00010002                           // Young Link
-    dw 0x00010001                           // Dr. Mario
+    // add space for new characters
+    fill (selection_action_table + (Character.NUM_CHARACTERS * 0x4)) - pc()
     
     // @ Description
     // Logo offsets in file 0x14
@@ -888,6 +877,7 @@ scope CharacterSelect {
     }
 
     series_logo_offset_table:
+    constant series_logo_offset_table_origin(origin())
     dw series_logo.MARIO_BROS               // Mario
     dw series_logo.STARFOX                  // Fox
     dw series_logo.DONKEY_KONG              // Donkey Kong
@@ -917,11 +907,9 @@ scope CharacterSelect {
     dw series_logo.DONKEY_KONG              
     dw 0x00000000                           
     dw 0x00000000                           
-    dw series_logo.STARFOX                  // Falco
-    dw series_logo.ZELDA                    // Ganondorf
-    dw series_logo.ZELDA                    // Young Link
-    dw series_logo.MARIO_BROS               // Dr. Mario
-
+    // add space for new characters
+    fill (series_logo_offset_table + (Character.NUM_CHARACTERS * 0x4)) - pc()
+    
     // @ Description
     // Name texture offsets in file 0x11
     scope name_texture {
@@ -941,6 +929,7 @@ scope CharacterSelect {
     }
 
     name_texture_table:
+    constant name_texture_table_origin(origin())
     dw name_texture.MARIO                   // Mario
     dw name_texture.FOX                     // Fox
     dw name_texture.DONKEY_KONG             // Donkey Kong
@@ -970,10 +959,8 @@ scope CharacterSelect {
     dw name_texture.BLANK                   // Giant Donkey Kong
     dw name_texture.BLANK                   // (Placeholder)
     dw name_texture.BLANK                   // None (Placeholder)
-    dw name_texture.BLANK                   // Falco
-    dw name_texture.BLANK                   // Ganondorf
-    dw name_texture.BLANK                   // Young Link
-    dw name_texture.BLANK                   // Dr. Mario
+    // add space for new characters
+    fill (name_texture_table + (Character.NUM_CHARACTERS * 0x4)) - pc()
 
     constant START_X(22)
     constant START_Y(24)
@@ -986,48 +973,65 @@ scope CharacterSelect {
 
 
     // @ Description
-    // CSS characters in order
-    id_table:
-    // row 1
-    db Character.id.YLINK
-    db Character.id.LUIGI
-    db Character.id.MARIO
-    db Character.id.DONKEY_KONG
-    db Character.id.LINK
-    db Character.id.SAMUS
-    db Character.id.CAPTAIN_FALCON
-    db Character.id.GND
-    // row 2
-    db Character.id.DRM
-    db Character.id.NESS
-    db Character.id.YOSHI
-    db Character.id.KIRBY
-    db Character.id.FOX
-    db Character.id.PIKACHU
-    db Character.id.JIGGLYPUFF
-    db Character.id.FALCO
+    // CHARACTER SELECT SCREEN LAYOUT
+    constant NUM_SLOTS(24)
+    scope layout {
+        // row 1
+        define slot_1(DRM)
+        define slot_2(LUIGI)
+        define slot_3(MARIO)
+        define slot_4(DONKEY)
+        define slot_5(LINK)
+        define slot_6(SAMUS)
+        define slot_7(CAPTAIN)
+        define slot_8(GND)
+        // row 2
+        define slot_9(YLINK)
+        define slot_10(NESS)
+        define slot_11(YOSHI)
+        define slot_12(KIRBY)
+        define slot_13(FOX)
+        define slot_14(PIKACHU)
+        define slot_15(JIGGLYPUFF)
+        define slot_16(FALCO)
+        // row 3
+        define slot_17(NONE)
+        define slot_18(NONE)
+        define slot_19(NONE)
+        define slot_20(NONE)
+        define slot_21(NONE)
+        define slot_22(NONE)
+        define slot_23(NONE)
+        define slot_24(NONE)
+    }
     
-    // row 3
-    db Character.id.NONE
-    db Character.id.NONE
-    db Character.id.NONE
-    db Character.id.NONE
-    db Character.id.NONE
-    db Character.id.NONE
-    db Character.id.NONE
-    db Character.id.NONE
-
-    // row 3
-    db Character.id.NLUIGI
-    db Character.id.NMARIO
-    db Character.id.NDONKEY
-    db Character.id.NLINK
-    db Character.id.NSAMUS
-    db Character.id.NCAPTAIN
-    db Character.id.NNESS
-    db Character.id.NYOSHI
+    
+    // @ Description
+    // CSS characters in order of portrait ID
+    id_table:
+    evaluate n(0)
+    while NUM_SLOTS > {n} {
+        evaluate n({n} + 1)
+        db Character.id.{layout.slot_{n}}
+    }
     OS.align(4)
-
+    
+    // @ Description
+    // CSS portraits IDs in order of character ID
+    portrait_id_table:
+    constant portrait_id_table_origin(origin())
+    // fill table with empty slots
+    fill Character.NUM_CHARACTERS
+    OS.align(4)
+    pushvar origin, base
+    evaluate n(0)
+    while NUM_SLOTS > {n} {
+        evaluate n({n} + 1)
+        origin portrait_id_table_origin + Character.id.{layout.slot_{n}}
+        db {n} - 1
+    }
+    pullvar base, origin
+    
     // hands
     insert hand_pointing,       "../textures/hand_pointing.rgba5551"
     insert hand_holding,        "../textures/hand_holding.rgba5551"
@@ -1061,9 +1065,12 @@ scope CharacterSelect {
     insert portrait_pikachu,        "../textures/portrait_pikachu.rgba5551"
     insert portrait_samus,          "../textures/portrait_samus.rgba5551"
     insert portrait_yoshi,          "../textures/portrait_yoshi.rgba5551"
+    // allow add_portrait to use portrait_unknown
+    define __portrait_unknown__()
     insert portrait_unknown,        "../textures/portrait_unknown.rgba5551"
 
     portrait_table:
+    constant portrait_table_origin(origin())
     dw portrait_mario                   // Mario
     dw portrait_fox                     // Fox
     dw portrait_donkey_kong             // Donkey Kong
@@ -1093,10 +1100,67 @@ scope CharacterSelect {
     dw portrait_unknown                 // Giant Donkey Kong
     dw portrait_unknown                 // (Placeholder)
     dw portrait_unknown                 // None (Placeholder)
-    dw portrait_unknown                 // Falco
-    dw portrait_unknown                 // Ganondorf
-    dw portrait_unknown                 // Young Link
-    dw portrait_unknown                 // Dr. Mario
+    // add space for new characters
+    fill (portrait_table + (Character.NUM_CHARACTERS * 0x4)) - pc()
+    
+    // @ Description
+    // Adds a portrait for a character.
+    // @ Arguments
+    // character - character id to add a portrait for
+    // portrait - portrait file name (.rgba5551 file in ../textures/)
+    macro add_portrait(character, portrait) {
+        if !{defined __{portrait}__} {
+            define __{portrait}__()
+            insert {portrait}, "../textures/{portrait}.rgba5551"
+        }
+        
+        pushvar origin, base
+        origin portrait_table_origin + ({character} * 0x4)
+        dw  {portrait}
+        pullvar base, origin
+    }
+    
+    // @ Description
+    // Adds a character to the character select screen.
+    // @ Arguments
+    // character - character id to add a portrait for
+    // fgm - fgm id for announcer voice
+    // circle_size - float32 size of white circle underneath character
+    // action - action id (format 0x000100??) for menu action
+    // logo - series logo to use
+    // name_texture - name texture to use
+    // portrait - portrait file name (.rgba5551 file in ../textures/)
+    macro add_to_css(character, fgm, circle_size, action, logo, name_texture, portrait) {
+    pushvar origin, base
+    // add to fgm table
+    origin fgm_table_origin + ({character} * 2)
+    dh  {fgm}
+    // add to white circle table
+    origin white_circle_size_table_origin + ({character} * 4)
+    float32 {circle_size}
+    // add to selection action table
+    origin selection_action_table_origin + ({character} * 4)
+    dw  {action}
+    // add to series logo offset table
+    origin series_logo_offset_table_origin + ({character} * 4)
+    dw  {logo}
+    // add to name texture table
+    origin name_texture_table_origin + ({character} * 4)
+    dw  {name_texture}
+    pullvar base, origin
+    
+    // add portrait
+    add_portrait({character}, {portrait})
+    }
+    
+    
+    // ADD CHARACTERS
+    // TODO: name textures and portraits
+    add_to_css(Character.id.FALCO, FGM.announcer.names.FALCO, 1.50, 0x00010004, series_logo.STARFOX, name_texture.BLANK, portrait_unknown)
+    add_to_css(Character.id.GND, FGM.announcer.names.GANONDORF, 1.50, 0x00010002, series_logo.ZELDA, name_texture.BLANK, portrait_unknown)
+    add_to_css(Character.id.YLINK, FGM.announcer.names.YOUNG_LINK, 1.50, 0x00010002, series_logo.ZELDA, name_texture.BLANK, portrait_unknown)
+    add_to_css(Character.id.DRM, FGM.announcer.names.DR_MARIO, 1.50, 0x00010001, series_logo.MARIO_BROS, name_texture.BLANK, portrait_unknown)
+    
 }
 
 } // __CHARACTER_SELECT__
