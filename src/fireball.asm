@@ -128,7 +128,7 @@ scope Fireball: {
     scope Capsule {
         constant FIREBALL_SUBROUTINE(0x80155E64)
         constant TYPE(0x4)                  // damage type to use for capsule effects
-        constant FGM(0x1B5)                 // fgm to play when capsule hits an opponent
+        constant FGM(0x2C7)                 // fgm to play when capsule hits an opponent
         
         // @ Description
         // Subroutine which randomizes the palette index used by Dr. Mario's capsule when the
