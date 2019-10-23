@@ -483,7 +483,7 @@ scope CharacterSelect {
         sw      t2, 0x0058(t8)              // update token_xpos
 
         lw      v0, 0x0010(sp)              // restore v0 (portrait_id)
-        lli     t0, NUM_COLUMNS - 1         // ~
+        lli     t0, NUM_COLUMNS             // ~
         divu    v0, t0                      // ~
         mflo    t1                          // t1 = portrait_id / NUM_COLUMS = row
         lli     t0, PORTRAIT_HEIGHT         // ~
