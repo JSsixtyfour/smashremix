@@ -8,6 +8,7 @@ scope YoungLink {
     insert JUMP2, "moveset/JUMP2.bin"
     insert GRAB_RELEASE_DATA,"moveset/GRAB_RELEASE_DATA.bin"
     GRAB:; Moveset.THROW_DATA(GRAB_RELEASE_DATA); insert "moveset/GRAB.bin"
+    insert TEETERING, "moveset/TEETERING.bin"
     insert EDGEATTACKF, "moveset/EDGEATTACKF.bin"
     insert EDGEATTACKS, "moveset/EDGEATTACKS.bin"
     insert TECHSTAND, "moveset/TECHSTAND.bin"
@@ -39,6 +40,7 @@ scope YoungLink {
     Character.edit_action_parameters(YLINK, Action.JumpAerialF,      -1,                        JUMP2,                      -1)
     Character.edit_action_parameters(YLINK, Action.JumpAerialB,      -1,                        JUMP2,                      -1)
     Character.edit_action_parameters(YLINK, Action.Catch,            -1,                        GRAB,                       -1)
+    Character.edit_action_parameters(YLINK, Action.Teeter,           -1,                        TEETERING,                  -1)
     Character.edit_action_parameters(YLINK, Action.Taunt,           File.YLINK_TAUNT,           TAUNT,                      -1)
     Character.edit_action_parameters(YLINK, Action.Jab1,            -1,                         JAB_1,                      -1)
     Character.edit_action_parameters(YLINK, Action.Jab2,            -1,                         JAB_2,                      -1)

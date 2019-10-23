@@ -17,6 +17,9 @@ scope Falco {
     BTHROW:; Moveset.THROW_DATA(BTHROWDATA); insert "moveset/BTHROW.bin"
     insert GRAB_RELEASE_DATA,"moveset/GRAB_RELEASE_DATA.bin"
     GRAB:; Moveset.THROW_DATA(GRAB_RELEASE_DATA); insert "moveset/GRAB.bin"
+    insert TEETERING, "moveset/TEETERING.bin"
+    insert STUN, "moveset/STUN.bin"; Moveset.GO_TO(STUN)         // loops
+    insert ASLEEP, "moveset/ASLEEP.bin"; Moveset.GO_TO(ASLEEP)   // loops
     insert TAUNT,"moveset/TAUNT.bin"
     insert JAB_1,"moveset/JAB_1.bin"
     insert JAB_2,"moveset/JAB_2.bin"
@@ -55,6 +58,9 @@ scope Falco {
     Character.edit_action_parameters(FALCO, Action.TechF,            -1,                        TECH_ROLL,                  -1)
     Character.edit_action_parameters(FALCO, Action.TechB,            -1,                        TECH_ROLL,                  -1)
     Character.edit_action_parameters(FALCO, Action.Tech,             -1,                        TECH_STAND,                 -1)
+    Character.edit_action_parameters(FALCO, Action.Teeter,           -1,                        TEETERING,                  -1)
+    Character.edit_action_parameters(FALCO, Action.Stun,             -1,                        STUN,                       -1)
+    Character.edit_action_parameters(FALCO, Action.Sleep,            -1,                        ASLEEP,                      -1)
     Character.edit_action_parameters(FALCO, Action.Taunt,           File.FALCO_TAUNT,           TAUNT,                      -1)
     Character.edit_action_parameters(FALCO, Action.Jab1,            -1,                         JAB_1,                      -1)
     Character.edit_action_parameters(FALCO, Action.Jab2,            -1,                         JAB_2,                      -1)
