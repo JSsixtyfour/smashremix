@@ -384,8 +384,8 @@ scope CharacterSelect {
         sw      t4, 0x0008(a2)              // update texture to draw
         jal     Overlay.draw_texture_       // draw portrait background
         nop
-
-        // draw character portrait
+        
+        // get id of character to draw
         lli     t2, NUM_COLUMNS             // ~
         multu   t0, t2                      // ~
         mflo    t2                          // ~
@@ -393,6 +393,40 @@ scope CharacterSelect {
         li      t3, id_table                // ~
         addu    t3, t3, t2                  // t3 = (id_table + ((y * NUM_COLUMNS) + x))
         lbu     t3, 0x0000(t3)              // t3 = id of character to draw
+        
+        // check for selection flash
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      a0, 0x0004(sp)              // ~
+        sw      a1, 0x0008(sp)              // store a0, a1
+        li      a2, flash_table             // a2 = flash_table
+        addu    a2, a2, t3                  // a2 = flash_table + character id
+        lbu     t4, 0x0000(a2)              // t4 = flash timer for {character}
+        beq     t4, r0, _draw_portrait      // if flash = 0, _draw_portrait
+        nop
+        addiu   t4, t4,-0x0001              // decrement flash timer
+        sb      t4, 0x0000(a2)              // store updated flash timer
+        lli     a2, 0x0002                  // ~
+        divu    t4, a2                      // ~
+        mfhi    a2                          // a2 = flash % 2
+        beq     a2, r0, _draw_portrait      // if flash % 2 = 0, _draw_portrait
+        nop
+        
+        // draw selection flash
+        lli     a0, Color.low.WHITE         // ~
+        jal     Overlay.set_color_          // set fill color
+        nop
+        lw      a0, 0x0004(sp)              // load a0
+        lw      a1, 0x0008(sp)              // load a1
+        lli     a2, PORTRAIT_WIDTH          // a2 = PORTRAIT_WIDTH
+        lli     a3, PORTRAIT_HEIGHT         // a3 = PORTRAIT_HEIGHT
+        jal     Overlay.draw_rectangle_     // draw flash rectangle
+        nop
+
+        // draw character portrait
+        _draw_portrait:
+        lw      a0, 0x0004(sp)              // ~
+        lw      a1, 0x0008(sp)              // load a0, a1
+        addiu   sp, sp, 0x0010              // deallocate stack space
         sll     t3, t3, 0x0002              // t3 = id * 4
         li      t4, portrait_table          // t4 = portrait table
         addu    t4, t4, t3                  // t4 = portrait_table[id]
@@ -421,14 +455,14 @@ scope CharacterSelect {
         lw      v1, 0x002C(sp)              // restore registers
         addiu   sp, sp, 0x0030              // deallocate stack space
         lw      at, 0x0004(sp)              // ~
-        lw      t0, 0x0008(sp)              // save registers
+        lw      t0, 0x0008(sp)              // restore registers registers
         addiu   sp, sp, 0x0010              // deallocate stack space
         j       _return                     // return
         nop
 
         _skip:
         lw      at, 0x0004(sp)              // ~
-        lw      t0, 0x0008(sp)              // save registers
+        lw      t0, 0x0008(sp)              // restore registers
         addiu   sp, sp, 0x0010              // deallocate stack space
         j       _return                     // return
         nop
@@ -738,24 +772,30 @@ scope CharacterSelect {
 
     // @ Description
     // Changes the loads from fgm_table instead of the original function table
+    // Also sets the selection flash timer
     scope get_fgm_: {
         OS.patch_start(0x00134B10, 0x80136890)
-//      sll     t5, t4, 0x0001             // original line
-//      addu    a0, sp, t5                 // original line
+//      sll     t5, t4, 0x0001              // original line
+//      addu    a0, sp, t5                  // original line
         j       get_fgm_
-        sll     t5, t4, 0x0001
+        nop
         _get_fgm_return:
         OS.patch_end()
 
         OS.patch_start(0x00134B1C, 0x8013689C)
-//      lw      a0, 0x0020(a0)             // original line
+//      lw      a0, 0x0020(a0)              // original line
         nop
         OS.patch_end()
-
-        li      a0, fgm_table          // a0 = table 
-        addu    a0, a0, t5                 // a0 = table + char offset
-        lhu     a0, 0x0000(a0)             // a0 = fgm id
-        j       _get_fgm_return        // return
+        
+        lli     t5, FLASH_TIME              // t5 = FLASH_TIME
+        li      a0, flash_table             // a0 = flash_table
+        addu    a0, a0, t4                  // a0 = flash_table + character id
+        sb      t5, 0x0000(a0)              // store FLASH_TIME
+        li      a0, fgm_table               // a0 = fgm_table 
+        sll     t5, t4, 0x0001              // ~
+        addu    a0, a0, t5                  // a0 = fgm_table + char offset
+        lhu     a0, 0x0000(a0)              // a0 = fgm id
+        j       _get_fgm_return             // return
         nop       
     }
 
@@ -1089,7 +1129,14 @@ scope CharacterSelect {
 
     constant TOKEN_WIDTH(32)
     constant TOKEN_HEIGHT(31)
-
+    
+    // @ Description
+    // used for storing white flash timer
+    flash_table:
+    constant FLASH_TIME(0xF)
+    fill Character.NUM_CHARACTERS
+    OS.align(4)
+    
     // @ Description
     // Texture inserts for portraits
     insert portrait_fire,           "../textures/portrait_fire.rgba5551"
