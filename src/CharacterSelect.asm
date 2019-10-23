@@ -419,6 +419,7 @@ scope CharacterSelect {
         nop
     }
 
+    OS.align(16)
     display_list:
     fill 0x8000
 
