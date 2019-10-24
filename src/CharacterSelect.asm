@@ -154,7 +154,7 @@ scope CharacterSelect {
     dw  0                                   // 0x1C - PLACEHOLDER
     dw  0x8050                              // 0x1D - FALCO
     dw  0x19270                             // 0x1E - GND
-    dw  0x12170                             // 0x1F - YLINK
+    dw  0x124D8                             // 0x1F - YLINK
     dw  0x7710                              // 0x20 - DRM
 
     // @ Description
@@ -1002,6 +1002,10 @@ scope CharacterSelect {
         constant PIKACHU(0x000032F8)
         constant JIGGLYPUFF(0x00003DB8)
         constant NESS(0x000035B0)
+        constant GND(0x00011AA8)
+        constant FALCO(0x00011F88)
+        constant YLINK(0x00012468)
+        constant DRM(0x00012948)
         constant BLANK(0x0)
     }
 
@@ -1242,11 +1246,10 @@ scope CharacterSelect {
     
     
     // ADD CHARACTERS
-    // TODO: name textures
-    add_to_css(Character.id.FALCO, FGM.announcer.names.FALCO, 1.50, 0x00010004, series_logo.STARFOX, name_texture.BLANK, portrait_falco)
-    add_to_css(Character.id.GND, FGM.announcer.names.GANONDORF, 1.50, 0x00010002, series_logo.ZELDA, name_texture.BLANK, portrait_ganondorf)
-    add_to_css(Character.id.YLINK, FGM.announcer.names.YOUNG_LINK, 1.50, 0x00010002, series_logo.ZELDA, name_texture.BLANK, portrait_young_link)
-    add_to_css(Character.id.DRM, FGM.announcer.names.DR_MARIO, 1.50, 0x00010001, series_logo.MARIO_BROS, name_texture.BLANK, portrait_dr_mario)
+    add_to_css(Character.id.FALCO, FGM.announcer.names.FALCO, 1.50, 0x00010004, series_logo.STARFOX, name_texture.FALCO, portrait_falco)
+    add_to_css(Character.id.GND, FGM.announcer.names.GANONDORF, 1.50, 0x00010002, series_logo.ZELDA, name_texture.GND, portrait_ganondorf)
+    add_to_css(Character.id.YLINK, FGM.announcer.names.YOUNG_LINK, 1.50, 0x00010002, series_logo.ZELDA, name_texture.YLINK, portrait_young_link)
+    add_to_css(Character.id.DRM, FGM.announcer.names.DR_MARIO, 1.50, 0x00010001, series_logo.MARIO_BROS, name_texture.DRM, portrait_dr_mario)
     
 }
 
