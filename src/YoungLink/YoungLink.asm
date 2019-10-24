@@ -100,7 +100,7 @@ scope YoungLink {
 
     // Set menu zoom size.
     Character.table_patch_start(menu_zoom, Character.id.YLINK, 0x4)
-    float32 1.15
+    float32 1.05
     OS.patch_end()
     
     // Set default costumes
