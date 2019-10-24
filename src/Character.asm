@@ -233,6 +233,7 @@ scope Character {
         add_to_table(down_bound_fgm, id.{name}, id.{parent}, 0x2)
         add_to_table(crowd_chant_fgm, id.{name}, id.{parent}, 0x2)
         add_to_table(yoshi_egg, id.{name}, id.{parent}, 0x1C)
+        add_to_table(ai_behaviour, id.{name}, id.{parent}, 0x4)
         
         // Copy parent character for menu tables  
         add_to_table(menu_zoom, id.{name}, id.{parent}, 0x4)
@@ -1175,6 +1176,26 @@ scope Character {
             addu    at, at, t7              // original line 2
             lw      t7, LOWER(at)           // original line 3
         }
+        
+        // @ Description
+        // modifies a hard-coded routine which seemingly runs when an AI switches behaviours?
+        // the table contains pointers to what seems to be a struct for determining how the AI will
+        // behave, depending on which character it uses.
+        // TODO: find out more about these supposed AI behaviour structs...
+        scope get_ai_behaviour_struct_: {
+            constant UPPER(ai_behaviour.table >> 16)
+            constant LOWER(ai_behaviour.table & 0xFFFF)
+            origin  0xADAD0
+            base    0x80133090
+            if LOWER > 0x7FFF {
+                lui     s2, (UPPER + 0x1)   // original line (modified)
+            } else {
+                lui     s2, UPPER           // original line (modified)
+            }
+            origin  0xADB80
+            base    0x80133140
+            lw      s2, LOWER(s2)           // original line (modified)
+        }
 
         pullvar base, origin
 
@@ -1567,6 +1588,7 @@ scope Character {
     move_table(down_bound_fgm, 0xA8170, 0x2)
     move_table(crowd_chant_fgm, 0xA81A8, 0x2)
     move_table(yoshi_egg, 0x103160, 0x1C)
+    move_table(ai_behaviour, 0x102B04, 0x4)
     
     // menu tables
     move_table_12(menu_zoom, 0x108370, 0x4)
