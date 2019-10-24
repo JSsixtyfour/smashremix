@@ -377,13 +377,6 @@ scope CharacterSelect {
         addu    a0, a0, t3                  // a0 - ulx
         lli     a1, START_Y + START_VISUAL  // ~
         addu    a1, a1, t4                  // a1 - uly
-
-        // draw portrait background
-        li      a2, portrait_info           // a2 = address of texture struct
-        li      t4, portrait_fire           // t4 = address of fire portrait
-        sw      t4, 0x0008(a2)              // update texture to draw
-        jal     Overlay.draw_texture_       // draw portrait background
-        nop
         
         // get id of character to draw
         lli     t2, NUM_COLUMNS             // ~
@@ -412,23 +405,19 @@ scope CharacterSelect {
         nop
         
         // draw selection flash
-        lli     a0, Color.low.WHITE         // ~
-        jal     Overlay.set_color_          // set fill color
-        nop
-        lw      a0, 0x0004(sp)              // load a0
-        lw      a1, 0x0008(sp)              // load a1
-        lli     a2, PORTRAIT_WIDTH          // a2 = PORTRAIT_WIDTH
-        lli     a3, PORTRAIT_HEIGHT         // a3 = PORTRAIT_HEIGHT
-        jal     Overlay.draw_rectangle_     // draw flash rectangle
+        li      t4, portrait_flash_table    // t4 = portrait flash table
+        b       _draw
         nop
 
         // draw character portrait
         _draw_portrait:
+        li      t4, portrait_table          // t4 = portrait table
+
+        _draw:
         lw      a0, 0x0004(sp)              // ~
         lw      a1, 0x0008(sp)              // load a0, a1
         addiu   sp, sp, 0x0010              // deallocate stack space
         sll     t3, t3, 0x0002              // t3 = id * 4
-        li      t4, portrait_table          // t4 = portrait table
         addu    t4, t4, t3                  // t4 = portrait_table[id]
         lw      t4, 0x0000(t4)              // t4 = address of texture
         li      a2, portrait_info           // a2 - address of texture struct
@@ -1143,19 +1132,30 @@ scope CharacterSelect {
     
     // @ Description
     // Texture inserts for portraits
-    insert portrait_fire,           "../textures/portrait_fire.rgba5551"
-    insert portrait_donkey_kong,    "../textures/portrait_donkey_kong.rgba5551"
-    insert portrait_falcon,         "../textures/portrait_falcon.rgba5551"
-    insert portrait_fox,            "../textures/portrait_fox.rgba5551"
-    insert portrait_jigglypuff,     "../textures/portrait_jigglypuff.rgba5551"
-    insert portrait_kirby,          "../textures/portrait_kirby.rgba5551"
-    insert portrait_link,           "../textures/portrait_link.rgba5551"
-    insert portrait_luigi,          "../textures/portrait_luigi.rgba5551"
-    insert portrait_mario,          "../textures/portrait_mario.rgba5551"
-    insert portrait_ness,           "../textures/portrait_ness.rgba5551"
-    insert portrait_pikachu,        "../textures/portrait_pikachu.rgba5551"
-    insert portrait_samus,          "../textures/portrait_samus.rgba5551"
-    insert portrait_yoshi,          "../textures/portrait_yoshi.rgba5551"
+    insert portrait_donkey_kong,         "../textures/portrait_donkey_kong.rgba5551"
+    insert portrait_falcon,              "../textures/portrait_falcon.rgba5551"
+    insert portrait_fox,                 "../textures/portrait_fox.rgba5551"
+    insert portrait_jigglypuff,          "../textures/portrait_jigglypuff.rgba5551"
+    insert portrait_kirby,               "../textures/portrait_kirby.rgba5551"
+    insert portrait_link,                "../textures/portrait_link.rgba5551"
+    insert portrait_luigi,               "../textures/portrait_luigi.rgba5551"
+    insert portrait_mario,               "../textures/portrait_mario.rgba5551"
+    insert portrait_ness,                "../textures/portrait_ness.rgba5551"
+    insert portrait_pikachu,             "../textures/portrait_pikachu.rgba5551"
+    insert portrait_samus,               "../textures/portrait_samus.rgba5551"
+    insert portrait_yoshi,               "../textures/portrait_yoshi.rgba5551"
+    insert portrait_donkey_kong_flash,   "../textures/portrait_donkey_kong_flash.rgba5551"
+    insert portrait_falcon_flash,        "../textures/portrait_falcon_flash.rgba5551"
+    insert portrait_fox_flash,           "../textures/portrait_fox_flash.rgba5551"
+    insert portrait_jigglypuff_flash,    "../textures/portrait_jigglypuff_flash.rgba5551"
+    insert portrait_kirby_flash,         "../textures/portrait_kirby_flash.rgba5551"
+    insert portrait_link_flash,          "../textures/portrait_link_flash.rgba5551"
+    insert portrait_luigi_flash,         "../textures/portrait_luigi_flash.rgba5551"
+    insert portrait_mario_flash,         "../textures/portrait_mario_flash.rgba5551"
+    insert portrait_ness_flash,          "../textures/portrait_ness_flash.rgba5551"
+    insert portrait_pikachu_flash,       "../textures/portrait_pikachu_flash.rgba5551"
+    insert portrait_samus_flash,         "../textures/portrait_samus_flash.rgba5551"
+    insert portrait_yoshi_flash,         "../textures/portrait_yoshi_flash.rgba5551"
     // allow add_portrait to use portrait_unknown
     define __portrait_unknown__()
     insert portrait_unknown,        "../textures/portrait_unknown.rgba5551"
@@ -1193,6 +1193,40 @@ scope CharacterSelect {
     dw portrait_unknown                 // None (Placeholder)
     // add space for new characters
     fill (portrait_table + (Character.NUM_CHARACTERS * 0x4)) - pc()
+
+    portrait_flash_table:
+    constant portrait_flash_table_origin(origin())
+    dw portrait_mario_flash             // Mario
+    dw portrait_fox_flash               // Fox
+    dw portrait_donkey_kong_flash       // Donkey Kong
+    dw portrait_samus_flash             // Samus
+    dw portrait_luigi_flash             // Luigi
+    dw portrait_link_flash              // Link
+    dw portrait_yoshi_flash             // Yoshi
+    dw portrait_falcon_flash            // Captain Falcon
+    dw portrait_kirby_flash             // Kirby
+    dw portrait_pikachu_flash           // Pikachu
+    dw portrait_jigglypuff_flash        // Jigglypuff
+    dw portrait_ness_flash              // Ness
+    dw portrait_unknown                 // Masterhand
+    dw portrait_unknown                 // Metal Mario
+    dw portrait_unknown                 // Polygon Mario
+    dw portrait_unknown                 // Polygon Fox
+    dw portrait_unknown                 // Polygon Donkey Kong
+    dw portrait_unknown                 // Polygon Samus
+    dw portrait_unknown                 // Polygon Luigi
+    dw portrait_unknown                 // Polygon Link
+    dw portrait_unknown                 // Polygon Yoshi
+    dw portrait_unknown                 // Polygon Captain Falcon
+    dw portrait_unknown                 // Polygon Kirby
+    dw portrait_unknown                 // Polygon Pikachu
+    dw portrait_unknown                 // Polygon Jigglypuff
+    dw portrait_unknown                 // Polygon Ness
+    dw portrait_unknown                 // Giant Donkey Kong
+    dw portrait_unknown                 // (Placeholder)
+    dw portrait_unknown                 // None (Placeholder)
+    // add space for new characters
+    fill (portrait_flash_table + (Character.NUM_CHARACTERS * 0x4)) - pc()
     
     // @ Description
     // Adds a portrait for a character.
@@ -1203,11 +1237,14 @@ scope CharacterSelect {
         if !{defined __{portrait}__} {
             define __{portrait}__()
             insert {portrait}, "../textures/{portrait}.rgba5551"
+            insert {portrait}_flash, "../textures/{portrait}_flash.rgba5551"
         }
         
         pushvar origin, base
         origin portrait_table_origin + ({character} * 0x4)
         dw  {portrait}
+        origin portrait_flash_table_origin + ({character} * 0x4)
+        dw  {portrait}_flash
         pullvar base, origin
     }
     
