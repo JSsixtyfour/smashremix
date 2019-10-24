@@ -496,21 +496,6 @@ scope Stages {
     constant ICON_HEIGHT(30)
 
     // Layout
-    // Page 1
-    // [00] [01] [02] [03] [04]
-    // [05] [06] [07] [08] [09]
-    //
-    // Page 2
-    // [0A] [0B] [0C] [0D] [0E]
-    // [0F] [10] [11] [12] [13]
-    //
-    // Page 3
-    // [14] [15] [16] [17] [18]
-    // [19] [1A] [1B] [1C] [1D]
-    // Page 4
-    // [1E] [1F] [20] [21] [22]
-    // [23] [24] [25] [26] [27]
-
     constant NUM_ROWS(3)
     constant NUM_COLUMNS(6)
     constant NUM_ICONS(NUM_ROWS * NUM_COLUMNS)
@@ -544,12 +529,12 @@ scope Stages {
     db id.COOLCOOL                          // 15
     db id.DR_MARIO                          // 16
     db id.RANDOM                            // 17
-    db id.RANDOM                            // 18
+    db id.N64                               // 18
     db id.DEKU_TREE                         // 19
-    db id.MUTE                              // 1A
+    db id.MADMM                             // 1A
     db id.MUDA			                    // 1B
-    db id.DRAGONKING                        // 1C
-    db id.MADMM                             // 1D
+    db id.MUTE                              // 1C
+    db id.DRAGONKING                        // 1D
     db id.RANDOM                            // 1E
     db id.FRAYS_STAGE                       // 1F
     db id.DREAM_LAND_BETA_1                 // 20
@@ -557,22 +542,22 @@ scope Stages {
     db id.HOW_TO_PLAY                       // 22
     db id.RANDOM                            // 23
     // page 3 (guest stages)
-    db id.RANDOM                            // 24
+    db id.WARIOWARE                         // 24
     db id.KALOS_POKEMON_LEAGUE              // 25
     db id.POKEMON_STADIUM_2                 // 26
     db id.SKYLOFT                           // 27
     db id.SMASHVILLE                        // 28
-    db id.RANDOM                            // 29
-    db id.SMBBF                             // 2A
-    db id.WARIOWARE                         // 2B
-    db id.MEMENTOS                          // 2C
-    db id.N64                               // 2D
-    db id.TOH                               // 2E
+    db id.MEMENTOS                          // 29
+    db id.CORNERIA_CITY                     // 2A
+    db id.GREAT_BAY                         // 2B
+    db id.FOD					            // 2C
+    db id.TOH                               // 2D
+    db id.SMBBF                             // 2E
     db id.SMBO                              // 2F
     db id.RANDOM                            // 30
-    db id.CORNERIA_CITY                     // 31
-    db id.GREAT_BAY                         // 32
-    db id.FOD					            // 33
+    db id.RANDOM                            // 31
+    db id.RANDOM                            // 32
+    db id.RANDOM					        // 33
     db id.RANDOM                            // 34
     db id.RANDOM                            // 35
     OS.align(4)
