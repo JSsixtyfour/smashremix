@@ -14,6 +14,7 @@ scope Ganondorf {
     insert TAUNT,"moveset/TAUNT.bin"
     insert SPARKLE,"moveset/SPARKLE.bin"; Moveset.GO_TO(SPARKLE)            // loops
     insert SHIELD_BREAK,"moveset/SHIELD_BREAK.bin"; Moveset.GO_TO(SPARKLE)            // loops
+    insert STUN, "moveset/STUN.bin"; Moveset.GO_TO(STUN)         // loops
     insert JAB_1,"moveset/JAB_1.bin"
     insert DASH_ATTACK,"moveset/DASH_ATTACK.bin"
     insert FTILT_HI,"moveset/FORWARD_TILT_HIGH.bin"
@@ -58,6 +59,7 @@ scope Ganondorf {
     Character.edit_action_parameters(GND,   Action.CliffAttackSlow2, -1,                        EDGEATTACKS,                -1)
     Character.edit_action_parameters(GND,   Action.Taunt,           File.GND_TAUNT,             TAUNT,                      -1)
     Character.edit_action_parameters(GND,   Action.ShieldBreak,     -1,                         SHIELD_BREAK,               -1)
+    Character.edit_action_parameters(GND,   Action.Stun,             -1,                        STUN,                       -1)
     Character.edit_action_parameters(GND,   Action.Jab1,            -1,                         JAB_1,                      -1)
     Character.edit_action_parameters(GND,   Action.DashAttack,      -1,                         DASH_ATTACK,                -1)
     Character.edit_action_parameters(GND,   Action.FTiltHigh,       -1,                         FTILT_HI,                   -1)
