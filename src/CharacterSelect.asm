@@ -388,9 +388,6 @@ scope CharacterSelect {
         lbu     t3, 0x0000(t3)              // t3 = id of character to draw
         
         // check for selection flash
-        addiu   sp, sp,-0x0010              // allocate stack space
-        sw      a0, 0x0004(sp)              // ~
-        sw      a1, 0x0008(sp)              // store a0, a1
         li      a2, flash_table             // a2 = flash_table
         addu    a2, a2, t3                  // a2 = flash_table + character id
         lbu     t4, 0x0000(a2)              // t4 = flash timer for {character}
@@ -414,9 +411,6 @@ scope CharacterSelect {
         li      t4, portrait_table          // t4 = portrait table
 
         _draw:
-        lw      a0, 0x0004(sp)              // ~
-        lw      a1, 0x0008(sp)              // load a0, a1
-        addiu   sp, sp, 0x0010              // deallocate stack space
         sll     t3, t3, 0x0002              // t3 = id * 4
         addu    t4, t4, t3                  // t4 = portrait_table[id]
         lw      t4, 0x0000(t4)              // t4 = address of texture
