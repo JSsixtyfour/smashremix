@@ -519,6 +519,8 @@ scope FGM {
     add_sound(YoungLink/sounds/96, SAMPLE_RATE_32000)
     add_sound(YoungLink/sounds/ANNOUNCER, SAMPLE_RATE_16000)
     add_sound(DrMario/sounds/ANNOUNCER, SAMPLE_RATE_16000)
+    add_sound(YoungLink/sounds/YLTAUNTDRINK, SAMPLE_RATE_32000)
+    add_sound(YoungLink/sounds/YLSLEEP, SAMPLE_RATE_32000)
 
     // This is always last
     write_sounds()
