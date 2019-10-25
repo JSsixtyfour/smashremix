@@ -62,6 +62,11 @@ scope DrMario {
     Character.edit_action_parameters(DRM,   0xE3,                   -1,                         DSP_GROUND,                 -1)
     Character.edit_action_parameters(DRM,   0xE4,                   -1,                         DSP_AIR,                    -1)    
     
+    // Set crowd chant FGM.
+    Character.table_patch_start(crowd_chant_fgm, Character.id.DRM, 0x2)
+    dh  0x02EB
+    OS.patch_end()
+    
     // Set default costumes
     Character.set_default_costumes(Character.id.DRM, 0, 1, 2, 3, 2, 3, 4)
 }
