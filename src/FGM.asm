@@ -507,7 +507,7 @@ scope FGM {
     }
 
     // Add the sounds here
-    add_sound(Ganondorf/sounds/53 deflectsound2, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0) // PLACEHOLDER: id 2B7 has issues in-game
+    add_sound(Ganondorf/sounds/PLACEHOLDER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0) // PLACEHOLDER: id 2B7 has issues in-game
     add_sound(Ganondorf/sounds/53 deflectsound2, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
     add_sound(Ganondorf/sounds/54 hurtcut3, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
     add_sound(Ganondorf/sounds/55 hurt2cut2, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
