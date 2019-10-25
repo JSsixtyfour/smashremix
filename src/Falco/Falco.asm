@@ -101,6 +101,11 @@ scope Falco {
     float32 1.2
     OS.patch_end()
     
+    // Set crowd chant FGM.
+    Character.table_patch_start(crowd_chant_fgm, Character.id.FALCO, 0x2)
+    dh  0x02C8
+    OS.patch_end()
+    
     // Set default costumes
     Character.set_default_costumes(Character.id.FALCO, 0, 1, 2, 3, 1, 2, 3)
     

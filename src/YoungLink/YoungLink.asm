@@ -103,6 +103,11 @@ scope YoungLink {
     float32 1.05
     OS.patch_end()
     
+    // Set crowd chant FGM.
+    Character.table_patch_start(crowd_chant_fgm, Character.id.YLINK, 0x2)
+    dh  0x02D7
+    OS.patch_end()
+    
     // Set default costumes
     // TODO: update this when Young Link has costumes)
     Character.set_default_costumes(Character.id.YLINK, 0, 1, 2, 3, 1, 2, 0)
