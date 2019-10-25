@@ -115,6 +115,7 @@ scope MIDI {
     insert_midi(DRMARIO_VICTORY)
     insert_midi(DRAGONKING)
     insert_midi(DREAMLANDBETA)
+    insert_midi(SHOWDOWN)
 
     pushvar origin, base
 
