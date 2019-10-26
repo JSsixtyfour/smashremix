@@ -423,6 +423,10 @@ scope CharacterSelect {
         nop
         
         _end:
+        li      a0, 0xEF00AC3F              // ~ 
+        li      a1, 0x00504241              // restore RDP other modes
+        jal     RCP.append_
+        nop
         jal     RCP.end_list_
         nop
         lw      ra, 0x0004(sp)              // ~
