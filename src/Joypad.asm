@@ -268,14 +268,17 @@ scope Joypad {
     // @ Arguments
     // a0 - POSITIVE/uint min coordinate (deadzone)
     scope update_stick_: {
+        constant ORIGINAL_INSTRUCTION(0x27BDFFD8) //addiu sp, sp, 0xFFD8
+    
         OS.save_registers()                 // allocate stack space, save registers
         addiu   sp, sp,-0x0008              // deallocate stack space
         sw      a0, 0x0004(sp)              // restore a0
 
         // make sure the functions are in RAM
         li      t0, check_stick_x_          // ~
-        lw      t0, 0x0000(t0)              // binary of first instruction
-        beqz    t0, _not_loaded             // skip!
+        lw      t0, 0x0000(t0)              // t0 = current value of check_stick_x_
+        li      t1, ORIGINAL_INSTRUCTION    // t1 = first instruction of check_stick_x_
+        bne     t0, t1, _not_loaded         // skip when first instruction is not present
         nop
 
         _left:
