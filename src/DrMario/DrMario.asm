@@ -29,8 +29,8 @@ scope DrMario {
     insert NSP_GROUND, "moveset/NEUTRAL_SPECIAL_AIR.bin"
     insert NSP_AIR, "moveset/NEUTRAL_SPECIAL_GROUND.bin"
     insert USP, "moveset/UP_SPECIAL.bin"
-    insert DSP_GROUND, "moveset/DOWN_SPECIAL_AIR.bin"
-    insert DSP_AIR, "moveset/DOWN_SPECIAL_GROUND.bin"
+    insert DSP_GROUND, "moveset/DOWN_SPECIAL_GROUND.bin"
+    insert DSP_AIR, "moveset/DOWN_SPECIAL_AIR.bin"
 
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(DRM,   Action.Taunt,           File.DRM_TAUNT,             TAUNT,                      -1)
