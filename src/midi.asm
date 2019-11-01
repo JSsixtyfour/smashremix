@@ -116,6 +116,9 @@ scope MIDI {
     insert_midi(DRAGONKING)
     insert_midi(DREAMLANDBETA)
     insert_midi(SHOWDOWN)
+    // Test MIDIs for adding instruments
+    insert_midi(YES)
+    insert_midi(THUNDERHORSE)
 
     pushvar origin, base
 
@@ -181,7 +184,7 @@ scope MIDI {
     read32 INST_BANK_MAP_OFFSET, "../roms/original.z64", INST_CTL_TABLE + 0x0004 // INST_BANK_MAP_OFFSET is the offset from CTL to the INST_BANK_MAP
     constant INST_BANK_MAP(INST_CTL_TABLE + INST_BANK_MAP_OFFSET)                // INST_BANK_MAP holds offsets to each instrument
     read32 INST_SAMPLE_DATA, "../roms/original.z64", 0x3D760                     // INST_SAMPLE_DATA is the raw sample data
-    variable instrument_count(0x2B)                                              // variable containing the total number of added instruments
+    variable instrument_count(0x2A)                                              // variable containing the total number of added instruments
     variable current_instrument_sample_count(0)                                  // variable containing number of samples in the current instrument
 
     // @ Description
@@ -205,6 +208,11 @@ scope MIDI {
     // loop_end      - (word) loop end
     // loop_count    - (word) loop count
     macro add_instrument_sample(name, attack_time, decay_time, release, attack, decay_volume, vel_min, vel_max, key_min, key_max, key_base, detune, sample_pan, sample_volume, loop_enabled, loop_start, loop_end, loop_count) {
+        if current_instrument_sample_count == 0 {
+            // increment instrument count
+            global variable instrument_count(instrument_count + 1)
+        }
+
         // increment current_instrument_sample_count
         global variable current_instrument_sample_count(current_instrument_sample_count + 1)
         evaluate inst_num(instrument_count)
@@ -322,7 +330,7 @@ scope MIDI {
         }
 
         // reset current_instrument_sample_count
-        variable current_instrument_sample_count(0)
+        global variable current_instrument_sample_count(0)
     }
 
     // @ Description
@@ -362,6 +370,12 @@ scope MIDI {
     add_instrument_sample(distortion_guitar-2, 0x0, 0x0, 0x7530, 0x7F, 0x7F, 0x0, 0x7F, 0x2B, 0x30, 0x2E, 0x0, 0x3F, 0x7E, OS.TRUE, 0x6C16, 0x154CF, 0xFFFFFFFF)
     add_instrument_sample(distortion_guitar-3, 0x0, 0x0, 0x7530, 0x7F, 0x7F, 0x0, 0x7F, 0x31, 0x7F, 0x34, 0x0, 0x3F, 0x7E, OS.TRUE, 0x6C16, 0x154CF, 0xFFFFFFFF)
     add_instrument(Distortion Guitar, 0x7E, 0x3F, 0x05, 0x0, 0x0, 0x0, 0x0, 0x80, 0xF1, 0x64, 0x01)
+
+    // TODO: remove this duplicate instrument - only used for testing adding multiple instruments
+    add_instrument_sample(distortion_guitar-1, 0x0, 0x0, 0x7530, 0x7F, 0x7F, 0x0, 0x7F, 0x00, 0x2A, 0x28, 0x0, 0x3F, 0x7E, OS.TRUE, 0x6C16, 0x154CF, 0xFFFFFFFF)
+    add_instrument_sample(distortion_guitar-2, 0x0, 0x0, 0x7530, 0x7F, 0x7F, 0x0, 0x7F, 0x2B, 0x30, 0x2E, 0x0, 0x3F, 0x7E, OS.TRUE, 0x6C16, 0x154CF, 0xFFFFFFFF)
+    add_instrument_sample(distortion_guitar-3, 0x0, 0x0, 0x7530, 0x7F, 0x7F, 0x0, 0x7F, 0x31, 0x7F, 0x34, 0x0, 0x3F, 0x7E, OS.TRUE, 0x6C16, 0x154CF, 0xFFFFFFFF)
+    add_instrument(Distortion Guitar 2, 0x7E, 0x3F, 0x05, 0x0, 0x0, 0x0, 0x0, 0x80, 0xF1, 0x64, 0x01)
 
     move_instrument_bank_map()
 
