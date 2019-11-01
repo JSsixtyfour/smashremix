@@ -378,7 +378,7 @@ scope MIDI {
         // reload bank table from ROM
         li      a0, moved_inst_bank_map_origin          // load rom address
         li      a1, moved_inst_bank_map                 // load ram address
-        li      a2, 0x10 + ((instrument_count - 1) * 4) // load length of bank table
+        li      a2, 0x10 + (instrument_count * 4)       // load length of bank table
         jal     0x80002CA0                              // dmaCopy
         nop
 
