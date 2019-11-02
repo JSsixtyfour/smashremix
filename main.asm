@@ -94,7 +94,6 @@ include "src/Spawn.asm"
 include "src/Stages.asm"
 include "src/String.asm"
 include "src/Texture.asm"
-include "src/Costumes.asm"
 include "src/Cheats.asm"
 include "src/TimedStock.asm"
 // CONSTANTS
@@ -103,6 +102,7 @@ include "src/File.asm"
 // CHARACTER
 include "src/Character.asm"
 include "src/CharacterSelect.asm"
+include "src/Costumes.asm"
 include "src/Fireball.asm"
 include "src/ResultsScreen.asm"
 // FALCO

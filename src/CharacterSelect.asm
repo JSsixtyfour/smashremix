@@ -154,7 +154,7 @@ scope CharacterSelect {
     dw  0                                   // 0x1C - PLACEHOLDER
     dw  0x8050                              // 0x1D - FALCO
     dw  0x19270                             // 0x1E - GND
-    dw  0x124D8                             // 0x1F - YLINK
+    dw  0x14268                             // 0x1F - YLINK
     dw  0x7710                              // 0x20 - DRM
 
     // @ Description

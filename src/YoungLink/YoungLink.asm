@@ -110,7 +110,25 @@ scope YoungLink {
     
     // Set default costumes
     // TODO: update this when Young Link has costumes)
-    Character.set_default_costumes(Character.id.YLINK, 0, 1, 2, 3, 1, 2, 0)
+    Character.set_default_costumes(Character.id.YLINK, 0, 1, 2, 4, 1, 2, 0)
+    
+    // Add icon palettes
+    Costumes.add_icon_palette_array(Character.id.YLINK, 0x5F4, icon_palette_array)
+    
+    OS.align(16)
+    icon_palette_array:
+    dw  icon_palette_green
+    dw  icon_palette_red
+    dw  icon_palette_blue
+    dw  icon_palette_dark
+    dw  icon_palette_lavender
+    
+    OS.align(16)
+    insert icon_palette_green, "icon_palette_green.bin"
+    insert icon_palette_red, "icon_palette_red.bin"
+    insert icon_palette_blue, "icon_palette_blue.bin"
+    insert icon_palette_dark, "icon_palette_dark.bin"
+    insert icon_palette_lavender, "icon_palette_lavender.bin"
     
     up_special_landing_fsm:
     float32 0.33                // 25 frames of landing lag
