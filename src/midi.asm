@@ -3,7 +3,8 @@ if !{defined __MIDI__} {
 define __MIDI__()
 
 // This file extends the music table and defines macros for including new MIDI files.
-// For converting MIDI files, it's reccomended to use GE Editor.
+// It also extends the instrument table and defines macros for including new instruments.
+// For converting MIDI files, it's recommended to use GE Editor.
 // Tools > Extra Tools > MIDI Tools > Convert Midi to GE Format and Loop
 
 include "OS.asm"
@@ -116,9 +117,6 @@ scope MIDI {
     insert_midi(DRAGONKING)
     insert_midi(DREAMLANDBETA)
     insert_midi(SHOWDOWN)
-    // Test MIDIs for adding instruments
-    insert_midi(YES)
-    insert_midi(THUNDERHORSE)
 
     pushvar origin, base
 
