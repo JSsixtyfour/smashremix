@@ -115,4 +115,9 @@ scope File {
     constant STG_MADMM_HEADER(0x8C2)
     constant STG_MADMM(0x8C3)
     constant STG_MADMM_BG(0x8C4)
+    constant STG_SMBBF_HEADER(0x8C5)
+    constant STG_SMBBF_STAGE(0x8C6)
+    constant STG_SMBO_HEADER(0x8C7)
+    constant STG_SMBO_STAGE(0x8C8)
+    constant LUCAS_MAIN(0x8C9)
 }
