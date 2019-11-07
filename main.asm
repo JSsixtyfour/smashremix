@@ -81,6 +81,7 @@ include "src/Settings.asm"
 include "src/Moveset.asm"
 include "src/Command.asm"
 include "src/Timeouts.asm"
+include "src/GFX.asm"
 // partial 19XX merge
 include "src/Color.asm"
 include "src/Crash.asm"
