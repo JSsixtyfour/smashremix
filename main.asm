@@ -30,6 +30,7 @@ include "src/Settings.asm"
 include "src/Moveset.asm"
 include "src/Command.asm"
 include "src/Timeouts.asm"
+include "src/GFX.asm"
 // 19XX merge
 include "src/AI.asm"
 include "src/BGM.asm"
