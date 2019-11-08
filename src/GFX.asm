@@ -5,6 +5,7 @@ print "included GFX.asm\n"
 
 // @ Description
 // This file allows new GFX (graphics effects) to be created.
+// TODO: Adding too many textures will cause CSS to not load. May need to store them in ROM and load dynamically?
 
 include "OS.asm"
 
@@ -90,6 +91,32 @@ scope GFX {
     }
 
     // @ Description
+    // Modifies the render routine that maps GFX Texture Block IDs to GFX Texture Blocks so that we can use an extended table
+    scope extend_gfx_texture_block_map_render_: {
+        OS.patch_start(0x4D0D4, 0x800D16F4)
+        j       extend_gfx_texture_block_map_render_
+        nop
+        OS.patch_end()
+
+        // t7 is the GFX_TEXTURE_BLOCK_ID
+
+        slti    t8, t7, 0x002F                           // check if ID is less than 0x2F, which means it's an original GFX_TEXTURE_BLOCK_ID
+        bnez    t8, _normal                              // if it is not a new GFX_TEXTURE_BLOCK_ID, then branch
+        nop                                              // else determine extended table address and offset:
+        li      t6, extended_gfx_texture_block_map       // t6 = address of extended table
+        addiu   t8, t7, -0x002F                          // t8 = slot in extended table
+        sll     t8, t8, 0x2                              // t8 = offset in extended table
+        j       0x800D1700                               // return
+        nop
+
+        _normal:
+        addu    t6, t6, t9                               // original line 1
+        lw      t6, 0x6420(t6)                           // original line 2
+        j       0x800D16FC                               // return
+        nop                                              // ~
+    }
+
+    // @ Description
     // This routine is a copy of the first part of the explosion gfx instructions loader modified to accept
     // the gfx_instructions_id as an argument. Then we piggyback off of the rest of the explosion code.
     scope gfx_instructions_loader_: {
@@ -125,15 +152,18 @@ scope GFX {
         OS.align(16)
 
         gfx_texture_block_{n}:
+        OS.print_hex(gfx_texture_block_{n})
         global variable gfx_texture_block_{n}_origin(origin())
         dw      {num_textures}                           // number of textures in block
-        dw      0x00000000                               // ?
-        dw      0x00000003                               // ?
-        dw      0x00000020                               // ?
-        dw      0x00000020                               // ?
+        dw      0x00000000                               // May be the type of texture - 0 works with rgba8888 if so
+        dw      0x00000003                               // May be the type of texture - 3 works with rgba8888 if so
+        dw      0x00000020                               // Either texture height or texture width
+        dw      0x00000020                               // Either texture height or texture width
         dw      0x00000001                               // ?
         // next words are the pointers to the textures
         fill    {num_textures} * 4, 0x00
+
+        OS.align(16)
     }
 
     // @ Description
@@ -198,8 +228,10 @@ scope GFX {
         // dw      0xBF800000
         // dw      0x43700000
         // dw      0xA0004316
-        // dw      0x0000A01A // last byte controls size
-        // dw      0x43AF0000 // 2nd byte controls size
+        // dw      0x0000A01A // 3rd byte controls translations? animation start or type?
+                              // last byte controls how long it takes to grow to the final size
+        // dw      0x43AF0000 // 1st byte controls whether it shrinks or grows?
+                              // 2nd byte controls final size for growing?
         // dw      0xC700FFFF // last halfword controls color
         // dw      0xFF430043 // this looks like frame data
         // dw      0x01430243 // this looks like frame data
@@ -227,6 +259,13 @@ scope GFX {
             evaluate n({n}+1)
         }
 
+        extended_gfx_texture_block_map:
+        define n(1)
+        while {n} <= new_gfx_texture_block_count {
+            dw       gfx_texture_block_{n}
+            evaluate n({n}+1)
+        }
+
         // Increase the size of the GFX command jump table size check
         pushvar base, origin
         origin  0x6669B
@@ -235,13 +274,22 @@ scope GFX {
     }
 
     // ADD NEW GFX TEXTURES HERE
-    extended_gfx_texture_block_map:
-    add_gfx_texture_block(Test, 2)
-    add_gfx_texture(gfx/portrait_samus.rgba8888)
-    add_gfx_texture(gfx/portrait_samus.rgba8888)
+    // TODO: These texture blocks are for demonstration purposes only
+    add_gfx_texture_block(Coin, 9)
+    add_gfx_texture(gfx/coin-1.rgba8888)
+    add_gfx_texture(gfx/coin-2.rgba8888)
+    add_gfx_texture(gfx/coin-3.rgba8888)
+    add_gfx_texture(gfx/coin-4.rgba8888)
+    add_gfx_texture(gfx/coin-5.rgba8888)
+    add_gfx_texture(gfx/coin-6.rgba8888)
+    add_gfx_texture(gfx/coin-7.rgba8888)
+    add_gfx_texture(gfx/coin-8.rgba8888)
+    add_gfx_texture(gfx/coin-9.rgba8888)
 
     // ADD NEW GFX HERE
+    // TODO: These GFX are for demonstration purposes only
     add_gfx(Explosion Duplicate, gfx/blue_explosion_instructions.bin)
+    add_gfx(Spinning Coin, gfx/coin_instructions.bin)
 
     write_gfx()                                          // writes new GFX to ROM
 
