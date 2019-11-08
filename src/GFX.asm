@@ -152,7 +152,6 @@ scope GFX {
         OS.align(16)
 
         gfx_texture_block_{n}:
-        OS.print_hex(gfx_texture_block_{n})
         global variable gfx_texture_block_{n}_origin(origin())
         dw      {num_textures}                           // number of textures in block
         dw      0x00000000                               // May be the type of texture - 0 works with rgba8888 if so
