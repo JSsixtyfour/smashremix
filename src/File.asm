@@ -115,4 +115,12 @@ scope File {
     constant STG_MADMM_HEADER(0x8C2)
     constant STG_MADMM(0x8C3)
     constant STG_MADMM_BG(0x8C4)
+    constant STG_SMBBF_HEADER(0x8C5)
+    constant STG_SMBBF(0x8C6)
+    constant STG_SMBO_HEADER(0x8C7)
+    constant STG_SMBO(0x8C8)
+    constant YLINK_USMASH(0x8C9)
+    constant STG_BOWSERBOSS_HEADER(0x8CA)
+    constant STG_BOWSERBOSS(0x8CB)
+    constant STG_BOWSERBOSS_BG(0x8CC)
 }

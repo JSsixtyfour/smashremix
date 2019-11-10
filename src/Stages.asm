@@ -162,6 +162,7 @@ scope Stages {
     dw function.CLONE                       // Mad Monster Mansion
     dw function.CLONE                       // SMBBF
     dw function.CLONE                       // SMBO
+    dw function.CLONE                       // Bowser's Stadium
     
 
     // TODO
@@ -292,6 +293,7 @@ scope Stages {
     insert icon_madmm,                  "../textures/icon_madmm.rgba5551"
     insert icon_smbbf,                  "../textures/icon_smbbf.rgba5551"
     insert icon_smbo,                   "../textures/icon_smbo.rgba5551"
+    insert icon_bowserb,                "../textures/icon_bowserb.rgba5551"
     
 
     // @ Description
@@ -369,6 +371,7 @@ scope Stages {
         constant MADMM(0x40)
         constant SMBBF(0x41)
         constant SMBO(0x42)
+        constant BOWSERB(0x43)
 
         // not an actual id, some arbitary number Sakurai picked(?)
         constant RANDOM(0xDE)
@@ -474,6 +477,7 @@ scope Stages {
         constant MADMM(0x8C2)
         constant SMBBF(0x8C5)
         constant SMBO(0x8C7)
+        constant BOWSERB(0x8CA)
     }
 
     scope function {
@@ -528,7 +532,7 @@ scope Stages {
     db id.SPIRALM                           // 14
     db id.COOLCOOL                          // 15
     db id.DR_MARIO                          // 16
-    db id.RANDOM                            // 17
+    db id.BOWSERB                           // 17
     db id.N64                               // 18
     db id.DEKU_TREE                         // 19
     db id.MADMM                             // 1A
@@ -659,6 +663,7 @@ scope Stages {
     dw icon_madmm                           // Mad Monster Mansion
     dw icon_smbbf                           // Mushroom Kingdom BF
     dw icon_smbo                            // Mushroom Kingdom Omega
+    dw icon_bowserb                         // Bowser's Stadium
 
     // @ Description
     // Row the cursor is on
@@ -1814,6 +1819,7 @@ scope Stages {
     db id.MADMM                             // 27
     db id.SMBBF                             // 28
     db id.SMBO                              // 29
+    db id.BOWSERB                           // 2A
     
     OS.align(4)
 
@@ -1951,6 +1957,7 @@ scope Stages {
     float32 0.5                         // Mad Monster Mansion
     float32 0.5                         // Mushroom Kingdom BF
     float32 0.5                         // Mushroom Kingdom Omega
+    float32 0.5                         // Bowser's Stadium
 
     background_table:
     db id.PEACHS_CASTLE                 // Peach's Castle
@@ -2020,6 +2027,7 @@ scope Stages {
     db id.SECTOR_Z                      // Mad Monster Mansion
     db id.MUSHROOM_KINGDOM              // Mushroom Kingdom BF
     db id.MUSHROOM_KINGDOM              // Mushroom Kingdom Omega
+    db id.SECTOR_Z                      // Bowser's Stadium
     OS.align(4)
 
     // @ Description
@@ -2097,6 +2105,7 @@ scope Stages {
     dw header.MADMM,                  type.CLONE
     dw header.SMBBF,                  type.CLONE
     dw header.SMBO,                   type.CLONE
+    dw header.BOWSERB,                   type.CLONE
 
 
     string_peachs_castle:;          String.insert("Peach's Castle")
@@ -2142,7 +2151,8 @@ scope Stages {
     string_mute:;                   String.insert("Mute City")
     string_madmm:;                  String.insert("Mad Monster Mansion")
     string_smbbf:;                  String.insert("Mushroom Kingdom BF")
-    string_smbo:;                   String.insert("Mushroom Kingdom Omega")
+    string_smbo:;                   String.insert("Mushroom Kingdom O")
+    string_bowserb:;                String.insert("Bowser's Stadium")
     
 
     string_table:
@@ -2213,6 +2223,7 @@ scope Stages {
     dw string_madmm
     dw string_smbbf
     dw string_smbo
+    dw string_bowserb
 
 }
 

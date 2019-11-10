@@ -54,7 +54,7 @@ scope YoungLink {
     Character.edit_action_parameters(YLINK, Action.UTilt,           -1,                         UTILT,                      -1)
     Character.edit_action_parameters(YLINK, Action.DTilt,           -1,                         DTILT,                      -1)
     Character.edit_action_parameters(YLINK, Action.FSmash,          -1,                         FSMASH,                     -1)   
-    Character.edit_action_parameters(YLINK, Action.USmash,          -1,                         USMASH,                     -1)
+    Character.edit_action_parameters(YLINK, Action.USmash,          0x8C9,                      USMASH,                     -1)
     Character.edit_action_parameters(YLINK, Action.DSmash,          -1,                         DSMASH,                     -1)
     Character.edit_action_parameters(YLINK, Action.AttackAirN,      -1,                         NAIR,                       -1)
     Character.edit_action_parameters(YLINK, Action.AttackAirF,      -1,                         FAIR,                       -1)
