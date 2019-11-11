@@ -119,6 +119,8 @@ scope MIDI {
     insert_midi(SHOWDOWN)
     insert_midi(BOWSERBOSS)
     insert_midi(POKEMON_STADIUM)
+    insert_midi(BOWSERROAD)
+    insert_midi(BOWSERFINAL)
     insert_midi(TESTMIDI)
 
     pushvar origin, base
