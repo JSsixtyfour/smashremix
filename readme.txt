@@ -1,4 +1,4 @@
-YOU DON'T BELONG HERE IF YOU ARE NOT A HACKER OR HAVE INTEREST IN THE CODE. PLEASE DOWNLOAD THE RELEASE VERSION BY CLICKING THE RELEASE TAB.
+THIS IS ONLY FOR THOSE INTERESTED IN THE SOURCE CODE OF THE MOD. PLEASE DOWNLOAD THE RELEASE VERSION BY CLICKING THE RELEASE TAB.
 =======
 The original xdelta will generate a smash rom that is compatible with our ASM code. Much of our edits are done within
 the compressed files within the rom. If you utilize a vanilla Smash 64 rom, it will not work correctly.
