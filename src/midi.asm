@@ -296,7 +296,7 @@ scope MIDI {
     // volume     - (byte) volumn
     // pan        - (byte) pan
     // priority   - (byte) priority
-    // pitch_bend - (hw) pitch bend
+    // bend_range - (hw) bend range
     // trem_type  - (byte) trem type
     // trem_rate  - (byte) trem rate
     // trem_depth - (byte) trem depth
@@ -305,7 +305,7 @@ scope MIDI {
     // vib_rate   - (byte) vib rate
     // vib_depth  - (byte) vib depth
     // vib_delay  - (byte) vid delay
-    macro add_instrument(name, volume, pan, priority, pitch_bend, trem_type, trem_rate, trem_depth, trem_delay, vib_type, vib_rate, vib_depth, vib_delay) {
+    macro add_instrument(name, volume, pan, priority, bend_range, trem_type, trem_rate, trem_depth, trem_delay, vib_type, vib_rate, vib_depth, vib_delay) {
         evaluate inst_num(instrument_count)
         global define INST_NAME_{inst_num}({name})
         print "Added {INST_NAME_{inst_num}}\nINST_ID: 0x"; OS.print_hex({inst_num}); print " (", {inst_num},")\nSamples:\n"
@@ -323,7 +323,7 @@ scope MIDI {
         db      {vib_rate}
         db      {vib_depth}
         db      {vib_delay}
-        dh      {pitch_bend}                       // 0x0064 for most (2 semitones?)
+        dh      {bend_range}                       // 0x0064 for most (2 semitones?)
         dh      current_instrument_sample_count
 
         // pointers to instrument blocks
@@ -378,13 +378,13 @@ scope MIDI {
     add_instrument_sample(4, 0x00000000, 0xFFFFFFFF, 0x00000000, 0x7F, 0x7F, 0x00, 0x7F, 0x5E, 0x62, 0x60, 0x28, 0x40, 0x7F, OS.TRUE, 0x00000A86, 0x00002278, 0xFFFFFFFF)
     add_instrument_sample(5, 0x00000000, 0xFFFFFFFF, 0x00000000, 0x7F, 0x7F, 0x00, 0x7F, 0x63, 0x69, 0x67, 0x28, 0x40, 0x7F, OS.TRUE, 0x00000D84, 0x00001E1D, 0xFFFFFFFF)
     add_instrument_sample(6, 0x00000000, 0xFFFFFFFF, 0x00000000, 0x7F, 0x7F, 0x00, 0x7F, 0x6A, 0x7F, 0x6C, 0x28, 0x40, 0x7F, OS.TRUE, 0x00000CAC, 0x00001E35, 0xFFFFFFFF)
-    add_instrument(Natural Strings, 0x7F, 0x40, 0x05, 0xC8, 0x0, 0x0, 0x0, 0x0, 0x80, 0xF1, 0x64, 0x01)
+    add_instrument(Natural Strings, 0x7F, 0x40, 0x05, 0x00C8, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0)
 
     // TODO: for these samples, make sure values are correct (assuming we keep this instrument)
     add_instrument_sample(distortion_guitar-1, 0x0, 0x0, 0x7530, 0x7F, 0x7F, 0x0, 0x7F, 0x00, 0x2A, 0x28, 0x0, 0x3F, 0x7E, OS.TRUE, 0x3383, 0x677A, 0xFFFFFFFF)
     add_instrument_sample(distortion_guitar-2, 0x0, 0x0, 0x7530, 0x7F, 0x7F, 0x0, 0x7F, 0x2B, 0x30, 0x2E, 0x0, 0x3F, 0x7E, OS.TRUE, 0x3333, 0x6686, 0xFFFFFFFF)
     add_instrument_sample(distortion_guitar-3, 0x0, 0x0, 0x7530, 0x7F, 0x7F, 0x0, 0x7F, 0x31, 0x7F, 0x34, 0x0, 0x3F, 0x7E, OS.TRUE, 0x3477, 0x684C, 0xFFFFFFFF)
-    add_instrument(Distortion Guitar, 0x7E, 0x3F, 0x05, 0xC8, 0x0, 0x0, 0x0, 0x0, 0x80, 0xF1, 0x64, 0x01)
+    add_instrument(Distortion Guitar, 0x7E, 0x3F, 0x05, 0x00C8, 0x0, 0x0, 0x0, 0x0, 0x80, 0xF1, 0x64, 0x01)
 
     move_instrument_bank_map()
 
