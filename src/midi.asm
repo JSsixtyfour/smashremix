@@ -194,25 +194,26 @@ scope MIDI {
 
     // @ Description
     // Adds an instrument sample to be used by the instrument created in the next add_instrument() call
-    // name          - Name of .aifc file of sample
-    // attack_time   - (word) attack time
-    // decay_time    - (word) decay time
-    // release_time  - (word) release time
-    // attack_volume - (byte) attack volume
-    // decay_volume  - (byte) decay volume
-    // vel_min       - (byte) vel min
-    // vel_max       - (byte) vel max
-    // key_min       - (byte) key min
-    // key_max       - (byte) key max
-    // key_base      - (byte) key base
-    // detune        - (byte) detune
-    // sample_pan    - (byte) sample pan
-    // sample_volume - (byte) sample volume
-    // loop_enabled  - (bool) if OS.FALSE, then loop is not enabled, if OS.TRUE then loop is enabled
-    // loop_start    - (word) loop start
-    // loop_end      - (word) loop end
-    // loop_count    - (word) loop count
-    macro add_instrument_sample(name, attack_time, decay_time, release_time, attack_volume, decay_volume, vel_min, vel_max, key_min, key_max, key_base, detune, sample_pan, sample_volume, loop_enabled, loop_start, loop_end, loop_count) {
+    // name                        - Name of .aifc file of sample (and .bin of loop predictors file if present)
+    // attack_time                 - (word) attack time
+    // decay_time                  - (word) decay time
+    // release_time                - (word) release time
+    // attack_volume               - (byte) attack volume
+    // decay_volume                - (byte) decay volume
+    // vel_min                     - (byte) vel min
+    // vel_max                     - (byte) vel max
+    // key_min                     - (byte) key min
+    // key_max                     - (byte) key max
+    // key_base                    - (byte) key base
+    // detune                      - (byte) detune
+    // sample_pan                  - (byte) sample pan
+    // sample_volume               - (byte) sample volume
+    // loop_enabled                - (bool) if OS.FALSE, then loop is not enabled, if OS.TRUE then loop is enabled
+    // loop_start                  - (word) loop start
+    // loop_end                    - (word) loop end
+    // loop_count                  - (word) loop count
+    // loop_predictors_file_exists - (bool) if OS.TRUE, then loop predictors are in {name}.bin, if OS.FALSE then fill with 0
+    macro add_instrument_sample(name, attack_time, decay_time, release_time, attack_volume, decay_volume, vel_min, vel_max, key_min, key_max, key_base, detune, sample_pan, sample_volume, loop_enabled, loop_start, loop_end, loop_count, loop_predictors_file_exists) {
         if current_instrument_sample_count == 0 {
             // increment instrument count
             global variable instrument_count(instrument_count + 1)
@@ -280,9 +281,13 @@ scope MIDI {
             dw  {loop_start}
             dw  {loop_end}
             dw  {loop_count}
-            // TODO: loop predictors - I believe they should be at the end of the .aifc file, but haven't been able to produce a valid one yet
-            // ...also not sure if they matter all that much
-            fill 0x20, 0x0
+            // loop predictors - I believe they should be at the end of the .aifc file, but haven't been able to produce a valid one yet
+            // ...but n64 sound tool produces them
+            if {loop_predictors_file_exists} == OS.TRUE {
+                insert "../src/music/instruments/{SAMPLE_NAME_{inst_num}_{sample_num}}.bin"
+            } else {
+                fill 0x20, 0x0
+            }
             dw  0x0000
         }
 
@@ -373,19 +378,19 @@ scope MIDI {
 
     // Add instrument samples, then call add_instrument
     // TODO: for these samples, make sure values are correct (assuming we keep this instrument)
-    add_instrument_sample(0, 0x00000000, 0xFFFFFFFF, 0x00000000, 0x7F, 0x7F, 0x00, 0x7F, 0x00, 0x48, 0x48, 0x28, 0x40, 0x7F, OS.TRUE, 0x00001915, 0x00003612, 0xFFFFFFFF)
-    add_instrument_sample(1, 0x00000000, 0xFFFFFFFF, 0x00000000, 0x7F, 0x7F, 0x00, 0x7F, 0x49, 0x51, 0x4F, 0x28, 0x40, 0x7F, OS.TRUE, 0x00001AAA, 0x0000326E, 0xFFFFFFFF)
-    add_instrument_sample(2, 0x00000000, 0xFFFFFFFF, 0x00000000, 0x7F, 0x7F, 0x00, 0x7F, 0x52, 0x56, 0x54, 0x28, 0x40, 0x7F, OS.TRUE, 0x00000F3D, 0x000027FF, 0xFFFFFFFF)
-    add_instrument_sample(3, 0x00000000, 0xFFFFFFFF, 0x00000000, 0x7F, 0x7F, 0x00, 0x7F, 0x57, 0x5D, 0x5B, 0x28, 0x40, 0x7F, OS.TRUE, 0x00000A7E, 0x00002184, 0xFFFFFFFF)
-    add_instrument_sample(4, 0x00000000, 0xFFFFFFFF, 0x00000000, 0x7F, 0x7F, 0x00, 0x7F, 0x5E, 0x62, 0x60, 0x28, 0x40, 0x7F, OS.TRUE, 0x00000A86, 0x00002278, 0xFFFFFFFF)
-    add_instrument_sample(5, 0x00000000, 0xFFFFFFFF, 0x00000000, 0x7F, 0x7F, 0x00, 0x7F, 0x63, 0x69, 0x67, 0x28, 0x40, 0x7F, OS.TRUE, 0x00000D84, 0x00001E1D, 0xFFFFFFFF)
-    add_instrument_sample(6, 0x00000000, 0xFFFFFFFF, 0x00000000, 0x7F, 0x7F, 0x00, 0x7F, 0x6A, 0x7F, 0x6C, 0x28, 0x40, 0x7F, OS.TRUE, 0x00000CAC, 0x00001E35, 0xFFFFFFFF)
+    add_instrument_sample(natural_strings-0, 0x00000000, 0xFFFFFFFF, 0x00000000, 0x7F, 0x7F, 0x00, 0x7F, 0x00, 0x48, 0x48, 0x28, 0x40, 0x7F, OS.TRUE, 0x00001915, 0x00003612, 0xFFFFFFFF, OS.TRUE)
+    add_instrument_sample(natural_strings-1, 0x00000000, 0xFFFFFFFF, 0x00000000, 0x7F, 0x7F, 0x00, 0x7F, 0x49, 0x51, 0x4F, 0x28, 0x40, 0x7F, OS.TRUE, 0x00001AAA, 0x0000326E, 0xFFFFFFFF, OS.TRUE)
+    add_instrument_sample(natural_strings-2, 0x00000000, 0xFFFFFFFF, 0x00000000, 0x7F, 0x7F, 0x00, 0x7F, 0x52, 0x56, 0x54, 0x28, 0x40, 0x7F, OS.TRUE, 0x00000F3D, 0x000027FF, 0xFFFFFFFF, OS.TRUE)
+    add_instrument_sample(natural_strings-3, 0x00000000, 0xFFFFFFFF, 0x00000000, 0x7F, 0x7F, 0x00, 0x7F, 0x57, 0x5D, 0x5B, 0x28, 0x40, 0x7F, OS.TRUE, 0x00000A7E, 0x00002184, 0xFFFFFFFF, OS.TRUE)
+    add_instrument_sample(natural_strings-4, 0x00000000, 0xFFFFFFFF, 0x00000000, 0x7F, 0x7F, 0x00, 0x7F, 0x5E, 0x62, 0x60, 0x28, 0x40, 0x7F, OS.TRUE, 0x00000A86, 0x00002278, 0xFFFFFFFF, OS.TRUE)
+    add_instrument_sample(natural_strings-5, 0x00000000, 0xFFFFFFFF, 0x00000000, 0x7F, 0x7F, 0x00, 0x7F, 0x63, 0x69, 0x67, 0x28, 0x40, 0x7F, OS.TRUE, 0x00000D84, 0x00001E1D, 0xFFFFFFFF, OS.TRUE)
+    add_instrument_sample(natural_strings-6, 0x00000000, 0xFFFFFFFF, 0x00000000, 0x7F, 0x7F, 0x00, 0x7F, 0x6A, 0x7F, 0x6C, 0x28, 0x40, 0x7F, OS.TRUE, 0x00000CAC, 0x00001E35, 0xFFFFFFFF, OS.TRUE)
     add_instrument(Natural Strings, 0x7F, 0x40, 0x05, 0x00C8, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0)
 
     // TODO: for these samples, make sure values are correct (assuming we keep this instrument)
-    add_instrument_sample(distortion_guitar-1, 0x0, 0x0, 0x7530, 0x7F, 0x7F, 0x0, 0x7F, 0x00, 0x2A, 0x28, 0x0, 0x3F, 0x7E, OS.TRUE, 0x3383, 0x677A, 0xFFFFFFFF)
-    add_instrument_sample(distortion_guitar-2, 0x0, 0x0, 0x7530, 0x7F, 0x7F, 0x0, 0x7F, 0x2B, 0x30, 0x2E, 0x0, 0x3F, 0x7E, OS.TRUE, 0x3333, 0x6686, 0xFFFFFFFF)
-    add_instrument_sample(distortion_guitar-3, 0x0, 0x0, 0x7530, 0x7F, 0x7F, 0x0, 0x7F, 0x31, 0x7F, 0x34, 0x0, 0x3F, 0x7E, OS.TRUE, 0x3477, 0x684C, 0xFFFFFFFF)
+    add_instrument_sample(distortion_guitar-1, 0x0, 0x0, 0x7530, 0x7F, 0x7F, 0x0, 0x7F, 0x00, 0x2A, 0x28, 0x0, 0x3F, 0x7E, OS.TRUE, 0x3383, 0x677A, 0xFFFFFFFF, OS.FALSE)
+    add_instrument_sample(distortion_guitar-2, 0x0, 0x0, 0x7530, 0x7F, 0x7F, 0x0, 0x7F, 0x2B, 0x30, 0x2E, 0x0, 0x3F, 0x7E, OS.TRUE, 0x3333, 0x6686, 0xFFFFFFFF, OS.FALSE)
+    add_instrument_sample(distortion_guitar-3, 0x0, 0x0, 0x7530, 0x7F, 0x7F, 0x0, 0x7F, 0x31, 0x7F, 0x34, 0x0, 0x3F, 0x7E, OS.TRUE, 0x3477, 0x684C, 0xFFFFFFFF, OS.FALSE)
     add_instrument(Distortion Guitar, 0x7E, 0x3F, 0x05, 0x00C8, 0x0, 0x0, 0x0, 0x0, 0x80, 0xF1, 0x64, 0x01)
 
     move_instrument_bank_map()
