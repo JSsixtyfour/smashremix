@@ -62,7 +62,7 @@
 087F Kalos bg file
 0880 Pokemon Stadium 2 Header
 0881 Pokemon Stadium 2 Stage
-0882 pokemon Stadium 2 bg file
+0882 Pokemon Stadium 2 bg file
 0883 Skyloft Header
 0884 Skyloft Stage
 0885 Skyloft BG
@@ -138,6 +138,12 @@
 08CA Bowser's Stadium Header
 08CB Bowser's Stadium Stage
 08CC Bowser's Stadium BG
+08CD Peach's Castle II Header
+08CE Peach's Castle II Stage
+08CF Peach's Castle II BG
+08D0 Delfino Plaza Header
+08D1 Delfino Plaza Stage
+08D2 Delfino Plaza BG
 0611 CAPTAIN DeadU
 0611 CAPTAIN ScreenKO
 05E8 CAPTAIN Entry

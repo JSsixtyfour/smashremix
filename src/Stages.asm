@@ -163,6 +163,8 @@ scope Stages {
     dw function.CLONE                       // SMBBF
     dw function.CLONE                       // SMBO
     dw function.CLONE                       // Bowser's Stadium
+    dw function.CLONE                       // Peach's Castle II
+    dw function.CLONE                       // Delfino
     
 
     // TODO
@@ -294,6 +296,8 @@ scope Stages {
     insert icon_smbbf,                  "../textures/icon_smbbf.rgba5551"
     insert icon_smbo,                   "../textures/icon_smbo.rgba5551"
     insert icon_bowserb,                "../textures/icon_bowserb.rgba5551"
+    insert icon_peach2,                 "../textures/icon_peach2.rgba5551"
+    insert icon_delfino,                "../textures/icon_delfino.rgba5551"
     
 
     // @ Description
@@ -372,6 +376,8 @@ scope Stages {
         constant SMBBF(0x41)
         constant SMBO(0x42)
         constant BOWSERB(0x43)
+        constant PEACH2(0x44)
+        constant DELFINO(0x45)
 
         // not an actual id, some arbitary number Sakurai picked(?)
         constant RANDOM(0xDE)
@@ -478,6 +484,8 @@ scope Stages {
         constant SMBBF(0x8C5)
         constant SMBO(0x8C7)
         constant BOWSERB(0x8CA)
+        constant PEACH2(0x8CD)
+        constant DELFINO(0x8D0)
     }
 
     scope function {
@@ -558,8 +566,8 @@ scope Stages {
     db id.TOH                               // 2D
     db id.SMBBF                             // 2E
     db id.SMBO                              // 2F
-    db id.RANDOM                            // 30
-    db id.RANDOM                            // 31
+    db id.DELFINO                           // 30
+    db id.PEACH2                            // 31
     db id.RANDOM                            // 32
     db id.RANDOM					        // 33
     db id.RANDOM                            // 34
@@ -664,6 +672,8 @@ scope Stages {
     dw icon_smbbf                           // Mushroom Kingdom BF
     dw icon_smbo                            // Mushroom Kingdom Omega
     dw icon_bowserb                         // Bowser's Stadium
+    dw icon_peach2                          // Peach's Castle II
+    dw icon_delfino                         // Delfino Plaza
 
     // @ Description
     // Row the cursor is on
@@ -1820,6 +1830,8 @@ scope Stages {
     db id.SMBBF                             // 28
     db id.SMBO                              // 29
     db id.BOWSERB                           // 2A
+    db id.PEACH2                            // 2B
+    db id.DELFINO                           // 2C
     
     OS.align(4)
 
@@ -1898,7 +1910,7 @@ scope Stages {
     float32 0.5                         // Yoshi's Island
     float32 0.4                         // Dream Land
     float32 0.4                         // Saffron City
-    float32 0.2                         // Musrhoom Kingdom
+    float32 0.2                         // Mushroom Kingdom
     float32 0.5                         // Dream Land Beta 1
     float32 0.3                         // Dream Land Beta 2
     float32 0.5                         // How to Play
@@ -1958,6 +1970,8 @@ scope Stages {
     float32 0.5                         // Mushroom Kingdom BF
     float32 0.5                         // Mushroom Kingdom Omega
     float32 0.5                         // Bowser's Stadium
+    float32 0.5                         // Peach's Castle II
+    float32 0.5                         // Delfino Plaza
 
     background_table:
     db id.PEACHS_CASTLE                 // Peach's Castle
@@ -2028,6 +2042,8 @@ scope Stages {
     db id.MUSHROOM_KINGDOM              // Mushroom Kingdom BF
     db id.MUSHROOM_KINGDOM              // Mushroom Kingdom Omega
     db id.SECTOR_Z                      // Bowser's Stadium
+    db id.PEACHS_CASTLE                 // Peach's Castle II
+    db id.PEACHS_CASTLE                 // Delfino Plaza
     OS.align(4)
 
     // @ Description
@@ -2105,7 +2121,9 @@ scope Stages {
     dw header.MADMM,                  type.CLONE
     dw header.SMBBF,                  type.CLONE
     dw header.SMBO,                   type.CLONE
-    dw header.BOWSERB,                   type.CLONE
+    dw header.BOWSERB,                type.CLONE
+    dw header.PEACH2,                 type.CLONE
+    dw header.DELFINO,                type.CLONE
 
 
     string_peachs_castle:;          String.insert("Peach's Castle")
@@ -2153,7 +2171,8 @@ scope Stages {
     string_smbbf:;                  String.insert("Mushroom Kingdom BF")
     string_smbo:;                   String.insert("Mushroom Kingdom O")
     string_bowserb:;                String.insert("Bowser's Stadium")
-    
+    string_peach2:;                 String.insert("Peach's Castle II")
+    string_delfino:;                String.insert("Delfino Plaza")
 
     string_table:
     dw string_peachs_castle
@@ -2224,6 +2243,8 @@ scope Stages {
     dw string_smbbf
     dw string_smbo
     dw string_bowserb
+    dw string_peach2
+    dw string_delfino
 
 }
 

@@ -123,4 +123,10 @@ scope File {
     constant STG_BOWSERBOSS_HEADER(0x8CA)
     constant STG_BOWSERBOSS(0x8CB)
     constant STG_BOWSERBOSS_BG(0x8CC)
+    constant STG_PEACH2_HEADER(0x8CD)
+    constant STG_PEACH2(0x8CE)
+    constant STG_PEACH2_BG(0x8CF)
+    constant STG_DELFINO_HEADER(0x8D0)
+    constant STG_DELFINO(0x8D1)
+    constant STG_DELFINO_BG(0x8D2)
 }
