@@ -1,58 +1,69 @@
-// boot.asm
-
-// this file runs extra functions after the initial DMA
-
-scope boot_: {
-    li      a0, Fireball.Capsule.graphic// a0 = capsule graphic address
-    ori     a1, r0, 0x00D8              // a1 = capsule graphic initial pointer offset
-    li      a2, Fireball.Capsule.graphic// a2 = capsule graphic base
-    jal     assign_pointers_            // assign pointers for capsule graphic file
-    nop
-    li      a0, Fireball.Capsule.data   // a0 = capsule data address
-    or      a1, r0, r0                  // a1 = capsule data initial pointer offset
-    li      a2, Fireball.Capsule.graphic// a2 = capsule data base
-    jal     assign_pointers_            // assign pointers for capsule data file
-    nop
-    j       0x8000063C                  // return to DMA hook
-    nop
-}
+// Boot.asm
+if !{defined __BOOT__} {
+define __BOOT__()
+print "included Boot.asm\n"
 
 // @ Description
-// This function assigns pointers to a binary file using the original ssb format.
-// Format - XXXXYYYY
-// XXXX * 4 = offset of next pointer from start of file
-// YYYY * 4 = offset of data from start of file
-// @ Arguments
-// a0 - file address
-// a1 - initial pointer offset
-// a2 - base address
+// This file loads Remix data into RAM.
 
-scope assign_pointers_: {
+include "OS.asm"
+include "Global.asm"
+include "Toggles.asm"
+include "SRAM.asm"
 
-    addiu   sp, sp,-0x0018              // allocate stack space
-    sw      t0, 0x0008(sp)              // ~
-    sw      t1, 0x0008(sp)              // ~
-    sw      t2, 0x000C(sp)              // ~
-    sw      t3, 0x0010(sp)              // store t0-t3
-    ori     t3, r0, 0xFFFF              // t3 = end value (0xFFFF)
-    addu    a1, a0, a1                  // a1 = current pointer address
-    
-    _assign:
-    lhu     t0, 0x0002(a1)              // t0 = data value (YYYY)
-    sll     t0, t0, 0x2                 // t0 = data offset (YYYY * 4)
-    lhu     t1, 0x0000(a1)              // t1 = next pointer value (XXXX)
-    sll     t2, t1, 0x2                 // t2 = next pointer offset (XXXX * 4)
-    addu    t0, a2, t0                  // t0 = pointer (base + data offset)
-    sw      t0, 0x0000(a1)              // assign pointer
-    bne     t1, t3, _assign             // loop if t1 != end (next pointer value != 0xFFFF)
-    addu    a1, a0, t2                  // a1 = next pointer address (file address + next pointer offset)
-    
-    _end:
-    lw      t0, 0x0008(sp)              // ~
-    lw      t1, 0x0008(sp)              // ~
-    lw      t2, 0x000C(sp)              // ~
-    lw      t3, 0x0010(sp)              // load t0-t3
-    addiu   sp, sp, 0x0018              // deallocate stack space
-    jr      ra                          // return
-    nop
+scope Boot {
+    // @ Description
+    // Nintendo 64 logo exits to title screen because t1 contains screen ID 0x0001
+    // instead of 0x001C
+    OS.patch_start(0x0017EE54, 0x80131C94)
+    ori     t1, r0, 0x0001
+    OS.patch_end()
+
+    // @ Descritpion
+    // Nintendo 64 logo cannot be skipped.
+    // Instead of checking for a button press, the check has been disabled.
+    OS.patch_start(0x0017EE18, 0x80131C58)
+    beq     r0, r0, 0x80131C80
+    OS.patch_end()
+
+    // @ Description
+    // Performs one DMA as part of the boot sequence.
+    // It transfers 0x400000 bytes to 0x80400000.
+    scope load_: {
+        OS.patch_start(0x00001234, 0x80000634)
+        j       0x80000438
+        nop
+        OS.patch_end()
+
+        OS.patch_start(0x00001038, 0x80000438)
+        jal     Global.dma_copy_        // original line 1
+        addiu   a2, r0, 0x0100          // original line 2
+        lui     a0, 0x0200              // load rom address (0x02000000)
+        lui     a1, 0x8040              // load ram address (0x80400000)
+        jal     Global.dma_copy_        // add custom functions
+        lui     a2, 0x0040              // load length of 0x400000
+        j       load_                   // finish function
+        nop
+        OS.patch_end()
+
+        jal     SRAM.check_saved_       // v0 = has_saved
+        nop
+        addiu   sp, sp,-0x0008          // allocate stack space
+        sw      t0, 0x0004(sp)          // save t0
+        lli     t0, OS.TRUE             // t0 = OS.TRUE
+        bne     v0, t0, _continue       // if (!has_saved), skip
+        nop
+        jal     Toggles.load_           // load toggles
+        nop
+
+        _continue:
+        lw      t0, 0x0004(sp)          // restore t0
+        addiu   sp, sp, 0x0008          // deallocate stack space
+
+        j       0x80000638              // return
+        nop
+    }
+
 }
+
+} // __BOOT__

@@ -8,6 +8,7 @@ print "included Overlay.asm\n"
 // @ Note
 // This file only supports rgba5551
 
+include "Data.asm"
 include "Global.asm"
 include "Joypad.asm"
 include "OS.asm"
@@ -66,15 +67,31 @@ scope Overlay {
         lli     t1, 0x0039                  // t1 = OPTION screen
         bne     t0, t1, _training           // if (screen_id != OPTION), skip
         nop
-        //jal     Toggles.run_
+        jal     Toggles.run_
         nop
 
         // training mode
         _training:
         lli     t1, 0x0036
-        bne     t0, t1, _sss                // if (screen_id != training), skip
+        bne     t0, t1, _vs                 // if (screen_id != training), skip
         nop
-        //jal     Training.run_
+        jal     Training.run_
+        nop        
+
+        _vs:
+        lli     t1, 0x0016
+        bne     t0, t1, _results            // if (screen_id != vs mode), skip
+        nop
+        jal     VsCombo.run_
+        nop
+        jal     VsStats.run_collect_
+        nop
+
+        _results:
+        lli     t1, 0x0018
+        bne     t0, t1, _sss                // if (screen_id != results), skip
+        nop
+        jal     VsStats.run_results_
         nop
 
         _sss:
@@ -83,6 +100,13 @@ scope Overlay {
         nop
         jal     Stages.run_                 //
         nop
+        
+        // Need this so that the combo meter correctly differentiates singles
+        li      t1, VsCombo.player_count    // t1 = address of number of players
+        sw      r0, 0x0000(t1)              // Set player_count to 0
+        // Need this so that the match stats correctly resets each match (can't rely on VsCombo having run since it's a toggle)
+        li      t1, VsStats.player_count    // t1 = address of number of players
+        sb      r0, 0x0000(t1)              // Set player_count to 0
 
         _finish:
         jal     end_                        // end display list
@@ -257,7 +281,7 @@ scope Overlay {
         jr      ra                          // return
         nop
     }
-1
+
     // @ Description
     // Adds f3dex2 to draw multiple textured rectangles (for one texture) to the framebuffer.
     // @ Arguments
