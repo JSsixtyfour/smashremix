@@ -341,6 +341,9 @@ scope MIDI {
             evaluate n({n}+1)
         }
 
+        // This is necessary so the next instrument doesn't get jarbled
+        OS.align(16)
+
         // reset current_instrument_sample_count
         global variable current_instrument_sample_count(0)
     }
@@ -375,6 +378,9 @@ scope MIDI {
 
         pullvar base, origin
     }
+
+    // This is necessary so the first instrument doesn't get jarbled
+    OS.align(16)
 
     // Add instrument samples, then call add_instrument
     // TODO: for these samples, make sure values are correct (assuming we keep this instrument)
