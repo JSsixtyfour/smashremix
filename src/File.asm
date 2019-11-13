@@ -129,4 +129,11 @@ scope File {
     constant STG_DELFINO_HEADER(0x8D0)
     constant STG_DELFINO(0x8D1)
     constant STG_DELFINO_BG(0x8D2)
+    constant DSAMUS_MAIN(0x8D3)
+    constant DSAMUS_CHARACTER(0x8D4)
+    constant DSAMUS_SECONDARY(0x8D5)
+    constant DSAMUS_NSP(0x8D6)
+    constant LUCAS_MAIN(0x8D7)
+    constant DSAMUS_ROLLF(0x8D8)
+    constant DSAMUS_ROLLB(0x8D9)
 }

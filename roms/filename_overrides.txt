@@ -20,21 +20,21 @@
 0855 Ganon downsmash
 0856 Ganon forward air trident
 0857 Ganon forward air melee style punch
-0858 dr. mario down air
-0859 dr. mario forward air
-085A dr. mario taunt
+0858 Dr. mario down air
+0859 Dr. mario forward air
+085A Dr. mario taunt
 085B Wario down smash
 085C Wario aerial b move
 085D Wario ground b move
-085E wario balloon attack nair
-085F wario clap up uair
-0860 wario taunt
+085E Wario balloon attack nair
+085F Wario clap up uair
+0860 Wario taunt
 0861 Ganon's taunt
 0862 Wario's back air
 0863 Wario's running animation
-0864 wario's dash
-0865 wario's run stop
-0866 wario's down air
+0864 Wario's dash
+0865 Wario's run stop
+0866 Wario's down air
 0867 falco's forward smash (400000000)
 0868 falco's taunt
 0869 falco's up tilt
@@ -144,6 +144,13 @@
 08D0 Delfino Plaza Header
 08D1 Delfino Plaza Stage
 08D2 Delfino Plaza BG
+08D3 Dark Samus Main
+08D4 Dark Samus Character
+08D5 Dark Samus Secondary File
+08D6 Dark Samus Neutral Special Graphic
+08D7 Lucas Main
+08D8 Dark Samus Roll F
+08D9 Dark Samus Roll B
 0611 CAPTAIN DeadU
 0611 CAPTAIN ScreenKO
 05E8 CAPTAIN Entry
