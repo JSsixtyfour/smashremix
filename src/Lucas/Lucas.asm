@@ -4,12 +4,30 @@
 
 scope Lucas {
     // Insert Moveset files
+    insert FAIR, "moveset/FAIR.bin"
+    insert NAIR, "moveset/NAIR.bin"
+    insert UAIR, "moveset/UAIR.bin"
+    insert BAIR, "moveset/BAIR.bin"
+    insert DAIR, "moveset/DAIR.bin"
+    insert UTILT, "moveset/UTILT.bin"
+    insert DSMASH, "moveset/DSMASH.bin"
+    insert USMASH, "moveset/USMASH.bin"
+    insert GRAB_RELEASE_DATA,"moveset/GRAB_RELEASE_DATA.bin"
+    GRAB:; Moveset.THROW_DATA(GRAB_RELEASE_DATA); insert "moveset/GRAB.bin"
     
     
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
+    Character.edit_action_parameters(LUCAS, Action.AttackAirN,      -1,                         NAIR,                       -1)
+    Character.edit_action_parameters(LUCAS, Action.AttackAirF,      -1,                         FAIR,                       -1)
+    Character.edit_action_parameters(LUCAS, Action.AttackAirB,      -1,                         BAIR,                       -1)
+    Character.edit_action_parameters(LUCAS, Action.AttackAirU,      -1,                         UAIR,                       -1)
+    Character.edit_action_parameters(LUCAS, Action.AttackAirD,      -1,                         DAIR,                       -1)
+    Character.edit_action_parameters(LUCAS, Action.UTilt,           -1,                         UTILT,                      -1)
+    Character.edit_action_parameters(LUCAS, Action.USmash,          -1,                         USMASH,                     -1)
+    Character.edit_action_parameters(LUCAS, Action.DSmash,          -1,                         DSMASH,                     -1)
+    Character.edit_action_parameters(LUCAS, Action.Catch,           -1,                         GRAB,                       -1)
     
-    
-    // Modify Menu Action Parameters             // Action          // Animation                // Moveset Data             // Flags
+    // Modify Menu Action Parameters        // Action          // Animation                // Moveset Data             // Flags
     
 
     // Set menu zoom size.

@@ -116,6 +116,8 @@ include "src/YoungLink/YoungLink.asm"
 include "src/DrMario/DrMario.asm"
 // LUCAS
 include "src/Lucas/Lucas.asm"
+// DARK SAMUS
+include "src/DSamus/DSamus.asm"
 
 // MIDI
 include "src/MIDI.asm"

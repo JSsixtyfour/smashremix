@@ -12,7 +12,7 @@ include "OS.asm"
 
 scope Character {
     // number of character slots to add
-    constant ADD_CHARACTERS(5)
+    constant ADD_CHARACTERS(6)
     // start and end offset for the main character struct table
     constant STRUCT_TABLE(0x92610)
     variable STRUCT_TABLE_END(STRUCT_TABLE + 0x6C)
@@ -1785,6 +1785,9 @@ scope Character {
     define_character(DRM, MARIO, File.DRM_MAIN, 0x0CA, 0, File.DRM_CHARACTER, 0x12A, File.DRM_PROJECTILE_DATA, 0x164, File.DRM_PROJECTILE_DATA, 0, 0x428, 0x0, OS.TRUE)
     // 0x21 - LUCAS
     define_character(LUCAS, NESS, File.LUCAS_MAIN, 0x0EE, 0, 0x14F, 0x150, 0x160, 0x0F0, 0x151, 0,  0x5BC, 0x0, OS.TRUE)
+    // 0x22 - DSAMUS
+    define_character(DSAMUS, SAMUS, File.DSAMUS_MAIN, 0x0D8, 0, File.DSAMUS_CHARACTER, 0x141, 0x15D, File.DSAMUS_SECONDARY, File.DSAMUS_NSP, 0, 0x610, 0x0, OS.TRUE)
+    
     print "========================================================================== \n"
 }
 
