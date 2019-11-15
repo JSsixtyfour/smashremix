@@ -5,7 +5,6 @@ print "included GFX.asm\n"
 
 // @ Description
 // This file allows new GFX (graphics effects) to be created.
-// TODO: Adding too many textures will cause CSS to not load. May need to store them in ROM and load dynamically?
 
 include "OS.asm"
 
@@ -143,6 +142,7 @@ scope GFX {
     // Adds a new GFX Texture block
     // name - Used for display only
     // num_textures - The number of textures to be added to the block
+    // TODO: may want to add additional parameters for the 4 words after num_textures
     macro add_gfx_texture_block(name, num_textures) {
         global variable new_gfx_texture_block_count(new_gfx_texture_block_count + 1) // increment new_gfx_texture_block_count
         evaluate n(new_gfx_texture_block_count)
@@ -232,12 +232,12 @@ scope GFX {
         // dw      0x43AF0000 // 1st byte controls whether it shrinks or grows?
                               // 2nd byte controls final size for growing?
         // dw      0xC700FFFF // last halfword controls color
-        // dw      0xFF430043 // this looks like frame data
-        // dw      0x01430243 // this looks like frame data
-        // dw      0x04eF04eF // this looks like frame data
-        // dw      0x05440644 // this looks like frame data
-        // dw      0x074208A0 // this looks like frame data
-        // dw      0x1B434800 // this looks like frame data
+        // dw      0xFF430043 // this looks like frame data: first byte of each hw is the texture index in the block, the 2nd byte is how long
+        // dw      0x01430243 // this looks like frame data: first byte of each hw is the texture index in the block, the 2nd byte is how long
+        // dw      0x04eF04eF // this looks like frame data: first byte of each hw is the texture index in the block, the 2nd byte is how long
+        // dw      0x05440644 // this looks like frame data: first byte of each hw is the texture index in the block, the 2nd byte is how long
+        // dw      0x074208A0 // this looks like frame data: first byte of each hw is the texture index in the block, the 2nd byte is how long
+        // dw      0x1B434800 // this looks like frame data: first byte of each hw is the texture index in the block, the 2nd byte is how long
         // dw      0x00FF0000
     }
 
@@ -247,21 +247,21 @@ scope GFX {
         extended_gfx_command_jump_table:
         define n(1)
         while {n} <= new_gfx_count {
-            dw       gfx_assembly_{n}
+            dw       gfx_assembly_{n}                    // pointer to gfx_assembly
             evaluate n({n}+1)
         }
 
         extended_gfx_instructions_map:
         define n(1)
         while {n} <= new_gfx_count {
-            dw       gfx_instructions_{n}
+            dw       gfx_instructions_{n}                // pointer to gfx_instructions
             evaluate n({n}+1)
         }
 
         extended_gfx_texture_block_map:
         define n(1)
         while {n} <= new_gfx_texture_block_count {
-            dw       gfx_texture_block_{n}
+            dw       gfx_texture_block_{n}               // pointer to gfx_texture_block
             evaluate n({n}+1)
         }
 
@@ -273,22 +273,21 @@ scope GFX {
     }
 
     // ADD NEW GFX TEXTURES HERE
-    // TODO: These texture blocks are for demonstration purposes only
-    add_gfx_texture_block(Coin, 9)
-    add_gfx_texture(gfx/coin-1.rgba8888)
-    add_gfx_texture(gfx/coin-2.rgba8888)
-    add_gfx_texture(gfx/coin-3.rgba8888)
-    add_gfx_texture(gfx/coin-4.rgba8888)
-    add_gfx_texture(gfx/coin-5.rgba8888)
-    add_gfx_texture(gfx/coin-6.rgba8888)
-    add_gfx_texture(gfx/coin-7.rgba8888)
-    add_gfx_texture(gfx/coin-8.rgba8888)
-    add_gfx_texture(gfx/coin-9.rgba8888)
+    // Add a texture block and specify the number of textures in the block, then add the textures.
+    // Example:
+    // add_gfx_texture_block(Coin, 9)
+    // add_gfx_texture(gfx/coin-1.rgba8888)
+    // add_gfx_texture(gfx/coin-2.rgba8888)
+    // add_gfx_texture(gfx/coin-3.rgba8888)
+    // add_gfx_texture(gfx/coin-4.rgba8888)
+    // add_gfx_texture(gfx/coin-5.rgba8888)
+    // add_gfx_texture(gfx/coin-6.rgba8888)
+    // add_gfx_texture(gfx/coin-7.rgba8888)
+    // add_gfx_texture(gfx/coin-8.rgba8888)
+    // add_gfx_texture(gfx/coin-9.rgba8888)
 
     // ADD NEW GFX HERE
-    // TODO: These GFX are for demonstration purposes only
     add_gfx(Explosion Duplicate, gfx/blue_explosion_instructions.bin)
-    add_gfx(Spinning Coin, gfx/coin_instructions.bin)
 
     write_gfx()                                          // writes new GFX to ROM
 
