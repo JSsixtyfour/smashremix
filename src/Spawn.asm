@@ -233,11 +233,7 @@ scope Spawn {
         li      t1, Global.vs.stage         // t1 = address of stageID
 
         // TODO: handle all stages, then remove the next 4 lines
-        lb      t2, 0x0000(t1)              // t2 = stageID
-        slti    t2, t2, 0x41
-        beqz    t2, _original_method        // if stageID is higher than the last stageID in the neutral table...
-        nop                                 // ...then use the original spawn method
-
+                                     // ...then use the original spawn method
         b       _load_spawn                 // don't get original table
         nop
 
@@ -609,10 +605,10 @@ scope Spawn {
     float32  0000,  0000
     
     // 29 - DEKU TREE
-    float32  0000,  0006
-    float32 -1397,  0906
-    float32  0001,  1545
-    float32  1421,  0909
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32  0000,  1545
+    float32  0000,  0005
     
     // 2A - FIRST DESTINATION
     float32 -1600,  0018
@@ -623,8 +619,8 @@ scope Spawn {
     // 2B - GANONS TOWER
     float32 -2200,  1954
     float32  1996,  1954              
-    float32 -1083,  1040
-    float32  0902,  1042
+    float32 -0082,  2717
+    float32 -0082,  1042
     
     // 2C - KALOS POKEMON LEAGUE
     float32 -2371,  0921
@@ -641,8 +637,8 @@ scope Spawn {
     // 2E - SKYLOFT
     float32 -1825,  0884
     float32  1825,  0884              
-    float32 -1825,  0035
-    float32  1825,  0035
+    float32  0000,  1520
+    float32  0000,  0010
     
     // 2F - SMASHVILLE
     float32 -1500,  0035
@@ -659,8 +655,8 @@ scope Spawn {
     // 31 - BATTLEFIELD
     float32 -1262,  0752
     float32  1262,  0752              
-    float32 -1262,  0035
-    float32  1262,  0035
+    float32  0000,  1470
+    float32  0000,  0035
     
     // 32 - CORNERIA CITY
     float32 -1685,  0700
@@ -695,20 +691,20 @@ scope Spawn {
     // 37 - Fray's Stage
     float32 -1400,  0910
     float32  1400,  0910
-    float32 -1400,  0005
-    float32  1400,  0005
+    float32  0000,  1545
+    float32  0000,  0005
     
     // 38 - Tower of Heaven
     float32 -1495,  0851
     float32  1399,  0851
-    float32 -1495,  0010
-    float32  1399,  0010
+    float32  0000,  1550
+    float32  0000,  0010
     
     // 39 - Fountain of Dreams
     float32 -1400,  0910
     float32  1400,  0910
-    float32 -1400,  0005
-    float32  1400,  0005
+    float32  0000,  1545
+    float32  0000,  0005
     
     // 3A - Muda
     float32 -0873,  1547
@@ -743,8 +739,8 @@ scope Spawn {
     // 3F - Mute City
     float32 -1400,  0910
     float32  1400,  0910
-    float32 -1400,  0005
-    float32  1400,  0005
+    float32  0000,  1545
+    float32  0000,  0005
     
     // 40 - Mad Monster Mansion
     float32 -1847, -0294
@@ -755,8 +751,8 @@ scope Spawn {
     // 41 - Super Mario Bros. BF
     float32 -1262,  0932
     float32  1262,  0932
-    float32 -1262,  0035
-    float32  1262,  0035
+    float32  0000,  1569
+    float32  0000,  0035
     
     // 42 - Super Mario Bros. O
     float32 -1831,  0035
