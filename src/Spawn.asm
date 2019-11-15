@@ -734,11 +734,11 @@ scope Spawn {
     float32 -1161,  0035
     float32  1161,  0035
     
-    // 3E - Moray Towers (Placeholder - to be removed)
-    float32 -2080,  0880
-    float32  2080,  0880
-    float32 -1161,  0035
-    float32  1161,  0035
+    // 3E - N64
+    float32 -3447,  1998
+    float32  2564,  1953
+    float32 -1732,  1125
+    float32  0853,  1114
     
     // 3F - Mute City
     float32 -1400,  0910
@@ -750,7 +750,37 @@ scope Spawn {
     float32 -1847, -0294
     float32  1947, -0294
     float32 -1148,  0719
-    float32  1300,  0719zz
+    float32  1300,  0719
+    
+    // 41 - Super Mario Bros. BF
+    float32 -1262,  0932
+    float32  1262,  0932
+    float32 -1262,  0035
+    float32  1262,  0035
+    
+    // 42 - Super Mario Bros. O
+    float32 -1831,  0035
+    float32  1831,  0035
+    float32 -0919,  0035
+    float32  1182,  0035
+    
+    // 43 - Bowser's Stadium
+    float32 -2028,  1061
+    float32  2242,  1061
+    float32 -0915,  1061
+    float32  0915,  1061
+    
+    // 43 - Peach's Castle II
+    float32 -2758,  0097
+    float32  3423,  0097
+    float32 -1489,  0097
+    float32  1898,  0097
+    
+    // 44 - Delfino
+    float32 -2500,  0900
+    float32  2500,  0900
+    float32 -1240,  0900
+    float32  1240,  0900
 
     neutral_table:
     // 00 - Peach's Castle
@@ -1125,11 +1155,11 @@ scope Spawn {
     float32 -1161,  0035
     float32  1161,  0035
     
-    // 3E - Moray Towers (Placeholder - to be removed)
-    float32 -2080,  0880
-    float32  2080,  0880
-    float32 -1161,  0035
-    float32  1161,  0035
+    // 3E - N64
+    float32 -3447,  1998
+    float32  2564,  1953
+    float32 -1732,  1125
+    float32  0853,  1114
     
     // 3F - Mute City
     float32 -1400,  0910
@@ -1142,6 +1172,36 @@ scope Spawn {
     float32  1947, -0294
     float32 -1148,  0719
     float32  1300,  0719
+    
+    // 41 - Super Mario Bros. BF
+    float32 -1262,  0932
+    float32  1262,  0932
+    float32 -1262,  0035
+    float32  1262,  0035
+    
+    // 42 - Super Mario Bros. O
+    float32 -1831,  0035
+    float32  1831,  0035
+    float32 -0919,  0035
+    float32  1182,  0035
+    
+    // 43 - Bowser's Stadium
+    float32 -2028,  1061
+    float32  2242,  1061
+    float32 -0915,  1061
+    float32  0915,  1061
+    
+    // 43 - Peach's Castle II
+    float32 -2758,  0097
+    float32  3423,  0097
+    float32 -1489,  0097
+    float32  1898,  0097
+    
+    // 44 - Delfino
+    float32 -2500,  0900
+    float32  2500,  0900
+    float32 -1240,  0900
+    float32  1240,  0900
 }
 
 } // __SPAWN__
