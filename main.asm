@@ -30,7 +30,7 @@ include "src/Settings.asm"
 include "src/Moveset.asm"
 include "src/Command.asm"
 include "src/Timeouts.asm"
-// partial 19XX merge
+// 19XX merge
 include "src/AI.asm"
 include "src/BGM.asm"
 include "src/Camera.asm"
@@ -47,6 +47,8 @@ include "src/Hitbox.asm"
 include "src/Joypad.asm"
 include "src/Menu.asm"
 include "src/Overlay.asm"
+include "src/Pause.asm"
+include "src/Practice.asm"
 include "src/RCP.asm"
 include "src/Spawn.asm"
 include "src/Stages.asm"
@@ -58,7 +60,8 @@ include "src/TimedStock.asm"
 // CONSTANTS
 include "src/Action.asm"
 include "src/File.asm"
-// partial 19XX merge
+// 19XX merge continued
+include "src/Shield.asm"
 include "src/Training.asm"
 include "src/VsCombo.asm"
 include "src/VsStats.asm"

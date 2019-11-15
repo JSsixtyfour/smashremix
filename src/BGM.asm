@@ -23,33 +23,6 @@ scope BGM {
     // This function is not yet documented.
     constant stop_(0x00000000)
 
-// TODO: should we do this? or make it a toggle?
-if {defined __TE__} { 
-    // @ Descirption
-    // Replaces Ness victory music with another song to avoid copyright issues
-    scope swap_music_: {
-        OS.patch_start(0x000216F0, 0x80020AF0)
-        j       swap_music_
-        nop
-        _swap_music_return:
-        OS.patch_end()
-
-        constant TABLE_SIZE(13)
-
-        // don't play NESS music
-        lli     t3, BGM.win.NESS            // check for Ness victory music
-        bne     t3, a1, _skip               // ~
-        nop
-        lli     a1, BGM.win.KIRBY          // swap if Ness victory music
-        
-        _skip:
-        or      v0, a1, r0                  // original line 1
-        addu    t3, t1, t2                  // original line 2
-        j       _swap_music_return          // return
-        nop
-    }
-} // __TE__
-
     // @ Description
     // This function implements the mono/stero toggle (boolean stereo_enabled - 0x8003CB24)
     scope get_type_: {

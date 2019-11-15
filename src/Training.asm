@@ -700,13 +700,6 @@ scope Training {
         jal     Overlay.draw_rectangle_     // draw background rectangle
         nop
         
-        // draw logo
-        lli     a0, 000068                  // a0 - ulx
-        lli     a1, 000083                  // a1 - uly
-        li      a2, Data.menu_logo_info     // a2 - address of texture struct
-        jal     Overlay.draw_texture_big_   // draw logo texture
-        nop
-        
         // update menu
         li      a0, info                    // a0 - address of Menu.info()
         jal     Menu.update_                // check for updates

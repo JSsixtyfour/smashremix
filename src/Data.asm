@@ -11,9 +11,10 @@ include "Texture.asm"
 scope Data {
     
     // Menu Textures
-    menu_logo_info:
-    Texture.info(184,74)
-    insert menu_logo, "../textures/menu_19xx_logo.rgba5551"
+    menu_bg_info:
+    //Texture.info(184,74)
+    Texture.info(300,220)
+    insert menu_bg, "../textures/menu_bg_remix.rgba5551"
 
     options_text_info:
     Texture.info(80,16)

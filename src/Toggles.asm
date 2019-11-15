@@ -64,47 +64,18 @@ scope Toggles {
         sw      t0, 0x0018(sp)              // ~
         sw      t1, 0x001C(sp)              // save registers
 
-        // draw background rectangle
-        lli     a0, Color.low.MENU_BG       // a0 - menu background color
-        jal     Overlay.set_color_          // set fill color
+        // draw logo
+        lli     a0, 000010                  // a0 - ulx
+        lli     a1, 000010                  // a1 - uly
+        li      a2, Data.menu_bg_info     // a2 - address of texture struct
+        jal     Overlay.draw_texture_big_   // draw logo texture
         nop
-        lli     a0, 000000                  // a0 - ulx
-        lli     a1, 000000                  // a1 - uly
-        lli     a2, 000320                  // a2 - width
-        lli     a3, 000240                  // a3 - height
-        jal     Overlay.draw_rectangle_     // draw background rectangle
-        // draw white outline
-        nop
-        lli     a0, Color.low.WHITE         // a0 - color
-        jal     Overlay.set_color_          // set fill color
-        nop
-        lli     a0, 000028                  // a0 - ulx
-        lli     a1, 000028                  // a1 - uly
-        lli     a2, 000264                  // a2 - width
-        lli     a3, 000184                  // a3 - height
-        jal     Overlay.draw_rectangle_     // draw outline rectangle
-        nop
-        // draw foreground rectangle
-        lli     a0, Color.low.MENU_BG       // a0 - color
-        jal     Overlay.set_color_          // set fill color
-        nop
-        lli     a0, 000029                  // a0 - ulx
-        lli     a1, 000029                  // a1 - uly
-        lli     a2, 000262                  // a2 - width
-        lli     a3, 000182                  // a3 - height
-        jal     Overlay.draw_rectangle_     // draw foreground rectangle
-        nop
+
         // draw "options" text
         lli     a0, 000026                  // a0 - ulx
         lli     a1, 000011                  // a1 - uly
         li      a2, Data.options_text_info  // a2 - address of texture struct
         jal     Overlay.draw_texture_       // draw options text texture
-        nop
-        // draw logo
-        lli     a0, 000068                  // a0 - ulx
-        lli     a1, 000083                  // a1 - uly
-        li      a2, Data.menu_logo_info     // a2 - address of texture struct
-        jal     Overlay.draw_texture_big_   // draw logo texture
         nop
 
         // update menu
@@ -168,7 +139,7 @@ scope Toggles {
         sw      t0, 0x0010(sp)              // ~
         sw      ra, 0x0014(sp)              // save registers
 
-        li      a0, head_19xx_settings      // a0 - address of head
+        li      a0, head_remix_settings     // a0 - address of head
         li      a1, block_misc              // a1 - address of block
         jal     Menu.export_                // export data
         nop
@@ -218,7 +189,7 @@ scope Toggles {
         li      a0, block_misc              // a0 - address of block (misc)
         jal     SRAM.load_                  // load data
         nop
-        li      a0, head_19xx_settings      // a0 - address of head
+        li      a0, head_remix_settings     // a0 - address of head
         li      a1, block_misc              // a1 - address of block
         jal     Menu.import_
         nop
@@ -272,7 +243,7 @@ scope Toggles {
     // @ Description
     // Functions to change the menu currently displayed.
     set_info_1_:; set_info_head(head_super_menu)
-    set_info_2_:; set_info_head(head_19xx_settings)
+    set_info_2_:; set_info_head(head_remix_settings)
     set_info_3_:; set_info_head(head_music_settings)
     set_info_4_:; set_info_head(head_random_stage_settings)
 
@@ -307,14 +278,14 @@ scope Toggles {
     // @ Description
     // Contains list of submenus.
     head_super_menu:
-    Menu.entry_title("19XX SETTINGS", set_info_2_, pc() + 20)
+    Menu.entry_title("REMIX SETTINGS", set_info_2_, pc() + 20)
     Menu.entry_title("MUSIC SETTINGS", set_info_3_, pc() + 20)
     Menu.entry_title("RANDOM STAGE SETTINGS", set_info_4_, pc() + 28)
     Menu.entry_title("SCREEN ADJUST", load_screen_adjust_, OS.NULL)
 
     // @ Description 
     // Miscellaneous Toggles
-    head_19xx_settings:
+    head_remix_settings:
     entry_practice_overlay:;            Menu.entry_bool("COLOR OVERLAYS", OS.FALSE, entry_disable_cinematic_camera)
     entry_disable_cinematic_camera:;    Menu.entry_bool("DISABLE CINEMATIC CAMERA", OS.FALSE, entry_flash_on_z_cancel)
     entry_flash_on_z_cancel:;           Menu.entry_bool("FLASH ON Z-CANCEL", OS.FALSE, entry_hitbox_mode)
@@ -354,20 +325,6 @@ scope Toggles {
     // @ Description
     // Random Stage Toggles
     head_random_stage_settings:
-if {defined __TE__} {
-    entry_random_stage_battlefield:;            Menu.entry_bool("BATTLEFIELD", OS.TRUE, pc() + 16)
-    entry_random_stage_congo_jungle:;           Menu.entry_bool("CONGO JUNGLE", OS.TRUE, pc() + 20)
-    entry_random_stage_dream_land:;             Menu.entry_bool("DREAM LAND", OS.TRUE, pc() + 16)
-    entry_random_stage_final_destination:;      Menu.entry_bool("FINAL DESTINATION", OS.TRUE, pc() + 24)
-    entry_random_stage_hyrule_castle:;          Menu.entry_bool("HYRULE CASTLE", OS.TRUE, pc() + 20)
-    entry_random_stage_mushroom_kingdom:;       Menu.entry_bool("MUSHROOM KINGDOM", OS.TRUE, pc() + 24)
-    entry_random_stage_peachs_castle:;          Menu.entry_bool("PEACH'S CASTLE", OS.TRUE, pc() + 20)
-    entry_random_stage_planet_zebes:;           Menu.entry_bool("PLANET ZEBES", OS.TRUE, pc() + 20)
-    entry_random_stage_saffron_city:;           Menu.entry_bool("SAFFRON CITY", OS.TRUE, pc() + 20)
-    entry_random_stage_sector_z:;               Menu.entry_bool("SECTOR Z", OS.TRUE, pc() + 16)
-    entry_random_stage_yoshis_island:;          Menu.entry_bool("YOSHI'S ISLAND", OS.TRUE, OS.NULL)
-} // __TE__
-
     entry_random_stage_battlefield:;            Menu.entry_bool("BATTLEFIELD", OS.TRUE, pc() + 16)
     entry_random_stage_congo_jungle:;           Menu.entry_bool("CONGO JUNGLE", OS.TRUE, pc() + 20)
     entry_random_stage_dream_land:;             Menu.entry_bool("DREAM LAND", OS.TRUE, pc() + 16)

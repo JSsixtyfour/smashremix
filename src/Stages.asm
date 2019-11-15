@@ -1099,7 +1099,7 @@ scope Stages {
         sw      v0, 0x0010(sp)              // ~
         sw      ra, 0x0014(sp)              // save registers
 
-        // this block draws "19XX <version>"
+        // this block draws "Smash Remix"
         lli     a0, 232                     // a0 - ulx
         lli     a1, 130                     // a1 - uly
         li      a2, string_title            // a2 - address of string
@@ -1249,22 +1249,22 @@ scope Stages {
         sw      t1, 0x001C(sp)              // ~
         sw      at, 0x0020(sp)              // save registers
 
-        // TODO: reimplemnt frozen mode (?)
-        // check for z/r press to toggle frozen mode
-//      li      a0, Joypad.Z                // a0 - button mask
-//      li      a2, Joypad.PRESSED          // a2 - type
-//      jal     Joypad.check_buttons_all_   // v0 = l/r pressed
-//      nop
-//      beqz    v0, _draw                   // if not pressed, skip
-//      nop
-//      li      t0, frozen_mode             // t0 = address of frozen mode
-//      lw      t1, 0x0000(t0)              // t1 = frozen_mode
-//      xori    t1, t1, 0x0001              // 0 -> 1 or 1 -> 0
-//      sw      t1, 0x0000(t0)
-//      lli     a0, FGM.menu.TOGGLE         // a0 - fgm_id
-//      jal     FGM.play_                   // play menu sound
-//      nop
+        // check for dpad up press to toggle frozen mode
+        li      a0, Joypad.DU               // a0 - button mask
+        li      a2, Joypad.PRESSED          // a2 - type
+        jal     Joypad.check_buttons_all_   // v0 = dpad up pressed
+        nop
+        beqz    v0, _check_inputs           // if not pressed, skip
+        nop
+        li      t0, frozen_mode             // t0 = address of frozen mode
+        lw      t1, 0x0000(t0)              // t1 = frozen_mode
+        xori    t1, t1, 0x0001              // 0 -> 1 or 1 -> 0
+        sw      t1, 0x0000(t0)
+        lli     a0, FGM.menu.TOGGLE         // a0 - fgm_id
+        jal     FGM.play_                   // play menu sound
+        nop
 
+        _check_inputs:
         jal     update_up_
         nop
 
@@ -1777,9 +1777,6 @@ scope Stages {
     // TODO: reimplement random stage switch
     // @ Descirption
     // Table of stage IDs (as words, 32 bit values)
-    //random_table:
-    //fill 4 * 32                             // assumes there will never be more than 32 stages
-
     random_table:
     db id.PEACHS_CASTLE                     // 00
     db id.CONGO_JUNGLE                      // 01
@@ -1837,9 +1834,6 @@ scope Stages {
 
     // @ Description
     // number of stages in random_table.
-    //random_count:
-    //dw 0
-    
     random_count:
     dw 27
 
