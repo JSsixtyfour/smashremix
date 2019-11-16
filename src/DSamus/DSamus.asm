@@ -79,10 +79,10 @@ scope DSamus {
     
     // Redirect hardcoding related to Dark Samus Down Special
     // @ Description
-    // loads a Dark Samus file table, instead of Samus. If Dark Samus uses bombs.
-     scope get_filetable_struct_: {
+    // loads a Dark Samus instruction set, instead of Samus. If Dark Samus uses bombs.
+     scope get_bombinstructions_struct_: {
         OS.patch_start(0xE3D74, 0x80169334)
-        j       get_filetable_struct_
+        j       get_bombinstructions_struct_
         nop
         _return:
         OS.patch_end()
@@ -93,19 +93,48 @@ scope DSamus {
         lw      t1, 0x008C(sp)              // pull struct
         lw      t1, 0x0008(t1)              // current character ID
         ori     t2, r0, Character.id.DSAMUS // t2 = id.DSAMUS
-        li      a1, bomb_anim_struct        // a1 = file table
+        li      a1, bomb_anim_struct        // a1 = instructions
         beq     t1, t2, _end                // end if character id = DSAMUS
         nop
         li      a1, 0x80189070              // original line (load charge animation struct)
         
         _end:
-        lw      t0, 0x0004(sp)              // ~
-        lw      t1, 0x0008(sp)              // load t0, t1
+        lw      t1, 0x0004(sp)              // ~
+        lw      t2, 0x0008(sp)              // load t0, t1
         addiu   sp, sp, 0x0010              // deallocate stack space
         j       _return                     // return
         nop
-    
-    // don't fully understand but an ID check at 800E73CC seems to allow dark samus to use charge shot
+        }
+        
+    // Redirect hardcoding related to Dark Samus Neutral Special
+    // @ Description
+    // loads a Dark Samus instruction set, instead of Samus'. If Dark Samus uses charge shot.
+     scope get_chargeinstructions_struct_: {
+        OS.patch_start(0xE3854, 0x80168E14)
+        j       get_chargeinstructions_struct_
+        nop
+        _return:
+        OS.patch_end()
+        
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      t1, 0x0004(sp)              // ~
+        sw      t2, 0x0008(sp)              // store t0, t1
+        lw      t1, 0x0008(t6)              // current character ID
+        ori     t2, r0, Character.id.DSAMUS // t2 = id.DSAMUS
+        li      a1, charge_anim_struct      // a1 = file table
+        beq     t1, t2, _end                // end if character id = DSAMUS
+        nop
+        li      a1, 0x80189030              // original line (load charge animation struct)
+        
+        _end:
+        lw      t1, 0x0004(sp)              // ~
+        lw      t2, 0x0008(sp)              // load t0, t1
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        jal     0x801655C8
+        sw      a0, 0x0028(sp)
+        j       _return                     // return
+        nop
+        }
     
     // OS.align(16)
     // charge_anim_struct:
@@ -113,12 +142,19 @@ scope DSamus {
     // dw  File.DSAMUS_SECONDARY
     // OS.copy_segment(0xA97CC, 0x20)    
     
-     OS.align(16)
-     bomb_anim_struct:
-     dw  0x00000000
-     dw  0x00000003
-     dw  Character.DSAMUS_file_1_ptr
-     OS.copy_segment(0x103ABC, 0x28)  
+        OS.align(16)
+        bomb_anim_struct:
+        dw  0x00000000
+        dw  0x00000003
+        dw  Character.DSAMUS_file_1_ptr
+        OS.copy_segment(0x103ABC, 0x28)
+
+        OS.align(16)
+        charge_anim_struct:
+        dw  0x00000000
+        dw  0x00000002
+        dw  Character.DSAMUS_file_7_ptr
+        OS.copy_segment(0x103A7C, 0x28)  
     
     // Set default costumes
     Character.set_default_costumes(Character.id.DSAMUS, 0, 1, 2, 4, 1, 2, 0)
