@@ -4,6 +4,7 @@
 
 scope DSamus {
     // Insert Moveset files
+    insert ROLLSUB, "moveset/ROLLSUBROUTINE.bin"
     insert JUMP2, "moveset/JUMP2.bin"
     insert FAIR, "moveset/FAIR.bin"
     insert NAIR, "moveset/NAIR.bin"
@@ -14,15 +15,18 @@ scope DSamus {
     insert USMASH, "moveset/USMASH.bin"
     insert UP_SPECIAL_AIR, "moveset/UP_SPECIAL_AIR.bin"
     insert UP_SPECIAL_GROUND, "moveset/UP_SPECIAL_GROUND.bin"
-    // insert ROLLF, "moveset/ROLLF.bin"
-    // insert ROLLB, "moveset/ROLLB.bin"
+    ROLLF:; Moveset.CONCURRENT_STREAM(ROLLSUB); insert "moveset/FROLL.bin"
+    insert NEUTRAL1, "moveset/NEUTRAL1.bin"
+    insert NEUTRAL2, "moveset/NEUTRAL2.bin"
     
     
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
-    Character.edit_action_parameters(DSAMUS, Action.RollF,          File.DSAMUS_ROLLF,          -1,                         -1)
-    Character.edit_action_parameters(DSAMUS, Action.RollB,          File.DSAMUS_ROLLB,          -1,                         -1)
+    Character.edit_action_parameters(DSAMUS, Action.RollF,          File.DSAMUS_ROLLF,          ROLLF,                      -1)
+    Character.edit_action_parameters(DSAMUS, Action.RollB,          File.DSAMUS_ROLLB,          ROLLSUB,                    -1)
     Character.edit_action_parameters(DSAMUS, Action.JumpAerialF,    0x3C3,                      JUMP2,                      -1)
     Character.edit_action_parameters(DSAMUS, Action.JumpAerialB,    0x3C3,                      JUMP2,                      -1)
+    Character.edit_action_parameters(DSAMUS, Action.Jab1,           -1,                         NEUTRAL1,                   -1)
+    Character.edit_action_parameters(DSAMUS, Action.Jab2,           -1,                         NEUTRAL2,                   -1)
     Character.edit_action_parameters(DSAMUS, Action.AttackAirN,     -1,                         NAIR,                       -1)
     Character.edit_action_parameters(DSAMUS, Action.AttackAirN,     -1,                         NAIR,                       -1)
     Character.edit_action_parameters(DSAMUS, Action.AttackAirF,     -1,                         FAIR,                       -1)
