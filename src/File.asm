@@ -136,4 +136,9 @@ scope File {
     constant LUCAS_MAIN(0x8D7)
     constant DSAMUS_ROLLF(0x8D8)
     constant DSAMUS_ROLLB(0x8D9)
+    constant DSAMUS_JUMPF(0x8DA)
+    constant DSAMUS_JUMPB(0x8DB)
+    constant DSAMUS_DASH(0x8DC)
+    constant DSAMUS_RUN(0x8DD)
+    
 }

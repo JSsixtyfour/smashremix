@@ -151,6 +151,10 @@
 08D7 Lucas Main
 08D8 Dark Samus Roll F
 08D9 Dark Samus Roll B
+08DA Dark Samus Jump F
+08DB Dark Samus Jump B
+08DC Dark Samus Dash
+08DD Dark Samus Run
 0611 CAPTAIN DeadU
 0611 CAPTAIN ScreenKO
 05E8 CAPTAIN Entry
