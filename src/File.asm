@@ -140,5 +140,11 @@ scope File {
     constant DSAMUS_JUMPB(0x8DB)
     constant DSAMUS_DASH(0x8DC)
     constant DSAMUS_RUN(0x8DD)
+    constant STG_CORNERIA2_HEADER(0x8DE)
+    constant STG_CORNERIA2(0x8DF)
+    constant STG_CORNERIA2_BG(0x8E0)
+    constant STG_UNCANNY_HEADER(0x8E1)
+    constant STG_UNCANNY(0x8E2)
+    constant STG_UNCANNY_BG(0x8E3)
     
 }
