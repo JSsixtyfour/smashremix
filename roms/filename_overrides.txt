@@ -20,9 +20,9 @@
 0855 Ganon downsmash
 0856 Ganon forward air trident
 0857 Ganon forward air melee style punch
-0858 Dr. mario down air
-0859 Dr. mario forward air
-085A Dr. mario taunt
+0858 dr. mario down air
+0859 dr. mario forward air
+085A dr. mario taunt
 085B Wario down smash
 085C Wario aerial b move
 085D Wario ground b move
@@ -151,6 +151,16 @@
 08D7 Lucas Main
 08D8 Dark Samus Roll F
 08D9 Dark Samus Roll B
+08DA Dark Samus Jump F
+08DB Dark Samus Jump B
+08DC Dark Samus Dash
+08DD Dark Samus Run
+08DE Corneria Header
+08DF Corneria Stage
+08E0 Corneria BG
+08E1 Uncanny Mansion Header
+08E2 Uncanny Mansion Stage
+08E3 Uncanny Mansion BG
 0611 CAPTAIN DeadU
 0611 CAPTAIN ScreenKO
 05E8 CAPTAIN Entry
