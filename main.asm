@@ -64,8 +64,8 @@ include "src/File.asm"
 // 19XX merge continued
 include "src/Shield.asm"
 include "src/Training.asm"
-include "src/VsCombo.asm"
-include "src/VsStats.asm"
+//include "src/VsCombo.asm"
+//include "src/VsStats.asm"
 // CHARACTER
 include "src/Character.asm"
 include "src/CharacterSelect.asm"
