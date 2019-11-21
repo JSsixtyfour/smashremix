@@ -62,34 +62,34 @@ scope VsCombo {
     dw      Data.combo_numbers_g_info
     dw      Data.combo_numbers_s_info
 
-	// @ Description
+    // @ Description
     // This macro creates a combo struct for the given port
     macro combo_struct(port) {
-	    combo_struct_p{port}: {
-	        dw      0x00                        // 0x0000 = combo_meter_pointer
-	        dw      0x00                        // 0x0004 = max_combo_hits
-	        dw      0x00                        // 0x0008 = max_combo_damage
-	        dw      0x00                        // 0x000C = combo_count
-	        dw      0x00                        // 0x0010 = combo color index (display)
-	        dw      0x00                        // 0x0014 = combo color index (current)
-	        dw      0x00                        // 0x0018 = x_coord
-	        dw      0x00                        // 0x001C = frame_buffer
-	        dw      0x00                        // 0x0020 = player struct address
-	        dw      0x00                        // 0x0024 = highest_combo_vs_p1
-	        dw      0x00                        // 0x0028 = highest_combo_vs_p2
-	        dw      0x00                        // 0x002C = highest_combo_vs_p3
-	        dw      0x00                        // 0x0030 = highest_combo_vs_p4
-	        dw      0x00                        // 0x0034 = current_attribution_start_hit_count
-	    }
-	}
+        combo_struct_p{port}: {
+            dw      0x00                        // 0x0000 = combo_meter_pointer
+            dw      0x00                        // 0x0004 = max_combo_hits
+            dw      0x00                        // 0x0008 = max_combo_damage
+            dw      0x00                        // 0x000C = combo_count
+            dw      0x00                        // 0x0010 = combo color index (display)
+            dw      0x00                        // 0x0014 = combo color index (current)
+            dw      0x00                        // 0x0018 = x_coord
+            dw      0x00                        // 0x001C = frame_buffer
+            dw      0x00                        // 0x0020 = player struct address
+            dw      0x00                        // 0x0024 = highest_combo_vs_p1
+            dw      0x00                        // 0x0028 = highest_combo_vs_p2
+            dw      0x00                        // 0x002C = highest_combo_vs_p3
+            dw      0x00                        // 0x0030 = highest_combo_vs_p4
+            dw      0x00                        // 0x0034 = current_attribution_start_hit_count
+        }
+    }
 
-	// Create combo structs
-	combo_struct(1)
-	combo_struct(2)
-	combo_struct(3)
-	combo_struct(4)
+    // Create combo structs
+    combo_struct(1)
+    combo_struct(2)
+    combo_struct(3)
+    combo_struct(4)
 
-	// @ Description
+    // @ Description
     // If in teams, this will modify the color maps to point to the color of the given port's team
     macro set_color_by_team(port, offset) {
         li      t0, Global.vs.p{port}         // t0 = pointer to address of player struct for p{port}
@@ -117,9 +117,9 @@ scope VsCombo {
         _team_color_set_p{port}:
         sw      t0, {offset}(a0)                // set p{port} combo text color
         sw      t1, {offset}(a1)                // set p{port} combo numbers color
-	}
+    }
 
-	// @ Description
+    // @ Description
     // This initializes the combo structs for the match
     scope initialize_combo_structs_: {
         addiu   sp, sp,-0x0010                // allocate stack space
@@ -134,29 +134,35 @@ scope VsCombo {
 
         // Set X coords
         lli     t0, P1_COMBO_METER_X_COORD    // t0 = p1 x coord
-	    sw      t0, 0x0018(a0)                // store x coord
+        sw      t0, 0x0018(a0)                // store x coord
         lli     t0, P2_COMBO_METER_X_COORD    // t0 = p2 x coord
-	    sw      t0, 0x0018(a1)                // store x coord
+        sw      t0, 0x0018(a1)                // store x coord
         lli     t0, P3_COMBO_METER_X_COORD    // t0 = p3 x coord
-	    sw      t0, 0x0018(a2)                // store x coord
+        sw      t0, 0x0018(a2)                // store x coord
         li      t0, P4_COMBO_METER_X_COORD    // t0 = p4 x coord
-	    sw      t0, 0x0018(a3)                // store x coord
+        sw      t0, 0x0018(a3)                // store x coord
 
         // Set combo meter addresses
         li      t0, P1_HIT_COUNT              // t0 = p1 hit count address
-	    sw      t0, 0x0000(a0)                // store hit count address
+        sw      t0, 0x0000(a0)                // store hit count address
         li      t0, P2_HIT_COUNT              // t0 = p2 hit count address
-	    sw      t0, 0x0000(a1)                // store hit count address
+        sw      t0, 0x0000(a1)                // store hit count address
         li      t0, P3_HIT_COUNT              // t0 = p3 hit count address
-	    sw      t0, 0x0000(a2)                // store hit count address
+        sw      t0, 0x0000(a2)                // store hit count address
         li      t0, P4_HIT_COUNT              // t0 = p4 hit count address
-	    sw      t0, 0x0000(a3)                // store hit count address
+        sw      t0, 0x0000(a3)                // store hit count address
 
-        // Set frame buffers (need to do this so prior match data is cleared)
+        // Reset frame buffers (need to do this so prior match data is cleared)
         sw      r0, 0x001C(a0)                // set frame buffer to 0 for p1
         sw      r0, 0x001C(a1)                // set frame buffer to 0 for p2
         sw      r0, 0x001C(a2)                // set frame buffer to 0 for p3
         sw      r0, 0x001C(a3)                // set frame buffer to 0 for p4
+
+        // Reset player struct addresses (need to do this so prior match data is cleared)
+        sw      r0, 0x0020(a0)                // set player struct address to 0 for p1
+        sw      r0, 0x0020(a1)                // set player struct address to 0 for p2
+        sw      r0, 0x0020(a2)                // set player struct address to 0 for p3
+        sw      r0, 0x0020(a3)                // set player struct address to 0 for p4
 
         // Reset combo stats
         sw      r0, 0x0004(a0)                // set max_combo_hits to 0 for p1
@@ -221,14 +227,14 @@ scope VsCombo {
         sw      a2, 0x0008(t0)                // store p3 combo numbers color
         sw      a3, 0x000C(t0)                // store p4 combo numbers color
 
-		_end:
+        _end:
         lw      t0, 0x0004(sp)                // ~
         lw      t1, 0x0008(sp)                // ~
         lw      ra, 0x000C(sp)                // save registers
         addiu   sp, sp, 0x0010                // deallocate stack space
         jr      ra                            // return
         nop
-	}
+    }
 
     // @ Description
     // This draws the given hit count at the specified X coordinate
@@ -248,13 +254,17 @@ scope VsCombo {
         sw      t7, 0x0020(sp)                    // ~
         sw      ra, 0x0024(sp)                    // save registers
 
-		move    t5, a0                            // t5 = player combo struct
-		lw      t0, 0x0000(t5)                    // t0 = combo meter address
-		lw      a0, 0x0000(t0)                    // a0 = hit count
-		addiu   t0, -0x0004                       // t0 = combo damage address
-		lw      t6, 0x0000(t0)                    // t6 = combo damage
-		lw      t4, 0x0018(t5)                    // t4 = player_x_coord
-		lw      t7, 0x0014(t5)                    // t7 = previous color index
+        move    t5, a0                            // t5 = player combo struct
+        lw      t0, 0x0000(t5)                    // t0 = combo meter address
+        lw      a0, 0x0000(t0)                    // a0 = hit count
+        addiu   t0, -0x0004                       // t0 = combo damage address
+        lw      t6, 0x0000(t0)                    // t6 = combo damage
+        lw      t4, 0x0018(t5)                    // t4 = player_x_coord
+        lw      t7, 0x0014(t5)                    // t7 = previous color index
+
+        // Check if player struct address is 0 - if so, don't draw anything
+        beqz    a1, _end                          // if (player struct address == 0) then skip to _end
+        nop                                       // ~
 
         // Check if currently in a combo (hit count > 1)
         lli     t0, 0x0001                        // t0 = 1
@@ -299,29 +309,29 @@ scope VsCombo {
         sw      t3, 0x001C(t5)                    // frame buffer = DEFAULT_FRAME_BUFFER + additional frames
 
         lli     t1, 0x0014                        // t1 = 20
-	    bne     t1, a0, _max_hit_check            // if (hit count != 20) then don't play sound effect
-	    nop                                       // ~
-	    lw      t1, 0x000C(t5)                    // t1 = current combo count previously
-	    beq     t1, a0, _continue_in_combo2       // if (hit count already is 20) then don't play sound effect (because we already did)
-	    nop                                       // ~
-	    move    t1, a0                            // t1 = hit count
-	    li      a0, FGM.announcer.misc.INCREDIBLE // a0 - fgm_id for INCREDIBLE
+        bne     t1, a0, _max_hit_check            // if (hit count != 20) then don't play sound effect
+        nop                                       // ~
+        lw      t1, 0x000C(t5)                    // t1 = current combo count previously
+        beq     t1, a0, _continue_in_combo2       // if (hit count already is 20) then don't play sound effect (because we already did)
+        nop                                       // ~
+        move    t1, a0                            // t1 = hit count
+        li      a0, FGM.announcer.misc.INCREDIBLE // a0 - fgm_id for INCREDIBLE
         jal     FGM.play_                         // play INCREDIBLE sound effect
         nop
         move    a0, t1                            // a0 = hit count
 
-	    _max_hit_check:
-	    lw      t2, 0x0004(t5)                    // Load previous max_combo_hits
-	    slt     t3, t2, a0                        // if (combo count > max_combo_hits) then update max_combo_hits
-	    beqz    t3, _max_damage_check             // skip to max_damage_check if not a higher max_combo_hits
-	    nop                                       // ~
+        _max_hit_check:
+        lw      t2, 0x0004(t5)                    // Load previous max_combo_hits
+        slt     t3, t2, a0                        // if (combo count > max_combo_hits) then update max_combo_hits
+        beqz    t3, _max_damage_check             // skip to max_damage_check if not a higher max_combo_hits
+        nop                                       // ~
         sw      a0, 0x0004(t5)                    // store max_combo_hits
 
         _max_damage_check:
         lw      t2, 0x0008(t5)                    // Load previous max_combo_damage
-	    slt     t3, t2, t6                        // if (combo damage > max_combo_damage) then update max_combo_damage
-	    beqz    t3, _continue_in_combo2           // skip to team_check if not a higher max_combo_damage
-	    nop                                       // ~
+        slt     t3, t2, t6                        // if (combo damage > max_combo_damage) then update max_combo_damage
+        beqz    t3, _continue_in_combo2           // skip to team_check if not a higher max_combo_damage
+        nop                                       // ~
         sw      t6, 0x0008(t5)                    // store max_combo_damage
 
         _continue_in_combo2:
@@ -413,10 +423,10 @@ scope VsCombo {
     // @ Description
     // This macro draws the given port's combo meter
     macro draw_hit_count(port) {
-    	li      a0, combo_struct_p{port}    // a0 = combo_struct_pX address
-    	lw      a1, 0x0020(a0)              // a1 = player struct address
-    	lli     a2, {port}                  // a2 = port
-    	jal     VsCombo.draw_hit_count_     // draw combo meter
+        li      a0, combo_struct_p{port}    // a0 = combo_struct_pX address
+        lw      a1, 0x0020(a0)              // a1 = player struct address
+        lli     a2, {port}                  // a2 = port
+        jal     VsCombo.draw_hit_count_     // draw combo meter
         nop
     }
 
@@ -435,7 +445,7 @@ scope VsCombo {
         beqz    t4, {next}                       // not man/cpu so skip
         nop
         or      a0, r0, t1                       // a0 = player struct index, (p1 = 0, p4 = 3)
-    	jal     Character.get_struct_            // v0 = player struct address
+        jal     Character.get_struct_            // v0 = player struct address
         nop
         addu    t1, t1, t4                       // player_count++
         li      t4, combo_struct_p{port}         // t4 = combo struct address for right/left port
@@ -532,7 +542,7 @@ scope VsCombo {
     scope run_: {
         OS.save_registers()                 // save registers
 
-		b       _guard                      // check if toggle is on
+        b       _guard                      // check if toggle is on
         nop
         _toggle_off:
         b       _end                        // toggle is off, skip to end
@@ -565,10 +575,10 @@ scope VsCombo {
         _p2:
         port_check(2, _p3)                  // check port 2
 
-		_p3:
+        _p3:
         port_check(3, _p4)                  // check port 3
 
-		_p4:
+        _p4:
         port_check(4, _check_singles)       // check port 4
 
         _check_singles:
