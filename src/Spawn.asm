@@ -777,6 +777,18 @@ scope Spawn {
     float32  2500,  0900
     float32 -1240,  0900
     float32  1240,  0900
+    
+    // 45 - Corneria
+    float32 -3339,  1400
+    float32  0885,  1995
+    float32 -2042,  1212
+    float32 -0320,  1411
+    
+    // 46 - Uncanny Mansion
+    float32 -0166,  3275
+    float32  2325,  4315
+    float32 -2399,  2690
+    float32  2403,  1791
 
     neutral_table:
     // 00 - Peach's Castle
@@ -1198,6 +1210,18 @@ scope Spawn {
     float32  2500,  0900
     float32 -1240,  0900
     float32  1240,  0900
+    
+    // 45 - Corneria
+    float32 -3339,  1400
+    float32  0885,  1995
+    float32 -2042,  1212
+    float32 -0320,  1411
+    
+    // 46 - Uncanny Mansion
+    float32 -0166,  3275
+    float32  2325,  4315
+    float32 -2399,  2690
+    float32  2403,  1791
 }
 
 } // __SPAWN__

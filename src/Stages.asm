@@ -165,6 +165,8 @@ scope Stages {
     dw function.CLONE                       // Bowser's Stadium
     dw function.CLONE                       // Peach's Castle II
     dw function.CLONE                       // Delfino
+    dw function.CLONE                       // Corneria
+    dw function.CLONE                       // Uncanny Mansion
     
 
     // TODO
@@ -298,6 +300,8 @@ scope Stages {
     insert icon_bowserb,                "../textures/icon_bowserb.rgba5551"
     insert icon_peach2,                 "../textures/icon_peach2.rgba5551"
     insert icon_delfino,                "../textures/icon_delfino.rgba5551"
+    insert icon_corneria2,              "../textures/icon_corneria2.rgba5551"
+    insert icon_uncanny,                "../textures/icon_uncanny.rgba5551"
     
 
     // @ Description
@@ -378,6 +382,8 @@ scope Stages {
         constant BOWSERB(0x43)
         constant PEACH2(0x44)
         constant DELFINO(0x45)
+        constant CORNERIA2(0x46)
+        constant UNCANNY(0x47)
 
         // not an actual id, some arbitary number Sakurai picked(?)
         constant RANDOM(0xDE)
@@ -486,6 +492,8 @@ scope Stages {
         constant BOWSERB(0x8CA)
         constant PEACH2(0x8CD)
         constant DELFINO(0x8D0)
+        constant CORNERIA2(0x8DE)
+        constant UNCANNY(0x8E1)
     }
 
     scope function {
@@ -547,7 +555,7 @@ scope Stages {
     db id.MUDA			                    // 1B
     db id.MUTE                              // 1C
     db id.DRAGONKING                        // 1D
-    db id.RANDOM                            // 1E
+    db id.UNCANNY                           // 1E
     db id.FRAYS_STAGE                       // 1F
     db id.DREAM_LAND_BETA_1                 // 20
     db id.DREAM_LAND_BETA_2                 // 21
@@ -568,7 +576,7 @@ scope Stages {
     db id.SMBO                              // 2F
     db id.DELFINO                           // 30
     db id.PEACH2                            // 31
-    db id.RANDOM                            // 32
+    db id.CORNERIA2                         // 32
     db id.RANDOM					        // 33
     db id.RANDOM                            // 34
     db id.RANDOM                            // 35
@@ -674,6 +682,8 @@ scope Stages {
     dw icon_bowserb                         // Bowser's Stadium
     dw icon_peach2                          // Peach's Castle II
     dw icon_delfino                         // Delfino Plaza
+    dw icon_corneria2                       // Corneria
+    dw icon_uncanny                         // Uncanny Mansion
 
     // @ Description
     // Row the cursor is on
@@ -1829,6 +1839,8 @@ scope Stages {
     db id.BOWSERB                           // 2A
     db id.PEACH2                            // 2B
     db id.DELFINO                           // 2C
+    db id.CORNERIA2                         // 2D
+    db id.UNCANNY                           // 2E
     
     OS.align(4)
 
@@ -1966,6 +1978,8 @@ scope Stages {
     float32 0.5                         // Bowser's Stadium
     float32 0.5                         // Peach's Castle II
     float32 0.5                         // Delfino Plaza
+    float32 0.5                         // Corneria
+    float32 0.5                         // Uncanny Mansion
 
     background_table:
     db id.PEACHS_CASTLE                 // Peach's Castle
@@ -2038,6 +2052,8 @@ scope Stages {
     db id.SECTOR_Z                      // Bowser's Stadium
     db id.PEACHS_CASTLE                 // Peach's Castle II
     db id.PEACHS_CASTLE                 // Delfino Plaza
+    db id.PEACHS_CASTLE                 // Corneria
+    db id.YOSHIS_ISLAND                 // Uncanny Mansion
     OS.align(4)
 
     // @ Description
@@ -2118,6 +2134,8 @@ scope Stages {
     dw header.BOWSERB,                type.CLONE
     dw header.PEACH2,                 type.CLONE
     dw header.DELFINO,                type.CLONE
+    dw header.CORNERIA2,              type.CLONE
+    dw header.UNCANNY,                type.CLONE
 
 
     string_peachs_castle:;          String.insert("Peach's Castle")
@@ -2167,6 +2185,8 @@ scope Stages {
     string_bowserb:;                String.insert("Bowser's Stadium")
     string_peach2:;                 String.insert("Peach's Castle II")
     string_delfino:;                String.insert("Delfino Plaza")
+    string_corneria2:;              String.insert("Corneria")
+    string_uncanny:;                String.insert("Uncanny Mansion")
 
     string_table:
     dw string_peachs_castle
@@ -2239,6 +2259,8 @@ scope Stages {
     dw string_bowserb
     dw string_peach2
     dw string_delfino
+    dw string_corneria2
+    dw string_uncanny
 
 }
 
