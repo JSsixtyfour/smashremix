@@ -123,6 +123,7 @@ scope MIDI {
     insert_midi(BOWSERFINAL)
     insert_midi(PEACH2)
     insert_midi(DELFINO)
+    insert_midi(HORROR_MANOR)
     insert_midi(TESTMIDI)
 
     pushvar origin, base
