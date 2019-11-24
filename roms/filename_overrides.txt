@@ -161,6 +161,8 @@
 08E1 Uncanny Mansion Header
 08E2 Uncanny Mansion Stage
 08E3 Uncanny Mansion BG
+08E4 Dark Samus Down Tilt
+08E5 Dark Samus Down Smash
 0611 CAPTAIN DeadU
 0611 CAPTAIN ScreenKO
 05E8 CAPTAIN Entry

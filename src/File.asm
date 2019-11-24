@@ -146,5 +146,7 @@ scope File {
     constant STG_UNCANNY_HEADER(0x8E1)
     constant STG_UNCANNY(0x8E2)
     constant STG_UNCANNY_BG(0x8E3)
+    constant DSAMUS_DTILT(0x8E4)
+    constant DSAMUS_DSMASH(0x8E5)
     
 }
