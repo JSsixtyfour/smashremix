@@ -26,7 +26,6 @@ scope DSamus {
     insert UP_SPECIAL_GROUND, "moveset/UP_SPECIAL_GROUND.bin"
     ROLLF:; Moveset.CONCURRENT_STREAM(ROLLSUB); insert "moveset/FROLL.bin"
     insert NEUTRAL1, "moveset/NEUTRAL1.bin"
-    insert NEUTRAL2, "moveset/NEUTRAL2.bin"
     insert DASHATTACK, "moveset/DASH.bin"
     
     
@@ -40,7 +39,6 @@ scope DSamus {
     Character.edit_action_parameters(DSAMUS, Action.JumpAerialF,    0x3C3,                      JUMP2,                      -1)
     Character.edit_action_parameters(DSAMUS, Action.JumpAerialB,    0x3C3,                      JUMP2,                      -1)
     Character.edit_action_parameters(DSAMUS, Action.Jab1,           -1,                         NEUTRAL1,                   -1)
-    Character.edit_action_parameters(DSAMUS, Action.Jab2,           -1,                         NEUTRAL2,                   -1)
     Character.edit_action_parameters(DSAMUS, Action.DashAttack,     -1,                         DASHATTACK,                 -1)
     Character.edit_action_parameters(DSAMUS, Action.AttackAirN,     -1,                         NAIR,                       -1)
     Character.edit_action_parameters(DSAMUS, Action.AttackAirN,     -1,                         NAIR,                       -1)
