@@ -148,5 +148,13 @@ scope File {
     constant STG_UNCANNY_BG(0x8E3)
     constant DSAMUS_DTILT(0x8E4)
     constant DSAMUS_DSMASH(0x8E5)
+    constant DSAMUS_FDOUBLEJUMP(0x8E6)
+    constant DSAMUS_BDOUBLEJUMP(0x8E7)
+    constant DSAMUS_UPSMASH(0x8E8)
+    constant DSAMUS_NAIR(0x8E9)
+    constant DSAMUS_FAIR(0x8EA)
+    constant DSAMUS_BAIR(0x8EB)
+    
+    
     
 }

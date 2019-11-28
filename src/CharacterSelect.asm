@@ -156,6 +156,8 @@ scope CharacterSelect {
     dw  0x19270                             // 0x1E - GND
     dw  0x14268                             // 0x1F - YLINK
     dw  0x7710                              // 0x20 - DRM
+    dw  0x0                                 // 0x21 - LUCAS
+    dw  0x12550                             // 0x22 - DARK SAMUS
 
     // @ Description
     // Holds the ROM offset of an alternate req list, used by get_alternate_req_list_
@@ -166,7 +168,7 @@ scope CharacterSelect {
     // Table of alternate req list ROM offsets.
     alt_req_table:
     constant alt_req_table_origin(origin())
-    fill Character.NUM_CHARACTERS * 0x4
+    fill Character.NUM_CHARACTERS * 0x6
     
     // @ Description
     // Adds an alternate req list for a given character.
@@ -209,6 +211,7 @@ scope CharacterSelect {
     add_alt_req_list(Character.id.GND, req/GND_MODEL)
     add_alt_req_list(Character.id.YLINK, req/YLINK_MODEL)
     add_alt_req_list(Character.id.DRM, req/DRM_MODEL)
+    add_alt_req_list(Character.id.DSAMUS, req/DSAMUS_MODEL)
 
     // @ Description
     // This function returns what character is selected by the token's position
@@ -742,13 +745,13 @@ scope CharacterSelect {
         _return:
         OS.patch_end()
 
-        // for (char_id i = FACLO; i < DRM; i++)
+        // for (char_id i = FALCO; i < DSAMUS; i++)
         lli     s0, Character.id.FALCO      // s0 = index (and start character, usually skips polygons)
         
         _loop:
         jal     load_character_model_       // load character function
         or      a0, s0, r0                  // a0 = index
-        slti    at, s0, Character.id.DRM    // end on x character (Character.NUM_CHARACTERS - 1 should work usually)
+        slti    at, s0, Character.id.DSAMUS // end on x character (Character.NUM_CHARACTERS - 1 should work usually)
         bnez    at, _loop
         addiu   s0, s0, 0x0001              // increment index
         lui     v1, 0x8014                  // original line 1
@@ -852,6 +855,7 @@ scope CharacterSelect {
     dh FGM.announcer.names.GDK             // Giant Donkey Kong
     dh FGM.announcer.names.MARIO           // (Placeholder)
     dh FGM.announcer.names.MARIO           // None (Placeholder)
+
     // add space for new characters
     fill (fgm_table + (Character.NUM_CHARACTERS * 0x2)) - pc()
     OS.align(4)
@@ -995,6 +999,7 @@ scope CharacterSelect {
         constant FALCO(0x00011F88)
         constant YLINK(0x00012468)
         constant DRM(0x00012948)
+        constant DSAMUS(0x00002358)
         constant BLANK(0x0)
     }
 
@@ -1067,7 +1072,7 @@ scope CharacterSelect {
         define slot_15(JIGGLYPUFF)
         define slot_16(FALCO)
         // row 3
-        define slot_17(NONE)
+        define slot_17(DSAMUS)
         define slot_18(NONE)
         define slot_19(NONE)
         define slot_20(NONE)
@@ -1287,6 +1292,7 @@ scope CharacterSelect {
     add_to_css(Character.id.GND, FGM.announcer.names.GANONDORF, 1.50, 0x00010002, series_logo.ZELDA, name_texture.GND, portrait_ganondorf)
     add_to_css(Character.id.YLINK, FGM.announcer.names.YOUNG_LINK, 1.50, 0x00010002, series_logo.ZELDA, name_texture.YLINK, portrait_young_link)
     add_to_css(Character.id.DRM, FGM.announcer.names.DR_MARIO, 1.50, 0x00010001, series_logo.MARIO_BROS, name_texture.DRM, portrait_dr_mario)
+    add_to_css(Character.id.DSAMUS, FGM.announcer.names.SAMUS, 1.50, 0x00010004, series_logo.METROID, name_texture.DSAMUS, portrait_dark_samus)
     
 }
 
