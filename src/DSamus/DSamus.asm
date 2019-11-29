@@ -241,8 +241,12 @@ scope DSamus {
         lw      ra, 0x0024(sp)              // original code
         j       _return                     // return
         nop
-        }
-        
+    }
+    
+        // temporary dark samus charge shot patch
+        OS.patch_start(0x6643C, 0x800EAC3C)
+        nop
+        OS.patch_end()
     
     // Set default costumes
     Character.set_default_costumes(Character.id.DSAMUS, 0, 1, 2, 4, 1, 2, 0)
