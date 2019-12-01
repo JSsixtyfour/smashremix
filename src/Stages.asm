@@ -167,6 +167,7 @@ scope Stages {
     dw function.CLONE                       // Delfino
     dw function.CLONE                       // Corneria
     dw function.CLONE                       // Uncanny Mansion
+    dw function.CLONE                       // Big Blue
     
 
     // TODO
@@ -302,6 +303,7 @@ scope Stages {
     insert icon_delfino,                "../textures/icon_delfino.rgba5551"
     insert icon_corneria2,              "../textures/icon_corneria2.rgba5551"
     insert icon_uncanny,                "../textures/icon_uncanny.rgba5551"
+    insert icon_blue,                   "../textures/icon_blue.rgba5551"
     
 
     // @ Description
@@ -384,6 +386,7 @@ scope Stages {
         constant DELFINO(0x45)
         constant CORNERIA2(0x46)
         constant UNCANNY(0x47)
+        constant BLUE(0x48)
 
         // not an actual id, some arbitary number Sakurai picked(?)
         constant RANDOM(0xDE)
@@ -494,6 +497,7 @@ scope Stages {
         constant DELFINO(0x8D0)
         constant CORNERIA2(0x8DE)
         constant UNCANNY(0x8E1)
+        constant BLUE(0x8EC)
     }
 
     scope function {
@@ -577,7 +581,7 @@ scope Stages {
     db id.DELFINO                           // 30
     db id.PEACH2                            // 31
     db id.CORNERIA2                         // 32
-    db id.RANDOM					        // 33
+    db id.BLUE					            // 33
     db id.RANDOM                            // 34
     db id.RANDOM                            // 35
     OS.align(4)
@@ -684,6 +688,7 @@ scope Stages {
     dw icon_delfino                         // Delfino Plaza
     dw icon_corneria2                       // Corneria
     dw icon_uncanny                         // Uncanny Mansion
+    dw icon_blue                            // Big Blue
 
     // @ Description
     // Row the cursor is on
@@ -1376,7 +1381,7 @@ scope Stages {
         _end_update:
         li      t0, preview_is_outdated     // ~
         lli     t1, OS.TRUE                 // ~
-        sw      t1, 0x0000(t0)              // mark previw as outdated
+        sw      t1, 0x0000(t0)              // mark preview as outdated
 
         _end:
         lw      ra, 0x0004(sp)              // ~
@@ -1841,6 +1846,7 @@ scope Stages {
     db id.DELFINO                           // 2C
     db id.CORNERIA2                         // 2D
     db id.UNCANNY                           // 2E
+    db id.BLUE                              // 2F
     
     OS.align(4)
 
@@ -1980,6 +1986,7 @@ scope Stages {
     float32 0.5                         // Delfino Plaza
     float32 0.5                         // Corneria
     float32 0.5                         // Uncanny Mansion
+    float32 0.5                         // Big Blue
 
     background_table:
     db id.PEACHS_CASTLE                 // Peach's Castle
@@ -2054,6 +2061,7 @@ scope Stages {
     db id.PEACHS_CASTLE                 // Delfino Plaza
     db id.PEACHS_CASTLE                 // Corneria
     db id.YOSHIS_ISLAND                 // Uncanny Mansion
+    db id.PEACHS_CASTLE                 // Big Blue
     OS.align(4)
 
     // @ Description
@@ -2136,6 +2144,7 @@ scope Stages {
     dw header.DELFINO,                type.CLONE
     dw header.CORNERIA2,              type.CLONE
     dw header.UNCANNY,                type.CLONE
+    dw header.BLUE,                   type.CLONE
 
 
     string_peachs_castle:;          String.insert("Peach's Castle")
@@ -2187,6 +2196,7 @@ scope Stages {
     string_delfino:;                String.insert("Delfino Plaza")
     string_corneria2:;              String.insert("Corneria")
     string_uncanny:;                String.insert("Uncanny Mansion")
+    string_blue:;                   String.insert("Big Blue")
 
     string_table:
     dw string_peachs_castle
@@ -2261,6 +2271,7 @@ scope Stages {
     dw string_delfino
     dw string_corneria2
     dw string_uncanny
+    dw string_blue
 
 }
 

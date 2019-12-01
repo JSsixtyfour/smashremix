@@ -169,6 +169,9 @@
 08E9 Dark Samus Nair
 08EA Dark Samus Fair
 08EB Dark Samus Bair
+08EC Big Blue Header
+08ED Big Blue Stage
+08EE Big Blue BG
 0611 CAPTAIN DeadU
 0611 CAPTAIN ScreenKO
 05E8 CAPTAIN Entry

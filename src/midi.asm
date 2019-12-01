@@ -124,6 +124,7 @@ scope MIDI {
     insert_midi(PEACH2)
     insert_midi(DELFINO)
     insert_midi(HORROR_MANOR)
+    insert_midi(BIG_BLUE)
     insert_midi(TESTMIDI)
 
     pushvar origin, base

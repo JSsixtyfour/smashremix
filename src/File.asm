@@ -154,7 +154,9 @@ scope File {
     constant DSAMUS_NAIR(0x8E9)
     constant DSAMUS_FAIR(0x8EA)
     constant DSAMUS_BAIR(0x8EB)
-    
+    constant STG_BLUE_HEADER(0x8EC)
+    constant STG_BLUE(0x8ED)
+    constant STG_BLUE_BG(0x8EE)
     
     
 }

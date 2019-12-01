@@ -789,6 +789,12 @@ scope Spawn {
     float32  2325,  4315
     float32 -2399,  2690
     float32  2403,  1791
+    
+    // 47 - Big Blue
+    float32 -3780,  2003
+    float32  5125,  1488
+    float32 -1740,  1133
+    float32  3489,  0604
 
     neutral_table:
     // 00 - Peach's Castle
@@ -1222,6 +1228,12 @@ scope Spawn {
     float32  2325,  4315
     float32 -2399,  2690
     float32  2403,  1791
+    
+    // 47 - Big Blue
+    float32 -3780,  2003
+    float32  5125,  1488
+    float32 -1740,  1133
+    float32  3489,  0604
 }
 
 } // __SPAWN__
