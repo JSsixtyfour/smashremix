@@ -296,4 +296,5 @@ scope ResultsScreen {
     add_to_results_screen(Character.id.GND, 0x2C5, Character.id.LINK, Character.id.CAPTAIN, 185, GANONDORF, 20, 0.6, 0x43)
     add_to_results_screen(Character.id.YLINK, 0x2E5, Character.id.LINK, Character.id.LINK, 185, YOUNG LINK, 20, 0.65, 0x44)
     add_to_results_screen(Character.id.DRM, 0x2E6, Character.id.MARIO, Character.id.MARIO, 185, DR. MARIO, 20, 0.75, 0x46)
+    add_to_results_screen(Character.id.DSAMUS, 0x2E7, Character.id.SAMUS, Character.id.SAMUS, 185, DARK SAMUS, 20, 0.6, 0x52)
 }

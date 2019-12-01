@@ -125,6 +125,7 @@ scope MIDI {
     insert_midi(DELFINO)
     insert_midi(HORROR_MANOR)
     insert_midi(BIG_BLUE)
+    insert_midi(DSAMUS_VICTORY)
     insert_midi(TESTMIDI)
 
     pushvar origin, base
