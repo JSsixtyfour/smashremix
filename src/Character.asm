@@ -247,7 +247,13 @@ scope Character {
         add_to_table(str_winner_lx, id.{name}, id.{parent}, 0x4)
         add_to_table(str_winner_scale, id.{name}, id.{parent}, 0x4)
         add_to_table(winner_bgm, id.{name}, id.{parent}, 0x4)
-        
+        // overlay end table
+        origin overlay_end.TABLE_ORIGIN + (id.{name} * 0x4)
+        if id.{parent} > id.FOX {
+            OS.copy_segment(overlay_end.ORIGINAL_TABLE + ((id.{parent} - 2) * 0x4), 0x4)
+        } else {
+            dw overlay_end.DISABLED
+        }
         
         // Copy parent character for projectile tables
         add_to_table(fireball, id.{name}, id.{parent}, 0x4)
@@ -1070,6 +1076,23 @@ scope Character {
             addu    at, at, t7
             lw      t7, LOWER(at)
         }
+        
+        // @ Description
+        // modifies a hard-coded routine which runs when an overlay/flash effect ends and is
+        // responsible for enabling the "charge flash" effect for samus and dk's neutral specials
+        scope get_overlay_end_script_: {
+            origin  0x65148
+            base    0x800E9948
+            // t6 = character id
+            li      at, overlay_end.table   // at = overlay_end.table
+            sll     t7, t6, 0x2             // ~
+            addu    at, at, t7              // at = overlay_end.table + (id * 4)
+            lw      t7, 0x0000(at)          // t7 = overlay ending script for {character}
+            jr      t7                      // jump to overlay ending script
+            nop
+            nop
+            nop
+        }
 
         // @ Description
         // modifies a hard-coded routine which runs when a character is hit by an electric attack,
@@ -1581,6 +1604,21 @@ scope Character {
         // add NNESS and GDONKEY to table
         OS.copy_segment(ORIGINAL_TABLE + (id.NESS * 4), 0x4)
         OS.copy_segment(ORIGINAL_TABLE + (id.DONKEY * 4), 0x4)
+        // pad table for new characters
+        fill (table + (NUM_CHARACTERS * 0x4)) - pc()
+    }
+    scope overlay_end {
+        // this table originally begins with DONKEY and ends with GDONKEY
+        constant ORIGINAL_TABLE(0xAB6AC)
+        constant DISABLED(0x800E9A60)
+        OS.align(16)
+        table:
+        constant TABLE_ORIGIN(origin())
+        // add MARIO and FOX to table
+        OS.copy_segment(ORIGINAL_TABLE + ((id.NMARIO - 2) * 4), 0x4)
+        OS.copy_segment(ORIGINAL_TABLE + ((id.NFOX - 2) * 4), 0x4)
+        // copy ORIGINAL_TABLE
+        OS.copy_segment(ORIGINAL_TABLE, (25 * 4))
         // pad table for new characters
         fill (table + (NUM_CHARACTERS * 0x4)) - pc()
     }
