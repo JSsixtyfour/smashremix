@@ -33,6 +33,7 @@ scope DSamus {
     
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(DSAMUS, Action.Dash,           File.DSAMUS_DASH,           -1,                         -1)
+    Character.edit_action_parameters(DSAMUS, Action.Walk3,          File.DSAMUS_WALK3,          -1,                         -1)
     Character.edit_action_parameters(DSAMUS, Action.Run,            File.DSAMUS_RUN,            -1,                         -1)
     Character.edit_action_parameters(DSAMUS, Action.RollF,          File.DSAMUS_ROLLF,          ROLLF,                      -1)
     Character.edit_action_parameters(DSAMUS, Action.RollB,          File.DSAMUS_ROLLB,          ROLLSUB,                    -1)

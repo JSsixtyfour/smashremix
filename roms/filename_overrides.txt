@@ -172,6 +172,7 @@
 08EC Big Blue Header
 08ED Big Blue Stage
 08EE Big Blue BG
+08EF Dark Samus Walk3
 0611 CAPTAIN DeadU
 0611 CAPTAIN ScreenKO
 05E8 CAPTAIN Entry

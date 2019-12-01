@@ -157,6 +157,7 @@ scope File {
     constant STG_BLUE_HEADER(0x8EC)
     constant STG_BLUE(0x8ED)
     constant STG_BLUE_BG(0x8EE)
+    constant DSAMUS_WALK3(0x8EF)
     
     
 }
