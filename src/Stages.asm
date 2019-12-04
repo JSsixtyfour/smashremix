@@ -168,6 +168,8 @@ scope Stages {
     dw function.CLONE                       // Corneria
     dw function.CLONE                       // Uncanny Mansion
     dw function.CLONE                       // Big Blue
+    dw function.CLONE                       // Onett
+    dw function.CLONE                       // Zebes Landing
     
 
     // TODO
@@ -304,6 +306,8 @@ scope Stages {
     insert icon_corneria2,              "../textures/icon_corneria2.rgba5551"
     insert icon_uncanny,                "../textures/icon_uncanny.rgba5551"
     insert icon_blue,                   "../textures/icon_blue.rgba5551"
+    insert icon_onett,                  "../textures/icon_onett.rgba5551"
+    insert icon_zlanding,               "../textures/icon_zlanding.rgba5551"
     
 
     // @ Description
@@ -387,6 +391,8 @@ scope Stages {
         constant CORNERIA2(0x46)
         constant UNCANNY(0x47)
         constant BLUE(0x48)
+        constant ONETT(0x49)
+        constant ZLANDING(0x4A)
 
         // not an actual id, some arbitary number Sakurai picked(?)
         constant RANDOM(0xDE)
@@ -498,6 +504,8 @@ scope Stages {
         constant CORNERIA2(0x8DE)
         constant UNCANNY(0x8E1)
         constant BLUE(0x8EC)
+        constant ONETT(0x8F0)
+        constant ZLANDING(0x8F3)
     }
 
     scope function {
@@ -547,7 +555,7 @@ scope Stages {
     db id.BATTLEFIELD                       // 10 
     db id.RANDOM                            // 11 
     // page 2 (original design stages and beta)
-    db id.RANDOM                            // 12
+    db id.ZLANDING                          // 12
     db id.GANONS_TOWER                      // 13
     db id.SPIRALM                           // 14
     db id.COOLCOOL                          // 15
@@ -582,7 +590,7 @@ scope Stages {
     db id.PEACH2                            // 31
     db id.CORNERIA2                         // 32
     db id.BLUE					            // 33
-    db id.RANDOM                            // 34
+    db id.ONETT                             // 34
     db id.RANDOM                            // 35
     OS.align(4)
 
@@ -689,6 +697,8 @@ scope Stages {
     dw icon_corneria2                       // Corneria
     dw icon_uncanny                         // Uncanny Mansion
     dw icon_blue                            // Big Blue
+    dw icon_onett                           // Onett
+    dw icon_zlanding                        // Zebes Landing
 
     // @ Description
     // Row the cursor is on
@@ -1847,6 +1857,8 @@ scope Stages {
     db id.CORNERIA2                         // 2D
     db id.UNCANNY                           // 2E
     db id.BLUE                              // 2F
+    db id.ONETT                             // 30
+    db id.ZLANDING                          // 31
     
     OS.align(4)
 
@@ -1987,6 +1999,8 @@ scope Stages {
     float32 0.5                         // Corneria
     float32 0.5                         // Uncanny Mansion
     float32 0.5                         // Big Blue
+    float32 0.5                         // Onett
+    float32 0.5                         // Zebes Landing
 
     background_table:
     db id.PEACHS_CASTLE                 // Peach's Castle
@@ -2062,6 +2076,8 @@ scope Stages {
     db id.PEACHS_CASTLE                 // Corneria
     db id.YOSHIS_ISLAND                 // Uncanny Mansion
     db id.PEACHS_CASTLE                 // Big Blue
+    db id.PEACHS_CASTLE                 // Onett
+    db id.PEACHS_CASTLE                 // Zebes Landing
     OS.align(4)
 
     // @ Description
@@ -2145,6 +2161,8 @@ scope Stages {
     dw header.CORNERIA2,              type.CLONE
     dw header.UNCANNY,                type.CLONE
     dw header.BLUE,                   type.CLONE
+    dw header.ONETT,                  type.CLONE
+    dw header.ZLANDING,               type.CLONE
 
 
     string_peachs_castle:;          String.insert("Peach's Castle")
@@ -2197,6 +2215,8 @@ scope Stages {
     string_corneria2:;              String.insert("Corneria")
     string_uncanny:;                String.insert("Uncanny Mansion")
     string_blue:;                   String.insert("Big Blue")
+    string_onett:;                  String.insert("Onett")
+    string_zlanding:;               String.insert("Zebes Landing")
 
     string_table:
     dw string_peachs_castle
@@ -2272,6 +2292,8 @@ scope Stages {
     dw string_corneria2
     dw string_uncanny
     dw string_blue
+    dw string_onett
+    dw string_zlanding
 
 }
 

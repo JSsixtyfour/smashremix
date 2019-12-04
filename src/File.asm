@@ -158,6 +158,12 @@ scope File {
     constant STG_BLUE(0x8ED)
     constant STG_BLUE_BG(0x8EE)
     constant DSAMUS_WALK3(0x8EF)
+    constant STG_ONETT_HEADER(0x8F0)
+    constant STG_ONETT(0x8F1)
+    constant STG_ONETT_BG(0x8F2)
+    constant STG_ZLANDING_HEADER(0x8F3)
+    constant STG_ZLANDING(0x8F4)
+    constant STG_ZLANDING_BG(0x8F5)
     
     
 }

@@ -795,6 +795,18 @@ scope Spawn {
     float32  5125,  1488
     float32 -1740,  1133
     float32  3489,  0604
+    
+    // 48 - Onett
+    float32 -0057,  2043
+    float32  4163,  2413
+    float32 -0776,  3017
+    float32  3795,  3678
+    
+    // 49 - Zebes Landing
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32  0000,  1545
+    float32  0000,  0005
 
     neutral_table:
     // 00 - Peach's Castle
@@ -1234,6 +1246,18 @@ scope Spawn {
     float32  5125,  1488
     float32 -1740,  1133
     float32  3489,  0604
+    
+    // 48 - Onett
+    float32 -0057,  2043
+    float32  4163,  2413
+    float32 -0776,  3017
+    float32  3795,  3678
+    
+    // 49 - Zebes Landing
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32 -1400,  0005
+    float32  1400,  0005
 }
 
 } // __SPAWN__

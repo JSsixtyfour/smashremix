@@ -1824,7 +1824,7 @@ scope Character {
     // 0x21 - LUCAS
     define_character(LUCAS, NESS, File.LUCAS_MAIN, 0x0EE, 0, 0x14F, 0x150, 0x160, 0x0F0, 0x151, 0,  0x5BC, 0x0, OS.TRUE)
     // 0x22 - DSAMUS
-    define_character(DSAMUS, SAMUS, File.DSAMUS_MAIN, 0x0D8, 0, 0x140, 0x142, 0x15D, File.DSAMUS_SECONDARY, 0, 0, 0x610, 0x0, OS.TRUE)
+    define_character(DSAMUS, SAMUS, File.DSAMUS_MAIN, 0x0D8, 0, File.DSAMUS_CHARACTER, 0x142, 0x15D, File.DSAMUS_SECONDARY, 0, 0, 0x610, 0x0, OS.TRUE)
     
     print "========================================================================== \n"
 }
