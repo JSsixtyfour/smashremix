@@ -79,20 +79,20 @@ scope Overlay {
         nop        
 
         _vs:
-        //lli     t1, 0x0016
-        //bne     t0, t1, _results            // if (screen_id != vs mode), skip
-        //nop
-        //jal     VsCombo.run_
-        //nop
-        //jal     VsStats.run_collect_
-        //nop
+        lli     t1, 0x0016
+        bne     t0, t1, _results            // if (screen_id != vs mode), skip
+        nop
+        jal     VsCombo.run_
+        nop
+        jal     VsStats.run_collect_
+        nop
 
         _results:
-        //lli     t1, 0x0018
-        //bne     t0, t1, _sss                // if (screen_id != results), skip
-        //nop
-        //jal     VsStats.run_results_
-        //nop
+        lli     t1, 0x0018
+        bne     t0, t1, _sss                // if (screen_id != results), skip
+        nop
+        jal     VsStats.run_results_
+        nop
 
         _sss:
         lli     t1, 0x0015                  // t1 = stage select screen
@@ -102,11 +102,11 @@ scope Overlay {
         nop
         
         // Need this so that the combo meter correctly differentiates singles
-        //li      t1, VsCombo.player_count    // t1 = address of number of players
-        //sw      r0, 0x0000(t1)              // Set player_count to 0
+        li      t1, VsCombo.player_count    // t1 = address of number of players
+        sw      r0, 0x0000(t1)              // Set player_count to 0
         // Need this so that the match stats correctly resets each match (can't rely on VsCombo having run since it's a toggle)
-        //li      t1, VsStats.player_count    // t1 = address of number of players
-        //sb      r0, 0x0000(t1)              // Set player_count to 0
+        li      t1, VsStats.player_count    // t1 = address of number of players
+        sb      r0, 0x0000(t1)              // Set player_count to 0
 
         _finish:
         jal     end_                        // end display list

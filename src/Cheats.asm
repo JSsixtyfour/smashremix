@@ -22,20 +22,6 @@ scope Cheats {
     OS.patch_end()
 
     // @ Description
-    // The following code enables Widescreen [Danny_SsB]. I have no iddea how it works
-    OS.patch_start(0x000AA37C, 0x00000000)
-    dw      0x3FEF311A
-    OS.patch_end()
-
-    OS.patch_start(0x00051C80, 0x00000000)
-    dw      0x3FEF311A
-    OS.patch_end()
-
-    OS.patch_start(0x000891B4, 0x8010D9B4)
-    // nop
-    OS.patch_end()
-
-    // @ Description
     // This makes it so that stock value is always displayed as a number.
     OS.patch_start(0x0008B0D4, 0x8010F8D4)
     // slti    at, s1, 0x0001          // default value is 7

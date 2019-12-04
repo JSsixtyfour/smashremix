@@ -13,6 +13,19 @@ include "OS.asm"
 scope AI {
 
     // @ Description
+    // All Computers Are Level 9 By Default [Mada0]
+    pushvar origin, base
+    origin 0x42D38
+    db     0x09
+    origin 0x42DAC
+    db     0x09
+    origin 0x42E20
+    db     0x09
+    origin 0x42E94
+    db     0x09
+    pullvar base, origin
+
+    // @ Description
     // This removes the up b check allowing the CPU to recover multiple times [bit].
     scope recovery_fix_: {
         OS.patch_start(0x000AFFBC, 0x8013557C)

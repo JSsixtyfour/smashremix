@@ -178,30 +178,27 @@ scope VsStats {
         lli     a0, Color.GREY                           // a0 = gray
         jal     Overlay.set_color_                       // set fill color
         nop
-        lli     a0, 000015                               // a0 = ulx
-        or      a1, r0, t8                               // a1 - uly, unadjusted
-        addiu   a1, a1, -0x0002                          // a1 = uly, adjusted
-        lli     a2, 289                                  // a2 - width
+        lli     a0, 000023                               // a0 = ulx
+        addiu   a1, t8, -0x0002                          // a1 = uly, adjusted
+        lli     a2, 266                                  // a2 - width
         lli     a3, 0x0001                               // a3 - line height
         jal     Overlay.draw_rectangle_                  // draw line
         nop
         lli     a0, 0x190F                               // a0 = 19XX logo dark color
         jal     Overlay.set_color_                       // set fill color
         nop
-        lli     a0, 000015                               // a0 = ulx
-        or      a1, r0, t8                               // a1 - uly, unadjusted
-        addiu   a1, a1, -0x0001                          // a1 = uly, adjusted
-        lli     a2, 289                                  // a2 - width
+        lli     a0, 000023                               // a0 = ulx
+        addiu   a1, t8, -0x0001                          // a1 = uly, adjusted
+        lli     a2, 266                                  // a2 - width
         lli     a3, 0x0009                               // a3 - line height
         jal     Overlay.draw_rectangle_                  // draw line
         nop
         lli     a0, Color.GREY
         jal     Overlay.set_color_                       // set fill color
         nop
-        lli     a0, 000015                               // a0 = ulx
-        or      a1, r0, t8                               // a1 - uly, unadjusted
-        addiu   a1, a1, 0x0008                           // a1 = uly, adjusted
-        lli     a2, 289                                  // a2 - width
+        lli     a0, 000023                               // a0 = ulx
+        addiu   a1, t8, 0x0008                           // a1 = uly, adjusted
+        lli     a2, 266                                  // a2 - width
         lli     a3, 0x0001                               // a3 - line height
         jal     Overlay.draw_rectangle_                  // draw line
         nop
@@ -223,9 +220,9 @@ scope VsStats {
         lli     t6, {na_port}                            // t6 = port whose stat is not relevant for this row
         // draw the stat for each port:
         draw_line_stat({table}, {offset}, 1, 184)
-        draw_line_stat({table}, {offset}, 2, 224)
-        draw_line_stat({table}, {offset}, 3, 264)
-        draw_line_stat({table}, {offset}, 4, 304)
+        draw_line_stat({table}, {offset}, 2, 219)
+        draw_line_stat({table}, {offset}, 3, 254)
+        draw_line_stat({table}, {offset}, 4, 289)
         addiu   t8, 000011                               // increment Y coord
     }
 
@@ -325,8 +322,8 @@ scope VsStats {
         lli     a0, Color.low.MENU_BG
         jal     Overlay.set_color_                       // set fill color
         nop
-        lli     a0, 000000                               // a0 - ulx
-        lli     a1, 000000                               // a1 - uly
+        lli     a0, 000001                               // a0 - ulx
+        lli     a1, 000001                               // a1 - uly
         li      a2, 000320                               // a2 - width
         lli     a3, 000240                               // a3 - height
         jal     Overlay.draw_rectangle_                  // draw background rectangle
@@ -342,9 +339,9 @@ scope VsStats {
         jal     Overlay.set_color_                       // set fill color
         nop
         draw_port_header(1, 160)                         // Draw P1 header
-        draw_port_header(2, 200)                         // Draw P2 header
-        draw_port_header(3, 240)                         // Draw P3 header
-        draw_port_header(4, 280)                         // Draw P4 header
+        draw_port_header(2, 195)                         // Draw P2 header
+        draw_port_header(3, 230)                         // Draw P3 header
+        draw_port_header(4, 265)                         // Draw P4 header
 
         collect_stats(1, 0x0004)                         // collect stats for port 1
         collect_stats(2, 0x0008)                         // collect stats for port 2
@@ -352,7 +349,7 @@ scope VsStats {
         collect_stats(4, 0x0010)                         // collect stats for port 4
 
         // Draw lines
-        lli     t7, 000016                               // t7 = X coord
+        lli     t7, 000024                               // t7 = X coord
         lli     t8, 000030                               // t8 = Y coord
         li      t9, stripe_on                            // t9 = stripe_on
         lli     t6, 0x0000                               // t6 = 0

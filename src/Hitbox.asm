@@ -158,6 +158,46 @@ scope Hitbox {
         j       _projectile_return
         nop
     }
+
+    // @ Description
+    // This makes it so the hitbox display is positioned correctly on the CSS screens.
+    // I am doing it this way because I don't know if the positioning is important on other screens.
+    // See https://github.com/tehzz/SSB64-Notes/blob/master/Universal/Model%20Display/Routine%20800F293C%20-%20renderCharModel.md#hurtbox-mooring
+    scope css_position_: {
+        OS.patch_start(0x6EB10, 0x800F3310)
+        j       css_position_
+        nop
+        _css_position_return:
+        OS.patch_end()
+
+        li      at, Toggles.entry_hitbox_mode
+        lw      at, 0x0004(at)              // at = bool hitbox_mode
+        beq     at, r0, _original           // if (!hitbox_mode), skip
+        nop
+        li      at, Global.current_screen   // ~
+        lb      at, 0x0000(at)              // at = screen id
+
+        // css screen ids: vs - 0x10, 1p - 0x11, training - 0x12, bonus1 - 0x13, bonus2 - 0x14
+        slti    t5, at, 0x0010              // if (screen id < 0x10)...
+        bnez    t5, _original               // ...then branch to original (not on a CSS)
+        nop
+        slti    t5, at, 0x0015              // if (screen id is between 0x10 and 0x14)...
+        bnez    t5, _css                    // ...then we're on a CSS
+        nop                                 // ...otherwise just do the original:
+
+        _original:
+        addiu   at, r0, 0x03EA              // original line 1 - this is the key "mooring" value
+        lw      t5, 0x0000(t7)              // original line 2
+        j       _css_position_return        // return
+        nop
+
+        _css:
+        addiu   at, r0, 0x03EA              // original line 1 - this is the key "mooring" value
+        addiu   t5, r0, 0x03EA              // intentionally set t5 equal to at
+        j       _css_position_return        // return
+        nop
+
+    }
 }
 
 } // __HITBOX__

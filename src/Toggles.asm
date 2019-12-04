@@ -300,7 +300,8 @@ scope Toggles {
     entry_skip_results_screen:;         Menu.entry_bool("SKIP RESULTS SCREEN", OS.FALSE, entry_stereo_sound)
     entry_stereo_sound:;                Menu.entry_bool("STEREO SOUND", OS.TRUE, entry_stock_handicap)
     entry_stock_handicap:;              Menu.entry_bool("STOCK HANDICAP", OS.TRUE, entry_salty_runback)
-    entry_salty_runback:;               Menu.entry_bool("SALTY RUNBACK", OS.TRUE, OS.NULL)
+    entry_salty_runback:;               Menu.entry_bool("SALTY RUNBACK", OS.TRUE, entry_widescreen)
+    entry_widescreen:;                  Menu.entry_bool("WIDESCREEN", OS.FALSE, OS.NULL)
 
     // @ Description
     // Random Music Toggles
@@ -344,7 +345,7 @@ scope Toggles {
 
     // @ Description
     // SRAM blocks for toggle saving.
-    block_misc:; SRAM.block(15 * 4)
+    block_misc:; SRAM.block(16 * 4)
     block_music:; SRAM.block(16 * 4)
     block_stages:; SRAM.block(16 * 4)
 }
