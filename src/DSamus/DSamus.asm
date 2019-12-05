@@ -29,6 +29,7 @@ scope DSamus {
     insert DASHATTACK, "moveset/DASH.bin"
     insert DAIR, "moveset/DAIR.bin"
     insert BAIR, "moveset/BAIR.bin"
+    // insert NAIRLANDING, "moveset/NAIRLANDING.bin"
     
     
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
@@ -244,6 +245,75 @@ scope DSamus {
         nop
     }
     
+        // Loads an alternate animation for Dark Samus bomb explosion if explodes via timer
+    scope alt_bomb_explosion: {
+        OS.patch_start(0xE3A04, 0x80168FC4)
+        jal       alt_bomb_explosion
+        addiu   a0, a0, 0x001C              // original line
+        _return:
+        OS.patch_end()
+        
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      t0, 0x0004(sp)              // ~
+        sw      t1, 0x0008(sp)              // store t0, t1
+        lw      t0, 0x010C (a2)             // t0 = projectile type
+        ori     t1, r0, TYPE                // t1 = Electric type
+        beq     t0, t1, _dsbombgraphic      // branch if type = Electric
+        nop
+        lw      t0, 0x0004(sp)              // ~
+        lw      t1, 0x0008(sp)              // load t0, t1
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        j     0x801005C8                    // original line modified
+        nop
+        
+        _dsbombgraphic:
+        lw      t0, 0x0004(sp)              // ~
+        lw      t1, 0x0008(sp)              // load t0, t1
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        addiu   sp, sp, 0xFFD8              // original line
+        sw      a0, 0x0028(sp)              // original line
+        lui     a0, 0x8013                  // original line
+        lw      a0, 0x13C4(a0)              // original line
+        sw      ra, 0x001C(sp)              // original line
+        sw      s0, 0x0018(sp)              // original line
+        addiu   a1, r0, 0x0073              // place new graphic ID
+        lui     ra, 0x8010                  // set to original return address
+        addiu   ra, ra, 0x05EC              // set to original return address
+        j       0x800CE9E8                  // jump to "Create GFX"
+        ori     a0, a0, 0x0008
+        j       _return                     // return
+        nop
+    }
+    
+     // Loads an alternate animation for Dark Samus bomb explosion if explodes via connecting with an opponet
+    // active projectile struct is in 0x34(sp)
+    scope alt_bomb_explosion_connect: {
+        OS.patch_start(0xE3C58, 0x80169218)
+        jal     alt_bomb_explosion_connect
+        addiu   a0, a0, 0x001C              // original line
+        _return:
+        OS.patch_end()
+        
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      t0, 0x0004(sp)              // ~
+        sw      t1, 0x0008(sp)              // store t0, t1
+        lw      t0, 0x0044(sp)              // load active projectile struct
+        lw      t0, 0x010C (t0)             // t0 = projectile type
+        ori     t1, r0, TYPE                // t1 = Electric type
+        beq     t0, t1, alt_bomb_explosion._dsbombgraphic      // branch if type = Electric
+        nop
+        lw      t0, 0x0004(sp)              // ~
+        lw      t1, 0x0008(sp)              // load t0, t1
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        j     0x801005C8                    // original line modified
+        nop
+        
+        
+    }
+    
+    
+    constant TYPE(0x2)                  // electric type damage used in Dark Samus down special in contrast to Samus (Fire type 0x1)
+        
         // temporary dark samus charge shot patch
         OS.patch_start(0x6643C, 0x800EAC3C)
         nop
