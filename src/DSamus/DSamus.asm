@@ -29,7 +29,7 @@ scope DSamus {
     insert DASHATTACK, "moveset/DASH.bin"
     insert DAIR, "moveset/DAIR.bin"
     insert BAIR, "moveset/BAIR.bin"
-    // insert NAIRLANDING, "moveset/NAIRLANDING.bin"
+    insert LANDING_NAIR, "moveset/LANDING_NAIR.bin"
     
     
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
@@ -45,6 +45,7 @@ scope DSamus {
     Character.edit_action_parameters(DSAMUS, Action.Jab1,           -1,                         NEUTRAL1,                   -1)
     Character.edit_action_parameters(DSAMUS, Action.DashAttack,     -1,                         DASHATTACK,                 -1)
     Character.edit_action_parameters(DSAMUS, Action.AttackAirN,     File.DSAMUS_NAIR,           NAIR,                       -1)
+    Character.edit_action_parameters(DSAMUS, Action.LandingAirN,    0x3CC,                      LANDING_NAIR,               -1)
     Character.edit_action_parameters(DSAMUS, Action.AttackAirF,     File.DSAMUS_FAIR,           FAIR,                       -1)
     Character.edit_action_parameters(DSAMUS, Action.AttackAirU,     -1,                         UAIR,                       -1)
     Character.edit_action_parameters(DSAMUS, Action.AttackAirB,     File.DSAMUS_BAIR,           BAIR,                       -1)
