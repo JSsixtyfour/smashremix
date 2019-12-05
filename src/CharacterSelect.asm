@@ -7,6 +7,10 @@ print "included CharacterSelect.asm\n"
 // This file contains modifications to the Character Select screen
 
 // TODO
+// Training mode - models don't load
+// 1p mode - apply
+// BTT - apply
+// BTP - apply
 // why is gdk crashing
 // costumes    
 // automatic token placement on cpu select (DONE) and character (NOT DONE)
@@ -57,6 +61,20 @@ scope CharacterSelect {
     jal     load_character_model_
     OS.patch_end()
     
+    // @ Description
+    // Patch Training mode character select loading routine to use load_character_model_
+    OS.patch_start(0x14737C, 0x80137D9C)
+    jal     load_character_model_
+    OS.patch_end()
+
+    // @ Description
+    // Patch 1P mode character select loading routine to use load_character_model_
+    OS.patch_start(0x157DFC, 0x8013841C)
+    //jal     load_character_model_
+    OS.patch_end()
+
+    // TODO: load_character_model_ call for BTT and BTP
+
     // @ Description
     // Patch which checks for an alternate malloc size, ensures that the right amount of space is
     // allocated when an alternate req list is loaded.
@@ -219,10 +237,25 @@ scope CharacterSelect {
     // @ Returns
     // v0 - character id
     scope get_character_id_: {
+        // VS
         OS.patch_start(0x000135AEC, 0x8013786C)
         j       get_character_id_
         nop
         OS.patch_end()
+
+        // Training
+        OS.patch_start(0x000144508, 0x80134F2C)
+        j       get_character_id_
+        nop
+        OS.patch_end()
+
+        // TODO: 1P, BTT and BTP
+
+        // 1P
+        //OS.patch_start(0x000135AEC, 0x8013786C)
+        //j       get_character_id_
+        //nop
+        //OS.patch_end()
         
         mfc1    v1, f10                     // original line 1 (v1 = (int) ypos)
         mfc1    a1, f6                      // original line 2 (a1 = (int) xpos)
@@ -274,11 +307,26 @@ scope CharacterSelect {
         jr      ra                          // return (discard the rest of the function)
         addiu   sp, sp, 0x0028              // deallocate stack space (original function)
     }
-   // disable drawing of default portraits
+
+    // disable drawing of default portraits on VS CSS
     OS.patch_start(0x001307A0, 0x80132520)
     jr      ra 
     nop
     OS.patch_end()
+
+    // disable drawing of default portraits on Training Mode CSS
+    OS.patch_start(0x001419B8, 0x801323D8)
+    jr      ra
+    nop
+    OS.patch_end()
+
+    // disable drawing of default portraits on 1P Mode CSS
+    OS.patch_start(0x0013ADA4, 0x80132BA4)
+    //jr      ra
+    //nop
+    OS.patch_end()
+
+    // TODO: disable drawing of default portraits on BTP and BTT CSS
 
     // @ Description
     // Highjacks the display list of the portraits
@@ -299,10 +347,16 @@ scope CharacterSelect {
         // lazy attempt to see if the texture drawn is the "back" texture 
         li      t0, Global.current_screen   // ~
         lbu     t0, 0x0000(t0)              // t0 = screen id
-        lli     at, 0x0010
-        bne     at, t0, _skip               // if (screen_id != character_select), skip
+        lli     at, 0x0010                  // at = vs css screen id
+        beq     at, t0, _continue           // if (screen_id = vs css), continue
+        nop
+        lli     at, 0x0012                  // at = training css screen id
+        beq     at, t0, _continue           // if (screen_id = training css), continue
+        nop
+        b       _skip                       // not on a valid css, so skip
         nop
 
+        _continue:
         lli     at, 0x0030                  // at = expected height
         lhu     t0, 0x0014(s1)              // t0 = height
         bne     at, t0, _skip               // if test fails, end
@@ -470,14 +524,26 @@ scope CharacterSelect {
     // @ Description
     // Allows random character to include remix characters
     scope get_random_char_id_: {
+        // VS
         OS.patch_start(0x136AD8, 0x80138858)
 //      jal     0x80018A30                  // original line 1
 //      addiu   a0, r0, 0xC                 // original line 2
-        j       get_random_char_id_
+        jal     get_random_char_id_
+        nop
+        OS.patch_end()
+
+        // Training
+        OS.patch_start(0x147090, 0x80137AB0)
+//      jal     0x80018A30                  // original line 1
+//      addiu   a0, r0, 0xC                 // original line 2
+        jal     get_random_char_id_
         nop
         OS.patch_end()
 
         _get_random_id:
+        addiu   sp, sp,-0x0004              // allocate stack space
+        sw      ra, 0x0004(sp)              // ~
+
         jal     0x80018A30                  // original line 1
         addiu   a0, r0, NUM_SLOTS           // original line 2 modified to include all slots
         // v0 = random number between 0 and NUM_SLOTS
@@ -487,22 +553,34 @@ scope CharacterSelect {
         lli     s0, Character.id.NONE       // s0 = Character.id.NONE
         beq     s0, v0, _get_random_id      // if v0 is not a valid character then get a new random number
         nop                                 // ~
-        j       0x80138860                  // return
+
+        lw      ra, 0x0004(sp)              // ~
+        addiu   sp, sp, 0x0004              // deallocate stack space
+
+        jr      ra                          // return
         nop                                 // ~
     }
 
     // @ Description
     // Places the token based on character id
     scope place_token_from_id_: {
+        // VS
         OS.patch_start(0x00136A28, 0x801387A8)
 //      jal     0x80132168                  // original line 1
 //      or      a0, a1, r0                  // original line 2
         j       place_token_from_id_
         nop
-        _return:
         OS.patch_end()
 
-        // 80132168 originally returned portrait_id in v0 (0-5 on the top row, 6-11 on bottom)
+        // Training
+        OS.patch_start(0x001452BC, 0x80135CDC)
+//      jal     0x80132020                  // original line 1
+//      or      a0, a1, r0                  // original line 2
+        j       place_token_from_id_
+        nop
+        OS.patch_end()
+
+        // 80132168/80132020 originally returned portrait_id in v0 (0-5 on the top row, 6-11 on bottom)
         // 0x0058(t8) = xpos
         // 0x005C(t8) = ypos
         // a0 = character id
@@ -565,40 +643,39 @@ scope CharacterSelect {
 
     }
 
-    // 80138894
-
     // @ Description
-    // Use id_table to figure out which character should be loaded
-    scope fix_random_character_id_: {
-        OS.patch_start(0x00130424, 0x801321A4)
-//      sll     t1, a0, 0x0002              // original line 1
-//      addu    t2, v1, t1                  // original line 2
-        //j       fix_random_character_id_
-        //nop
-        _return:
-        //lbu     v0, 0x0000(t2)              // (modified for byes, not words)
-        OS.patch_end()
-
-        li      v1, id_table                // v1 = new table
-        addu    t2, v1, a0                  // original line 2 (modified for byes, not words)
-        j       _return                     // return
-        nop
-    }
+    // Bypasses CPU token being recalled when selecting a portrait with the
+    // character id NONE on VS CSS
+    OS.patch_start(0x00136D70, 0x80138AF0)
+//  lli     at, r0, Character.id.NONE       // original line
+    lli     at, 0x7FFF                      // at = really large unsigned value
+    OS.patch_end()
 
     // @ Description
     // Bypasses CPU token being recalled when selecting a portrait with the
-    // character id NONE   
-    OS.patch_start(0x00136D70, 0x80138AEC)
-    // TODO: better fix
-//  lli     at, r0, Character.id.NONE
-    lli     at, 0x7FFF                      // at = really large unsinged value
+    // character id NONE on training CSS
+    OS.patch_start(0x00145550, 0x80135F70)
+//  lli     at, r0, Character.id.NONE       // original line
+    lli     at, 0x7FFF                      // at = really large unsigned value
     OS.patch_end()
 
     // @ Description
-    // removes white flash on character select
+    // removes white flash on vs character select
     OS.patch_start(0x134730, 0x801364B0)
     nop
     OS.patch_end()
+
+    // @ Description
+    // removes white flash on Training character select
+    OS.patch_start(0x143670, 0x80134090)
+    nop
+    OS.patch_end()
+
+    // @ Description
+    // removes white flash on 1p character select
+    //OS.patch_start(0x13770C, 0x8013948C)
+    //nop
+    //OS.patch_end()
 
     // @ Description
     // Expands the filetable to include more entries
@@ -622,24 +699,45 @@ scope CharacterSelect {
     // @ Description
     // allows for custom entries of series logo based on file offset (+0x10 for DF000000 00000000)
     // (requires modification of file 0x11)
+    // VS Mode
     scope get_name_texture_: {
         OS.patch_start(0x00130E18, 0x80132B98)
-//      lw      t8, 0x0024(t8)                  // original line
+//      lw      t8, 0x0024(t8)                  // original line 1
         j       get_name_texture_
-        lw      t5, 0xC4A0(t5)                  // original line
+        lw      t5, 0xC4A0(t5)                  // original line 2
         _get_name_texture_return:
         OS.patch_end()
     
-        li      t8, name_texture_table      // t8 = texture offset table 
+        li      t8, name_texture_table          // t8 = texture offset table
         addu    t8, t8, a2                      // t8 = address of texture offset
         lw      t8, 0x0000(t8)                  // t8 = texture offset
-        j       _get_name_texture_return    // return
+        j       _get_name_texture_return        // return
+        nop
+    }
+
+    // @ Description
+    // allows for custom entries of series logo based on file offset (+0x10 for DF000000 00000000)
+    // (requires modification of file 0x11)
+    // Training Mode
+    scope get_name_texture_training_: {
+        OS.patch_start(0x00141D24, 0x80132744)
+//      lw      t6, 0x001C(t6)                    // original line 1
+        j       get_name_texture_training_
+        lw      t8, 0x8C98(t8)                    // original line 2
+        _get_name_texture_training_return:
+        OS.patch_end()
+
+        li      t6, name_texture_table            // t8 = texture offset table
+        addu    t6, t6, a2                        // t8 = address of texture offset
+        lw      t6, 0x0000(t6)                    // t8 = texture offset
+        j       _get_name_texture_training_return // return
         nop
     }
 
     // @ Description
     // Allows for custom entries of series logo based on file offset (+0x10 for DF000000 00000000)
     // (requires modification of file 0x14)
+    // VS Mode
     scope get_series_logo_offset_: {
         OS.patch_start(0x00130D68, 0x80132AE8)
 //      addu    t5, sp, a2                  // original line (sp holds table, a2 holds char id * 4)
@@ -657,8 +755,35 @@ scope CharacterSelect {
     }
 
     // @ Description
-    // Disables token movement when token set down (migrates towards original spot)
+    // Allows for custom entries of series logo based on file offset (+0x10 for DF000000 00000000)
+    // (requires modification of file 0x14)
+    // Training Mode
+    scope get_series_logo_offset_training_: {
+        OS.patch_start(0x00141C88, 0x801326A8)
+//      addu    t5, sp, a2                  // original line (sp holds table, a2 holds char id * 4)
+//      lw      t5, 0x004C(t5)              // original line (t5 = file offset of data)
+        j       get_series_logo_offset_training_
+        nop
+        _get_series_logo_offset_training_return:
+        OS.patch_end()
+
+        li      t5, series_logo_offset_table
+        addu    t5, t5, a2
+        lw      t5, 0x0000(t5)
+        j       _get_series_logo_offset_training_return
+        nop
+    }
+
+    // @ Description
+    // Disables token movement when token set down on vs css (migrates towards original spot)
     OS.patch_start(0x001376E0, 0x80139460)
+    jr      ra
+    nop
+    OS.patch_end()
+
+    // @ Description
+    // Disables token movement when token set down on training css (migrates towards original spot)
+    OS.patch_start(0x00145E68, 0x80136888)
     jr      ra
     nop
     OS.patch_end()
@@ -669,14 +794,31 @@ scope CharacterSelect {
     // All values are 1.5 except DK. Possibly change this to static in the future
     scope get_zoom_: {
         OS.patch_start(0x00137E18, 0x80139B98)
-//      addiu   a1, sp, 0x0004                  // original line
+//      addiu   a1, sp, 0x0004                  // original line 1
         j       get_zoom_                       // set table to custom table
-        addiu   t6, t6, 0xB90C                  // original line
+        addiu   t6, t6, 0xB90C                  // original line 2
         _get_zoom_return:
         OS.patch_end()
 
-        li      a1, white_circle_size_table // set a1
-        j       _get_zoom_return            // return
+        li      a1, white_circle_size_table     // set a1
+        j       _get_zoom_return                // return
+        nop
+    }
+
+    // @ Description
+    // Loads from white_circle_size_table instead of original table
+    // @ Note
+    // All values are 1.5 except DK. Possibly change this to static in the future
+    scope get_zoom_training_: {
+        OS.patch_start(0x001465B0, 0x80136FD0)
+//      addiu   a1, sp, 0x0004                  // original line 1
+        j       get_zoom_training_              // set table to custom table
+        addiu   t6, t6, 0x83FC                  // original line 2
+        _get_zoom_training_return:
+        OS.patch_end()
+
+        li      a1, white_circle_size_table     // set a1
+        j       _get_zoom_training_return       // return
         nop
     }
     
@@ -684,7 +826,18 @@ scope CharacterSelect {
     // Patch which loads character selected action from selection_action_table.
     // Originally a jump table was used here, but it's not necessary.
     scope get_action_: {
+        // vs
         OS.patch_start(0x132B6C, 0x801348EC)
+        j       get_action_
+        nop
+        OS.patch_end()
+
+        // training
+        OS.patch_start(0x142BFC, 0x8013361C)
+        j       get_action_
+        nop
+        OS.patch_end()
+
         // a0 = character id
         sll     t6, a0, 0x2                 // t6 = character id * 4
         li      at, selection_action_table  // at = selection_action_table
@@ -692,7 +845,6 @@ scope CharacterSelect {
         lw      v0, 0x0000(at)              // v0 = selection_action for {character}
         jr      ra                          // return
         nop
-        OS.patch_end()
     }
     
     // @ Description
@@ -739,11 +891,27 @@ scope CharacterSelect {
     // @ Description
     // This is the hook for loading more characters. Located directly after the initial characters.
     scope load_additional_characters_: {
+        // VS
         OS.patch_start(0x00139458, 0x8013B1D8)
+        lli     s8, 0x0000                  // 0 for VS
         j       load_additional_characters_
         nop
         _return:
         OS.patch_end()
+        // Training
+        OS.patch_start(0x00147394, 0x80137DB4)
+        lli     s8, 0x0001                  // 1 for Training
+        j       load_additional_characters_
+        nop
+        _return_training:
+        OS.patch_end()
+        // 1P
+        //OS.patch_start(0x00157E14, 0x8013B1D8)
+        //lli     s8, 0x0002                  // 2 for 1P
+        //j       load_additional_characters_
+        //nop
+        //_return_1p:
+        //OS.patch_end()
 
         // for (char_id i = FALCO; i < DSAMUS; i++)
         lli     s0, Character.id.FALCO      // s0 = index (and start character, usually skips polygons)
@@ -756,9 +924,15 @@ scope CharacterSelect {
         addiu   s0, s0, 0x0001              // increment index
         lui     v1, 0x8014                  // original line 1
         lui     s0, 0x8013                  // original line 2
-        j       _return
+        addiu   s0, s0, 0x0D9C              // original line 3
+        beqz    s8, _vs                     // if (a1 = 1) then return to VS code
+        nop
+        j       _return_training
         nop
 
+        _vs:
+        j       _return
+        nop
     }
 
 
@@ -766,19 +940,30 @@ scope CharacterSelect {
     // Changes the loads from fgm_table instead of the original function table
     // Also sets the selection flash timer
     scope get_fgm_: {
+        // vs
         OS.patch_start(0x00134B10, 0x80136890)
-//      sll     t5, t4, 0x0001              // original line
-//      addu    a0, sp, t5                  // original line
-        j       get_fgm_
+//      sll     t5, t4, 0x0001              // original line 1
+//      addu    a0, sp, t5                  // original line 2
+        jal     get_fgm_
         nop
-        _get_fgm_return:
         OS.patch_end()
-
         OS.patch_start(0x00134B1C, 0x8013689C)
 //      lw      a0, 0x0020(a0)              // original line
         nop
         OS.patch_end()
         
+        // training
+        OS.patch_start(0x14385C, 0x8013427C)
+//      sll     t6, t5, 0x0001              // original line 1
+//      addu    a0, sp, t6                  // original line 2
+        jal     get_fgm_
+        addu    t4, t5, r0
+        OS.patch_end()
+        OS.patch_start(0x143868, 0x80134288)
+//      lw      a0, 0x0028(a0)              // original line
+        nop
+        OS.patch_end()
+
         lli     t5, FLASH_TIME              // t5 = FLASH_TIME
         li      a0, flash_table             // a0 = flash_table
         addu    a0, a0, t4                  // a0 = flash_table + character id
@@ -787,38 +972,13 @@ scope CharacterSelect {
         sll     t5, t4, 0x0001              // ~
         addu    a0, a0, t5                  // a0 = fgm_table + char offset
         lhu     a0, 0x0000(a0)              // a0 = fgm id
-        j       _get_fgm_return             // return
+        jr      ra                          // return
         nop       
     }
 
     // @ Description
-    // Struct containting cursor information [tehz] (https://github.com/tehzz/SSB64-Notes/blob/master/Char%20Select%20Screen/struct%20-%20css-player-data.md)
-    player_data:
-    dw 0x8013BA88
-    dw 0x8013BB44
-    dw 0x8013BC00
-    dw 0x8013BCBC
-
-    // @ Description
-    // rgba5551 textures for hands (placement is not the same as the original causing "correction" issues)
-    hand_textures:
-    dw hand_pointing
-    dw hand_holding
-    dw hand_open
-
-    // @ Description
-    // rgba551 textures for tokens
-    token_textures:
-    dw token_1
-    dw token_2
-    dw token_3
-    dw token_4
-
-    // @ Description
-    // Structs for each of  type of texture mentioned above
-    hand_info:;         Texture.info(HAND_WIDTH, HAND_HEIGHT)
+    // Struct for portrait textures
     portrait_info:;     Texture.info(PORTRAIT_WIDTH_FILE, PORTRAIT_HEIGHT_FILE)
-    token_info:;        Texture.info(TOKEN_WIDTH, TOKEN_HEIGHT)
 
     // @ Description
     // New table for sound fx (for each character)
@@ -1109,25 +1269,6 @@ scope CharacterSelect {
     }
     pullvar base, origin
     
-    // hands
-    insert hand_pointing,       "../textures/hand_pointing.rgba5551"
-    insert hand_holding,        "../textures/hand_holding.rgba5551"
-    insert hand_open,           "../textures/hand_open.rgba5551"
-
-    constant HAND_WIDTH(32)
-    constant HAND_HEIGHT(32)
-
-    // @ Description
-    // Texture inserts for tokens
-    insert token_1,              "../textures/token_1.rgba5551"
-    insert token_2,              "../textures/token_2.rgba5551"
-    insert token_3,              "../textures/token_3.rgba5551"
-    insert token_4,              "../textures/token_4.rgba5551"
-    insert token_C,              "../textures/token_C.rgba5551"
-
-    constant TOKEN_WIDTH(32)
-    constant TOKEN_HEIGHT(31)
-    
     // @ Description
     // used for storing white flash timer
     flash_table:
@@ -1264,26 +1405,26 @@ scope CharacterSelect {
     // name_texture - name texture to use
     // portrait - portrait file name (.rgba5551 file in ../textures/)
     macro add_to_css(character, fgm, circle_size, action, logo, name_texture, portrait) {
-    pushvar origin, base
-    // add to fgm table
-    origin fgm_table_origin + ({character} * 2)
-    dh  {fgm}
-    // add to white circle table
-    origin white_circle_size_table_origin + ({character} * 4)
-    float32 {circle_size}
-    // add to selection action table
-    origin selection_action_table_origin + ({character} * 4)
-    dw  {action}
-    // add to series logo offset table
-    origin series_logo_offset_table_origin + ({character} * 4)
-    dw  {logo}
-    // add to name texture table
-    origin name_texture_table_origin + ({character} * 4)
-    dw  {name_texture}
-    pullvar base, origin
-    
-    // add portrait
-    add_portrait({character}, {portrait})
+        pushvar origin, base
+        // add to fgm table
+        origin fgm_table_origin + ({character} * 2)
+        dh  {fgm}
+        // add to white circle table
+        origin white_circle_size_table_origin + ({character} * 4)
+        float32 {circle_size}
+        // add to selection action table
+        origin selection_action_table_origin + ({character} * 4)
+        dw  {action}
+        // add to series logo offset table
+        origin series_logo_offset_table_origin + ({character} * 4)
+        dw  {logo}
+        // add to name texture table
+        origin name_texture_table_origin + ({character} * 4)
+        dw  {name_texture}
+        pullvar base, origin
+
+        // add portrait
+        add_portrait({character}, {portrait})
     }
     
     
