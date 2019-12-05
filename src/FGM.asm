@@ -560,6 +560,7 @@ scope FGM {
     add_sound(Ganondorf/sounds/GNDSTUN, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
     add_sound(Ganondorf/sounds/GND_CROWD, SAMPLE_RATE_16000, FGM_TYPE_CHANT, 0x810C)
     add_sound(DrMario/sounds/DRM_CROWD, SAMPLE_RATE_16000, FGM_TYPE_CHANT, 0x8160)
+    add_sound(DSamus/sounds/ANNOUNCER, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0x0)
 
     // This is always last
     write_sounds()
@@ -607,6 +608,7 @@ scope FGM {
             constant GANONDORF(709)
             constant YOUNG_LINK(741)
             constant DR_MARIO(742)
+            constant DSAMUS(748)
         }
 
         scope css {

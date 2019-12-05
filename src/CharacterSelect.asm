@@ -1433,7 +1433,7 @@ scope CharacterSelect {
     add_to_css(Character.id.GND, FGM.announcer.names.GANONDORF, 1.50, 0x00010002, series_logo.ZELDA, name_texture.GND, portrait_ganondorf)
     add_to_css(Character.id.YLINK, FGM.announcer.names.YOUNG_LINK, 1.50, 0x00010002, series_logo.ZELDA, name_texture.YLINK, portrait_young_link)
     add_to_css(Character.id.DRM, FGM.announcer.names.DR_MARIO, 1.50, 0x00010001, series_logo.MARIO_BROS, name_texture.DRM, portrait_dr_mario)
-    add_to_css(Character.id.DSAMUS, FGM.announcer.names.SAMUS, 1.50, 0x00010004, series_logo.METROID, name_texture.DSAMUS, portrait_dark_samus)
+    add_to_css(Character.id.DSAMUS, FGM.announcer.names.DSAMUS, 1.50, 0x00010004, series_logo.METROID, name_texture.DSAMUS, portrait_dark_samus
     
 }
 
