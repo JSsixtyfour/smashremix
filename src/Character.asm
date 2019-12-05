@@ -1225,10 +1225,14 @@ scope Character {
         // @ Description
         // Patches which redirect from the original zoom table to the extended one.
         scope menu_zoom_patches {
-            // character select screen
+            // character select screen (vs)
             OS.patch_start(0x00132E58, 0x80134BD8)
             li      t2, menu_zoom.table     // original line 1/3
             cvt.s.w f10, f8                 // original line 2
+            OS.patch_end()
+            // character select screen (training)
+            OS.patch_start(0x00142F14, 0x80133934)
+            li      t8, menu_zoom.table     // original line 1/2
             OS.patch_end()
             // results screen
             OS.patch_start(0x152A8C, 0x801338EC)
