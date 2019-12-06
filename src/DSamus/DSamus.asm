@@ -286,7 +286,7 @@ scope DSamus {
         nop
     }
     
-     // Loads an alternate animation for Dark Samus bomb explosion if explodes via connecting with an opponet
+    // Loads an alternate animation for Dark Samus bomb explosion if explodes via connecting with an opponent
     // active projectile struct is in 0x34(sp)
     scope alt_bomb_explosion_connect: {
         OS.patch_start(0xE3C58, 0x80169218)
@@ -315,10 +315,31 @@ scope DSamus {
     
     constant TYPE(0x2)                  // electric type damage used in Dark Samus down special in contrast to Samus (Fire type 0x1)
         
-        // temporary dark samus charge shot patch
+     // Loads an the ball graphic used by Samus at then end of her grab
+        scope throw_ball_graphic: {
+        OS.patch_start(0xC4654, 0x80149C14)
+        jal       throw_ball_graphic
+        andi    t8, t7, 0xFFFB              // original line 
+        _return:
+        OS.patch_end()
+        
+        addiu   at, r0, 0x0022
+        beq     v0, at, _darksamusballgraphic
+        nop
+        addiu   at, r0, 0x0003              // original line
+        j       _return                     // return
+        nop
+        
+        _darksamusballgraphic:
+        jr      ra                          // return
+        nop
+        }   
+     
+     // temporary dark samus charge shot patch
         OS.patch_start(0x6643C, 0x800EAC3C)
         nop
         OS.patch_end()
+    
     
     // Set default costumes
     Character.set_default_costumes(Character.id.DSAMUS, 0, 1, 2, 4, 1, 2, 0)
