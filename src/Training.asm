@@ -136,12 +136,14 @@ scope Training {
         nop
         OS.patch_end()
         
-        addiu   sp, sp,-0x0018              // allocate stack space
+        addiu   sp, sp,-0x0020              // allocate stack space
         sw      ra, 0x0004(sp)              // ~
         sw      t0, 0x0008(sp)              // ~
         sw      t1, 0x000C(sp)              // ~
         sw      t2, 0x0010(sp)              // ~
-        sw      t3, 0x0014(sp)              // store ra, t0-t3
+        sw      t3, 0x0014(sp)              // ~
+        sw      t4, 0x0018(sp)              // ~
+        sw      t5, 0x001C(sp)              // store ra, t0-t5
         
         li      t0, Global.match_info       // ~
         lw      t0, 0x0000(t0)              // t1 = match info address
@@ -149,11 +151,14 @@ scope Training {
         lw      t1, 0x0000(t1)              // t1 = reset counter value
         beq     t1, r0, _initialize_p1      // initialize values if load from sss is detected
         ori     t3, r0, Character.id.NONE   // t3 = character id: NONE
+        li      t4, entry_id_to_char_id     // t4 = entry_id_to_char_id table address
         
         _load_p1:
         addiu   t0, Global.vs.P_OFFSET      // t0 = p1 info
         li      t1, struct.port_1.ID        // ~
-        lw      t1, 0x0000(t1)              // t1 = port 1 char id
+        lw      t1, 0x0000(t1)              // t1 = port 1 training char id
+        addu    t1, t1, t4                  // t1 = address of char id
+        lb      t1, 0x0000(t1)              // t1 = char id
         sb      t1, 0x0003(t0)              // store char id
         li      t1, struct.port_1.type      // ~
         lw      t1, 0x0000(t1)              // t1 = port 1 type
@@ -164,7 +169,9 @@ scope Training {
         _load_p2:
         addiu   t0, Global.vs.P_DIFF        // t0 = p2 info
         li      t1, struct.port_2.ID        // ~
-        lw      t1, 0x0000(t1)              // t1 = port 2 char id
+        lw      t1, 0x0000(t1)              // t1 = port 2 training char id
+        addu    t1, t1, t4                  // t1 = address of char id
+        lb      t1, 0x0000(t1)              // t1 = char id
         sb      t1, 0x0003(t0)              // store char id
         li      t1, struct.port_2.type      // ~
         lw      t1, 0x0000(t1)              // t1 = port 2 type
@@ -175,7 +182,9 @@ scope Training {
         _load_p3:
         addiu   t0, Global.vs.P_DIFF        // t0 = p3 info
         li      t1, struct.port_3.ID        // ~
-        lw      t1, 0x0000(t1)              // t1 = port 3 char id
+        lw      t1, 0x0000(t1)              // t1 = port 3 training char id
+        addu    t1, t1, t4                  // t1 = address of char id
+        lb      t1, 0x0000(t1)              // t1 = char id
         sb      t1, 0x0003(t0)              // store char id
         li      t1, struct.port_3.type      // ~
         lw      t1, 0x0000(t1)              // t1 = port 3 type
@@ -186,7 +195,9 @@ scope Training {
         _load_p4:
         addiu   t0, Global.vs.P_DIFF        // t0 = p4 info
         li      t1, struct.port_4.ID        // ~
-        lw      t1, 0x0000(t1)              // t1 = port 4 char id
+        lw      t1, 0x0000(t1)              // t1 = port 4 training char id
+        addu    t1, t1, t4                  // t1 = address of char id
+        lb      t1, 0x0000(t1)              // t1 = char id
         sb      t1, 0x0003(t0)              // store char id
         li      t1, struct.port_4.type      // ~
         lw      t1, 0x0000(t1)              // t1 = port 4 type
@@ -198,11 +209,14 @@ scope Training {
         nop
         
         _initialize_p1:
+        li      t4, char_id_to_entry_id     // t4 = char_id_to_entry_id table address
         addiu   t0, Global.vs.P_OFFSET      // t0 = p1 info
         lbu     t1, 0x0003(t0)              // t1 = char id
+        addu    t5, t1, t4                  // t5 = address of training char id
+        lb      t5, 0x0000(t5)              // t5 = training char id
         li      t2, struct.port_1.ID        // t2 = struct id address
-        bnel    t1, t3, _initialize_p1+0x18 // ~
-        sw      t1, 0x0000(t2)              // if id != NONE, store in struct
+        bnel    t1, t3, _initialize_p1+0x24 // ~
+        sw      t5, 0x0000(t2)              // if id != NONE, store in struct
         lbu     t1, 0x0002(t0)              // t1 = type
         li      t2, struct.port_1.type      // t2 = struct type address
         sw      t1, 0x0000(t2)              // store type in struct
@@ -214,9 +228,11 @@ scope Training {
         _initialize_p2:
         addiu   t0, Global.vs.P_DIFF        // t0 = p2 info
         lbu     t1, 0x0003(t0)              // t1 = char id
+        addu    t5, t1, t4                  // t5 = address of training char id
+        lb      t5, 0x0000(t5)              // t5 = training char id
         li      t2, struct.port_2.ID        // t2 = struct id address
-        bnel    t1, t3, _initialize_p2+0x18 // ~
-        sw      t1, 0x0000(t2)              // if id != NONE, store in struct
+        bnel    t1, t3, _initialize_p2+0x20 // ~
+        sw      t5, 0x0000(t2)              // if id != NONE, store in struct
         lbu     t1, 0x0002(t0)              // t1 = type
         li      t2, struct.port_2.type      // t2 = struct type address
         sw      t1, 0x0000(t2)              // store type in struct
@@ -228,9 +244,11 @@ scope Training {
         _initialize_p3:
         addiu   t0, Global.vs.P_DIFF        // t0 = p3 info
         lbu     t1, 0x0003(t0)              // t1 = char id
+        addu    t5, t1, t4                  // t5 = address of training char id
+        lb      t5, 0x0000(t5)              // t5 = training char id
         li      t2, struct.port_3.ID        // t2 = struct id address
-        bnel    t1, t3, _initialize_p3+0x18 // ~
-        sw      t1, 0x0000(t2)              // if id != NONE, store in struct
+        bnel    t1, t3, _initialize_p3+0x20 // ~
+        sw      t5, 0x0000(t2)              // if id != NONE, store in struct
         lbu     t1, 0x0002(t0)              // t1 = type
         li      t2, struct.port_3.type      // t2 = struct type address
         sw      t1, 0x0000(t2)              // store type in struct
@@ -242,9 +260,11 @@ scope Training {
         _initialize_p4:
         addiu   t0, Global.vs.P_DIFF        // t0 = p4 info
         lbu     t1, 0x0003(t0)              // t1 = char id
+        addu    t5, t1, t4                  // t5 = address of training char id
+        lb      t5, 0x0000(t5)              // t5 = training char id
         li      t2, struct.port_4.ID        // t2 = struct id address
-        bnel    t1, t3, _initialize_p4+0x18 // ~
-        sw      t1, 0x0000(t2)              // if id != NONE, store in struct
+        bnel    t1, t3, _initialize_p4+0x20 // ~
+        sw      t5, 0x0000(t2)              // if id != NONE, store in struct
         lbu     t1, 0x0002(t0)              // t1 = type
         li      t2, struct.port_4.type      // t2 = struct type address
         sw      t1, 0x0000(t2)              // store type in struct
@@ -261,11 +281,13 @@ scope Training {
         lw      t0, 0x0008(sp)              // ~
         lw      t1, 0x000C(sp)              // ~
         lw      t2, 0x0010(sp)              // ~
-        lw      t3, 0x0014(sp)              // load t0-t3
+        lw      t3, 0x0014(sp)              // ~
+        lw      t4, 0x0018(sp)              // ~
+        lw      t5, 0x001C(sp)              // load t0-t5
         jal     0x801906D0                  // original line 1
         nop                                 // original line 2
         lw      ra, 0x0004(sp)              // load ra
-        addiu   sp, sp, 0x0018              // deallocate stack space
+        addiu   sp, sp, 0x0020              // deallocate stack space
         jr      ra                          // return
         nop
     }    
@@ -783,33 +805,157 @@ scope Training {
 
     // @ Description
     // Character Strings
-    char_1:;  db "MARIO" , 0x00
-    char_2:;  db "FOX", 0x00
-    char_3:;  db "DK", 0x00
-    char_4:;  db "SAMUS", 0x00
-    char_5:;  db "LUIGI", 0x00
-    char_6:;  db "LINK", 0x00
-    char_7:;  db "YOSHI", 0x00
-    char_8:;  db "C. FALCON", 0x00
-    char_9:;  db "KIRBY", 0x00
-    char_10:; db "PIKACHU", 0x00
-    char_11:; db "JIGGLYPUFF", 0x00
-    char_12:; db "NESS", 0x00
+    char_0x00:; db "MARIO" , 0x00
+    char_0x01:; db "FOX", 0x00
+    char_0x02:; db "DK", 0x00
+    char_0x03:; db "SAMUS", 0x00
+    char_0x04:; db "LUIGI", 0x00
+    char_0x05:; db "LINK", 0x00
+    char_0x06:; db "YOSHI", 0x00
+    char_0x07:; db "C. FALCON", 0x00
+    char_0x08:; db "KIRBY", 0x00
+    char_0x09:; db "PIKACHU", 0x00
+    char_0x0A:; db "JIGGLYPUFF", 0x00
+    char_0x0B:; db "NESS", 0x00
+    //char_0x0C:; db "MASTER HAND", 0x00
+    char_0x0D:; db "METAL MARIO", 0x00
+    char_0x0E:; db "POLY MARIO", 0x00
+    char_0x0F:; db "POLY FOX", 0x00
+    char_0x10:; db "POLY DK", 0x00
+    char_0x11:; db "POLY SAMUS", 0x00
+    char_0x12:; db "POLY LUIGI", 0x00
+    char_0x13:; db "POLY LINK", 0x00
+    char_0x14:; db "POLY YOSHI", 0x00
+    char_0x15:; db "POLY FALCON", 0x00
+    char_0x16:; db "POLY KIRBY", 0x00
+    char_0x17:; db "POLY PIKACHU", 0x00
+    char_0x18:; db "POLY PUFF", 0x00
+    char_0x19:; db "POLY NESS", 0x00
+    char_0x1A:; db "GIANT DK", 0x00
+    //char_0x1B:; db "NONE", 0x00
+    //char_0x1C:; db "NONE", 0x00
+    char_0x1D:; db "FALCO", 0x00
+    char_0x1E:; db "GANONDORF", 0x00
+    char_0x1F:; db "YOUNG LINK", 0x00
+    char_0x20:; db "DR. MARIO", 0x00
+    //char_0x21:; db "LUCAS", 0x00
+    char_0x22:; db "DARK SAMUS", 0x00
     OS.align(4)
 
     string_table_char:
-    dw char_1
-    dw char_2
-    dw char_3
-    dw char_4
-    dw char_5
-    dw char_6
-    dw char_7
-    dw char_8
-    dw char_9
-    dw char_10
-    dw char_11
-    dw char_12
+    dw char_0x00
+    dw char_0x01
+    dw char_0x02
+    dw char_0x03
+    dw char_0x04
+    dw char_0x05
+    dw char_0x06
+    dw char_0x07
+    dw char_0x08
+    dw char_0x09
+    dw char_0x0A
+    dw char_0x0B
+    //dw char_0x0C
+    dw char_0x0D
+    dw char_0x0E
+    dw char_0x0F
+    dw char_0x10
+    dw char_0x11
+    dw char_0x12
+    dw char_0x13
+    dw char_0x14
+    dw char_0x15
+    dw char_0x16
+    dw char_0x17
+    dw char_0x18
+    dw char_0x19
+    dw char_0x1A
+    //dw char_0x1B
+    //dw char_0x1C
+    dw char_0x1D
+    dw char_0x1E
+    dw char_0x1F
+    dw char_0x20
+    //dw char_0x21
+    dw char_0x22
+
+    entry_id_to_char_id:
+    db Character.id.MARIO
+    db Character.id.FOX
+    db Character.id.DK
+    db Character.id.SAMUS
+    db Character.id.LUIGI
+    db Character.id.LINK
+    db Character.id.YOSHI
+    db Character.id.CAPTAIN
+    db Character.id.KIRBY
+    db Character.id.PIKACHU
+    db Character.id.JIGGLYPUFF
+    db Character.id.NESS
+    //db Character.id.BOSS
+    db Character.id.METAL
+    db Character.id.NMARIO
+    db Character.id.NFOX
+    db Character.id.NDONKEY
+    db Character.id.NSAMUS
+    db Character.id.NLUIGI
+    db Character.id.NLINK
+    db Character.id.NYOSHI
+    db Character.id.NCAPTAIN
+    db Character.id.NKIRBY
+    db Character.id.NPIKACHU
+    db Character.id.NJIGGLY
+    db Character.id.NNESS
+    db Character.id.GDONKEY
+    //db Character.id.NONE
+    //db Character.id.NONE
+    db Character.id.FALCO
+    db Character.id.GND
+    db Character.id.YLINK
+    db Character.id.DRM
+    //db Character.id.LUCAS
+    db Character.id.DSAMUS
+
+    variable chars_skipped(0)
+    char_id_to_entry_id:
+    db Character.id.MARIO
+    db Character.id.FOX
+    db Character.id.DK
+    db Character.id.SAMUS
+    db Character.id.LUIGI
+    db Character.id.LINK
+    db Character.id.YOSHI
+    db Character.id.CAPTAIN
+    db Character.id.KIRBY
+    db Character.id.PIKACHU
+    db Character.id.JIGGLYPUFF
+    db Character.id.NESS
+    db Character.id.BOSS         // Not used
+    variable chars_skipped(chars_skipped + 1)
+    db Character.id.METAL - chars_skipped
+    db Character.id.NMARIO - chars_skipped
+    db Character.id.NFOX - chars_skipped
+    db Character.id.NDONKEY - chars_skipped
+    db Character.id.NSAMUS - chars_skipped
+    db Character.id.NLUIGI - chars_skipped
+    db Character.id.NLINK - chars_skipped
+    db Character.id.NYOSHI - chars_skipped
+    db Character.id.NCAPTAIN - chars_skipped
+    db Character.id.NKIRBY - chars_skipped
+    db Character.id.NPIKACHU - chars_skipped
+    db Character.id.NJIGGLY - chars_skipped
+    db Character.id.NNESS - chars_skipped
+    db Character.id.GDONKEY - chars_skipped
+    db Character.id.NONE         // Not used
+    db Character.id.NONE         // Not used
+    variable chars_skipped(chars_skipped + 2)
+    db Character.id.FALCO - chars_skipped
+    db Character.id.GND - chars_skipped
+    db Character.id.YLINK - chars_skipped
+    db Character.id.DRM - chars_skipped
+    db Character.id.LUCAS - chars_skipped    // Not used
+    variable chars_skipped(chars_skipped + 1)
+    db Character.id.DSAMUS - chars_skipped
 
     // @ Description 
     // Spawn Position Strings
@@ -882,14 +1028,10 @@ scope Training {
         nop
     }
         
-        
-        
-    
     percent_func_1_:; set_percent(1)
     percent_func_2_:; set_percent(2)
     percent_func_3_:; set_percent(3)
     percent_func_4_:; set_percent(4)
-    
     
     macro tail_px(player) {
         define character(Training.struct.port_{player}.ID)
@@ -901,7 +1043,7 @@ scope Training {
         define percent_func(Training.percent_func_{player}_)
 
 
-        Menu.entry("CHARACTER", Menu.type.U8, 0, 0, Character.id.NESS, OS.NULL, string_table_char, {character}, pc() + 16)
+        Menu.entry("CHARACTER", Menu.type.U8, 0, 0, char_id_to_entry_id - entry_id_to_char_id - 1, OS.NULL, string_table_char, {character}, pc() + 16)
         Menu.entry("COSTUME", Menu.type.U8, 0, 0, 5, OS.NULL, OS.NULL, {costume}, pc() + 12)
         Menu.entry("TYPE", Menu.type.U8, 2, 0, 2, OS.NULL, string_table_type, {type}, pc() + 12)
         Menu.entry("SPAWN", Menu.type.U8, 0, 0, 4, OS.NULL, string_table_spawn, {spawn_id}, pc() + 12)
