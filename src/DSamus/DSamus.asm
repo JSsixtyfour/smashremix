@@ -30,6 +30,7 @@ scope DSamus {
     insert DAIR, "moveset/DAIR.bin"
     insert BAIR, "moveset/BAIR.bin"
     insert LANDING_NAIR, "moveset/LANDING_NAIR.bin"
+    insert VICTORY1, "moveset/VICTORY1.bin"
     
     
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
@@ -75,6 +76,11 @@ scope DSamus {
     // Character.edit_action(DSAMUS, Action.FTiltMidLow,   -1,             -1,                         0x8014E6A0,                     -1,                             -1)
     // Character.edit_action(DSAMUS, Action.FTiltLow,      -1,             -1,                         0x8014E6A0,                     -1,                             -1)
 
+    // Modify Menu Action Parameters                // Action          // Animation                // Moveset Data             // Flags
+    Character.edit_menu_action_parameters(DSAMUS,   0x1,               File.DSAMUS_VICTORY1,       VICTORY1,                    -1)
+    Character.edit_menu_action_parameters(DSAMUS,   0x2,               File.DSAMUS_VICTORY1,       VICTORY1,                    -1)
+    Character.edit_menu_action_parameters(DSAMUS,   0x3,               File.DSAMUS_VICTORY1,       VICTORY1,                    -1)
+    
     // Set menu zoom size.
     Character.table_patch_start(menu_zoom, Character.id.DSAMUS, 0x4)
     float32 1.05

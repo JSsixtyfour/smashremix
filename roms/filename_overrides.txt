@@ -179,6 +179,7 @@
 08F3 Zebes Landing Header
 08F4 Zebes Landing Stage
 08F5 Zebes Landing BG
+08F6 Dark Samus Victory1
 0611 CAPTAIN DeadU
 0611 CAPTAIN ScreenKO
 05E8 CAPTAIN Entry
