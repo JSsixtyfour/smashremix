@@ -843,41 +843,80 @@ scope Training {
     OS.align(4)
 
     string_table_char:
-    dw char_0x00
-    dw char_0x01
-    dw char_0x02
-    dw char_0x03
-    dw char_0x04
-    dw char_0x05
-    dw char_0x06
-    dw char_0x07
-    dw char_0x08
-    dw char_0x09
-    dw char_0x0A
-    dw char_0x0B
-    //dw char_0x0C
-    dw char_0x0D
-    dw char_0x0E
-    dw char_0x0F
-    dw char_0x10
-    dw char_0x11
-    dw char_0x12
-    dw char_0x13
-    dw char_0x14
-    dw char_0x15
-    dw char_0x16
-    dw char_0x17
-    dw char_0x18
-    dw char_0x19
-    dw char_0x1A
-    //dw char_0x1B
-    //dw char_0x1C
-    dw char_0x1D
-    dw char_0x1E
-    dw char_0x1F
-    dw char_0x20
-    //dw char_0x21
-    dw char_0x22
+    dw char_0x00            // MARIO
+    dw char_0x01            // FOX
+    dw char_0x02            // DK
+    dw char_0x03            // SAMUS
+    dw char_0x04            // LUIGI
+    dw char_0x05            // LINK
+    dw char_0x06            // YOSHI
+    dw char_0x07            // CAPTAIN
+    dw char_0x08            // KIRBY
+    dw char_0x09            // PIKACHU
+    dw char_0x0A            // JIGGLYPUFF
+    dw char_0x0B            // NESS
+    dw char_0x1D            // FALCO
+    dw char_0x1E            // GANONDORF
+    dw char_0x1F            // YOUNG LINK
+    dw char_0x20            // DR MARIO
+    //dw char_0x21            // LUCAS
+    dw char_0x22            // DARK SAMUS
+    dw char_0x0D            // METAL MARIO
+    dw char_0x1A            // GIANT DK
+    dw char_0x0E            // POLYGON MARIO
+    dw char_0x0F            // POLYGON FOX
+    dw char_0x10            // POLYGON DK
+    dw char_0x11            // POLYGON SAMUS
+    dw char_0x12            // POLYGON LUIGI
+    dw char_0x13            // POLYGON LINK
+    dw char_0x14            // POLYGON YOSHI
+    dw char_0x15            // POLYGON CAPTAIN
+    dw char_0x16            // POLYGON KIRBY
+    dw char_0x17            // POLYGON PIKACHU
+    dw char_0x18            // POLYGON JIGGLYPUFF
+    dw char_0x19            // POLYGON NESS
+
+    // @ Description
+    // Training character id is really the order they are displayed in
+    // constant names are loosely based on the debug names for characters
+    scope id {
+        constant MARIO(0x00)
+        constant FOX(0x01)
+        constant DK(0x02)
+        constant SAMUS(0x03)
+        constant LUIGI(0x04)
+        constant LINK(0x05)
+        constant YOSHI(0x06)
+        constant CAPTAIN(0x07)
+        constant KIRBY(0x08)
+        constant PIKACHU(0x09)
+        constant JIGGLYPUFF(0x0A)
+        constant NESS(0x0B)
+
+        constant FALCO(0x0C)
+        constant GND(0x0D)
+        constant YLINK(0x0E)
+        constant DRM(0x0F)
+        constant LUCAS(0x10)           // Not yet in use, update DSAMUS when it is
+        constant DSAMUS(0x10)
+        // Increment METAL after adding more characters here
+
+        constant METAL(0x11)
+        constant GDONKEY(METAL + 0x01)
+        constant NMARIO(METAL + 0x02)
+        constant NFOX(METAL + 0x03)
+        constant NDONKEY(METAL + 0x04)
+        constant NSAMUS(METAL + 0x05)
+        constant NLUIGI(METAL + 0x06)
+        constant NLINK(METAL + 0x07)
+        constant NYOSHI(METAL + 0x08)
+        constant NCAPTAIN(METAL + 0x09)
+        constant NKIRBY(METAL + 0x0A)
+        constant NPIKACHU(METAL + 0x0B)
+        constant NJIGGLY(METAL + 0x0C)
+        constant NNESS(METAL + 0x0D)
+    }
+
 
     entry_id_to_char_id:
     db Character.id.MARIO
@@ -892,8 +931,14 @@ scope Training {
     db Character.id.PIKACHU
     db Character.id.JIGGLYPUFF
     db Character.id.NESS
-    //db Character.id.BOSS
+    db Character.id.FALCO
+    db Character.id.GND
+    db Character.id.YLINK
+    db Character.id.DRM
+    //db Character.id.LUCAS
+    db Character.id.DSAMUS
     db Character.id.METAL
+    db Character.id.GDONKEY
     db Character.id.NMARIO
     db Character.id.NFOX
     db Character.id.NDONKEY
@@ -906,56 +951,43 @@ scope Training {
     db Character.id.NPIKACHU
     db Character.id.NJIGGLY
     db Character.id.NNESS
-    db Character.id.GDONKEY
-    //db Character.id.NONE
-    //db Character.id.NONE
-    db Character.id.FALCO
-    db Character.id.GND
-    db Character.id.YLINK
-    db Character.id.DRM
-    //db Character.id.LUCAS
-    db Character.id.DSAMUS
 
-    variable chars_skipped(0)
     char_id_to_entry_id:
-    db Character.id.MARIO
-    db Character.id.FOX
-    db Character.id.DK
-    db Character.id.SAMUS
-    db Character.id.LUIGI
-    db Character.id.LINK
-    db Character.id.YOSHI
-    db Character.id.CAPTAIN
-    db Character.id.KIRBY
-    db Character.id.PIKACHU
-    db Character.id.JIGGLYPUFF
-    db Character.id.NESS
+    db id.MARIO
+    db id.FOX
+    db id.DK
+    db id.SAMUS
+    db id.LUIGI
+    db id.LINK
+    db id.YOSHI
+    db id.CAPTAIN
+    db id.KIRBY
+    db id.PIKACHU
+    db id.JIGGLYPUFF
+    db id.NESS
     db Character.id.BOSS         // Not used
-    variable chars_skipped(chars_skipped + 1)
-    db Character.id.METAL - chars_skipped
-    db Character.id.NMARIO - chars_skipped
-    db Character.id.NFOX - chars_skipped
-    db Character.id.NDONKEY - chars_skipped
-    db Character.id.NSAMUS - chars_skipped
-    db Character.id.NLUIGI - chars_skipped
-    db Character.id.NLINK - chars_skipped
-    db Character.id.NYOSHI - chars_skipped
-    db Character.id.NCAPTAIN - chars_skipped
-    db Character.id.NKIRBY - chars_skipped
-    db Character.id.NPIKACHU - chars_skipped
-    db Character.id.NJIGGLY - chars_skipped
-    db Character.id.NNESS - chars_skipped
-    db Character.id.GDONKEY - chars_skipped
+    db id.METAL
+    db id.NMARIO
+    db id.NFOX
+    db id.NDONKEY
+    db id.NSAMUS
+    db id.NLUIGI
+    db id.NLINK
+    db id.NYOSHI
+    db id.NCAPTAIN
+    db id.NKIRBY
+    db id.NPIKACHU
+    db id.NJIGGLY
+    db id.NNESS
+    db id.GDONKEY
     db Character.id.NONE         // Not used
     db Character.id.NONE         // Not used
-    variable chars_skipped(chars_skipped + 2)
-    db Character.id.FALCO - chars_skipped
-    db Character.id.GND - chars_skipped
-    db Character.id.YLINK - chars_skipped
-    db Character.id.DRM - chars_skipped
-    db Character.id.LUCAS - chars_skipped    // Not used
-    variable chars_skipped(chars_skipped + 1)
-    db Character.id.DSAMUS - chars_skipped
+    db id.FALCO
+    db id.GND
+    db id.YLINK
+    db id.DRM
+    db id.LUCAS                  // Not used yet
+    db id.DSAMUS
 
     // @ Description 
     // Spawn Position Strings
