@@ -60,6 +60,15 @@ scope Data {
     combo_numbers_y_info:
     Texture.info(16, 16)
     insert "../textures/combo_numbers_y.rgba5551"
+
+    // Controller textures
+    a_button_info:
+    Texture.info(16, 16)
+    insert "../textures/a_button.rgba5551"
+
+    b_button_info:
+    Texture.info(16, 16)
+    insert "../textures/b_button.rgba5551"
 }
 
 } // __DATA__

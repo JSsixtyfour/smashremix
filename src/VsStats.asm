@@ -49,6 +49,7 @@ scope VsStats {
     max_combo_hits_taken:; db "MAX HITS TAKEN", 0x00
     max_combo_damage_taken:; db "MAX DAMAGE TAKEN", 0x00
     dash:; db "-", 0x00
+    press_b:; db ":BACK", 0x00
     OS.align(4)
 
     // @ Description
@@ -299,6 +300,12 @@ scope VsStats {
         jal     Overlay.draw_centered_str_               // draw custom menu instructions
         nop
 
+        lli     a0, 000112                               // a0 - ulx
+        lli     a1, 000217                               // a1 - uly
+        li      a2, Data.a_button_info                   // a2 - a button texture address
+        jal     Overlay.draw_texture_                    // draw a button texture
+        nop
+
         // check for a press
         lli     a0, Joypad.A                             // a0 - button_mask
         lli     a1, 000069                               // a1 - whatever you like!
@@ -347,6 +354,19 @@ scope VsStats {
         collect_stats(2, 0x0008)                         // collect stats for port 2
         collect_stats(3, 0x000C)                         // collect stats for port 3
         collect_stats(4, 0x0010)                         // collect stats for port 4
+
+        // Tell the player how to go back
+        lli     a0, 000024                               // a0 = ulx
+        lli     a1, 000013                               // a1 = uly
+        li      a2, Data.b_button_info                   // a2 = b button texture address
+        jal     Overlay.draw_texture_                    // draw b button texture
+        nop
+
+        lli     a0, 000036                               // a0 = ulx
+        lli     a1, 000016                               // a1 = uly
+        li      a2, press_b                              // a2 = press b text address
+        jal     Overlay.draw_string_                     // draw press b text
+        nop
 
         // Draw lines
         lli     t7, 000024                               // t7 = X coord
