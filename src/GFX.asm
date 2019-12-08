@@ -61,6 +61,7 @@ scope GFX {
         sll     t6, t6, 0x2                              // t6 = offset in extended table
         addu    at, at, t6                               // at = address of address of GFX instructions
         lw      v0, 0x0000(at)                           // v0 = address of GFX instructions
+        mtc1    r0, f0                                   // original line (important)
         j       0x800CE71C                               // return after v0 is originally set
         nop                                           // ~
     }

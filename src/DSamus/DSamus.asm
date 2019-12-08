@@ -283,7 +283,7 @@ scope DSamus {
         lw      a0, 0x13C4(a0)              // original line
         sw      ra, 0x001C(sp)              // original line
         sw      s0, 0x0018(sp)              // original line
-        addiu   a1, r0, 0x0073              // place new graphic ID
+        addiu   a1, r0, 0x0077              // place new graphic ID
         lui     ra, 0x8010                  // set to original return address
         addiu   ra, ra, 0x05EC              // set to original return address
         j       0x800CE9E8                  // jump to "Create GFX"
@@ -314,15 +314,12 @@ scope DSamus {
         addiu   sp, sp, 0x0010              // deallocate stack space
         j     0x801005C8                    // original line modified
         nop
-        
-        
     }
-    
     
     constant TYPE(0x2)                  // electric type damage used in Dark Samus down special in contrast to Samus (Fire type 0x1)
         
      // Loads an the ball graphic used by Samus at then end of her grab
-        scope throw_ball_graphic: {
+     scope throw_ball_graphic: {
         OS.patch_start(0xC4654, 0x80149C14)
         jal       throw_ball_graphic
         andi    t8, t7, 0xFFFB              // original line 
