@@ -160,14 +160,14 @@ scope Hitbox {
     }
 
     // @ Description
-    // This makes it so the hitbox display is positioned correctly on the CSS screens.
+    // This makes it so the hitbox display is positioned correctly on the CSS screens and the VS results screen.
     // I am doing it this way because I don't know if the positioning is important on other screens.
     // See https://github.com/tehzz/SSB64-Notes/blob/master/Universal/Model%20Display/Routine%20800F293C%20-%20renderCharModel.md#hurtbox-mooring
-    scope css_position_: {
+    scope fix_hibox_position_: {
         OS.patch_start(0x6EB10, 0x800F3310)
-        j       css_position_
+        j       fix_hibox_position_
         nop
-        _css_position_return:
+        _fix_hibox_position_return:
         OS.patch_end()
 
         li      at, Toggles.entry_hitbox_mode
@@ -182,19 +182,22 @@ scope Hitbox {
         bnez    t5, _original               // ...then branch to original (not on a CSS)
         nop
         slti    t5, at, 0x0015              // if (screen id is between 0x10 and 0x14)...
-        bnez    t5, _css                    // ...then we're on a CSS
+        bnez    t5, _fix                    // ...then we're on a CSS
+        nop
+        addiu   t5, r0, 0x0018              // t5 = results screen id
+        beq     t5, at, _fix                // if (screen id = results) then apply the fix
         nop                                 // ...otherwise just do the original:
 
         _original:
         addiu   at, r0, 0x03EA              // original line 1 - this is the key "mooring" value
         lw      t5, 0x0000(t7)              // original line 2
-        j       _css_position_return        // return
+        j       _fix_hibox_position_return  // return
         nop
 
-        _css:
+        _fix:
         addiu   at, r0, 0x03EA              // original line 1 - this is the key "mooring" value
         addiu   t5, r0, 0x03EA              // intentionally set t5 equal to at
-        j       _css_position_return        // return
+        j       _fix_hibox_position_return  // return
         nop
 
     }
