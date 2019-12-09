@@ -196,7 +196,7 @@ scope GFX {
     macro add_gfx(name, instructions_filename) {
         global variable new_gfx_count(new_gfx_count + 1) // increment new_gfx_count
         evaluate n(new_gfx_count)
-        print " - Added GFX_ID 0x"; OS.print_hex(0x5B + new_gfx_count); print " (Command ID "; OS.print_hex((0x5B + new_gfx_count) * 4); print "): {name}\n"
+        print " - Added GFX_ID 0x"; OS.print_hex(0x5B + new_gfx_count); print " (Command ID "; OS.print_hex((0x5B + new_gfx_count) * 4); print ") with Instruction ID 0x"; OS.print_hex(0x76 + new_gfx_count); print "): {name}\n"
 
         gfx_assembly_{n}:
         lli     a3, 0x76 + {n}                           // this creates a new unique GFX_INSTRUCTION_ID
@@ -210,7 +210,7 @@ scope GFX {
         insert "{instructions_filename}"
 
         // Notes on instructions (can be removed in the future)
-        // dw      0x0000002D // texture id... TODO: allow for additional textures
+        // dw      0x0000002D // texture id
         // dw      0x00010022 // second halfword is number of frames
         // dw      0x00000000 // setting to FFFFFFFF makes the gfx stay on screen forever
                               // setting to 11111111 makes it disintegrate and fall to the ground
@@ -218,15 +218,15 @@ scope GFX {
 		                      // last digit is falling/disintegrating, can be 0-3
 		                      // 2nd to last digit mirrors gfx on various axes
 		                      // 3rd to last digit pixelizes gfx and makes it stay on the screen forever when 8 or higher
-        // dw      0x3F800000
-        // dw      0x3F800000
-        // dw      0x00000000
-        // dw      0x00000000
-        // dw      0x00000000
-        // dw      0x00000000
-        // dw      0x00000000
+        // dw      0x3F800000 // related to position
+        // dw      0x3F800000 // related to position
+        // dw      0x00000000 // related to position
+        // dw      0x00000000 // related to position
+        // dw      0x00000000 // related to position
+        // dw      0x00000000 // related to position
+        // dw      0x00000000 // related to position?
         // dw      0xBF800000
-        // dw      0x43700000
+        // dw      0x43700000 // scale?
         // dw      0xA0004316
         // dw      0x0000A01A // 3rd byte controls translations? animation start or type?
                               // last byte controls how long it takes to grow to the final size
@@ -259,6 +259,9 @@ scope GFX {
             evaluate n({n}+1)
         }
 
+        extended_gfx_instructions_map_pointer:
+        dw      extended_gfx_instructions_map            // pointer to extended gfx instructions table
+
         extended_gfx_texture_block_map:
         define n(1)
         while {n} <= new_gfx_texture_block_count {
@@ -288,10 +291,50 @@ scope GFX {
     // add_gfx_texture(gfx/coin-9.rgba8888)
 
     // ADD NEW GFX HERE
-    add_gfx(Explosion Duplicate, gfx/blue_explosion_instructions.bin)
+    add_gfx(Blue Explosion, gfx/blue_explosion_instructions.bin)
+    add_gfx(Blue Bomb Explosion, gfx/blue_bomb_explosion_instructions.bin)
+    add_gfx(Blue Bomb Explosion - Instruction 0x1B replacement, gfx/blue_bomb_explosion_instructions-1B.bin)
+    add_gfx(Blue Bomb Explosion - Instruction 0x1C replacement, gfx/blue_bomb_explosion_instructions-1C.bin)
+    add_gfx(Blue Bomb Explosion - Instruction 0x1D replacement, gfx/blue_bomb_explosion_instructions-1D.bin)
+    add_gfx(Blue Bomb Explosion - Instruction 0x1E replacement, gfx/blue_bomb_explosion_instructions-1E.bin)
+    add_gfx(Blue Bomb Explosion - Instruction 0x1F replacement, gfx/blue_bomb_explosion_instructions-1F.bin)
+    add_gfx(Blue Bomb Explosion - Instruction 0x20 replacement, gfx/blue_bomb_explosion_instructions-20.bin)
 
-    write_gfx()                                          // writes new GFX to ROM
+    // writes new GFX to ROM
+    write_gfx()
 
+    // @ Description
+    // Modifies the routine that references GFX Instruction IDs within GFX instructions so that we can use an extended table
+    // Instructions reference other GFX Instruction IDs via the A5 command
+    scope extend_referenced_gfx_instructions_map_: {
+        OS.patch_start(0x4F02C, 0x800D364C)
+        j       extend_referenced_gfx_instructions_map_
+        nop
+        _return:
+        OS.patch_end()
+
+        OS.patch_start(0x4EFF0, 0x800D3610)
+        // slti    at, a3, t6                             // original line
+        slti    at, a3, 0x0077 + new_gfx_count            // modify check on max GFX_INSTRUCTIONS_ID
+        OS.patch_end()
+
+        // a0 should be a pointer to the address of the original GFX instructions map, so we'll change it if need be
+        // a3 is the referenced GFX_INSTRUCTIONS_ID
+
+        slti    at, a3, 0x0077                            // check if this is a new GFX_INSTRUCTIONS_ID
+        beqz    at, _new_gfx_instructions_id              // if it is a new GFX_INSTRUCTIONS_ID, then branch
+        nop                                               // else use the original table and return to original routine:
+        addiu   t7, t7, 0x6400                            // original line 1
+        addu    a0, a1, t7                                // original line 2
+        j       _return                                   // return to original routine
+        nop
+
+        _new_gfx_instructions_id:
+        li      a0, extended_gfx_instructions_map_pointer // a0 = pointer to address of extended table
+        addiu   a3, a3, -0x0077                           // a3 = slot in extended table
+        j       _return                                   // return to original routine
+        nop                                               // ~
+    }
 }
 
 } // __GFX__

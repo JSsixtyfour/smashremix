@@ -283,7 +283,7 @@ scope DSamus {
         lw      a0, 0x13C4(a0)              // original line
         sw      ra, 0x001C(sp)              // original line
         sw      s0, 0x0018(sp)              // original line
-        addiu   a1, r0, 0x0077              // place new graphic ID
+        addiu   a1, r0, 0x0078              // place new graphic ID
         lui     ra, 0x8010                  // set to original return address
         addiu   ra, ra, 0x05EC              // set to original return address
         j       0x800CE9E8                  // jump to "Create GFX"
