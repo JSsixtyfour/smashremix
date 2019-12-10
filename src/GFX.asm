@@ -208,6 +208,7 @@ scope GFX {
 
         gfx_instructions_{n}:
         insert "{instructions_filename}"
+        OS.align(16)
 
         // Notes on instructions (can be removed in the future)
         // dw      0x0000002D // texture id
