@@ -165,6 +165,7 @@ scope File {
     constant STG_ZLANDING(0x8F4)
     constant STG_ZLANDING_BG(0x8F5)
     constant DSAMUS_VICTORY1(0x8F6)
+    constant DSAMUS_SELECT(0x8F7)
     
     
 }
