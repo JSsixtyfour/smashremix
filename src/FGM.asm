@@ -125,14 +125,22 @@ scope FGM {
     // name - Name of the file located in ../src, without the extension and including directory e.g. DrMario/sounds/B65
     // sample rate - The desired sample rate, for now 16000 Hz and 32000 Hz are supported
     // fgm_type - The type of sound, for now Voice and Chant are supported, with Chant including crowd noise
-    // fgm_length - The length of the sound, for now only suppored for chants
-    macro add_sound(name, sample_rate, fgm_type, fgm_length) {
+    // reverb - Amount of reverb to apply to the sample, 0-127, only supported by Voice type
+    // fgm_length - The length of the sound, -1 will determine length automatically  
+    macro add_sound(name, sample_rate, fgm_type, reverb, fgm_length) {
         global variable new_sample_count(new_sample_count + 1)
         evaluate num(new_sample_count)
         global define SOUND_NAME_{num}({name})
         global evaluate SOUND_SAMPLE_RATE_{num}({sample_rate})
         global evaluate SOUND_TYPE_{num}({fgm_type})
-        global evaluate SOUND_LENGTH_{num}({fgm_length})
+        global evaluate SOUND_REVERB_{num}({reverb})
+        read32 SOUND_SIZE_{num}, "../src/{SOUND_NAME_{num}}.aifc", 0x4
+        if {fgm_length} != -1 {
+            global evaluate SOUND_LENGTH_{num}({fgm_length})  
+        } else {
+            global evaluate SOUND_LENGTH_{num}(SOUND_SIZE_{num} / 177)
+        }
+        
         print "Added {SOUND_NAME_{num}}\nFGM_ID: 0x"; OS.print_hex(ORIGINAL_FGM_COUNT - 1 + {num}); print " (", ORIGINAL_FGM_COUNT - 1 + {num},")\n"
         print "Sound Test Voice ID: ", 244 + {num}, "\n\n"
     }
@@ -349,18 +357,20 @@ scope FGM {
             // If not, then the following byte is checked and combined with the first to get the SFX to FGM table's index
             // TODO: handle any sfx_fgm_index appropriately - for now, assume > 0x1D0 and < 0x180
             evaluate sfx_fgm_index({sfx_fgm_index}+0x8000)
-
+            evaluate fgm_length({fgm_length}|0x8000)
             if {fgm_type} == FGM_TYPE_VOICE {
                 dh  0xDE00
                 db  0xD1              // Next halfword is pointer to SFX_ID
                 dh  {sfx_fgm_index}
                 dh  0xD2FF
-                db  0xD3
-                dw  0x55D224D5
-                dw  0xEC6F64D3
-                dw  0x4B6F64D3
-                dw  0x416F64D3
-                dw  0x3C6F1ED0
+                dh  0xD3D4
+                dh  0xD224
+                dh  0xD5FF
+                db  0x6F
+                dh  {fgm_length} // length
+                db  0xD0
+                // fill rest of block with 0x00s for now
+                fill 0xB, 0x00
             } else {
                 dh  0xDE04
                 db  0xD1
@@ -373,7 +383,7 @@ scope FGM {
                 dh  {fgm_length} // length
                 db  0xD0
                 // fill rest of block with 0x00s for now
-                fill 0x6, 0x00
+                fill 0x9, 0x00
             }
         }
 
@@ -419,23 +429,34 @@ scope FGM {
         // TODO: set up with more arguments once we understand this better
         // @ Arguments
         // sfx_index - The index in the SFX table
-        // sample_rate - Sample of the SFX, for now 16000 Hz and 32000 Hz are supported.
+        // sample_rate - Sample of the SFX, for now 16000 Hz and 32000 Hz are supported
+        // reverb - Amount of reverb to apply to the sample, 0-127, only supported by Voice type
         // fgm_type - The type of sound, either Voice or Chant
-        macro add_sfx_fgm(sfx_index, sample_rate, fgm_type) {
+        macro add_sfx_fgm(sfx_index, sample_rate, reverb, fgm_type) {
             // TODO: May not always use 0x3C as the block size
             // Block size of 0x3C is no longer filled
+            if {reverb} > 127 {
+                print "Invalid reverb value attempted: {reverb}. Max reverb of 127 will be used instead.\n"
+                evaluate reverb(127)
+            }
             if {fgm_type} == FGM_TYPE_VOICE {
                 db      0x60                                        // always starts with 60
                 dh      {sfx_index}                                 // add the pointer to the sfx id we added
                 db      {sample_rate}                               // set sample rate (0x20 = 16000 Hz, 0x60 = 32000 Hz)
-                dw      0xFB500564
-                dw      0x05690574
-                dw      0x080A7208
-                dw      0x19690832
-                dw      0x5F083255
-                dw      0x08324608
-                dw      0x3C3C083C
-                dw      0x32700000
+                dh      0xFB50
+                db      0x30
+                db      {reverb}
+                dw      0x089F407F
+                dw      0x70000000
+                // OLD
+                // dw      0xFB500564
+                // dw      0x05690574
+                // dw      0x080A7208
+                // dw      0x19690832
+                // dw      0x5F083255
+                // dw      0x08324608
+                // dw      0x3C3C083C
+                // dw      0x32700000
             } else {
                 db      0x60                                        // always starts with 60
                 dh      {sfx_index}                                 // add the pointer to the sfx id we added
@@ -443,7 +464,6 @@ scope FGM {
                 dw      0x306420FB
                 dw      0x5A0B747F
                 dw      0x70000000
-                fill    0x14, 0x00
             }
         }
 
@@ -478,7 +498,7 @@ scope FGM {
             // add the sfx to fgm block
             origin sfx_fgm_origin
             evaluate s({n}+1)
-            add_sfx_fgm(0x8142 + {n}, {SOUND_SAMPLE_RATE_{s}}, {SOUND_TYPE_{s}})
+            add_sfx_fgm(0x8142 + {n}, {SOUND_SAMPLE_RATE_{s}}, {SOUND_REVERB_{s}}, {SOUND_TYPE_{s}})
             variable sfx_fgm_origin(origin())
             variable sfx_fgm_pc(pc())
             evaluate n({n}+1)
@@ -507,60 +527,60 @@ scope FGM {
     }
 
     // Add the sounds here
-    add_sound(Ganondorf/sounds/PLACEHOLDER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0) // PLACEHOLDER: id 2B7 has issues in-game
-    add_sound(Ganondorf/sounds/53 deflectsound2, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(Ganondorf/sounds/54 hurtcut3, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(Ganondorf/sounds/55 hurt2cut2, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(Ganondorf/sounds/56 attacklike6cut3 seems unused, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(Ganondorf/sounds/57 middle size attackcut6, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(Ganondorf/sounds/58 attacklike2cut7, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(Ganondorf/sounds/GNDWARLOCKPUNCH1, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(Ganondorf/sounds/GNDWARLOCKPUNCH2, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(Ganondorf/sounds/5C Goodattacksound, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(Ganondorf/sounds/5D attacklike6, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(Ganondorf/sounds/5E shortenedlaugh, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(Ganondorf/sounds/5F attacklike5cut4, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(Ganondorf/sounds/62 deathlikecut1, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(Ganondorf/sounds/ANNOUNCER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(DrMario/sounds/65, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(DrMario/sounds/B5, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(Falco/sounds/FALCO_CROWD, SAMPLE_RATE_16000, FGM_TYPE_CHANT, 0x8157)
-    add_sound(Falco/sounds/66, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(Falco/sounds/67, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(Falco/sounds/68, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(Falco/sounds/69, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(Falco/sounds/6a, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(Falco/sounds/6B, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(Falco/sounds/6C, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(Falco/sounds/6D, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(Falco/sounds/6E, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(Falco/sounds/6F, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(Falco/sounds/70, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(Falco/sounds/71, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(Falco/sounds/72, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(Falco/sounds/ANNOUNCER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(YoungLink/sounds/YLINK_CROWD, SAMPLE_RATE_16000, FGM_TYPE_CHANT, 0x8101)
-    add_sound(YoungLink/sounds/8A2, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0x0)
-    add_sound(YoungLink/sounds/8B Hup!short3, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0x0)
-    add_sound(YoungLink/sounds/8C5, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0x0)
-    add_sound(YoungLink/sounds/8D2, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0x0)
-    add_sound(YoungLink/sounds/8E2, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0x0)
-    add_sound(YoungLink/sounds/8F, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0x0)
-    add_sound(YoungLink/sounds/90, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0x0)
-    add_sound(YoungLink/sounds/91, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0x0)
-    add_sound(YoungLink/sounds/92, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0x0)
-    add_sound(YoungLink/sounds/93, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0x0)
-    add_sound(YoungLink/sounds/95, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0x0)
-    add_sound(YoungLink/sounds/yltaunt, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0x0)
-    add_sound(YoungLink/sounds/96, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0x0)
-    add_sound(YoungLink/sounds/ANNOUNCER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(DrMario/sounds/ANNOUNCER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(YoungLink/sounds/YLTAUNTDRINK, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0x0)
-    add_sound(YoungLink/sounds/YLSLEEP, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0x0)
-    add_sound(Ganondorf/sounds/GNDSTUN, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0x0)
-    add_sound(Ganondorf/sounds/GND_CROWD, SAMPLE_RATE_16000, FGM_TYPE_CHANT, 0x810C)
-    add_sound(DrMario/sounds/DRM_CROWD, SAMPLE_RATE_16000, FGM_TYPE_CHANT, 0x8160)
-    add_sound(DSamus/sounds/ANNOUNCER, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0x0)
+    add_sound(Ganondorf/sounds/PLACEHOLDER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1) // PLACEHOLDER: id 2B7 has issues in-game
+    add_sound(Ganondorf/sounds/53 deflectsound2, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Ganondorf/sounds/54 hurtcut3, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Ganondorf/sounds/55 hurt2cut2, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Ganondorf/sounds/56 attacklike6cut3 seems unused, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Ganondorf/sounds/57 middle size attackcut6, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Ganondorf/sounds/58 attacklike2cut7, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Ganondorf/sounds/GNDWARLOCKPUNCH, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Ganondorf/sounds/PLACEHOLDER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1) // PLACEHOLDER: GNDWARLOCKPUNCH is now all one sound so this lsot is unused
+    add_sound(Ganondorf/sounds/5C Goodattacksound, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Ganondorf/sounds/5D attacklike6, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Ganondorf/sounds/5E shortenedlaugh, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Ganondorf/sounds/5F attacklike5cut4, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Ganondorf/sounds/62 deathlikecut1, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Ganondorf/sounds/ANNOUNCER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(DrMario/sounds/65, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(DrMario/sounds/B5, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Falco/sounds/FALCO_CROWD, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, 0x157)
+    add_sound(Falco/sounds/66, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Falco/sounds/67, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Falco/sounds/68, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Falco/sounds/69, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Falco/sounds/6a, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Falco/sounds/6B, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Falco/sounds/6C, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Falco/sounds/6D, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Falco/sounds/6E, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Falco/sounds/6F, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Falco/sounds/70, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Falco/sounds/71, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Falco/sounds/72, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Falco/sounds/ANNOUNCER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(YoungLink/sounds/YLINK_CROWD, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, 0x101)
+    add_sound(YoungLink/sounds/8A2, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(YoungLink/sounds/8B Hup!short3, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(YoungLink/sounds/8C5, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(YoungLink/sounds/8D2, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(YoungLink/sounds/8E2, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(YoungLink/sounds/8F, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(YoungLink/sounds/90, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(YoungLink/sounds/91, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(YoungLink/sounds/92, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(YoungLink/sounds/93, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(YoungLink/sounds/95, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(YoungLink/sounds/yltaunt, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(YoungLink/sounds/96, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(YoungLink/sounds/ANNOUNCER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(DrMario/sounds/ANNOUNCER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(YoungLink/sounds/YLTAUNTDRINK, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(YoungLink/sounds/YLSLEEP, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Ganondorf/sounds/GNDSTUN, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Ganondorf/sounds/GND_CROWD, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, 0x10C)
+    add_sound(DrMario/sounds/DRM_CROWD, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, 0x160)
+    add_sound(DSamus/sounds/ANNOUNCER, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0, -1)
 
     // This is always last
     write_sounds()
