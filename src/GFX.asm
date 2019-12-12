@@ -244,6 +244,51 @@ scope GFX {
     }
 
     // @ Description
+    // Clones the ground effect GFX with a new color
+    // name - Used for display only
+    // color_index - known colors:
+    //    0 - red, 1 - green, 2 - blue/black, 3 - yellow, 4 - normal , 5 - black, 8 - black/blue
+    macro add_ground_effect_gfx(name, color_index) {
+        global variable new_gfx_count(new_gfx_count + 1) // increment new_gfx_count
+        evaluate n(new_gfx_count)
+        print " - Added GFX_ID 0x"; OS.print_hex(0x5B + new_gfx_count); print " (Command ID "; OS.print_hex((0x5B + new_gfx_count) * 4); print "): {name}\n"
+
+        // The following lines are from 0x800EB0A4, the original chargeshot ground effect GFX assembly:
+        gfx_assembly_{n}:
+        lw      t0, 0x0054(sp)                           // original line 1
+        or      a0, s0, r0                               // original line 2
+        lw      t1, 0x014C(t0)                           // original line 3
+        bnez    t1, j_0x800EB0F8                         // original line 4, modified to use jump
+        nop                                              // original line 5
+        lw      v0, 0x00EC(t0)                           // original line 6 - v0 = platform ID of character
+        addiu   at, r0, 0xFFFF                           // original line 7
+        beq     v0, at, j_0x800EB0F8                     // original line 8, modified to use jump
+        addiu   at, r0, 0xFFFE                           // original line 9
+        beq     v0, at, j_0x800EB0F8                     // original line 10, modified to use jump
+        nop                                              // original line 11
+        lwc1    f12, 0x00F8(t0)                          // original line 12 - related to angle of platform
+        lwc1    f14, 0x00FC(t0)                          // original line 13 - related to angle of platform
+        jal     0x8001863C                               // original line 14
+        neg.s   f12, f12                                 // original line 15
+        mfc1    a2, f0                                   // original line 16
+        or      a0, s0, r0                               // original line 17
+        jal     0x800FFD58                               // original line 18
+        addiu   a1, r0, {color_index}                    // original line 19
+        or      v1, v0, r0                               // original line 21
+        j       0x800EB388                               // original line 20
+        nop
+
+        j_0x800EB0F8:
+        j       0x800EB0F8                               // jump instead of branch to avoid out of bounds
+        nop
+
+        gfx_instructions_{n}:
+        // instructions not necessary, but leave in label so write_gfx() doesn't fail
+
+        OS.align(16)
+    }
+
+    // @ Description
     // Finalizes adding new GFX
     macro write_gfx() {
         extended_gfx_command_jump_table:
@@ -300,6 +345,8 @@ scope GFX {
     add_gfx(Blue Bomb Explosion - Instruction 0x1E replacement, gfx/blue_bomb_explosion_instructions-1E.bin)
     add_gfx(Blue Bomb Explosion - Instruction 0x1F replacement, gfx/blue_bomb_explosion_instructions-1F.bin)
     add_gfx(Blue Bomb Explosion - Instruction 0x20 replacement, gfx/blue_bomb_explosion_instructions-20.bin)
+
+    add_ground_effect_gfx(Blue/Black Ground Effect, 0x0002)
 
     // writes new GFX to ROM
     write_gfx()
