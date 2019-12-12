@@ -345,7 +345,7 @@ scope VsCombo {
         nop
         sw      t3, 0x0014(t5)                    // store color index as current color index
         sw      t3, 0x0010(t5)                    // store color index as color index for display
-        beq     t3, t7, _highest_combo_check      // if (previoius color index != current color index) then set attribution start
+        beq     t3, t7, _highest_combo_check      // if (previous color index != current color index) then set attribution start
         nop
         sw      a0, 0x0034(t5)                    // store hit count as starting hit
         b       _highest_combo_check              // skip to _highest_combo_check
@@ -354,17 +354,20 @@ scope VsCombo {
         _use_previous_color:
         lw      t3, 0x0014(t5)                    // t3 = previously stored color index
         sw      t3, 0x0010(t5)                    // store color index as color index for display
+        sltiu   t2, t3, 0x0004                    // if (current and previous hit unattributed to player) then don't do highest combo check
+        beqz    t2, _draw                         // ~
+        nop
 
         _highest_combo_check:
         lw      t0, 0x0034(t5)                    // t0 = starting hit
         subu    t1, a0, t0                        // t1 = current hit count - starting hit
         addiu   t1, t1, 0x0001                    // t1 = current combo hit count attributed to this player
-        li      t0, 0x0038                        // t0 = size of combo struct
+        lli     t0, 0x0038                        // t0 = size of combo struct
         multu   t0, t3                            // t3 * t0 is the offset from combo_struct_p1 for the attacking player
         mflo    t0                                // t0 = t3 * t0
         li      t2, combo_struct_p1               // t2 = address of port 1 combo struct
         addu    t2, t2, t0                        // t2 = address of attacking player's combo struct (combo_struct_pX)
-        li      t0, 0x0004                        // t0 = size of word
+        lli     t0, 0x0004                        // t0 = size of word
         multu   t0, a2                            // a2 * t0 is the offset from highest_combo_vs_p1 for the defending player
         mflo    t0                                // t0 = a2 * t0
         addiu   t2, t2, 0x0020                    // t2 = word before highest_combo_vs_p1 for attacking player

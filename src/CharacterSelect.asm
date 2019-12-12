@@ -542,10 +542,10 @@ scope CharacterSelect {
         nop
         OS.patch_end()
 
-        _get_random_id:
         addiu   sp, sp,-0x0004              // allocate stack space
         sw      ra, 0x0004(sp)              // ~
 
+        _get_random_id:
         jal     0x80018A30                  // original line 1
         addiu   a0, r0, NUM_SLOTS           // original line 2 modified to include all slots
         // v0 = random number between 0 and NUM_SLOTS

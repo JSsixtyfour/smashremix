@@ -258,13 +258,13 @@ scope GFX {
         lw      t0, 0x0054(sp)                           // original line 1
         or      a0, s0, r0                               // original line 2
         lw      t1, 0x014C(t0)                           // original line 3
-        bnez    t1, j_0x800EB0F8                         // original line 4, modified to use jump
+        bnez    t1, j_0x800EB0F8_{n}                     // original line 4, modified to use jump
         nop                                              // original line 5
         lw      v0, 0x00EC(t0)                           // original line 6 - v0 = platform ID of character
         addiu   at, r0, 0xFFFF                           // original line 7
-        beq     v0, at, j_0x800EB0F8                     // original line 8, modified to use jump
+        beq     v0, at, j_0x800EB0F8_{n}                 // original line 8, modified to use jump
         addiu   at, r0, 0xFFFE                           // original line 9
-        beq     v0, at, j_0x800EB0F8                     // original line 10, modified to use jump
+        beq     v0, at, j_0x800EB0F8_{n}                 // original line 10, modified to use jump
         nop                                              // original line 11
         lwc1    f12, 0x00F8(t0)                          // original line 12 - related to angle of platform
         lwc1    f14, 0x00FC(t0)                          // original line 13 - related to angle of platform
@@ -278,7 +278,7 @@ scope GFX {
         j       0x800EB388                               // original line 20
         nop
 
-        j_0x800EB0F8:
+        j_0x800EB0F8_{n}:
         j       0x800EB0F8                               // jump instead of branch to avoid out of bounds
         nop
 

@@ -723,13 +723,22 @@ scope Stages {
     constant NUM_PAGES(0x03)
 
     // @ Description
-    // Disable original L and R button behavior [bit]
-    OS.patch_start(0x0014FC54, 0x801340E4)
-    lli     a0, 0x0202
+    // Disable original L/R, D-pad and C button behavior
+    // left
+    OS.patch_start(0x0014FC50, 0x801340E0)
+    or       v0, r0, r0                     // don't check input and instead return that nothing is pressed
     OS.patch_end()
-
-    OS.patch_start(0x0014FD58, 0x801341E8)
-    lli     a0, 0x0101
+    // right
+    OS.patch_start(0x0014FD54, 0x801341E4)
+    or       v0, r0, r0                     // don't check input and instead return that nothing is pressed
+    OS.patch_end()
+    // down
+    OS.patch_start(0x0014FB80, 0x80134010)
+    or       v0, r0, r0                     // don't check input and instead return that nothing is pressed
+    OS.patch_end()
+    // up
+    OS.patch_start(0x0014FAAC, 0x80133F3C)
+    or       v0, r0, r0                     // don't check input and instead return that nothing is pressed
     OS.patch_end()
 
     // @ Description
