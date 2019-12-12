@@ -246,9 +246,9 @@ scope GFX {
     // @ Description
     // Clones the ground effect GFX with a new color
     // name - Used for display only
-    // color_index - known colors:
-    //    0 - red, 1 - green, 2 - blue/black, 3 - yellow, 4 - normal , 5 - black, 8 - black/blue
-    macro add_ground_effect_gfx(name, color_index) {
+    // color_offset - (byte) offset from built-in palette... only use multiples of 4 for console. Known colors:
+    //    0x00 - red, 0x04 - normal (yellow), 0x08 - black/blue, 0x10 - black, 0x20 - blue/black
+    macro add_ground_effect_gfx(name, color_offset) {
         global variable new_gfx_count(new_gfx_count + 1) // increment new_gfx_count
         evaluate n(new_gfx_count)
         print " - Added GFX_ID 0x"; OS.print_hex(0x5B + new_gfx_count); print " (Command ID "; OS.print_hex((0x5B + new_gfx_count) * 4); print "): {name}\n"
@@ -273,7 +273,7 @@ scope GFX {
         mfc1    a2, f0                                   // original line 16
         or      a0, s0, r0                               // original line 17
         jal     0x800FFD58                               // original line 18
-        addiu   a1, r0, {color_index}                    // original line 19
+        addiu   a1, r0, {color_offset}                   // original line 19
         or      v1, v0, r0                               // original line 21
         j       0x800EB388                               // original line 20
         nop
@@ -346,7 +346,7 @@ scope GFX {
     add_gfx(Blue Bomb Explosion - Instruction 0x1F replacement, gfx/blue_bomb_explosion_instructions-1F.bin)
     add_gfx(Blue Bomb Explosion - Instruction 0x20 replacement, gfx/blue_bomb_explosion_instructions-20.bin)
 
-    add_ground_effect_gfx(Blue/Black Ground Effect, 0x0002)
+    add_ground_effect_gfx(Blue/Black Ground Effect, 0x20)
 
     // writes new GFX to ROM
     write_gfx()
