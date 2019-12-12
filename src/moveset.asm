@@ -55,7 +55,8 @@ scope Moveset {
     macro THROW_DATA(address) {
         dw 0x30000000                       // command
         dw {address}                        // pointer
-    }   
+    }
+    
     // @ Description
     // adds a CONCURRENT_STREAM moveset command
     macro CONCURRENT_STREAM(address) {

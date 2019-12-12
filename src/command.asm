@@ -227,7 +227,7 @@ scope Command {
     }    
     
     // @ Description
-    // sets the character's armour value to a given value.
+    // sets the character's armour value to a given value
     // armour is a floating point value which is subtracted from the knockback value on hit
     // CC00XXXX
     // XXXX0000 = armour value
@@ -237,6 +237,30 @@ scope Command {
         sll     t0, t0, 0x0010              // shift armour value 2 bytes left
         sw      t0, 0x07E8(s2)              // store armour value
         ori     t8, r0, COMMAND_LENGTH      // set command length
+        jr      ra                          // return
+        nop
+    }
+    
+    // @ Description
+    // sets the character's kinetic (aerial/grounded) state
+    // CC0000XX
+    // 0x00 = on ground
+    // 0x01 = in air
+    scope set_kinetic_: {
+        constant COMMAND_LENGTH(0x4)
+        lbu     t0, 0x0003(v0)              // t0 = parameter value
+        bnez    t0, _aerial                 // if !0, set kinetic state to aerial
+        nop
+        _grounded:
+        sb      r0, 0x0148(s2)              // set jump value to 0
+        sw      r0, 0x014C(s2)              // set kinetic state to 0(grounded)
+        b       _end                        // end
+        nop
+        _aerial:
+        ori     t0, r0, 0x0001              // t0 = 0x0001
+        sb      t0, 0x0148(s2)              // set jump value to 1
+        sw      t0, 0x014C(s2)              // set kinetic state to 1(aerial)
+        _end:
         jr      ra                          // return
         nop
     }
@@ -601,7 +625,7 @@ scope Command {
     dw      model_part.save_                // 0xD4 MODEL PART SAVE
     dw      model_part.set_                 // 0xD5 MODEL PART SET
     dw      model_part.load_                // 0xD6 MODEL PART LOAD
-    dw      OS.NULL                         // 0xD7
+    dw      set_kinetic_                    // 0xD7 SET KINETIC STATE
     dw      OS.NULL                         // 0xD8
     dw      OS.NULL                         // 0xD9
     dw      OS.NULL                         // 0xDA

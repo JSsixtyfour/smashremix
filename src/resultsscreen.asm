@@ -292,9 +292,10 @@ scope ResultsScreen {
     }
     
     // ADD CHARACTERS TO RESULTS SCREEN
-    add_to_results_screen(Character.id.FALCO, 0x2D6, Character.id.FOX, Character.id.FOX, 170, FALCO, 30, 1, 0x45)
-    add_to_results_screen(Character.id.GND, 0x2C5, Character.id.LINK, Character.id.CAPTAIN, 185, GANONDORF, 20, 0.6, 0x43)
-    add_to_results_screen(Character.id.YLINK, 0x2E5, Character.id.LINK, Character.id.LINK, 185, YOUNG LINK, 20, 0.65, 0x44)
-    add_to_results_screen(Character.id.DRM, 0x2E6, Character.id.MARIO, Character.id.MARIO, 185, DR. MARIO, 20, 0.75, 0x46)
-    add_to_results_screen(Character.id.DSAMUS, 0x2EC, Character.id.SAMUS, Character.id.SAMUS, 185, DARK SAMUS, 20, 0.6, 0x52)
+    add_to_results_screen(Character.id.FALCO, FGM.announcer.names.FALCO, Character.id.FOX, Character.id.FOX, 170, FALCO, 30, 1, 0x45)
+    add_to_results_screen(Character.id.GND, FGM.announcer.names.GANONDORF, Character.id.LINK, Character.id.CAPTAIN, 185, GANONDORF, 20, 0.6, 0x43)
+    add_to_results_screen(Character.id.YLINK, FGM.announcer.names.YOUNG_LINK, Character.id.LINK, Character.id.LINK, 185, YOUNG LINK, 20, 0.65, 0x44)
+    add_to_results_screen(Character.id.DRM, FGM.announcer.names.DR_MARIO, Character.id.MARIO, Character.id.MARIO, 185, DR. MARIO, 20, 0.75, 0x46)
+    add_to_results_screen(Character.id.DSAMUS, FGM.announcer.names.DSAMUS, Character.id.SAMUS, Character.id.SAMUS, 185, DARK SAMUS, 20, 0.6, 0x52)
+    add_to_results_screen(Character.id.WARIO, FGM.announcer.names.WARIO, Character.id.MARIO, Character.id.MARIO, 170, WARIO, 30, 1, 0x0C)
 }

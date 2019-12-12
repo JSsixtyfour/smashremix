@@ -52,7 +52,7 @@ scope Falco {
     Character.edit_action_parameters(FALCO, Action.Dash,             -1,                        DASH,                       -1)
     Character.edit_action_parameters(FALCO, Action.JumpAerialF,      -1,                        JUMP2,                      -1)
     Character.edit_action_parameters(FALCO, Action.JumpAerialB,      -1,                        JUMP2,                      -1)
-    Character.edit_action_parameters(FALCO, Action.Catch,            -1,                        GRAB,                       -1)
+    Character.edit_action_parameters(FALCO, Action.Grab,             -1,                        GRAB,                       -1)
     Character.edit_action_parameters(FALCO, Action.ThrowF,           -1,                        FTHROW,                     -1)
     Character.edit_action_parameters(FALCO, Action.ThrowB,           -1,                        BTHROW,                     -1)
     Character.edit_action_parameters(FALCO, Action.RollF,            -1,                        FROLL,                      -1)

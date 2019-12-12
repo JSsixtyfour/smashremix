@@ -845,7 +845,7 @@ scope Training {
     char_0x1E:; db "GANONDORF", 0x00
     char_0x1F:; db "YOUNG LINK", 0x00
     char_0x20:; db "DR. MARIO", 0x00
-    //char_0x21:; db "LUCAS", 0x00
+    char_0x21:; db "WARIO", 0x00
     char_0x22:; db "DARK SAMUS", 0x00
     OS.align(4)
 
@@ -866,7 +866,7 @@ scope Training {
     dw char_0x1E            // GANONDORF
     dw char_0x1F            // YOUNG LINK
     dw char_0x20            // DR MARIO
-    //dw char_0x21            // LUCAS
+    dw char_0x21            // WARIO
     dw char_0x22            // DARK SAMUS
     dw char_0x0D            // METAL MARIO
     dw char_0x1A            // GIANT DK
@@ -904,11 +904,11 @@ scope Training {
         constant GND(0x0D)
         constant YLINK(0x0E)
         constant DRM(0x0F)
-        constant LUCAS(0x10)           // Not yet in use, update DSAMUS when it is
-        constant DSAMUS(0x10)
+        constant WARIO(0x10)
+        constant DSAMUS(0x11)
         // Increment METAL after adding more characters here
 
-        constant METAL(0x11)
+        constant METAL(0x12)
         constant GDONKEY(METAL + 0x01)
         constant NMARIO(METAL + 0x02)
         constant NFOX(METAL + 0x03)
@@ -942,7 +942,7 @@ scope Training {
     db Character.id.GND
     db Character.id.YLINK
     db Character.id.DRM
-    //db Character.id.LUCAS
+    db Character.id.WARIO
     db Character.id.DSAMUS
     db Character.id.METAL
     db Character.id.GDONKEY
@@ -993,7 +993,7 @@ scope Training {
     db id.GND
     db id.YLINK
     db id.DRM
-    db id.LUCAS                  // Not used yet
+    db id.WARIO
     db id.DSAMUS
 
     // @ Description 

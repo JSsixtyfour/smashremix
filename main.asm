@@ -82,8 +82,9 @@ include "src/Ganondorf/Ganondorf.asm"
 include "src/YoungLink/YoungLink.asm"
 // DR MARIO
 include "src/DrMario/DrMario.asm"
-// LUCAS
-include "src/Lucas/Lucas.asm"
+// WARIO
+include "src/Wario/WarioSpecial.asm"
+include "src/Wario/Wario.asm"
 // DARK SAMUS
 include "src/DSamus/DSamus.asm"
 

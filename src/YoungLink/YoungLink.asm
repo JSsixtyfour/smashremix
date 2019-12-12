@@ -44,7 +44,7 @@ scope YoungLink {
     Character.edit_action_parameters(YLINK, Action.CliffAttackQuick2,-1,                        EDGEATTACKF,                -1)
     Character.edit_action_parameters(YLINK, Action.CliffAttackSlow2, -1,                        EDGEATTACKS,                -1)
     Character.edit_action_parameters(YLINK, Action.Sleep,            -1,                        ASLEEP,                     -1)
-    Character.edit_action_parameters(YLINK, Action.Catch,            -1,                        GRAB,                       -1)
+    Character.edit_action_parameters(YLINK, Action.Grab,             -1,                        GRAB,                       -1)
     Character.edit_action_parameters(YLINK, Action.Teeter,           -1,                        TEETERING,                  -1)
     Character.edit_action_parameters(YLINK, Action.Taunt,           File.YLINK_TAUNT,           TAUNT,                      -1)
     Character.edit_action_parameters(YLINK, Action.Jab1,            -1,                         JAB_1,                      -1)
@@ -54,7 +54,7 @@ scope YoungLink {
     Character.edit_action_parameters(YLINK, Action.UTilt,           -1,                         UTILT,                      -1)
     Character.edit_action_parameters(YLINK, Action.DTilt,           -1,                         DTILT,                      -1)
     Character.edit_action_parameters(YLINK, Action.FSmash,          -1,                         FSMASH,                     -1)   
-    Character.edit_action_parameters(YLINK, Action.USmash,          0x8C9,                      USMASH,                     -1)
+    Character.edit_action_parameters(YLINK, Action.USmash,          File.YLINK_USMASH,          USMASH,                     -1)
     Character.edit_action_parameters(YLINK, Action.DSmash,          -1,                         DSMASH,                     -1)
     Character.edit_action_parameters(YLINK, Action.AttackAirN,      -1,                         NAIR,                       -1)
     Character.edit_action_parameters(YLINK, Action.AttackAirF,      -1,                         FAIR,                       -1)
@@ -109,7 +109,6 @@ scope YoungLink {
     OS.patch_end()
     
     // Set default costumes
-    // TODO: update this when Young Link has costumes)
     Character.set_default_costumes(Character.id.YLINK, 0, 1, 2, 4, 1, 2, 0)
     
     // Add icon palettes

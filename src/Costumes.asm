@@ -147,7 +147,9 @@ scope Costumes {
         db 0x03                             // Falco
         db 0x05                             // Ganondorf
         db 0x04                             // Young Link
-        db 0x04                             // Dr. Mario                
+        db 0x04                             // Dr. Mario
+        db 0x04                             // Wario
+        db 0x01                             // Dark Samus
         OS.align(4)
 
         functions:

@@ -280,7 +280,7 @@ scope Character {
     // NOTE: this macro supports use outside of this file.
     macro edit_action_parameters(name, action, animation, command, flags) {
     if {action} >= 0xDC && ({action} - 0xDC) * 0x14 >= Character.action_array_size.{Character.{name}_parent} {
-        print "\n\n WARNING: Action 0x" ; OS.print_hex({action}) ; print " does not exist for {{name}_parent}. edit_action_parameters aborted."
+        print "\n\nWARNING: Action 0x" ; OS.print_hex({action}) ; print " does not exist for {{name}_parent}. edit_action_parameters aborted.\n"
     } else {
         // Define {num} (used to avoid constant declaration issues with read16)
         if !{defined num} {
@@ -319,7 +319,7 @@ scope Character {
     // NOTE: this macro supports use outside of this file.
     macro edit_menu_action_parameters(name, action, animation, command, flags) {
     if {action} > 0xF {
-        print "\n\n WARNING: Menu Action 0x" ; OS.print_hex({action}) ; print " is unsupported. edit_menu_action_parameters aborted."
+        print "\n\nWARNING: Menu Action 0x" ; OS.print_hex({action}) ; print " is unsupported. edit_menu_action_parameters aborted.\n"
     } else {
         // Modify menu parameter struct
         pushvar origin, base
@@ -342,7 +342,7 @@ scope Character {
     // NOTE: this macro supports use outside of this file.
     macro edit_action(name, action, staling, asm1, asm2, asm3, asm4) {
     if {action} < 0xDC {
-        print "\n\n WARNING: Action 0x" OS.print_hex({action}) ; print " is a shared action and cannot be modified. edit_action aborted."
+        print "\n\nWARNING: Action 0x" ; OS.print_hex({action}) ; print " is a shared action and cannot be modified. edit_action aborted.\n"
     } else if {staling} > 0x1F {
         print "\n\n WARNING: UNSUPPORTED STALING ID! Max Staling ID = 0x1F. edit_action aborted."
     } else {
@@ -1824,9 +1824,9 @@ scope Character {
     // 0x1F - YLINK
     define_character(YLINK, LINK, File.YLINK_MAIN, 0x0E0, 0, File.YLINK_CHARACTER, 0x147, File.YLINK_BOOMERANG_HITBOX, 0x161, 0x145, 0, 0x708, 0, OS.TRUE)
     // 0x20 - DRM
-    define_character(DRM, MARIO, File.DRM_MAIN, 0x0CA, 0, File.DRM_CHARACTER, 0x12A, File.DRM_PROJECTILE_DATA, 0x164, File.DRM_PROJECTILE_DATA, 0, 0x428, 0x0, OS.TRUE)
-    // 0x21 - LUCAS
-    define_character(LUCAS, NESS, File.LUCAS_MAIN, 0x0EE, 0, 0x14F, 0x150, 0x160, 0x0F0, 0x151, 0,  0x5BC, 0x0, OS.TRUE)
+    define_character(DRM, MARIO, File.DRM_MAIN, 0x0CA, 0, File.DRM_CHARACTER, 0x12A, File.DRM_PROJECTILE_DATA, 0x164, File.DRM_PROJECTILE_GRAPHIC, 0, 0x428, 0x0, OS.TRUE)
+    // 0x21 - WARIO
+    define_character(WARIO, MARIO, File.WARIO_MAIN, 0x0CA, 0, File.WARIO_CHARACTER, 0x12A, 0x0CC, 0x164, 0x129, 0, 0x428, 0x0, OS.FALSE)
     // 0x22 - DSAMUS
     define_character(DSAMUS, SAMUS, File.DSAMUS_MAIN, 0x0D8, 0, File.DSAMUS_CHARACTER, 0x142, 0x15D, File.DSAMUS_SECONDARY, 0, 0, 0x610, 0x0, OS.TRUE)
     

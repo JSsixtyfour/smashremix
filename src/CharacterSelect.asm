@@ -174,7 +174,7 @@ scope CharacterSelect {
     dw  0x19270                             // 0x1E - GND
     dw  0x14268                             // 0x1F - YLINK
     dw  0x7710                              // 0x20 - DRM
-    dw  0x0                                 // 0x21 - LUCAS
+    dw  0x8A70                              // 0x21 - WARIO
     dw  0x12550                             // 0x22 - DARK SAMUS
 
     // @ Description
@@ -186,7 +186,7 @@ scope CharacterSelect {
     // Table of alternate req list ROM offsets.
     alt_req_table:
     constant alt_req_table_origin(origin())
-    fill Character.NUM_CHARACTERS * 0x6
+    fill Character.NUM_CHARACTERS * 0x4
     
     // @ Description
     // Adds an alternate req list for a given character.
@@ -229,7 +229,9 @@ scope CharacterSelect {
     add_alt_req_list(Character.id.GND, req/GND_MODEL)
     add_alt_req_list(Character.id.YLINK, req/YLINK_MODEL)
     add_alt_req_list(Character.id.DRM, req/DRM_MODEL)
+    add_alt_req_list(Character.id.WARIO, req/WARIO_MODEL)
     add_alt_req_list(Character.id.DSAMUS, req/DSAMUS_MODEL)
+    OS.align(4)
 
     // @ Description
     // This function returns what character is selected by the token's position
@@ -697,7 +699,7 @@ scope CharacterSelect {
     }
 
     // @ Description
-    // allows for custom entries of series logo based on file offset (+0x10 for DF000000 00000000)
+    // allows for custom entries of name texture based on file offset (+0x10 for DF000000 00000000)
     // (requires modification of file 0x11)
     // VS Mode
     scope get_name_texture_: {
@@ -716,7 +718,7 @@ scope CharacterSelect {
     }
 
     // @ Description
-    // allows for custom entries of series logo based on file offset (+0x10 for DF000000 00000000)
+    // allows for custom entries of name texture based on file offset (+0x10 for DF000000 00000000)
     // (requires modification of file 0x11)
     // Training Mode
     scope get_name_texture_training_: {
@@ -919,7 +921,8 @@ scope CharacterSelect {
         _loop:
         jal     load_character_model_       // load character function
         or      a0, s0, r0                  // a0 = index
-        slti    at, s0, Character.id.DSAMUS // end on x character (Character.NUM_CHARACTERS - 1 should work usually)
+        // end on x character (Character.NUM_CHARACTERS - 1 should work usually)
+        slti    at, s0, Character.NUM_CHARACTERS - 1
         bnez    at, _loop
         addiu   s0, s0, 0x0001              // increment index
         lui     v1, 0x8014                  // original line 1
@@ -1433,6 +1436,7 @@ scope CharacterSelect {
     add_to_css(Character.id.GND, FGM.announcer.names.GANONDORF, 1.50, 0x00010002, series_logo.ZELDA, name_texture.GND, portrait_ganondorf)
     add_to_css(Character.id.YLINK, FGM.announcer.names.YOUNG_LINK, 1.50, 0x00010002, series_logo.ZELDA, name_texture.YLINK, portrait_young_link)
     add_to_css(Character.id.DRM, FGM.announcer.names.DR_MARIO, 1.50, 0x00010001, series_logo.MARIO_BROS, name_texture.DRM, portrait_dr_mario)
+    add_to_css(Character.id.WARIO, FGM.announcer.names.WARIO, 1.50, 0x00010003, series_logo.MARIO_BROS, name_texture.BLANK, portrait_wario)
     add_to_css(Character.id.DSAMUS, FGM.announcer.names.DSAMUS, 1.50, 0x00010004, series_logo.METROID, name_texture.DSAMUS, portrait_dark_samus)
     
 }
