@@ -109,7 +109,7 @@ scope Wario {
     
     // Set crowd chant FGM.
     Character.table_patch_start(crowd_chant_fgm, Character.id.WARIO, 0x2)
-    dh  0x2FF
+    dh  0x303
     OS.patch_end()
     
     // Set initial script.
