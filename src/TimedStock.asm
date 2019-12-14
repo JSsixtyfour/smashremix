@@ -71,7 +71,7 @@ scope TimedStock {
         lw      t6, 0x9B90 (t6)             // (original) t6 = deaths
         li      t7, Global.vs.stocks        // t7 = address of stocks_setting
         lbu     t7, 0x0000(t7)              // t7 = stocks_setting
-        subu    v0, t6, t7                  // v0 = score = stocks_setting - deaths
+        subu    v0, t7, t6                  // v0 = score = stocks_setting - deaths
         b       _end
         nop
         
