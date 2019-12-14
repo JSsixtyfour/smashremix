@@ -60,6 +60,7 @@ scope Joypad {
     // a0 - button_mask
     // a1 - player (p1 = 0, p4 = 3)
     // a2 - type
+    // a3 - (bool) match any
     // @ Returns
     // v0 - bool
     scope check_buttons_: {
@@ -76,7 +77,17 @@ scope Joypad {
         addu    t0, t0, a2                  // t0 = struct + offset + type
         lhu     t0, 0x0000(t0)              // t0 = type
         lli     v0, OS.FALSE                // v0 = false
+        bnez    a3, _any
+        nop
         bne     t0, a0, _end                // if (mask != button_mask), skip
+        nop
+        lli     v0, OS.TRUE
+        b       _end
+        nop
+
+        _any:
+        and     t1, t0, a0
+        beqz    t1, _end                    // if (mask != button_mask), skip
         nop
         lli     v0, OS.TRUE
 
@@ -94,22 +105,24 @@ scope Joypad {
     // true as well.
     // @ Arguments
     // a0 - button_mask
-    // a1 - whatever you like!
+    // a1 - (bool) match any?
     // a2 - type
     // @ Returns
     // v0 - bool
     scope check_buttons_all_: {
-        addiu   sp, sp,-0x0018              // allocate stack space
+        addiu   sp, sp,-0x001C              // allocate stack space
         sw      a0, 0x0004(sp)              // ~
         sw      a1, 0x0008(sp)              // ~
         sw      a2, 0x000C(sp)              // ~
-        sw      t0, 0x0010(sp)              // ~
-        sw      ra, 0x0014(sp)              // save registers
+        sw      a3, 0x0010(sp)              // ~
+        sw      t0, 0x0014(sp)              // ~
+        sw      ra, 0x0018(sp)              // save registers
         
         // player 1
         lw      a0, 0x0004(sp)              // a0 - button mask
         lli     a1, 0x0000                  // a1 - player
         lw      a2, 0x000C(sp)              // a2 - type
+        lw      a3, 0x0008(sp)              // a3 - match any?
         jal     Joypad.check_buttons_       // v0 = bool (p1)
         nop
         move    t0, v0                      // t0 = return
@@ -118,6 +131,7 @@ scope Joypad {
         lw      a0, 0x0004(sp)              // a0 - button mask
         lli     a1, 0x0001                  // a1 - player
         lw      a2, 0x000C(sp)              // a2 - type
+        lw      a3, 0x0008(sp)              // a3 - match any?
         jal     Joypad.check_buttons_       // v0 = bool (p2)
         nop
         or      t0, t0, v0                  // t0 = bool (p1/p2)
@@ -126,6 +140,7 @@ scope Joypad {
         lw      a0, 0x0004(sp)              // a0 - button mask
         lli     a1, 0x0002                  // a1 - player
         lw      a2, 0x000C(sp)              // a2 - type
+        lw      a3, 0x0008(sp)              // a3 - match any?
         jal     Joypad.check_buttons_       // v0 = bool (p3)
         nop
         or      t0, t0, v0                  // at = bool (p1/p2/p3)
@@ -134,6 +149,7 @@ scope Joypad {
         lw      a0, 0x0004(sp)              // a0 - button mask
         lli     a1, 0x0003                  // a1 - player
         lw      a2, 0x000C(sp)              // a2 - type
+        lw      a3, 0x0008(sp)              // a3 - match any?
         jal     Joypad.check_buttons_       // v0 = bool (p4)
         nop
         or      t0, t0, v0                  // at = bool (p1/p2/p3/p4)
@@ -142,9 +158,10 @@ scope Joypad {
         lw      a0, 0x0004(sp)              // ~
         lw      a1, 0x0008(sp)              // ~
         lw      a2, 0x000C(sp)              // ~
-        lw      t0, 0x0010(sp)              // ~
-        lw      ra, 0x0014(sp)              // save registers
-        addiu   sp, sp, 0x0018              // deallocate stack space
+        lw      a3, 0x0010(sp)              // ~
+        lw      t0, 0x0014(sp)              // ~
+        lw      ra, 0x0018(sp)              // save registers
+        addiu   sp, sp, 0x001C              // deallocate stack space
         jr      ra                          // return
         nop
     }

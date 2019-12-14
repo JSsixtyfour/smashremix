@@ -1283,10 +1283,10 @@ scope Stages {
         sw      t1, 0x001C(sp)              // ~
         sw      at, 0x0020(sp)              // save registers
 
-        // check for dpad up press to toggle frozen mode
-        li      a0, Joypad.DU               // a0 - button mask
+        // check for L button press to toggle frozen mode
+        li      a0, Joypad.L                // a0 - button mask
         li      a2, Joypad.PRESSED          // a2 - type
-        jal     Joypad.check_buttons_all_   // v0 = dpad up pressed
+        jal     Joypad.check_buttons_all_   // v0 = L pressed
         nop
         beqz    v0, _check_inputs           // if not pressed, skip
         nop
@@ -1496,12 +1496,20 @@ scope Stages {
         sw      v0, 0x0018(sp)              // save registers
 
         // check for right on the stick
-        lli     a0, Joypad.RIGHT             // a0 - enum left/right/down/up
-        jal     Joypad.check_stick_          // v0 = right was pushed
+        lli     a0, Joypad.RIGHT            // a0 - enum left/right/down/up
+        jal     Joypad.check_stick_         // v0 = right was pushed
         nop
-        beqz    v0, _end                     // skip update
+        bnez    v0, _update                 // if (right was pushed) then do update
+        nop
+        li      a0, Joypad.CR | Joypad.DR   // a0 - button mask
+        lli     a1, OS.TRUE                 // a1 - any button
+        li      a2, Joypad.PRESSED          // a2 - type
+        jal     Joypad.check_buttons_all_   // v0 = C/dpad right pressed
+        nop
+        beqz    v0, _end                    // skip update
         nop
 
+        _update:
         li      t0, preview_is_outdated     // ~
         lli     t1, OS.TRUE                 // ~
         sw      t1, 0x0000(t0)              // mark preview outdated
@@ -1547,13 +1555,20 @@ scope Stages {
         lli     a0, Joypad.LEFT             // a0 - enum left/right/down/up
         jal     Joypad.check_stick_         // v0 = left was pushed
         nop
+        bnez    v0, _update                 // if (left was pushed) then do update
+        nop
+        li      a0, Joypad.CL | Joypad.DL   // a0 - button mask
+        lli     a1, OS.TRUE                 // a1 - any button
+        li      a2, Joypad.PRESSED          // a2 - type
+        jal     Joypad.check_buttons_all_   // v0 = C/dpad left pressed
+        nop
         beqz    v0, _end                    // skip update
         nop
 
+        _update:
         li      t0, preview_is_outdated     // ~
         lli     t1, OS.TRUE                 // ~
         sw      t1, 0x0000(t0)              // mark preview outdated
-
 
         // check bounds
         li      t0, column                  // ~
@@ -1595,9 +1610,17 @@ scope Stages {
         lli     a0, Joypad.DOWN             // a0 - enum left/right/down/up
         jal     Joypad.check_stick_         // v0 = down was pushed
         nop
+        bnez    v0, _update                 // if (down was pushed) then do update
+        nop
+        li      a0, Joypad.CD | Joypad.DD   // a0 - button mask
+        lli     a1, OS.TRUE                 // a1 - any button
+        li      a2, Joypad.PRESSED          // a2 - type
+        jal     Joypad.check_buttons_all_   // v0 = C/dpad down pressed
+        nop
         beqz    v0, _end                    // skip update
         nop
 
+        _update:
         li      t0, preview_is_outdated     // ~
         lli     t1, OS.TRUE                 // ~
         sw      t1, 0x0000(t0)              // mark preview outdated
@@ -1648,9 +1671,17 @@ scope Stages {
         lli     a0, Joypad.UP               // a0 - enum left/right/down/up
         jal     Joypad.check_stick_         // v0 = up was pushed
         nop
+        bnez    v0, _update                 // if (up was pushed) then do update
+        nop
+        li      a0, Joypad.CU | Joypad.DU   // a0 - button mask
+        lli     a1, OS.TRUE                 // a1 - any button
+        li      a2, Joypad.PRESSED          // a2 - type
+        jal     Joypad.check_buttons_all_   // v0 = C/dpad up pressed
+        nop
         beqz    v0, _end                    // skip update
         nop
 
+        _update:
         li      t0, preview_is_outdated     // ~
         lli     t1, OS.TRUE                 // ~
         sw      t1, 0x0000(t0)              // mark preview outdated

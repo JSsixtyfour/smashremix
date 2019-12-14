@@ -46,7 +46,7 @@ scope GameEnd {
 
         // p1
         lli     a0, BUTTON_MASK             // a0 - button masks
-        lli     a1, 000069                  // a1 - whatever you want
+        lli     a1, OS.FALSE                // a1 - all must be pressed
         lli     a2, Joypad.HELD             // a2 - type
         jal     Joypad.check_buttons_all_   // v0 = bool
         nop
