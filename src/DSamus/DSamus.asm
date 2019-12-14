@@ -32,6 +32,8 @@ scope DSamus {
     insert LANDING_NAIR, "moveset/LANDING_NAIR.bin"
     insert VICTORY1, "moveset/VICTORY1.bin"
     insert SELECT, "moveset/SELECT.bin"
+    insert CHARGE, "moveset/CHARGE.bin"; Moveset.GO_TO(CHARGELOOP)            // loops
+    insert CHARGELOOP, "moveset/CHARGELOOP.bin"; Moveset.GO_TO(CHARGELOOP)    // loops
     
     
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
@@ -68,14 +70,10 @@ scope DSamus {
     Character.edit_action_parameters(DSAMUS, Action.FSmashLow,      -1,                         FSMASHDOWN,                 -1)
     Character.edit_action_parameters(DSAMUS, 0xE3,                  -1,                         UP_SPECIAL_GROUND,          -1)
     Character.edit_action_parameters(DSAMUS, 0xE4,                  -1,                         UP_SPECIAL_AIR,             -1)
+    Character.edit_action_parameters(DSAMUS, 0xDF,                  -1,                         CHARGE,                     -1)
     
      // Modify Actions            // Action             // Staling ID   // Main ASM                 // Interrupt/Other ASM          // Movement/Physics ASM         // Collision ASM
        Character.edit_action(DSAMUS, 0xE4,                 -1,             -1,                         0x80160370,                     -1,                             -1)
-    // Character.edit_action(DSAMUS, Action.FTiltHigh,     -1,             -1,                         0x8014E6A0,                     -1,                             -1)
-    // Character.edit_action(DSAMUS, Action.FTiltMidHigh,  -1,             -1,                         0x8014E6A0,                     -1,                             -1)
-    // Character.edit_action(DSAMUS, Action.FTilt,         -1,             -1,                         0x8014E6A0,                     -1,                             -1)
-    // Character.edit_action(DSAMUS, Action.FTiltMidLow,   -1,             -1,                         0x8014E6A0,                     -1,                             -1)
-    // Character.edit_action(DSAMUS, Action.FTiltLow,      -1,             -1,                         0x8014E6A0,                     -1,                             -1)
 
     // Modify Menu Action Parameters                // Action          // Animation                // Moveset Data             // Flags
     Character.edit_menu_action_parameters(DSAMUS,   0x1,               File.DSAMUS_VICTORY1,       VICTORY1,                    -1)
