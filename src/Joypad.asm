@@ -60,7 +60,7 @@ scope Joypad {
     // a0 - button_mask
     // a1 - player (p1 = 0, p4 = 3)
     // a2 - type
-    // a3 - (bool) match any
+    // a3 - (bool) match any? Any non-zero treated as true
     // @ Returns
     // v0 - bool
     scope check_buttons_: {
@@ -77,19 +77,19 @@ scope Joypad {
         addu    t0, t0, a2                  // t0 = struct + offset + type
         lhu     t0, 0x0000(t0)              // t0 = type
         lli     v0, OS.FALSE                // v0 = false
-        bnez    a3, _any
-        nop
+        bnez    a3, _any                    // if we are checking for any button in the mask, skip
+        nop                                 // otherwise we check all buttons in the mask
         bne     t0, a0, _end                // if (mask != button_mask), skip
         nop
-        lli     v0, OS.TRUE
-        b       _end
+        lli     v0, OS.TRUE                 // v0 = true
+        b       _end                        // skip to end
         nop
 
         _any:
-        and     t1, t0, a0
-        beqz    t1, _end                    // if (mask != button_mask), skip
+        and     t1, t0, a0                  // t1 = zero if no buttons pressed
+        beqz    t1, _end                    // if (no buttons pressed), skip
         nop
-        lli     v0, OS.TRUE
+        lli     v0, OS.TRUE                 // v0 = true
 
         _end:
         lw      t0, 0x0004(sp)              // ~
