@@ -36,7 +36,7 @@ scope BGM {
         mfhi    s3                          // original line 2
 
         li      t8, Toggles.entry_stereo_sound // ~
-        lw      t8, 0x0000(t8)              // t8 = custom stereo_enabled
+        lw      t8, 0x0004(t8)              // t8 = custom stereo_enabled
         j       _get_type_return            // return
         nop
     }

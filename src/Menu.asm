@@ -313,8 +313,15 @@ scope Menu {
         lli     a0, Joypad.DOWN             // a1 - enum left/right/down/up
         jal     Joypad.check_stick_         // v0 = boolean
         nop
+        bnez    v0, _update_down            // if (down was pushed) then do update
+        nop
+        li      a0, Joypad.DD               // a0 - dpad down
+        li      a2, Joypad.PRESSED          // a2 - type
+        jal     Joypad.check_buttons_all_   // v0 = dpad down pressed
+        nop
         beqz    v0, _up                     // if not pressed, check c-up
         nop
+        _update_down:
         lli     a0, FGM.menu.SCROLL         // a0 - fgm_id
         jal     FGM.play_                   // play menu sound
         nop
@@ -342,8 +349,15 @@ scope Menu {
         lli     a0, Joypad.UP               // a1 - enum left/right/down/up
         jal     Joypad.check_stick_         // v0 = boolean
         nop
+        bnez    v0, _update_up              // if (up was pushed) then do update
+        nop
+        li      a0, Joypad.DU               // a0 - dpad up
+        li      a2, Joypad.PRESSED          // a2 - type
+        jal     Joypad.check_buttons_all_   // v0 = dpad up pressed
+        nop
         beqz    v0, _right                  // if not pressed, check right
         nop
+        _update_up:
         lli     a0, FGM.menu.SCROLL         // a0 - fgm_id
         jal     FGM.play_                   // play menu sound
         nop
@@ -370,8 +384,15 @@ scope Menu {
         lli     a0, Joypad.RIGHT             // a1 - enum left/right/down/up
         jal     Joypad.check_stick_         // v0 = boolean
         nop
+        bnez    v0, _update_right           // if (right was pushed) then do update
+        nop
+        li      a0, Joypad.DR               // a0 - dpad right
+        li      a2, Joypad.PRESSED          // a2 - type
+        jal     Joypad.check_buttons_all_   // v0 = dpad right pressed
+        nop
         beqz    v0, _left                   // if not pressed, check left
         nop
+        _update_right:
         lli     a0, FGM.menu.TOGGLE         // a0 - fgm_id
         jal     FGM.play_                   // play menu sound
         nop
@@ -392,8 +413,15 @@ scope Menu {
         lli     a0, Joypad.LEFT             // a1 - enum left/right/down/up
         jal     Joypad.check_stick_         // v0 = boolean
         nop
+        bnez    v0, _update_left            // if (left was pushed) then do update
+        nop
+        li      a0, Joypad.DL               // a0 - dpad left
+        li      a2, Joypad.PRESSED          // a2 - type
+        jal     Joypad.check_buttons_all_   // v0 = dpad left pressed
+        nop
         beqz    v0, _a                      // if not pressed, check A
         nop
+        _update_left:
         lli     a0, FGM.menu.TOGGLE         // a0 - fgm_id
         jal     FGM.play_                   // play menu sound
         nop
