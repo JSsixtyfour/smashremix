@@ -20,9 +20,9 @@
 0855 Ganon downsmash
 0856 Ganon forward air trident
 0857 Ganon forward air melee style punch
-0858 dr. mario down air
-0859 dr. mario forward air
-085A dr. mario taunt
+0858 Dr. mario down air
+0859 Dr. mario forward air
+085A Dr. mario taunt
 085B Wario down smash
 085C Wario aerial b move
 085D Wario ground b move
@@ -35,9 +35,9 @@
 0864 Wario's dash
 0865 Wario's run stop
 0866 Wario's down air
-0867 falco's forward smash (400000000)
-0868 falco's taunt
-0869 falco's up tilt
+0867 Falco's forward smash (400000000)
+0868 Falco's taunt
+0869 Falco's up tilt
 086A Donkey Kong's Aerial Tennis Swing
 086B Donkey Kong's Ground Tennis Swing
 086C Donkey Kong's Up Air
