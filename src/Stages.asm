@@ -397,6 +397,8 @@ scope Stages {
         constant ZLANDING(0x4A)
         constant FROSTY(0x4B)
 
+        constant MAX_STAGE_ID(0x4B)
+
         // not an actual id, some arbitary number Sakurai picked(?)
         constant RANDOM(0xDE)
     }
@@ -1749,12 +1751,11 @@ scope Stages {
         // if the stage should be added, it is added here. count is also incremented here
         li      t0, random_count            // t0 = address of random_count
         lw      v1, 0x0000(t0)              // v1 = random_count
-        sll     t1, v1, 0x0002              // t1 = offset = random_count * 4
         addiu   v1, v1, 0x0001              // v1 = random_count++
         sw      v1, 0x0000(t0)              // update random_count
-        li      t0, random_table            // t0 = address of random_table
-        addu    t0, t0, t1                  // t0 = random_table + offset
-        sw      a1, 0x0000(t0)              // add stage
+        li      t0, random_table - 1        // t0 = address of byte before random_table
+        addu    t0, t0, v1                  // t0 = random_table + offset
+        sb      a1, 0x0000(t0)              // add stage
         lli     v0, OS.TRUE                 // v0 = true
 
         _end:
@@ -1786,7 +1787,7 @@ scope Stages {
         nop
         OS.patch_end()
 
-        addiu   sp, sp,-0x0010              // allocate stack space
+        addiu   sp, sp,-0x0014              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      ra, 0x0008(sp)              // ~
         sw      at, 0x000C(sp)              // save registers
@@ -1795,123 +1796,92 @@ scope Stages {
         nop
 
         // this block checks if random is selected (if not stage_id is returned)
-        // TODO: reimplement random
         _check_random:
         lli     t0, id.RANDOM               // t0 = id.RANDOM
         bne     v0, t0, _end                // if (stage_id != id.RANDOM), end
         nop
 
         li      t0, random_count            // ~
-        lw      v1, 0x0000(t0)              // v1 = random count
+        sw      r0, 0x0000(t0)              // reset count
 
-        // TODO: reimplement random stage switch
-//      sw      r0, 0x0000(t0)              // reset count
-//      add_to_list(Toggles.entry_random_stage_peachs_castle, id.PEACHS_CASTLE)
-//      add_to_list(Toggles.entry_random_stage_sector_z, id.SECTOR_Z)
-//      add_to_list(Toggles.entry_random_stage_congo_jungle, id.CONGO_JUNGLE)
-//      add_to_list(Toggles.entry_random_stage_planet_zebes, id.PLANET_ZEBES)
-//      add_to_list(Toggles.entry_random_stage_hyrule_castle, id.HYRULE_CASTLE)
-//      add_to_list(Toggles.entry_random_stage_yoshis_island, id.YOSHIS_ISLAND)
-//      add_to_list(Toggles.entry_random_stage_dream_land, id.DREAM_LAND)
-//      add_to_list(Toggles.entry_random_stage_saffron_city, id.SAFFRON_CITY)
-//      add_to_list(Toggles.entry_random_stage_mushroom_kingdom, id.MUSHROOM_KINGDOM)
-//      add_to_list(Toggles.entry_random_stage_duel_zone, id.DUEL_ZONE)
-//      add_to_list(Toggles.entry_random_stage_final_destination, id.FINAL_DESTINATION)
-//      add_to_list(Toggles.entry_random_stage_dream_land_beta_1, id.DREAM_LAND_BETA_1)
-//      add_to_list(Toggles.entry_random_stage_dream_land_beta_2, id.DREAM_LAND_BETA_2)
-//      add_to_list(Toggles.entry_random_stage_how_to_play, id.HOW_TO_PLAY)
-//      add_to_list(Toggles.entry_random_stage_mini_yoshis_island, id.MINI_YOSHIS_ISLAND)
-//      add_to_list(Toggles.entry_random_stage_meta_crystal, id.META_CRYSTAL)
+        add_to_list(Toggles.entry_random_stage_peachs_castle, id.PEACHS_CASTLE)
+        add_to_list(Toggles.entry_random_stage_sector_z, id.SECTOR_Z)
+        add_to_list(Toggles.entry_random_stage_congo_jungle, id.CONGO_JUNGLE)
+        add_to_list(Toggles.entry_random_stage_planet_zebes, id.PLANET_ZEBES)
+        add_to_list(Toggles.entry_random_stage_hyrule_castle, id.HYRULE_CASTLE)
+        add_to_list(Toggles.entry_random_stage_yoshis_island, id.YOSHIS_ISLAND)
+        add_to_list(Toggles.entry_random_stage_dream_land, id.DREAM_LAND)
+        add_to_list(Toggles.entry_random_stage_saffron_city, id.SAFFRON_CITY)
+        add_to_list(Toggles.entry_random_stage_mushroom_kingdom, id.MUSHROOM_KINGDOM)
+        add_to_list(Toggles.entry_random_stage_duel_zone, id.DUEL_ZONE)
+        add_to_list(Toggles.entry_random_stage_final_destination, id.FINAL_DESTINATION)
+        add_to_list(Toggles.entry_random_stage_dream_land_beta_1, id.DREAM_LAND_BETA_1)
+        add_to_list(Toggles.entry_random_stage_dream_land_beta_2, id.DREAM_LAND_BETA_2)
+        add_to_list(Toggles.entry_random_stage_how_to_play, id.HOW_TO_PLAY)
+        add_to_list(Toggles.entry_random_stage_mini_yoshis_island, id.MINI_YOSHIS_ISLAND)
+        add_to_list(Toggles.entry_random_stage_meta_crystal, id.META_CRYSTAL)
+
+        // Add custom Stages
+        define n(0x29)
+        evaluate n({n})
+        while {n} <= id.MAX_STAGE_ID {
+            add_to_list(Toggles.entry_random_stage_{n}, {n})
+            evaluate n({n}+1)
+        }
+
+        // It seems like the first time it's called, get_random_int_ returns 0.
+        // So let's avoid that by calling once and ignoring the result.
+        sw      v1, 0x0010(sp)              // save v1
+        lli     a0, 10                      // a0 = 10 (not sure it matters)
+        jal     Global.get_random_int_      // v0 = (0, N-1)
+        nop
+        lw      v1, 0x0010(sp)              // restore v1
+
+        beqz    v1, _any_valid_stage        // if there were no valid entries in the random table, then use all stage_ids
+        nop
 
         // this block loads from the random list using a random int
         move    a0, v1                      // a0 - range (0, N-1)
         jal     Global.get_random_int_      // v0 = (0, N-1)
         nop
         li      t0, random_table            // t0 = random_table
-//      sll     v0, v0, 0x0002              // v0 = offset = random_int * 4
         addu    t0, t0, v0                  // t0 = random_table + offset
-//      lw      v0, 0x0000(t0)              // v0 = stage_id
         lbu     v0, 0x0000(t0)              // v0 = stage_id
         b       _end                        // get a new stage id based off of random offset
         nop
+
+        _any_valid_stage:
+        lli     a0, 16 + id.MAX_STAGE_ID - id.BTX_LAST // a0 = number of new stages + original valid 16 stages
+        jal     Global.get_random_int_                 // v0 = (0, N-1)
+        nop
+        slti    t0, v0, id.RACE_TO_THE_FINISH          // if it's a stage_id low enough, then we don't have to correct it
+        bnez    t0, _end                               // so skip to end
+        nop                                            // otherwise, we'll have to shift it:
+        addiu   v0, v0, 0x0001                         // v0 = adjusted stage_id
+        lli     t0, id.FINAL_DESTINATION               // if it's RACE_TO_THE_FINISH,
+        beq     t0, v0, _end                           // then return FINAL_DESTINATION
+        nop
+        addiu   v0, v0, id.BTX_LAST - id.BTX_FIRST - 1 // otherwise it's a new stage, so adjust accordingly
 
         _end:
         lw      t0, 0x0004(sp)              // ~
         lw      ra, 0x0008(sp)              // ~
         lw      at, 0x000C(sp)              // restore registers
-        addiu   sp, sp, 0x0010              // deallocate stack space
+        addiu   sp, sp, 0x0014              // deallocate stack space
         jr      ra                          // return
         nop
     }
     
-    // TODO: reimplement random stage switch
     // @ Descirption
     // Table of stage IDs (as words, 32 bit values)
     random_table:
-    db id.PEACHS_CASTLE                     // 00
-    db id.CONGO_JUNGLE                      // 01
-    db id.HYRULE_CASTLE                     // 02
-    db id.PLANET_ZEBES                      // 03
-    db id.MUSHROOM_KINGDOM                  // 04
-    db id.YOSHIS_ISLAND                     // 05
-    db id.DREAM_LAND                        // 06
-    db id.SECTOR_Z                          // 07
-    db id.SAFFRON_CITY                      // 08
-    db id.FINAL_DESTINATION                 // 09
-    db id.MINI_YOSHIS_ISLAND                // 0A
-	db id.META_CRYSTAL                      // 0B
-    db id.DUEL_ZONE                         // 0C
-    db id.BATTLEFIELD                       // 0D
-    db id.DEKU_TREE                         // 0E
-    db id.GANONS_TOWER                      // 0F
-    db id.KALOS_POKEMON_LEAGUE              // 10
-
-    // page 2 (custom stages)
-    
-    db id.POKEMON_STADIUM_2                 // 11
-    db id.SKYLOFT                           // 12
-    db id.SMASHVILLE                        // 13
-    db id.WARIOWARE                         // 14
-    db id.CORNERIA_CITY                     // 15
-    db id.DR_MARIO                          // 16
-    db id.FIRST_DESTINATION                 // 17
-    db id.COOLCOOL                          // 18
-    db id.DRAGONKING                        // 19
-    db id.GREAT_BAY                         // 1A
-    db id.FRAYS_STAGE                       // 1B
-    db id.TOH                               // 1C
-    db id.FOD								// 1D
-	db id.MUDA				                // 1E
-    db id.MEMENTOS                          // 1F
-    db id.SHOWDOWN                          // 20
-    db id.SPIRALM                           // 21
-    db id.N64                               // 22
-
-    // page 3 (custom and beta)
-    
-    db id.MUTE                              // 23
-    db id.DREAM_LAND_BETA_1                 // 24
-    db id.DREAM_LAND_BETA_2                 // 25
-    db id.HOW_TO_PLAY                       // 26
-    db id.MADMM                             // 27
-    db id.SMBBF                             // 28
-    db id.SMBO                              // 29
-    db id.BOWSERB                           // 2A
-    db id.PEACH2                            // 2B
-    db id.DELFINO                           // 2C
-    db id.CORNERIA2                         // 2D
-    db id.UNCANNY                           // 2E
-    db id.BLUE                              // 2F
-    db id.ONETT                             // 30
-    db id.ZLANDING                          // 31
-    db id.FROSTY                            // 32
-    
+    fill id.MAX_STAGE_ID - 25                  // We don't use the 24 BTTs nor the RTTF
     OS.align(4)
 
     // @ Description
     // number of stages in random_table.
     random_count:
-    dw 27
+    dw 0x00000000
 
     // @ Description
     // This function fixes a bug that does not allow single player stages to be loaded in training.
@@ -2213,7 +2183,6 @@ scope Stages {
     dw header.ZLANDING,               type.CLONE
     dw header.FROSTY,                 type.CLONE
 
-
     string_peachs_castle:;          String.insert("Peach's Castle")
     string_sector_z:;               String.insert("Sector Z")
     string_congo_jungle:;           String.insert("Congo Jungle")
@@ -2232,43 +2201,9 @@ scope Stages {
     string_final_destination:;      String.insert("Final Destination")
     string_btp:;                    String.insert("Board the Platforms")
     string_btt:;                    String.insert("Break the Targets")
-    string_deku_tree:;              String.insert("Deku Tree")
-    string_first_destination:;      String.insert("First Destination")
-    string_ganons_tower:;           String.insert("Ganon's Tower")
-    string_kalos_pokemon_league:;   String.insert("Kalos Pokemon League")
-    string_pokemon_stadium_2:;      String.insert("Pokemon Stadium II")
-    string_skyloft:;                String.insert("Skyloft")
-    string_smashville:;             String.insert("Smashville")
-    string_warioware:;              String.insert("WarioWare, Inc.")
-    string_battlefield:;            String.insert("Battlefield")
-    string_corneria_city:;          String.insert("Corneria City")
-    string_dr_mario:;               String.insert("Dr. Mario")
-    string_cool_cool_mountain:;     String.insert("Cool Cool Mountain")
-    string_dragon_king:;            String.insert("Dragon King")
-    string_great_bay:;              String.insert("Great Bay")
-    string_frays_stage:;            String.insert("Fray's Stage")
-    string_toh:;                    String.insert("Tower of Heaven")
-	string_fod:;					String.insert("Fountain of Dreams")
-    string_muda:;                   String.insert("Muda Kingdom")
-    string_mementos:;               String.insert("Mementos")
-    string_showdown:;               String.insert("Showdown")
-    string_spiralm:;                String.insert("Spiral Mountain")
-    string_n64:;                    String.insert("N64")
-    string_mute:;                   String.insert("Mute City")
-    string_madmm:;                  String.insert("Mad Monster Mansion")
-    string_smbbf:;                  String.insert("Mushroom Kingdom BF")
-    string_smbo:;                   String.insert("Mushroom Kingdom O")
-    string_bowserb:;                String.insert("Bowser's Stadium")
-    string_peach2:;                 String.insert("Peach's Castle II")
-    string_delfino:;                String.insert("Delfino Plaza")
-    string_corneria2:;              String.insert("Corneria")
-    string_uncanny:;                String.insert("Uncanny Mansion")
-    string_blue:;                   String.insert("Big Blue")
-    string_onett:;                  String.insert("Onett")
-    string_zlanding:;               String.insert("Zebes Landing")
-    string_frosty:;                 String.insert("Frosty Village")
 
     string_table:
+    constant string_table_origin(origin())
     dw string_peachs_castle
     dw string_sector_z
     dw string_congo_jungle
@@ -2310,41 +2245,67 @@ scope Stages {
     dw string_btp
     dw string_btp
     dw string_btp
-    dw string_deku_tree
-    dw string_first_destination
-    dw string_ganons_tower
-    dw string_kalos_pokemon_league
-    dw string_pokemon_stadium_2
-    dw string_skyloft
-    dw string_smashville
-    dw string_warioware
-    dw string_battlefield
-    dw string_corneria_city
-    dw string_dr_mario
-    dw string_cool_cool_mountain
-    dw string_dragon_king
-    dw string_great_bay
-    dw string_frays_stage
-    dw string_toh
-	dw string_fod
-    dw string_muda
-    dw string_mementos
-    dw string_showdown
-    dw string_spiralm
-    dw string_n64
-    dw string_mute
-    dw string_madmm
-    dw string_smbbf
-    dw string_smbo
-    dw string_bowserb
-    dw string_peach2
-    dw string_delfino
-    dw string_corneria2
-    dw string_uncanny
-    dw string_blue
-    dw string_onett
-    dw string_zlanding
-    dw string_frosty
+    fill 4 * (id.MAX_STAGE_ID - id.BTX_LAST)
+
+    variable new_stages(0)
+
+    // @ Description
+    // Adds a custom stage
+    // TODO: beef this up so adding a stage isn't so painful
+    // @ Arguments:
+    // name - Short name for quick reference
+    // display_name - Name to display
+    macro add_stage(name, display_name) {
+        global variable new_stages(new_stages + 1)
+        evaluate new_stage_id(0x28 + new_stages)
+        global define STAGE_{new_stage_id}_TITLE({display_name})
+        print " - Added Stage 0x"; OS.print_hex({new_stage_id}); print ": ", {display_name}, "\n";
+
+        string_{name}:; String.insert({display_name})
+
+        pushvar origin, base
+
+        origin string_table_origin + (41 * 4) + (new_stages * 4)
+        dw     string_{name}
+
+        pullvar base, origin
+    }
+
+    add_stage(deku_tree, "Deku Tree")
+    add_stage(first_destination, "First Destination")
+    add_stage(ganons_tower, "Ganon's Tower")
+    add_stage(kalos_pokemon_league, "Kalos Pokemon League")
+    add_stage(pokemon_stadium_2, "Pokemon Stadium II")
+    add_stage(skyloft, "Skyloft")
+    add_stage(smashville, "Smashville")
+    add_stage(warioware, "WarioWare, Inc.")
+    add_stage(battlefield, "Battlefield")
+    add_stage(corneria_city, "Corneria City")
+    add_stage(dr_mario, "Dr. Mario")
+    add_stage(cool_cool_mountain, "Cool Cool Mountain")
+    add_stage(dragon_king, "Dragon King")
+    add_stage(great_bay, "Great Bay")
+    add_stage(frays_stage, "Fray's Stage")
+    add_stage(toh, "Tower of Heaven")
+	add_stage(fod, "Fountain of Dreams")
+    add_stage(muda, "Muda Kingdom")
+    add_stage(mementos, "Mementos")
+    add_stage(showdown, "Showdown")
+    add_stage(spiralm, "Spiral Mountain")
+    add_stage(n64, "N64")
+    add_stage(mute, "Mute City")
+    add_stage(madmm, "Mad Monster Mansion")
+    add_stage(smbbf, "Mushroom Kingdom BF")
+    add_stage(smbo, "Mushroom Kingdom O")
+    add_stage(bowserb, "Bowser's Stadium")
+    add_stage(peach2, "Peach's Castle II")
+    add_stage(delfino, "Delfino Plaza")
+    add_stage(corneria2, "Corneria")
+    add_stage(uncanny, "Uncanny Mansion")
+    add_stage(blue, "Big Blue")
+    add_stage(onett, "Onett")
+    add_stage(zlanding, "Zebes Landing")
+    add_stage(frosty, "Frosty Village")
 
 }
 
