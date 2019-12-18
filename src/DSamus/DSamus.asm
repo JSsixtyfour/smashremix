@@ -34,6 +34,7 @@ scope DSamus {
     insert SELECT, "moveset/SELECT.bin"
     insert CHARGE, "moveset/CHARGE.bin"; Moveset.GO_TO(CHARGELOOP)            // loops
     insert CHARGELOOP, "moveset/CHARGELOOP.bin"; Moveset.GO_TO(CHARGELOOP)    // loops
+    insert CLAP, "moveset/CLAP.bin"
     
     
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
@@ -80,6 +81,7 @@ scope DSamus {
     Character.edit_menu_action_parameters(DSAMUS,   0x2,               File.DSAMUS_VICTORY1,       VICTORY1,                    -1)
     Character.edit_menu_action_parameters(DSAMUS,   0x3,               File.DSAMUS_VICTORY1,       VICTORY1,                    -1)
     Character.edit_menu_action_parameters(DSAMUS,   0x4,               File.DSAMUS_SELECT,         SELECT,                      -1)
+    Character.edit_menu_action_parameters(DSAMUS,   0x5,               -1,                         CLAP,                        -1)
     
     // Set menu zoom size.
     Character.table_patch_start(menu_zoom, Character.id.DSAMUS, 0x4)
@@ -345,7 +347,7 @@ scope DSamus {
     
     
     // Set default costumes
-    Character.set_default_costumes(Character.id.DSAMUS, 0, 1, 2, 4, 1, 2, 0)
+    Character.set_default_costumes(Character.id.DSAMUS, 0, 1, 2, 3, 4, 5, 0)
     
     
 }
