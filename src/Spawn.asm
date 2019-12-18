@@ -807,6 +807,12 @@ scope Spawn {
     float32  1400,  0910
     float32  0000,  1545
     float32  0000,  0005
+    
+    // 4A - Frosty Village
+    float32 -1605,  2252
+    float32  1616,  2311
+    float32 -2905,  1226
+    float32  3776,  1144
 
     neutral_table:
     // 00 - Peach's Castle
@@ -1258,6 +1264,12 @@ scope Spawn {
     float32  1400,  0910
     float32 -1400,  0005
     float32  1400,  0005
+    
+    // 4A - Frosty Village
+    float32 -1605,  2252
+    float32  1616,  2311
+    float32 -2905,  1226
+    float32  3776,  1144
 }
 
 } // __SPAWN__

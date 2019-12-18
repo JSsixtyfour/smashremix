@@ -133,6 +133,7 @@ scope MIDI {
     insert_midi(DSAMUS_VICTORY, OS.FALSE, -1)
     insert_midi(ONETT, OS.TRUE, ONETT)
     insert_midi(ZEBES_LANDING, OS.TRUE, ZEBES LANDING)
+    insert_midi(FROSTY_VILLAGE, OS.TRUE, FROSTY VILLAGE)
     insert_midi(TESTMIDI, OS.FALSE, -1)
 
     pushvar origin, base

@@ -175,7 +175,7 @@ scope CharacterSelect {
     dw  0x14268                             // 0x1F - YLINK
     dw  0x7710                              // 0x20 - DRM
     dw  0x8A70                              // 0x21 - WARIO
-    dw  0x12550                             // 0x22 - DARK SAMUS
+    dw  0x18E40                             // 0x22 - DARK SAMUS
 
     // @ Description
     // Holds the ROM offset of an alternate req list, used by get_alternate_req_list_

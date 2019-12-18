@@ -347,7 +347,7 @@ scope DSamus {
     
     
     // Set default costumes
-    Character.set_default_costumes(Character.id.DSAMUS, 0, 1, 2, 3, 4, 5, 0)
+    Character.set_default_costumes(Character.id.DSAMUS, 0, 1, 2, 4, 5, 1, 3)
     
     
 }

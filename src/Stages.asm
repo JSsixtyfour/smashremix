@@ -170,6 +170,7 @@ scope Stages {
     dw function.CLONE                       // Big Blue
     dw function.CLONE                       // Onett
     dw function.CLONE                       // Zebes Landing
+    dw function.CLONE                       // Frosty Village
     
 
     // TODO
@@ -308,6 +309,7 @@ scope Stages {
     insert icon_blue,                   "../textures/icon_blue.rgba5551"
     insert icon_onett,                  "../textures/icon_onett.rgba5551"
     insert icon_zlanding,               "../textures/icon_zlanding.rgba5551"
+    insert icon_frosty,                 "../textures/icon_n64.rgba5551"
     
 
     // @ Description
@@ -393,6 +395,7 @@ scope Stages {
         constant BLUE(0x48)
         constant ONETT(0x49)
         constant ZLANDING(0x4A)
+        constant FROSTY(0x4B)
 
         // not an actual id, some arbitary number Sakurai picked(?)
         constant RANDOM(0xDE)
@@ -506,6 +509,7 @@ scope Stages {
         constant BLUE(0x8EC)
         constant ONETT(0x8F0)
         constant ZLANDING(0x8F3)
+        constant FROSTY(0x90C)
     }
 
     scope function {
@@ -548,7 +552,7 @@ scope Stages {
     db id.SAFFRON_CITY                      // 09 
     db id.DUEL_ZONE                         // 0A 
     db id.FINAL_DESTINATION                 // 0B    
-    db id.RANDOM                            // 0C 
+    db id.FROSTY                            // 0C 
     db id.MINI_YOSHIS_ISLAND                // 0D 
     db id.FIRST_DESTINATION                 // 0E 
     db id.SHOWDOWN                          // 0F 
@@ -699,6 +703,7 @@ scope Stages {
     dw icon_blue                            // Big Blue
     dw icon_onett                           // Onett
     dw icon_zlanding                        // Zebes Landing
+    dw icon_n64                             // Frosty Village
 
     // @ Description
     // Row the cursor is on
@@ -1899,6 +1904,7 @@ scope Stages {
     db id.BLUE                              // 2F
     db id.ONETT                             // 30
     db id.ZLANDING                          // 31
+    db id.FROSTY                            // 32
     
     OS.align(4)
 
@@ -2041,6 +2047,7 @@ scope Stages {
     float32 0.5                         // Big Blue
     float32 0.5                         // Onett
     float32 0.5                         // Zebes Landing
+    float32 0.5                         // Frosty Village
 
     background_table:
     db id.PEACHS_CASTLE                 // Peach's Castle
@@ -2118,6 +2125,7 @@ scope Stages {
     db id.PEACHS_CASTLE                 // Big Blue
     db id.PEACHS_CASTLE                 // Onett
     db id.PEACHS_CASTLE                 // Zebes Landing
+    db id.SECTOR_Z                      // Frosty Village
     OS.align(4)
 
     // @ Description
@@ -2203,6 +2211,7 @@ scope Stages {
     dw header.BLUE,                   type.CLONE
     dw header.ONETT,                  type.CLONE
     dw header.ZLANDING,               type.CLONE
+    dw header.FROSTY,                 type.CLONE
 
 
     string_peachs_castle:;          String.insert("Peach's Castle")
@@ -2257,6 +2266,7 @@ scope Stages {
     string_blue:;                   String.insert("Big Blue")
     string_onett:;                  String.insert("Onett")
     string_zlanding:;               String.insert("Zebes Landing")
+    string_frosty:;                 String.insert("Frosty Village")
 
     string_table:
     dw string_peachs_castle
@@ -2334,6 +2344,7 @@ scope Stages {
     dw string_blue
     dw string_onett
     dw string_zlanding
+    dw string_frosty
 
 }
 
