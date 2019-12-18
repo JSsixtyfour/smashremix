@@ -41,7 +41,10 @@ scope MIDI {
 
     // @ Description
     // adds a MIDI to our new MIDI bank, and the music table
-    macro insert_midi(file_name) {
+    // file_name - Name of MIDI file
+    // can_toggle - (bool) indicates if this should be toggleable
+    // display_name - Name to display in Toggles
+    macro insert_midi(file_name, can_toggle, display_name) {
         pushvar origin, base
 
         // defines
@@ -50,9 +53,11 @@ scope MIDI {
         evaluate MIDI_{file_name}_ID((MUSIC_TABLE_END - MUSIC_TABLE) / 0x8)
 
         global variable midi_count({MIDI_{file_name}_ID} + 0x1)
+        global define MIDI_{MIDI_{file_name}_ID}_TOGGLE({can_toggle})
+        global define MIDI_{MIDI_{file_name}_ID}_NAME({display_name})
 
         // print message
-        print "Added MIDI_{file_name}({path_MIDI_{file_name}})\n"
+        print "Added MIDI_{file_name}({path_MIDI_{file_name}}): {MIDI_{MIDI_{file_name}_ID}_NAME}\n"
         print "ROM Offset: 0x"; OS.print_hex({offset_MIDI_{file_name}}); print "\n"
         print "MIDI_{file_name}_ID: 0x"; OS.print_hex({MIDI_{file_name}_ID}); print "\n"
         print "Sound Test Music ID: ", midi_count, "\n\n"
@@ -90,45 +95,45 @@ scope MIDI {
     // move dream land midi
     move_dream_land_midi()
     // insert custom midi files
-    insert_midi(GANONDORF_BATTLE)
-    insert_midi(CORNERIA)
-    insert_midi(KOKIRI_FOREST)
-    insert_midi(DR_MARIO)
-    insert_midi(KALOS)
-    insert_midi(SMASHVILLE)
-    insert_midi(WARIO_WARE)
-    insert_midi(FIRST_DESTINATION)
-	insert_midi(COOLCOOLMOUNTAIN)
-	insert_midi(GODDESSBALLAD)
-	insert_midi(GREATBAY)
-	insert_midi(TOWEROFHEAVEN)
-	insert_midi(FOD)
-    insert_midi(MUDA)
-    insert_midi(MEMENTOS)
-    insert_midi(SPIRAL_MOUNTAIN)
-    insert_midi(N64)
-    insert_midi(MUTE_CITY)
-    insert_midi(BATTLEFIELD)
-    insert_midi(MADMONSTER)
-    insert_midi(GANON_VICTORY)
-    insert_midi(YOUNGLINK_VICTORY)
-    insert_midi(FALCO_VICTORY)
-    insert_midi(DRMARIO_VICTORY)
-    insert_midi(DRAGONKING)
-    insert_midi(DREAMLANDBETA)
-    insert_midi(SHOWDOWN)
-    insert_midi(BOWSERBOSS)
-    insert_midi(POKEMON_STADIUM)
-    insert_midi(BOWSERROAD)
-    insert_midi(BOWSERFINAL)
-    insert_midi(PEACH2)
-    insert_midi(DELFINO)
-    insert_midi(HORROR_MANOR)
-    insert_midi(BIG_BLUE)
-    insert_midi(DSAMUS_VICTORY)
-    insert_midi(ONETT)
-    insert_midi(ZEBES_LANDING)
-    insert_midi(TESTMIDI)
+    insert_midi(GANONDORF_BATTLE, OS.TRUE, GANONDORF BATTLE)
+    insert_midi(CORNERIA, OS.TRUE, CORNERIA)
+    insert_midi(KOKIRI_FOREST, OS.TRUE, KOKIRI FOREST)
+    insert_midi(DR_MARIO, OS.TRUE, DR MARIO)
+    insert_midi(KALOS, OS.TRUE, KALOS)
+    insert_midi(SMASHVILLE, OS.TRUE, SMASHVILLE)
+    insert_midi(WARIO_WARE, OS.TRUE, WARIO WARE)
+    insert_midi(FIRST_DESTINATION, OS.TRUE, FIRST DESTINATION)
+	insert_midi(COOLCOOLMOUNTAIN, OS.TRUE, COOL COOL MOUNTAIN)
+	insert_midi(GODDESSBALLAD, OS.TRUE, GODDESS BALLAD)
+	insert_midi(GREATBAY, OS.TRUE, GREAT BAY)
+	insert_midi(TOWEROFHEAVEN, OS.TRUE, TOWER OF HEAVEN)
+	insert_midi(FOD, OS.TRUE, FOD)
+    insert_midi(MUDA, OS.TRUE, MUDA)
+    insert_midi(MEMENTOS, OS.TRUE, MEMENTOS)
+    insert_midi(SPIRAL_MOUNTAIN, OS.TRUE, SPIRAL MOUNTAIN)
+    insert_midi(N64, OS.TRUE, N64)
+    insert_midi(MUTE_CITY, OS.TRUE, MUTE CITY)
+    insert_midi(BATTLEFIELD, OS.TRUE, BATTLEFIELD)
+    insert_midi(MADMONSTER, OS.TRUE, MAD MONSTER MANSION)
+    insert_midi(GANON_VICTORY, OS.FALSE, -1)
+    insert_midi(YOUNGLINK_VICTORY, OS.FALSE, -1)
+    insert_midi(FALCO_VICTORY, OS.FALSE, -1)
+    insert_midi(DRMARIO_VICTORY, OS.FALSE, -1)
+    insert_midi(DRAGONKING, OS.TRUE, DRAGON KING)
+    insert_midi(DREAMLANDBETA, OS.TRUE, DREAMLAND BETA)
+    insert_midi(SHOWDOWN, OS.TRUE, SHOWDOWN)
+    insert_midi(BOWSERBOSS, OS.TRUE, BOWSER BOSS)
+    insert_midi(POKEMON_STADIUM, OS.TRUE, POKEMON STADIUM)
+    insert_midi(BOWSERROAD, OS.TRUE, BOWSER ROAD)
+    insert_midi(BOWSERFINAL, OS.TRUE, BOWSER FINAL)
+    insert_midi(PEACH2, OS.TRUE, PEACH2)
+    insert_midi(DELFINO, OS.TRUE, DELFINO)
+    insert_midi(HORROR_MANOR, OS.TRUE, HORROR MANOR)
+    insert_midi(BIG_BLUE, OS.TRUE, BIG BLUE)
+    insert_midi(DSAMUS_VICTORY, OS.FALSE, -1)
+    insert_midi(ONETT, OS.TRUE, ONETT)
+    insert_midi(ZEBES_LANDING, OS.TRUE, ZEBES LANDING)
+    insert_midi(TESTMIDI, OS.FALSE, -1)
 
     pushvar origin, base
 

@@ -14,6 +14,7 @@ include "String.asm"
 scope Menu {
 
     constant ROW_HEIGHT(000010)
+    constant MAX_PER_PAGE(19)
 
     scope type {
         constant U8(0x0000)                 // 08 bit integer (unsigned)
@@ -35,7 +36,9 @@ scope Menu {
         dw 0x00000000                       // 0x000C - selection
         dh {rgba5551}                       // 0x0010 - color of background
         dh {rgba5551}                       // ^
-        dw {width}                          // 0x0014 - widht of menu in chars
+        dw {width}                          // 0x0014 - width of menu in chars
+        dw {head}                           // 0x0018 - first entry currently displayed (default to head)
+        dw {head}                           // 0x001C - last entry currently displayed (default to head)
     }
 
     // @ Description
@@ -182,7 +185,8 @@ scope Menu {
         sw      a1, 0x0014(sp)              // ~
         sw      a2, 0x0018(sp)              // ~
         sw      a3, 0x001C(sp)              // ~
-        sw      at, 0x0020(sp)              // save registers
+        sw      t1, 0x0020(sp)              // ~
+        sw      at, 0x0024(sp)              // save registers
 
         // draw rectangle
         lw      a0, 0x0010(a0)              // a0 - fill color
@@ -213,7 +217,7 @@ scope Menu {
          _draw_entries:
         // draw first entry
         lw      at, 0x0010(sp)              // at = address of info()
-        lw      a0, 0x0000(at)              // a0 - entry
+        lw      a0, 0x0018(at)              // a0 - first entry
         lw      a1, 0x0004(at)              // a1 - ulx, unadjusted
         lw      a2, 0x0008(at)              // a2 - uly
         lw      a3, 0x0014(at)              // a3 = width
@@ -225,7 +229,7 @@ scope Menu {
 
         // draw following entries
         lw      a0, 0x0010(sp)              // a0 = address of info
-        lw      s0, 0x0000(a0)              // s0 = head (aka current_entry)
+        lw      s0, 0x0018(a0)              // s0 = head (aka current_entry)
         lw      t0, 0x0008(a0)              // t0 = uly
 
         _loop:
@@ -233,10 +237,14 @@ scope Menu {
         beqz    s0, _end                    // if (entry->next == NULL), end
         nop
         addiu   t0, t0, ROW_HEIGHT          // increment height
+        slti    at, t0, 00217               // if we don't have enough room to draw any more entries, end
+        beqz    at, _end                    // ~
+        nop
         lw      at, 0x0010(sp)              // at = address of Menu.info()
         move    a0, s0                      // a0 - entry
+        sw      a0, 0x001C(at)              // update last entry displayed
         lw      a1, 0x0004(at)              // a1 - ulx, unadjusted
-        move    a2, t0                      // a2 - ulx
+        move    a2, t0                      // a2 - uly
         lw      a3, 0x0014(at)              // a3 = width
         sll     a3, a3, 0x0003              // a3 = urx_difference
         addu    a3, a3, a1                  // a3 - urx
@@ -252,7 +260,10 @@ scope Menu {
         jal     Overlay.set_color_          // set fill color
         nop
         lw      at, 0x0010(sp)              // at = address of Menu.info()
-        lw      t0, 0x000C(at)              // t0 = selecion
+        lw      t0, 0x000C(at)              // t0 = selection
+        addiu   t1, r0, MAX_PER_PAGE        // t1 = max rows per page
+        div     t0, t1                      // divide selection by rows per page to get row
+        mfhi    t0                          // t0 - row
         lli     s0, ROW_HEIGHT              // ~
         mult    t0, s0                      // ~
         mflo    a1                          // a1 = height of row
@@ -268,6 +279,9 @@ scope Menu {
         //  draw selection line
         lw      at, 0x0010(sp)              // at = address of Menu.info()
         lw      t0, 0x000C(at)              // t0 = selecion
+        addiu   t1, r0, MAX_PER_PAGE        // t1 = max rows per page
+        div     t0, t1                      // divide selection by rows per page to get row
+        mfhi    t0                          // t0 - row
         lli     s0, ROW_HEIGHT              // ~
         mult    t0, s0                      // ~
         mflo    a1                          // a1 = height of row
@@ -290,7 +304,8 @@ scope Menu {
         lw      a1, 0x0014(sp)              // ~
         lw      a2, 0x0018(sp)              // ~
         lw      a3, 0x001C(sp)              // ~
-        lw      at, 0x0020(sp)              // restore registers
+        sw      t1, 0x0020(sp)              // ~
+        lw      at, 0x0024(sp)              // restore registers
         addiu   sp, sp, 0x0028              // deallocate stack space
         jr      ra                          // return
         nop
@@ -315,9 +330,10 @@ scope Menu {
         nop
         bnez    v0, _update_down            // if (down was pushed) then do update
         nop
-        li      a0, Joypad.DD               // a0 - dpad down
+        li      a0, Joypad.DD | Joypad.CD   // a0 - dpad/c down
+        lli     a1, 00001                   // a1 - any
         li      a2, Joypad.PRESSED          // a2 - type
-        jal     Joypad.check_buttons_all_   // v0 = dpad down pressed
+        jal     Joypad.check_buttons_all_   // v0 = dpad/c down pressed
         nop
         beqz    v0, _up                     // if not pressed, check c-up
         nop
@@ -336,13 +352,32 @@ scope Menu {
         beqz    at, _wrap_down              // if (selection == (num_entries - 1), wrap
         nop
         addiu   t1, t1, 0x0001              // t1 = selection++
+        lli     a0, MAX_PER_PAGE            // a0 = MAX_PER_PAGE
+        div     t1, a0                      // divide to get remainder
+        mfhi    a0                          // a0 = t1 % 19
+        bnez    a0, _update_down_finish     // if cursor is now on an entry not on this page, 
+        nop                                 // then we need to adjust:
+        addiu   t1, t1, -MAX_PER_PAGE       // t1 = selection corrected
+        _update_down_finish:
         sw      t1, 0x0000(t0)              // update selection
         b       _copy                       // only allow one update
         nop
 
         _wrap_down:
-        sw      r0, 0x0000(t0)              // update selction
+        lli     a0, MAX_PER_PAGE            // a0 = MAX_PER_PAGE
+        sltu    at, a0, t1                  // if not on the fist page
+        bnez    at, _update_down_page_top   // then update to top of page
+        nop                                 // otherwise update to 0:
+        sw      r0, 0x0000(t0)              // update selection
         b       _copy                       // only allow one update
+        nop
+
+        _update_down_page_top:
+        div     t1, a0                      // ~
+        mflo    t1                          // t1 = t1 / 19 no remainder
+        mult    t1, a0                      // ~
+        mflo    t1                          // t1 = first row on page
+        b       _update_down_finish         // update selection
         nop
 
         _up:
@@ -351,9 +386,10 @@ scope Menu {
         nop
         bnez    v0, _update_up              // if (up was pushed) then do update
         nop
-        li      a0, Joypad.DU               // a0 - dpad up
+        li      a0, Joypad.DU | Joypad.CU   // a0 - dpad/c up
+        lli     a1, 00001                   // a1 - any
         li      a2, Joypad.PRESSED          // a2 - type
-        jal     Joypad.check_buttons_all_   // v0 = dpad up pressed
+        jal     Joypad.check_buttons_all_   // v0 = dpad/c up pressed
         nop
         beqz    v0, _right                  // if not pressed, check right
         nop
@@ -364,9 +400,13 @@ scope Menu {
         lw      at, 0x0014(sp)              // at = address of info()
         addiu   t0, at, 0x000C              // t0 = address of selection
         lw      t1, 0x0000(t0)              // t1 = selection
-        beqz    t1, _wrap_up                // if (selection == 0), go to bottom option
+        lli     a0, MAX_PER_PAGE            // a0 = max_per_page
+        div     t1, a0                      // ~
+        mfhi    a0                          // a0 (row) = t1 % 19
+        beqz    a0, _wrap_up                // if (row == 0), go to bottom option
         nop
         addiu   t1, t1,-0x0001              // t1 = selection--
+        _wrap_up_finish:
         sw      t1, 0x0000(t0)              // update selection
         b       _copy                       // only allow one update
         nop
@@ -376,19 +416,24 @@ scope Menu {
         jal     get_num_entries_            // v0 = num_entries
         nop
         addiu   v0, v0,-0x0001              // ~
+        addiu   t1, t1, 00018               // t1 - last on page
+        sltu    at, t1, v0                  // if the last entry is not higher than the number of entries
+        bnez    at, _wrap_up_finish         // then we can use it
+        nop                                 // otherwise:
         sw      v0, 0x0000(t0)              // update selection to bottom option
         b       _copy                       // only allow one update
         nop
 
         _right:
-        lli     a0, Joypad.RIGHT             // a1 - enum left/right/down/up
+        lli     a0, Joypad.RIGHT            // a1 - enum left/right/down/up
         jal     Joypad.check_stick_         // v0 = boolean
         nop
         bnez    v0, _update_right           // if (right was pushed) then do update
         nop
-        li      a0, Joypad.DR               // a0 - dpad right
+        li      a0, Joypad.DR | Joypad.CR   // a0 - dpad/c right
+        lli     a1, 00001                   // a1 - any
         li      a2, Joypad.PRESSED          // a2 - type
-        jal     Joypad.check_buttons_all_   // v0 = dpad right pressed
+        jal     Joypad.check_buttons_all_   // v0 = dpad/c right pressed
         nop
         beqz    v0, _left                   // if not pressed, check left
         nop
@@ -415,11 +460,12 @@ scope Menu {
         nop
         bnez    v0, _update_left            // if (left was pushed) then do update
         nop
-        li      a0, Joypad.DL               // a0 - dpad left
+        li      a0, Joypad.DL | Joypad.CL   // a0 - dpad/c left
+        lli     a1, 00001                   // a1 - any
         li      a2, Joypad.PRESSED          // a2 - type
-        jal     Joypad.check_buttons_all_   // v0 = dpad left pressed
+        jal     Joypad.check_buttons_all_   // v0 = dpad/c left pressed
         nop
-        beqz    v0, _a                      // if not pressed, check A
+        beqz    v0, _r                      // if not pressed, check R
         nop
         _update_left:
         lli     a0, FGM.menu.TOGGLE         // a0 - fgm_id
@@ -437,6 +483,48 @@ scope Menu {
         sw      t0, 0x0004(v0)              // entry.current_value--
         b       _copy                       // only allow one update
         nop
+
+        _r:
+        li      a0, Joypad.R                // a0 - r button
+        li      a2, Joypad.PRESSED          // a2 - type
+        jal     Joypad.check_buttons_all_   // v0 = r button pressed
+        nop
+        beqz    v0, _z                      // if not pressed, check Z
+        nop
+        _update_r:
+        lli     a0, FGM.menu.SCROLL         // a0 - fgm_id
+        jal     FGM.play_                   // play menu sound
+        nop
+        lw      a0, 0x0014(sp)              // a0 - address of info()
+        jal     get_num_entries_            // v0 = num_entries
+        nop
+        lw      t0, 0x000C(a0)              // t0 - selection
+        addiu   t0, t0, MAX_PER_PAGE        // t0 - selection on next page
+        sw      t0, 0x000C(a0)              // update selection but maintain cursor row
+        lw      t0, 0x001C(a0)              // t0 - last entry
+        lw      t0, 0x001C(t0)              // t0 - next entry
+        bnez    t0, _update_r_continued     // if (last entry) then go back to first page
+        nop
+        lw      t0, 0x000C(a0)              // t0 - selection
+        lli     a2, MAX_PER_PAGE            // a2 - max_per_page
+        div     t0, a2                      // ~
+        mfhi    a2                          // a0 (row) = t1 % 19
+        sw      a2, 0x000C(a0)              // store selection
+        lw      t0, 0x0000(a0)              // t0 - head
+        _update_r_continued:
+        sw      t0, 0x0018(a0)              // update first entry
+        sw      t0, 0x001C(a0)              // update last entry
+        lw      t0, 0x000C(a0)              // t0 - selection
+        addiu   v0, v0, -0x0001             // v0 - num_entries, 0 based
+        sltu    at, v0, t0                  // if selection is not higher than the total number
+        beqz    at, _copy                   // then we're done
+        nop
+        sw      v0, 0x000C(a0)              // otherwise set the total number as the selection
+        b       _copy                       // only allow one update
+        nop
+
+        _z:
+        // TODO: implement left pagination?
 
         _a:
         lli     a0, Joypad.A                // a0 - button_mask
@@ -593,7 +681,7 @@ scope Menu {
     }
 
     // @ Description
-    // Returns the number of entires for a menu
+    // Returns the number of entries for a menu
     // @ Arguments
     // a0 - address of info
     // @ Returns

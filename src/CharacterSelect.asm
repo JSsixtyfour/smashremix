@@ -376,14 +376,14 @@ scope CharacterSelect {
 
         // init
         li      t0, RCP.display_list_info_p // t0 = display list info pointer 
-        li      t1, display_list_info       // t1 = address of display list info
-        sw      t1, 0x0000(t0)              // update display list info pointer
+        li      at, display_list_info       // at = address of display list info
+        sw      at, 0x0000(t0)              // update display list info pointer
 
         // reset
         li      t0, display_list            // t0 = address of display_list
-        li      t1, display_list_info       // t1 = address of display_list_info 
-        sw      t0, 0x0000(t1)              // ~
-        sw      t0, 0x0004(t1)              // update display list address each frame
+        li      at, display_list_info       // at = address of display_list_info
+        sw      t0, 0x0000(at)              // ~
+        sw      t0, 0x0004(at)              // update display list address each frame
 
         // highjack
         li      t0, 0xDE000000              // ~

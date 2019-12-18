@@ -6,6 +6,7 @@ print "included Toggles.asm\n"
 include "Color.asm"
 include "Data.asm"
 include "Menu.asm"
+include "MIDI.asm"
 include "OS.asm"
 include "SRAM.asm"
 
@@ -54,6 +55,9 @@ scope Toggles {
     nop
     OS.patch_end()
 
+    press_r:; db ": NEXT PAGE", 0x00
+    OS.align(4)
+
     scope run_: {
         addiu   sp, sp,-0x0020              // allocate stack space
         sw      ra, 0x0004(sp)              // ~
@@ -78,6 +82,28 @@ scope Toggles {
         jal     Overlay.draw_texture_       // draw options text texture
         nop
 
+        li      a0, info                    // a0 = address of info
+        jal     Menu.get_num_entries_       // v0 = number of entries
+        nop
+        slti    a0, v0, Menu.MAX_PER_PAGE+1 // if there is only one page
+        bnez    a0, _draw_menu              // then don't draw pagination instructions
+        nop
+
+        // draw "R" button
+        lli     a0, 000181                  // a0 - ulx
+        lli     a1, 000011                  // a1 - uly
+        li      a2, Data.r_button_info      // a2 - address of texture struct
+        jal     Overlay.draw_texture_       // draw options text texture
+        nop
+
+        // tell the user they can bring up the custom menu
+        lli     a0, 000199                  // a0 - ulx
+        lli     a1, 000014                  // a1 - uly
+        li      a2, press_r                 // a2 - address of string
+        jal     Overlay.draw_string_        // draw custom menu instructions
+        nop
+
+        _draw_menu:
         // update menu
         li      a0, info
         jal     Menu.update_                // check for updates
@@ -229,6 +255,8 @@ scope Toggles {
         li      t1, {address_of_head}       // t1 = address of head
         sw      t1, 0x0000(t0)              // update info->head
         sw      r0, 0x000C(t0)              // update info.selection
+        sw      t1, 0x0018(t0)              // update info->1st displayed
+        sw      t1, 0x001C(t0)              // update info->last displayed
 
         lw      t0, 0x0004(sp)              // restore t0
         lw      t1, 0x0008(sp)              // restore t1
@@ -321,7 +349,36 @@ scope Toggles {
     entry_random_music_planet_zebes:;       Menu.entry_bool("PLANET ZEBES", OS.FALSE, pc() + 20)
     entry_random_music_saffron_city:;       Menu.entry_bool("SAFFRON CITY", OS.FALSE, pc() + 20)
     entry_random_music_sector_z:;           Menu.entry_bool("SECTOR Z", OS.FALSE, pc() + 16)
-    entry_random_music_yoshis_island:;      Menu.entry_bool("YOSHI'S ISLAND", OS.TRUE, OS.NULL)
+    entry_random_music_yoshis_island:;      Menu.entry_bool("YOSHI'S ISLAND", OS.FALSE, pc() + 20)
+
+    // Add custom MIDIs
+    define toggled_custom_MIDIs(0)
+    define last_toggled_custom_MIDI(0)
+    evaluate n(0x2F)
+    while {n} < MIDI.midi_count {
+        evaluate can_toggle({MIDI.MIDI_{n}_TOGGLE})
+        if ({can_toggle} == OS.TRUE) {
+            evaluate last_toggled_custom_MIDI({n})
+            evaluate toggled_custom_MIDIs({toggled_custom_MIDIs}+1)
+        }
+        evaluate n({n}+1)
+    }
+
+    evaluate n(0x2F)
+    while {n} < MIDI.midi_count {
+        entry_random_music_{n}:                                        // always create the label even if we don't create the entry
+        evaluate can_toggle({MIDI.MIDI_{n}_TOGGLE})
+        if ({can_toggle} == OS.TRUE) {
+            if ({n} == {last_toggled_custom_MIDI}) {
+                evaluate next(OS.NULL)
+            } else {
+                evaluate m({n}+1)
+                evaluate next(entry_random_music_{m})
+            }
+            Menu.entry_bool("{MIDI.MIDI_{n}_NAME}", OS.FALSE, {next})
+        }
+        evaluate n({n}+1)
+    }
 
     // @ Description
     // Random Stage Toggles
@@ -346,7 +403,7 @@ scope Toggles {
     // @ Description
     // SRAM blocks for toggle saving.
     block_misc:; SRAM.block(16 * 4)
-    block_music:; SRAM.block(16 * 4)
+    block_music:; SRAM.block((16 + {toggled_custom_MIDIs}) * 4)
     block_stages:; SRAM.block(16 * 4)
 }
 

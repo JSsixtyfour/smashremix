@@ -518,7 +518,7 @@ scope Overlay {
     // @ Arguments
     // a0 - rgba5551 color
     scope set_color_: {
-        addiu   sp, sp,-0x0008              // allocate stack space
+        addiu   sp, sp,-0x000C              // allocate stack space
         sw      at, 0x0004(sp)              // ~
         sw      ra, 0x0008(sp)              // save registers
         or      at, a0, r0                  // ~
@@ -528,7 +528,7 @@ scope Overlay {
         nop
         lw      at, 0x0004(sp)              // ~
         lw      ra, 0x0008(sp)              // save registers
-        addiu   sp, sp, 0x0008              // deallocate stack space
+        addiu   sp, sp, 0x000C              // deallocate stack space
         jr      ra                          // return
         nop
     }

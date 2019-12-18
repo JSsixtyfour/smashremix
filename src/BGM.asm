@@ -7,6 +7,7 @@ print "included BGM.asm\n"
 // This file allows BGM (background music) to be played and stopped.
 
 include "Global.asm"
+include "Midi.asm"
 include "Toggles.asm"
 include "OS.asm"
 
@@ -94,7 +95,7 @@ scope BGM {
     // @ Descirption
     // Table of bgm_id (as words, 32 bit values)
     random_table:
-    fill 4 * 32                             // assumes there will never be more than 32 songs
+    fill 4 * MIDI.midi_count                // allows for space for all songs, which is actually more than we need
 
     // @ Descirption
     // number of stages in random_table.
@@ -126,8 +127,6 @@ scope BGM {
         _random_music_return:
         OS.patch_end()
 
-        constant TABLE_SIZE(13)
-
         or      v0, a1, r0                  // original line 1
         addu    t3, t1, t2                  // original line 2
         Toggles.guard(Toggles.entry_random_music, _random_music_return)
@@ -144,7 +143,13 @@ scope BGM {
         bne     t0, v0, _end                // if not fight screen, end
         nop
 
+        // reset count each time so we don't grow the list too large
+        li      v1, random_count            // v1 = random_count address
+        sw      r0, 0x0000(v1)              // set random_count to 0
+
         // this block builds the list of stages available in the random list (using macro above)
+        sw      a1, 0x0014(sp)              // save a1 (default bgm_id)
+
         add_to_list(Toggles.entry_random_music_peachs_castle, stage.PEACHS_CASTLE)
         add_to_list(Toggles.entry_random_music_sector_z, stage.SECTOR_Z)
         add_to_list(Toggles.entry_random_music_congo_jungle, stage.CONGO_JUNGLE)
@@ -152,13 +157,25 @@ scope BGM {
         add_to_list(Toggles.entry_random_music_hyrule_castle, stage.HYRULE_CASTLE)
         add_to_list(Toggles.entry_random_music_yoshis_island, stage.YOSHIS_ISLAND)
         add_to_list(Toggles.entry_random_music_dream_land, stage.DREAM_LAND)
-        add_to_list(Toggles.entry_random_stage_saffron_city, stage.SAFFRON_CITY)
+        add_to_list(Toggles.entry_random_music_saffron_city, stage.SAFFRON_CITY)
         add_to_list(Toggles.entry_random_music_mushroom_kingdom, stage.MUSHROOM_KINGDOM)
         add_to_list(Toggles.entry_random_music_battlefield, stage.BATTLEFIELD)
         add_to_list(Toggles.entry_random_music_final_destination, stage.FINAL_DESTINATION)
         add_to_list(Toggles.entry_random_music_how_to_play, stage.HOW_TO_PLAY)
         add_to_list(Toggles.entry_random_music_data, menu.DATA)
         add_to_list(Toggles.entry_random_music_meta_crystal, stage.META_CRYSTAL)
+
+        // Add custom MIDIs
+        define n(0x2F)
+        evaluate n({n})
+        while {n} < MIDI.midi_count {
+            add_to_list(Toggles.entry_random_music_{n}, {n})
+            evaluate n({n}+1)
+        }
+
+        lw      a1, 0x0014(sp)              // restore a1 (default bgm_id)
+        beqz    v1, _end                    // if there were no valid entries in the random table, then use default bgm_id
+        nop
 
         // this block loads from the random list using a random int
         move    a0, v1                      // a0 - range (0, N-1)
