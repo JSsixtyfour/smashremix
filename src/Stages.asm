@@ -554,7 +554,7 @@ scope Stages {
     db id.SAFFRON_CITY                      // 09 
     db id.DUEL_ZONE                         // 0A 
     db id.FINAL_DESTINATION                 // 0B    
-    db id.FROSTY                            // 0C 
+    db id.RANDOM                            // 0C 
     db id.MINI_YOSHIS_ISLAND                // 0D 
     db id.FIRST_DESTINATION                 // 0E 
     db id.SHOWDOWN                          // 0F 
@@ -573,7 +573,7 @@ scope Stages {
     db id.MUDA			                    // 1B
     db id.MUTE                              // 1C
     db id.DRAGONKING                        // 1D
-    db id.UNCANNY                           // 1E
+    db id.FROSTY                            // 1E
     db id.FRAYS_STAGE                       // 1F
     db id.DREAM_LAND_BETA_1                 // 20
     db id.DREAM_LAND_BETA_2                 // 21
