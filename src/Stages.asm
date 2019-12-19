@@ -1184,24 +1184,44 @@ scope Stages {
         sw      v0, 0x0010(sp)              // ~
         sw      ra, 0x0014(sp)              // save registers
 
-        // this block draws ""<< Z Page   R >>""
+        // this block draws the legend text
         lli     a0, 160                     // a0 - x
         lli     a1, 117                     // a1 - uly
         li      a2, string_page             // a2 - address of string
         jal     Overlay.draw_centered_str_  // draw string
         nop
 
-        // TODO:
         // this block draws page number 
         li      a0, page_number             // ~
         lw      a0, 0x0000(a0)              // a0 - (int) page_number
         addiu   a0, a0, 0x0001              // make it normie readable
         jal     String.itoa_                // v0 = (string) page_number
         nop
-        lli     a0, 160                     // a0 - x
-        lli     a1, 117                     // a1 - uly
+        lli     a0, 000068                  // a0 - x
+        lli     a1, 000117                  // a1 - uly
         move    a2, v0                      // a2 - address of string
-//      jal     Overlay.draw_centered_str_  // draw string
+        jal     Overlay.draw_string_        // draw string
+        nop
+
+        // draw "R" button
+        lli     a0, 000098                  // a0 - ulx
+        lli     a1, 000114                  // a1 - uly
+        li      a2, Data.r_button_info      // a2 - address of texture struct
+        jal     Overlay.draw_texture_       // draw options text texture
+        nop
+
+        // draw "Z" button
+        lli     a0, 000082                  // a0 - ulx
+        lli     a1, 000113                  // a1 - uly
+        li      a2, Data.z_button_info      // a2 - address of texture struct
+        jal     Overlay.draw_texture_       // draw options text texture
+        nop
+
+        // draw "L" button
+        lli     a0, 000156                  // a0 - ulx
+        lli     a1, 000114                  // a1 - uly
+        li      a2, Data.l_button_info      // a2 - address of texture struct
+        jal     Overlay.draw_texture_       // draw options text texture
         nop
 
         _end:
@@ -1215,7 +1235,7 @@ scope Stages {
         nop
 
         string_page:
-        String.insert("Previous Page: Z, Next Page: R")
+        String.insert("Page:   /  :+/-   :Hazards On/Off")
     }
 
     // @ Description

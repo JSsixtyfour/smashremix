@@ -74,9 +74,17 @@ scope Data {
     Texture.info(16, 16)
     insert "../textures/b_button.rgba5551"
 
+    l_button_info:
+    Texture.info(16, 16)
+    insert "../textures/l_button.rgba5551"
+
     r_button_info:
     Texture.info(16, 16)
     insert "../textures/r_button.rgba5551"
+
+    z_button_info:
+    Texture.info(16, 16)
+    insert "../textures/z_button.rgba5551"
 }
 
 } // __DATA__
