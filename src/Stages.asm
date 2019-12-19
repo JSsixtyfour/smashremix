@@ -2285,7 +2285,7 @@ scope Stages {
 
         pushvar origin, base
 
-        origin string_table_origin + (41 * 4) + (new_stages * 4)
+        origin string_table_origin + ({new_stage_id} * 4)
         dw     string_{name}
 
         pullvar base, origin
