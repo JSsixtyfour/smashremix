@@ -20,29 +20,29 @@
 0855 Ganon downsmash
 0856 Ganon forward air trident
 0857 Ganon forward air melee style punch
-0858 Dr. mario down air
-0859 Dr. mario forward air
-085A Dr. mario taunt
-085B Wario down smash
-085C Wario aerial b move
-085D Wario ground b move
-085E Wario balloon attack nair
-085F Wario clap up uair
-0860 Wario taunt
+0858 dr. mario down air
+0859 dr. mario forward air
+085A dr. mario taunt
+085B Wario D-Smash
+085C Wario Air Neutral Special
+085D Wario Ground Neutral Special
+085E Wario N-Air
+085F Wario U-Air
+0860 Wario Taunt
 0861 Ganon's taunt
-0862 Wario's back air
-0863 Wario's running animation
-0864 Wario's dash
-0865 Wario's run stop
-0866 Wario's down air
-0867 Falco's forward smash (400000000)
-0868 Falco's taunt
-0869 Falco's up tilt
+0862 Wario B-Air
+0863 Wario Idle
+0864 Wario Up Tilt
+0865 Wario F-Air
+0866 Wario D-Air
+0867 falco's forward smash (400000000)
+0868 falco's taunt
+0869 falco's up tilt
 086A Donkey Kong's Aerial Tennis Swing
 086B Donkey Kong's Ground Tennis Swing
 086C Donkey Kong's Up Air
-086D Wario's Forward Smash
-086E Wario's Up Smash
+086D Wario F-Smash
+086E Wario U-Smash
 086F Dr. Mario's Projectile Hitbox
 0870 Dr. Mario's Projectile Graphic
 0871 Battlefield Header 
@@ -62,7 +62,7 @@
 087F Kalos bg file
 0880 Pokemon Stadium 2 Header
 0881 Pokemon Stadium 2 Stage
-0882 Pokemon Stadium 2 bg file
+0882 Pokemon Stadium 2 BG
 0883 Skyloft Header
 0884 Skyloft Stage
 0885 Skyloft BG
@@ -148,7 +148,7 @@
 08D4 Dark Samus Character
 08D5 Dark Samus Secondary File
 08D6 Dark Samus Neutral Special Graphic
-08D7 Lucas Main
+08D7 UNUSED -- REPLACE WITH DARK SAMUS ANIMATION
 08D8 Dark Samus Roll F
 08D9 Dark Samus Roll B
 08DA Dark Samus Jump F
@@ -180,7 +180,27 @@
 08F4 Zebes Landing Stage
 08F5 Zebes Landing BG
 08F6 Dark Samus Victory1
-08F6 Dark Samus Select
+08F7 Dark Samus Select
+08F8 Wario Main
+08F9 Wario Character
+08FA Wario Up Special
+08FB Wario Jab 1
+08FC Wario Jab 2
+08FD Wario FTilt High
+08FE Wario FTilt
+08FF Wario Ftilt Low
+0900 Wario Crouch Begin
+0901 Wario Crouch Idle
+0902 Wario Crouch End
+0903 Wario Down Tilt
+0904 Wario Grab
+0905 Wario Grab Pull
+0906 Wario Forward Throw
+0907 Wario Back Throw
+0908 Wario Neutral Special Recoil
+0909 Wario Ground Down Special
+090A Wario Air Down Special
+090B Wario Down Special Landing
 0611 CAPTAIN DeadU
 0611 CAPTAIN ScreenKO
 05E8 CAPTAIN Entry

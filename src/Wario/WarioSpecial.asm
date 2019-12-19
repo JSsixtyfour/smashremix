@@ -6,12 +6,12 @@
 // Subroutines for Neutral Special    
 scope WarioNSP {
     constant X_SPEED(0x4270)                // current setting - float:60.0
-    constant Y_SPEED(0x4220)                // current setting - float:40.0
+    constant Y_SPEED(0x41F0)                // current setting - float:30.0
     constant JUMP_SPEED(0x4288)             // current setting - float:68.0
     constant RECOIL_X_SPEED(0xC230)         // current setting - float:-44.0
     constant RECOIL_Y_SPEED(0x4230)         // current setting - float:44.0
     constant GRAVITY(0x4030)                // current setting - float:2.75
-    constant MAX_FALL_SPEED(0x4228)         // current setting - float:42.0
+    constant MAX_FALL_SPEED(0x4240)         // current setting - float:48.0
     constant AIR_FRICTION(0x4000)           // current setting - float:2.0
     constant GROUND_TRACTION(0x3F00)        // current setting - float:0.5
     
@@ -192,11 +192,13 @@ scope WarioNSP {
         // a2 = player struct
         // 0x184 in player struct = temp variable 3
         
-        addiu   sp, sp,-0x0018              // allocate stack space
-        sw      t0, 0x0004(sp)              // ~
-        sw      t1, 0x0008(sp)              // ~
-        swc1    f0, 0x000C(sp)              // ~
-        swc1    f2, 0x0010(sp)              // store t0, t1, f0, f2
+        addiu   sp, sp,-0x0020              // allocate stack space
+        sw      ra, 0x0004(sp)              // ~
+        sw      a0, 0x0008(sp)              // ~
+        sw      t0, 0x000C(sp)              // ~
+        sw      t1, 0x0010(sp)              // ~
+        swc1    f0, 0x0014(sp)              // ~
+        swc1    f2, 0x0018(sp)              // store a0, ra, t0, t1, f0, f2
         
         _check_begin:
         lw      t0, 0x0184(a2)              // t0 = temp variable 3
@@ -231,16 +233,36 @@ scope WarioNSP {
         lw      t0, 0x0180(a2)              // temp variable 2
         beq     t0, r0, _end                // skip if temp variable 2 = 0
         nop
-        lui     t0, Y_SPEED                 // t0 = Y_SPEED
-        sw      t0, 0x004C(a2)              // y velocity = Y_SPEED
+        _apply_y:
         sw      r0, 0x0180(a2)              // temp variable 2 = 0
+        // falcon punch subroutine which takes stick_y and returns an angle in radians to f0
+        jal     0x8015F874                  // return f0 = angle
+        lb      a0, 0x01C3(a2)              // a0 = stick_y
+        // ultra64 sinf function
+        jal     0x800303F0                  // return f0 = sin(angle)
+        mov.s   f12, f0                     // f12 = angle
+        // sine used to calculate final Y_SPEED
+        lui     t0, X_SPEED                 // ~
+        mtc1    t0, f2                      // f2 = X_SPEED
+        mul.s   f0, f0, f2                  // f2 = sin(angle) * X_SPEED
+        // multiply by 0.75 to reduce the range of angles
+        lui     t0, 0x3F40                  // ~
+        mtc1    t0, f2                      // f2 = 0.75
+        mul.s   f0, f0, f2                  // f2 = f2 * 0.75
+        // add base speed
+        lui     t0, Y_SPEED                 // ~
+        mtc1    t0, f2                      // f2 = Y_SPEED
+        add.s   f0, f0, f2                  // f0 = f2 + Y_SPEED
+        swc1    f0, 0x004C(a2)              // store final y velocity
         
         _end:
-        lw      t0, 0x0004(sp)              // ~
-        lw      t1, 0x0008(sp)              // ~
-        lwc1    f0, 0x000C(sp)              // ~
-        lwc1    f2, 0x0010(sp)              // load t0, t1, f0, f2
-        addiu   sp, sp, 0x0018              // deallocate stack space
+        lw      ra, 0x0004(sp)              // ~
+        lw      a0, 0x0008(sp)              // ~
+        lw      t0, 0x000C(sp)              // ~
+        lw      t1, 0x0010(sp)              // ~
+        lwc1    f0, 0x0014(sp)              // ~
+        lwc1    f2, 0x0018(sp)              // load a0, ra, t0, t1, f0, f2
+        addiu   sp, sp, 0x0020              // deallocate stack space
         jr      ra                          // return
         nop
     }

@@ -4,6 +4,18 @@
 
 scope Wario {
     // Insert Moveset files
+    insert JUMP_1,"moveset/JUMP_1.bin"
+    insert JUMP_2,"moveset/JUMP_2.bin"
+    insert TECH_STAND,"moveset/TECH_STAND.bin"
+    insert TECH_ROLL,"moveset/TECH_ROLL.bin"
+    insert ROLL_F,"moveset/ROLL_F.bin"
+    insert ROLL_B,"moveset/ROLL_B.bin"
+    insert EDGE_ATTACK_F,"moveset/EDGE_ATTACK_F.bin"
+    insert EDGE_ATTACK_S,"moveset/EDGE_ATTACK_S.bin"
+    insert SPARKLE,"moveset/SPARKLE.bin"; Moveset.GO_TO(SPARKLE)             // loops
+    insert SHIELD_BREAK,"moveset/SHIELD_BREAK.bin"; Moveset.GO_TO(SPARKLE)   // loops
+    insert STUN, "moveset/STUN.bin"; Moveset.GO_TO(STUN)         // loops
+    insert ASLEEP, "moveset/ASLEEP.bin"; Moveset.GO_TO(ASLEEP)   // loops
     insert GRAB_RELEASE_DATA,"moveset/GRAB_RELEASE_DATA.bin"
     GRAB:; Moveset.THROW_DATA(GRAB_RELEASE_DATA); insert "moveset/GRAB.bin"
     insert FTHROW_DATA,"moveset/FORWARD_THROW_DATA.bin"
@@ -12,6 +24,7 @@ scope Wario {
     BTHROW:; Moveset.THROW_DATA(BTHROW_DATA); insert "moveset/BACK_THROW.bin"
     insert JAB_1,"moveset/JAB_1.bin"
     insert JAB_2,"moveset/JAB_2.bin"
+    insert DASH_ATTACK,"moveset/DASH_ATTACK.bin"
     insert FTILT_HI,"moveset/FORWARD_TILT_HIGH.bin"
     insert FTILT,"moveset/FORWARD_TILT.bin"
     insert FTILT_LO,"moveset/FORWARD_TILT_LOW.bin"
@@ -36,6 +49,21 @@ scope Wario {
 
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(WARIO, Action.Idle,            File.WARIO_IDLE,            -1,                         -1)
+    Character.edit_action_parameters(WARIO, Action.JumpF,           -1,                         JUMP_1,                     -1)
+    Character.edit_action_parameters(WARIO, Action.JumpB,           -1,                         JUMP_1,                     -1)
+    Character.edit_action_parameters(WARIO, Action.JumpAerialF,     -1,                         JUMP_2,                     -1)
+    Character.edit_action_parameters(WARIO, Action.JumpAerialB,     -1,                         JUMP_2,                     -1)
+    Character.edit_action_parameters(WARIO, Action.Tech,            -1,                         TECH_STAND,                 -1)
+    Character.edit_action_parameters(WARIO, Action.TechF,           -1,                         TECH_ROLL,                  -1)
+    Character.edit_action_parameters(WARIO, Action.TechB,           -1,                         TECH_ROLL,                  -1)
+    Character.edit_action_parameters(WARIO, Action.RollF,           -1,                         ROLL_F,                     -1)
+    Character.edit_action_parameters(WARIO, Action.RollB,           -1,                         ROLL_B,                     -1)
+    Character.edit_action_parameters(WARIO, Action.CliffAttackQuick2, -1,                       EDGE_ATTACK_F,              -1)
+    Character.edit_action_parameters(WARIO, Action.CliffAttackSlow2, -1,                        EDGE_ATTACK_S,              -1)
+    Character.edit_action_parameters(WARIO, Action.ShieldBreak,     -1,                         SHIELD_BREAK,               -1)
+    Character.edit_action_parameters(WARIO, Action.Stun,            -1,                         STUN,                       -1)
+    Character.edit_action_parameters(WARIO, Action.Sleep,           -1,                         ASLEEP,                     -1)
+    Character.edit_action_parameters(WARIO, Action.Idle,            File.WARIO_IDLE,            -1,                         -1)
     Character.edit_action_parameters(WARIO, Action.Crouch,          File.WARIO_CROUCH_BEGIN,    -1,                         -1)
     Character.edit_action_parameters(WARIO, Action.CrouchIdle,      File.WARIO_CROUCH_IDLE,     -1,                         -1)
     Character.edit_action_parameters(WARIO, Action.CrouchEnd,       File.WARIO_CROUCH_END,      -1,                         -1)
@@ -47,6 +75,7 @@ scope Wario {
     Character.edit_action_parameters(WARIO, Action.Taunt,           File.WARIO_TAUNT,           -1,                         -1)
     Character.edit_action_parameters(WARIO, Action.Jab1,            File.WARIO_JAB_1,           JAB_1,                      -1)
     Character.edit_action_parameters(WARIO, Action.Jab2,            File.WARIO_JAB_2,           JAB_2,                      -1)
+    Character.edit_action_parameters(WARIO, Action.DashAttack,      0x25A,                      DASH_ATTACK,                -1)
     Character.edit_action_parameters(WARIO, Action.FTiltHigh,       File.WARIO_FTILT_HIGH,      FTILT_HI,                   -1)
     Character.edit_action_parameters(WARIO, Action.FTiltMidHigh,    0,                          0x80000000,                 0)
     Character.edit_action_parameters(WARIO, Action.FTilt,           File.WARIO_FTILT,           FTILT,                      -1)
