@@ -543,13 +543,13 @@ scope VsCombo {
     // @ Description
     // This is the entry for Overlay.asm
     scope run_: {
-        OS.save_registers()                 // save registers
-
         b       _guard                      // check if toggle is on
         nop
+
         _toggle_off:
         b       _end                        // toggle is off, skip to end
         nop
+
         _swap_toggle_off:
         b       _draw_hit_counts            // 1v1 swap toggle is off, skip to _draw_hit_counts
         nop
@@ -557,6 +557,8 @@ scope VsCombo {
         _guard:
         // If combo meter is off, skip to _end and don't draw hit counts
         Toggles.guard(Toggles.entry_vs_mode_combo_meter, _toggle_off)
+
+        OS.save_registers()                 // save registers
 
         li      t0, player_count            // t0 = number of players
         lw      t1, 0x0000(t0)              // t1 = player_count
@@ -610,8 +612,9 @@ scope VsCombo {
         draw_hit_count(3)                   // draw combo meter for port 3
         draw_hit_count(4)                   // draw combo meter for port 4
 
-        _end:
         OS.restore_registers()              // restore registers
+
+        _end:
         jr      ra                          // return
         nop
 

@@ -303,6 +303,17 @@ scope Toggles {
         nop
     }
 
+    // @ Description
+    // FPS strings
+    fps_off:; db "OFF", 0x00
+    fps_normal:; db "NORMAL", 0x00
+    fps_overclocked:; db "OVERCLOCKED", 0x00
+    OS.align(4)
+
+    string_table_fps:
+    dw fps_off
+    dw fps_normal
+    dw fps_overclocked
 
     // @ Description
     // Contains list of submenus.
@@ -317,13 +328,14 @@ scope Toggles {
     head_remix_settings:
     entry_practice_overlay:;            Menu.entry_bool("COLOR OVERLAYS", OS.FALSE, entry_disable_cinematic_camera)
     entry_disable_cinematic_camera:;    Menu.entry_bool("DISABLE CINEMATIC CAMERA", OS.FALSE, entry_flash_on_z_cancel)
-    entry_flash_on_z_cancel:;           Menu.entry_bool("FLASH ON Z-CANCEL", OS.FALSE, entry_hitbox_mode)
+    entry_flash_on_z_cancel:;           Menu.entry_bool("FLASH ON Z-CANCEL", OS.FALSE, entry_fps)
+    entry_fps:;                         Menu.entry("FPS DISPLAY *BETA", Menu.type.U8, OS.FALSE, 0, 2, OS.NULL, string_table_fps, OS.NULL, entry_hitbox_mode)
     entry_hitbox_mode:;                 Menu.entry_bool("HITBOX DISPLAY", OS.FALSE, entry_hold_to_pause)
     entry_hold_to_pause:;               Menu.entry_bool("HOLD TO PAUSE", OS.TRUE, entry_improved_combo_meter)
-    entry_improved_combo_meter:;        Menu.entry_bool("IMPROVED COMBO METER - BETA", OS.FALSE, entry_tech_chase_combo_meter)
-    entry_tech_chase_combo_meter:;      Menu.entry_bool("TECH CHASE COMBO METER - BETA", OS.FALSE, entry_vs_mode_combo_meter)
-    entry_vs_mode_combo_meter:;         Menu.entry_bool("VS MODE COMBO METER - BETA", OS.FALSE, entry_1v1_combo_meter_swap)
-    entry_1v1_combo_meter_swap:;        Menu.entry_bool("1V1 COMBO METER SWAP - BETA", OS.FALSE, entry_improved_ai)
+    entry_improved_combo_meter:;        Menu.entry_bool("IMPROVED COMBO METER *BETA", OS.FALSE, entry_tech_chase_combo_meter)
+    entry_tech_chase_combo_meter:;      Menu.entry_bool("TECH CHASE COMBO METER *BETA", OS.FALSE, entry_vs_mode_combo_meter)
+    entry_vs_mode_combo_meter:;         Menu.entry_bool("VS MODE COMBO METER *BETA", OS.FALSE, entry_1v1_combo_meter_swap)
+    entry_1v1_combo_meter_swap:;        Menu.entry_bool("1V1 COMBO METER SWAP *BETA", OS.FALSE, entry_improved_ai)
     entry_improved_ai:;                 Menu.entry_bool("IMPROVED AI", OS.TRUE, entry_neutral_spawns)
     entry_neutral_spawns:;              Menu.entry_bool("NEUTRAL SPAWNS", OS.TRUE, entry_skip_results_screen)
     entry_skip_results_screen:;         Menu.entry_bool("SKIP RESULTS SCREEN", OS.FALSE, entry_stereo_sound)
@@ -416,9 +428,9 @@ scope Toggles {
 
     // @ Description
     // SRAM blocks for toggle saving.
-    block_misc:; SRAM.block(16 * 4)
+    block_misc:; SRAM.block(17 * 4)
     block_music:; SRAM.block((16 + {toggled_custom_MIDIs}) * 4)
-    block_stages:; SRAM.block((Stages.id.MAX_STAGE_ID - 24) * 4) // We don't use the 24 BTT/BTPs nor the RTTF
+    block_stages:; SRAM.block((Stages.id.MAX_STAGE_ID + 1 - 25) * 4) // We don't use the 24 BTT/BTPs nor the RTTF
 }
 
 

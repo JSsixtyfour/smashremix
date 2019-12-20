@@ -91,6 +91,8 @@ include "src/DSamus/DSamus.asm"
 // MIDI
 include "src/MIDI.asm"
 
+include "src/FPS.asm"
+
 // rom size = 40MB
 origin 0x27FFFFF
 db 0x00

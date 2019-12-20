@@ -8,7 +8,6 @@ print "included Overlay.asm\n"
 // @ Note
 // This file only supports rgba5551
 
-include "Data.asm"
 include "Global.asm"
 include "Joypad.asm"
 include "OS.asm"
@@ -109,6 +108,8 @@ scope Overlay {
         sb      r0, 0x0000(t1)              // Set player_count to 0
 
         _finish:
+        jal     FPS.run_                    // display fps
+        nop
         jal     end_                        // end display list
         nop
 

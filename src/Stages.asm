@@ -19,6 +19,8 @@ include "Texture.asm"
 
 scope Stages {
 
+    OS.align(16)
+
     // DONE
     // 800FC298 - reads from table at 0x8012C520, (stage file #, stage type #)
     // solution: change li @ 0x800FC29C to custom table by stage id
@@ -1763,16 +1765,14 @@ scope Stages {
         lw      t0, 0x0004(a0)              // t0 = curr_value
 
         _continue:
-        li      v1, random_count            // ~
-        lw      v1, 0x0000(v1)              // v1 = random_count
+        li      t1, random_count            // t1 = address of random_count
+        lw      v1, 0x0000(t1)              // v1 = random_count
         beqz    t0, _end                    // end, return false and count
         nop
 
         // if the stage should be added, it is added here. count is also incremented here
-        li      t0, random_count            // t0 = address of random_count
-        lw      v1, 0x0000(t0)              // v1 = random_count
         addiu   v1, v1, 0x0001              // v1 = random_count++
-        sw      v1, 0x0000(t0)              // update random_count
+        sw      v1, 0x0000(t1)              // update random_count
         li      t0, random_table - 1        // t0 = address of byte before random_table
         addu    t0, t0, v1                  // t0 = random_table + offset
         sb      a1, 0x0000(t0)              // add stage
@@ -1892,10 +1892,10 @@ scope Stages {
         nop
     }
     
-    // @ Descirption
-    // Table of stage IDs (as words, 32 bit values)
+    // @ Description
+    // Table of stage IDs
     random_table:
-    fill id.MAX_STAGE_ID - 25                  // We don't use the 24 BTTs nor the RTTF
+    fill id.MAX_STAGE_ID + 1 - 25           // We don't use the 24 BTT/BTPs nor the RTTF
     OS.align(4)
 
     // @ Description
