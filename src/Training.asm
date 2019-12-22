@@ -866,7 +866,7 @@ scope Training {
     dw char_0x1E            // GANONDORF
     dw char_0x1F            // YOUNG LINK
     dw char_0x20            // DR MARIO
-    dw char_0x21            // WARIO
+    //dw char_0x21            // WARIO
     dw char_0x22            // DARK SAMUS
     dw char_0x0D            // METAL MARIO
     dw char_0x1A            // GIANT DK
@@ -905,10 +905,10 @@ scope Training {
         constant YLINK(0x0E)
         constant DRM(0x0F)
         constant WARIO(0x10)
-        constant DSAMUS(0x11)
+        constant DSAMUS(0x10)
         // Increment METAL after adding more characters here
 
-        constant METAL(0x12)
+        constant METAL(0x11)
         constant GDONKEY(METAL + 0x01)
         constant NMARIO(METAL + 0x02)
         constant NFOX(METAL + 0x03)
@@ -942,7 +942,7 @@ scope Training {
     db Character.id.GND
     db Character.id.YLINK
     db Character.id.DRM
-    db Character.id.WARIO
+    //db Character.id.WARIO
     db Character.id.DSAMUS
     db Character.id.METAL
     db Character.id.GDONKEY
