@@ -311,7 +311,7 @@ scope Stages {
     insert icon_blue,                   "../textures/icon_blue.rgba5551"
     insert icon_onett,                  "../textures/icon_onett.rgba5551"
     insert icon_zlanding,               "../textures/icon_zlanding.rgba5551"
-    insert icon_frosty,                 "../textures/icon_n64.rgba5551"
+    insert icon_frosty,                 "../textures/icon_frosty.rgba5551"
     
 
     // @ Description
@@ -707,7 +707,7 @@ scope Stages {
     dw icon_blue                            // Big Blue
     dw icon_onett                           // Onett
     dw icon_zlanding                        // Zebes Landing
-    dw icon_n64                             // Frosty Village
+    dw icon_frosty                          // Frosty Village
 
     // @ Description
     // Row the cursor is on

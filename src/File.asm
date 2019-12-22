@@ -186,4 +186,7 @@ scope File {
     constant WARIO_DSP_GROUND(0x909)
     constant WARIO_DSP_AIR(0x90A)
     constant WARIO_DSP_LANDING(0x90B)
+    constant STG_FROSTY_HEADER(0x90C)
+    constant STG_FROSTY(0x90D)
+    constant STG_FROSTY_BG(0x90E)
 }
