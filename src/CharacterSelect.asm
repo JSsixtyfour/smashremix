@@ -1162,7 +1162,7 @@ scope CharacterSelect {
         constant FALCO(0x00011F88)
         constant YLINK(0x00012468)
         constant DRM(0x00012948)
-        constant DSAMUS(0x00002358)
+        constant DSAMUS(0x00012E28)
         constant BLANK(0x0)
     }
 
