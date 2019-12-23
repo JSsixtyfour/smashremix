@@ -35,6 +35,7 @@ scope DSamus {
     insert CHARGE, "moveset/CHARGE.bin"; Moveset.GO_TO(CHARGELOOP)            // loops
     insert CHARGELOOP, "moveset/CHARGELOOP.bin"; Moveset.GO_TO(CHARGELOOP)    // loops
     insert CLAP, "moveset/CLAP.bin"
+    insert TAUNT, "moveset/TAUNT.bin"
     
     
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
@@ -69,6 +70,7 @@ scope DSamus {
     Character.edit_action_parameters(DSAMUS, Action.FSmash,         -1,                         FSMASHMID,                  -1)
     Character.edit_action_parameters(DSAMUS, Action.FSmashMidLow,   -1,                         FSMASHMIDDOWN,              -1)
     Character.edit_action_parameters(DSAMUS, Action.FSmashLow,      -1,                         FSMASHDOWN,                 -1)
+    Character.edit_action_parameters(DSAMUS, Action.Taunt,          File.DSAMUS_TAUNT,          TAUNT,                      -1)
     Character.edit_action_parameters(DSAMUS, 0xE3,                  -1,                         UP_SPECIAL_GROUND,          -1)
     Character.edit_action_parameters(DSAMUS, 0xE4,                  -1,                         UP_SPECIAL_AIR,             -1)
     Character.edit_action_parameters(DSAMUS, 0xDF,                  -1,                         CHARGE,                     -1)

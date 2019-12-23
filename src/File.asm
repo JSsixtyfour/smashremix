@@ -189,4 +189,5 @@ scope File {
     constant STG_FROSTY_HEADER(0x90C)
     constant STG_FROSTY(0x90D)
     constant STG_FROSTY_BG(0x90E)
+    constant DSAMUS_TAUNT(0x90F)
 }

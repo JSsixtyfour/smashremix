@@ -204,6 +204,7 @@
 090C Frosty Village Header
 090D Frosty Village Stage
 090E Frosty Village BG
+090F Dark Samus Taunt
 0611 CAPTAIN DeadU
 0611 CAPTAIN ScreenKO
 05E8 CAPTAIN Entry
