@@ -100,6 +100,10 @@ scope AI {
         addiu   t0, t0, Global.vs.P_OFFSET  // t0 = address of first player sturct
         
         _loop:
+        lbu     t2, 0x0002(t0)              // t2 = enum (man, cpu, none)
+        lli     t1, 0x0002                  // t1 = none
+        beql    t1, t2, _loop               // if (port is empty), go to next port
+        addiu   t0, t0, Global.vs.P_DIFF    // else, increment pointer and loop
         lw      t1, 0x0058(t0)              // t0 = px struct
         beq     t1, s0, _cpu_check          // if (px = p_teched), continue (compare player structs)
         nop
@@ -108,7 +112,6 @@ scope AI {
         nop
         
         _cpu_check:
-        lbu     t2, 0x0002(t0)              // t2 = enum (man, cpu, none)
         beqz    t2, _original               // if (t2 == man), skip
         nop
         lli     a0, 000100                  // ~
@@ -203,6 +206,10 @@ scope AI {
         addiu   t0, t0, Global.vs.P_OFFSET  // t0 = address of first player sturct
         
         _loop:
+        lbu     t2, 0x0002(t0)              // t2 = enum (man, cpu, none)
+        lli     t1, 0x0002                  // t1 = none
+        beql    t1, t2, _loop               // if (port is empty), go to next port
+        addiu   t0, t0, Global.vs.P_DIFF    // else, increment pointer and loop
         lw      t1, 0x0058(t0)              // t0 = px struct
         beq     t1, a0, _cpu_check          // if (px = p_teched), continue (compare player structs)
         nop
@@ -211,7 +218,6 @@ scope AI {
         nop
         
         _cpu_check:
-        lbu     t2, 0x0002(t0)              // t2 = enum (man, cpu, none)
         beqz    t2, _end                    // if (t2 == man), skip
         nop
         lli     a0, 000100                  // ~

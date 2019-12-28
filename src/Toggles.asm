@@ -423,7 +423,7 @@ scope Toggles {
     entry_tech_chase_combo_meter:;      entry_bool("Tech Chase Combo Meter *BETA", OS.FALSE, OS.FALSE, entry_vs_mode_combo_meter)
     entry_vs_mode_combo_meter:;         entry_bool("VS Mode Combo Meter *BETA", OS.FALSE, OS.FALSE, entry_1v1_combo_meter_swap)
     entry_1v1_combo_meter_swap:;        entry_bool("1V1 Combo Meter Swap *BETA", OS.FALSE, OS.FALSE, entry_improved_ai)
-    entry_improved_ai:;                 entry_bool("Improved AI *BETA", OS.FALSE, OS.FALSE, entry_neutral_spawns)
+    entry_improved_ai:;                 entry_bool("Improved AI", OS.TRUE, OS.FALSE, entry_neutral_spawns)
     entry_neutral_spawns:;              entry_bool("Neutral Spawns", OS.TRUE, OS.TRUE, entry_skip_results_screen)
     entry_skip_results_screen:;         entry_bool("Skip Results Screen", OS.FALSE, OS.FALSE, entry_stereo_sound)
     entry_stereo_sound:;                entry_bool("Stereo Sound", OS.TRUE, OS.TRUE, entry_stock_handicap)
