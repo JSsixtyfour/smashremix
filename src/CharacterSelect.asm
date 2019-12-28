@@ -6,14 +6,7 @@ print "included CharacterSelect.asm\n"
 // @ Description
 // This file contains modifications to the Character Select screen
 
-// TODO
-// Training mode - models don't load
-// 1p mode - apply
-// BTT - apply
-// BTP - apply
-// why is gdk crashing
-// costumes    
-// automatic token placement on cpu select (DONE) and character (NOT DONE)
+// TODO: DK's icon on 1P CSS blank
 
 include "Global.asm"
 include "OS.asm"
@@ -69,11 +62,15 @@ scope CharacterSelect {
 
     // @ Description
     // Patch 1P mode character select loading routine to use load_character_model_
-    OS.patch_start(0x157DFC, 0x8013841C)
-    //jal     load_character_model_
+    OS.patch_start(0x14061C, 0x8013841C)
+    jal     load_character_model_
     OS.patch_end()
 
-    // TODO: load_character_model_ call for BTT and BTP
+    // @ Description
+    // Patch BTT/BTP mode character select loading routine to use load_character_model_
+    OS.patch_start(0x14CDF0, 0x80136DC0)
+    jal     load_character_model_
+    OS.patch_end()
 
     // @ Description
     // Patch which checks for an alternate malloc size, ensures that the right amount of space is
@@ -246,18 +243,30 @@ scope CharacterSelect {
         OS.patch_end()
 
         // Training
-        OS.patch_start(0x000144508, 0x80134F2C)
+        OS.patch_start(0x000144508, 0x80134F28)
         j       get_character_id_
         nop
         OS.patch_end()
 
-        // TODO: 1P, BTT and BTP
-
         // 1P
-        //OS.patch_start(0x000135AEC, 0x8013786C)
-        //j       get_character_id_
-        //nop
-        //OS.patch_end()
+        OS.patch_start(0x00013E27C, 0x8013607C)
+        j       get_character_id_
+        nop
+        OS.patch_end()
+        OS.patch_start(0x00013E15C, 0x80135F5C)
+        j       get_character_id_           // get character ID for high score
+        addiu   sp, sp,-0x0010              // adjust sp
+        OS.patch_end()
+
+        // BTT/BTP
+        OS.patch_start(0x00014AFC8, 0x80134F98)
+        j       get_character_id_
+        nop
+        OS.patch_end()
+        OS.patch_start(0x00014AEA8, 0x80134E78)
+        j       get_character_id_           // get character ID for high score
+        addiu   sp, sp,-0x0010              // adjust sp
+        OS.patch_end()
         
         mfc1    v1, f10                     // original line 1 (v1 = (int) ypos)
         mfc1    a1, f6                      // original line 2 (a1 = (int) xpos)
@@ -324,11 +333,15 @@ scope CharacterSelect {
 
     // disable drawing of default portraits on 1P Mode CSS
     OS.patch_start(0x0013ADA4, 0x80132BA4)
-    //jr      ra
-    //nop
+    jr      ra
+    nop
     OS.patch_end()
 
-    // TODO: disable drawing of default portraits on BTP and BTT CSS
+    // disable drawing of default portraits on BTT/BTP CSS
+    OS.patch_start(0x00148A88, 0x80132A58)
+    jr      ra
+    nop
+    OS.patch_end()
 
     // @ Description
     // Highjacks the display list of the portraits
@@ -349,13 +362,13 @@ scope CharacterSelect {
         // lazy attempt to see if the texture drawn is the "back" texture 
         li      t0, Global.current_screen   // ~
         lbu     t0, 0x0000(t0)              // t0 = screen id
-        lli     at, 0x0010                  // at = vs css screen id
-        beq     at, t0, _continue           // if (screen_id = vs css), continue
+
+        // css screen ids: vs - 0x10, 1p - 0x11, training - 0x12, bonus1 - 0x13, bonus2 - 0x14
+        slti    at, t0, 0x0010              // if (screen id < 0x10)...
+        bnez    at, _skip                   // ...then skip (not on a CSS)
         nop
-        lli     at, 0x0012                  // at = training css screen id
-        beq     at, t0, _continue           // if (screen_id = training css), continue
-        nop
-        b       _skip                       // not on a valid css, so skip
+        slti    at, t0, 0x0015              // if (screen id is between 0x10 and 0x14)...
+        bnez    at, _continue               // ...then we're on a CSS
         nop
 
         _continue:
@@ -582,6 +595,14 @@ scope CharacterSelect {
         nop
         OS.patch_end()
 
+        // 1P
+        OS.patch_start(0x0013F244, 0x80137044)
+//      jal     0x801327EC                  // original line 1
+//      or      a0, a1, r0                  // original line 2
+        j       place_token_from_id_
+        nop
+        OS.patch_end()
+
         // 80132168/80132020 originally returned portrait_id in v0 (0-5 on the top row, 6-11 on bottom)
         // 0x0058(t8) = xpos
         // 0x005C(t8) = ypos
@@ -675,9 +696,15 @@ scope CharacterSelect {
 
     // @ Description
     // removes white flash on 1p character select
-    //OS.patch_start(0x13770C, 0x8013948C)
-    //nop
-    //OS.patch_end()
+    OS.patch_start(0x13DC10, 0x80135A10)
+    nop
+    OS.patch_end()
+
+    // @ Description
+    // removes white flash on BTT/BTP character select
+    OS.patch_start(0x14A960, 0x80134930)
+    nop
+    OS.patch_end()
 
     // @ Description
     // Expands the filetable to include more entries
@@ -737,42 +764,83 @@ scope CharacterSelect {
     }
 
     // @ Description
-    // Allows for custom entries of series logo based on file offset (+0x10 for DF000000 00000000)
-    // (requires modification of file 0x14)
-    // VS Mode
-    scope get_series_logo_offset_: {
-        OS.patch_start(0x00130D68, 0x80132AE8)
-//      addu    t5, sp, a2                  // original line (sp holds table, a2 holds char id * 4)
-//      lw      t5, 0x0054(t5)              // original line (t5 = file offset of data)
-        j       get_series_logo_offset_ 
-        nop 
-        _get_series_logo_offset_return:
+    // allows for custom entries of name texture based on file offset (+0x10 for DF000000 00000000)
+    // (requires modification of file 0x11)
+    // 1P Mode and BTT/BTP
+    scope get_name_texture_1p_btx_: {
+        // 1P
+        OS.patch_start(0x0013B0CC, 0x80132ECC)
+//      lw      t7, 0x001C(t7)                    // original line 1
+        jal     get_name_texture_1p_btx_
+        lw      t0, 0x96A0(t0)                    // original line 2
         OS.patch_end()
-    
-        li      t5, series_logo_offset_table
-        addu    t5, t5, a2
-        lw      t5, 0x0000(t5)
-        j       _get_series_logo_offset_return
+
+        // BTT/BTP
+        OS.patch_start(0x00148BF4, 0x80132BC4)
+//      lw      t7, 0x001C(t7)                    // original line 1
+        jal     get_name_texture_1p_btx_
+        lw      t0, 0x7DF8(t0)                    // original line 2
+        OS.patch_end()
+
+        li      t7, name_texture_table            // t8 = texture offset table
+        addu    t7, t7, v1                        // t8 = address of texture offset
+        lw      t7, 0x0000(t7)                    // t8 = texture offset
+        jr      ra                                // return
         nop
     }
 
     // @ Description
     // Allows for custom entries of series logo based on file offset (+0x10 for DF000000 00000000)
     // (requires modification of file 0x14)
-    // Training Mode
-    scope get_series_logo_offset_training_: {
+    scope get_series_logo_offset_: {
+        // vs
+        OS.patch_start(0x00130D68, 0x80132AE8)
+//      addu    t5, sp, a2                  // original line (sp holds table, a2 holds char id * 4)
+//      lw      t5, 0x0054(t5)              // original line (t5 = file offset of data)
+        jal     get_series_logo_offset_
+        nop 
+        OS.patch_end()
+
+        // training
         OS.patch_start(0x00141C88, 0x801326A8)
 //      addu    t5, sp, a2                  // original line (sp holds table, a2 holds char id * 4)
 //      lw      t5, 0x004C(t5)              // original line (t5 = file offset of data)
-        j       get_series_logo_offset_training_
+        jal     get_series_logo_offset_
         nop
-        _get_series_logo_offset_training_return:
         OS.patch_end()
 
         li      t5, series_logo_offset_table
         addu    t5, t5, a2
         lw      t5, 0x0000(t5)
-        j       _get_series_logo_offset_training_return
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // Allows for custom entries of series logo based on file offset (+0x10 for DF000000 00000000)
+    // (requires modification of file 0x14)
+    // 1P Mode and BTT/BTP
+    scope get_series_logo_offset_1p_btx_: {
+        // 1P
+        OS.patch_start(0x0013B070, 0x80132E70)
+//      addu    t5, sp, v1                  // original line (sp holds table, a2 holds char id * 4)
+//      lw      t5, 0x004C(t5)              // original line (t5 = file offset of data)
+        jal     get_series_logo_offset_1p_btx_
+        nop
+        OS.patch_end()
+
+        // BTT/BTP
+        OS.patch_start(0x00148B98, 0x80132B68)
+//      addu    t5, sp, v1                  // original line (sp holds table, a2 holds char id * 4)
+//      lw      t5, 0x004C(t5)              // original line (t5 = file offset of data)
+        jal     get_series_logo_offset_1p_btx_
+        nop
+        OS.patch_end()
+
+        li      t5, series_logo_offset_table
+        addu    t5, t5, v1
+        lw      t5, 0x0000(t5)
+        jr      ra
         nop
     }
 
@@ -786,6 +854,20 @@ scope CharacterSelect {
     // @ Description
     // Disables token movement when token set down on training css (migrates towards original spot)
     OS.patch_start(0x00145E68, 0x80136888)
+    jr      ra
+    nop
+    OS.patch_end()
+
+    // @ Description
+    // Disables token movement when token set down on 1p css (migrates towards original spot)
+    OS.patch_start(0x0014C1DC, 0x801361AC)
+    jr      ra
+    nop
+    OS.patch_end()
+
+    // @ Description
+    // Disables token movement when token set down on BTT/BTP css (migrates towards original spot)
+    OS.patch_start(0x0013F8F8, 0x801376F8)
     jr      ra
     nop
     OS.patch_end()
@@ -823,7 +905,41 @@ scope CharacterSelect {
         j       _get_zoom_training_return       // return
         nop
     }
-    
+
+    // @ Description
+    // Loads from white_circle_size_table instead of original table
+    // @ Note
+    // All values are 1.5 except DK. Possibly change this to static in the future
+    scope get_zoom_1p_: {
+        OS.patch_start(0x0013FC34, 0x80137A34)
+//      addiu   v0, sp, 0x0000                  // original line 1
+        j       get_zoom_1p_                    // set table to custom table
+        lui     v1, 0x8014                      // original line 2
+        _get_zoom_1p_return:
+        OS.patch_end()
+
+        li      v0, white_circle_size_table     // set v0
+        j       _get_zoom_1p_return             // return
+        nop
+    }
+
+    // @ Description
+    // Loads from white_circle_size_table instead of original table
+    // @ Note
+    // All values are 1.5 except DK. Possibly change this to static in the future
+    scope get_zoom_btx_: {
+        OS.patch_start(0x0014C518, 0x801364E8)
+//      addiu   v0, sp, 0x0000                  // original line 1
+        j       get_zoom_btx_                   // set table to custom table
+        lui     v1, 0x8013                      // original line 2
+        _get_zoom_btx_return:
+        OS.patch_end()
+
+        li      v0, white_circle_size_table     // set v0
+        j       _get_zoom_btx_return            // return
+        nop
+    }
+
     // @ Description
     // Patch which loads character selected action from selection_action_table.
     // Originally a jump table was used here, but it's not necessary.
@@ -836,6 +952,18 @@ scope CharacterSelect {
 
         // training
         OS.patch_start(0x142BFC, 0x8013361C)
+        j       get_action_
+        nop
+        OS.patch_end()
+
+        // 1p
+        OS.patch_start(0x13D0E0, 0x80134EE0)
+        j       get_action_
+        nop
+        OS.patch_end()
+
+        // BTT/BTP
+        OS.patch_start(0x149FB8, 0x80133F88)
         j       get_action_
         nop
         OS.patch_end()
@@ -895,25 +1023,30 @@ scope CharacterSelect {
     scope load_additional_characters_: {
         // VS
         OS.patch_start(0x00139458, 0x8013B1D8)
-        lli     s8, 0x0000                  // 0 for VS
-        j       load_additional_characters_
+        jal     load_additional_characters_
         nop
-        _return:
         OS.patch_end()
+
         // Training
         OS.patch_start(0x00147394, 0x80137DB4)
-        lli     s8, 0x0001                  // 1 for Training
-        j       load_additional_characters_
+        jal     load_additional_characters_
         nop
-        _return_training:
         OS.patch_end()
+
         // 1P
-        //OS.patch_start(0x00157E14, 0x8013B1D8)
-        //lli     s8, 0x0002                  // 2 for 1P
-        //j       load_additional_characters_
-        //nop
-        //_return_1p:
-        //OS.patch_end()
+        OS.patch_start(0x00140634, 0x80138434)
+        jal     load_additional_characters_._1p_btx
+        nop
+        OS.patch_end()
+
+        // BTT/BTP
+        OS.patch_start(0x0014CE08, 0x80136DD8)
+        jal     load_additional_characters_._1p_btx
+        nop
+        OS.patch_end()
+
+        addiu   sp, sp, -0x0008             // allocate stack space
+        sw      ra, 0x0004(sp)              // ~
 
         // for (char_id i = FALCO; i < DSAMUS; i++)
         lli     s0, Character.id.FALCO      // s0 = index (and start character, usually skips polygons)
@@ -927,17 +1060,32 @@ scope CharacterSelect {
         addiu   s0, s0, 0x0001              // increment index
         lui     v1, 0x8014                  // original line 1
         lui     s0, 0x8013                  // original line 2
-        addiu   s0, s0, 0x0D9C              // original line 3
-        beqz    s8, _vs                     // if (a1 = 1) then return to VS code
-        nop
-        j       _return_training
+
+        lw      ra, 0x0004(sp)              // ~
+        addiu   sp, sp, 0x0008              // deallocate stack space
+
+        jr      ra                          // return
         nop
 
-        _vs:
-        j       _return
+        _1p_btx:
+        addiu   sp, sp, -0x0010             // allocate stack space
+        sw      ra, 0x0004(sp)              // ~
+        sw      v1, 0x0008(sp)              // ~
+        sw      s0, 0x000C(sp)              // ~
+
+        jal     load_additional_characters_
+        nop
+        lui     a0, 0x8013                  // original line 1
+        lw      a0, 0x0D9C(a0)              // original line 2
+
+        lw      ra, 0x0004(sp)              // ~
+        lw      v1, 0x0008(sp)              // ~
+        lw      s0, 0x000C(sp)              // ~
+        addiu   sp, sp, 0x0010              // deallocate stack space
+
+        jr      ra                          // return
         nop
     }
-
 
     // @ Description
     // Changes the loads from fgm_table instead of the original function table
@@ -949,9 +1097,8 @@ scope CharacterSelect {
 //      addu    a0, sp, t5                  // original line 2
         jal     get_fgm_
         nop
-        OS.patch_end()
-        OS.patch_start(0x00134B1C, 0x8013689C)
-//      lw      a0, 0x0020(a0)              // original line
+        jal     0x800269C0                  // original line 3
+//      lw      a0, 0x0020(a0)              // original line 4
         nop
         OS.patch_end()
         
@@ -960,10 +1107,31 @@ scope CharacterSelect {
 //      sll     t6, t5, 0x0001              // original line 1
 //      addu    a0, sp, t6                  // original line 2
         jal     get_fgm_
-        addu    t4, t5, r0
+        addu    t4, t5, r0                  // our routine uses t4, not t5
+        jal     0x800269C0                  // original line 3
+//      lw      a0, 0x0028(a0)              // original line 4
+        nop
         OS.patch_end()
-        OS.patch_start(0x143868, 0x80134288)
-//      lw      a0, 0x0028(a0)              // original line
+
+        // 1p
+        OS.patch_start(0x13DDC4, 0x80135BC4)
+//      sll     t2, t1, 0x0001              // original line 1
+//      addu    a0, sp, t2                  // original line 2
+        jal     get_fgm_
+        addu    t4, t1, r0                  // our routine uses t4, not t1
+        jal     0x800269C0                  // original line 3
+//      lhu     a0, 0x0020(a0)              // original line 4
+        nop
+        OS.patch_end()
+
+        // 1p
+        OS.patch_start(0x14AB14, 0x80134AE4)
+//      sll     t2, t1, 0x0001              // original line 1
+//      addu    a0, sp, t2                  // original line 2
+        jal     get_fgm_
+        addu    t4, t1, r0                  // our routine uses t4, not t1
+        jal     0x800269C0                  // original line 3
+//      lhu     a0, 0x0020(a0)              // original line 4
         nop
         OS.patch_end()
 

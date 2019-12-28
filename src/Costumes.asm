@@ -5,7 +5,7 @@ print "included Costumes.asm\n"
 
 // @ Description
 // This file makes all SSB costumes usable in versus and training.
-// TODO: Shades don't work in Training - once you leave the CSS, the shade resets to default
+// TODO: Shades don't work in 1p, Bonus or Training - once you leave the CSS, the shade resets to default
 
 include "OS.asm"
 
@@ -27,6 +27,25 @@ scope Costumes {
         OS.patch_start(0x00144BF8, 0x80135618)
         jal     Costumes.select_
         nop
+        OS.patch_end()
+
+        // 1P
+        OS.patch_start(0x13ED5C, 0x80136B5C)
+        sw      s0, 0x001C(sp)              // store s0
+        jal     Costumes.select_
+        addu    s0, v1, r0                  // s0 = player struct
+        lw      s0, 0x001C(sp)              // restore s0
+        sw      v0, 0x001C(sp)              // original line 2
+        nop
+        OS.patch_end()
+
+        // Bonus
+        OS.patch_start(0x14B628, 0x801355F8)
+        li      s0, 0x80137648              // s0 = player struct
+        jal     Costumes.select_
+        nop
+        addu    s0, r0, r0                  // restore s0
+        sw      v0, 0x001C(sp)              // original line 2
         OS.patch_end()
 
         // a0 holds character id (until original line 2)
@@ -54,8 +73,15 @@ scope Costumes {
         beq     at, ra, _training           // if we're in training, then skip next part
         nop
         lw      t2, 0x0050(s0)              // t2 = current shade_id
+        li      at, 0x80136B6C              // at = ra for 1p
+        beq     at, ra, _1p                 // if we're in 1p, then skip next part
+        nop
         b       _go_to_function
         nop
+
+        _1p:
+        jr      t0                          // go to function
+        lw      v0, 0x0024(s0)              // v0 = current costume_id
 
         _training:
         li      at, Global.p_struct_head    // Global player struct head
@@ -105,20 +131,31 @@ scope Costumes {
         b       _end                        // end
         nop
 
-        _end:
-        sw      v0, 0x004C(s0)              // store updated costume_id
+        _1p_2:
+        sw      v0, 0x0024(s0)              // store updated costume_id
+        sw      t2, 0x0050(s0)              // store updated shade_id
         lw      a0, 0x0008(s0)              // a0 = (?)
-        lw      a1, 0x004C(s0)              // a1 = costume_id
+        b       _finish
+        nop
+
+        _end:
+        lw      a0, 0x0008(s0)              // a0 = (?)
+        addu    a1, v0, r0                  // a1 = costume_id
+
+        li      at, 0x80136B6C              // at = ra for 1p
+        beq     at, ra, _1p_2               // if we're in 1p, then skip next part
+        nop
+
+        sw      v0, 0x004C(s0)              // store updated costume_id
 
         li      at, 0x80135620              // at = ra for training
-        beq     at, ra, _training_2         // if we're in training, then skip next part
+        beq     at, ra, _finish             // if we're in training, then skip next part
         nop
+
         sw      t2, 0x0050(s0)              // store updated shade_id
 
-        _training_2:
-        or        a2, t2, r0                // a2 = shade_id
-
         _finish:
+        or      a2, t2, r0                // a2 = shade_id
         addiu   sp, sp,-0x0008              // allocate stack space
         sw      v0, 0x0004(sp)              // save v0
         jal     Costumes.update_            // apply costume

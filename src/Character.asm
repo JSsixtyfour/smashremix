@@ -29,7 +29,7 @@ scope Character {
 
     // @ Description
     // adds a new character
-    macro define_character(name, parent, file_1, file_2, file_3, file_4, file_5, file_6, file_7, file_8, file_9, attrib_offset, add_actions, bool_jab_3) {
+    macro define_character(name, parent, file_1, file_2, file_3, file_4, file_5, file_6, file_7, file_8, file_9, attrib_offset, add_actions, bool_jab_3, btt_stage_id, btp_stage_id) {
     if id.{parent} > 0xB {
         print "CHARACTER: {name} NOT CREATED. UNSUPPORTED PARENT. \n"
     } else {
@@ -266,6 +266,12 @@ scope Character {
         add_to_id_table(inhale_copy, id.{name}, id.NMARIO)      // NMARIO ID used to disable copy
         add_to_id_table(inhale_star_damage, id.{name}, id.{parent})
         add_to_id_table(inhale_star_size, id.{name}, id.{parent})
+
+        // update bonus stage tables
+        origin BTT_TABLE_ORIGIN + id.{name} - 29
+        db      {btt_stage_id}
+        origin BTP_TABLE_ORIGIN + id.{name} - 29
+        db      {btp_stage_id}
 
         pullvar base, origin
     }
@@ -1234,6 +1240,20 @@ scope Character {
             OS.patch_start(0x00142F14, 0x80133934)
             li      t8, menu_zoom.table     // original line 1/2
             OS.patch_end()
+            // character select screen (1p)
+            OS.patch_start(0x0013D364, 0x80135164)
+            li      t2, menu_zoom.table     // original line 1/5
+            swc1    f8, 0x001C(t7)          // original line 2
+            lw      t6, 0x0074(s0)          // original line 3
+            lwc1    f10, 0x8eCC(at)         // original line 4
+            OS.patch_end()
+            // character select screen (btt/btp)
+            OS.patch_start(0x0014A23C, 0x8013420C)
+            li      t2, menu_zoom.table     // original line 1/5
+            swc1    f8, 0x001C(t7)          // original line 2
+            lw      t6, 0x0074(s0)          // original line 3
+            lwc1    f10, 0x7630(at)         // original line 4
+            OS.patch_end()
             // results screen
             OS.patch_start(0x152A8C, 0x801338EC)
             li      t7, menu_zoom.table     // original line 1/2
@@ -1798,6 +1818,21 @@ scope Character {
     fill (ACTION_ARRAY_TABLE + (NUM_CHARACTERS * 0x4)) - pc()
     OS.align(16)
 
+    // set up extended high score table
+    EXTENDED_HIGH_SCORE_TABLE_BLOCK:; SRAM.block(ADD_CHARACTERS * 0x20)
+    constant EXTENDED_HIGH_SCORE_TABLE(EXTENDED_HIGH_SCORE_TABLE_BLOCK + 0x000C)
+
+    // set up custom character bonus stages
+    OS.align(16)
+    BTT_TABLE:
+    constant BTT_TABLE_ORIGIN(origin())
+    fill ADD_CHARACTERS
+    OS.align(16)
+    BTP_TABLE:
+    constant BTP_TABLE_ORIGIN(origin())
+    fill ADD_CHARACTERS
+    OS.align(16)
+
     // set up custom characters
     // define_character(name, parent, file_1, file_2, file_3, file_4, file_5, file_6, file_7, file_8, file_9, attrib_offset, add_actions, bool_jab_3)
     // name - character name
@@ -1816,19 +1851,21 @@ scope Character {
     // attrib_offset - offset of attributes in file_1
     // add_actions - number of new action slots to add
     // bool_jab_3 - OS.TRUE = inherit jab 3 properties, OS.FALSE = disable jab 3
+    // btt_stage_id - stage_id for btt
+    // btp_stage_id - stage_id for btp
 
     // 0x1D - FALCO
-    define_character(FALCO, FOX, File.FALCO_MAIN, 0x0D0, 0, File.FALCO_CHARACTER, 0x13A, 0x0D2, 0x15A, 0x0A1, 0x013C, 0x46C, 0x0, OS.TRUE)
+    define_character(FALCO, FOX, File.FALCO_MAIN, 0x0D0, 0, File.FALCO_CHARACTER, 0x13A, 0x0D2, 0x15A, 0x0A1, 0x013C, 0x46C, 0x0, OS.TRUE, Stages.id.BTT_FOX, Stages.id.BTP_FOX)
     // 0x1E - GND
-    define_character(GND, CAPTAIN, File.GND_MAIN, 0x0EB, 0, File.GND_CHARACTER, 0x14E, 0, File.GND_ENTRY_KICK, File.GND_PUNCH_GRAPHIC, 0, 0x488, 0x0, OS.TRUE)
+    define_character(GND, CAPTAIN, File.GND_MAIN, 0x0EB, 0, File.GND_CHARACTER, 0x14E, 0, File.GND_ENTRY_KICK, File.GND_PUNCH_GRAPHIC, 0, 0x488, 0x0, OS.TRUE, Stages.id.BTT_FALCON, Stages.id.BTP_FALCON)
     // 0x1F - YLINK
-    define_character(YLINK, LINK, File.YLINK_MAIN, 0x0E0, 0, File.YLINK_CHARACTER, 0x147, File.YLINK_BOOMERANG_HITBOX, 0x161, 0x145, 0, 0x708, 0, OS.TRUE)
+    define_character(YLINK, LINK, File.YLINK_MAIN, 0x0E0, 0, File.YLINK_CHARACTER, 0x147, File.YLINK_BOOMERANG_HITBOX, 0x161, 0x145, 0, 0x708, 0, OS.TRUE, Stages.id.BTT_LINK, Stages.id.BTP_LINK)
     // 0x20 - DRM
-    define_character(DRM, MARIO, File.DRM_MAIN, 0x0CA, 0, File.DRM_CHARACTER, 0x12A, File.DRM_PROJECTILE_DATA, 0x164, File.DRM_PROJECTILE_GRAPHIC, 0, 0x428, 0x0, OS.TRUE)
+    define_character(DRM, MARIO, File.DRM_MAIN, 0x0CA, 0, File.DRM_CHARACTER, 0x12A, File.DRM_PROJECTILE_DATA, 0x164, File.DRM_PROJECTILE_GRAPHIC, 0, 0x428, 0x0, OS.TRUE, Stages.id.BTT_MARIO, Stages.id.BTP_MARIO)
     // 0x21 - WARIO
-    define_character(WARIO, MARIO, File.WARIO_MAIN, 0x0CA, 0, File.WARIO_CHARACTER, 0x12A, 0x0CC, 0x164, 0x129, 0, 0x428, 0x0, OS.FALSE)
+    define_character(WARIO, MARIO, File.WARIO_MAIN, 0x0CA, 0, File.WARIO_CHARACTER, 0x12A, 0x0CC, 0x164, 0x129, 0, 0x428, 0x0, OS.FALSE, Stages.id.BTT_MARIO, Stages.id.BTP_MARIO)
     // 0x22 - DSAMUS
-    define_character(DSAMUS, SAMUS, File.DSAMUS_MAIN, 0x0D8, 0, File.DSAMUS_CHARACTER, 0x142, 0x15D, File.DSAMUS_SECONDARY, 0, 0, 0x6B4, 0x0, OS.TRUE)
+    define_character(DSAMUS, SAMUS, File.DSAMUS_MAIN, 0x0D8, 0, File.DSAMUS_CHARACTER, 0x142, 0x15D, File.DSAMUS_SECONDARY, 0, 0, 0x6B4, 0x0, OS.TRUE, Stages.id.BTT_SAMUS, Stages.id.BTP_SAMUS)
     
     print "========================================================================== \n"
 }
