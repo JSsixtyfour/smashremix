@@ -13,6 +13,14 @@ scope SRAM {
     constant ADDRESS(0x0BDC)
 
     // @ Description
+    // Constant to hold current revision. Increment this whenever:
+    //  - A new stage is added
+    //  - A new MIDI is added
+    //  - A new toggle is added
+    //  - The order of the toggles is changed
+    constant REVISION(0x0002)
+
+    // @ Description
     // Struct that holds information for a block of save data. 
     macro block(size) {
         dw SRAM.address
@@ -23,8 +31,10 @@ scope SRAM {
     }
 
     // @ Description
-    // Allocates space for a boolean indicating if the player has saved previously.
-    has_saved:; block(4)
+    // Allocates space for save info.
+    //  - 0x0000 = has_saved: boolean indicating if the player has saved previously.
+    //  - 0x0004 = revision_number: revision number, which will help determine if we should load previously saved data.
+    save_info:; block(8)
 
     // @ Description
     // Function to marked has_saved as true.
@@ -37,7 +47,7 @@ scope SRAM {
 
         li      a0, true                    // a0 - RAM source
         li      a1, ADDRESS                 // a1 - SRAM destination
-        lli     a2, 0x0004                  // a2 - size
+        lli     a2, 0x0008                  // a2 - size
         jal     write_                      // write true to has_saved
         nop
 
@@ -51,6 +61,7 @@ scope SRAM {
 
         true:
         dw OS.TRUE
+        dw REVISION
     }
 
     // @ Description
@@ -66,11 +77,19 @@ scope SRAM {
 
         li      a0, ADDRESS                 // a0 - SRAM source
         li      a1, return                  // a1 - RAM destination
-        li      a2, 0x0004                  // a2 - size
-        jal     read_                       // read from  has_saved
+        li      a2, 0x0008                  // a2 - size
+        jal     read_                       // read from save_info
         nop
         li      v0, return                  // ~
-        lw      v0, 0x0000(v0)              // v0 = ret
+        lli     a0, REVISION                // a0 = current revision number
+        lw      a1, 0x0004(v0)              // a1 = saved revision number
+        beq     a0, a1, _end                // If the revision numbers match, then trust the has_saved value
+        nop                                 // otherwise, set back to FALSE:
+        lli     a0, OS.FALSE                // a0 = false
+        sw      a0, 0x0000(v0)              // reset saved flag back to FALSE
+
+        _end:
+        lw      v0, 0x0000(v0)              // v0 = has_saved bool
 
         lw      a0, 0x0004(sp)              // ~
         lw      a1, 0x0008(sp)              // ~
@@ -82,6 +101,7 @@ scope SRAM {
 
         return:
         dw OS.FALSE
+        dw 0x00000000
     }
 
 

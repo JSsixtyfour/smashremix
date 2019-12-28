@@ -2269,6 +2269,16 @@ scope Stages {
     dw string_btp
     fill 4 * (id.MAX_STAGE_ID - id.BTX_LAST)
 
+    // @ Description
+    // Holds alternate BGM_IDs for each stage:
+    // The index of each word corresponds to stage_id.
+    // The word is split into 2 halfwords:
+    // 0x0000 - Occasional BGM_ID
+    // 0x0002 - Rare BGM_ID
+    alternate_music_table:
+    constant alternate_music_table_origin(origin())
+    fill 4 * (id.MAX_STAGE_ID - 1), 0xF
+
     variable new_stages(0)
 
     // @ Description
@@ -2277,7 +2287,9 @@ scope Stages {
     // @ Arguments:
     // name - Short name for quick reference
     // display_name - Name to display
-    macro add_stage(name, display_name) {
+    // bgm_occasional - BGM_ID for the Occasional alternate BGM, or -1 if no alternate. Example: {MIDI.id.COOLCOOLMOUNTAIN}
+    // bgm_rare - BGM_ID for the Rare alternate BGM, or -1 if no alternate. Example: {MIDI.id.COOLCOOLMOUNTAIN}
+    macro add_stage(name, display_name, bgm_occasional, bgm_rare) {
         global variable new_stages(new_stages + 1)
         evaluate new_stage_id(0x28 + new_stages)
         global define STAGE_{new_stage_id}_TITLE({display_name})
@@ -2287,47 +2299,54 @@ scope Stages {
 
         pushvar origin, base
 
+        // update string table
         origin string_table_origin + ({new_stage_id} * 4)
         dw     string_{name}
+
+        // update alternate music table
+        origin alternate_music_table_origin + ({new_stage_id} * 4)
+        dh     {bgm_occasional}
+        dh     {bgm_rare}
 
         pullvar base, origin
     }
 
-    add_stage(deku_tree, "Deku Tree")
-    add_stage(first_destination, "First Destination")
-    add_stage(ganons_tower, "Ganon's Tower")
-    add_stage(kalos_pokemon_league, "Kalos Pokemon League")
-    add_stage(pokemon_stadium_2, "Pokemon Stadium II")
-    add_stage(skyloft, "Skyloft")
-    add_stage(smashville, "Smashville")
-    add_stage(warioware, "WarioWare, Inc.")
-    add_stage(battlefield, "Battlefield")
-    add_stage(corneria_city, "Corneria City")
-    add_stage(dr_mario, "Dr. Mario")
-    add_stage(cool_cool_mountain, "Cool Cool Mountain")
-    add_stage(dragon_king, "Dragon King")
-    add_stage(great_bay, "Great Bay")
-    add_stage(frays_stage, "Fray's Stage")
-    add_stage(toh, "Tower of Heaven")
-	add_stage(fod, "Fountain of Dreams")
-    add_stage(muda, "Muda Kingdom")
-    add_stage(mementos, "Mementos")
-    add_stage(showdown, "Showdown")
-    add_stage(spiralm, "Spiral Mountain")
-    add_stage(n64, "N64")
-    add_stage(mute, "Mute City")
-    add_stage(madmm, "Mad Monster Mansion")
-    add_stage(smbbf, "Mushroom Kingdom BF")
-    add_stage(smbo, "Mushroom Kingdom O")
-    add_stage(bowserb, "Bowser's Stadium")
-    add_stage(peach2, "Peach's Castle II")
-    add_stage(delfino, "Delfino Plaza")
-    add_stage(corneria2, "Corneria")
-    add_stage(uncanny, "Uncanny Mansion")
-    add_stage(blue, "Big Blue")
-    add_stage(onett, "Onett")
-    add_stage(zlanding, "Zebes Landing")
-    add_stage(frosty, "Frosty Village")
+    // Add stages here
+    add_stage(deku_tree, "Deku Tree", -1, -1)
+    add_stage(first_destination, "First Destination", -1, -1)
+    add_stage(ganons_tower, "Ganon's Tower", -1, -1)
+    add_stage(kalos_pokemon_league, "Kalos Pokemon League", -1, -1)
+    add_stage(pokemon_stadium_2, "Pokemon Stadium II", -1, -1)
+    add_stage(skyloft, "Skyloft", -1, -1)
+    add_stage(smashville, "Smashville", -1, -1)
+    add_stage(warioware, "WarioWare, Inc.", -1, -1)
+    add_stage(battlefield, "Battlefield", -1, -1)
+    add_stage(corneria_city, "Corneria City", -1, -1)
+    add_stage(dr_mario, "Dr. Mario", -1, -1)
+    add_stage(cool_cool_mountain, "Cool Cool Mountain", -1, -1)
+    add_stage(dragon_king, "Dragon King", -1, -1)
+    add_stage(great_bay, "Great Bay", -1, -1)
+    add_stage(frays_stage, "Fray's Stage", -1, -1)
+    add_stage(toh, "Tower of Heaven", -1, -1)
+	add_stage(fod, "Fountain of Dreams", -1, -1)
+    add_stage(muda, "Muda Kingdom", -1, -1)
+    add_stage(mementos, "Mementos", -1, -1)
+    add_stage(showdown, "Showdown", -1, -1)
+    add_stage(spiralm, "Spiral Mountain", -1, -1)
+    add_stage(n64, "N64", -1, -1)
+    add_stage(mute, "Mute City", -1, -1)
+    add_stage(madmm, "Mad Monster Mansion", -1, -1)
+    add_stage(smbbf, "Mushroom Kingdom BF", -1, -1)
+    add_stage(smbo, "Mushroom Kingdom O", -1, -1)
+    add_stage(bowserb, "Bowser's Stadium", -1, -1)
+    add_stage(peach2, "Peach's Castle II", -1, -1)
+    add_stage(delfino, "Delfino Plaza", -1, -1)
+    add_stage(corneria2, "Corneria", -1, -1)
+    add_stage(uncanny, "Uncanny Mansion", -1, -1)
+    add_stage(blue, "Big Blue", -1, -1)
+    add_stage(onett, "Onett", -1, -1)
+    add_stage(zlanding, "Zebes Landing", -1, -1)
+    add_stage(frosty, "Frosty Village", -1, -1)
 
 }
 

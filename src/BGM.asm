@@ -42,6 +42,77 @@ scope BGM {
         nop
     }
 
+    // @ Description
+    // These constants determine alternate music chances
+    constant CHANCE_MAIN(80)
+    constant CHANCE_OCCASIONAL(15)
+    constant CHANCE_RARE(5)
+
+    // @ Description
+    // This function replaces a1 with alternate ids defined for the stage, sometimes.
+    // a1 holds BGM_ID.
+    // The alternate BGM_ID could be replaced by a random one if that toggle is on.
+    // There can be up to 3 songs defined for a stage:
+    // - Main: plays most of the time
+    // - Occasional: plays sometimes
+    // - Rare: plays rarely
+    scope alternate_music_: {
+        OS.patch_start(0x000216E8, 0x80020AE8)
+        j       alternate_music_
+        nop
+        _alternate_music_return:
+        OS.patch_end()
+
+        lw      t1, 0xD974(t1)              // original line 1
+        sll     t2, a0, 0x0002              // original line 2
+
+        addiu   sp, sp,-0x0018              // allocate stack space
+        sw      a0, 0x0004(sp)              // ~
+        sw      t0, 0x0008(sp)              // ~
+        sw      v0, 0x000C(sp)              // ~
+        sw      ra, 0x0010(sp)              // save registers
+
+        li      t0, Global.current_screen   // ~
+        lb      t0, 0x0000(t0)              // t0 = current_screen
+        lli     v0, 0x0016                  // v0 = FIGHT_SCREEN
+        bne     t0, v0, _end                // if not fight screen, end
+        nop
+
+        lli     a0, 100                     // a0 - range (0, N-1)
+        jal     Global.get_random_int_      // v0 = (0, N-1)
+        nop
+        sltiu   t0, v0, CHANCE_MAIN
+        bnez    t0, _end                    // if we should play the Main song, skip to end
+        nop                                 // else, check to see which other song to play
+
+        sltiu   t0, v0, CHANCE_MAIN + CHANCE_OCCASIONAL
+        beql    t0, r0, _get_bgm_id         // if (v0 > main + occasional chances)
+        ori     a0, r0, 0x0002              // then we'll use the Rare song
+        ori     a0, r0, 0x0000              // otherwise we'll use the Occasional song
+
+        _get_bgm_id:
+        li      t0, Global.vs.stage         // t0 = address of stage_id
+        lb      v0, 0x0000(t0)              // v0 = stage_id
+        li      t0, Stages.alternate_music_table   // t0 = address of alternate music table
+        sll     v0, v0, 0x0002              // v0 = offset to stage's alt music
+        addu    t0, t0, v0                  // t0 = address of alt music options for stage (0x0 = Occasional, 0x2 = Rare)
+        addu    t0, t0, a0                  // t0 = address of bgm_id to use
+        lh      v0, 0x0000(t0)              // v0 = bgm_id to use, maybe
+        addiu   t0, r0, 0xFFFF              // t0 = -1 - means there is no alt BGM_ID for this stage
+        beq     v0, t0, _end                // if (there is no alt BGM_ID) for this stage, skip to end
+        nop
+        addu    a1, r0, v0                  // a1 = bgm_id to use
+
+        _end:
+        lw      a0, 0x0004(sp)              // ~
+        lw      t0, 0x0008(sp)              // ~
+        lw      v0, 0x000C(sp)              // ~
+        lw      ra, 0x0010(sp)              // restore registers
+        addiu   sp, sp, 0x0018              // deallocate stack space
+        j       _alternate_music_return     // return
+        nop
+    }
+
     // @ Descirption
     // Adds a song to the random list if it's toggled on.
     // @ Arguments
@@ -159,7 +230,7 @@ scope BGM {
         add_to_list(Toggles.entry_random_music_dream_land, stage.DREAM_LAND)
         add_to_list(Toggles.entry_random_music_saffron_city, stage.SAFFRON_CITY)
         add_to_list(Toggles.entry_random_music_mushroom_kingdom, stage.MUSHROOM_KINGDOM)
-        add_to_list(Toggles.entry_random_music_battlefield, stage.BATTLEFIELD)
+        add_to_list(Toggles.entry_random_music_duel_zone, stage.DUEL_ZONE)
         add_to_list(Toggles.entry_random_music_final_destination, stage.FINAL_DESTINATION)
         add_to_list(Toggles.entry_random_music_how_to_play, stage.HOW_TO_PLAY)
         add_to_list(Toggles.entry_random_music_data, menu.DATA)
@@ -215,7 +286,7 @@ scope BGM {
         constant TUTORIAL(34)
         constant KIRBY_BETA_1(34)
         constant FIGHT_POLYGON_STAGE(36)
-        constant BATTLEFIELD(36)
+        constant DUEL_ZONE(36)
         constant METAL_MARIO(37)
         constant META_CRYSTAL(37)
     }

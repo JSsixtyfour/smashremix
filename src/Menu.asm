@@ -527,8 +527,8 @@ scope Menu {
         // TODO: implement left pagination?
 
         _a:
-        lli     a0, Joypad.A                // a0 - button_mask
-        lli     a1, 0x0000                  // a1 - whatever you like!
+        lli     a0, Joypad.A | Joypad.START // a0 - button_mask
+        lli     a1, 0x0001                  // a1 - match any
         lli     a2, Joypad.PRESSED          // a2 - type
         jal     Joypad.check_buttons_all_   // v0 = someone pressed a?
         nop
