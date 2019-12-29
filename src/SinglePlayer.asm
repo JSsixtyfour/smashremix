@@ -206,6 +206,46 @@ scope SinglePlayer {
     }
 
     // @ Description
+    // This extends the high score BTT success new record check to allow for new characters
+    scope extend_high_score_btt_new_record_check_: {
+        OS.patch_start(0x111C9C, 0x8018D55C)
+        j       extend_high_score_btt_new_record_check_
+        nop
+        _extend_high_score_btt_new_record_check_return:
+        OS.patch_end()
+
+        // t0 is character ID
+        slti    t2, t0, Character.id.FALCO  // if (it's an added character) then use extended table
+        bnez    t2, _original               // otherwise use original table
+        nop                                 // ~
+
+        li      t2, Character.EXTENDED_HIGH_SCORE_TABLE
+        addiu   v0, t0, -Character.id.FALCO // v0 = index to character struct in extended table
+        sll     v0, v0, 0x0005              // v0 = offset to character struct in extended table
+        addu    v0, t2, v0                  // v0 = address of high score character struct
+        lbu     t3, 0x0014(v0)              // t3 = target count (modified original line 5)
+        addiu   at, r0, 0x000A              // original line 6
+        lui     t4, 0x800A                  // original line 7
+        bne     t3, at, _j_0x8018D5A8       // original line 8 (modified to use jump)
+        nop                                 // original line 9
+        lw      t4, 0x50E8(t4)              // original line 10
+        lw      t6, 0x0010(v0)              // t6 = current best time (modified original line 11)
+        j       0x8018D588                  // return
+        nop
+
+        _original:
+        lui     t2, 0x800A                  // original line 1
+        addiu   t2, t2, 0x44E0              // original line 2
+
+        j       _extend_high_score_btt_new_record_check_return
+        nop
+
+        _j_0x8018D5A8:
+        j       0x8018D5A8                  // jump instead of branch
+        nop
+    }
+
+    // @ Description
     // This extends the high score BTP failure write code to allow for new characters
     scope extend_high_score_btp_count_write_: {
         OS.patch_start(0x113158, 0x8018EA18)
@@ -285,6 +325,46 @@ scope SinglePlayer {
 
         _j_0x8018EA74:
         j       0x8018EA74                  // jump instead of branch
+        nop
+    }
+
+    // @ Description
+    // This extends the high score BTP success new record check to allow for new characters
+    scope extend_high_score_btp_new_record_check_: {
+        OS.patch_start(0x112100, 0x8018D9C0)
+        j       extend_high_score_btp_new_record_check_
+        nop
+        _extend_high_score_btp_new_record_check_return:
+        OS.patch_end()
+
+        // t2 is character ID
+        slti    t4, t2, Character.id.FALCO  // if (it's an added character) then use extended table
+        bnez    t4, _original               // otherwise use original table
+        nop                                 // ~
+
+        li      t4, Character.EXTENDED_HIGH_SCORE_TABLE
+        addiu   v0, t2, -Character.id.FALCO // v0 = index to character struct in extended table
+        sll     v0, v0, 0x0005              // v0 = offset to character struct in extended table
+        addu    v0, t4, v0                  // v0 = address of high score character struct
+        lbu     t5, 0x001C(v0)              // t5 = platform count (modified original line 5)
+        addiu   at, r0, 0x000A              // original line 6
+        lui     t6, 0x800A                  // original line 7
+        bne     t5, at, _j_0x8018DA0C       // original line 8 (modified to use jump)
+        nop                                 // original line 9
+        lw      t6, 0x50E8(t6)              // original line 10
+        lw      t8, 0x0018(v0)              // t8 = current best time (modified original line 11)
+        j       0x8018D9EC                  // return
+        nop
+
+        _original:
+        lui     t4, 0x800A                  // original line 1
+        addiu   t4, t4, 0x44E0              // original line 2
+
+        j       _extend_high_score_btp_new_record_check_return
+        nop
+
+        _j_0x8018DA0C:
+        j       0x8018DA0C                  // jump instead of branch
         nop
     }
 

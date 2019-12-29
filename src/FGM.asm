@@ -677,6 +677,7 @@ scope FGM {
         }
 
         scope singleplayer {
+            constant A_NEW_RECORD(464)
             constant BOARD_THE_PLATFROMS(476)
             constant BONUS_STAGE(477)
             constant BREAK_THE_TARGETS(478)
