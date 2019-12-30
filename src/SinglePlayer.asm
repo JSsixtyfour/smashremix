@@ -10,7 +10,6 @@ print "included SinglePlayer.asm\n"
 // 1p mode
 // - battle preview model not appearing
 //   --> look at 80134B38 during battle preview, break on 80134C84
-// - battle preview name file needs to be extended
 // - continue?/gameover model not appearing
 // - final picture/crash
 // - possible overwrite of platform data after beating MH
@@ -795,13 +794,12 @@ scope SinglePlayer {
         constant PIKACHU(0x00000D28)
         constant JIGGLYPUFF(0x00000F68)
         constant NESS(0x00001088)
-        // TODO: update file and these offsets
-        constant GND(0x00000A28)
-        constant FALCO(0x00000248)
-        constant YLINK(0x00000728)
-        constant DRM(0x00000128)
-        constant WARIO(0x00000128)
-        constant DSAMUS(0x000004E8)
+        constant GND(0x000012C8)
+        constant FALCO(0x00001448)
+        constant YLINK(0x00001688)
+        constant DRM(0x00001868)
+        constant WARIO(0x000019E8)
+        constant DSAMUS(0x00001C28)
         constant BLANK(0x0)
     }
 
