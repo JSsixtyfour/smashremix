@@ -72,8 +72,12 @@ scope Global {
         constant damage(0x800A4D13)
 
         // @ Description
-        // Word, timer in second
+        // Word, timer in seconds * 60 fps
         constant timer(0x800A4D1C)
+
+        // @ Description
+        // Word, time elapsed in seconds * 60 fps
+        constant elapsed(0x800A4D20)
 
         // @ Description
         // Byte, 0 = none, 5 = high

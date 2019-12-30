@@ -2277,7 +2277,7 @@ scope Stages {
     // 0x0002 - Rare BGM_ID
     alternate_music_table:
     constant alternate_music_table_origin(origin())
-    fill 4 * (id.MAX_STAGE_ID - 1), 0xF
+    fill 4 * (id.MAX_STAGE_ID - 1), 0xFF
 
     variable new_stages(0)
 

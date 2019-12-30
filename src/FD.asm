@@ -53,11 +53,47 @@ scope FD {
     }
 
 
-    ///// @ Description
-    ////// Sets track to 0x18 (FD battle music)
-    /////OS.patch_start(0x640CD2, 0x00000000)
-    //////dh 0xC33E
-    //////OS.patch_end()
+    // @ Description
+    // Sets track to FD battle music after the intro in VS
+    scope music_fix_: {
+        OS.patch_start(0x8E960, 0x80113160)
+        jal     music_fix_
+        lw      t8, 0x0018(a0)              // original line 1
+        _music_fix_return:
+        OS.patch_end()
+
+        li      t0, Global.vs.stage         // t0 = address of stage_id
+        lbu     t0, 0x0000(t0)              // t0 = stage_id
+        lli     t9, Stages.id.FINAL_DESTINATION
+        bne     t0, t9, _end                // if not FD, then skip to end
+        nop
+
+        li      t0, Global.vs.elapsed       // t0 = address of time elapsed
+        lw      t0, 0x0000(t0)              // t0 = time elapsed
+        addiu   t9, r0, 0x01C0              // t9 = length of intro
+        bne     t0, t9, _end                // if not the exact end of intro, then skip to end
+        nop
+
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      a0, 0x0004(sp)              // ~
+        sw      a1, 0x0008(sp)              // ~
+        sw      t8, 0x000C(sp)              // save registers
+
+        lli     a1, BGM.stage.FINAL_DESTINATION
+        jal     BGM.play_                   // play FD battle music
+        addu    a0, r0, r0
+
+        lw      a0, 0x0004(sp)              // ~
+        lw      a1, 0x0008(sp)              // ~
+        lw      t8, 0x000C(sp)              // restore registers
+        addiu   sp, sp, 0x0010              // deallocate stack space
+
+        _end:
+        addu    t9, t8, a1                  // original line 2
+
+        j       _music_fix_return           // return
+        nop
+    }
 }
 
 } // __FD__

@@ -15,6 +15,7 @@ print "included SinglePlayer.asm\n"
 // - possible overwrite of platform data after beating MH
 // - DK stock icon missing
 // - Falco crashes after pressing start on CSS
+// - Continue? crash on yes
 
 include "OS.asm"
 
