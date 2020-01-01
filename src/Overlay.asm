@@ -113,6 +113,10 @@ scope Overlay {
         jal     end_                        // end display list
         nop
 
+        // Write back display list to cache - fixes random crashes
+        jal     0x80039160                  // osWritebackDCacheAll
+        nop
+
         lw      t0, 0x0004(sp)              // ~
         lw      a0, 0x0008(sp)              // ~
         lw      a1, 0x000C(sp)              // ~
