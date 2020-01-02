@@ -619,8 +619,8 @@ scope Spawn {
     // 2B - GANONS TOWER
     float32 -2200,  1954
     float32  1996,  1954              
-    float32 -0082,  2717
-    float32 -0082,  1042
+    float32 -1076,  1042
+    float32  0902,  1042
     
     // 2C - KALOS POKEMON LEAGUE
     float32 -2371,  0921
@@ -784,11 +784,11 @@ scope Spawn {
     float32 -2042,  1212
     float32 -0320,  1411
     
-    // 46 - Uncanny Mansion
-    float32 -0166,  3275
-    float32  2325,  4315
-    float32 -2399,  2690
-    float32  2403,  1791
+    // 46 - Kitchen
+    float32 -2263,  3137
+    float32  2252,  3567
+    float32 -0669,  2181
+    float32  2267,  1389
     
     // 47 - Big Blue
     float32 -3780,  2003
@@ -1076,8 +1076,8 @@ scope Spawn {
     // 2B - GANONS TOWER
     float32 -2200,  1954
     float32  1996,  1954              
-    float32 -1083,  1040
-    float32  0902,  1042
+    float32 -2200,  1954
+    float32  1996,  1954 
     
     // 2C - KALOS POKEMON LEAGUE
     float32 -2371,  0921
@@ -1241,11 +1241,11 @@ scope Spawn {
     float32 -2042,  1212
     float32 -0320,  1411
     
-    // 46 - Uncanny Mansion
-    float32 -0166,  3275
-    float32  2325,  4315
-    float32 -2399,  2690
-    float32  2403,  1791
+    // 46 - Kitchen Island
+    float32 -2263,  3137
+    float32  2252,  3567
+    float32 -0669,  2181
+    float32  2267,  1389
     
     // 47 - Big Blue
     float32 -3780,  2003

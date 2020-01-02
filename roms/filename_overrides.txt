@@ -158,9 +158,9 @@
 08DE Corneria Header
 08DF Corneria Stage
 08E0 Corneria BG
-08E1 Uncanny Mansion Header
-08E2 Uncanny Mansion Stage
-08E3 Uncanny Mansion BG
+08E1 Kitchen Island Header
+08E2 Kitchen Island Stage
+08E3 Kitchen Island BG
 08E4 Dark Samus Down Tilt
 08E5 Dark Samus Down Smash
 08E6 Dark Samus F Double Jump

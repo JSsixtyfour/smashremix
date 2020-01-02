@@ -168,7 +168,7 @@ scope Stages {
     dw function.CLONE                       // Peach's Castle II
     dw function.CLONE                       // Delfino
     dw function.CLONE                       // Corneria
-    dw function.CLONE                       // Uncanny Mansion
+    dw function.CLONE                       // Kitchen Island
     dw function.CLONE                       // Big Blue
     dw function.CLONE                       // Onett
     dw function.CLONE                       // Zebes Landing
@@ -307,7 +307,7 @@ scope Stages {
     insert icon_peach2,                 "../textures/icon_peach2.rgba5551"
     insert icon_delfino,                "../textures/icon_delfino.rgba5551"
     insert icon_corneria2,              "../textures/icon_corneria2.rgba5551"
-    insert icon_uncanny,                "../textures/icon_uncanny.rgba5551"
+    insert icon_kitchen,                "../textures/icon_kitchen.rgba5551"
     insert icon_blue,                   "../textures/icon_blue.rgba5551"
     insert icon_onett,                  "../textures/icon_onett.rgba5551"
     insert icon_zlanding,               "../textures/icon_zlanding.rgba5551"
@@ -393,7 +393,7 @@ scope Stages {
         constant PEACH2(0x44)
         constant DELFINO(0x45)
         constant CORNERIA2(0x46)
-        constant UNCANNY(0x47)
+        constant KITCHEN(0x47)
         constant BLUE(0x48)
         constant ONETT(0x49)
         constant ZLANDING(0x4A)
@@ -509,7 +509,7 @@ scope Stages {
         constant PEACH2(0x8CD)
         constant DELFINO(0x8D0)
         constant CORNERIA2(0x8DE)
-        constant UNCANNY(0x8E1)
+        constant KITCHEN(0x8E1)
         constant BLUE(0x8EC)
         constant ONETT(0x8F0)
         constant ZLANDING(0x8F3)
@@ -556,7 +556,7 @@ scope Stages {
     db id.SAFFRON_CITY                      // 09 
     db id.DUEL_ZONE                         // 0A 
     db id.FINAL_DESTINATION                 // 0B    
-    db id.RANDOM                            // 0C 
+    db id.DRAGONKING                        // 0C 
     db id.MINI_YOSHIS_ISLAND                // 0D 
     db id.FIRST_DESTINATION                 // 0E 
     db id.SHOWDOWN                          // 0F 
@@ -574,7 +574,7 @@ scope Stages {
     db id.MADMM                             // 1A
     db id.MUDA			                    // 1B
     db id.MUTE                              // 1C
-    db id.DRAGONKING                        // 1D
+    db id.KITCHEN                           // 1D
     db id.FROSTY                            // 1E
     db id.FRAYS_STAGE                       // 1F
     db id.DREAM_LAND_BETA_1                 // 20
@@ -703,7 +703,7 @@ scope Stages {
     dw icon_peach2                          // Peach's Castle II
     dw icon_delfino                         // Delfino Plaza
     dw icon_corneria2                       // Corneria
-    dw icon_uncanny                         // Uncanny Mansion
+    dw icon_kitchen                         // Kitchen Island
     dw icon_blue                            // Big Blue
     dw icon_onett                           // Onett
     dw icon_zlanding                        // Zebes Landing
@@ -2111,7 +2111,7 @@ scope Stages {
     db id.PEACHS_CASTLE                 // Peach's Castle II
     db id.PEACHS_CASTLE                 // Delfino Plaza
     db id.PEACHS_CASTLE                 // Corneria
-    db id.YOSHIS_ISLAND                 // Uncanny Mansion
+    db id.PEACHS_CASTLE                 // Kitchen Island
     db id.PEACHS_CASTLE                 // Big Blue
     db id.PEACHS_CASTLE                 // Onett
     db id.PEACHS_CASTLE                 // Zebes Landing
@@ -2197,7 +2197,7 @@ scope Stages {
     dw header.PEACH2,                 type.CLONE
     dw header.DELFINO,                type.CLONE
     dw header.CORNERIA2,              type.CLONE
-    dw header.UNCANNY,                type.CLONE
+    dw header.KITCHEN,                type.CLONE
     dw header.BLUE,                   type.CLONE
     dw header.ONETT,                  type.CLONE
     dw header.ZLANDING,               type.CLONE
@@ -2332,18 +2332,18 @@ scope Stages {
     add_stage(showdown, "Showdown", -1, -1)
     add_stage(spiralm, "Spiral Mountain", -1, -1)
     add_stage(n64, "N64", -1, -1)
-    add_stage(mute, "Mute City", -1, -1)
+    add_stage(mute, "Mute City", {MIDI.id.BIG_BLUE}, -1)
     add_stage(madmm, "Mad Monster Mansion", -1, -1)
     add_stage(smbbf, "Mushroom Kingdom BF", -1, -1)
     add_stage(smbo, "Mushroom Kingdom O", -1, -1)
-    add_stage(bowserb, "Bowser's Stadium", -1, -1)
+    add_stage(bowserb, "Bowser's Stadium", {MIDI.id.BOWSERROAD}, {MIDI.id.BOWSERFINAL})
     add_stage(peach2, "Peach's Castle II", -1, -1)
     add_stage(delfino, "Delfino Plaza", -1, -1)
     add_stage(corneria2, "Corneria", -1, -1)
-    add_stage(uncanny, "Uncanny Mansion", -1, -1)
+    add_stage(kitchen, "Kitchen Island", {MIDI.id.HORROR_MANOR}, -1)
     add_stage(blue, "Big Blue", -1, -1)
     add_stage(onett, "Onett", -1, -1)
-    add_stage(zlanding, "Zebes Landing", -1, -1)
+    add_stage(zlanding, "Zebes Landing", {MIDI.id.SHOWDOWN}, -1)
     add_stage(frosty, "Frosty Village", -1, -1)
 
 }
