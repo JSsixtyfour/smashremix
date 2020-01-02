@@ -507,14 +507,9 @@ scope Toggles {
             evaluate next(OS.NULL)
         } else {
             evaluate m({n}+1)
-            if ({m} == Stages.id.UNCANNY) { // temporarily exclude Uncanny Mansion
-                evaluate m({n}+2)
-            }
             evaluate next(entry_random_stage_{m})
         }
-        if ({n} != Stages.id.UNCANNY) { // temporarily exclude Uncanny Mansion
-            entry_random_stage_{n}:;                entry_bool({Stages.STAGE_{n}_TITLE}, OS.TRUE, OS.TRUE, {next})
-        }
+        entry_random_stage_{n}:;                entry_bool({Stages.STAGE_{n}_TITLE}, OS.TRUE, OS.TRUE, {next})
         evaluate n({n}+1)
     }
 

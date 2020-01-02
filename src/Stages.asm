@@ -1845,9 +1845,7 @@ scope Stages {
         define n(0x29)
         evaluate n({n})
         while {n} <= id.MAX_STAGE_ID {
-            if ({n} != id.UNCANNY) { // temporarily exclude Uncanny Mansion
-                add_to_list(Toggles.entry_random_stage_{n}, {n})
-            }
+            add_to_list(Toggles.entry_random_stage_{n}, {n})
             evaluate n({n}+1)
         }
 
