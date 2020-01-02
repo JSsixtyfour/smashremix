@@ -1356,6 +1356,19 @@ scope Stages {
         jal     draw_page_number_           // draw page number
         nop
 
+        // this block draws the hazards on/off modal message
+        lli     a0, 231                     // a0 - x
+        lli     a1, 163                     // a1 - uly
+        li      t0, frozen_mode             // t0 = address of frozen mode
+        lw      t1, 0x0000(t0)              // t1 = frozen_mode
+        li      a2, string_hazards_on
+        beqz    t1, _draw_modal
+        nop
+        li      a2, string_hazards_off      // a2 - address of string
+        _draw_modal:
+        jal     Overlay.draw_centered_str_  // draw string
+        nop
+
         lw      ra, 0x0004(sp)              // ~
         lw      a0, 0x0008(sp)              // ~
         lw      a1, 0x000C(sp)              // ~
@@ -1367,6 +1380,11 @@ scope Stages {
         addiu   sp, sp, 0x0028              // deallocate stack space
         jr      ra                          // return
         nop
+
+        string_hazards_off:
+        String.insert("Hazards Off")
+        string_hazards_on:
+        String.insert("Hazards On")
     }
 
     // @ Description
@@ -2275,7 +2293,7 @@ scope Stages {
     // 0x0002 - Rare BGM_ID
     alternate_music_table:
     constant alternate_music_table_origin(origin())
-    fill 4 * (id.MAX_STAGE_ID - 1), 0xFF
+    fill 4 * (id.MAX_STAGE_ID + 1), 0xFF
 
     variable new_stages(0)
 
