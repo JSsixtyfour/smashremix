@@ -27,7 +27,7 @@ scope Overlay {
     // devolpers to overlay their own display list built using Overlay.draw_* functions in this
     // file. Insert functions below "HOOKS GO HERE."
 
-    macro highjack_(return_address, original_line_2_hex, display_list) {
+    macro highjack_(return_address, original_line_2_hex) {
         addiu   sp, sp,-0x0020              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      a0, 0x0008(sp)              // ~
@@ -39,19 +39,19 @@ scope Overlay {
 
         // init
         li      t0, RCP.display_list_info_p // t0 = display list info pointer 
-        li      t1, {display_list}_info     // t1 = address of display list info
+        li      t1, display_list_info       // t1 = address of display list info
         sw      t1, 0x0000(t0)              // update display list info pointer
 
         // reset
-        li      t0, {display_list}          // t0 = address of display_list
-        li      t1, {display_list}_info     // t1 = address of display_list_info
+        li      t0, display_list            // t0 = address of display_list
+        li      t1, display_list_info       // t1 = address of display_list_info 
         sw      t0, 0x0000(t1)              // ~
         sw      t0, 0x0004(t1)              // update display list address each frame
 
         // highjack
         li      t0, 0xDE010000              // ~
         sw      t0, 0x0000(v0)              // ~
-        li      t0, {display_list}          // ~
+        li      t0, display_list            // ~ 
         sw      t0, 0x0004(v0)              // highjack ssb display list
 
         // HOOKS GO HERE
@@ -134,7 +134,7 @@ scope Overlay {
         _highjack_1_return:
         OS.patch_end()
 
-        highjack_(_highjack_1_return, 0x8E020000, display_list_1)
+        highjack_(_highjack_1_return, 0x8E020000)
     }
 
     scope highjack_2_: {
@@ -144,7 +144,7 @@ scope Overlay {
         _highjack_2_return:
         OS.patch_end()
 
-        highjack_(_highjack_2_return, 0x8E020004, display_list_2)
+        highjack_(_highjack_2_return, 0x8E020004)
     }
 
     // @ Description
@@ -537,17 +537,11 @@ scope Overlay {
     // @ Description
     // Custom display list goes here.
     OS.align(16)
-    display_list_1:
+    display_list:
     fill 0x20000
 
-    display_list_1_info:
-    RCP.display_list_info(display_list_1, 0x20000)
-
-    display_list_2:
-    fill 0x20000
-
-    display_list_2_info:
-    RCP.display_list_info(display_list_2, 0x20000)
+    display_list_info:
+    RCP.display_list_info(display_list, 0x20000)
 }
 
 } // __OVERLAY__
