@@ -1855,11 +1855,11 @@ scope Character {
     // btp_stage_id - stage_id for btp
 
     // 0x1D - FALCO
-    define_character(FALCO, FOX, File.FALCO_MAIN, 0x0D0, 0, File.FALCO_CHARACTER, 0x13A, 0x0D2, 0x15A, 0x0A1, 0x013C, 0x46C, 0x0, OS.TRUE, Stages.id.BTT_FOX, Stages.id.BTP_FOX)
+    define_character(FALCO, FOX, File.FALCO_MAIN, 0x0D0, 0, File.FALCO_CHARACTER, 0x13A, 0x0D2, 0x15A, 0x0A1, 0x013C, 0x474, 0x0, OS.TRUE, Stages.id.BTT_FOX, Stages.id.BTP_FOX)
     // 0x1E - GND
     define_character(GND, CAPTAIN, File.GND_MAIN, 0x0EB, 0, File.GND_CHARACTER, 0x14E, 0, File.GND_ENTRY_KICK, File.GND_PUNCH_GRAPHIC, 0, 0x488, 0x0, OS.TRUE, Stages.id.BTT_FALCON, Stages.id.BTP_FALCON)
     // 0x1F - YLINK
-    define_character(YLINK, LINK, File.YLINK_MAIN, 0x0E0, 0, File.YLINK_CHARACTER, 0x147, File.YLINK_BOOMERANG_HITBOX, 0x161, 0x145, 0, 0x708, 0, OS.TRUE, Stages.id.BTT_LINK, Stages.id.BTP_LINK)
+    define_character(YLINK, LINK, File.YLINK_MAIN, 0x0E0, 0, File.YLINK_CHARACTER, 0x147, File.YLINK_BOOMERANG_HITBOX, 0x161, 0x145, 0, 0x760, 0, OS.TRUE, Stages.id.BTT_LINK, Stages.id.BTP_LINK)
     // 0x20 - DRM
     define_character(DRM, MARIO, File.DRM_MAIN, 0x0CA, 0, File.DRM_CHARACTER, 0x12A, File.DRM_PROJECTILE_DATA, 0x164, File.DRM_PROJECTILE_GRAPHIC, 0, 0x428, 0x0, OS.TRUE, Stages.id.BTT_MARIO, Stages.id.BTP_MARIO)
     // 0x21 - WARIO

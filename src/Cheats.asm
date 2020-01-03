@@ -27,7 +27,7 @@ scope Cheats {
     // slti    at, s1, 0x0001          // default value is 7
     OS.patch_end()
 
-    // @ Descritpion
+    // @ Description
     // (I don't remember how this works)
     OS.patch_start(0x00081408, 0x80105C08)
     // nop

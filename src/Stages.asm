@@ -574,7 +574,7 @@ scope Stages {
     db id.MADMM                             // 1A
     db id.MUDA			                    // 1B
     db id.MUTE                              // 1C
-    db id.KITCHEN                           // 1D
+    db id.RANDOM                           // 1D
     db id.FROSTY                            // 1E
     db id.FRAYS_STAGE                       // 1F
     db id.DREAM_LAND_BETA_1                 // 20

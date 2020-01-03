@@ -107,7 +107,7 @@ scope Falco {
     OS.patch_end()
     
     // Set default costumes
-    Character.set_default_costumes(Character.id.FALCO, 0, 1, 2, 3, 1, 2, 3)
+    Character.set_default_costumes(Character.id.FALCO, 0, 1, 4, 5, 1, 2, 3)
     
     // @ Description
     // Replaces a small subroutine which usually sets the up special delay for Fox, extends to

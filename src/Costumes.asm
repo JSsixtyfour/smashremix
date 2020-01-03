@@ -209,9 +209,9 @@ scope Costumes {
         db 0x00                             // Giant Donkey Kong
         db 0x00                             // (Placeholder)
         db 0x00                             // None (Placeholder)
-        db 0x03                             // Falco
+        db 0x05                             // Falco
         db 0x05                             // Ganondorf
-        db 0x04                             // Young Link
+        db 0x05                             // Young Link
         db 0x04                             // Dr. Mario
         db 0x04                             // Wario
         db 0x05                             // Dark Samus
