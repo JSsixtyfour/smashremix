@@ -32,9 +32,10 @@ scope Hitbox {
         sw      t1, 0x0008(sp)              // ~
         sw      t2, 0x000C(sp)              // store t0 - t2
         
-        li      t0, Toggles.entry_hitbox_mode
-        lw      t0, 0x0004(t0)              // t0 = bool hitbox_mode
-        beq     t0, r0, _update_player      // if (!hitbox_mode), skip
+        li      t0, Toggles.entry_special_model
+        lw      t0, 0x0004(t0)              // t0 = 1 if hitbox_mode
+        lli     t1, 0x0001                  // t1 = 1
+        bne     t0, t1, _update_player      // if (!hitbox_mode), skip
         nop                                 
         lli     v1, 0x0001                  // v1 = hitbox display
         
@@ -140,12 +141,14 @@ scope Hitbox {
         or      s0, a0, r0                  // original line 1
         lli     v1, 0x0000                  // v1 = no hitbox display
         
-        addiu   sp, sp, -0x0008             // allocate stack space
-        sw      t0, 0x0004(sp)              // store t0
+        addiu   sp, sp, -0x000C             // allocate stack space
+        sw      t0, 0x0004(sp)              // ~
+        sw      t1, 0x0008(sp)              // store t0, t1
         
-        li      t0, Toggles.entry_hitbox_mode
-        lw      t0, 0x0004(t0)              // t0 = bool hitbox_mode
-        beq     t0, r0, _update_projectile  // if (!hitbox_mode), skip
+        li      t0, Toggles.entry_special_model
+        lw      t0, 0x0004(t0)              // t0 = 1 if hitbox_mode
+        lli     t1, 0x0001                  // t1 = 1
+        bne     t0, t1, _update_projectile  // if (!hitbox_mode), skip
         nop  
         lli     v1, 0x0001                  // v1 = hitbox display
         
@@ -154,7 +157,8 @@ scope Hitbox {
         
         end:
         lw      t0, 0x0004(sp)              // ~
-        addiu   sp, sp, 0x0008              // deallocate stack space
+        lw      t1, 0x0008(sp)              // ~
+        addiu   sp, sp, 0x000C              // deallocate stack space
         j       _projectile_return
         nop
     }
@@ -163,16 +167,17 @@ scope Hitbox {
     // This makes it so the hitbox display is positioned correctly on the CSS screens and the VS results screen.
     // I am doing it this way because I don't know if the positioning is important on other screens.
     // See https://github.com/tehzz/SSB64-Notes/blob/master/Universal/Model%20Display/Routine%20800F293C%20-%20renderCharModel.md#hurtbox-mooring
-    scope fix_hibox_position_: {
+    scope fix_hitbox_position_: {
         OS.patch_start(0x6EB10, 0x800F3310)
-        j       fix_hibox_position_
+        j       fix_hitbox_position_
         nop
-        _fix_hibox_position_return:
+        _fix_hitbox_position_return:
         OS.patch_end()
 
-        li      at, Toggles.entry_hitbox_mode
-        lw      at, 0x0004(at)              // at = bool hitbox_mode
-        beq     at, r0, _original           // if (!hitbox_mode), skip
+        li      at, Toggles.entry_special_model
+        lw      at, 0x0004(at)              // at = 1 if hitbox_mode
+        lli     t5, 0x0001                  // t5 = 1
+        bne     at, t5, _original           // if (!hitbox_mode), skip
         nop
         li      at, Global.current_screen   // ~
         lb      at, 0x0000(at)              // at = screen id
@@ -191,13 +196,13 @@ scope Hitbox {
         _original:
         addiu   at, r0, 0x03EA              // original line 1 - this is the key "mooring" value
         lw      t5, 0x0000(t7)              // original line 2
-        j       _fix_hibox_position_return  // return
+        j       _fix_hitbox_position_return  // return
         nop
 
         _fix:
         addiu   at, r0, 0x03EA              // original line 1 - this is the key "mooring" value
         addiu   t5, r0, 0x03EA              // intentionally set t5 equal to at
-        j       _fix_hibox_position_return  // return
+        j       _fix_hitbox_position_return  // return
         nop
 
     }

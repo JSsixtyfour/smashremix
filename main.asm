@@ -93,6 +93,7 @@ include "src/MIDI.asm"
 
 include "src/FPS.asm"
 include "src/SinglePlayer.asm"
+include "src/Skeleton.asm"
 
 // rom size = 40MB
 origin 0x27FFFFF

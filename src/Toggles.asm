@@ -402,6 +402,18 @@ scope Toggles {
     dw fps_overclocked
 
     // @ Description
+    // Special Model Display strings
+    model_off:; db "OFF", 0x00
+    model_hitbox:; db "HITBOX", 0x00
+    model_skeleton:; db "SKELETON", 0x00
+    OS.align(4)
+
+    string_table_model:
+    dw model_off
+    dw model_hitbox
+    dw model_skeleton
+
+    // @ Description
     // Contains list of submenus.
     head_super_menu:
     Menu.entry("Load Profile:", Menu.type.U8, OS.FALSE, 0, 1, load_profile_, string_table_profile, OS.NULL, pc() + 20)
@@ -416,8 +428,8 @@ scope Toggles {
     entry_practice_overlay:;            entry_bool("Color Overlays", OS.FALSE, OS.FALSE, entry_disable_cinematic_camera)
     entry_disable_cinematic_camera:;    entry_bool("Disable Cinematic Camera", OS.FALSE, OS.FALSE, entry_flash_on_z_cancel)
     entry_flash_on_z_cancel:;           entry_bool("Flash On Z-Cancel", OS.FALSE, OS.FALSE, entry_fps)
-    entry_fps:;                         entry("FPS Display *BETA", Menu.type.U8, OS.FALSE, OS.FALSE, 0, 2, OS.NULL, string_table_fps, OS.NULL, entry_hitbox_mode)
-    entry_hitbox_mode:;                 entry_bool("Hitbox Display", OS.FALSE, OS.FALSE, entry_hold_to_pause)
+    entry_fps:;                         entry("FPS Display *BETA", Menu.type.U8, OS.FALSE, OS.FALSE, 0, 2, OS.NULL, string_table_fps, OS.NULL, entry_special_model)
+    entry_special_model:;               entry("Special Model Display", Menu.type.U8, OS.FALSE, OS.FALSE, 0, 2, OS.NULL, string_table_model, OS.NULL, entry_hold_to_pause)
     entry_hold_to_pause:;               entry_bool("Hold To Pause", OS.TRUE, OS.TRUE, entry_improved_combo_meter)
     entry_improved_combo_meter:;        entry_bool("Improved Combo Meter *BETA", OS.FALSE, OS.FALSE, entry_tech_chase_combo_meter)
     entry_tech_chase_combo_meter:;      entry_bool("Tech Chase Combo Meter *BETA", OS.FALSE, OS.FALSE, entry_vs_mode_combo_meter)

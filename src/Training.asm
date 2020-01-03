@@ -388,6 +388,15 @@ scope Training {
         addiu   t1, t1, 0x0001              // t1 = port 4 id
         sw      t1, 0x0000(t0)              // save port id as spawn id
 
+        li      t1, Toggles.entry_special_model
+        lw      t0, 0x0004(t1)              // t0 = initial special model display mode
+        li      t1, initial_model_display   // t1 = initial model display value address
+        // do some shifting to treat 1 as 0 so that hitbox mode correctly toggles when you load with hitbox mode on
+        srl     t0, 0x0001                  // 0 -> 0, 1 -> 0, 2 -> 1
+        sll     t0, 0x0001                  // 0 -> 0, 1 -> 2
+        sw      t0, 0x0000(t1)              // save initial model display value
+
+
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // load t0, t1
         addiu   sp, sp, 0x0010              // deallocate stack space
@@ -464,11 +473,18 @@ scope Training {
         nop
         beqz    v0, _check_frame_advance    // if (!dd_pressed), skip
         nop
-        li      t1, Toggles.entry_hitbox_mode
-        lw      t0, 0x0004(t1)              // t0 = bool hitbox_mode
-        xori    t0, t0, 0x0001              // 0 -> 1 or 1 -> 0 (flip bool)
-        sw      t0, 0x0004(t1)              // store bool hitbox_mode
+        li      t1, Toggles.entry_special_model
+        lw      t0, 0x0004(t1)              // t0 = 1 for hitbox_mode
+        lli     t2, 0x0001                  // t2 = 1
+        bnel    t0, t2, _update_model_display
+        addu    t0, r0, t2                  // turn on hitbox_mode
         
+        li      t2, initial_model_display   // t2 = initial model display value address
+        lw      t0, 0x0000(t2)              // t0 = initial model display value
+
+        _update_model_display:
+        sw      t0, 0x0004(t1)              // store updated model display
+
         _check_frame_advance:
         li      t1, freeze                  // t1 = freeze
         li      t2, du_pressed              // t2 = du_pressed
@@ -1173,6 +1189,11 @@ scope Training {
     head:
     entry_port_x:
     Menu.entry("PORT", Menu.type.U8, 1, 1, 4, OS.NULL, OS.NULL, OS.NULL, tail_p1)
+
+    // @ Description
+    // Holds the initial value of the special model display toggle
+    initial_model_display:
+    dw      0x00000000
 }
 
 } // __TRAINING__
