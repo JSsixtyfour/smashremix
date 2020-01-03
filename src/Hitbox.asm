@@ -33,11 +33,14 @@ scope Hitbox {
         sw      t2, 0x000C(sp)              // store t0 - t2
         
         li      t0, Toggles.entry_special_model
-        lw      t0, 0x0004(t0)              // t0 = 1 if hitbox_mode
+        lw      t0, 0x0004(t0)              // t0 = 1 if hitbox_mode, 3 if ECB
         lli     t1, 0x0001                  // t1 = 1
-        bne     t0, t1, _update_player      // if (!hitbox_mode), skip
-        nop                                 
+        beql    t0, t1, _update_player      // if (hitbox_mode), set v1
         lli     v1, 0x0001                  // v1 = hitbox display
+
+        lli     t1, 0x0003                  // t1 = 3
+        beql    t0, t1, _update_player      // if (ecb_mode), set v1
+        lli     v1, 0x0003                  // v1 = ecb display
         
         _update_player:
         sw      v1, 0x0B4C(s8)              // save hitbox display state
@@ -148,9 +151,12 @@ scope Hitbox {
         li      t0, Toggles.entry_special_model
         lw      t0, 0x0004(t0)              // t0 = 1 if hitbox_mode
         lli     t1, 0x0001                  // t1 = 1
-        bne     t0, t1, _update_projectile  // if (!hitbox_mode), skip
-        nop  
+        beql    t0, t1, _update_projectile  // if (hitbox_mode), set v1
         lli     v1, 0x0001                  // v1 = hitbox display
+
+        lli     t1, 0x0003                  // t1 = 3
+        beql    t0, t1, _update_projectile  // if (ecb_mode), set v1
+        lli     v1, 0x0003                  // v1 = ecb display
         
         _update_projectile:
         sw      v1, 0x02BC(v0)              // save projectile display state

@@ -390,12 +390,13 @@ scope Training {
 
         li      t1, Toggles.entry_special_model
         lw      t0, 0x0004(t1)              // t0 = initial special model display mode
-        li      t1, initial_model_display   // t1 = initial model display value address
-        // do some shifting to treat 1 as 0 so that hitbox mode correctly toggles when you load with hitbox mode on
-        srl     t0, 0x0001                  // 0 -> 0, 1 -> 0, 2 -> 1
-        sll     t0, 0x0001                  // 0 -> 0, 1 -> 2
-        sw      t0, 0x0000(t1)              // save initial model display value
+        lli     t1, 0x0001                  // t1 = 1 for hitbox_mode
+        beql    t0, t1, _set_initial_model_display
+        addu    t0, r0, r0                  // if entered in hitbox mode, then set initial to off so it toggles
 
+        _set_initial_model_display:
+        li      t1, initial_model_display   // t1 = initial model display value address
+        sw      t0, 0x0000(t1)              // save initial model display value
 
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // load t0, t1
