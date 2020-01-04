@@ -135,6 +135,8 @@ scope MIDI {
     insert_midi(ONETT, OS.TRUE, Onett)
     insert_midi(ZEBES_LANDING, OS.TRUE, Zebes Landing)
     insert_midi(FROSTY_VILLAGE, OS.TRUE, Frosty Village)
+    insert_midi(METAL_CAP, OS.TRUE, Metal Cap)
+    insert_midi(WING_CAP, OS.TRUE, Wing Cap)
     insert_midi(TESTMIDI, OS.FALSE, -1)
 
     pushvar origin, base
