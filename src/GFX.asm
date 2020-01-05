@@ -335,6 +335,16 @@ scope GFX {
     // add_gfx_texture(gfx/coin-7.rgba8888)
     // add_gfx_texture(gfx/coin-8.rgba8888)
     // add_gfx_texture(gfx/coin-9.rgba8888)
+    add_gfx_texture_block(Black and White Explosion, 9)
+    add_gfx_texture(gfx/explosion-bw-1.rgba8888)
+    add_gfx_texture(gfx/explosion-bw-2.rgba8888)
+    add_gfx_texture(gfx/explosion-bw-3.rgba8888)
+    add_gfx_texture(gfx/explosion-bw-4.rgba8888)
+    add_gfx_texture(gfx/explosion-bw-5.rgba8888)
+    add_gfx_texture(gfx/explosion-bw-6.rgba8888)
+    add_gfx_texture(gfx/explosion-bw-7.rgba8888)
+    add_gfx_texture(gfx/explosion-bw-8.rgba8888)
+    add_gfx_texture(gfx/explosion-bw-9.rgba8888)
 
     // ADD NEW GFX HERE
     add_gfx(Blue Explosion, gfx/blue_explosion_instructions.bin)
@@ -347,6 +357,8 @@ scope GFX {
     add_gfx(Blue Bomb Explosion - Instruction 0x20 replacement, gfx/blue_bomb_explosion_instructions-20.bin)
 
     add_ground_effect_gfx(Blue/Black Ground Effect, 0x20)
+
+    add_gfx(Purple Explosion, gfx/purple_explosion_instructions.bin)
 
     // writes new GFX to ROM
     write_gfx()
