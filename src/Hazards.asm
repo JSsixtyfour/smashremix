@@ -158,7 +158,10 @@ scope Hazards {
 
         addiu   t0, r0, Stages.id.SMASHVILLE2      // t0 = SMASHVILLE2 ID
         beq     t0, v1, _end                // if current stage
-        nop                                 
+        nop
+        lw      t0, 0x0004(sp)              // ~
+        lw      t1, 0x0008(sp)              // restore registers
+        addiu   sp, sp, 0x0010              // deallocate stack space
         hazard_toggle(0x8010B378)           // standard toggle
 
         _end:
