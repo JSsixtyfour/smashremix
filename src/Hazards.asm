@@ -145,13 +145,30 @@ scope Hazards {
     
     // @ Description
     // Toggle for Peach's Bumper.
+    // registers v0 and v1 have current stage ID
     scope peach_bumper_: {
         OS.patch_start(0x00086CB4, 0x8010B4B4)
         jal     peach_bumper_
         nop
         OS.patch_end()
+        
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      t0, 0x0004(sp)              // ~
+        sw      t1, 0x0008(sp)              // save registers
 
-        hazard_toggle(0x8010B378)
+        addiu   t0, r0, Stages.id.SMASHVILLE2      // t0 = SMASHVILLE2 ID
+        beq     t0, v1, _end                // if current stage
+        nop                                 
+        hazard_toggle(0x8010B378)           // standard toggle
+
+        _end:
+        lw      t0, 0x0004(sp)              // ~
+        lw      t1, 0x0008(sp)              // restore registers
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        jr      ra                          // return
+        nop
+
+        
     }
 
 }
