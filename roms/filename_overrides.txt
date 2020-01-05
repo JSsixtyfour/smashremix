@@ -206,6 +206,10 @@
 090E Frosty Village BG
 090F Dark Samus Taunt
 0910 Dark Samus Landing Nair
+0911 Smashville2 Header
+0912 Smashville2 Stage
+0913 Smashville2 BG
+0914 Smashville2 Bumper
 0611 CAPTAIN DeadU
 0611 CAPTAIN ScreenKO
 05E8 CAPTAIN Entry

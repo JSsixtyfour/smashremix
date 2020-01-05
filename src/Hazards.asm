@@ -142,6 +142,17 @@ scope Hazards {
         jr      ra                          // return
         nop
     }
+    
+    // @ Description
+    // Toggle for Peach's Bumper.
+    scope peach_bumper_: {
+        OS.patch_start(0x00086CB4, 0x8010B4B4)
+        jal     peach_bumper_
+        nop
+        OS.patch_end()
+
+        hazard_toggle(0x8010B378)
+    }
 
 }
 

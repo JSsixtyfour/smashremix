@@ -173,6 +173,7 @@ scope Stages {
     dw function.CLONE                       // Onett
     dw function.CLONE                       // Zebes Landing
     dw function.CLONE                       // Frosty Village
+    dw function.PEACHS_CASTLE               // Smashville
     
 
     // TODO
@@ -312,6 +313,7 @@ scope Stages {
     insert icon_onett,                  "../textures/icon_onett.rgba5551"
     insert icon_zlanding,               "../textures/icon_zlanding.rgba5551"
     insert icon_frosty,                 "../textures/icon_frosty.rgba5551"
+    insert icon_smashville2,            "../textures/icon_smashville.rgba5551"
     
 
     // @ Description
@@ -398,8 +400,9 @@ scope Stages {
         constant ONETT(0x49)
         constant ZLANDING(0x4A)
         constant FROSTY(0x4B)
+        constant SMASHVILLE2(0x4C)
 
-        constant MAX_STAGE_ID(0x4B)
+        constant MAX_STAGE_ID(0x4C)
 
         // not an actual id, some arbitary number Sakurai picked(?)
         constant RANDOM(0xDE)
@@ -514,6 +517,7 @@ scope Stages {
         constant ONETT(0x8F0)
         constant ZLANDING(0x8F3)
         constant FROSTY(0x90C)
+        constant SMASHVILLE2(0x911)
     }
 
     scope function {
@@ -586,7 +590,7 @@ scope Stages {
     db id.KALOS_POKEMON_LEAGUE              // 25
     db id.POKEMON_STADIUM_2                 // 26
     db id.SKYLOFT                           // 27
-    db id.SMASHVILLE                        // 28
+    db id.SMASHVILLE2                       // 28
     db id.MEMENTOS                          // 29
     db id.CORNERIA_CITY                     // 2A
     db id.GREAT_BAY                         // 2B
@@ -708,6 +712,7 @@ scope Stages {
     dw icon_onett                           // Onett
     dw icon_zlanding                        // Zebes Landing
     dw icon_frosty                          // Frosty Village
+    dw icon_smashville2                     // Smashville
 
     // @ Description
     // Row the cursor is on
@@ -2056,6 +2061,7 @@ scope Stages {
     float32 0.5                         // Onett
     float32 0.5                         // Zebes Landing
     float32 0.5                         // Frosty Village
+    float32 0.5                         // Smashville
 
     background_table:
     db id.PEACHS_CASTLE                 // Peach's Castle
@@ -2134,6 +2140,7 @@ scope Stages {
     db id.PEACHS_CASTLE                 // Onett
     db id.PEACHS_CASTLE                 // Zebes Landing
     db id.SECTOR_Z                      // Frosty Village
+    db id.PEACHS_CASTLE                 // Smashville
     OS.align(4)
 
     // @ Description
@@ -2220,6 +2227,7 @@ scope Stages {
     dw header.ONETT,                  type.CLONE
     dw header.ZLANDING,               type.CLONE
     dw header.FROSTY,                 type.CLONE
+    dw header.SMASHVILLE2,            type.PEACHS_CASTLE
 
     string_peachs_castle:;          String.insert("Peach's Castle")
     string_sector_z:;               String.insert("Sector Z")
@@ -2363,6 +2371,7 @@ scope Stages {
     add_stage(onett, "Onett", -1, -1)
     add_stage(zlanding, "Zebes Landing", {MIDI.id.SHOWDOWN}, -1)
     add_stage(frosty, "Frosty Village", -1, -1)
+    add_stage(smashville2, "Smashville 2", -1, -1)
 
 }
 

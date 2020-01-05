@@ -813,6 +813,12 @@ scope Spawn {
     float32  1626,  1324
     float32 -0672,  1156
     float32  2953,  0117
+    
+    // 4B - SMASHVILLE
+    float32 -1500,  0035
+    float32  1500,  0035              
+    float32 -0800,  0035
+    float32  0800,  0035
 
     neutral_table:
     // 00 - Peach's Castle
@@ -1270,6 +1276,12 @@ scope Spawn {
     float32  1626,  1324
     float32 -0672,  1156
     float32  2953,  0117
+    
+    // 4B - SMASHVILLE
+    float32 -1500,  0035
+    float32  1500,  0035              
+    float32 -0800,  0035
+    float32  0800,  0035
 }
 
 } // __SPAWN__

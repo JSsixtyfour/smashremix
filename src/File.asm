@@ -191,4 +191,9 @@ scope File {
     constant STG_FROSTY_BG(0x90E)
     constant DSAMUS_TAUNT(0x90F)
     constant DSAMUS_NAIR_LANDING(0x910)
+    constant STG_SMASHVILLE2_HEADER(0x911)
+    constant STG_SMASHVILLE2(0x912)
+    constant STG_SMASHVILLE2_BG(0x913)
+    constant STG_SMASHVILLE2_BUMPER(0x914)
+
 }
