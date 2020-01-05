@@ -363,10 +363,10 @@ scope Training {
         nop
         _load_from_sss_return:
         OS.patch_end()
-        
+
         addiu   t6, t6, 0x5240              // original line 1
         addiu   a0, a0, 0x0870              // original line 2
-        
+
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // store t0, t1
@@ -404,7 +404,7 @@ scope Training {
         j       _load_from_sss_return
         nop
     }
-    
+
     // @ Description
     // This hook runs when training is loaded from reset, but not from the stage select screen
     // it also runs when training mode exit is used
@@ -756,6 +756,18 @@ scope Training {
         jal     Menu.draw_                  // draw menu
         nop
 
+        // draw bgm name
+        lli     a0, 000161                  // a0 - x
+        lli     a1, 000150                  // a1 - uly
+        li      t0, entry_music             // t0 - music menu entry address
+        lw      t0, 0x0004(t0)              // t0 - string_table_music index
+        sll     t0, t0, 0x0002              // t0 - string_table_music offset
+        li      a2, string_table_music      // a2 - address of music tring table
+        addu    a2, a2, t0                  // a2 - address of BGM name string pointer
+        lw      a2, 0x0000(a2)              // a2 - address of BGM name string
+        jal     Overlay.draw_centered_str_  // draw BGM name
+        nop
+
         // check for b press
         lli     a0, Joypad.B                // a0 - button_mask
         lli     a1, 000069                  // a1 - whatever you like!
@@ -798,6 +810,29 @@ scope Training {
         jr      ra
         nop
     }
+    
+    // @ Description
+    // This hook allows us to play custom music instead of the standard training mode music
+    scope play_custom_music_: {
+        OS.patch_start(0x116994, 0x80190174)
+        jal     play_custom_music_
+        nop
+        OS.patch_end()
+
+        // addiu   a1, r0, 0x002A              // original line 1
+
+        li      at, entry_music             // at = address of music menu entry
+        lw      at, 0x0004(at)              // at = bgm_table index
+        li      t7, bgm_table               // t7 = address of bgm_table
+        addu    a1, at, t7                  // a1 = address of bgm_id
+        lb      a1, 0x0000(a1)              // a1 = bgm_id
+
+        sw      a1, 0x0000(v0)              // original line 2
+
+        jr      ra                          // return
+        nop
+    }
+    
     // @ Description
     // Strings used to explain advance_frame_ shortcuts
     dpad_up:; db "DPAD UP - PAUSE AND RESUME", 0x00
@@ -1106,9 +1141,7 @@ scope Training {
         Menu.entry_title("SET CUSTOM SPAWN", {spawn_func}, pc() + 24)
         Menu.entry("PERCENT", Menu.type.U16, 0, 0, 999, OS.NULL, OS.NULL, {percent}, pc() + 12)
         Menu.entry_title("SET PERCENT", {percent_func}, entry_percent_toggle_p{player})
-        entry_percent_toggle_p{player}:; Menu.entry_bool("RESET SETS PERCENT", OS.TRUE, OS.NULL)
-
-
+        entry_percent_toggle_p{player}:; Menu.entry_bool("RESET SETS PERCENT", OS.TRUE, entry_music)
     }
 
     tail_p1:; tail_px(1)
@@ -1190,6 +1223,63 @@ scope Training {
     head:
     entry_port_x:
     Menu.entry("PORT", Menu.type.U8, 1, 1, 4, OS.NULL, OS.NULL, OS.NULL, tail_p1)
+
+    string_training_mode:; String.insert("Training Mode")
+
+    string_table_music:
+    dw       string_training_mode
+    dw       Toggles.entry_random_music_congo_jungle + 0x20
+    dw       Toggles.entry_random_music_data + 0x20
+    dw       Toggles.entry_random_music_dream_land + 0x20
+    dw       Toggles.entry_random_music_duel_zone + 0x20
+    dw       Toggles.entry_random_music_final_destination + 0x20
+    dw       Toggles.entry_random_music_how_to_play + 0x20
+    dw       Toggles.entry_random_music_hyrule_castle + 0x20
+    dw       Toggles.entry_random_music_meta_crystal + 0x20
+    dw       Toggles.entry_random_music_mushroom_kingdom + 0x20
+    dw       Toggles.entry_random_music_peachs_castle + 0x20
+    dw       Toggles.entry_random_music_planet_zebes + 0x20
+    dw       Toggles.entry_random_music_saffron_city + 0x20
+    dw       Toggles.entry_random_music_sector_z + 0x20
+    dw       Toggles.entry_random_music_yoshis_island + 0x20
+    evaluate total(15)
+    evaluate n(0x2F)
+    while {n} < MIDI.midi_count {
+        evaluate can_toggle({MIDI.MIDI_{n}_TOGGLE})
+        if ({can_toggle} == OS.TRUE) {
+            evaluate total({total}+1)
+            dw       Toggles.entry_random_music_{n} + 0x20
+        }
+        evaluate n({n}+1)
+    }
+
+    bgm_table:
+    db      BGM.special.TRAINING
+    db      BGM.stage.CONGO_JUNGLE
+    db      BGM.menu.DATA
+    db      BGM.stage.DREAM_LAND
+    db      BGM.stage.DUEL_ZONE
+    db      BGM.stage.FINAL_DESTINATION
+    db      BGM.stage.HOW_TO_PLAY
+    db      BGM.stage.HYRULE_CASTLE
+    db      BGM.stage.META_CRYSTAL
+    db      BGM.stage.MUSHROOM_KINGDOM
+    db      BGM.stage.PEACHS_CASTLE
+    db      BGM.stage.PLANET_ZEBES
+    db      BGM.stage.SAFFRON_CITY
+    db      BGM.stage.SECTOR_Z
+    db      BGM.stage.YOSHIS_ISLAND
+    evaluate n(0x2F)
+    while {n} < MIDI.midi_count {
+        evaluate can_toggle({MIDI.MIDI_{n}_TOGGLE})
+        if ({can_toggle} == OS.TRUE) {
+            db       {n}
+        }
+        evaluate n({n}+1)
+    }
+    OS.align(4)
+
+    entry_music:; Menu.entry("MUSIC", Menu.type.U8, 0, 0, {total} - 1, OS.NULL, OS.NULL, OS.NULL, OS.NULL)
 
     // @ Description
     // Holds the initial value of the special model display toggle
