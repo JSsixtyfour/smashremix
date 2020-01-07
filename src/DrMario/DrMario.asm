@@ -68,5 +68,5 @@ scope DrMario {
     OS.patch_end()
     
     // Set default costumes
-    Character.set_default_costumes(Character.id.DRM, 0, 1, 2, 3, 2, 3, 4)
+    Character.set_default_costumes(Character.id.DRM, 0, 1, 2, 4, 1, 3, 4)
 }

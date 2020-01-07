@@ -1861,7 +1861,7 @@ scope Character {
     // 0x1F - YLINK
     define_character(YLINK, LINK, File.YLINK_MAIN, 0x0E0, 0, File.YLINK_CHARACTER, 0x147, File.YLINK_BOOMERANG_HITBOX, 0x161, 0x145, 0, 0x760, 0, OS.TRUE, Stages.id.BTT_LINK, Stages.id.BTP_LINK)
     // 0x20 - DRM
-    define_character(DRM, MARIO, File.DRM_MAIN, 0x0CA, 0, File.DRM_CHARACTER, 0x12A, File.DRM_PROJECTILE_DATA, 0x164, File.DRM_PROJECTILE_GRAPHIC, 0, 0x428, 0x0, OS.TRUE, Stages.id.BTT_MARIO, Stages.id.BTP_MARIO)
+    define_character(DRM, MARIO, File.DRM_MAIN, 0x0CA, 0, File.DRM_CHARACTER, 0x12A, File.DRM_PROJECTILE_DATA, 0x164, File.DRM_PROJECTILE_GRAPHIC, 0, 0x454, 0x0, OS.TRUE, Stages.id.BTT_MARIO, Stages.id.BTP_MARIO)
     // 0x21 - WARIO
     define_character(WARIO, MARIO, File.WARIO_MAIN, 0x0CA, 0, File.WARIO_CHARACTER, 0x12A, 0x0CC, 0x164, 0x129, 0, 0x428, 0x0, OS.FALSE, Stages.id.BTT_MARIO, Stages.id.BTP_MARIO)
     // 0x22 - DSAMUS

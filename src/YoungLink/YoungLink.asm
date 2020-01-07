@@ -109,7 +109,7 @@ scope YoungLink {
     OS.patch_end()
     
     // Set default costumes
-    Character.set_default_costumes(Character.id.YLINK, 0, 3, 4, 5, 1, 2, 0)
+    Character.set_default_costumes(Character.id.YLINK, 0, 1, 4, 5, 2, 3, 0)
     
     up_special_landing_fsm:
     float32 0.33                // 25 frames of landing lag
