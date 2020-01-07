@@ -15,7 +15,13 @@ include "Texture.asm"
 
 scope CharacterSelect {
 
-    
+    OS.align(16)
+    display_list:
+    fill 0x8000
+
+    display_list_info:
+    RCP.display_list_info(display_list, 0x8000)
+
     // @ Description
     // Subroutine which loads a character, but uses an alternate req list which loads only the main
     // and model file, instead of all of the character's files. This is safe on the select screen.
@@ -528,13 +534,6 @@ scope CharacterSelect {
         j       _return                     // return
         nop
     }
-
-    OS.align(16)
-    display_list:
-    fill 0x8000
-
-    display_list_info:
-    RCP.display_list_info(display_list, 0x8000)
 
     // @ Description
     // Allows random character to include remix characters

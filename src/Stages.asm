@@ -19,8 +19,6 @@ include "Texture.asm"
 
 scope Stages {
 
-    OS.align(16)
-
     // DONE
     // 800FC298 - reads from table at 0x8012C520, (stage file #, stage type #)
     // solution: change li @ 0x800FC29C to custom table by stage id
@@ -543,6 +541,8 @@ scope Stages {
     constant NUM_ROWS(3)
     constant NUM_COLUMNS(6)
     constant NUM_ICONS(NUM_ROWS * NUM_COLUMNS)
+
+    OS.align(16)
 
     // @ Description
     // Stage IDs in order
