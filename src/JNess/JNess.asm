@@ -1,21 +1,18 @@
-// Lucas.asm
+// JNess.asm
 
-// This file contains file inclusions, action edits, and assembly for Lucas.
+// This file contains file inclusions, action edits, and assembly for JNess.
 
-scope Lucas {
+scope JNess {
     // Insert Moveset files
-    insert FAIR, "moveset/FAIR.bin"
-    insert NAIR, "moveset/NAIR.bin"
-    insert UAIR, "moveset/UAIR.bin"
-    insert BAIR, "moveset/BAIR.bin"
-    insert DAIR, "moveset/DAIR.bin"
     insert UTILT, "moveset/UTILT.bin"
-    insert DSMASH, "moveset/DSMASH.bin"
-    insert USMASH, "moveset/USMASH.bin"
-    insert GRAB_RELEASE_DATA,"moveset/GRAB_RELEASE_DATA.bin"
-    GRAB:; Moveset.THROW_DATA(GRAB_RELEASE_DATA); insert "moveset/GRAB.bin"
     
+	// examples
+	// insert DSMASH, "moveset/DSMASH.bin"
+    // insert USMASH, "moveset/USMASH.bin"
+    // insert GRAB_RELEASE_DATA,"moveset/GRAB_RELEASE_DATA.bin"
+    // GRAB:; Moveset.THROW_DATA(GRAB_RELEASE_DATA); insert "moveset/GRAB.bin"
     
+    // -1 means no change from the character from which this one was cloned
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(LUCAS, Action.AttackAirN,      -1,                         NAIR,                       -1)
     Character.edit_action_parameters(LUCAS, Action.AttackAirF,      -1,                         FAIR,                       -1)

@@ -1,0 +1,30 @@
+JNess moveset and addresses
+
+fthrow		????	same
+
+
+6c60	neutral 1	same
+6ca8	neutral 2	new
+6cf0	neutral 3	same
+6d44	dash		same
+6d9c	ftilt up	same
+6dd8	ftilt side	same
+6e14	ftilt down	same
+6e50	utilt		new
+6e98	dtilt		same
+--- bat reflection data ---
+6f08	fsmash		new
+6f78	usmash		new
+6ffc	dsmash		new
+704c	nair		same
+70e4	fair		same
+7130 	fair land	same
+7154	bair		same
+71c4	bair land	same
+71e0	uair		new
+7224	dair		same
+7264	dair land	same
+72fc	ns ground	same (proj help needed)
+735c	ns air		same (proj help needed)
+73b8	us ground	same except for: US 9540: 3C0000DD > 3C0000D3; US 957c: B1040000 > B1000000; changing these doesn't seem to do anything
+742c	us ram		new (changed hitbox and increased invulnerability time from 10 to 18), but I don't see the end hitboxes command in J version; it seems to stop after Set Hurtbox State - Vulnerable so I am not sure if the Wait length after that is different
