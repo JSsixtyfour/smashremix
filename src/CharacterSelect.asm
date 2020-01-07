@@ -6,7 +6,7 @@ print "included CharacterSelect.asm\n"
 // @ Description
 // This file contains modifications to the Character Select screen
 
-// TODO: DK's icon on 1P CSS blank
+// TODO: 1p: C-left sometimes causes costumes to stop getting updated and for stock icon to become corrupted - select with c-left then hit b then select with c-left again and cycle through with c-left
 
 include "Global.asm"
 include "OS.asm"
@@ -140,7 +140,7 @@ scope CharacterSelect {
     alt_malloc_table:
     dw  0x7710                              // 0x00 - MARIO
     dw  0x8050                              // 0x01 - FOX
-    dw  0xD800                              // 0x02 - DONKEY
+    dw  0xD800                              // 0x02 - DONKEY (req list also includes the file with stock icons, but size of that file not accounted for here)
     dw  0xE750                              // 0x03 - SAMUS
     dw  0x8110                              // 0x04 - LUIGI
     dw  0x12170                             // 0x05 - LINK
