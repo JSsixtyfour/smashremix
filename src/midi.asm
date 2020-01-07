@@ -137,6 +137,8 @@ scope MIDI {
     insert_midi(FROSTY_VILLAGE, OS.TRUE, Frosty Village)
     insert_midi(METAL_CAP, OS.TRUE, Metal Cap)
     insert_midi(WING_CAP, OS.TRUE, Wing Cap)
+    insert_midi(PIKA_CUP, OS.TRUE, Pika Cup)
+    insert_midi(KITCHEN_ISLAND, OS.TRUE, Kitchen Island)
     insert_midi(TESTMIDI, OS.FALSE, -1)
 
     pushvar origin, base

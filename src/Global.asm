@@ -101,7 +101,7 @@ scope Global {
 
     // @ Description
     // list of files loaded in the game
-    // @ Fomrat
+    // @ Format
     // 0x0000 - file
     // 0x0004 - address
     constant files_loaded(0x800D6300)
