@@ -221,6 +221,27 @@ scope Lucas {
         j       _return                     // return
         nop
         
+    // character ID check add for when Ness/Lucas perform their unique double jump
+    scope ness_jump_: {
+        OS.patch_start(0xBA848, 0x8013FE08)
+        j       ness_jump_
+        nop
+        _return:
+        OS.patch_end()
+        
+        addiu   at, r0, 0x000B              // original line 1
+        beq     v0, at, special_jump        // original line 2
+        lui     t2, 0x8014                  // original line 3
+        addiu   at, r0, 0x0021              // Lucas Character ID
+        beq     v0, at, special_jump
+        nop
+        j       _return                     // return
+        nop
+        
+        special_jump:
+        j       0x8013FE20
+        nop
+        
     
     // Set default costumes
     Character.set_default_costumes(Character.id.LUCAS, 0, 1, 2, 4, 1, 2, 0)
