@@ -5,6 +5,9 @@
 include "OS.asm"
 
 scope Command {
+    constant HITBOX_STRUCT_BASE(0x294)
+    constant HITBOX_STRUCT_SIZE(0xC4)
+
     // @ Description
     // function which executes a custom moveset command (0xD0-0xFF) 
     // commands 0xD0-0xFF are usually unsupported, which means they can be used as custom commands
@@ -136,6 +139,49 @@ scope Command {
         // holds the screen id from the previous change_action_
         previous_screen:
         dw 0
+    }
+
+    // @ Description
+    // expands the existing end hitbox function to include resetting the directional override and FGM override
+    scope end_hitbox_: {
+        // v0 = player struct
+        addiu   sp, sp,-0x0010          // allocate stack space
+        sw      t0, 0x0004(sp)          // store t0
+        sw      t1, 0x0008(sp)          // store t1
+
+        li      t0, hitbox_direction_.apply_direction_.hitbox_dir_table
+        lbu     t1, 0x000D(v0)          // t1 = player port
+        sll     t1, t1, 0x2             // ~
+        addu    t0, t0, t1              // a0 = hitbox_dir_table + (port * 4))
+        lw      t0, 0x0000(t0)          // t0 = px_hitbox_dir
+        sw      r0, 0x0000(t0)          // ~
+        sw      r0, 0x0004(t0)          // ~
+        sw      r0, 0x0008(t0)          // ~
+        sw      r0, 0x000C(t0)          // disable directional override for all hitboxes
+
+        li      t0, set_hitbox_fgm_.apply_fgm_.hitbox_fgm_table
+        addu    t0, t0, t1              // a0 = hitbox_fgm_table + (port * 4))
+        lw      t0, 0x0000(t0)          // t0 = px_hitbox_fgm
+        addiu   t1, r0, -0x0001         // t1 = -1 (0xFFFFFFFF)
+        sw      t1, 0x0000(t0)          // disable fgm override for hitboxes 1 and 2
+        sw      t1, 0x0004(t0)          // disable fgm override for hitboxes 3 and 4
+
+        lw      t0, 0x0004(sp)          // ~
+        lw      t1, 0x0008(sp)          // load t0, t1
+        sw      r0, 0x04E0(v0)          // original line 1 (disable hitbox 4)
+        sw      r0, 0x0294(v0)          // original line 2 (disable hitbox 1)
+        addiu   sp, sp, 0x0010          // deallocate stack space
+        j       _end_hitbox_return      // return
+        nop
+
+        pushvar origin, base
+        // end_hitbox_ hook
+        origin  0x63D2C
+        base    0x800E852C
+        j       end_hitbox_
+        nop
+        _end_hitbox_return:
+        pullvar base, origin
     }
     
     // @ Description
@@ -301,8 +347,6 @@ scope Command {
             // s5 = hit player struct
             // 0x0044(s1) = attacker direction
             // 0x07FC(s5) = hit direction
-            constant HITBOX_STRUCT_BASE(0x294)
-            constant HITBOX_STRUCT_SIZE(0xC4)
             li      at, hitbox_dir_table    // at = hitbox_dir_table
             lbu     a0, 0x000D(s1)          // a0 = player port
             sll     a0, a0, 0x2             // ~
@@ -362,40 +406,6 @@ scope Command {
             j       apply_direction_
             nop
             _apply_direction_return:
-            pullvar base, origin
-        }
-        
-        // @ Description
-        // expands the existing end hitbox function to include resetting the directional override
-        scope end_hitbox_: {
-            // v0 = player struct
-            addiu   sp, sp,-0x0010          // allocate stack space
-            sw      t0, 0x0004(sp)          // store t0
-            sw      t1, 0x0008(sp)          // store t1
-            li      t0, apply_direction_.hitbox_dir_table
-            lbu     t1, 0x000D(v0)          // t1 = player port
-            sll     t1, t1, 0x2             // ~
-            addu    t0, t0, t1              // a0 = hitbox_dir_table + (port * 4))
-            lw      t0, 0x0000(t0)          // t0 = px_hitbox_dir
-            sw      r0, 0x0000(t0)          // ~
-            sw      r0, 0x0004(t0)          // ~
-            sw      r0, 0x0008(t0)          // ~
-            sw      r0, 0x000C(t0)          // disable directional override for all hitboxes
-            lw      t0, 0x0004(sp)          // ~
-            lw      t1, 0x0008(sp)          // load t0, t1
-            sw      r0, 0x04E0(v0)          // original line 1 (disable hitbox 4)
-            sw      r0, 0x0294(v0)          // original line 2 (disable hitbox 1)
-            addiu   sp, sp, 0x0010          // deallocate stack space
-            j       _end_hitbox_return      // return
-            nop
-            
-            pushvar origin, base 
-            // end_hitbox_ hook
-            origin  0x63D2C
-            base    0x800E852C
-            j       end_hitbox_
-            nop
-            _end_hitbox_return:
             pullvar base, origin
         }
     }
@@ -614,7 +624,115 @@ scope Command {
 		dw	DLIST_DRMPILLHAND				// 0x02 - Doctor Mario's Pill Hand
         
     }
-    
+
+    // @ Description
+    // Enables using the given FGM instead of the one specified by the hitbox command when the hitbox makes contact
+    // CCXYZZZZ
+    // CC   = command byte
+    // X    = (boolean) if not 0, then hitbox id is ignored and the fgm_id is used for all hitboxes
+    // Y    = hitbox id (0-3 = hitbox 1-4)
+    // ZZZZ = fgm_id
+    scope set_hitbox_fgm_: {
+        constant COMMAND_LENGTH(0x4)
+        li      t0, apply_fgm_.hitbox_fgm_table
+        lbu     t1, 0x000D(s2)              // t1 = player port
+        sll     t1, t1, 0x2                 // ~
+        addu    t0, t0, t1                  // a0 = hitbox_fgm_table + (port * 4))
+        lw      t0, 0x0000(t0)              // t0 = px_hitbox_fgm
+        lh      t1, 0x0002(v0)              // t1 = fgm_id
+        lbu     t2, 0x0001(v0)              // t2 = hitbox flags
+        srl     t3, t2, 0x4                 // t3 = X
+        bnez    t3, _set_for_all            // if flagged to apply to all hitboxes, then do so
+        nop                                 // otherwise figure out which hitbox to set it for (t2 = Y (hitbox id))
+        sll     t2, t2, 0x1                 // ~
+        addu    t0, t0, t2                  // t2 = hitbox_fgm
+        sh      t1, 0x0000(t0)              // store fgm_id
+        b       _end
+        nop
+
+        _set_for_all:
+        sh      t1, 0x0000(t0)              // store fgm_id for hitbox 1
+        sh      t1, 0x0002(t0)              // store fgm_id for hitbox 2
+        sh      t1, 0x0004(t0)              // store fgm_id for hitbox 3
+        sh      t1, 0x0006(t0)              // store fgm_id for hitbox 4
+
+        _end:
+        ori     t8, r0, COMMAND_LENGTH      // set command length
+        jr      ra                          // return
+        nop
+
+        // @ Description
+        // Overrides the FGM for a hitbox if the corresponding hitbox FGM parameter is set
+        scope apply_fgm_: {
+            OS.patch_start(0x5E4A8, 0x800E2CA8)
+            j       apply_fgm_
+            nop
+            _apply_fgm_return:
+            OS.patch_end()
+            // s0 = hit player struct
+            // s1 = attacking player struct
+            // t7 = hitbox struct
+            li      t0, hitbox_fgm_table    // t0 = hitbox_fgm_table
+            lbu     t1, 0x000D(s1)          // t1 = player port
+            sll     t1, t1, 0x2             // ~
+            addu    t0, t0, t1              // t0 = hitbox_fgm_table + (port * 4)
+            lw      t0, 0x0000(t0)          // t0 = px_hitbox_fgm
+
+            _get_hitbox_id:
+            subu    t1, t7, s1              // t1 = hitbox struct offset
+            subiu   t1, t1, HITBOX_STRUCT_BASE// t1 = hitbox struct offset - HITBOX_STRUCT_BASE
+            ori     t8, r0, HITBOX_STRUCT_SIZE// t8 = HITBOX_STRUCT_SIZE
+            divu    t1, t8                  // ~
+            mflo    t1                      // t1 = hitbox id
+            // hitbox id = ((hitbox struct address - player struct address) - HITBOX_STRUCT_BASE) / HITBOX_STRUCT_SIZE
+
+            _get_fgm_id:
+            sll     t1, t1, 0x1             // ~
+            addu    t0, t0, t1              // t0 = px_hitbox_dir + (hitbox id * 2)
+            lh      t1, 0x0000(t0)          // t1 = hitbox fgm_id
+            addiu   t0, r0, -0x0001         // t0 = -1
+            beq     t1, t0, _original       // skip if hitbox fgm_id = -1 (don't override)
+            nop                             // otherwise, use fgm_id:
+            jal     0x800C8654              // original line 1
+            addu    a0, r0, t1              // a0 = new fgm_id
+            j       _apply_fgm_return       // return
+            nop
+
+            _original:
+            jal     0x800C8654              // original line 1
+            lhu     a0, 0x8D00(a0)          // original line 2
+            j       _apply_fgm_return       // return
+            nop
+
+            hitbox_fgm_table:
+            dw p1_hitbox_fgm
+            dw p2_hitbox_fgm
+            dw p3_hitbox_fgm
+            dw p4_hitbox_fgm
+
+            p1_hitbox_fgm:
+            dh 0xFFFF                       // hitbox 1
+            dh 0xFFFF                       // hitbox 2
+            dh 0xFFFF                       // hitbox 3
+            dh 0xFFFF                       // hitbox 4
+            p2_hitbox_fgm:
+            dh 0xFFFF                       // hitbox 1
+            dh 0xFFFF                       // hitbox 2
+            dh 0xFFFF                       // hitbox 3
+            dh 0xFFFF                       // hitbox 4
+            p3_hitbox_fgm:
+            dh 0xFFFF                       // hitbox 1
+            dh 0xFFFF                       // hitbox 2
+            dh 0xFFFF                       // hitbox 3
+            dh 0xFFFF                       // hitbox 4
+            p4_hitbox_fgm:
+            dh 0xFFFF                       // hitbox 1
+            dh 0xFFFF                       // hitbox 2
+            dh 0xFFFF                       // hitbox 3
+            dh 0xFFFF                       // hitbox 4
+        }
+    }
+
     command_table:
     dw      fsm_                            // 0xD0 SET FRAME SPEED MULTIPLIER
     dw      armour_                         // 0xD1 SET ARMOUR
@@ -624,7 +742,7 @@ scope Command {
     dw      model_part.set_                 // 0xD5 MODEL PART SET
     dw      model_part.load_                // 0xD6 MODEL PART LOAD
     dw      set_kinetic_                    // 0xD7 SET KINETIC STATE
-    dw      OS.NULL                         // 0xD8
+    dw      set_hitbox_fgm_                 // 0xD8 SET HITBOX FGM
     dw      OS.NULL                         // 0xD9
     dw      OS.NULL                         // 0xDA
     dw      OS.NULL                         // 0xDB
