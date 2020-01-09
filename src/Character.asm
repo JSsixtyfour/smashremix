@@ -1963,7 +1963,7 @@ scope Character {
     // 0x21 - WARIO
     define_character(WARIO, MARIO, File.WARIO_MAIN, 0x0CA, 0, File.WARIO_CHARACTER, 0x12A, 0x0CC, 0x164, 0x129, 0, 0x428, 0x0, OS.FALSE, Stages.id.BTT_MARIO, Stages.id.BTP_MARIO, sound_type.U)
     // 0x22 - DSAMUS
-    define_character(DSAMUS, SAMUS, File.DSAMUS_MAIN, 0x0D8, 0, File.DSAMUS_CHARACTER, 0x142, 0x15D, File.DSAMUS_SECONDARY, 0, 0, 0x6B4, 0x0, OS.TRUE, Stages.id.BTT_SAMUS, Stages.id.BTP_SAMUS, sound_type.J)
+    define_character(DSAMUS, SAMUS, File.DSAMUS_MAIN, 0x0D8, 0, File.DSAMUS_CHARACTER, 0x142, 0x15D, File.DSAMUS_SECONDARY, 0, 0, 0x6B4, 0x0, OS.TRUE, Stages.id.BTT_SAMUS, Stages.id.BTP_SAMUS, sound_type.U)
     
     print "========================================================================== \n"
 }
