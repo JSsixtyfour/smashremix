@@ -29,7 +29,7 @@ scope Character {
 
     // @ Description
     // adds a new character
-    macro define_character(name, parent, file_1, file_2, file_3, file_4, file_5, file_6, file_7, file_8, file_9, attrib_offset, add_actions, bool_jab_3, btt_stage_id, btp_stage_id) {
+    macro define_character(name, parent, file_1, file_2, file_3, file_4, file_5, file_6, file_7, file_8, file_9, attrib_offset, add_actions, bool_jab_3, btt_stage_id, btp_stage_id, sound_type) {
     if id.{parent} > 0xB {
         print "CHARACTER: {name} NOT CREATED. UNSUPPORTED PARENT. \n"
     } else {
@@ -272,6 +272,11 @@ scope Character {
         db      {btt_stage_id}
         origin BTP_TABLE_ORIGIN + id.{name} - 29
         db      {btp_stage_id}
+
+        // update sound type table
+        table_patch_start(sound_type, id.{name}, 0x1)
+        db      {sound_type}
+        OS.patch_end()
 
         pullvar base, origin
     }
@@ -1746,6 +1751,98 @@ scope Character {
     }
 
     // @ Description
+    // constants and table for sound type
+    // sound_type is used to determine which hitbox sound bank to use
+    scope sound_type {
+        constant U(0x0)
+        constant J(0x1)
+        OS.align(16)
+        table:
+        constant TABLE_ORIGIN(origin())
+        db  U                               // 0x00 - MARIO
+        db  U                               // 0x01 - FOX
+        db  U                               // 0x02 - DONKEY
+        db  U                               // 0x03 - SAMUS
+        db  U                               // 0x04 - LUIGI
+        db  U                               // 0x05 - LINK
+        db  U                               // 0x06 - YOSHI
+        db  U                               // 0x07 - CAPTAIN
+        db  U                               // 0x08 - KIRBY
+        db  U                               // 0x09 - PIKACHU
+        db  U                               // 0x0A - JIGGLY
+        db  U                               // 0x0B - NESS
+        db  U                               // 0x0C - BOSS
+        db  U                               // 0x0D - METAL
+        db  U                               // 0x0E - NMARIO
+        db  U                               // 0x0F - NFOX
+        db  U                               // 0x10 - NDONKEY
+        db  U                               // 0x11 - NSAMUS
+        db  U                               // 0x12 - NLUIGI
+        db  U                               // 0x13 - NLINK
+        db  U                               // 0x14 - NYOSHI
+        db  U                               // 0x15 - NCAPTAIN
+        db  U                               // 0x16 - NKIRBY
+        db  U                               // 0x17 - NPIKACHU
+        db  U                               // 0x18 - NJIGGLY
+        db  U                               // 0x19 - NNESS
+        db  U                               // 0x1A - GDONKEY
+        // pad table for new characters
+        fill table + NUM_CHARACTERS - pc(), U
+    }
+
+    // @ Description
+    // Holds the fgm_ids for J hitboxes
+    scope sound_type_J: {
+        constant ORIGINAL_TABLE(0xA4500)
+        OS.align(16)
+        table:
+        constant TABLE_ORIGIN(origin())
+        // copy ORIGINAL_TABLE
+        OS.copy_segment(ORIGINAL_TABLE, 48)
+        OS.align(4)
+        // update fgm_ids for J sounds
+        pushvar base, origin
+        origin  TABLE_ORIGIN
+        dh      0x0093                     // Punch S
+        dh      0x0092                     // Punch M
+        dh      0x0091                     // Punch L
+        dh      0x0090                     // Kick S
+        dh      0x008F                     // Kick M
+        dh      0x008E                     // Kick L
+        pullvar origin, base
+
+        scope apply_sound_type_: {
+            OS.patch_start(0x5E4A0, 0x800E2CA0)
+            j       apply_sound_type_
+            nop
+            _apply_sound_type_return:
+            OS.patch_end()
+
+            // s1 = attacking player struct
+            lbu     t3, 0x000B(s1)              // t3 = character_id
+            li      a0, sound_type.table        // a0 = address of sound_type table
+            addu    t3, a0, t3                  // t3 = address of sound_type
+            lbu     t3, 0x0000(t3)              // t3 = sound_type
+            addiu   a0, r0, sound_type.U        // a0 = sound_type.U
+            beq     t3, a0, _original           // if sound_type is U, then use original sounds
+            nop                                 // else use J table
+            li      a0, sound_type_J.table      // a0 = address of sound_type_J table
+            addiu   a0, a0, -0x8D00             // a0 = adjusted address of sound_type_J table (later on is lhu a0, 0x8D00(a0))
+            b       _end                        // skip to end
+            nop
+
+            _original:
+            lui     a0, 0x8013                  // original a0
+
+            _end:
+            addu    t3, t0, t2                  // original line 1
+            addu    a0, a0, t3                  // original line 2
+            j       _apply_sound_type_return    // return
+            nop
+        }
+    }
+
+    // @ Description
     // Adds a 32-bit signed int to the player's percentage
     // the game will crash if the player's % goes below 0
     // @ Arguments
@@ -1853,19 +1950,20 @@ scope Character {
     // bool_jab_3 - OS.TRUE = inherit jab 3 properties, OS.FALSE = disable jab 3
     // btt_stage_id - stage_id for btt
     // btp_stage_id - stage_id for btp
+    // sound_type - type of sounds to use (see sound_type table)
 
     // 0x1D - FALCO
-    define_character(FALCO, FOX, File.FALCO_MAIN, 0x0D0, 0, File.FALCO_CHARACTER, 0x13A, 0x0D2, 0x15A, 0x0A1, 0x013C, 0x474, 0x0, OS.TRUE, Stages.id.BTT_FOX, Stages.id.BTP_FOX)
+    define_character(FALCO, FOX, File.FALCO_MAIN, 0x0D0, 0, File.FALCO_CHARACTER, 0x13A, 0x0D2, 0x15A, 0x0A1, 0x013C, 0x474, 0x0, OS.TRUE, Stages.id.BTT_FOX, Stages.id.BTP_FOX, sound_type.U)
     // 0x1E - GND
-    define_character(GND, CAPTAIN, File.GND_MAIN, 0x0EB, 0, File.GND_CHARACTER, 0x14E, 0, File.GND_ENTRY_KICK, File.GND_PUNCH_GRAPHIC, 0, 0x488, 0x0, OS.TRUE, Stages.id.BTT_FALCON, Stages.id.BTP_FALCON)
+    define_character(GND, CAPTAIN, File.GND_MAIN, 0x0EB, 0, File.GND_CHARACTER, 0x14E, 0, File.GND_ENTRY_KICK, File.GND_PUNCH_GRAPHIC, 0, 0x488, 0x0, OS.TRUE, Stages.id.BTT_FALCON, Stages.id.BTP_FALCON, sound_type.U)
     // 0x1F - YLINK
-    define_character(YLINK, LINK, File.YLINK_MAIN, 0x0E0, 0, File.YLINK_CHARACTER, 0x147, File.YLINK_BOOMERANG_HITBOX, 0x161, 0x145, 0, 0x760, 0, OS.TRUE, Stages.id.BTT_LINK, Stages.id.BTP_LINK)
+    define_character(YLINK, LINK, File.YLINK_MAIN, 0x0E0, 0, File.YLINK_CHARACTER, 0x147, File.YLINK_BOOMERANG_HITBOX, 0x161, 0x145, 0, 0x760, 0, OS.TRUE, Stages.id.BTT_LINK, Stages.id.BTP_LINK, sound_type.U)
     // 0x20 - DRM
-    define_character(DRM, MARIO, File.DRM_MAIN, 0x0CA, 0, File.DRM_CHARACTER, 0x12A, File.DRM_PROJECTILE_DATA, 0x164, File.DRM_PROJECTILE_GRAPHIC, 0, 0x454, 0x0, OS.TRUE, Stages.id.BTT_MARIO, Stages.id.BTP_MARIO)
+    define_character(DRM, MARIO, File.DRM_MAIN, 0x0CA, 0, File.DRM_CHARACTER, 0x12A, File.DRM_PROJECTILE_DATA, 0x164, File.DRM_PROJECTILE_GRAPHIC, 0, 0x454, 0x0, OS.TRUE, Stages.id.BTT_MARIO, Stages.id.BTP_MARIO, sound_type.U)
     // 0x21 - WARIO
-    define_character(WARIO, MARIO, File.WARIO_MAIN, 0x0CA, 0, File.WARIO_CHARACTER, 0x12A, 0x0CC, 0x164, 0x129, 0, 0x428, 0x0, OS.FALSE, Stages.id.BTT_MARIO, Stages.id.BTP_MARIO)
+    define_character(WARIO, MARIO, File.WARIO_MAIN, 0x0CA, 0, File.WARIO_CHARACTER, 0x12A, 0x0CC, 0x164, 0x129, 0, 0x428, 0x0, OS.FALSE, Stages.id.BTT_MARIO, Stages.id.BTP_MARIO, sound_type.U)
     // 0x22 - DSAMUS
-    define_character(DSAMUS, SAMUS, File.DSAMUS_MAIN, 0x0D8, 0, File.DSAMUS_CHARACTER, 0x142, 0x15D, File.DSAMUS_SECONDARY, 0, 0, 0x6B4, 0x0, OS.TRUE, Stages.id.BTT_SAMUS, Stages.id.BTP_SAMUS)
+    define_character(DSAMUS, SAMUS, File.DSAMUS_MAIN, 0x0D8, 0, File.DSAMUS_CHARACTER, 0x142, 0x15D, File.DSAMUS_SECONDARY, 0, 0, 0x6B4, 0x0, OS.TRUE, Stages.id.BTT_SAMUS, Stages.id.BTP_SAMUS, sound_type.J)
     
     print "========================================================================== \n"
 }
