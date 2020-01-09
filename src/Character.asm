@@ -1957,7 +1957,7 @@ scope Character {
     // 0x1E - GND
     define_character(GND, CAPTAIN, File.GND_MAIN, 0x0EB, 0, File.GND_CHARACTER, 0x14E, 0, File.GND_ENTRY_KICK, File.GND_PUNCH_GRAPHIC, 0, 0x488, 0x0, OS.TRUE, Stages.id.BTT_FALCON, Stages.id.BTP_FALCON, sound_type.U)
     // 0x1F - YLINK
-    define_character(YLINK, LINK, File.YLINK_MAIN, 0x0E0, 0, File.YLINK_CHARACTER, 0x147, File.YLINK_BOOMERANG_HITBOX, 0x161, 0x145, 0, 0x760, 0, OS.TRUE, Stages.id.BTT_LINK, Stages.id.BTP_LINK, sound_type.U)
+    define_character(YLINK, LINK, File.YLINK_MAIN, 0x0E0, 0, File.YLINK_CHARACTER, 0x147, File.YLINK_BOOMERANG_HITBOX, 0x161, 0x145, 0, 0x6C0, 0, OS.TRUE, Stages.id.BTT_LINK, Stages.id.BTP_LINK, sound_type.U)
     // 0x20 - DRM
     define_character(DRM, MARIO, File.DRM_MAIN, 0x0CA, 0, File.DRM_CHARACTER, 0x12A, File.DRM_PROJECTILE_DATA, 0x164, File.DRM_PROJECTILE_GRAPHIC, 0, 0x454, 0x0, OS.TRUE, Stages.id.BTT_MARIO, Stages.id.BTP_MARIO, sound_type.U)
     // 0x21 - WARIO

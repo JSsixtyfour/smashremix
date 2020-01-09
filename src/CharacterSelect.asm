@@ -175,7 +175,7 @@ scope CharacterSelect {
     dw  0                                   // 0x1C - PLACEHOLDER
     dw  0x8810                              // 0x1D - FALCO
     dw  0x19270                             // 0x1E - GND
-    dw  0x140D0                             // 0x1F - YLINK
+    dw  0x174B0                             // 0x1F - YLINK
     dw  0x7B50                              // 0x20 - DRM
     dw  0x8A70                              // 0x21 - WARIO
     dw  0x121D0                             // 0x22 - DARK SAMUS
