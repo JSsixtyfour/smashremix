@@ -55,7 +55,7 @@ scope Stages {
 
     // DONE
     // 8010DA90 - check for id.PLANET_ZEBES (later followed by check for id.MUSHROOM_KINGDOM)
-    // soltuion: do nothing, there's a default later
+    // solution: do nothing, there's a default later
 
     // DONE
     // 801056D0 - this is actually of importance (lol), this is what function runs for each stage < 9
@@ -91,7 +91,7 @@ scope Stages {
         nop
     }
 
-    // something something function funciton
+    // something something function function
     function_table:
     dw function.PEACHS_CASTLE
     dw function.SECTOR_Z
@@ -222,7 +222,7 @@ scope Stages {
     }
 
     // DONE    
-    // 8013C2BC - same as above except does not alter gameset/failure. unsure of what this does
+    // 8013C2BC - same as above except does not alter gameset/failure. Unsure of what this does
     // solution: same as above, probably won't hurt
     scope id_fix_6_: {
         OS.patch_start(0x000B6F90, 0x8013C2C0)
@@ -402,7 +402,7 @@ scope Stages {
 
         constant MAX_STAGE_ID(0x4C)
 
-        // not an actual id, some arbitary number Sakurai picked(?)
+        // not an actual id, some arbitrary number Sakurai picked(?)
         constant RANDOM(0xDE)
     }
 
@@ -644,7 +644,7 @@ scope Stages {
     dw icon_yoshis_island                   // Yoshi's Island
     dw icon_dream_land                      // Dream Land
     dw icon_saffron_city                    // Saffron City
-    dw icon_mushroom_kingdom                // Musrhoom Kingdom
+    dw icon_mushroom_kingdom                // Mushroom Kingdom
     dw icon_dream_land_beta_1               // Dream Land Beta 1
     dw icon_dream_land_beta_2               // Dream Land Beta 2
     dw icon_how_to_play                     // How to Play
@@ -911,7 +911,7 @@ scope Stages {
         addiu   sp, sp,-0x00010             // allocate stack space
         sw      ra, 0x0004(sp)              // ~
         sw      v0, 0x0008(sp)              // ~
-        sw      t0, 0x000C(sp)              // save registesr
+        sw      t0, 0x000C(sp)              // save registers
 
         jal     get_stage_id_               // v0 = stage_id
         nop
@@ -956,7 +956,7 @@ scope Stages {
 
         lw      ra, 0x0004(sp)                  // ~
         lw      t0, 0x0008(sp)                  // ~
-        lw      v0, 0x000C(sp)                  // resore registers
+        lw      v0, 0x000C(sp)                  // restore registers
         addiu   sp, sp, 0x0010                  // deallocate stack space
         j       _get_header_return              // return
         nop
@@ -986,7 +986,7 @@ scope Stages {
 
         lw      ra, 0x0004(sp)                  // ~
         lw      t0, 0x0008(sp)                  // ~
-        lw      v0, 0x000C(sp)                  // resore registers
+        lw      v0, 0x000C(sp)                  // restore registers
         addiu   sp, sp, 0x0010                  // deallocate stack space
         lui     at, 0x8013                      // original line 1
 //      lw      t8, 0x0004(v1)                  // original line 2
@@ -1030,7 +1030,7 @@ scope Stages {
         addu    t4, t3, t2                  // t4 = address of stage_table[index]
         lbu     t4, 0x0000(t4)              // t4 = stage_id
 
-        // this interupts flow to check for random
+        // this interrupts flow to check for random
         lli     at, id.RANDOM               // at = id.RANDOM
         bne     t4, at, _not_random         // if (stage_id != id.RANDOM), skip
         nop
@@ -1101,7 +1101,7 @@ scope Stages {
 
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
-        sw      ra, 0x0008(sp)              // save registesr
+        sw      ra, 0x0008(sp)              // save registers
 
         // this block gets the position
         jal     get_index_                  // v0 = index
@@ -1132,7 +1132,7 @@ scope Stages {
 
         lw      t0, 0x0004(sp)              // ~
         lw      ra, 0x0008(sp)              // restore registers
-        addiu   sp, sp, 0x0010              // deallocate stack sapce
+        addiu   sp, sp, 0x0010              // deallocate stack space
         jr      ra                          // return
         nop
     }
@@ -1204,10 +1204,17 @@ scope Stages {
         addiu   a0, a0, 0x0001              // make it normie readable
         jal     String.itoa_                // v0 = (string) page_number
         nop
-        lli     a0, 000068                  // a0 - x
+        lli     a0, 000065                  // a0 - x
         lli     a1, 000117                  // a1 - uly
         move    a2, v0                      // a2 - address of string
         jal     Overlay.draw_string_        // draw string
+        nop
+
+        // draw "L" button
+        lli     a0, 000075                  // a0 - ulx
+        lli     a1, 000114                  // a1 - uly
+        li      a2, Data.l_button_info      // a2 - address of texture struct
+        jal     Overlay.draw_texture_       // draw options text texture
         nop
 
         // draw "R" button
@@ -1218,16 +1225,9 @@ scope Stages {
         nop
 
         // draw "Z" button
-        lli     a0, 000082                  // a0 - ulx
-        lli     a1, 000113                  // a1 - uly
-        li      a2, Data.z_button_info      // a2 - address of texture struct
-        jal     Overlay.draw_texture_       // draw options text texture
-        nop
-
-        // draw "L" button
-        lli     a0, 000156                  // a0 - ulx
+        lli     a0, 000163                  // a0 - ulx
         lli     a1, 000114                  // a1 - uly
-        li      a2, Data.l_button_info      // a2 - address of texture struct
+        li      a2, Data.z_button_info      // a2 - address of texture struct
         jal     Overlay.draw_texture_       // draw options text texture
         nop
 
@@ -1242,7 +1242,7 @@ scope Stages {
         nop
 
         string_page:
-        String.insert("Page:   /  :+/-   :Hazards On/Off")
+        String.insert("Page:   /  :-/+   :              ")
     }
 
     // @ Description
@@ -1266,7 +1266,7 @@ scope Stages {
 
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // ~
-        lw      t2, 0x000C(sp)              // restre registers
+        lw      t2, 0x000C(sp)              // restore registers
         addiu   sp, sp, 0x0010              // deallocate stack space
         jr      ra
         nop
@@ -1317,12 +1317,12 @@ scope Stages {
         sw      t1, 0x001C(sp)              // ~
         sw      at, 0x0020(sp)              // save registers
 
-        // check for L button press to toggle frozen mode
-        li      a0, Joypad.L                // a0 - button mask
+        // check for Z button press to toggle frozen mode
+        li      a0, Joypad.Z                // a0 - button mask
         li      a2, Joypad.PRESSED          // a2 - type
-        jal     Joypad.check_buttons_all_   // v0 = L pressed
+        jal     Joypad.check_buttons_all_   // v0 = Z pressed
         nop
-        beqz    v0, _check_inputs           // if not pressed, skip
+        beqz    v0, _check_inputs           // if z not pressed, skip
         nop
         li      t0, frozen_mode             // t0 = address of frozen mode
         lw      t1, 0x0000(t0)              // t1 = frozen_mode
@@ -1362,8 +1362,8 @@ scope Stages {
         nop
 
         // this block draws the hazards on/off modal message
-        lli     a0, 231                     // a0 - x
-        lli     a1, 163                     // a1 - uly
+        lli     a0, 180                     // a0 - x
+        lli     a1, 117                     // a1 - uly
         li      t0, frozen_mode             // t0 = address of frozen mode
         lw      t1, 0x0000(t0)              // t1 = frozen_mode
         li      a2, string_hazards_on
@@ -1371,7 +1371,7 @@ scope Stages {
         nop
         li      a2, string_hazards_off      // a2 - address of string
         _draw_modal:
-        jal     Overlay.draw_centered_str_  // draw string
+        jal     Overlay.draw_string_  // draw string
         nop
 
         lw      ra, 0x0004(sp)              // ~
@@ -1428,13 +1428,13 @@ scope Stages {
         b       _end_update                 //  don't check multiple page switches per frame
         nop
 
-        // check for Z press (decrement page)
+        // check for L press (decrement page)
         _page_down:
-        li      a0, Joypad.Z                // a0 - button mask
+        li      a0, Joypad.L                // a0 - button mask
         li      a2, Joypad.PRESSED          // a2 - type
-        jal     Joypad.check_buttons_all_   // v0 = z pressed?
+        jal     Joypad.check_buttons_all_   // v0 = L pressed?
         nop
-        beqz    v0, _end                   // if z not pressed, skip
+        beqz    v0, _end                   // if l not pressed, skip
         nop
         li      t0, page_number             // ~
         lw      t1, 0x0000(t0)              // t1 = page number
@@ -1590,7 +1590,7 @@ scope Stages {
         lw      ra, 0x0010(sp)              // ~
         lw      a0, 0x0014(sp)              // ~
         lw      v0, 0x0018(sp)              // restore registers
-        addiu   sp, sp, 0x0020              // deallocate stack sapce
+        addiu   sp, sp, 0x0020              // deallocate stack space
         jr      ra                          // return
         nop
     }
@@ -1645,7 +1645,7 @@ scope Stages {
         lw      at, 0x000C(sp)              // ~
         lw      ra, 0x0010(sp)              // ~
         lw      a0, 0x0014(sp)              // restore registers
-        addiu   sp, sp, 0x0018              // deallocate stack sapce
+        addiu   sp, sp, 0x0018              // deallocate stack space
         jr      ra
         nop
     }
@@ -1700,7 +1700,7 @@ scope Stages {
         lw      at, 0x000C(sp)              // ~
         lw      ra, 0x0010(sp)              // ~
         lw      a0, 0x0014(sp)              // restore registers
-        addiu   sp, sp, 0x0018              // deallocate stack sapce
+        addiu   sp, sp, 0x0018              // deallocate stack space
         jr      ra
         nop
     }
@@ -1761,7 +1761,7 @@ scope Stages {
         lw      at, 0x000C(sp)              // ~
         lw      ra, 0x0010(sp)              // ~
         lw      a0, 0x0014(sp)              // restore registers
-        addiu   sp, sp, 0x0018              // deallocate stack sapce
+        addiu   sp, sp, 0x0018              // deallocate stack space
         jr      ra                          // return 
         nop
 
@@ -1776,7 +1776,7 @@ scope Stages {
     // v0 - bool was_added?
     // v1 - num_stages
     scope add_stage_to_random_list_: {
-        addiu   sp, sp,-0x0010              // allocate stack sapce
+        addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // save registers
 
@@ -1804,7 +1804,7 @@ scope Stages {
         _end:
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // restore registers
-        addiu   sp, sp, 0x0010              // deallocate stack sapce
+        addiu   sp, sp, 0x0010              // deallocate stack space
         jr      ra                          // return
         nop
     }
