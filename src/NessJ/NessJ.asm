@@ -1,8 +1,8 @@
-// JNess.asm
+// NessJ.asm
 
-// This file contains file inclusions, action edits, and assembly for JNess.
+// This file contains file inclusions, action edits, and assembly for J Ness
 
-scope JNess {
+scope NessJ {
     // Insert Moveset files
     insert UTILT, "moveset/UTILT.bin"
     

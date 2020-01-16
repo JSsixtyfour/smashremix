@@ -1,10 +1,10 @@
 JNess moveset and addresses
 
-fthrow		????	same
+????	fthrow		same
 
 
 6c60	neutral 1	same
-6ca8	neutral 2	new
+6ca8	neutral 2	same
 6cf0	neutral 3	same
 6d44	dash		same
 6d9c	ftilt up	same
