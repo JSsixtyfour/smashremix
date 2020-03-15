@@ -11,150 +11,86 @@ scope Lucas {
     insert DAIR, "moveset/DAIR.bin"
     insert UTILT, "moveset/UTILT.bin"
     insert DSMASH, "moveset/DSMASH.bin"
+    insert FSMASH, "moveset/FSMASH.bin"
     insert USMASH, "moveset/USMASH.bin"
     insert GRAB_RELEASE_DATA,"moveset/GRAB_RELEASE_DATA.bin"
     GRAB:; Moveset.THROW_DATA(GRAB_RELEASE_DATA); insert "moveset/GRAB.bin"
+    insert PKFIREGROUND, "moveset/PKFIREGROUND.bin"
+    insert PKFIREAIR, "moveset/PKFIREAIR.bin"
     
     
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
-    Character.edit_action_parameters(LUCAS, Action.AttackAirN,      -1,                         NAIR,                       -1)
-    Character.edit_action_parameters(LUCAS, Action.AttackAirF,      -1,                         FAIR,                       -1)
-    Character.edit_action_parameters(LUCAS, Action.AttackAirB,      -1,                         BAIR,                       -1)
+    Character.edit_action_parameters(LUCAS, Action.Jab1,            File.LUCAS_JAB1,            -1,                         0x00000000)
+    Character.edit_action_parameters(LUCAS, Action.Jab2,            File.LUCAS_JAB2,            -1,                         0x00000000)
+    Character.edit_action_parameters(LUCAS, 0xDC,                   File.LUCAS_JAB3,            -1,                         0x00000000)
+    Character.edit_action_parameters(LUCAS, Action.AttackAirN,      File.LUCAS_NAIR,            -1,                         -1)
+    Character.edit_action_parameters(LUCAS, Action.AttackAirF,      File.LUCAS_FAIR,            FAIR,                       -1)
+    Character.edit_action_parameters(LUCAS, Action.AttackAirB,      File.LUCAS_BAIR,            BAIR,                       -1)
     Character.edit_action_parameters(LUCAS, Action.AttackAirU,      -1,                         UAIR,                       -1)
-    Character.edit_action_parameters(LUCAS, Action.AttackAirD,      -1,                         DAIR,                       -1)
-    Character.edit_action_parameters(LUCAS, Action.UTilt,           -1,                         UTILT,                      -1)
-    Character.edit_action_parameters(LUCAS, Action.USmash,          -1,                         USMASH,                     -1)
-    Character.edit_action_parameters(LUCAS, Action.DSmash,          -1,                         DSMASH,                     -1)
-    Character.edit_action_parameters(LUCAS, Action.Catch,           -1,                         GRAB,                       -1)
+    Character.edit_action_parameters(LUCAS, Action.AttackAirD,      File.LUCAS_DAIR,            DAIR,                       -1)
+    Character.edit_action_parameters(LUCAS, Action.FTilt,           File.LUCAS_FTILT_MID,       -1,                         0x00000000)
+    Character.edit_action_parameters(LUCAS, Action.FTiltHigh,       File.LUCAS_FTILT_HIGH,       -1,                        0x00000000)
+    Character.edit_action_parameters(LUCAS, Action.FTiltLow,        File.LUCAS_FTILT_LOW,       -1,                         0x00000000)
+    Character.edit_action_parameters(LUCAS, Action.UTilt,           File.LUCAS_UTILT,           UTILT,                      -1)
+    Character.edit_action_parameters(LUCAS, Action.USmash,          File.LUCAS_USMASH,          USMASH,                     0x80000000)
+    Character.edit_action_parameters(LUCAS, Action.DSmash,          File.LUCAS_DSMASH,          DSMASH,                     0x00000000)
+    // Character.edit_action_parameters(LUCAS, Action.Catch,           -1,                         GRAB,                       -1)
+    Character.edit_action_parameters(LUCAS, Action.FSmash,          -1,                         FSMASH,                     -1)
+    Character.edit_action_parameters(LUCAS, Action.DashAttack,      File.LUCAS_DASHATTACK,      -1,                         -1)
+    Character.edit_action_parameters(LUCAS, 0xE2,                   File.LUCAS_PKFIREGROUNDANI, PKFIREGROUND,               0x40000000)
+    Character.edit_action_parameters(LUCAS, 0xE3,                   File.LUCAS_PKFIREAIRANI,    PKFIREAIR,                  -1)
+    Character.edit_action_parameters(LUCAS, 0xED,                   File.LUCAS_MAGNETSTARTGR,   -1,                         -1)
+    Character.edit_action_parameters(LUCAS, 0xEE,                   File.LUCAS_MAGNETHOLDGR,    -1,                         -1)
+    Character.edit_action_parameters(LUCAS, 0xF0,                   File.LUCAS_MAGNETRELEASEGR, -1,                         -1)
+    Character.edit_action_parameters(LUCAS, 0xF1,                   File.LUCAS_MAGNETSTARTAIR,  -1,                         -1)
+    Character.edit_action_parameters(LUCAS, 0xF2,                   File.LUCAS_MAGNETHOLDAIR,   -1,                         -1)
+    Character.edit_action_parameters(LUCAS, 0xF4,                   File.LUCAS_MAGNETRELEASEAIR, -1,                        -1)
+    Character.edit_action_parameters(LUCAS, Action.FallSpecial,     File.LUCAS_SFALL,           -1,                         -1)
+    Character.edit_action_parameters(LUCAS, 0xE4,                   File.LUCAS_PKTHUNDERSTARTGR, -1,                        -1)
+    Character.edit_action_parameters(LUCAS, 0xE5,                   File.LUCAS_PKTHUNDERHOLDGR, -1,                         -1)
+    Character.edit_action_parameters(LUCAS, 0xE6,                   File.LUCAS_PKTHUNDERRELEASEGR, -1,                      -1)
+    Character.edit_action_parameters(LUCAS, 0xE8,                   File.LUCAS_PKTHUNDERSTARTAIR, -1,                       -1)
+    Character.edit_action_parameters(LUCAS, 0xE9,                   File.LUCAS_PKTHUNDERHOLDAIR, -1,                        -1)
+    Character.edit_action_parameters(LUCAS, 0xEA,                   File.LUCAS_PKTHUNDERRELEASEAIR, -1,                     -1)
+    Character.edit_action_parameters(LUCAS, 0xEC,                   File.LUCAS_PKTHUNDER2,      -1,                         -1)
+    Character.edit_action_parameters(LUCAS, 0xE7,                   File.LUCAS_PKTHUNDER2,      -1,                         -1)
+    
+    // Modify Actions            // Action          // Staling ID   // Main ASM                 // Interrupt/Other ASM          // Movement/Physics ASM         // Collision ASM
+    Character.edit_action(LUCAS, 0xE2,              -1,             -1,                         -1,                             0x800D8CCC,                       -1)
+    Character.edit_action(LUCAS, 0xE3,              -1,             -1,                         LucasNSP.air_move_,             -1,                               -1)
     
     // Modify Menu Action Parameters        // Action          // Animation                // Moveset Data             // Flags
     
-
-    // Set menu zoom size.
-    Character.table_patch_start(menu_zoom, Character.id.LUCAS, 0x4)
-    float32 1.05
-    OS.patch_end()
     
     // Set crowd chant FGM.
-
-    // Load Up Special from different struct
-    // found via setting breakpoint at 800FD778
-    // Location of original struct 8012E494
-    // @ Description
-    // loads a different animation struct when Lucas uses the first graphic animation in his up special.
-    scope get_pkthunder_anim_struct_: {
-        OS.patch_start(0x7E208, 0x80102A08)
-        j       get_pkthunder_anim_struct_
-        nop
-        _return:
-        OS.patch_end()
         
-        // v1 = player struct
-        addiu   sp, sp,-0x0010              // allocate stack space
-        sw      t0, 0x0004(sp)              // ~
-        sw      t1, 0x0008(sp)              // store t0, t1
-        lw      t0, 0x0008(v1)              // t0 = character id
-        ori     t1, r0, Character.id.LUCAS  // t1 = id.LUCAS
-        li      a0, pkthunder_anim_struct   // a0 = pkthunder_anim_struct
-        beq     t0, t1, _end                // end if character id = LUCAS
-        nop
-        li      a0, 0x8012E494              // original line 1/3 (load pk thunder animation struct)
-        
-        _end:
-        lw      t0, 0x0004(sp)              // ~
-        lw      t1, 0x0008(sp)              // load t0, t1
-        addiu   sp, sp, 0x0010              // deallocate stack space
-        j       _return                     // return
-        nop
-    }
     
-    // Load Up Special from different struct
-    // found via setting breakpoint at 800FD778
-    // Location of original struct 8012E444
-    // @ Description
-    // loads a different animation struct when Lucas uses the third graphic animation in his up special.
-    scope get_pkthunder_anim_struct3_: {
-        OS.patch_start(0x7E058, 0x80102858)
-        j       get_pkthunder_anim_struct3_
-        nop
-        _return:
-        OS.patch_end()
-        
-        // t7 = player struct
-        addiu   sp, sp,-0x0010              // allocate stack space
-        sw      t0, 0x0004(sp)              // ~
-        sw      t1, 0x0008(sp)              // store t0, t1
-        lw      t0, 0x0008(t7)              // t0 = character id
-        ori     t1, r0, Character.id.LUCAS  // t1 = id.LUCAS
-        li      a0, pkthunder_anim_struct3  // a0 = pkthunder_anim_struct
-        beq     t0, t1, _end                // end if character id = LUCAS
-        nop
-        li      a0, 0x8012E444              // original line (load pk thunder animation struct)
-        
-        _end:
-        lw      t0, 0x0004(sp)              // ~
-        lw      t1, 0x0008(sp)              // load t0, t1
-        addiu   sp, sp, 0x0010              // deallocate stack space
-        j       _return                     // return
-        nop
-    }
+    // Set default costumes
+    Character.set_default_costumes(Character.id.LUCAS, 0, 1, 2, 4, 5, 2, 3)
     
-    // Load Up Special Functionality from different struct
-    // Location of original subroutine 801655C8
+    // Forces Lucas' pk fire to stay horizontal when in the air
     // @ Description
-     // loads a different special struct1 when Lucas uses his up special.
-     scope get_pkthunder_special_struct1_: {
-        OS.patch_start(0xE5D1C, 0x8016B2DC)
-        j       get_pkthunder_special_struct1_
+    // essentially a binary BNE, if 0, player is on the ground and will skip diagonal command. If in the air, 
+    // then it will be 1 and will proceed to go diagonal. A character check is done, player struct in s1 and v0.
+    // If lucas, the number will be changed to 0
+    scope pkfire_horizontal: {
+        OS.patch_start(0xCE414, 0x801539D4)
+        j       pkfire_horizontal
         nop
         _return:
         OS.patch_end()
         
-        // 0x0050(sp) = player struct
-        addiu   sp, sp,-0x0010              // allocate stack space
-        sw      t0, 0x0004(sp)              // ~
-        sw      t1, 0x0008(sp)              // store t0, t1
-        lw      t0, 0x0084(a0)
-        lw      t0, 0x0008(t0)
-        ori     t1, r0, Character.id.LUCAS  // t1 = id.LUCAS
-        li      a1, pkthunder_special_struct1  // a1 = pkthunder_special_struct
-        beq     t1, t0, _end                // end if character id = LUCAS
-        nop
-        lui     a1, 0x8019              // original line
-        addiu   a1, a1, 0x91D0           // original line
+        swc1    f18, 0x0028(sp)             // original line 1
         
-        _end:
-        lw      t0, 0x0004(sp)              // ~
-        lw      t1, 0x0008(sp)              // load t0, t1
-        addiu   sp, sp, 0x0010              // deallocate stack space
-        sw      a0, 0x0018(sp)              // original line
-        j       _return                     // return
-        nop
-    }
-    
-    // Load Up Special Functionality from different struct
-    // Location of original subroutine 801655C8
-    // @ Description
-    // loads a different special struct2 when Lucas uses his up special.
-     scope get_pkthunder_special_struct2_: {
-        OS.patch_start(0xE5FD8, 0x8016B598)
-        j       get_pkthunder_special_struct2_
-        nop
-        _return:
-        OS.patch_end()
-        
-        // 0x0050(sp) = player struct
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t1, 0x0004(sp)              // store t2, t1
         sw      t2, 0x0008(sp)              // store t2, t1
-        lw      t2, 0x01B4(t0)            // load player struct from projectile struct
-        lw      t2, 0x0008(t2)
-        ori     t1, r0, Character.id.LUCAS  // t1 = id.LUCAS
-        li      a1, pkthunder_special_struct2  // a1 = pkthunder_special_struct
-        beq     t1, t2, _end                // end if character id = LUCAS
+        lw      t1, 0x0008(v0)              // load character ID
+        ori     t2, r0, Character.id.LUCAS  // t1 = id.LUCAS
+        addiu   t9, r0, r0                  // set LUCAS as if grounded always
+        beq     t1, t2, _end                
         nop
-        lui     a1, 0x8019                  // original line
-        addiu   a1, a1, 0x9204              // original line
+        lw      t9, 0x14C(v0)               // original line 2 - load Ness current position, grounded (0) or air (1)
         
         _end:
         lw      t1, 0x0004(sp)              // ~
@@ -162,68 +98,53 @@ scope Lucas {
         addiu   sp, sp, 0x0010              // deallocate stack space
         j       _return                     // return
         nop
-    }
+    }    
     
-    // 8016B598
-    
-    OS.align(16)
-    pkthunder_anim_struct:
-    dw  0x060F0000
-    dw  Character.LUCAS_file_4_ptr
-    OS.copy_segment(0xA9C9C, 0x20)
-    
-    OS.align(16)
-    pkthunder_anim_struct3:
-    dw  0x020F0000
-    dw  Character.LUCAS_file_4_ptr
-    OS.copy_segment(0xA9C4C, 0x20)
-    
-    OS.align(16)
-    pkthunder_special_struct1:
-    dw 0x03000000
-    dw 0x0000000E
-    dw Character.LUCAS_file_1_ptr
-    OS.copy_segment(0x103C1C, 0x28)
-    
-    OS.align(16)
-    pkthunder_special_struct2:
-    dw 0x02000000
-    dw 0x0000000F
-    dw Character.LUCAS_file_1_ptr
-    OS.copy_segment(0x103C50, 0x28)
-   
-    
-    // establishes a pointer to the character struct that cam be used for a character id check during
-    // special_struct3.
-    scope get_pkthunder_playerstruct1_: {
-        OS.patch_start(0xE597C, 0x8016AF3C)
-        j       get_pkthunder_playerstruct1_
+    // Set initial script.
+    constant initial_script_(0x800DE448)
+    Character.table_patch_start(initial_script, Character.id.LUCAS, 0x4)
+    dw  initial_script_
+    OS.patch_end()
+
+    // Changes PK FIRE's after effect for Lucas
+    // @ Description
+    // the normal path it takes to spawn the pk fire2 object is swapped out with the explosion graphic
+    scope pkfire_explosion: {
+        OS.patch_start(0xE55A8, 0x8016AB68)
+        j       pkfire_explosion
         nop
         _return:
         OS.patch_end()
-        sw      a2, 0x01B4(a3)              // save playerstruct to unused space in projectile struct
-        jal     0x8016AE64                  // original code
-        sw      a3, 0x0054(sp)              // original code
-        j       _return                     // return
-        nop    
-    
-    // establishes a pointer to the character struct that cam be used for a character id check during
-    // special_struct3.
-     scope get_pkthunder_playerstruct2_: {
-        OS.patch_start(0xE5E10, 0x8016B3D0)
-        j       get_pkthunder_playerstruct2_
+        
+        swc1    f18, 0x0030(sp)             // original line 2
+        
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      t1, 0x0004(sp)              // store t2, t1
+        sw      t2, 0x0008(sp)              // store t2, t1
+        lw      t1, 0x0078(v0)              // load player struct from projectile struct as placed in previously by pkfire1pointer
+        lw      t1, 0x0008(t1)              // load character ID
+        ori     t2, r0, Character.id.LUCAS  // t1 = id.JNESS
+        beq     t1, t2, lucas_explosion_
         nop
-        _return:
-        OS.patch_end()
-        sw      a0, 0x01B4(a2)              // save player struct to unused space in projectile struct
-        sll     t1, t0, 1                   // original code
-        lw      t9, 0x0AE0(a0)
+       
+        _end:
+        lw      t1, 0x0004(sp)              // ~
+        lw      t2, 0x0008(sp)              // load t0, t1
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        jal     0x80185824                  // original line 1 - modified
+        nop
         j       _return                     // return
         nop
         
-    
-    // Set default costumes
-    Character.set_default_costumes(Character.id.LUCAS, 0, 1, 2, 4, 1, 2, 0)
-    
-    
+        lucas_explosion_:
+        addiu   a0, a1, 0x0000
+        lw      t1, 0x0004(sp)              // ~
+        lw      t2, 0x0008(sp)              // load t0, t1
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        jal     0x80100480                  // jump to explosion process
+        nop
+        j       _return                     // return
+        nop
+    }    
+
 }

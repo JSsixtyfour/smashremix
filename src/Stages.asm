@@ -5,6 +5,8 @@ print "included Stages.asm\n"
 
 // @ Description
 // This file expands the stage select screen.
+// TODO:
+// - Score not being saved correctly for new BTT stages
 
 include "Color.asm"
 include "FGM.asm"
@@ -36,10 +38,12 @@ scope Stages {
         nop
         OS.patch_end()
 
-        // Stage ID (v0) is greater than id.BTX_FIRST, check if it is less than
-        // BTX_LAST as well to account for new stage IDs.
-        sltiu   at, v0, id.BTX_LAST + 1      // ~
-        beqz    at, _corrected               // adjust path as necessary
+        li      at, function_table          // at = function table
+        sll     v0, v0, 0x0002              // v0 = offset in function table
+        addu    at, at, v0                  // at = address in function table
+        srl     v0, v0, 0x0002              // v0 = stage_id again
+        lw      at, 0x0000(at)              // at = 0 if Bonus
+        bnez    at, _corrected              // adjust path as necessary
         nop
 
         _original:
@@ -81,6 +85,11 @@ scope Stages {
         slti    at, v1, 0x0009              // original line 2
         slti    t0, v1, id.BTX_LAST + 1     // check upper bound
         bnez    t0, _return                 // if (stage id is NOT a new stage), skip
+        nop
+        sll     t0, v1, 0x0002              // t0 = offset in function table
+        addu    t0, t0, t9                  // t0 = address in function table
+        lw      t0, 0x0000(t0)              // t0 = 0 if Bonus
+        beqz    t0, _return                 // if (stage a new bonus stage), skip
         nop
         lli     at, OS.TRUE                 // set at
 
@@ -142,17 +151,17 @@ scope Stages {
     dw function.CLONE                       // Kalos Pokemon League
     dw function.CLONE                       // Pokemon Stadium
     dw function.CLONE                       // Skyloft
-    dw function.CLONE                       // Smashville
+    dw function.CLONE                       // Glacial River
     dw function.CLONE                       // WarioWare
     dw function.CLONE                       // Battlefield
     dw function.CLONE                       // Corneria City
     dw function.CLONE                       // Dr. Mario
     dw function.CLONE                       // Cool Cool Mountain
     dw function.CLONE                       // Dragon King
-    dw function.CLONE                       // Great Bay
+    dw function.CONGO_JUNGLE                // Great Bay
     dw function.CLONE                       // Fray' Stage
     dw function.CLONE                       // Tower of Heaven
-	dw function.CLONE                       // Fountain of Dreams
+	dw function.CONGO_JUNGLE                // Fountain of Dreams
     dw function.CLONE                       // Muda Kingdom
     dw function.CLONE                       // Mementos
     dw function.CLONE                       // Showdown
@@ -166,12 +175,20 @@ scope Stages {
     dw function.CLONE                       // Peach's Castle II
     dw function.CLONE                       // Delfino
     dw function.CLONE                       // Corneria
-    dw function.CLONE                       // Kitchen Island
-    dw function.CLONE                       // Big Blue
-    dw function.CLONE                       // Onett
+    dw function.PEACHS_CASTLE               // Kitchen Island
+    dw function.PEACHS_CASTLE               // Big Blue
+    dw function.CONGO_JUNGLE                // Onett
     dw function.CLONE                       // Zebes Landing
     dw function.CLONE                       // Frosty Village
     dw function.PEACHS_CASTLE               // Smashville
+    dw OS.NULL                              // Dr. Mario Break the Targets
+    dw OS.NULL                              // Ganondorf Break the Targets
+    dw OS.NULL                              // Young Link Break the Targets
+    dw function.CLONE                       // Great Bay SSS
+    dw OS.NULL                              // Dark Samus Break the Targets
+    dw OS.NULL                              // Stage 1 Break the Targets
+    dw OS.NULL                              // Falco Break the Targets
+    dw OS.NULL                              // Wario Break the Targets
     
 
     // TODO
@@ -208,8 +225,12 @@ scope Stages {
         bnez    at, _take_branch            // original line 2 (modified)
         lui     a1, 0x8011                  // original line 3
 
-        slti    at, t6, id.BTX_LAST + 1     // ~
-        beqz    at, _take_branch            // account for new stage ids
+        li      at, function_table          // at = function table
+        sll     t6, t6, 0x0002              // t6 = offset in function table
+        addu    at, at, t6                  // at = address in function table
+        srl     t6, t6, 0x0002              // t6 = stage_id again
+        lw      at, 0x0000(at)              // at = 0 if Bonus
+        bnez    at, _take_branch            // account for new stage ids
         nop
 
         _continue:
@@ -225,30 +246,154 @@ scope Stages {
     // 8013C2BC - same as above except does not alter gameset/failure. unsure of what this does
     // solution: same as above, probably won't hurt
     scope id_fix_6_: {
-        OS.patch_start(0x000B6F90, 0x8013C2C0)
-        j       id_fix_6_
+        OS.patch_start(0x000B6D00, 0x8013C2C0)
+        jal     id_fix_6_
         nop
         nop
-        _id_fix_6_return:
         OS.patch_end()
 
+        OS.patch_start(0x000B6E48, 0x8013C408)
+        jal     id_fix_6_
+        nop
+        nop
+        OS.patch_end()
+
+        OS.patch_start(0x000B6F90, 0x8013C550)
+        jal     id_fix_6_
+        nop
+        nop
+        OS.patch_end()
 
         slti    at, v0, 0x0011              // original line 1
         bnez    at, _take_branch            // original line 2 (modified)
         nop 
 
-        slti    at, v0, id.BTX_LAST + 1     // ~
-        beqz    at, _take_branch            // account for new stage ids
+        li      at, class_table             // at = class_table
+        addu    at, at, v0                  // at = address of class
+        lbu     at, 0x0000(at)              // at = class
+        beqz    at, _take_branch            // take branch when a battle stage
         nop
 
-        _continue:
-        slti    at, v0, 0x001D              // original line 3
-        j       _id_fix_6_return            // don't take branch
+        j       0x8013C2E4                  // branch to complete/failure
         nop
 
         _take_branch:
-        slti    at, v0, 0x001D              // original line 3
-        j       0x8013C2D0                  // branch to take
+        j       0x8013C2EC                  // branch to battle end
+        lli     at, 0x0000                  // at = 0
+    }
+
+    // @ Description
+    // This uses our class table to determine which branches to take so that new stages work
+    scope bonus_fix_1_: {
+        constant BTP_JAL(0x8018DC38)
+        constant BTT_JAL(0x8018D5C8)
+
+        OS.patch_start(0x00080F20, 0x80105720)
+        jal     bonus_fix_1_
+        nop
+        beq     r0, r0, 0x8010574C          // skip to end
+        nop
+        OS.patch_end()
+
+        // v0 is stage_id
+        li      at, class_table             // at = class_table
+        addu    at, at, v0                  // at = address of class
+        lbu     at, 0x0000(at)              // at = class
+
+        beqz    at, _return                 // if at = class.BATTLE (0), then skip to end
+        nop
+
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      t0, 0x0004(sp)              // ~
+        sw      t1, 0x0008(sp)              // ~
+        sw      ra, 0x000C(sp)              // save registers
+
+        lli     t0, class.BTT               // t0 = class.BTT
+        li      t1, BTT_JAL                 // t1 = BTT_JAL
+        beq     t0, at, _end                // if BTT, use BTT_JAL
+        nop
+
+        li      t1, BTP_JAL                 // else use BTP_JAL
+
+        _end:
+        jalr    t1                          // call routine
+        nop
+
+        lw      t0, 0x0004(sp)              // ~
+        lw      t1, 0x0008(sp)              // ~
+        lw      ra, 0x000C(sp)              // restore registers
+        addiu   sp, sp, 0x0010              // deallocate stack space
+
+        _return:
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // This allows us to extend the hardcodings for targets
+    scope bonus_fix_2_: {
+        OS.patch_start(0x111B00, 0x8018D3C0)
+        jal     bonus_fix_2_
+        nop
+        swc1    f20, 0x0050(sp)
+        swc1    f20, 0x004C(sp)
+        swc1    f20, 0x0048(sp)
+        nop
+        OS.patch_end()
+
+        // t7 is stage_id
+        li      t0, bonus_pointer_table    // t0 = bonus_pointer_table
+        sll     t8, t7, 0x0002             // t8 = offset in bonus_pointer_table
+        addu    t0, t0, t8                 // t0 = address in bonus_pointer_table
+        lw      v0, 0x0000(t0)             // v0 = bonus pointer
+
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // This corrects some ID checks related to determining BTT or BTP
+    scope bonus_fix_3_: {
+        OS.patch_start(0x11248C, 0x8018DD4C)
+        jal     bonus_fix_3_
+        ori     a2, a2, 0xD97C             // original line 1
+        OS.patch_end()
+
+        OS.patch_start(0x1127E8, 0x8018E0A8)
+        jal     bonus_fix_3_
+        lbu     t7, 0x0001(t6)             // original line 1
+        OS.patch_end()
+
+        OS.patch_start(0x1130C0, 0x8018E980)
+        jal     bonus_fix_3_
+        lbu     t7, 0x0001(a0)             // original line 1
+        OS.patch_end()
+
+        OS.patch_start(0x1132C8, 0x8018EB88)
+        jal     bonus_fix_3_
+        lbu     t7, 0x0001(v0)             // original line 1 (modified for t7 instead of t3)
+        lui     a0, 0x8013                 // original line 2
+        OS.patch_end()
+
+        addiu   sp, sp,-0x0008             // allocate stack space
+        sw      a1, 0x0004(sp)             // save registers
+
+        // t7 is stage_id
+        li      at, class_table            // at = class_table
+        addu    at, at, t7                 // at = address of class
+        lbu     at, 0x0000(at)             // at = class
+
+        lli     a1, class.BTT              // a1 = class.BTT
+        beql    a1, at, _return            // if BTT, set at to 1 and return
+        lli     at, 0x0001                 // ~
+
+        lli     at, 0x0000                 // otherwise set at to 0
+
+        _return:
+        lw      a1, 0x0004(sp)             // restore registers
+        addiu   sp, sp, 0x0008             // deallocate stack space
+
+        jr      ra                         // return
         nop
     }
 
@@ -282,7 +427,7 @@ scope Stages {
     insert icon_kalos_pokemon_league,   "../textures/icon_kalos_pokemon_league.rgba5551"
     insert icon_pokemon_stadium_2,      "../textures/icon_pokemon_stadium_2.rgba5551"
     insert icon_skyloft,                "../textures/icon_skyloft.rgba5551"
-    insert icon_smashville,             "../textures/icon_smashville.rgba5551"
+    insert icon_glacial,                "../textures/icon_glacial.rgba5551"
     insert icon_warioware,              "../textures/icon_warioware.rgba5551"
     insert icon_battlefield,            "../textures/icon_battlefield.rgba5551"
     insert icon_corneria_city,          "../textures/icon_corneria_city.rgba5551"
@@ -312,6 +457,7 @@ scope Stages {
     insert icon_zlanding,               "../textures/icon_zlanding.rgba5551"
     insert icon_frosty,                 "../textures/icon_frosty.rgba5551"
     insert icon_smashville2,            "../textures/icon_smashville.rgba5551"
+    insert icon_falls,                  "../textures/icon_falls.rgba5551"
     
 
     // @ Description
@@ -369,7 +515,7 @@ scope Stages {
         constant KALOS_POKEMON_LEAGUE(0x2C)
         constant POKEMON_STADIUM_2(0x2D)
         constant SKYLOFT(0x2E)
-        constant SMASHVILLE(0x2F)
+        constant GLACIAL(0x2F)
         constant WARIOWARE(0x30)
         constant BATTLEFIELD(0x31)
         constant CORNERIA_CITY(0x32)
@@ -399,8 +545,16 @@ scope Stages {
         constant ZLANDING(0x4A)
         constant FROSTY(0x4B)
         constant SMASHVILLE2(0x4C)
+        constant BTT_DRM(0x4D)
+        constant BTT_GND(0x4E)
+        constant BTT_YL(0x4F)
+        constant GREAT_BAY_SSS(0x50)
+        constant BTT_DS(0x51)
+        constant BTT_STG1(0x52)
+        constant BTT_FALCO(0x53)
+        constant BTT_WARIO(0x54)
 
-        constant MAX_STAGE_ID(0x4C)
+        constant MAX_STAGE_ID(0x54)
 
         // not an actual id, some arbitary number Sakurai picked(?)
         constant RANDOM(0xDE)
@@ -486,7 +640,7 @@ scope Stages {
         constant KALOS_POKEMON_LEAGUE(0x087D)
         constant POKEMON_STADIUM_2(0x0880)
         constant SKYLOFT(0x0883)
-        constant SMASHVILLE(0x0886)
+        constant GLACIAL(0x0886)
         constant WARIOWARE(0x0889)
         constant BATTLEFIELD(0x0871)
         constant CORNERIA_CITY(0x088C)
@@ -516,6 +670,14 @@ scope Stages {
         constant ZLANDING(0x8F3)
         constant FROSTY(0x90C)
         constant SMASHVILLE2(0x911)
+        constant BTT_DRM(0x92B)
+        constant BTT_GND(0x93A)
+        constant BTT_YL(0x966)
+        constant GREAT_BAY_SSS(0x941)
+        constant BTT_DS(0x944)
+        constant BTT_STG1(0x959)
+        constant BTT_FALCO(0x960)
+        constant BTT_WARIO(0x968)
     }
 
     scope function {
@@ -534,6 +696,17 @@ scope Stages {
         constant CLONE(0x801056F8)
     }
 
+
+    // @ Description
+    // Class will help us better determine which branches to take rather than relying on stage ID
+    scope class {
+        constant BATTLE(0x00)
+        constant RTTF(0x01)
+        constant BTP(0x02)
+        constant BTT(0x03)
+        constant SSS_PREVIEW(0x04)
+    }
+
     constant ICON_WIDTH(40)
     constant ICON_HEIGHT(30)
 
@@ -542,30 +715,36 @@ scope Stages {
     constant NUM_COLUMNS(6)
     constant NUM_ICONS(NUM_ROWS * NUM_COLUMNS)
 
+    // @ Description
+    // Pointers to the stage tables that are utilized via toggles
+    stage_table:
+    dw stage_table_normal
+    dw stage_table_tournament
+
     OS.align(16)
 
     // @ Description
     // Stage IDs in order
-    stage_table:
+    stage_table_normal:
     // page 1 (vanilla and "smash" stages)
-    db id.PEACHS_CASTLE                     // 00  
-    db id.CONGO_JUNGLE                      // 01  
-    db id.HYRULE_CASTLE                     // 02  
-    db id.PLANET_ZEBES                      // 03  
-    db id.MUSHROOM_KINGDOM                  // 04 
-	db id.META_CRYSTAL                      // 05 
-    db id.YOSHIS_ISLAND                     // 06 
-    db id.DREAM_LAND                        // 07  
-    db id.SECTOR_Z                          // 08  
-    db id.SAFFRON_CITY                      // 09 
-    db id.DUEL_ZONE                         // 0A 
-    db id.FINAL_DESTINATION                 // 0B    
-    db id.DRAGONKING                        // 0C 
-    db id.MINI_YOSHIS_ISLAND                // 0D 
-    db id.FIRST_DESTINATION                 // 0E 
-    db id.SHOWDOWN                          // 0F 
-    db id.BATTLEFIELD                       // 10 
-    db id.RANDOM                            // 11 
+    db id.PEACHS_CASTLE                     // 00
+    db id.CONGO_JUNGLE                      // 01
+    db id.HYRULE_CASTLE                     // 02
+    db id.PLANET_ZEBES                      // 03
+    db id.MUSHROOM_KINGDOM                  // 04
+	db id.META_CRYSTAL                      // 05
+    db id.YOSHIS_ISLAND                     // 06
+    db id.DREAM_LAND                        // 07
+    db id.SECTOR_Z                          // 08
+    db id.SAFFRON_CITY                      // 09
+    db id.DUEL_ZONE                         // 0A
+    db id.FINAL_DESTINATION                 // 0B
+    db id.DRAGONKING                        // 0C
+    db id.MINI_YOSHIS_ISLAND                // 0D
+    db id.FIRST_DESTINATION                 // 0E
+    db id.SHOWDOWN                          // 0F
+    db id.BATTLEFIELD                       // 10
+    db id.RANDOM                            // 11
     // page 2 (original design stages and beta)
     db id.ZLANDING                          // 12
     db id.GANONS_TOWER                      // 13
@@ -604,6 +783,108 @@ scope Stages {
     db id.BLUE					            // 33
     db id.ONETT                             // 34
     db id.RANDOM                            // 35
+    // page 4 (more stages)
+    db id.GLACIAL                           // 36
+    db id.RANDOM                            // 37
+    db id.RANDOM                            // 38
+    db id.RANDOM                            // 39
+    db id.RANDOM                            // 3A
+    db id.RANDOM                            // 3B
+    db id.RANDOM                            // 3C
+    db id.RANDOM                            // 3D
+    db id.RANDOM                            // 3E
+    db id.RANDOM                            // 3F
+    db id.RANDOM                            // 40
+    db id.RANDOM                            // 41
+    db id.RANDOM                            // 42
+    db id.RANDOM                            // 43
+    db id.RANDOM                            // 44
+    db id.RANDOM                            // 45
+    db id.RANDOM                            // 46
+    db id.RANDOM                            // 47
+
+    OS.align(16)
+
+    // @ Description
+    // Stage IDs in order
+    stage_table_tournament:
+    // page 1 (vanilla and "smash" stages)
+    // Page 1 - Viable
+    db id.DREAM_LAND                        // 00  
+    db id.ZLANDING                          // 01  
+    db id.DEKU_TREE                         // 02
+    db id.FRAYS_STAGE                       // 03  
+    db id.POKEMON_STADIUM_2                 // 04 
+	db id.KALOS_POKEMON_LEAGUE              // 25
+    db id.SPIRALM                           // 14 
+    db id.TOH                               // 2D
+    db id.MUTE                              // 1C
+    db id.SMBBF                             // 2E
+    db id.BATTLEFIELD                       // 10 
+    db id.WARIOWARE                         // 24
+    db id.SMASHVILLE2                       // 28 
+    db id.FIRST_DESTINATION                 // 0E
+    db id.SMBO                              // 2F
+    db id.GLACIAL                           // 35
+    db id.DR_MARIO                          // 16
+    db id.RANDOM                            // 0D
+    // Page 2 - Semi-Viable
+    db id.MINI_YOSHIS_ISLAND                // 0D   
+    db id.FINAL_DESTINATION                 // 0B    
+    db id.CORNERIA_CITY                     // 2A
+    db id.GANONS_TOWER                      // 13
+	db id.SKYLOFT                           // 27
+    db id.DELFINO                           // 30
+    db id.BOWSERB                           // 17
+    db id.META_CRYSTAL                      // 05
+    db id.PEACHS_CASTLE                     // 00
+    db id.CONGO_JUNGLE                      // 01
+    db id.HYRULE_CASTLE                     // 26
+    db id.FOD					            // 2C
+    db id.DUEL_ZONE                         // 0A
+    db id.YOSHIS_ISLAND                     // 06
+    db id.MUDA			                    // 1B
+    db id.MEMENTOS                          // 29
+    db id.SAFFRON_CITY                      // 09
+    db id.RANDOM                            // 0
+    // Page 3 - Non-Viable
+    db id.CORNERIA2                         // 32
+    db id.COOLCOOL                          // 15
+    db id.GREAT_BAY                         // 2B
+    db id.SECTOR_Z                          // 08
+    db id.N64                               // 18
+    db id.MADMM                             // 1A
+    db id.KITCHEN                           // 1D
+    db id.FROSTY                            // 1E
+    db id.PLANET_ZEBES                      // 1E
+    db id.PEACH2                            // 31
+    db id.BLUE					            // 33
+    db id.MUSHROOM_KINGDOM                  // 04
+    db id.DRAGONKING                        // 0C 
+    db id.SHOWDOWN                          // 0F 
+    db id.ONETT                             // 34
+    db id.DREAM_LAND_BETA_1                 // 20
+    db id.HOW_TO_PLAY                       // 22
+    db id.RANDOM                            // 0
+    // Page 4 - Non-Viable
+    db id.DREAM_LAND_BETA_2                 // 21
+    db id.RANDOM                            // 0
+    db id.RANDOM                            // 0
+    db id.RANDOM                            // 0
+    db id.RANDOM                            // 0
+    db id.RANDOM                            // 0
+    db id.RANDOM                            // 0
+    db id.RANDOM                            // 0
+    db id.RANDOM                            // 0
+    db id.RANDOM                            // 0
+    db id.RANDOM                            // 0
+    db id.RANDOM                            // 0
+    db id.RANDOM                            // 0
+    db id.RANDOM                            // 0
+    db id.RANDOM                            // 0
+    db id.RANDOM                            // 0
+    db id.RANDOM                            // 0
+    db id.RANDOM                            // 0
     OS.align(4)
 
     // @ Description
@@ -644,7 +925,7 @@ scope Stages {
     dw icon_yoshis_island                   // Yoshi's Island
     dw icon_dream_land                      // Dream Land
     dw icon_saffron_city                    // Saffron City
-    dw icon_mushroom_kingdom                // Musrhoom Kingdom
+    dw icon_mushroom_kingdom                // Mushroom Kingdom
     dw icon_dream_land_beta_1               // Dream Land Beta 1
     dw icon_dream_land_beta_2               // Dream Land Beta 2
     dw icon_how_to_play                     // How to Play
@@ -683,7 +964,7 @@ scope Stages {
     dw icon_kalos_pokemon_league            // Kalos Pokemon League
     dw icon_pokemon_stadium_2               // Pokemon Stadium 2
     dw icon_skyloft                         // Skyloft
-    dw icon_smashville                      // Smashville
+    dw icon_glacial                         // Glacial River
     dw icon_warioware                       // WarioWare
     dw icon_battlefield                     // Batlefield
     dw icon_corneria_city                   // Corneria City
@@ -713,6 +994,14 @@ scope Stages {
     dw icon_zlanding                        // Zebes Landing
     dw icon_frosty                          // Frosty Village
     dw icon_smashville2                     // Smashville
+    dw icon_btx                             // BTT Dr. Mario
+    dw icon_btx                             // BTT Ganondorf
+    dw icon_btx                             // BTT Young Link
+    dw icon_great_bay                       // Great Bay SSS
+    dw icon_btx                             // BTT Dark Samus
+    dw icon_btx                             // BTT Stage 1
+    dw icon_btx                             // BTT Falco
+    dw icon_btx                             // BTT Wario
 
     // @ Description
     // Row the cursor is on
@@ -734,7 +1023,7 @@ scope Stages {
     page_number:
     dw 0x00000000
 
-    constant NUM_PAGES(0x03)
+    constant NUM_PAGES(0x04)
 
     // @ Description
     // Disable original L/R, D-pad and C button behavior
@@ -946,6 +1235,12 @@ scope Stages {
 
         jal     get_stage_id_                   // v0 = stage_id
         nop
+        addiu   t0, r0, id.GREAT_BAY            
+        bne     v0, t0, _standard              // This branch is done for Great Bay, it loads an alternate model for the SSS
+        nop
+        li      v0, id.GREAT_BAY_SSS 
+
+        _standard:
         sll     v0, v0, 0x0003                  // t0 = offset << 3 (offset * 8)
         li      t0, stage_file_table            // ~
         addu    t0, v0, t0                      // t0 = address of header file
@@ -956,7 +1251,7 @@ scope Stages {
 
         lw      ra, 0x0004(sp)                  // ~
         lw      t0, 0x0008(sp)                  // ~
-        lw      v0, 0x000C(sp)                  // resore registers
+        lw      v0, 0x000C(sp)                  // restore registers
         addiu   sp, sp, 0x0010                  // deallocate stack space
         j       _get_header_return              // return
         nop
@@ -1013,7 +1308,12 @@ scope Stages {
         li      t0, icon_table              // t0 = address of icon_table
         li      t1, position_table          // t1 = address of position_table
         lli     t2, 0x0000                  // t2 = index
-        li      t3, stage_table             // t3 = address of stage_table
+        li      t3, stage_table             // t3 = address of stage_table pointers
+        li      t5, Toggles.entry_sss_layout
+        lw      t5, 0x0004(t5)              // t5 = stage table index
+        sll     t5, t5, 0x0002              // t5 = offset to stage_table to use
+        addu    t3, t3, t5                  // t3 = address of stage_table pointer
+        lw      t3, 0x0000(t3)              // t3 = address of stage_table to use
         lli     t5, NUM_ICONS               // ~
         li      t6, page_number             // ~
         lw      t6, 0x0000(t6)              // ~
@@ -1266,7 +1566,7 @@ scope Stages {
 
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // ~
-        lw      t2, 0x000C(sp)              // restre registers
+        lw      t2, 0x000C(sp)              // restore registers
         addiu   sp, sp, 0x0010              // deallocate stack space
         jr      ra
         nop
@@ -1292,6 +1592,11 @@ scope Stages {
         mflo    t1                          // ~
         addu    v0, v0, t1                  // add additional offset
         li      t0, stage_table             // t0 = address of stage table
+        li      t1, Toggles.entry_sss_layout
+        lw      t1, 0x0004(t1)              // t1 = stage table index
+        sll     t1, t1, 0x0002              // t1 = offset to stage_table to use
+        addu    t0, t0, t1                  // t0 = address of stage_table pointer
+        lw      t0, 0x0000(t0)              // t0 = address of stage_table to use
         addu    t0, t0, v0                  // t0 = address of stage table + offset
         lbu     v0, 0x0000(t0)              // v0 = ret = stage_id
 
@@ -1322,7 +1627,7 @@ scope Stages {
         li      a2, Joypad.PRESSED          // a2 - type
         jal     Joypad.check_buttons_all_   // v0 = L pressed
         nop
-        beqz    v0, _check_inputs           // if not pressed, skip
+        beqz    v0, _draw                   // if not pressed, skip
         nop
         li      t0, frozen_mode             // t0 = address of frozen mode
         lw      t1, 0x0000(t0)              // t1 = frozen_mode
@@ -1330,22 +1635,6 @@ scope Stages {
         sw      t1, 0x0000(t0)
         lli     a0, FGM.menu.TOGGLE         // a0 - fgm_id
         jal     FGM.play_                   // play menu sound
-        nop
-
-        _check_inputs:
-        jal     update_up_
-        nop
-
-        jal     update_down_
-        nop
-
-        jal     update_left_
-        nop
-
-        jal     update_right_
-        nop
-
-        jal     check_page_switch_
         nop
 
         _draw:
@@ -1393,8 +1682,24 @@ scope Stages {
     }
 
     // @ Description
-    // Switch Page (maybe)
-    scope check_page_switch_: {
+    // Each of these is a former update_right_ functions by Sakurai. They have
+    // been extended to update the Stages.asm cursor.
+    scope right_check_: {
+        OS.patch_start(0x0014FD70, 0x80134200)
+        j       right_check_
+        nop
+        _return:
+        OS.patch_end()
+
+        // original line (if v0 == 0, skip right_)
+//      beq         v0, r0, 0x801342F4      // original line 1
+        beq         v0, r0, page_switch     // original line 1 (modified)
+        sw          v0, 0x0020(sp)          // original line 2
+
+        j           right_                  // usually, this would go to right_ here
+        nop
+
+        page_switch:
         addiu   sp, sp,-0x0028              // allocate stack space
         sw      ra, 0x0004(sp)              // ~
         sw      a0, 0x0008(sp)              // ~
@@ -1420,7 +1725,7 @@ scope Stages {
         beq     at, t1, _up_warp            // if page is too high, handle case with warp
         nop
         sw      t1, 0x0000(t0)              // store page (next page)
-        b       _end_update                // don't check multiple page switches per frame
+        b       _end_update                 // don't check multiple page switches per frame
         nop
 
         _up_warp:
@@ -1448,11 +1753,8 @@ scope Stages {
         _down_warp:
         lli     t1, NUM_PAGES - 1           // ~
         sw      t1, 0x0000(t0)              // store page
-
-        _end_update:
-        li      t0, preview_is_outdated     // ~
-        lli     t1, OS.TRUE                 // ~
-        sw      t1, 0x0000(t0)              // mark preview as outdated
+        b       _end_update
+        nop
 
         _end:
         lw      ra, 0x0004(sp)              // ~
@@ -1464,81 +1766,39 @@ scope Stages {
         lw      t1, 0x001C(sp)              // ~
         lw      at, 0x0020(sp)              // restore registers
         addiu   sp, sp, 0x0028              // deallocate stack space
-        jr      ra
+        j       0x801342F4                  // skip (from original line 1)
+        nop
+        
+
+        _end_update:
+        lw      ra, 0x0004(sp)              // ~
+        lw      a0, 0x0008(sp)              // ~
+        lw      a1, 0x000C(sp)              // ~
+        lw      a2, 0x0010(sp)              // ~
+        lw      v0, 0x0014(sp)              // ~
+        lw      t0, 0x0018(sp)              // ~
+        lw      t1, 0x001C(sp)              // ~
+        lw      at, 0x0020(sp)              // restore registers
+        addiu   sp, sp, 0x0028              // deallocate stack space
+        li      a1, 0x80134BD8              // original line 1/2
+        lli     t0, 0x0001                  // spoofed cursor id
+        sw      t0, 0x0000(a1)              // update cursor id
+        j       right_._return              // use right_'s preview update
         nop
     }
+    
 
 
-    // @ Description
-    // This boolean controls the drawing of previews (only drawn when out of date)
-    preview_is_outdated:
-    dw OS.FALSE
 
-    // @ Description
-    // Each of these is a former update_right_ funcitons by Sakurai. They are all disabled
-    // except for update_right_ which has been modified to update stage preview when 
-    // preview_is_outdated_ == OS.TRUE
 
     // right
-    scope check_update_preview_: {
-        OS.patch_start(0x0014FD70, 0x80134200)
-        j       check_update_preview_
+    scope right_: {
+        OS.patch_start(0x0014FD78, 0x80134208)
+        j       right_
         nop
-        _check_update_preview_return:
-        lui     a1, 0x8013                  // original line 3
-        addiu   a1, a1, 0x4BD8              // original line 4
-//      lw      v1, 0x0000(a1)              // original line 5
-        lli     v1, 0x0001                  // original line 5 (modified, v1 = spoofed cursor id)
+        _return:
         OS.patch_end()
 
-        addiu   sp, sp,-0x0010              // allocate stack space
-        sw      t0, 0x0004(sp)              // ~
-        sw      t1, 0x0008(sp)              // save registers
-
-//      beq     v0, r0, 0x801342F4          // original line 1
-//      sw      v0, 0x0020(sp)              // original line 2
-        li      t0, preview_is_outdated     // ~
-        lw      t1, 0x0000(t0)              // ~
-        beqz    t1, _skip_return            // branch based on preview_is_outdated
-        sw      r0, 0x0000(t0)              // mark preview as updated
-
-        _continue_return:
-        lw      t0, 0x0004(sp)              // ~
-        lw      t1, 0x0008(sp)              // restore registers
-        addiu   sp, sp, 0x0010              // deallocate stack space
-        j       _check_update_preview_return
-        nop
-
-        _skip_return:
-        lw      t0, 0x0004(sp)              // ~
-        lw      t1, 0x0008(sp)              // restore registers
-        addiu   sp, sp, 0x0010              // deallocate stack space
-        j       0x801342F4
-        nop
-    }
-
-    // left
-    OS.patch_start(0x0014FC6C, 0x801340FC)
-    b       0x801341E4                      // original line 1 (no longer a conditional branch)
-    sw      v0, 0x0020(sp)                  // original line 2
-    OS.patch_end()
-
-    // down
-    OS.patch_start(0x0014FB9C, 0x8013402C)
-    b       0x801340E0                      // original line 1 (no longer a conditional branch)
-    sw      v0, 0x0020(sp)                  // original line 2
-    OS.patch_end()
-
-    // up
-    OS.patch_start(0x0014FAD0, 0x80133F60)
-    b       0x80134010                      // original line 1 (no longer a conditional branch)
-    sw      v0, 0x0020(sp)                  // original line 2
-    OS.patch_end()
-
-    // @ Description
-    // The following update_<direction>_ functions update Stages.row/Stages.column. They also set
-    // preview_is_outdated to OS.TRUE
-    scope update_right_: {
         addiu   sp, sp,-0x0020              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // ~
@@ -1547,24 +1807,9 @@ scope Stages {
         sw      a0, 0x0014(sp)              // ~
         sw      v0, 0x0018(sp)              // save registers
 
-        // check for right on the stick
-        lli     a0, Joypad.RIGHT            // a0 - enum left/right/down/up
-        jal     Joypad.check_stick_         // v0 = right was pushed
-        nop
-        bnez    v0, _update                 // if (right was pushed) then do update
-        nop
-        li      a0, Joypad.CR | Joypad.DR   // a0 - button mask
-        lli     a1, OS.TRUE                 // a1 - any button
-        li      a2, Joypad.PRESSED          // a2 - type
-        jal     Joypad.check_buttons_all_   // v0 = C/dpad right pressed
-        nop
-        beqz    v0, _end                    // skip update
-        nop
-
-        _update:
-        li      t0, preview_is_outdated     // ~
-        lli     t1, OS.TRUE                 // ~
-        sw      t1, 0x0000(t0)              // mark preview outdated
+        li      a1, 0x80134BD8              // original line 1/2
+        lli     t0, 0x0001                  // spoofed cursor id
+        sw      t0, 0x0000(a1)              // update cursor id
 
         // check bounds
         li      t0, column                  // ~
@@ -1591,11 +1836,20 @@ scope Stages {
         lw      a0, 0x0014(sp)              // ~
         lw      v0, 0x0018(sp)              // restore registers
         addiu   sp, sp, 0x0020              // deallocate stack sapce
-        jr      ra                          // return
+        j       _return                     // return
         nop
+
+
     }
 
-    scope update_left_: {
+    // left
+    scope left_: {
+        OS.patch_start(0x0014FC74, 0x80134104)
+        j       left_
+        nop
+        _return:
+        OS.patch_end()
+
         addiu   sp, sp,-0x0018              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // ~
@@ -1603,24 +1857,9 @@ scope Stages {
         sw      ra, 0x0010(sp)              // ~
         sw      a0, 0x0014(sp)              // save registers
 
-        // check for left  on the stick
-        lli     a0, Joypad.LEFT             // a0 - enum left/right/down/up
-        jal     Joypad.check_stick_         // v0 = left was pushed
-        nop
-        bnez    v0, _update                 // if (left was pushed) then do update
-        nop
-        li      a0, Joypad.CL | Joypad.DL   // a0 - button mask
-        lli     a1, OS.TRUE                 // a1 - any button
-        li      a2, Joypad.PRESSED          // a2 - type
-        jal     Joypad.check_buttons_all_   // v0 = C/dpad left pressed
-        nop
-        beqz    v0, _end                    // skip update
-        nop
-
-        _update:
-        li      t0, preview_is_outdated     // ~
-        lli     t1, OS.TRUE                 // ~
-        sw      t1, 0x0000(t0)              // mark preview outdated
+        li      a1, 0x80134BD8              // original line 1/2
+        lli     t0, 0x0001                  // spoofed cursor id
+        sw      t0, 0x0000(a1)              // update cursor id
 
         // check bounds
         li      t0, column                  // ~
@@ -1646,11 +1885,19 @@ scope Stages {
         lw      ra, 0x0010(sp)              // ~
         lw      a0, 0x0014(sp)              // restore registers
         addiu   sp, sp, 0x0018              // deallocate stack sapce
-        jr      ra
+        j       _return
         nop
     }
 
-    scope update_down_: {
+
+    // down
+    scope down_: {
+        OS.patch_start(0x0014FBA4, 0x80134034)
+        j       down_
+        nop
+        _return:
+        OS.patch_end()
+
         addiu   sp, sp,-0x0018              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // ~
@@ -1658,24 +1905,10 @@ scope Stages {
         sw      ra, 0x0010(sp)              // ~
         sw      a0, 0x0014(sp)              // save registers
 
-        // check for down on the stick
-        lli     a0, Joypad.DOWN             // a0 - enum left/right/down/up
-        jal     Joypad.check_stick_         // v0 = down was pushed
-        nop
-        bnez    v0, _update                 // if (down was pushed) then do update
-        nop
-        li      a0, Joypad.CD | Joypad.DD   // a0 - button mask
-        lli     a1, OS.TRUE                 // a1 - any button
-        li      a2, Joypad.PRESSED          // a2 - type
-        jal     Joypad.check_buttons_all_   // v0 = C/dpad down pressed
-        nop
-        beqz    v0, _end                    // skip update
-        nop
-
-        _update:
-        li      t0, preview_is_outdated     // ~
-        lli     t1, OS.TRUE                 // ~
-        sw      t1, 0x0000(t0)              // mark preview outdated
+        lui     v1, 0x8013                  // original line 1
+        lli     t0, 0x0001                  // ~ 
+        sw      t0, 0x4BD8(v1)              // spoof cursor
+        lw      v1, 0x4BD8(v1)              // original line 2
 
         // check bounds
         li      t0, row                     // ~
@@ -1701,15 +1934,16 @@ scope Stages {
         lw      ra, 0x0010(sp)              // ~
         lw      a0, 0x0014(sp)              // restore registers
         addiu   sp, sp, 0x0018              // deallocate stack sapce
-        jr      ra
+        j       _return
         nop
     }
 
-    scope update_up_: {
+    // up
+    scope up_: {
         OS.patch_start(0x0014FAD0, 0x80133F60)
-        //j       update_up_
-        //nop
-        //_update_up_return:
+        j       up_
+        nop
+        _return:
         OS.patch_end()
 
         addiu   sp, sp,-0x0018              // allocate stack space
@@ -1719,24 +1953,10 @@ scope Stages {
         sw      ra, 0x0010(sp)              // ~
         sw      a0, 0x0014(sp)              // save registers
 
-        // check for up on the stick
-        lli     a0, Joypad.UP               // a0 - enum left/right/down/up
-        jal     Joypad.check_stick_         // v0 = up was pushed
-        nop
-        bnez    v0, _update                 // if (up was pushed) then do update
-        nop
-        li      a0, Joypad.CU | Joypad.DU   // a0 - button mask
-        lli     a1, OS.TRUE                 // a1 - any button
-        li      a2, Joypad.PRESSED          // a2 - type
-        jal     Joypad.check_buttons_all_   // v0 = C/dpad up pressed
-        nop
-        beqz    v0, _end                    // skip update
-        nop
-
-        _update:
-        li      t0, preview_is_outdated     // ~
-        lli     t1, OS.TRUE                 // ~
-        sw      t1, 0x0000(t0)              // mark preview outdated
+        lui     v1, 0x8013                  // original line 1
+        lli     t0, 0x0006                  // ~ 
+        sw      t0, 0x4BD8(v1)              // spoof cursor
+        lw      v1, 0x4BD8(v1)              // original line 2
 
         // check bounds
         li      t0, row                     // ~
@@ -1762,10 +1982,13 @@ scope Stages {
         lw      ra, 0x0010(sp)              // ~
         lw      a0, 0x0014(sp)              // restore registers
         addiu   sp, sp, 0x0018              // deallocate stack sapce
-        jr      ra                          // return 
+        j       _return
         nop
-
     }
+
+    // @ Description
+    // These patches disable the cursor id from being updated in update_?_ functions.
+
 
     // @ Description
     // Adds a stage to the random list if it's toggled on.
@@ -1815,103 +2038,6 @@ scope Stages {
         li      a0, {entry}                 // a0 - address of entry
         lli     a1, {stage_id}              // a1 - stage id to add
         jal     add_stage_to_random_list_   // add stage
-        nop
-    }
-
-    // @ Description
-    // This function replaces the logic to convert the default cursor_id to a stage_id.
-    // @ Returns
-    // v0 - stage_id
-    scope swap_stage_: {
-        OS.patch_start(0x0014F774, 0x80133C04)
-//      jal     0x80132430                  // original line 1
-//      nop                                 // original line 2
-        jal     swap_stage_
-        nop
-        OS.patch_end()
-
-        addiu   sp, sp,-0x0014              // allocate stack space
-        sw      t0, 0x0004(sp)              // ~
-        sw      ra, 0x0008(sp)              // ~
-        sw      at, 0x000C(sp)              // save registers
-
-        jal     get_stage_id_               // v0 = stage_id
-        nop
-
-        // this block checks if random is selected (if not stage_id is returned)
-        _check_random:
-        lli     t0, id.RANDOM               // t0 = id.RANDOM
-        bne     v0, t0, _end                // if (stage_id != id.RANDOM), end
-        nop
-
-        li      t0, random_count            // ~
-        sw      r0, 0x0000(t0)              // reset count
-
-        add_to_list(Toggles.entry_random_stage_peachs_castle, id.PEACHS_CASTLE)
-        add_to_list(Toggles.entry_random_stage_sector_z, id.SECTOR_Z)
-        add_to_list(Toggles.entry_random_stage_congo_jungle, id.CONGO_JUNGLE)
-        add_to_list(Toggles.entry_random_stage_planet_zebes, id.PLANET_ZEBES)
-        add_to_list(Toggles.entry_random_stage_hyrule_castle, id.HYRULE_CASTLE)
-        add_to_list(Toggles.entry_random_stage_yoshis_island, id.YOSHIS_ISLAND)
-        add_to_list(Toggles.entry_random_stage_dream_land, id.DREAM_LAND)
-        add_to_list(Toggles.entry_random_stage_saffron_city, id.SAFFRON_CITY)
-        add_to_list(Toggles.entry_random_stage_mushroom_kingdom, id.MUSHROOM_KINGDOM)
-        add_to_list(Toggles.entry_random_stage_duel_zone, id.DUEL_ZONE)
-        add_to_list(Toggles.entry_random_stage_final_destination, id.FINAL_DESTINATION)
-        add_to_list(Toggles.entry_random_stage_dream_land_beta_1, id.DREAM_LAND_BETA_1)
-        add_to_list(Toggles.entry_random_stage_dream_land_beta_2, id.DREAM_LAND_BETA_2)
-        add_to_list(Toggles.entry_random_stage_how_to_play, id.HOW_TO_PLAY)
-        add_to_list(Toggles.entry_random_stage_mini_yoshis_island, id.MINI_YOSHIS_ISLAND)
-        add_to_list(Toggles.entry_random_stage_meta_crystal, id.META_CRYSTAL)
-
-        // Add custom Stages
-        define n(0x29)
-        evaluate n({n})
-        while {n} <= id.MAX_STAGE_ID {
-            add_to_list(Toggles.entry_random_stage_{n}, {n})
-            evaluate n({n}+1)
-        }
-
-        // It seems like the first time it's called, get_random_int_ returns 0.
-        // So let's avoid that by calling once and ignoring the result.
-        sw      v1, 0x0010(sp)              // save v1
-        lli     a0, 10                      // a0 = 10 (not sure it matters)
-        jal     Global.get_random_int_      // v0 = (0, N-1)
-        nop
-        lw      v1, 0x0010(sp)              // restore v1
-
-        beqz    v1, _any_valid_stage        // if there were no valid entries in the random table, then use all stage_ids
-        nop
-
-        // this block loads from the random list using a random int
-        move    a0, v1                      // a0 - range (0, N-1)
-        jal     Global.get_random_int_      // v0 = (0, N-1)
-        nop
-        li      t0, random_table            // t0 = random_table
-        addu    t0, t0, v0                  // t0 = random_table + offset
-        lbu     v0, 0x0000(t0)              // v0 = stage_id
-        b       _end                        // get a new stage id based off of random offset
-        nop
-
-        _any_valid_stage:
-        lli     a0, 16 + id.MAX_STAGE_ID - id.BTX_LAST // a0 = number of new stages + original valid 16 stages
-        jal     Global.get_random_int_                 // v0 = (0, N-1)
-        nop
-        slti    t0, v0, id.RACE_TO_THE_FINISH          // if it's a stage_id low enough, then we don't have to correct it
-        bnez    t0, _end                               // so skip to end
-        nop                                            // otherwise, we'll have to shift it:
-        addiu   v0, v0, 0x0001                         // v0 = adjusted stage_id
-        lli     t0, id.FINAL_DESTINATION               // if it's RACE_TO_THE_FINISH,
-        beq     t0, v0, _end                           // then return FINAL_DESTINATION
-        nop
-        addiu   v0, v0, id.BTX_LAST - id.BTX_FIRST - 1 // otherwise it's a new stage, so adjust accordingly
-
-        _end:
-        lw      t0, 0x0004(sp)              // ~
-        lw      ra, 0x0008(sp)              // ~
-        lw      at, 0x000C(sp)              // restore registers
-        addiu   sp, sp, 0x0014              // deallocate stack space
-        jr      ra                          // return
         nop
     }
     
@@ -2028,13 +2154,13 @@ scope Stages {
     float32 0.5                         // BTP Ness
     float32 0.5                         // Deku Tree
     float32 0.5                         // First Destination
-    float32 0.2                         // Ganon's Tower
+    float32 0.3                         // Ganon's Tower
     float32 0.5                         // Kalos Pokemon League
     float32 0.5                         // Pokemon Stadium
     float32 0.5                         // Skyloft
-    float32 0.5                         // Smashville
+    float32 0.5                         // Glacial River
     float32 0.5                         // WarioWare
-    float32 0.5                         // Batlefield
+    float32 0.5                         // Battlefield
     float32 0.5                         // Corneria City
     float32 0.5                         // Dr. Mario
     float32 0.5                         // Cool Cool Mountain
@@ -2062,6 +2188,14 @@ scope Stages {
     float32 0.5                         // Zebes Landing
     float32 0.5                         // Frosty Village
     float32 0.5                         // Smashville
+    float32 0.5                         // BTT Dr. Mario
+    float32 0.5                         // BTT Ganondorf
+    float32 0.5                         // BTT Young Link
+    float32 0.5                         // Great Bay SSS
+    float32 0.5                         // BTT Dark Samus
+    float32 0.5                         // BTT Stage 1
+    float32 0.5                         // BTT Falco
+    float32 0.5                         // BTT Wario
 
     background_table:
     db id.PEACHS_CASTLE                 // Peach's Castle
@@ -2111,11 +2245,11 @@ scope Stages {
     db id.SECTOR_Z                      // Kalos Pokemon League
     db id.SECTOR_Z                      // Pokemon Stadium
     db id.PEACHS_CASTLE                 // Skyloft
-    db id.PEACHS_CASTLE                 // Smashville
+    db id.PEACHS_CASTLE                 // Glacial River
     db id.SECTOR_Z                      // WarioWare
     db id.PEACHS_CASTLE                 // Battlefield
     db id.PEACHS_CASTLE                 // Corneria City
-    db id.PEACHS_CASTLE                 // Dr. Mario
+    db id.YOSHIS_ISLAND                 // Dr. Mario
     db id.PEACHS_CASTLE                 // Cool Cool Mountain
     db id.PEACHS_CASTLE                 // Dragon King
     db id.PEACHS_CASTLE                 // Great Bay
@@ -2138,9 +2272,17 @@ scope Stages {
     db id.PEACHS_CASTLE                 // Kitchen Island
     db id.PEACHS_CASTLE                 // Big Blue
     db id.PEACHS_CASTLE                 // Onett
-    db id.PEACHS_CASTLE                 // Zebes Landing
+    db id.SECTOR_Z                      // Zebes Landing
     db id.SECTOR_Z                      // Frosty Village
     db id.PEACHS_CASTLE                 // Smashville
+    db id.SECTOR_Z                      // BTT Dr. Mario
+    db id.SECTOR_Z                      // BTT Ganondorf
+    db id.PEACHS_CASTLE                 // BTT Young Link
+    db id.PEACHS_CASTLE                 // Great Bay SSS
+    db id.SECTOR_Z                      // BTT Dark Samus
+    db id.SECTOR_Z                      // BTT Stage 1
+    db id.SECTOR_Z                      // BTT Falco
+    db id.SECTOR_Z                      // BTT Wario
     OS.align(4)
 
     // @ Description
@@ -2198,17 +2340,17 @@ scope Stages {
     dw header.KALOS_POKEMON_LEAGUE,   type.CLONE
     dw header.POKEMON_STADIUM_2,      type.CLONE
     dw header.SKYLOFT,                type.CLONE
-    dw header.SMASHVILLE,             type.CLONE
+    dw header.GLACIAL,                type.CLONE
     dw header.WARIOWARE,              type.CLONE
     dw header.BATTLEFIELD,            type.CLONE
     dw header.CORNERIA_CITY,          type.CLONE
     dw header.DR_MARIO,               type.CLONE
     dw header.COOLCOOL,               type.CLONE
     dw header.DRAGONKING,             type.CLONE
-    dw header.GREAT_BAY,              type.CLONE
+    dw header.GREAT_BAY,              type.CONGO_JUNGLE
     dw header.FRAYS_STAGE,            type.CLONE
     dw header.TOH,                    type.CLONE
-	dw header.FOD,					  type.CLONE
+	dw header.FOD,					  type.CONGO_JUNGLE
     dw header.MUDA,                   type.CLONE
     dw header.MEMENTOS,               type.CLONE
     dw header.SHOWDOWN,               type.CLONE
@@ -2222,12 +2364,111 @@ scope Stages {
     dw header.PEACH2,                 type.CLONE
     dw header.DELFINO,                type.CLONE
     dw header.CORNERIA2,              type.CLONE
-    dw header.KITCHEN,                type.CLONE
-    dw header.BLUE,                   type.CLONE
-    dw header.ONETT,                  type.CLONE
+    dw header.KITCHEN,                type.PEACHS_CASTLE
+    dw header.BLUE,                   type.PEACHS_CASTLE
+    dw header.ONETT,                  type.CONGO_JUNGLE
     dw header.ZLANDING,               type.CLONE
     dw header.FROSTY,                 type.CLONE
     dw header.SMASHVILLE2,            type.PEACHS_CASTLE
+    dw header.BTT_DRM,                type.BTT
+    dw header.BTT_GND,                type.BTT
+    dw header.BTT_YL,			      type.BTT
+    dw header.GREAT_BAY_SSS,		  type.CONGO_JUNGLE
+    dw header.BTT_DS,                 type.BTT
+    dw header.BTT_STG1,               type.BTT
+    dw header.BTT_FALCO,              type.BTT
+    dw header.BTT_WARIO,              type.BTT
+
+    class_table:
+    constant class_table_origin(origin())
+    db class.BATTLE                     // Peach's Castle
+    db class.BATTLE                     // Sector Z
+    db class.BATTLE                     // Congo Jungle
+    db class.BATTLE                     // Planet Zebes
+    db class.BATTLE                     // Hyrule Castle
+    db class.BATTLE                     // Yoshi's Island
+    db class.BATTLE                     // Dream Land
+    db class.BATTLE                     // Saffron City
+    db class.BATTLE                     // Mushroom Kingdom
+    db class.BATTLE                     // Dream Land Beta 1
+    db class.BATTLE                     // Dream Land Beta 2
+    db class.BATTLE                     // How to Play
+    db class.BATTLE                     // Yoshi's Island (1P)
+    db class.BATTLE                     // Meta Crystal
+    db class.BATTLE                     // Batlefield
+    db class.RTTF                       // Race to the Finish (Placeholder)
+    db class.BATTLE                     // Final Destination
+    db class.BTT                        // BTT Mario
+    db class.BTT                        // BTT Fox
+    db class.BTT                        // BTT DK
+    db class.BTT                        // BTT Samus
+    db class.BTT                        // BTT Luigi
+    db class.BTT                        // BTT Link
+    db class.BTT                        // BTT Yoshi
+    db class.BTT                        // BTT Falcon
+    db class.BTT                        // BTT Kirby
+    db class.BTT                        // BTT Pikachu
+    db class.BTT                        // BTT Jigglypuff
+    db class.BTT                        // BTT Ness
+    db class.BTP                        // BTP Mario
+    db class.BTP                        // BTP Fox
+    db class.BTP                        // BTP DK
+    db class.BTP                        // BTP Samus
+    db class.BTP                        // BTP Luigi
+    db class.BTP                        // BTP Link
+    db class.BTP                        // BTP Yoshi
+    db class.BTP                        // BTP Falcon
+    db class.BTP                        // BTP Kirby
+    db class.BTP                        // BTP Pikachu
+    db class.BTP                        // BTP Jigglypuff
+    db class.BTP                        // BTP Ness
+    fill id.MAX_STAGE_ID - id.BTX_LAST
+    OS.align(4)
+
+    bonus_pointer_table:
+    constant bonus_pointer_table_origin(origin())
+    dw 0                                // Peach's Castle
+    dw 0                                // Sector Z
+    dw 0                                // Congo Jungle
+    dw 0                                // Planet Zebes
+    dw 0                                // Hyrule Castle
+    dw 0                                // Yoshi's Island
+    dw 0                                // Dream Land
+    dw 0                                // Saffron City
+    dw 0                                // Mushroom Kingdom
+    dw 0                                // Dream Land Beta 1
+    dw 0                                // Dream Land Beta 2
+    dw 0                                // How to Play
+    dw 0                                // Yoshi's Island (1P)
+    dw 0                                // Meta Crystal
+    dw 0                                // Batlefield
+    dw 0                                // Race to the Finish (Placeholder)
+    dw 0                                // Final Destination
+    dw 0x8018EEC4                       // BTT Mario
+    dw 0x8018EED0                       // BTT Fox
+    dw 0x8018EEDC                       // BTT DK
+    dw 0x8018EEE8                       // BTT Samus
+    dw 0x8018EEF4                       // BTT Luigi
+    dw 0x8018EF00                       // BTT Link
+    dw 0x8018EF0C                       // BTT Yoshi
+    dw 0x8018EF18                       // BTT Falcon
+    dw 0x8018EF24                       // BTT Kirby
+    dw 0x8018EF30                       // BTT Pikachu
+    dw 0x8018EF3C                       // BTT Jigglypuff
+    dw 0x8018EF48                       // BTT Ness
+    dw 0x8018EF54                       // BTP Mario
+    dw 0x8018EF5C                       // BTP Fox
+    dw 0x8018EF64                       // BTP DK
+    dw 0x8018EF6C                       // BTP Samus
+    dw 0x8018EF74                       // BTP Luigi
+    dw 0x8018EF7C                       // BTP Link
+    dw 0x8018EF84                       // BTP Yoshi
+    dw 0x8018EF8C                       // BTP Falcon
+    dw 0x8018EF94                       // BTP Kirby
+    dw 0x8018EF9C                       // BTP Pikachu
+    dw 0x8018EFA4                       // BTP Jigglypuff
+    dw 0x8018EFAC                       // BTP Ness
+    fill 4 * (id.MAX_STAGE_ID - id.BTX_LAST)
 
     string_peachs_castle:;          String.insert("Peach's Castle")
     string_sector_z:;               String.insert("Sector Z")
@@ -2313,15 +2554,42 @@ scope Stages {
     // display_name - Name to display
     // bgm_occasional - BGM_ID for the Occasional alternate BGM, or -1 if no alternate. Example: {MIDI.id.COOLCOOLMOUNTAIN}
     // bgm_rare - BGM_ID for the Rare alternate BGM, or -1 if no alternate. Example: {MIDI.id.COOLCOOLMOUNTAIN}
-    macro add_stage(name, display_name, bgm_occasional, bgm_rare) {
+    // tournament_legal - sets the default random stage toggle value for this stage... 1 if legal, 0 if not legal
+    // can_toggle - (bool) indicates if this should be toggleable
+    // class - stage class (see class scope)
+    // btt_word_1 - first BTT related word in table 0x113604
+    // btt_word_2 - second BTT related word in table 0x113604
+    // btt_word_3 - third BTT related word in table 0x113604
+    macro add_stage(name, display_name, bgm_occasional, bgm_rare, tournament_legal, can_toggle, class, btt_word_1, btt_word_2, btt_word_3) {
         global variable new_stages(new_stages + 1)
         evaluate new_stage_id(0x28 + new_stages)
         global define STAGE_{new_stage_id}_TITLE({display_name})
+        global define STAGE_{new_stage_id}_LEGAL({tournament_legal})
+        global define STAGE_{new_stage_id}_TOGGLE({can_toggle})
         print " - Added Stage 0x"; OS.print_hex({new_stage_id}); print ": ", {display_name}, "\n";
 
         string_{name}:; String.insert({display_name})
 
+        if {class} == class.BTT {
+            btt_words_{name}:
+            dw    {btt_word_1}
+            dw    {btt_word_2}
+            dw    {btt_word_3}
+        }
+
         pushvar origin, base
+
+        // update class table
+        origin class_table_origin + {new_stage_id}
+        db     {class}
+
+        // update bonus pointer table
+        origin bonus_pointer_table_origin + ({new_stage_id} * 4)
+        if {class} == class.BTT {
+            dw     btt_words_{name}
+        } else {
+            dw     0
+        }
 
         // update string table
         origin string_table_origin + ({new_stage_id} * 4)
@@ -2336,42 +2604,156 @@ scope Stages {
     }
 
     // Add stages here
-    add_stage(deku_tree, "Deku Tree", -1, -1)
-    add_stage(first_destination, "First Destination", -1, -1)
-    add_stage(ganons_tower, "Ganon's Tower", -1, -1)
-    add_stage(kalos_pokemon_league, "Kalos Pokemon League", -1, -1)
-    add_stage(pokemon_stadium_2, "Pokemon Stadium II", -1, -1)
-    add_stage(skyloft, "Skyloft", -1, -1)
-    add_stage(smashville, "Smashville", -1, -1)
-    add_stage(warioware, "WarioWare, Inc.", -1, -1)
-    add_stage(battlefield, "Battlefield", {MIDI.id.DRAGONKING}, -1)
-    add_stage(corneria_city, "Corneria City", -1, -1)
-    add_stage(dr_mario, "Dr. Mario", -1, -1)
-    add_stage(cool_cool_mountain, "Cool Cool Mountain", -1, -1)
-    add_stage(dragon_king, "Dragon King", -1, -1)
-    add_stage(great_bay, "Great Bay", -1, -1)
-    add_stage(frays_stage, "Fray's Stage", -1, -1)
-    add_stage(toh, "Tower of Heaven", -1, -1)
-	add_stage(fod, "Fountain of Dreams", -1, -1)
-    add_stage(muda, "Muda Kingdom", -1, -1)
-    add_stage(mementos, "Mementos", -1, -1)
-    add_stage(showdown, "Showdown", -1, -1)
-    add_stage(spiralm, "Spiral Mountain", -1, -1)
-    add_stage(n64, "N64", -1, -1)
-    add_stage(mute, "Mute City", {MIDI.id.BIG_BLUE}, -1)
-    add_stage(madmm, "Mad Monster Mansion", -1, -1)
-    add_stage(smbbf, "Mushroom Kingdom BF", -1, -1)
-    add_stage(smbo, "Mushroom Kingdom O", -1, -1)
-    add_stage(bowserb, "Bowser's Stadium", {MIDI.id.BOWSERROAD}, {MIDI.id.BOWSERFINAL})
-    add_stage(peach2, "Peach's Castle II", {MIDI.id.WING_CAP}, {MIDI.id.METAL_CAP})
-    add_stage(delfino, "Delfino Plaza", -1, -1)
-    add_stage(corneria2, "Corneria", -1, -1)
-    add_stage(kitchen, "Kitchen Island", {MIDI.id.HORROR_MANOR}, -1)
-    add_stage(blue, "Big Blue", -1, -1)
-    add_stage(onett, "Onett", -1, -1)
-    add_stage(zlanding, "Zebes Landing", {MIDI.id.SHOWDOWN}, -1)
-    add_stage(frosty, "Frosty Village", -1, -1)
-    add_stage(smashville2, "Smashville 2", {MIDI.id.PIKA_CUP}, -1)
+    add_stage(deku_tree, "Deku Tree", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(first_destination, "First Destination", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(ganons_tower, "Ganon's Tower", {MIDI.id.GERUDO_VALLEY}, {MIDI.id.GERUDO_VALLEY}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(kalos_pokemon_league, "Kalos Pokemon League", {MIDI.id.ELITE_FOUR}, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(pokemon_stadium_2, "Pokemon Stadium", {MIDI.id.PIKA_CUP}, {MIDI.id.ELITE_FOUR}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(skyloft, "Skyloft", -1, {MIDI.id.GERUDO_VALLEY}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(glacial, "Glacial River", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(warioware, "WarioWare, Inc.", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(battlefield, "Battlefield", {MIDI.id.DRAGONKING}, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(corneria_city, "Corneria City", {MIDI.id.STAR_WOLF}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(dr_mario, "Dr. Mario", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(cool_cool_mountain, "Cool Cool Mountain", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(dragon_king, "Dragon King", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(great_bay, "Great Bay", -1, {MIDI.id.GERUDO_VALLEY}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(frays_stage, "Fray's Stage", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(toh, "Tower of Heaven", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
+	add_stage(fod, "Fountain of Dreams", {MIDI.id.POP_STAR}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(muda, "Muda Kingdom", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(mementos, "Mementos", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(showdown, "Showdown", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(spiralm, "Spiral Mountain", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(n64, "N64", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(mute, "Mute City", {MIDI.id.MACHRIDER}, {MIDI.id.BIG_BLUE}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(madmm, "Mad Monster Mansion", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(smbbf, "Mushroom Kingdom BF", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(smbo, "Mushroom Kingdom O", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(bowserb, "Bowser's Stadium", {MIDI.id.BOWSERROAD}, {MIDI.id.BOWSERFINAL}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(peach2, "Peach's Castle II", {MIDI.id.WING_CAP}, {MIDI.id.METAL_CAP}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(delfino, "Delfino Plaza", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(corneria2, "Corneria", {MIDI.id.STAR_WOLF}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(kitchen, "Kitchen Island", {MIDI.id.HORROR_MANOR}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(blue, "Big Blue", {MIDI.id.MACHRIDER}, {MIDI.id.MACHRIDER}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(onett, "Onett", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(zlanding, "Zebes Landing", {MIDI.id.SHOWDOWN}, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(frosty, "Frosty Village", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(smashville2, "Smashville", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(drm_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x000038F0, 0x00003D10, 0x00003F20)
+    add_stage(gnd_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x000054D8, 0x00005AF0, 0x00005D00)
+    add_stage(yl_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x000035D0, 0x000038A0, 0x00003AB0)
+    add_stage(great_bay_sss, "Great Bay", -1, -1, OS.FALSE, OS.FALSE, class.SSS_PREVIEW, -1, -1, -1)
+    add_stage(ds_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x00006188, 0x00006720, 0x00006930)
+    add_stage(stg1_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x00008B10, 0x00008FE0, 0x000091F0)
+    add_stage(falco_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x00004430, 0x00004930, 0x00004B40)
+    add_stage(wario_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x00002F90, 0x00003300, 0x00003510)
+
+    // @ Description
+    // This function replaces the logic to convert the default cursor_id to a stage_id.
+    // @ Returns
+    // v0 - stage_id
+    scope swap_stage_: {
+        OS.patch_start(0x0014F774, 0x80133C04)
+//      jal     0x80132430                  // original line 1
+//      nop                                 // original line 2
+        jal     swap_stage_
+        nop
+        OS.patch_end()
+
+        addiu   sp, sp,-0x0014              // allocate stack space
+        sw      t0, 0x0004(sp)              // ~
+        sw      ra, 0x0008(sp)              // ~
+        sw      at, 0x000C(sp)              // save registers
+
+        jal     get_stage_id_               // v0 = stage_id
+        nop
+
+        // this block checks if random is selected (if not stage_id is returned)
+        _check_random:
+        lli     t0, id.RANDOM               // t0 = id.RANDOM
+        bne     v0, t0, _end                // if (stage_id != id.RANDOM), end
+        nop
+
+        li      t0, random_count            // ~
+        sw      r0, 0x0000(t0)              // reset count
+
+        add_to_list(Toggles.entry_random_stage_peachs_castle, id.PEACHS_CASTLE)
+        add_to_list(Toggles.entry_random_stage_sector_z, id.SECTOR_Z)
+        add_to_list(Toggles.entry_random_stage_congo_jungle, id.CONGO_JUNGLE)
+        add_to_list(Toggles.entry_random_stage_planet_zebes, id.PLANET_ZEBES)
+        add_to_list(Toggles.entry_random_stage_hyrule_castle, id.HYRULE_CASTLE)
+        add_to_list(Toggles.entry_random_stage_yoshis_island, id.YOSHIS_ISLAND)
+        add_to_list(Toggles.entry_random_stage_dream_land, id.DREAM_LAND)
+        add_to_list(Toggles.entry_random_stage_saffron_city, id.SAFFRON_CITY)
+        add_to_list(Toggles.entry_random_stage_mushroom_kingdom, id.MUSHROOM_KINGDOM)
+        add_to_list(Toggles.entry_random_stage_duel_zone, id.DUEL_ZONE)
+        add_to_list(Toggles.entry_random_stage_final_destination, id.FINAL_DESTINATION)
+        add_to_list(Toggles.entry_random_stage_dream_land_beta_1, id.DREAM_LAND_BETA_1)
+        add_to_list(Toggles.entry_random_stage_dream_land_beta_2, id.DREAM_LAND_BETA_2)
+        add_to_list(Toggles.entry_random_stage_how_to_play, id.HOW_TO_PLAY)
+        add_to_list(Toggles.entry_random_stage_mini_yoshis_island, id.MINI_YOSHIS_ISLAND)
+        add_to_list(Toggles.entry_random_stage_meta_crystal, id.META_CRYSTAL)
+
+        // Add custom Stages
+        define n(0x29)
+        evaluate n({n})
+        while {n} <= id.MAX_STAGE_ID {
+            evaluate can_toggle({STAGE_{n}_TOGGLE})
+            if ({can_toggle} == OS.TRUE) {
+                add_to_list(Toggles.entry_random_stage_{n}, {n})
+            }
+            evaluate n({n}+1)
+        }
+
+        // It seems like the first time it's called, get_random_int_ returns 0.
+        // So let's avoid that by calling once and ignoring the result.
+        sw      v1, 0x0010(sp)              // save v1
+        lli     a0, 10                      // a0 = 10 (not sure it matters)
+        jal     Global.get_random_int_      // v0 = (0, N-1)
+        nop
+        lw      v1, 0x0010(sp)              // restore v1
+
+        beqz    v1, _any_valid_stage        // if there were no valid entries in the random table, then use all stage_ids
+        nop
+
+        // this block loads from the random list using a random int
+        move    a0, v1                      // a0 - range (0, N-1)
+        jal     Global.get_random_int_      // v0 = (0, N-1)
+        nop
+        li      t0, random_table            // t0 = random_table
+        addu    t0, t0, v0                  // t0 = random_table + offset
+        lbu     v0, 0x0000(t0)              // v0 = stage_id
+        b       _end                        // get a new stage id based off of random offset
+        nop
+
+        _any_valid_stage:
+        lli     a0, 16 + id.MAX_STAGE_ID - id.BTX_LAST // a0 = number of new stages + original valid 16 stages
+        jal     Global.get_random_int_                 // v0 = (0, N-1)
+        nop
+        slti    t0, v0, id.RACE_TO_THE_FINISH          // if it's a stage_id low enough, then we don't have to correct it
+        bnez    t0, _end                               // so skip to end
+        nop                                            // otherwise, we'll have to shift it:
+        addiu   v0, v0, 0x0001                         // v0 = adjusted stage_id
+        lli     t0, id.FINAL_DESTINATION               // if it's RACE_TO_THE_FINISH,
+        beq     t0, v0, _end                           // then return FINAL_DESTINATION
+        nop
+        addiu   v0, v0, id.BTX_LAST - id.BTX_FIRST - 1 // otherwise it's a new stage, so adjust accordingly
+        // now make sure it's a valid BATTLE stage
+        li      at, class_table                        // at = class_table
+        addu    at, at, v0                             // at = address of class
+        lbu     at, 0x0000(at)                         // at = class (0 if BATTLE)
+        bnez    at, _any_valid_stage                   // if it's not a BATTLE stage, try again
+        nop
+
+        _end:
+        lw      t0, 0x0004(sp)              // ~
+        lw      ra, 0x0008(sp)              // ~
+        lw      at, 0x000C(sp)              // restore registers
+        addiu   sp, sp, 0x0014              // deallocate stack space
+        jr      ra                          // return
+        nop
+    }
 
 }
 

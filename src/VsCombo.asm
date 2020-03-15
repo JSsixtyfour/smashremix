@@ -4,7 +4,7 @@ define __VSCOMBO__()
 print "included VsCombo.asm\n"
 
 // @ Description
-// This file ads combo meters to VS. matches.
+// This file adds combo meters to VS. matches.
 
 include "Character.asm"
 include "Data.asm"
@@ -397,7 +397,7 @@ scope VsCombo {
         li      t2, combo_text_map                // t2 = combo_text_map address
         addu    t2, t2, t1                        // t2 = address of texture struct address
         lw      a2, 0x0000(t2)                    // a2 = address of texture struct
-        jal     Overlay.draw_texture_big_         // draw combo text texture
+        jal     Overlay.draw_texture_             // draw combo text texture
         nop
         addiu   a0, t4, 64                        // a0 = ulx + 64
         lli     a1, COMBO_METER_Y_COORD           // a1 = uly
@@ -415,8 +415,8 @@ scope VsCombo {
         lw      t3, 0x0010(sp)                    // ~
         lw      t4, 0x0014(sp)                    // ~
         lw      t5, 0x0018(sp)                    // ~
-        sw      t6, 0x001C(sp)                    // ~
-        sw      t7, 0x0020(sp)                    // ~
+        lw      t6, 0x001C(sp)                    // ~
+        lw      t7, 0x0020(sp)                    // ~
         lw      ra, 0x0024(sp)                    // save registers
         addiu   sp, sp, 0x0028                    // deallocate stack space
         jr      ra                                // return

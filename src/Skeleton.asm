@@ -18,8 +18,8 @@ scope Skeleton {
         sw      ra, 0x000C(sp)              // store registers
 
         li      t0, Toggles.entry_special_model
-        lw      t0, 0x0004(t0)              // t0 = 2 if skeleton_mode
-        lli     t1, 0x0002                  // t1 = 2
+        lw      t0, 0x0004(t0)              // t0 = 3 if skeleton_mode
+        lli     t1, 0x0003                  // t1 = 3
         bne     t0, t1, _end                // if not skeleton mode, skip
         nop
         

@@ -44,9 +44,9 @@ scope BGM {
 
     // @ Description
     // These constants determine alternate music chances
-    constant CHANCE_MAIN(80)
-    constant CHANCE_OCCASIONAL(15)
-    constant CHANCE_RARE(5)
+    constant CHANCE_MAIN(67)
+    constant CHANCE_OCCASIONAL(20)
+    constant CHANCE_RARE(13)
 
     // @ Description
     // This function replaces a1 with alternate ids defined for the stage, sometimes.
@@ -78,6 +78,38 @@ scope BGM {
         bne     t0, v0, _end                // if not fight screen, end
         nop
 
+        // check for held buttons to force alternate music: CU - Default, CL - Occasional, CR - Rare
+        addu    t0, r0, a1                  // t0 = bgm_id
+        lli     a0, Joypad.CU               // a0 - button masks
+        lli     a1, OS.TRUE                 // a1 - ignore other buttons
+        lli     a2, Joypad.HELD             // a2 - type
+        jal     Joypad.check_buttons_all_   // v0 = bool
+        nop
+        addu    a1, t0, r0                  // a1 = bgm_id
+        bnez    v0, _end                    // if CU pressed, then use default
+        nop
+
+        addu    t0, r0, a1                  // t0 = bgm_id
+        lli     a0, Joypad.CL               // a0 - button masks
+        lli     a1, OS.TRUE                 // a1 - ignore other buttons
+        lli     a2, Joypad.HELD             // a2 - type
+        jal     Joypad.check_buttons_all_   // v0 = bool
+        nop
+        addu    a1, t0, r0                  // a1 = bgm_id
+        bnez    v0, _get_bgm_id             // if CL pressed,
+        ori     a0, r0, 0x0000              // then use the Occasional song
+
+        addu    t0, r0, a1                  // t0 = bgm_id
+        lli     a0, Joypad.CR               // a0 - button masks
+        lli     a1, OS.TRUE                 // a1 - ignore other buttons
+        lli     a2, Joypad.HELD             // a2 - type
+        jal     Joypad.check_buttons_all_   // v0 = bool
+        nop
+        addu    a1, t0, r0                  // a1 = bgm_id
+        bnez    v0, _get_bgm_id             // if CR pressed,
+        ori     a0, r0, 0x0002              // then use the Occasional song
+
+        // otherwise, alt music will play by chance
         lli     a0, 100                     // a0 - range (0, N-1)
         jal     Global.get_random_int_      // v0 = (0, N-1)
         nop
@@ -234,13 +266,17 @@ scope BGM {
         add_to_list(Toggles.entry_random_music_final_destination, stage.FINAL_DESTINATION)
         add_to_list(Toggles.entry_random_music_how_to_play, stage.HOW_TO_PLAY)
         add_to_list(Toggles.entry_random_music_data, menu.DATA)
-        add_to_list(Toggles.entry_random_music_meta_crystal, stage.META_CRYSTAL)
+        add_to_list(Toggles.entry_random_music_bonus, menu.BONUS)
+        add_to_list(Toggles.entry_random_music_credits, menu.CREDITS)
 
         // Add custom MIDIs
         define n(0x2F)
         evaluate n({n})
         while {n} < MIDI.midi_count {
-            add_to_list(Toggles.entry_random_music_{n}, {n})
+            evaluate can_toggle({MIDI.MIDI_{n}_TOGGLE})
+            if ({can_toggle} == OS.TRUE) {
+                add_to_list(Toggles.entry_random_music_{n}, {n})
+            }
             evaluate n({n}+1)
         }
 

@@ -713,10 +713,11 @@ scope Menu {
     // a0 - address of head
     // a1 - address of block
     scope export_: {
-        addiu   sp, sp,-0x0010              // allocate stack space
+        addiu   sp, sp,-0x0014              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // ~
-        sw      a1, 0x000C(sp)              // save registers
+        sw      t2, 0x000C(sp)              // ~
+        sw      a1, 0x0010(sp)              // save registers
 
         move    t0, a0                      // t0 = first entry
         addiu   a1, a1, 0x000C              // a1 = address of SRAM block data
@@ -724,18 +725,28 @@ scope Menu {
         _loop:
         beqz    t0, _end                    // if (entry = null), end
         nop
+
+        // skip exporting titles
+        lli     t2, Menu.type.TITLE         // t2 = title type
+        lw      t1, 0x0000(t0)              // t1 = type
+        beq     t2, t1, _skip               // if (type == title), skip
+        nop
+
         lw      t1, 0x0004(t0)              // t1 = entry.curr_value
         sw      t1, 0x0000(a1)              // export
-        lw      t0, 0x001C(t0)              // t0 = entry->next
         addiu   a1, a1, 0x0004              // increment ram_address
+
+        _skip:
+        lw      t0, 0x001C(t0)              // t0 = entry->next
         b       _loop                       // check again
         nop
 
         _end:
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // ~
-        lw      a1, 0x000C(sp)              // restore registers
-        addiu   sp, sp, 0x0010              // deallocate stack space
+        lw      t2, 0x000C(sp)              // ~
+        lw      a1, 0x0010(sp)              // restore registers
+        addiu   sp, sp, 0x0014              // deallocate stack space
         jr      ra
         nop
     }
@@ -745,10 +756,11 @@ scope Menu {
     // a0 - address of head
     // a1 - address of block
     scope import_: {
-        addiu   sp, sp,-0x0010              // allocate stack space
+        addiu   sp, sp,-0x0014              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // ~
-        sw      a1, 0x000C(sp)              // save registers
+        sw      t2, 0x000C(sp)              // ~
+        sw      a1, 0x0010(sp)              // save registers
 
         move    t0, a0                      // t0 = first entry
         addiu   a1, a1, 0x000C              // a1 = address of SRAM block data
@@ -756,18 +768,28 @@ scope Menu {
         _loop:
         beqz    t0, _end                    // if (entry = null), end
         nop
+
+        // skip titles when importing
+        lli     t2, Menu.type.TITLE         // t2 = title type
+        lw      t1, 0x0000(t0)              // t1 = type
+        beq     t2, t1, _skip               // if (type == title), skip
+        nop
+
         lw      t1, 0x0000(a1)              // t1 = value at ram_address
         sw      t1, 0x0004(t0)              // update curr_value
-        lw      t0, 0x001C(t0)              // t0 = entry->next
         addiu   a1, a1, 0x0004              // increment ram_address
+
+        _skip:
+        lw      t0, 0x001C(t0)              // t0 = entry->next
         b       _loop                       // check again
         nop
 
         _end:
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // ~
-        lw      a1, 0x000C(sp)              // restore registers
-        addiu   sp, sp, 0x0010              // deallocate stack space
+        lw      t2, 0x000C(sp)              // ~
+        lw      a1, 0x0010(sp)              // restore registers
+        addiu   sp, sp, 0x0014              // deallocate stack space
         jr      ra
         nop
     }

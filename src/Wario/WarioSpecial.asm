@@ -18,6 +18,8 @@ scope WarioNSP {
     constant BEGIN(0x1)
     constant MOVE(0x2)
     
+    constant WALL_COLLISION(0x0021)         // bitmask for wall collision
+    
     // @ Description
     // Subroutine which runs when Wario initiates a grounded neutral special.
     // Changes action, and sets up initial variable values.
@@ -109,8 +111,18 @@ scope WarioNSP {
     // Copy of subroutine 0x800D8BB4, loads a hard-coded traction value instead of the character's
     // traction value.
     scope ground_physics_: {
-        // Copy the first 13 lines of subroutine 0x800D8BB4
-        OS.copy_segment(0x543B4, 0x34)
+        // Copy the first 10 lines of subroutine 0x800D8BB4
+        OS.copy_segment(0x543B4, 0x28)
+        // Replace original lines which load the base friction from the friction table
+        constant UPPER(Surface.friction_table >> 16)
+        constant LOWER(Surface.friction_table & 0xFFFF)
+        if LOWER > 0x7FFF {
+            lui     at, (UPPER + 0x1)
+        } else {
+            lui     at, UPPER
+        }
+        addu    at, at, t9
+        lwc1    f4, LOWER(at)
         // Replace original line which loads the character's grounded tracion value
         // lwc1 f6, 0x0024(v0)              // replaced line
         lui     a1, GROUND_TRACTION         // ~
@@ -123,11 +135,33 @@ scope WarioNSP {
     // Subroutine which handles collision for Wario's grounded neutral special.
     scope ground_collision_: {
         addiu   sp, sp,-0x0018              // allocate stack space
-        sw      a0, 0x0010(sp)              // store a0
-        sw      ra, 0x0014(sp)              // store ra
+        sw      a0, 0x0010(sp)              // ~
+        sw      ra, 0x0014(sp)              // store ra, a0
+        lw      a0, 0x0084(a0)              // a0 = player struct
+        lbu     a1, 0x000D(a0)              // a1 = player port
+        li      a2, special_jim_flag        // ~
+        addu    t0, a2, a1                  // t0 = px special_jim_flag address
+        lw      a1, 0x0184(a0)              // a1 = temp variable 3
+        ori     a2, r0, MOVE                // a2 = MOVE
+        bnel    a1, a2, _recoil_check       // skip if a1 != MOVE
+        sb      r0, 0x0000(t0)              // reset px special_jim_flag on branch
+        
+        _wall_collision:
+        lhu     a1, 0x00CC(a0)              // a1 = collision flags
+        andi    a1, a1, WALL_COLLISION      // a1 = collision flags & WALL_COLLISION
+        beql    a1, r0, _recoil_check       // skip if !WALL_COLLISION
+        sb      r0, 0x0000(t0)              // reset px special_jim_flag on branch
+        lbu     a1, 0x0000(t0)              // a2 = px special_jim_flag
+        bne     a1, r0, _recoil_check       // skip if Jim's special collision flag is enabled
+        nop
+        // enable the flag to begin recoil
+        ori     a1, r0, 0x0001              // ~
+        sw      a1, 0x017C(a0)              // temp variable 1 = 0x1 (recoil flag = true)
+        
+        _recoil_check:
         li      a1, _end                    // a1 = _end
         jal     check_recoil_               // check for recoil transition
-        nop
+        lw      a0, 0x0010(sp)              // load a0
         li      a1, ground_to_air_          // a1 = ground_to_air_
         jal     0x800DDDDC                  // ground collision (with slide-off)
         lw      a0, 0x0010(sp)              // load a0
@@ -306,10 +340,28 @@ scope WarioNSP {
     scope air_collision_: {
         addiu   sp, sp,-0x0018              // allocate stack space
         sw      a0, 0x0010(sp)              // ~
-        sw      ra, 0x0014(sp)              // store ra, a0
+        sw      ra, 0x0014(sp)              // store ra, a0  
+        lw      a0, 0x0084(a0)              // a0 = player struct
+        lbu     a1, 0x000D(a0)              // a1 = player port
+        li      a2, special_jim_flag        // ~
+        addu    t0, a2, a1                  // t0 = px special_jim_flag address
+        lw      a1, 0x0184(a0)              // a1 = temp variable 3
+        ori     a2, r0, MOVE                // a2 = MOVE
+        bnel    a1, a2, _recoil_check       // skip if a1 != MOVE
+        sb      r0, 0x0000(t0)              // reset px special_jim_flag on branch
+        
+        _wall_collision:
+        lhu     a1, 0x00CC(a0)              // a1 = collision flags
+        andi    a1, a1, WALL_COLLISION      // a1 = collision flags & WALL_COLLISION
+        beql    a1, r0, _recoil_check       // skip if !WALL_COLLISION
+        sb      r0, 0x0000(t0)              // reset px special_jim_flag on branch
+        ori     a1, r0, OS.TRUE             // ~
+        sb      a1, 0x0000(t0)              // px special_jim_flag = TRUE
+        
+        _recoil_check:
         li      a1, _end                    // a1 = _end
         jal     check_recoil_               // check for recoil transition
-        nop
+        lw      a0, 0x0010(sp)              // load a0
         li      a1, air_to_ground_          // a1 = air_to_ground_
         jal     0x800DE6E4                  // general air collision?
         lw      a0, 0x0010(sp)              // load a0
@@ -473,6 +525,10 @@ scope WarioNSP {
         addiu   sp, sp, 0xFFE0              // ~
         sw      ra, 0x001C(sp)              // ~
         sw      a0, 0x0020(sp)              // original lines 1-3
+        ori     a0, r0, 0x0117              // a0 = FGM ID
+        jal     FGM.play_                   // play fgm
+        nop
+        lw      a0, 0x0020(sp)              // ~
         lw      a0, 0x0084(a0)              // a0 = player struct
         lw      t7, 0x014C(a0)              // t7 = kinetic state
         bnez    t7, _end                    // skip if kinetic state !grounded
@@ -493,12 +549,24 @@ scope WarioNSP {
         jr      ra                          // original return logic
         nop
     }
+    
+    // @ Description
+    // This is Jim's special collision flag.
+    // Its primary purpose is to disable grounded wall collision recoil when Wario transitions from
+    // air to ground while already colliding with a wall.
+    // Its secondary purpose is to make Jim shut up.
+    special_jim_flag:
+    db 0x00 //p1
+    db 0x00 //p2
+    db 0x00 //p3
+    db 0x00 //p4
 }
 
 // @ Description
 // Subroutines for Up Special    
 scope WarioUSP {
     constant Y_SPEED(0x4280)                // current setting - float:64.0
+    constant LANDING_FSM(0x3E80)            // current setting - float:0.25
     
     // @ Description
     // Subroutine which runs when Wario initiates an up special (both ground/air).
@@ -542,6 +610,28 @@ scope WarioUSP {
     }
     
     // @ Description
+    // Main subroutine for Wario's up special.
+    // Based on subroutine 0x8015C750, which is the main subroutine of Fox's up special ending.
+    // Modified to load Wario's landing FSM value and disable the interrupt flag.
+    scope main_: {
+        // Copy the first 8 lines of subroutine 0x8015C750
+        OS.copy_segment(0xD7190, 0x20)
+        bc1fl   _end                        // skip if animation end has not been reached
+        lw      ra, 0x0024(sp)              // restore ra
+        sw      r0, 0x0010(sp)              // unknown argument = 0
+        sw      r0, 0x0018(sp)              // interrupt flag = FALSE
+        lui     t6, LANDING_FSM             // t6 = LANDING_FSM
+        jal     0x801438F0                  // begin special fall
+        sw      t6, 0x0014(sp)              // store LANDING_FSM
+        lw      ra, 0x0024(sp)              // restore ra
+        
+        _end:
+        addiu   sp, sp, 0x0028              // deallocate stack space
+        jr      ra                          // return
+        nop
+    }
+    
+    // @ Description
     // Subroutine which allows a direction change for Wario's up special.
     // Uses the moveset data command 580000XX (orignally identified as "set flag" by toomai)
     // This command's purpose appears to be setting a temporary variable in the player struct.  
@@ -579,7 +669,7 @@ scope WarioUSP {
     // 0x2 = begin movement
     // 0x3 = movement
     // 0x4 = end movement?
-    scope movement_: {
+    scope physics_: {
         // s0 = player struct
         // s1 = attributes pointer
         // 0x184 in player struct = temp variable 3
@@ -597,7 +687,7 @@ scope WarioUSP {
         swc1    f2, 0x0030(sp)              // ~
         swc1    f4, 0x0034(sp)              // store t0, t1, f0, f2, f4
         
-        OS.copy_segment(0x548F0, 0x40)      // copy from original air movement subroutine
+        OS.copy_segment(0x548F0, 0x40)      // copy from original air physics subroutine
         bnez    v0, _check_begin            // modified original branch
         nop
         li      t8, 0x800D8FA8              // t8 = subroutine which disallows air control
@@ -727,11 +817,11 @@ scope WarioUSP {
         lw      a3, 0x0050(t6)              // a3 = max air speed
         lw      t0, 0x0184(s0)              // t0 = temp variable 3
         _check_move:
-        ori     t1, r0, movement_.MOVE      // t1 = MOVE
+        ori     t1, r0, physics_.MOVE       // t1 = MOVE
         beql    t0, t1, _continue           // branch if temp variable 3 = MOVE
         lui     a2, 0x3CC0                  // on branch, a2 = 0.0234375
         _check_end_move:
-        ori     t1, r0, movement_.END_MOVE  // t1 = END_MOVE
+        ori     t1, r0, physics_.END_MOVE   // t1 = END_MOVE
         beql    t0, t1, _continue           // branch if temp variable 3 = END_MOVE
         lui     a2, 0x3C00                  // on branch, a2 = 0.0078125
         
@@ -744,6 +834,20 @@ scope WarioUSP {
         addiu   sp, sp, 0x0028              // deallocate stack space
         jr      ra                          // return
         nop
+    }
+    
+    // @ Description
+    // Subroutine which handles collision for Wario's up special.
+    // Copy of subroutine 0x80156358, which is the collision subroutine for Mario's up special.
+    // Loads the appropriate landing fsm value for Wario.
+    scope collision_: {
+        // Copy the first 30 lines of subroutine 0x80156358
+        OS.copy_segment(0xD0D98, 0x78)
+        // Replace original line which loads the landing fsm
+        //lui     a2, 0x3E8F                // original line 1
+        lui     a2, LANDING_FSM             // a2 = LANDING_FSM
+        // Copy the last 17 lines of subroutine 0x80156358
+        OS.copy_segment(0xD0E14, 0x44)
     }
 }
     

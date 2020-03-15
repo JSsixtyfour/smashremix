@@ -6,6 +6,7 @@ scope DSamus {
     // Insert Moveset files
     insert ROLLSUB, "moveset/ROLLSUBROUTINE.bin"
     insert JUMP2, "moveset/JUMP2.bin"
+    insert RUN_LOOP, "moveset/RUN_LOOP.bin"; Moveset.GO_TO(RUN_LOOP)           // loops
     insert FAIR, "moveset/FAIR.bin"
     insert NAIR, "moveset/NAIR.bin"
     insert UAIR, "moveset/UAIR.bin"
@@ -41,7 +42,7 @@ scope DSamus {
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(DSAMUS, Action.Dash,           File.DSAMUS_DASH,           -1,                         -1)
     Character.edit_action_parameters(DSAMUS, Action.Walk3,          File.DSAMUS_WALK3,          -1,                         -1)
-    Character.edit_action_parameters(DSAMUS, Action.Run,            File.DSAMUS_RUN,            -1,                         -1)
+    Character.edit_action_parameters(DSAMUS, Action.Run,            File.DSAMUS_RUN,            RUN_LOOP,                   -1)
     Character.edit_action_parameters(DSAMUS, Action.RollF,          File.DSAMUS_ROLLF,          ROLLF,                      -1)
     Character.edit_action_parameters(DSAMUS, Action.RollB,          File.DSAMUS_ROLLB,          ROLLSUB,                    -1)
     Character.edit_action_parameters(DSAMUS, Action.JumpF,          File.DSAMUS_JUMPF,          -1,                         -1)
@@ -144,6 +145,10 @@ scope DSamus {
         li      a1, bomb_anim_struct        // a1 = instructions
         beq     t1, t2, _end                // end if character id = DSAMUS
         nop
+        ori     t2, r0, Character.id.JSAMUS // t2 = id.JSAMUS
+        li      a1, bomb_anim_struct_jsamus // a1 = instructions
+        beq     t1, t2, _end                // end if character id = JSAMUS
+        nop
         li      a1, 0x80189070              // original line (load charge animation struct)
         
         _end:
@@ -171,6 +176,10 @@ scope DSamus {
         ori     t2, r0, Character.id.DSAMUS // t2 = id.DSAMUS
         li      a1, charge_anim_struct      // a1 = file table
         beq     t1, t2, _end                // end if character id = DSAMUS
+        nop
+        ori     t2, r0, Character.id.JSAMUS // t2 = id.JSAMUS
+        li      a1, charge_anim_struct_jsamus      // a1 = file table
+        beq     t1, t2, _end                // end if character id = JSAMUS
         nop
         li      a1, 0x80189030              // original line (load charge animation struct)
         
@@ -202,7 +211,21 @@ scope DSamus {
         dw  0x00000000
         dw  0x00000002
         dw  Character.DSAMUS_file_7_ptr
-        OS.copy_segment(0x103A7C, 0x28)  
+        OS.copy_segment(0x103A7C, 0x28)
+
+        OS.align(16)
+        bomb_anim_struct_jsamus:
+        dw  0x00000000
+        dw  0x00000003
+        dw  Character.JSAMUS_file_1_ptr
+        OS.copy_segment(0x103ABC, 0x28)
+
+        OS.align(16)
+        charge_anim_struct_jsamus:
+        dw  0x00000000
+        dw  0x00000002
+        dw  Character.JSAMUS_file_7_ptr
+        OS.copy_segment(0x103A7C, 0x28)          
         
     // Prevents Dark Samus from losing a jump after using air down special
     scope bomb_loss_prevention: {
@@ -331,6 +354,9 @@ scope DSamus {
         OS.patch_end()
         
         addiu   at, r0, 0x0022
+        beq     v0, at, _darksamusballgraphic
+        nop
+        addiu   at, r0, 0x0024
         beq     v0, at, _darksamusballgraphic
         nop
         addiu   at, r0, 0x0003              // original line

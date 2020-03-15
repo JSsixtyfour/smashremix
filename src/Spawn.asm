@@ -455,10 +455,10 @@ scope Spawn {
     float32  0000,  0000
 
     // 10 - Final Destination
-    float32 -0900,  0001
-    float32  0900,  0001
-    float32 -0600,  0001
-    float32  0600,  0001
+    float32 -1800,  0005
+    float32  1800,  0005
+    float32 -0900,  0005
+    float32  0900,  0005
     
     // 11 - BTT_MARIO (placeholder)
     float32  0000,  0000
@@ -640,11 +640,11 @@ scope Spawn {
     float32  0000,  1520
     float32  0000,  0010
     
-    // 2F - SMASHVILLE
-    float32 -1500,  0035
-    float32  1500,  0035              
-    float32 -0800,  0035
-    float32  0800,  0035
+    // 2F - GLACIAL RIVER
+    float32 -1647,  0130
+    float32  1647,  0130              
+    float32 -0764,  0955
+    float32  0764,  0955
     
     // 30 - WARIOWARE
     float32 -1172,  0783
@@ -766,90 +766,142 @@ scope Spawn {
     float32 -0915,  1061
     float32  0915,  1061
     
-    // 43 - Peach's Castle II
+    // 44 - Peach's Castle II
     float32 -2758,  0097
     float32  3423,  0097
     float32 -1489,  0097
     float32  1898,  0097
     
-    // 44 - Delfino
+    // 45 - Delfino
     float32 -2500,  0900
     float32  2500,  0900
     float32 -1240,  0900
     float32  1240,  0900
     
-    // 45 - Corneria
+    // 46 - Corneria
     float32 -3339,  1400
     float32  0885,  1995
     float32 -2042,  1212
     float32 -0320,  1411
     
-    // 46 - Kitchen
-    float32 -2263,  3137
-    float32  2252,  3567
-    float32 -0669,  2181
-    float32  2267,  1389
+    // 47 - Kitchen
+    float32 -2047,  1171
+    float32  2346,  1563
+    float32 -0398,  1554
+    float32  0912,  0815
     
-    // 47 - Big Blue
-    float32 -3780,  2003
-    float32  5125,  1488
-    float32 -1740,  1133
-    float32  3489,  0604
+    // 48 - Big Blue
+    float32 -1711,  0402
+    float32  1763,  0388
+    float32 -3530,  0320
+    float32  3675,  0428
     
-    // 48 - Onett
-    float32 -0057,  2043
-    float32  4163,  2413
-    float32 -0776,  3017
-    float32  3795,  3678
+    // 49 - Onett
+    float32 -2292,  2043
+    float32  1792,  2413
+    float32 -3144,  3017
+    float32  1426,  3678
     
-    // 49 - Zebes Landing
+    // 4A - Zebes Landing
     float32 -1400,  0910
     float32  1400,  0910
     float32  0000,  1545
     float32  0000,  0005
     
-    // 4A - Frosty Village
+    // 4B - Frosty Village
     float32 -2439,  2426
     float32  1626,  1324
     float32 -0672,  1156
     float32  2953,  0117
     
-    // 4B - SMASHVILLE
+    // 4C - SMASHVILLE
     float32 -1500,  0035
     float32  1500,  0035              
     float32 -0800,  0035
     float32  0800,  0035
+    
+    // 4D - BTT_DRM
+    float32 -1657, -2638
+    float32 -1657, -2638
+    float32 -1657, -2638
+    float32 -1657, -2638
+    
+    // 4E - BTT_GND
+    float32  1705,  0661
+    float32  1705,  0661
+    float32  1705,  0661
+    float32  1705,  0661
+    
+    // 4F - BTT_YL
+    float32  0000,  0035
+    float32  0000,  0035
+    float32  0000,  0035
+    float32  0000,  0035
+    
+    // 50 - Great Bay SSS
+    float32 -1013,  0511
+    float32  1190,  0511
+    float32 -2162, -0563
+    float32  2083, -0545
+
+    // 51 - BTT_DS
+    float32  0000,  0035
+    float32  0000,  0035
+    float32  0000,  0035
+    float32  0000,  0035
+    
+    // 52 - BTT_STAGE 1
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // 53 - BTT_FALCO
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // 54 - BTT_WARIO
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
 
     neutral_table:
     // 00 - Peach's Castle
-    float32 -0210,  1574
-    float32  0765,  1563
-    float32  0300,  1515
-    float32 -0840,  1526
+    float32 -1613,  1554
+    float32  1613,  1412
+    float32 -0665,  0662
+    float32  0665,  0662
 
     // 01 - Sector Z
     float32 -3301,  1869
+    float32  0296,  1739
     float32 -2094,  1708
     float32 -0898,  1593
-    float32  0296,  1739
+    
 
     // 02 - Kongo Jungle
     float32 -1739,  0002
+    float32  1739,  0002
     float32 -0630, -0210
     float32  0630, -0210
-    float32  1739,  0002
+    
 
     // 03 - Planet Zebes
     float32 -2556,  0572
+    float32  1745, -0262
     float32 -1137,  0011
     float32  0000,  0314
-    float32  1745, -0262
+    
 
     // 04 - Hyrule Castle
     float32 -2400,  1042
-    float32 -1110,  1039
-    float32  0240,  1042
     float32  1500,  1042
+    float32 -1110,  1042
+    float32  0240,  1042
+    
 
     // 05 - Yoshi's Island
     float32  0629, -0096
@@ -894,16 +946,16 @@ scope Spawn {
     float32 -1440,  0000
 
     // 0C - Yoshi's Island (1P)
-    float32  0629, -0180
-    float32  0090,  2085
-    float32  0900,  1140
-    float32 -0990,  0828
+    float32 -1105, -0162
+    float32  0986, -0156
+    float32 -1257,  0726
+    float32  1190,  0956
 
     // 0D - Meta Crystal
-    float32 -0960,  0135
-    float32 -0330,  0045
-    float32  0525,  0030
-    float32  1545,  0315
+    float32 -1127,  0031
+    float32  1769,  0263
+    float32 -0431,  0036
+    float32  0786,  0030
 
     // 0E - Duel Zone
     float32 -1200,  1025
@@ -1068,10 +1120,10 @@ scope Spawn {
     float32  0000,  0000
     
     // 29 - DEKU TREE
-    float32 -1397,  0906
-    float32  1421,  0909              
-    float32  0000,  0006
-    float32  0001,  1545
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32 -1400,  0005
+    float32  1400,  0005
     
     // 2A - FIRST DESTINATION
     float32 -1600,  0018
@@ -1103,11 +1155,11 @@ scope Spawn {
     float32 -1825,  0035
     float32  1825,  0035
     
-    // 2F - SMASHVILLE
-    float32 -1500,  0035
-    float32  1500,  0035              
-    float32 -0800,  0035
-    float32  0800,  0035
+    // 2F - GLACIAL RIVER
+    float32 -1647,  0130
+    float32  1647,  0130              
+    float32 -0764,  0955
+    float32  0764,  0955
     
     // 30 - WARIOWARE
     float32 -1172,  0783
@@ -1229,59 +1281,107 @@ scope Spawn {
     float32 -0915,  1061
     float32  0915,  1061
     
-    // 43 - Peach's Castle II
+    // 44 - Peach's Castle II
     float32 -2758,  0097
     float32  3423,  0097
     float32 -1489,  0097
     float32  1898,  0097
     
-    // 44 - Delfino
+    // 45 - Delfino
     float32 -2500,  0900
     float32  2500,  0900
     float32 -1240,  0900
     float32  1240,  0900
     
-    // 45 - Corneria
+    // 46 - Corneria
     float32 -3339,  1400
     float32  0885,  1995
     float32 -2042,  1212
     float32 -0320,  1411
     
-    // 46 - Kitchen Island
-    float32 -2263,  3137
-    float32  2252,  3567
-    float32 -0669,  2181
-    float32  2267,  1389
+    // 47 - Kitchen
+    float32 -2047,  1171
+    float32  2346,  1563
+    float32 -1995,  0232
+    float32  2316, -0634
     
-    // 47 - Big Blue
-    float32 -3780,  2003
-    float32  5125,  1488
-    float32 -1740,  1133
-    float32  3489,  0604
+    // 48 - Big Blue
+    float32 -1711,  0402
+    float32  1763,  0388
+    float32 -3530,  0320
+    float32  3675,  0428
     
-    // 48 - Onett
-    float32 -0057,  2043
-    float32  4163,  2413
-    float32 -0776,  3017
-    float32  3795,  3678
+    // 49 - Onett
+    float32 -2292,  2043
+    float32  1792,  2413
+    float32 -3144,  3017
+    float32  1426,  3678
     
-    // 49 - Zebes Landing
+    // 4A - Zebes Landing
     float32 -1400,  0910
     float32  1400,  0910
     float32 -1400,  0005
     float32  1400,  0005
     
-    // 4A - Frosty Village
+    // 4B - Frosty Village
     float32 -2439,  2426
     float32  1626,  1324
     float32 -0672,  1156
     float32  2953,  0117
     
-    // 4B - SMASHVILLE
+    // 4C - SMASHVILLE
     float32 -1500,  0035
     float32  1500,  0035              
     float32 -0800,  0035
     float32  0800,  0035
+    
+    // 4D - BTT_DRM
+    float32 -1657, -2638
+    float32 -1657, -2638
+    float32 -1657, -2638
+    float32 -1657, -2638
+    
+    // 4E - BTT_GND
+    float32  1705,  0661
+    float32  1705,  0661
+    float32  1705,  0661
+    float32  1705,  0661
+    
+    // 4F - BTT_YL
+    float32  0000,  0035
+    float32  0000,  0035
+    float32  0000,  0035
+    float32  0000,  0035
+    
+    // 50 - Great Bay SSS
+    float32 -1013,  0511
+    float32  1190,  0511
+    float32 -2162, -0563
+    float32  2083, -0545
+
+    // 51 - BTT_DS
+    float32  0000,  0035
+    float32  0000,  0035
+    float32  0000,  0035
+    float32  0000,  0035
+    
+    // 52 - BTT_STAGE 1
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // 53 - BTT_FALCO
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // 54 - BTT_WARIO
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
 }
 
 } // __SPAWN__

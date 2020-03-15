@@ -62,7 +62,22 @@ scope Overlay {
         li      t0, Global.current_screen   // ~
         lb      t0, 0x0000(t0)              // t0 = screen id
 
+        // TITLE screen
+        // screen_id = 0x1 AND first file loaded = 0xA7
+        lli     t1, 0x0001                  // t1 = TITLE screen (shared with other screens - at least 1p mode battle)
+        bne     t0, t1, _option             // if (screen_id != TITLE), skip
+        nop
+        li      a0, Global.files_loaded     // ~
+        lw      a0, 0x0000(a0)              // a0 = address of loaded files list
+        lw      a0, 0x0000(a0)              // a0 = first loaded file
+        lli     t1, 0x00A7                  // t1 = 0xA7
+        bne     a0, t1, _option             // if (first file loaded != 0xA7 Hole Image), skip
+        nop
+        jal     draw_version_               // draw version number
+        nop
+
         // OPTION screen
+        _option:
         lli     t1, 0x0039                  // t1 = OPTION screen
         bne     t0, t1, _training           // if (screen_id != OPTION), skip
         nop
@@ -88,10 +103,27 @@ scope Overlay {
 
         _results:
         lli     t1, 0x0018
-        bne     t0, t1, _sss                // if (screen_id != results), skip
+        bne     t0, t1, _css                // if (screen_id != results), skip
         nop
         jal     VsStats.run_results_
         nop
+
+        // To help with variant indicators, I set a flag when on a CSS
+        // to indicate when all characters are loaded
+        // css screen ids: vs - 0x10, 1p - 0x11, training - 0x12, bonus1 - 0x13, bonus2 - 0x14
+        _css:
+        slti    t1, t0, 0x0010               // t1 = 1 if not CSS
+        bnez    t1, _not_css                 // if (screen_id != css), go to _not_css
+        nop
+        slti    t1, t0, 0x0015               // t1 = 1 if CSS
+        beqz    t1, _not_css                 // if (screen_id != css), go to _not_css
+        nop
+        b       _sss                         // on CSS, so skip _not_css
+        nop
+
+        _not_css:
+        li      t1, CharacterSelect.chars_loaded
+        sw      r0, 0x0000(t1)              // set chars_loaded to 0 when not on CSS
 
         _sss:
         lli     t1, 0x0015                  // t1 = stage select screen
@@ -535,13 +567,44 @@ scope Overlay {
     }
 
     // @ Description
-    // Custom display list goes here.
-    OS.align(16)
-    display_list:
-    fill 0x20000
+    // Draws the version number
+    scope draw_version_: {
+        constant ULX(10)
+        constant ULY(219)
 
-    display_list_info:
-    RCP.display_list_info(display_list, 0x20000)
+        addiu   sp, sp,-0x0008              // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+
+        li      a0, 0x8013445C              // a0 = timer
+        lw      a0, 0x0000(a0)              // a0 = timer value
+        addiu   a0, a0, -0x00E0             // a0 = 0 if hit target timer value
+        bltz    a0, _return
+        nop
+
+        lli     a0, Color.BLACK             // a0 = color
+        jal     Overlay.set_color_          // set fill color to black
+        nop
+        lli     a0, ULX                     // a0 = ulx
+        lli     a1, ULY                     // a1 = uly
+        lli     a2, 52                      // a2 = width
+        lli     a3, 11                      // a3 = height
+        jal     Overlay.draw_rectangle_     // draw rectangle
+        nop
+
+        lli     a0, ULX + 2                 // a0 = ulx
+        lli     a1, ULY + 2                 // a1 = uly
+        li      a2, version                 // a0 = version
+        jal     Overlay.draw_string_        // draw version
+        nop
+
+        _return:
+        lw      ra, 0x0004(sp)              // save registers
+        addiu   sp, sp, 0x0008              // deallocate stack space
+        jr      ra                          // return
+        nop
+
+        version:; String.insert("v0.9.2")
+    }
 }
 
 } // __OVERLAY__

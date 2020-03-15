@@ -74,6 +74,10 @@ scope Data {
     Texture.info(16, 16)
     insert "../textures/b_button.rgba5551"
 
+    dpad_info:
+    Texture.info(16, 16)
+    insert "../textures/dpad-16x16.rgba5551"
+
     l_button_info:
     Texture.info(16, 16)
     insert "../textures/l_button.rgba5551"
@@ -85,6 +89,35 @@ scope Data {
     z_button_info:
     Texture.info(16, 16)
     insert "../textures/z_button.rgba5551"
+
+    // CSS textures
+    flag_eu_info:
+    Texture.info(16, 16)
+    insert "../textures/flag_eu-10x10.rgba5551"
+
+    flag_jp_info:
+    Texture.info(16, 16)
+    insert "../textures/flag_jp-10x10.rgba5551"
+
+    flag_eu_big_info:
+    Texture.info(16, 16)
+    insert "../textures/flag_eu.rgba5551"
+
+    flag_jp_big_info:
+    Texture.info(16, 16)
+    insert "../textures/flag_jp.rgba5551"
+
+    stock_icon_mm_info:
+    Texture.info(8, 8)
+    insert "../textures/stock-icon-mm.rgba5551"
+
+    stock_icon_gdk_info:
+    Texture.info(8, 8)
+    insert "../textures/stock-icon-gdk.rgba5551"
+
+    stock_icon_poly_info:
+    Texture.info(8, 8)
+    insert "../textures/stock-icon-poly.rgba5551"
 }
 
 } // __DATA__

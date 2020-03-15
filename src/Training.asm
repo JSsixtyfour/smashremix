@@ -388,16 +388,6 @@ scope Training {
         addiu   t1, t1, 0x0001              // t1 = port 4 id
         sw      t1, 0x0000(t0)              // save port id as spawn id
 
-        li      t1, Toggles.entry_special_model
-        lw      t0, 0x0004(t1)              // t0 = initial special model display mode
-        lli     t1, 0x0001                  // t1 = 1 for hitbox_mode
-        beql    t0, t1, _set_initial_model_display
-        addu    t0, r0, r0                  // if entered in hitbox mode, then set initial to off so it toggles
-
-        _set_initial_model_display:
-        li      t1, initial_model_display   // t1 = initial model display value address
-        sw      t0, 0x0000(t1)              // save initial model display value
-
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // load t0, t1
         addiu   sp, sp, 0x0010              // deallocate stack space
@@ -466,7 +456,7 @@ scope Training {
         OS.save_registers()
         move    t6, v0                      // t6 = bool skip_advance
         _check_dl:
-        // check for a DPAD DOWN press, toggles hitbox mode if detected
+        // check for a DPAD DOWN press, cycles through special model display if detected
         lli     a0, Joypad.DD               // a0 - button_mask
         lli     a1, 000069                  // a1 - whatever you like!
         lli     a2, Joypad.PRESSED          // a2 - type
@@ -475,14 +465,12 @@ scope Training {
         beqz    v0, _check_frame_advance    // if (!dd_pressed), skip
         nop
         li      t1, Toggles.entry_special_model
-        lw      t0, 0x0004(t1)              // t0 = 1 for hitbox_mode
-        lli     t2, 0x0001                  // t2 = 1
-        bnel    t0, t2, _update_model_display
-        addu    t0, r0, t2                  // turn on hitbox_mode
+        lw      t0, 0x0004(t1)              // t0 = 0 for off, 1 for hitbox_mode, 2 for ecb, 3 for skeleton
+        addiu   t0, t0, 0x0001              // t0 = 1, 2, 3 or 4
+        lli     t2, 0x0004                  // t2 = 4
+        beql    t0, t2, _update_model_display
+        addu    t0, r0, r0                  // turn off special model display
         
-        li      t2, initial_model_display   // t2 = initial model display value address
-        lw      t0, 0x0000(t2)              // t0 = initial model display value
-
         _update_model_display:
         sw      t0, 0x0004(t1)              // store updated model display
 
@@ -837,7 +825,7 @@ scope Training {
     // Strings used to explain advance_frame_ shortcuts
     dpad_up:; db "DPAD UP - PAUSE AND RESUME", 0x00
     dpad_right:; db "DPAD RIGHT - FRAME ADVANCE", 0x00
-    dpad_down:; db "DPAD DOWN - HITBOX DISPLAY", 0x00
+    dpad_down:; db "DPAD DOWN - SPECIAL MODEL DISPLAY", 0x00
     OS.align(4)
     
     // @ Description
@@ -899,6 +887,9 @@ scope Training {
     char_0x20:; db "DR. MARIO", 0x00
     char_0x21:; db "WARIO", 0x00
     char_0x22:; db "DARK SAMUS", 0x00
+    char_0x23:; db "E LINK", 0x00
+    char_0x24:; db "J SAMUS", 0x00
+    char_0x25:; db "J NESS", 0x00
     OS.align(4)
 
     string_table_char:
@@ -918,8 +909,11 @@ scope Training {
     dw char_0x1E            // GANONDORF
     dw char_0x1F            // YOUNG LINK
     dw char_0x20            // DR MARIO
-    //dw char_0x21            // WARIO
+    dw char_0x21            // WARIO
     dw char_0x22            // DARK SAMUS
+    dw char_0x23            // E LINK
+    dw char_0x24            // J SAMUS
+    dw char_0x25            // J NESS
     dw char_0x0D            // METAL MARIO
     dw char_0x1A            // GIANT DK
     dw char_0x0E            // POLYGON MARIO
@@ -957,10 +951,14 @@ scope Training {
         constant YLINK(0x0E)
         constant DRM(0x0F)
         constant WARIO(0x10)
-        constant DSAMUS(0x10)
+        constant DSAMUS(0x11)
+        constant ELINK(0x12)
+        constant JSAMUS(0x13)
+        constant JNESS(0x14)
+        constant LUCAS(0x15)
         // Increment METAL after adding more characters here
 
-        constant METAL(0x11)
+        constant METAL(0x15)
         constant GDONKEY(METAL + 0x01)
         constant NMARIO(METAL + 0x02)
         constant NFOX(METAL + 0x03)
@@ -994,8 +992,12 @@ scope Training {
     db Character.id.GND
     db Character.id.YLINK
     db Character.id.DRM
-    //db Character.id.WARIO
+    db Character.id.WARIO
     db Character.id.DSAMUS
+    db Character.id.ELINK   
+    db Character.id.JSAMUS
+    db Character.id.JNESS
+    // db Character.id.LUCAS
     db Character.id.METAL
     db Character.id.GDONKEY
     db Character.id.NMARIO
@@ -1047,6 +1049,9 @@ scope Training {
     db id.DRM
     db id.WARIO
     db id.DSAMUS
+    db id.ELINK   
+    db id.JSAMUS
+    db id.JNESS
 
     // @ Description 
     // Spawn Position Strings

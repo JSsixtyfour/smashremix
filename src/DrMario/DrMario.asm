@@ -31,6 +31,8 @@ scope DrMario {
     insert USP, "moveset/UP_SPECIAL.bin"
     insert DSP_GROUND, "moveset/DOWN_SPECIAL_GROUND.bin"
     insert DSP_AIR, "moveset/DOWN_SPECIAL_AIR.bin"
+    BTHROW:; Moveset.THROW_DATA(BTHROWDATA); insert "moveset/BTHROW.bin"
+    insert BTHROWDATA, "moveset/BTHROWDATA.bin"
 
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(DRM,   Action.Taunt,           File.DRM_TAUNT,             TAUNT,                      -1)
@@ -60,7 +62,8 @@ scope DrMario {
     Character.edit_action_parameters(DRM,   0xE1,                   -1,                         USP,                        -1)
     Character.edit_action_parameters(DRM,   0xE2,                   -1,                         USP,                        -1)
     Character.edit_action_parameters(DRM,   0xE3,                   -1,                         DSP_GROUND,                 -1)
-    Character.edit_action_parameters(DRM,   0xE4,                   -1,                         DSP_AIR,                    -1)    
+    Character.edit_action_parameters(DRM,   0xE4,                   -1,                         DSP_AIR,                    -1) 
+    Character.edit_action_parameters(DRM,   Action.ThrowB,          File.DRM_BTHROW,            BTHROW,                     0x50000000)
     
     // Set crowd chant FGM.
     Character.table_patch_start(crowd_chant_fgm, Character.id.DRM, 0x2)

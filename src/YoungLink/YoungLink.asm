@@ -34,6 +34,7 @@ scope YoungLink {
     insert USP_GROUND_END, "moveset/UP_SPECIAL_GROUND_END.bin"
     insert USP_AIR, "moveset/UP_SPECIAL_AIR.bin"
     insert VICTORY_POSE_2,"moveset/VICTORY_POSE_2.bin"
+    insert POSE_1P, "moveset/POSE_1P.bin"
     
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(YLINK, Action.JumpF,            -1,                        JUMP,                       -1)
@@ -70,6 +71,7 @@ scope YoungLink {
     
     // Modify Menu Action Parameters             // Action          // Animation                // Moveset Data             // Flags
     Character.edit_menu_action_parameters(YLINK, 0x2,               -1,                         VICTORY_POSE_2,             -1)
+    Character.edit_menu_action_parameters(YLINK, 0xD,               -1,                         POSE_1P,                  -1)
     
     // @ Description
     // Subroutine for Young Link's up special, allows a direction change with the command 58000002
@@ -133,6 +135,26 @@ scope YoungLink {
     dw 0x01000000
     dw 0x00000007
     dw Character.YLINK_file_6_ptr
+    OS.copy_segment(0x103DEC, 0x34)
+    
+    OS.align(16)
+    bomb_struct_elink:
+    dw 0x00000015
+    dw Character.ELINK_file_1_ptr
+    OS.copy_segment(0x106108, 0xF8)
+
+    OS.align(16)
+    up_special_struct_elink:
+    dw 0x03000000
+    dw 0x00000008
+    dw Character.ELINK_file_1_ptr
+    OS.copy_segment(0x103DAC, 0x34)
+    
+    OS.align(16)
+    boomerang_struct_elink:
+    dw 0x01000000
+    dw 0x00000007
+    dw Character.ELINK_file_6_ptr
     OS.copy_segment(0x103DEC, 0x34)  
     
     // @ Description
@@ -173,6 +195,10 @@ scope YoungLink {
         li      t0, bomb_struct             // t0 = YoungLink.bomb_struct
         beq     t1, a1, _end                // end if character id = YLINK
         nop
+        ori     t1, r0, Character.id.ELINK  // t1 = id.ELINK
+        li      t0, bomb_struct_elink       // t0 = Elink.bomb_struct
+        beq     t1, a1, _end                // end if character id = ELINK
+        nop
         li      t0, 0x8018B6C0              // t0 = original bomb struct
         
         _end:
@@ -208,6 +234,10 @@ scope YoungLink {
         li      t6, bomb_struct             // t6 = YoungLink.bomb_struct
         beq     t7, a2, _end                // end if character id = YLINK
         nop
+        ori     a2, r0, Character.id.ELINK  // a2 = id.ELINK
+        li      t6, bomb_struct_elink       // t6 = ELink.bomb_struct
+        beq     t7, a2, _end                // end if character id = ELINK
+        nop
         li      t6, 0x8018B6C0              // t6 = original bomb struct
         _end:
         lw      t6, 0x0004(t6)              // t6 = file 1 pointer address
@@ -231,6 +261,10 @@ scope YoungLink {
         ori     a1, r0, Character.id.YLINK  // a1 = id.YLINK
         li      t6, bomb_struct             // t6 = YoungLink.bomb_struct
         beq     t7, a1, _end                // end if character id = YLINK
+        nop
+        ori     a1, r0, Character.id.ELINK  // a1 = id.ELINK
+        li      t6, bomb_struct_elink       // t6 = ELink.bomb_struct
+        beq     t7, a1, _end                // end if character id = ELINK
         nop
         li      t6, 0x8018B6C0              // t6 = original bomb struct
         _end:
@@ -261,7 +295,10 @@ scope YoungLink {
         beq     v1, at, _end                // end if id = NLINK
         nop
         ori     at, r0, Character.id.YLINK  // at = YLINK
-        beq     v1, at, _end                // end if id = YINK
+        beq     v1, at, _end                // end if id = ELINK
+        nop
+        ori     at, r0, Character.id.ELINK  // at = ELINK
+        beq     v1, at, _end                // end if id = ELINK
         nop
         
         _end:
@@ -286,7 +323,10 @@ scope YoungLink {
         beq     v0, at, _end                // end if id = NLINK
         nop
         ori     at, r0, Character.id.YLINK  // at = YLINK
-        beq     v0, at, _end                // end if id = YINK
+        beq     v0, at, _end                // end if id = YLINK
+        nop
+        ori     at, r0, Character.id.ELINK  // at = ELINK
+        beq     v0, at, _end                // end if id = ELINK
         nop
         
         _end:
@@ -318,6 +358,9 @@ scope YoungLink {
         ori     at, r0, Character.id.YLINK  // at = YLINK
         beq     v1, at, _end                // end if id = YINK
         nop
+        ori     at, r0, Character.id.ELINK  // at = ELINK
+        beq     v1, at, _end                // end if id = ELINK
+        nop
         
         _end:
         jr      ra                          // return
@@ -340,6 +383,9 @@ scope YoungLink {
         nop
         ori     at, r0, Character.id.YLINK  // at = YLINK
         beq     t8, at, _branch_end         // branch if id = YLINK
+        nop
+        ori     at, r0, Character.id.ELINK  // at = ELINK
+        beq     t8, at, _branch_end         // branch if id = ELINK
         nop
         
         _end:
@@ -372,6 +418,10 @@ scope YoungLink {
         li      a1, up_special_struct       // a1 = YoungLink.up_special_struct
         beq     t1, t0, _end                // end if character id = YLINK
         nop
+        ori     t1, r0, Character.id.ELINK  // t1 = id.ELINK
+        li      a1, up_special_struct_elink // a1 = ELink.up_special_struct
+        beq     t1, t0, _end                // end if character id = ELINK
+        nop
         li      a1, 0x80189360              // a1 = original up special struct (original line 1/2)
         
         _end:
@@ -402,6 +452,10 @@ scope YoungLink {
         ori     t1, r0, Character.id.YLINK  // t1 = id.YLINK
         li      a1, boomerang_struct        // a1 = YoungLink.boomerang_struct
         beq     t1, t0, _end                // end if character id = YLINK
+        nop
+        ori     t1, r0, Character.id.ELINK  // t1 = id.ELINK
+        li      a1, boomerang_struct_elink  // a1 = ELink.boomerang_struct
+        beq     t1, t0, _end                // end if character id = ELINK
         nop
         li      a1, 0x801893A0              // a1 = original boomerang struct (original line 1)
         

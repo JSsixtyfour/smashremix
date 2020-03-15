@@ -63,4 +63,11 @@ scope Moveset {
         dw 0xB8000000                       // command
         dw {address}                        // pointer
     }
+    
+    // @ Description
+    // adds a SUBROUTINE moveset command
+    macro SUBROUTINE(address) {
+        dw 0x88000000                       // command
+        dw {address}                        // pointer
+    }
 }

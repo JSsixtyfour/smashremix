@@ -68,63 +68,6 @@ scope Command {
             sw      t2, 0x0000(t0)          // store default translation multiplier
         }
         
-        scope _check_destroy_display_lists: {
-            li      t0, previous_screen     // ~
-            lw      t0, 0x0000(t0)          // t0 = previous_screen
-            li      t1, Global.current_screen
-            lbu     t1, 0x0000(t1)          // t1 = current_screen
-            beq     t0, t1, _skip           // skip if previous_screen = current_screen
-            nop
-            
-            // destroy saved display lists for p1
-            jal     destroy_saved_display_lists_
-            ori     a0, r0, 0x0000
-            // destroy saved display lists for p2
-            jal     destroy_saved_display_lists_
-            ori     a0, r0, 0x0001
-            // destroy saved display lists for p3
-            jal     destroy_saved_display_lists_
-            ori     a0, r0, 0x0002
-            // destroy saved display lists for p4
-            jal     destroy_saved_display_lists_
-            ori     a0, r0, 0x0003
-
-            _skip:
-        }
-        
-        scope _reset_saved_display_lists: {
-            lw      a0, 0x0010(sp)          // ~
-            lw      t0, 0x0084(a0)          // t0 = player struct
-            li      t1, model_part.table_save
-            lbu     t2, 0x000D(t0)          // ~
-            sll     t2, t2, 0x3             // t2 = player port * 8
-            addu    t1, t1, t2              // t1 = table_save + (port * 8)
-            lw      t1, 0x0000(t1)          // t1 = table_temp_px
-            addiu   t2, t0, 0x08E8          // t2 = bone_table
-            ori     t3, r0, model_part.TABLE_SIZE
-            or      t4, r0, r0              // t4 = table_current
-            
-            _loop:
-            beq     t3, t4, _exit_loop      // exit loop if table_current = TABLE_SIZE
-            nop
-            lw      t5, 0x0000(t1)          // t5 = saved dlist
-            beq     t5, r0, _loop_end       // skip if t5 = NULL
-            nop
-            lw      t6, 0x0000(t2)          // t6 = bone struct
-            sw      t5, 0x0050(t6)          // store dlist
-            sw      r0, 0x0000(t1)          // reset saved dlist
-            
-            
-            _loop_end:
-            addiu   t1, t1, 0x0004          // increment table_temp_px
-            addiu   t2, t2, 0x0004          // increment bone_table
-            addiu   t4, t4, 0x0001          // increment table_current
-            b       _loop
-            nop
-            
-            _exit_loop:
-        }
-        
         scope _update_screen: {
             li      t0, previous_screen     // t0 = previous_screen address
             li      t1, Global.current_screen
@@ -142,8 +85,14 @@ scope Command {
     }
 
     // @ Description
-    // expands the existing end hitbox function to include resetting the directional override and FGM override
+    // patch which expands the existing end hitbox function to include resetting the directional override and FGM override
     scope end_hitbox_: {
+        OS.patch_start(0x63D2C, 0x800E852C)
+        j       end_hitbox_
+        nop
+        _return:
+        OS.patch_end()
+    
         // v0 = player struct
         addiu   sp, sp,-0x0010          // allocate stack space
         sw      t0, 0x0004(sp)          // store t0
@@ -152,7 +101,7 @@ scope Command {
         li      t0, hitbox_direction_.apply_direction_.hitbox_dir_table
         lbu     t1, 0x000D(v0)          // t1 = player port
         sll     t1, t1, 0x2             // ~
-        addu    t0, t0, t1              // a0 = hitbox_dir_table + (port * 4))
+        addu    t0, t0, t1              // t0 = hitbox_dir_table + (port * 4))
         lw      t0, 0x0000(t0)          // t0 = px_hitbox_dir
         sw      r0, 0x0000(t0)          // ~
         sw      r0, 0x0004(t0)          // ~
@@ -160,7 +109,7 @@ scope Command {
         sw      r0, 0x000C(t0)          // disable directional override for all hitboxes
 
         li      t0, set_hitbox_fgm_.apply_fgm_.hitbox_fgm_table
-        addu    t0, t0, t1              // a0 = hitbox_fgm_table + (port * 4))
+        addu    t0, t0, t1              // t0 = hitbox_fgm_table + (port * 4))
         lw      t0, 0x0000(t0)          // t0 = px_hitbox_fgm
         addiu   t1, r0, -0x0001         // t1 = -1 (0xFFFFFFFF)
         sw      t1, 0x0000(t0)          // disable fgm override for hitboxes 1 and 2
@@ -171,55 +120,72 @@ scope Command {
         sw      r0, 0x04E0(v0)          // original line 1 (disable hitbox 4)
         sw      r0, 0x0294(v0)          // original line 2 (disable hitbox 1)
         addiu   sp, sp, 0x0010          // deallocate stack space
-        j       _end_hitbox_return      // return
+        j       _return                 // return
         nop
-
-        pushvar origin, base
-        // end_hitbox_ hook
-        origin  0x63D2C
-        base    0x800E852C
-        j       end_hitbox_
-        nop
-        _end_hitbox_return:
-        pullvar base, origin
     }
     
     // @ Description
-    // Erases all saved display lists for a given player.
-    // @ Arguments
-    // a0 - player (p1 = 0, p4 = 3)
-    scope destroy_saved_display_lists_: {
-        addiu   sp, sp,-0x0018              // allocate stack space
-        sw      t0, 0x0004(sp)              // ~
-        sw      t1, 0x0008(sp)              // ~
-        sw      t2, 0x000C(sp)              // ~
-        sw      t3, 0x0010(sp)              // store t0-t3
-        li      t0, model_part.table_save   // ~
-        sll     t1, a0, 0x3                 // ~
-        addu    t1, t1, t0                  // t1 = table_save + (player * 8)
-        lw      t0, 0x0000(t1)              // t0 = table_temp_px
-        lw      t1, 0x0004(t1)              // t1 = table_perm_px
-        ori     t2, r0, model_part.TABLE_SIZE
-        or      t3, r0, r0                  // t2 = table_current
+    // patch which expands the existing create hitbox function to include resetting the directional override and FGM override
+    scope create_hitbox_: {
+        OS.patch_start(0x5A9F0, 0x800DF1F0)
+        j       create_hitbox_
+        nop
+        _return:
+        OS.patch_end()
         
-        _loop:
-        beq     t2, t3, _exit_loop          // exit loop if table_current = TABLE_SIZE
+        // s1 = player struct
+        // a1 = hitbox id
+        addiu   sp, sp,-0x0010          // allocate stack space
+        sw      t0, 0x0004(sp)          // store t0
+        sw      t1, 0x0008(sp)          // store t1
+        li      t0, hitbox_direction_.apply_direction_.hitbox_dir_table
+        lbu     t1, 0x000D(s1)          // t1 = player port
+        sll     t1, t1, 0x2             // ~
+        addu    t0, t0, t1              // t0 = hitbox_dir_table + (port * 4))
+        lw      t0, 0x0000(t0)          // t0 = px_hitbox_dir
+        sll     t1, a1, 0x2             // ~
+        addu    t0, t0, t1              // t0 = px_hitbox_dir + (hitbox id * 4)
+        sw      r0, 0x0000(t0)          // reset directional override for current hitbox
+        
+        li      t0, set_hitbox_fgm_.apply_fgm_.hitbox_fgm_table
+        lbu     t1, 0x000D(s1)          // t1 = player port
+        sll     t1, t1, 0x2             // ~
+        addu    t0, t0, t1              // t0 = hitbox_fgm_table + (port * 4))
+        lw      t0, 0x0000(t0)          // t0 = px_hitbox_fgm
+        sll     t1, a1, 0x1             // ~
+        addu    t0, t0, t1              // t0 = px_hitbox_fgm + (hitbox id * 2)
+        addiu   t1, r0, -0x0001         // t1 = -1 (0xFFFFFFFF)
+        sh      t1, 0x0000(t0)          // reset FGM override for current hitbox
+        
+        lw      t0, 0x0004(sp)          // ~
+        lw      t1, 0x0008(sp)          // load t0, t1
+        addiu   sp, sp, 0x0010          // deallocate stack space
+        multu   a1, t3                  // original line 1
+        mflo    t6                      // original line 2
+        j       _return                 // return
         nop
-        sw      r0, 0x0000(t0)              // destroy table_temp_px dlist
-        sw      r0, 0x0000(t1)              // destroy table_perm_px dlist
-        addiu   t0, t0, 0x0004              // increment table_temp_px
-        addiu   t1, t1, 0x0004              // increment table_perm_px
-        addiu   t3, t3, 0x0001              // increment table_current
-        b       _loop
+    }
+    
+    // @ Description
+    // patch which causes the "Set Texture Form" command to not take effect for Metal Mario
+    scope texture_form_fix_: {
+        OS.patch_start(0x64E2C, 0x800E962C)
+        j       texture_form_fix_
         nop
-
-        _exit_loop:
-        lw      t0, 0x0004(sp)              // ~
-        lw      t1, 0x0008(sp)              // ~
-        lw      t2, 0x000C(sp)              // ~
-        lw      t3, 0x0010(sp)              // load t0-t3
-        addiu   sp, sp, 0x0018              // deallocate stack space
-        jr      ra
+        _texture_form_fix_return:
+        OS.patch_end()
+        
+        lw      v0, 0x0084(a0)              // original line 1 (v0 = player struct)
+        sll     t8, a1, 0x2                 // original line 2
+        lw      t6, 0x0008(v0)              // t6 = character id
+        ori     t9, r0, Character.id.METAL  // t9 = id.METAL
+        beq     t6, t9, _metal              // branch if id = METAL
+        nop
+        j       _texture_form_fix_return    // return normally
+        nop
+        
+        _metal:
+        jr      ra                          // end subroutine early
         nop
     }
     
@@ -461,7 +427,6 @@ scope Command {
             pullvar base, origin
         }
         
-        
         multiplier_table:
         float32 0                           // p1 translation multiplier
         float32 0                           // p2 translation multiplier              
@@ -470,161 +435,6 @@ scope Command {
         
     }
     
-    
-    // @ Description
-    // Commands used to save, load, and set display lists for model parts.
-    // A table of bone structs can be found in the player struct at 0x8E8.
-    // The display list pointer can be found in a bone struct at 0x50.
-    scope model_part {
-        constant TABLE_SIZE(0x24)
-        // @ Description
-        // Save a display list pointer for a given bone struct.
-        // CCXXYYYY
-        // XX = ID for bone struct table (0x00 - 0x23)
-        // YYYY = save type: 0x0000 = temporary, !0x0000 = permanent
-        scope save_: {
-            constant COMMAND_LENGTH(0x4)
-            addiu   t0, s2, 0x8E8           // t0 = bone_table
-            lbu     t3, 0x0001(v0)          // ~
-            sll     t3, t3, 0x2             // t3 = bone ID * 4
-            addu    t0, t0, t3              // t0 = bone struct pointer (bone_table + bone ID * 4)
-            lw      t0, 0x0000(t0)          // t0 = bone struct
-            beq     t0, r0, _end            // skip if bone struct pointer = NULL
-            nop
-            lw      t2, 0x0050(t0)          // t2 = display list pointer
-            beq     t2, r0, _end            // skip if display list pointer = NULL
-            nop
-            
-            _get_table:
-            li      t0, table_save          // t0 = table_save
-            lbu     t1, 0x000D(s2)          // ~  
-            sll     t1, t1, 0x3             // t1 = player port * 8
-            addu    t0, t0, t1              // t0 = table_save + (port * 8)
-            lhu     t1, 0x0002(v0)          // t1 = save type
-            beq     t1, r0, _store          // branch if save type = temporary
-            nop
-            addiu   t0, t0, 0x0004          // table_perm offset
-            
-            _store:
-            lw      t0, 0x0000(t0)          // ~
-            addu    t0, t0, t3              // t0 = table + bone ID * 4
-            lw      t1, 0x0000(t0)          // t1 = saved display list
-            bnez    t1, _end                // skip if saved display list != NULL
-            nop
-            sw      t2, 0x0000(t0)          // store display list
-            
-            _end:
-            ori     t8, r0, COMMAND_LENGTH  // set command length
-            jr      ra                      // return
-            nop
-        }
-        
-        // @ Description
-        // Load a display list pointer for a given bone struct.
-        // CCXXYYYY
-        // XX = ID for bone struct table (0x00 - 0x23)
-        // YYYY = load type: 0x0000 = temporary, !0x0000 = permanent
-        scope load_: {
-            constant COMMAND_LENGTH(0x4)
-            li      t0, table_save          // t0 = table_save
-            lbu     t1, 0x000D(s2)          // ~  
-            sll     t1, t1, 0x3             // t1 = player port * 8
-            addu    t0, t0, t1              // t0 = table_save + (port * 8)
-            lhu     t1, 0x0002(v0)          // t1 = save type
-            beq     t1, r0, _load           // branch if save type = temporary
-            nop
-            addiu   t0, t0, 0x0004          // table_perm offset
-            
-            _load:
-            lbu     t3, 0x0001(v0)          // ~
-            sll     t3, t3, 0x2             // t3 = bone ID * 4
-            lw      t0, 0x0000(t0)          // ~
-            addu    t0, t0, t3              // t0 = table + bone ID * 4
-            lw      t2, 0x0000(t0)          // t2 = saved display list
-            beq     t2, r0, _end            // skip if saved display list = NULL
-            nop
-            
-            _store:
-            sw      r0, 0x0000(t0)          // reset saved display list
-            addiu   t0, s2, 0x8E8           // t0 = bone_table
-            addu    t0, t0, t3              // t0 = bone struct pointer (bone_table + bone ID * 4)
-            lw      t0, 0x0000(t0)          // t0 = bone struct
-            beq     t0, r0, _end            // skip if bone struct pointer = NULL
-            nop
-            sw      t2, 0x0050(t0)          // restore saved display list
-            
-            _end:
-            ori     t8, r0, COMMAND_LENGTH  // set command length
-            jr      ra                      // return
-            nop
-        }
-        
-        // @ Description
-        // Set the display list pointer for a given bone struct.
-        // CCXXYYYY
-        // XX = ID for bone struct table (0x00 - 0x23)
-        // YYYY = ID for display list table (0x0000 = NULL)
-        scope set_: {
-            constant COMMAND_LENGTH(0x4)
-            addiu   t0, s2, 0x8E8           // t0 = bone_table
-            lbu     t3, 0x0001(v0)          // ~
-            sll     t3, t3, 0x2             // t3 = bone ID * 4
-            addu    t0, t0, t3              // t0 = bone struct pointer (bone_table + bone ID * 4)
-            lw      t2, 0x0000(t0)          // t2 = bone struct
-            beq     t2, r0, _end            // skip if bone struct pointer = NULL
-            nop
-            
-            _get_dlist:
-            li      t0, table_dlist         // t0 = table_dlist
-            lhu     t1, 0x0002(v0)          // ~
-            sll     t1, 0x2                 // t1 = dlist ID * 4
-            addu    t0, t0, t1              // t0 = table_dlist + dlist ID * 4
-            lw      t0, 0x0000(t0)          // t0 = dlist pointer
-            sw      t0, 0x0050(t2)          // store dlist pointer
-            
-            _end:
-            ori     t8, r0, COMMAND_LENGTH  // set command length
-            jr      ra                      // return
-            nop
-        }
-        
-        table_save:
-        dw  table_temp_p1
-        dw  table_perm_p1
-        dw  table_temp_p2
-        dw  table_perm_p2
-        dw  table_temp_p3
-        dw  table_perm_p3
-        dw  table_temp_p4
-        dw  table_perm_p4
-        
-        table_temp_p1:                      // temporary save table (reset on action change)
-        fill TABLE_SIZE * 4
-        table_temp_p2:                      // temporary save table (reset on action change)
-        fill TABLE_SIZE * 4
-        table_temp_p3:                      // temporary save table (reset on action change)
-        fill TABLE_SIZE * 4
-        table_temp_p4:                      // temporary save table (reset on action change)
-        fill TABLE_SIZE * 4
-        
-        table_perm_p1:                      // permanent save table (don't reset on action change)
-        fill TABLE_SIZE * 4
-        table_perm_p2:                      // permanent save table (don't reset on action change)
-        fill TABLE_SIZE * 4
-        table_perm_p3:                      // permanent save table (don't reset on action change)
-        fill TABLE_SIZE * 4
-        table_perm_p4:                      // permanent save table (don't reset on action change)
-        fill TABLE_SIZE * 4
-        
-        table_dlist:                        // table of pointers to custom display lists
-        constant DLIST_SPEAR(0x8040C830)
-		constant DLIST_DRMPILLHAND(0x804262A0)
-        dw  OS.NULL                         // 0x00 - NULL
-        dw  DLIST_SPEAR                     // 0x01 - Ganondorf's Spear/Trident
-		dw	DLIST_DRMPILLHAND				// 0x02 - Doctor Mario's Pill Hand
-        
-    }
-
     // @ Description
     // Enables using the given FGM instead of the one specified by the hitbox command when the hitbox makes contact
     // CCXYZZZZ
@@ -670,16 +480,16 @@ scope Command {
             _apply_fgm_return:
             OS.patch_end()
             // s0 = hit player struct
-            // s1 = attacking player struct
+            // a3 = attacking player struct
             // t7 = hitbox struct
             li      t0, hitbox_fgm_table    // t0 = hitbox_fgm_table
-            lbu     t1, 0x000D(s1)          // t1 = player port
+            lbu     t1, 0x000D(a3)          // t1 = player port
             sll     t1, t1, 0x2             // ~
             addu    t0, t0, t1              // t0 = hitbox_fgm_table + (port * 4)
             lw      t0, 0x0000(t0)          // t0 = px_hitbox_fgm
 
             _get_hitbox_id:
-            subu    t1, t7, s1              // t1 = hitbox struct offset
+            subu    t1, t7, a3              // t1 = hitbox struct offset
             subiu   t1, t1, HITBOX_STRUCT_BASE// t1 = hitbox struct offset - HITBOX_STRUCT_BASE
             ori     t8, r0, HITBOX_STRUCT_SIZE// t8 = HITBOX_STRUCT_SIZE
             divu    t1, t8                  // ~
@@ -688,7 +498,7 @@ scope Command {
 
             _get_fgm_id:
             sll     t1, t1, 0x1             // ~
-            addu    t0, t0, t1              // t0 = px_hitbox_dir + (hitbox id * 2)
+            addu    t0, t0, t1              // t0 = px_hitbox_fgm + (hitbox id * 2)
             lh      t1, 0x0000(t0)          // t1 = hitbox fgm_id
             addiu   t0, r0, -0x0001         // t0 = -1
             beq     t1, t0, _original       // skip if hitbox fgm_id = -1 (don't override)
@@ -738,9 +548,9 @@ scope Command {
     dw      armour_                         // 0xD1 SET ARMOUR
     dw      hitbox_direction_               // 0xD2 OVERRIDE HITBOX DIRECTION
     dw      translation_multiplier_         // 0xD3 TOPJOINT TRANSLATION MULTIPLIER
-    dw      model_part.save_                // 0xD4 MODEL PART SAVE
-    dw      model_part.set_                 // 0xD5 MODEL PART SET
-    dw      model_part.load_                // 0xD6 MODEL PART LOAD
+    dw      OS.NULL                         // 0xD4
+    dw      OS.NULL                         // 0xD5
+    dw      OS.NULL                         // 0xD6
     dw      set_kinetic_                    // 0xD7 SET KINETIC STATE
     dw      set_hitbox_fgm_                 // 0xD8 SET HITBOX FGM
     dw      OS.NULL                         // 0xD9

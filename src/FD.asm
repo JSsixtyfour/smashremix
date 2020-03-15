@@ -74,10 +74,11 @@ scope FD {
         bne     t0, t9, _end                // if not the exact end of intro, then skip to end
         nop
 
-        addiu   sp, sp,-0x0010              // allocate stack space
+        addiu   sp, sp,-0x0014              // allocate stack space
         sw      a0, 0x0004(sp)              // ~
         sw      a1, 0x0008(sp)              // ~
-        sw      t8, 0x000C(sp)              // save registers
+        sw      a2, 0x000C(sp)              // ~
+        sw      t8, 0x0010(sp)              // save registers
 
         lli     a1, BGM.stage.FINAL_DESTINATION
         jal     BGM.play_                   // play FD battle music
@@ -85,8 +86,9 @@ scope FD {
 
         lw      a0, 0x0004(sp)              // ~
         lw      a1, 0x0008(sp)              // ~
-        lw      t8, 0x000C(sp)              // restore registers
-        addiu   sp, sp, 0x0010              // deallocate stack space
+        lw      a2, 0x000C(sp)              // ~
+        lw      t8, 0x0010(sp)              // restore registers
+        addiu   sp, sp, 0x0014              // deallocate stack space
 
         _end:
         addu    t9, t8, a1                  // original line 2

@@ -45,14 +45,15 @@ scope GFX {
         OS.patch_start(0x4A0D0, 0x800CE6F0)
         j       extend_gfx_instructions_map_
         nop
+        _return:
         OS.patch_end()
 
         addu    t8, t8, v1                               // original line 1
         slti    at, t6, 0x0077                           // check if ID is less than 0x77, which means it's an original GFX_INSTRUCTIONS_ID
         beqz    at, _new_gfx_instructions_id             // if it is a new GFX_INSTRUCTIONS_ID, then branch
         nop                                              // else return to original routine:
-        addiu   at, r0, 0x0001                           // set at to 1
-        j       0x800CE6F8                               // return to original routine
+        slt     at, t6, t7                               // original line 2
+        j       _return                                  // return to original routine
         nop
 
         _new_gfx_instructions_id:
@@ -144,7 +145,7 @@ scope GFX {
     // name - Used for display only
     // num_textures - The number of textures to be added to the block
     // TODO: may want to add additional parameters for the 4 words after num_textures
-    macro add_gfx_texture_block(name, num_textures) {
+    macro add_gfx_texture_block(name, num_textures, tile_format, texture_tile_size) {
         global variable new_gfx_texture_block_count(new_gfx_texture_block_count + 1) // increment new_gfx_texture_block_count
         evaluate n(new_gfx_texture_block_count)
         print " - Added GFX_TEXTURE_BLOCK_ID 0x"; OS.print_hex(0x2E + new_gfx_texture_block_count); print ": {name}\n"
@@ -155,8 +156,8 @@ scope GFX {
         gfx_texture_block_{n}:
         global variable gfx_texture_block_{n}_origin(origin())
         dw      {num_textures}                           // number of textures in block
-        dw      0x00000000                               // May be the type of texture - 0 works with rgba8888 if so
-        dw      0x00000003                               // May be the type of texture - 3 works with rgba8888 if so
+        dw      {tile_format}                            // Tile Format Encoding - 0:RGBA, 1:YUV, 2:CI, 3:IA, 4:I
+        dw      {texture_tile_size}                      // Size of Texels in Texture Tile - 0:4, 1:8, 2:16, 3:32
         dw      0x00000020                               // Either texture height or texture width
         dw      0x00000020                               // Either texture height or texture width
         dw      0x00000001                               // ?
@@ -335,7 +336,7 @@ scope GFX {
     // add_gfx_texture(gfx/coin-7.rgba8888)
     // add_gfx_texture(gfx/coin-8.rgba8888)
     // add_gfx_texture(gfx/coin-9.rgba8888)
-    add_gfx_texture_block(Black and White Explosion, 9)
+    add_gfx_texture_block(Black and White Explosion, 9, 0, 3)
     add_gfx_texture(gfx/explosion-bw-1.rgba8888)
     add_gfx_texture(gfx/explosion-bw-2.rgba8888)
     add_gfx_texture(gfx/explosion-bw-3.rgba8888)
@@ -345,6 +346,16 @@ scope GFX {
     add_gfx_texture(gfx/explosion-bw-7.rgba8888)
     add_gfx_texture(gfx/explosion-bw-8.rgba8888)
     add_gfx_texture(gfx/explosion-bw-9.rgba8888)
+
+    add_gfx_texture_block(Dr. Mario Pill Effect, 3, 0, 3)
+    add_gfx_texture(gfx/dr-mario-effect-1.rgba8888)
+    add_gfx_texture(gfx/dr-mario-effect-2.rgba8888)
+    add_gfx_texture(gfx/dr-mario-effect-3.rgba8888)
+
+    add_gfx_texture_block(PK Love, 3, 0, 3)
+    add_gfx_texture(gfx/lucas-pk-love-1.rgba8888)
+    add_gfx_texture(gfx/lucas-pk-love-2.rgba8888)
+    add_gfx_texture(gfx/lucas-pk-love-3.rgba8888)
 
     // ADD NEW GFX HERE
     add_gfx(Blue Explosion, gfx/blue_explosion_instructions.bin)
@@ -359,6 +370,8 @@ scope GFX {
     add_ground_effect_gfx(Blue/Black Ground Effect, 0x20)
 
     add_gfx(Purple Explosion, gfx/purple_explosion_instructions.bin)
+    add_gfx(Dr Mario Effect, gfx/dr_mario_effect_instructions.bin)
+    // add_gfx(PK Love, gfx/pk_love_instructions.bin)
 
     // writes new GFX to ROM
     write_gfx()

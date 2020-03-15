@@ -7,6 +7,9 @@ include "Global.asm"
 
 scope Fireball: {
     constant FIREBALL_BASE(0x80188E30)    
+    constant NORMAL_HIT_GFX_INST_ID_ADDRESS(0x8012DF20)
+    constant NORMAL_HIT_GFX_INST_ID(0x49)
+    constant DR_MARIO_EFFECT_GFX_INST_ID(0x81)
     
     // @ Description
     // Macro to set up a struct for a cloned fireball
@@ -73,10 +76,16 @@ scope Fireball: {
         lw      a0, 0x0074(t6)              // ~
         addiu   a0, a0, 0x001C              // modified original logic
         lw      t7, 0x003C(sp)              // t7 = damage
+        li      a1, NORMAL_HIT_GFX_INST_ID_ADDRESS
+        lli     a2, DR_MARIO_EFFECT_GFX_INST_ID
+        // sb      a2, 0x0000(a1)              // temporarilty update the GFX_INSTRUCTIONS_ID for "normal hit" gfx
         or      a1, r0, r0                  // a1 = 0
         or      a2, t7, r0                  // a2 = damage           
         jal     0x800FDC04                  // create "normal hit" gfx
         or      a3, r0, r0                  // a3 = 0
+        li      a1, NORMAL_HIT_GFX_INST_ID_ADDRESS
+        lli     a2, NORMAL_HIT_GFX_INST_ID
+        sb      a2, 0x0000(a1)              // restore the GFX_INSTRUCTIONS_ID for "normal hit" gfx
         li      ra, _hit_effect_branch      // load return address (branch)
         sw      ra, 0x006C(sp)              // update ra and save to stack
         

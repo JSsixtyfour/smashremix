@@ -48,7 +48,8 @@ scope Falco {
     insert VICTORY_POSE_2,"moveset/VICTORY_POSE_2.bin"
     insert VICTORY_POSE_3,"moveset/VICTORY_POSE_3.bin"
     insert CLAP, "moveset/CLAP.bin"
-
+    insert POSE_1P, "moveset/POSE_1P.bin"
+    
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(FALCO, Action.Run,              -1,                        RUN,                        -1)
     Character.edit_action_parameters(FALCO, Action.Dash,             -1,                        DASH,                       -1)
@@ -82,7 +83,7 @@ scope Falco {
     Character.edit_action_parameters(FALCO, Action.AttackAirU,      -1,                         UAIR,                       -1)
     Character.edit_action_parameters(FALCO, Action.AttackAirD,      -1,                         DAIR,                       -1)
     Character.edit_action_parameters(FALCO, 0xE1,                   0x2E9,                      NSP_GROUND,                 -1)
-    Character.edit_action_parameters(FALCO, 0xE2,                   0x2E9,                      NSP_AIR,                    -1)
+    Character.edit_action_parameters(FALCO, 0xE2,                   File.FALCO_NSP_AIR,         NSP_AIR,                    -1)
     Character.edit_action_parameters(FALCO, 0xE7,                   -1,                         USP_GROUND_MOVE,            -1)
     Character.edit_action_parameters(FALCO, 0xE8,                   -1,                         USP_AIR_MOVE,               -1)
     Character.edit_action_parameters(FALCO, 0xEC,                   -1,                         DSP_GROUND_START,           -1)
@@ -90,14 +91,15 @@ scope Falco {
 
     // Modify Actions            // Action          // Staling ID   // Main ASM                 // Interrupt/Other ASM          // Movement/Physics ASM         // Collision ASM
     Character.edit_action(FALCO, 0xE1,              -1,             0x800D94C4,                 Phantasm.ground_subroutine_,    -1,                             -1)
-    Character.edit_action(FALCO, 0xE2,              -1,             0x8015C750,                 Phantasm.air_subroutine_,       Phantasm.air_physics_,          0x80156358)
+    Character.edit_action(FALCO, 0xE2,              -1,             0x8015C750,                 Phantasm.air_subroutine_,       Phantasm.air_physics_,          Phantasm.air_collision_)
     
     // Modify Menu Action Parameters             // Action          // Animation                // Moveset Data             // Flags
-    Character.edit_menu_action_parameters(FALCO, 0x1,               -1,                         VICTORY_POSE_1,                       -1)
-    Character.edit_menu_action_parameters(FALCO, 0x2,               -1,                         VICTORY_POSE_2,             -1)
+    Character.edit_menu_action_parameters(FALCO, 0x1,               -1,                         VICTORY_POSE_1,             -1)
+    Character.edit_menu_action_parameters(FALCO, 0x2,               File.FALCO_SELECT,          VICTORY_POSE_2,             -1)
     Character.edit_menu_action_parameters(FALCO, 0x3,               -1,                         VICTORY_POSE_3,             -1)
-    Character.edit_menu_action_parameters(FALCO, 0x4,               -1,                         VICTORY_POSE_3,             -1)
-    Character.edit_menu_action_parameters(FALCO, 0x5,               0x174,                      CLAP,                       -1)
+    Character.edit_menu_action_parameters(FALCO, 0x4,               File.FALCO_SELECT,          VICTORY_POSE_2,             -1)
+    Character.edit_menu_action_parameters(FALCO, 0x5,               File.FALCO_CLAP,            CLAP,                       -1)
+    Character.edit_menu_action_parameters(FALCO, 0xD,               File.FALCO_POSE_1P,         POSE_1P,                    -1)
     
     // Set menu zoom size.
     Character.table_patch_start(menu_zoom, Character.id.FALCO, 0x4)
@@ -129,7 +131,7 @@ scope Falco {
         lw      t6, 0x0008(v0)              // t6 = character id
         ori     t0, r0, Character.id.FALCO  // t0 = FALCO
         beq     t0, t6, _end                // branch if chracter = FALCO
-        addiu   t6, r0, 0x0018              // up special delay = 0x18
+        addiu   t6, r0, 0x0016              // up special delay = 0x16
             
         addiu   t6, r0, 0x0023              // up special delay = 0x23 (original line 2)
         _end:   
@@ -155,7 +157,7 @@ scope Falco {
         lw      t0, 0x0008(s0)              // t0 = character id
         ori     t1, r0, Character.id.FALCO  // t1 = FALCO
         beq     t0, t1, _end                // branch if character = FALCO
-        lui     at, 0x42CC                  // up special velocity = 0x42CC0000
+        lui     at, 0x42C4                  // up special velocity = 0x42C40000
         
         lui     at, 0x42E6                  // up special velocity = 0x42E60000 (original line 1)
         _end:        
@@ -183,7 +185,7 @@ scope Falco {
         lw      t0, 0x0008(s0)              // t0 = character id
         ori     t1, r0, Character.id.FALCO  // t1 = FALCO
         beq     t0, t1, _end                // branch if character = FALCO
-        lui     at, 0x42CC                  // up special velocity = 0x42CC0000
+        lui     at, 0x42C4                  // up special velocity = 0x42C40000
         
         lui     at, 0x42E6                  // up special velocity = 0x42E60000 (original line 1)
         _end:        
@@ -211,7 +213,7 @@ scope Falco {
         lw      t0, 0x0008(s0)              // t0 = character id
         ori     t1, r0, Character.id.FALCO  // t1 = FALCO
         beq     t0, t1, _end                // branch if character = FALCO
-        lui     at, 0x42CC                  // up special velocity = 0x42CC0000
+        lui     at, 0x42C4                  // up special velocity = 0x42C40000
         
         lui     at, 0x42E6                  // up special velocity = 0x42E60000 (original line 1)
         _end:        

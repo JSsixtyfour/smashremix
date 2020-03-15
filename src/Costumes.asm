@@ -73,7 +73,7 @@ scope Costumes {
         beq     at, ra, _training           // if we're in training, then skip next part
         nop
         lw      t2, 0x0050(s0)              // t2 = current shade_id
-        li      at, 0x80136B6C              // at = ra for 1p
+        li      at, 0x80136B68              // at = ra for 1p
         beq     at, ra, _1p                 // if we're in 1p, then skip next part
         nop
         b       _go_to_function
@@ -193,28 +193,32 @@ scope Costumes {
         db 0x04                             // Jigglypuff
         db 0x03                             // Ness
         db 0x00                             // Master Hand
-        db 0x00                             // Metal Mario
-        db 0x00                             // Polygon Mario
-        db 0x00                             // Polygon Fox
-        db 0x00                             // Polygon Donkey Kong
-        db 0x00                             // Polygon Samus
-        db 0x00                             // Polygon Luigi
-        db 0x00                             // Polygon Link
-        db 0x00                             // Polygon Yoshi
-        db 0x00                             // Polygon Captain Falcon
-        db 0x00                             // Polygon Kirby
-        db 0x00                             // Polygon Pikachu
-        db 0x00                             // Polygon Jigglypuff
-        db 0x00                             // Polygon Ness
-        db 0x00                             // Giant Donkey Kong
+        db 0x05                             // Metal Mario
+        db 0x05                             // Polygon Mario
+        db 0x05                             // Polygon Fox
+        db 0x05                             // Polygon Donkey Kong
+        db 0x05                             // Polygon Samus
+        db 0x05                             // Polygon Luigi
+        db 0x05                             // Polygon Link
+        db 0x05                             // Polygon Yoshi
+        db 0x05                             // Polygon Captain Falcon
+        db 0x05                             // Polygon Kirby
+        db 0x05                             // Polygon Pikachu
+        db 0x05                             // Polygon Jigglypuff
+        db 0x05                             // Polygon Ness
+        db 0x04                             // Giant Donkey Kong
         db 0x00                             // (Placeholder)
         db 0x00                             // None (Placeholder)
         db 0x05                             // Falco
         db 0x05                             // Ganondorf
         db 0x05                             // Young Link
-        db 0x04                             // Dr. Mario
-        db 0x04                             // Wario
+        db 0x05                             // Dr. Mario
+        db 0x05                             // Wario
         db 0x05                             // Dark Samus
+        db 0x03                             // E Link
+        db 0x04                             // J Samus
+        db 0x03                             // J Ness
+        db 0x05                             // Lucas
         OS.align(4)
 
         functions:
@@ -318,5 +322,127 @@ scope Costumes {
         dw  {array}
         pullvar base, origin
     }
+    
+    // @ Description
+    // Revises attribute location within main file to adjust for Polygon Characters and Metal Mario's new costumes
+    
+    // Polygon Mario
+    pushvar origin, base
+    origin 0x94490
+    dw 0x000002B0
+    pullvar base, origin
+    
+    // Set default costumes
+    Character.set_default_costumes(Character.id.NMARIO, 0, 1, 4, 5, 1, 3, 2)
+    
+    // Polygon Fox
+    pushvar origin, base
+    origin 0x95A14
+    dw 0x000002BC
+    pullvar base, origin
+    
+    // Set default costumes
+    Character.set_default_costumes(Character.id.NFOX, 0, 1, 4, 5, 1, 3, 2)
+    
+    // Polygon DK
+    pushvar origin, base
+    origin 0x96FCC
+    dw 0x000002B0
+    pullvar base, origin
+    
+    // Set default costumes
+    Character.set_default_costumes(Character.id.NDONKEY, 0, 1, 4, 5, 1, 3, 2)
+    
+    // Polygon Samus
+    pushvar origin, base
+    origin 0x98EF8
+    dw 0x000003D4
+    pullvar base, origin
+    
+    // Set default costumes
+    Character.set_default_costumes(Character.id.NSAMUS, 0, 1, 4, 5, 1, 3, 2)
+    
+    // Polygon Luigi
+    pushvar origin, base
+    origin 0x9A310
+    dw 0x000002B8
+    pullvar base, origin
+    
+    // Set default costumes
+    Character.set_default_costumes(Character.id.NLUIGI, 0, 1, 4, 5, 1, 3, 2)
+    
+    // Polygon Link
+    pushvar origin, base
+    origin 0x9B7F0
+    dw 0x000002F0
+    pullvar base, origin
+    
+    // Set default costumes
+    Character.set_default_costumes(Character.id.NLINK, 0, 1, 4, 5, 1, 3, 2)
+    
+    // Polygon Yoshi
+    pushvar origin, base
+    origin 0x9CC70
+    dw 0x000002D0
+    pullvar base, origin
+    
+    // Set default costumes
+    Character.set_default_costumes(Character.id.NYOSHI, 0, 1, 4, 5, 1, 3, 2)
+    
+    // Polygon Falcon
+    pushvar origin, base
+    origin 0x9E178
+    dw 0x000002B4
+    pullvar base, origin
+    
+    // Set default costumes
+    Character.set_default_costumes(Character.id.NCAPTAIN, 0, 1, 4, 5, 1, 3, 2)
+    
+    // Polygon Kirby
+    pushvar origin, base
+    origin 0x9FADC
+    dw 0x000002D8
+    pullvar base, origin
+    
+    // Set default costumes
+    Character.set_default_costumes(Character.id.NKIRBY, 0, 1, 4, 5, 1, 3, 2)
+    
+    // Polygon Pikachu
+    pushvar origin, base
+    origin 0xA0F8C
+    dw 0x000002C0
+    pullvar base, origin
+    
+    // Set default costumes
+    Character.set_default_costumes(Character.id.NPIKACHU, 0, 1, 4, 5, 1, 3, 2)
+    
+    // Polygon Jigglypuff
+    pushvar origin, base
+    origin 0xA242C
+    dw 0x000002B8
+    pullvar base, origin
+    
+    // Set default costumes
+    Character.set_default_costumes(Character.id.NJIGGLY, 0, 1, 4, 5, 1, 3, 2)
+    
+    // Polygon Ness
+    pushvar origin, base
+    origin 0xA39D0
+    dw 0x00000308
+    pullvar base, origin
+    
+    // Set default costumes
+    Character.set_default_costumes(Character.id.NNESS, 0, 1, 4, 5, 1, 3, 2)
+    
+    // Metal Mario
+    pushvar origin, base
+    origin 0x93A80
+    dw 0x000002BC
+    pullvar base, origin
+    
+    // Set default costumes
+    Character.set_default_costumes(Character.id.METAL, 0, 1, 4, 5, 1, 3, 2)
+    
+    
     
 } // __COSTUMES__

@@ -26,6 +26,15 @@ scope Phantasm {
         OS.save_registers()
         lw      t0, 0x0184(a2)              // t0 = temp variable 3
         
+        _update_buffer:
+        lbu     t1, 0x000D(a2)              // t1 = player port
+        li      t2, button_press_buffer     // ~
+        addu    t3, t2, t1                  // t3 = px button_press_buffer address
+        lbu     t1, 0x01BE(a2)              // t1 = button_pressed
+        lbu     t2, 0x0000(t3)              // t2 = button_press_buffer
+        sb      t1, 0x0000(t3)              // update button_press_buffer with current inputs
+        or      t3, t1, t2                  // t3 = button_pressed | button_press_buffer 
+        
         _move:
         ori     t1, r0, MOVE                // t1 = MOVE
         bne     t0, t1, _check_end_move     // skip if t0 != MOVE
@@ -40,9 +49,8 @@ scope Phantasm {
         sw      t1, 0x0A88(a2)              // enable colour overlay bit
         
         _shorten:
-        lbu     t1, 0x01BE(a2)              // t3 = button_pressed
-        andi    t1, t1, B_PRESSED           // t3 = 0x40 if (B_PRESSED); else t3 = 0
-        beq     t1, r0, _end                // skip if (!B_PRESSED)
+        andi    t1, t3, B_PRESSED           // t1 = 0x40 if (B_PRESSED); else t1 = 0
+        beq     t1, r0, _end                // skip if !(B_PRESSED)
         nop
         ori     t1, r0, END_MOVE            // ~
         sw      t1, 0x0184(a2)              // temp variable 3 = END_MOVE
@@ -99,6 +107,15 @@ scope Phantasm {
         OS.save_registers()
         lw      t0, 0x0184(a2)              // t0 = temp variable 3
         
+        _update_buffer:
+        lbu     t1, 0x000D(a2)              // t1 = player port
+        li      t2, button_press_buffer     // ~
+        addu    t3, t2, t1                  // t3 = px button_press_buffer address
+        lbu     t1, 0x01BE(a2)              // t1 = button_pressed
+        lbu     t2, 0x0000(t3)              // t2 = button_press_buffer
+        sb      t1, 0x0000(t3)              // update button_press_buffer with current inputs
+        or      t3, t1, t2                  // t3 = button_pressed | button_press_buffer 
+        
         _initial_setup:
         ori     t1, r0, INITIAL_SETUP       // t1 = INITIAL_SETUP
         bne     t0, t1, _check_freeze_y     // skip if t0 != INITIAL_SETUP
@@ -134,8 +151,7 @@ scope Phantasm {
         sw      t1, 0x0A88(a2)              // enable colour overlay bit
         
         _shorten:
-        lbu     t1, 0x01BE(a2)              // t3 = button_pressed
-        andi    t1, t1, B_PRESSED           // t3 = 0x40 if (B_PRESSED); else t3 = 0
+        andi    t1, t3, B_PRESSED           // t1 = 0x40 if (B_PRESSED); else t1 = 0
         beq     t1, r0, _freeze_y           // skip if (!B_PRESSED)
         nop
         ori     t1, r0, END_MOVE            // ~
@@ -191,6 +207,14 @@ scope Phantasm {
         nop 
     }
     
+    // @ Description
+    // Holds each player's button presses from the previous frame.
+    // Used to add a single frame input buffer to shorten.
+    button_press_buffer:
+    db 0x00 //p1
+    db 0x00 //p2
+    db 0x00 //p3
+    db 0x00 //p4
     
     // @ Description
     // Subroutine which controls the physics for aerial phantasm. Applies gravity without allowing
@@ -221,33 +245,17 @@ scope Phantasm {
     }
     
     // @ Description
-    // Currently, phantasm uses mario/luigi's up special collision subroutine.
-    // This function modifies the landing frame speed multiplier set by the 
-    // collision subroutine when the player is Falco.
-    scope landing_fsm_: {
-        OS.patch_start(0xD0E10, 0x801563D0)
-        j       landing_fsm_
-        nop
-        _return:
-        OS.patch_end()
-        // struct in v1
-        
-        lui     a2, 0x3E8F                  // original line 1
-        andi    t9, t8, 0x3000              // original line 2
-        addiu   sp, sp,-0x0010              // allocate stack space
-        sw      t0, 0x0004(sp)              // ~
-        sw      t1, 0x0008(sp)              // store t0, t1
-        lbu     t0, 0x000B(v1)              // t0 = current char id
-        ori     t1, r0, Character.id.FALCO  // t1 = id.FALCO
-        beql    t0, t1, _end                // execute the next instruction ONLY if current char id = Falco
+    // Subroutine which handles collision for aerial phantasm.
+    // Copy of subroutine 0x80156358, which is the collision subroutine for Mario's up special.
+    // Loads the appropriate landing fsm value for Falco.
+    scope air_collision_: {
+        // Copy the first 30 lines of subroutine 0x80156358
+        OS.copy_segment(0xD0D98, 0x78)
+        // Replace original line which loads the landing fsm
+        //lui     a2, 0x3E8F                // original line 1
         lui     a2, LANDING_FSM             // a2 = LANDING_FSM
-        
-        _end:
-        lw      t0, 0x0004(sp)              // ~
-        lw      t1, 0x0008(sp)              // load t0, t1
-        addiu   sp, sp, 0x0010              // deallocate stack space
-        j       _return                     // return
-        nop
+        // Copy the last 17 lines of subroutine 0x80156358
+        OS.copy_segment(0xD0E14, 0x44)
     }
     
     // @ Description

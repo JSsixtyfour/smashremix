@@ -35,9 +35,9 @@
 0864 Wario Up Tilt
 0865 Wario F-Air
 0866 Wario D-Air
-0867 falco's forward smash (400000000)
-0868 falco's taunt
-0869 falco's up tilt
+0867 Falco's forward smash (400000000)
+0868 Falco's taunt
+0869 Falco's up tilt
 086A Donkey Kong's Aerial Tennis Swing
 086B Donkey Kong's Ground Tennis Swing
 086C Donkey Kong's Up Air
@@ -59,36 +59,36 @@
 087C Ganon's Tower BG file
 087D Kalos Header File
 087E Kalos Stage File
-087F Kalos bg file
-0880 Pokemon Stadium 2 Header
-0881 Pokemon Stadium 2 Stage
-0882 Pokemon Stadium 2 BG
+087F Kalos BG
+0880 Pokemon Stadium Header
+0881 Pokemon Stadium Stage
+0882 Pokemon Stadium BG
 0883 Skyloft Header
 0884 Skyloft Stage
 0885 Skyloft BG
-0886 Smashville Header
-0887 Smashville Stage file
-0888 Smashville BG
+0886 Glacial River Header
+0887 Glacial River Stage file
+0888 Glacial River BG
 0889 Warioware Header
 088A Warioware Stage 43DC
 088B Warioware BG
 088C Corneria City Header
 088D Corneria City Stage File
 088E Corneria City BG
-088F Doctor Mario Header
+088F Doctor Mario Stage Header
 0890 Doctor Mario Stage
-0891 Doctor Mario BG
+0891 Doctor Mario Stage BG
 0892 Cool Cool Header
-0893 Cool Cool Stage - 3DFC
+0893 Cool Cool Stage
 0894 Cool Cool BG
 0895 Dragon King Header
-0896 Dragon King Stage File 06DC
+0896 Dragon King Stage
 0897 Dragon King BG 
 0898 Fray's Stage Header
-0899 Fray's Stage Stage File
+0899 Fray's Stage Stage
 089A Fray's Stage BG
 089B Great Bay Header
-089C Great Bay Stage File 6A6C
+089C Great Bay Stage File
 089D Great Bay BG
 089E Tower of Heaven Header
 089F Tower of Heaven Stage
@@ -209,7 +209,93 @@
 0911 Smashville2 Header
 0912 Smashville2 Stage
 0913 Smashville2 BG
-0914 Smashville2 Bumper
+0914 ELink Main
+0915 JNess PK Fire Projectile Data
+0916 JNess Main
+0917 Lucas Main
+0918 Lucas Character
+0919 Lucas PK Fire
+091A Lucas Up Smash
+091B Lucas PK Fire Ground Animation
+091C Lucas PK Fire Air Animation
+091D Lucas PSI Magnet Start Ground
+091E Lucas PSI Magnet Hold Ground
+091F Lucas PSI Magnet Release Ground
+0920 Lucas PSI Magnet Star Air
+0921 Lucas PSI Magnet Hold Air
+0922 Lucas PSI Magnet Release Air
+0923 Lucas PK Thunder Start Ground
+0924 Lucas PK Thunder Hold Ground
+0925 Lucas PK Thunder Release Ground
+0926 Lucas PK Thunder Start Air
+0927 Lucas PK Thunder Hold Air
+0928 Lucas PK Thunder Release Air
+0929 Lucas PK Thunder 2
+092A Lucas Special Fall
+092B Dr. Mario Target Header
+092C Dr. Mario Target Stage
+092D Single Player Victor Image Bottom
+092E Single Player Victor Image Top
+092F Lucas Jab 1
+0930 Lucas Jab 2
+0931 Lucas Jab 3
+0932 Lucas Dash Attack
+0933 Lucas Forward Tilt Mid
+0934 Lucas Up Tilt
+0935 Lucas Down Smash
+0936 Lucas Neutral Air
+0937 Lucas Forward Air
+0938 Lucas Back Air
+0939 Lucas Down Air
+093A Ganondorf Target Header
+093B Ganondorf Target Stage
+093C Congo Falls Header
+093D Congo Falls Stage
+093E Congo Falls BG
+093F Lucas Forward Tilt High
+0940 Lucas Forward Tilt Low
+0941 Great Bay SSS Header
+0942 Great Bay SSS Model
+0943 Doctor Mario Backthrow
+0944 Dark Samus Target Header
+0945 Dark Samus Target Stage
+0946 Wario Jump F
+0947 Wario Jump B
+0948 Wario Jump Aerial F
+0949 Wario Jump Aerial B
+094A Wario Dash
+094B Wario Run
+094C Wario Run Brake
+094D Wario Turn
+094E Wario Run Turn
+094F Wario Dash Attack
+0950 Wario Landing
+0951 Wario U-Air Landing
+0952 Wario Ledge Attack F 1
+0953 Wario Ledge Attack F 2
+0954 Wario Victory 1
+0955 Wario Victory 2
+0956 Wario Victory 3
+0957 Wario Entry R
+0958 Wario Entry L
+0959 Stage 1 Target Header
+095A Stage 1 Target Stage
+095B Stage 1 Target BG
+095C Wario Pose 1P
+095D Ganondorf Pose 1P
+095E Splash Screen Image Bottom
+095F Splash Screen Image Top
+0960 Falco Target Test Header
+0961 Falco Target Test Stage
+0962 Falco Aerial Neutral Special
+0963 Falco Clap
+0964 Falco Select Pose
+0965 Falco Pose 1P
+0966 Young Link Target Test Header
+0967 Young Link Target Test Stage
+0968 Wario Target Test Header
+0969 Wario Target Test Stage
+
 0611 CAPTAIN DeadU
 0611 CAPTAIN ScreenKO
 05E8 CAPTAIN Entry

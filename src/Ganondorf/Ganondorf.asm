@@ -97,6 +97,7 @@ scope Ganondorf {
     Character.edit_menu_action_parameters(GND,   0x2,               -1,                         VICTORY_POSE_2,             -1)
     Character.edit_menu_action_parameters(GND,   0x3,               -1,                         VICTORY_POSE_3,             -1)
     Character.edit_menu_action_parameters(GND,   0x4,               -1,                         VICTORY_POSE_3,             -1)
+    Character.edit_menu_action_parameters(GND,   0xD,               File.GND_POSE_1P,           -1,                         -1)
     
     // Set menu zoom size.
     Character.table_patch_start(menu_zoom, Character.id.GND, 0x4)
@@ -110,6 +111,11 @@ scope Ganondorf {
     
     // Set default costumes
     Character.set_default_costumes(Character.id.GND, 0, 1, 2, 3, 1, 4, 2)
+    
+    // Set Kirby star damage override ID
+    Character.table_patch_start(inhale_star_damage, Character.id.GND, 0x4)
+    dw Character.id.DK
+    OS.patch_end()
     
     kick_anim_struct:
     dw  0x060F0000

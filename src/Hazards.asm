@@ -108,8 +108,19 @@ scope Hazards {
         jal     congo_jungle_barrel_
         nop
         OS.patch_end()
+        
+        lui     t7, 0x8013
+        addiu   t7, 0x1304
+        lw      t7, 0x0044(t7)
+        lui     t6, 0x0005
+        bne     t6, t7, _end                    // if current stage is not Congo (stage_id = 5), then always disable barrel
+        nop
 
         hazard_toggle(0x80109E84)
+        
+        _end:
+        jr      ra                          // return
+        nop
     }
 
     // @ Description

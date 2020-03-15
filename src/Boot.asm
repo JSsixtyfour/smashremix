@@ -13,11 +13,95 @@ include "SRAM.asm"
 
 scope Boot {
     // @ Description
-    // Nintendo 64 logo exits to title screen because t1 contains screen ID 0x0001
+    // Nintendo 64 logo exits to 1p victory screen because t1 contains screen ID 0x0037
     // instead of 0x001C
     OS.patch_start(0x0017EE54, 0x80131C94)
-    ori     t1, r0, 0x0001
+    ori     t1, r0, 0x0037
     OS.patch_end()
+
+    // @ Description
+    // After the Nintendo 64 logo exits we display the 1p victory screen but we want it
+    // to display a different image than the Mario victory image, so we set the character
+    // ID to NONE which will never occur after beating 1p mode.
+    // See SinglePlayer.replace_victory_image_
+    scope splash_: {
+        // @ Description
+        // unused word which will be used as a countdown timer
+        constant TIMER(0x801322F8)
+
+        // @ Description
+        // the character id of the 1p victor
+        constant VICTOR_ID(0x801322E0)
+
+        // image
+        OS.patch_start(0x17EA6C, 0x8013205C)
+        jal     splash_
+        nop
+        OS.patch_end()
+        // FGM
+        OS.patch_start(0x17E958, 0x80131F48)
+        jal     splash_._fgm
+        nop
+        OS.patch_end()
+        // Countdown timer
+        OS.patch_start(0x17E650, 0x80131C40)
+        jal     splash_._countdown
+        nop
+        _countdown_return:
+        OS.patch_end()
+
+        lli     t8, 0x0000              // t8 = 0 (original value stored in 0x801322E0)
+
+        lli     at, 0x001B              // at = N64 logo screen id
+        bne     v0, at, _end            // if previous screen is not the N64 logo screen
+        nop                             // then skip
+
+        lli     t8, 0x0200              // t8 = initial countdown timer value
+        li      at, TIMER               // at = countdown timer address
+        sw      t8, 0x0000(at)          // set countdown timer
+        lli     t8, Character.id.NONE   // t8 = Character.id.NONE, which we will detect to display splash images
+
+        _end:
+        lui     at, 0x8013              // original line 0
+        j       0x80132084              // original line 1 (modified to jump instead of branch)
+        sw      t8, 0x22E0(at)          // original line 2 (modified to use custom value)
+
+        _fgm:
+        mtlo    ra                      // save ra
+        lli     at, Character.id.NONE   // at = Character.id.NONE
+        bne     t3, at, pc() + 12       // if character id is not none, skip
+        nop                             // otherwise we'll use a nice sound:
+        lli     v0, 0x0A0               // v0 = fgm_id of a nice sound
+        jal     0x800269C0              // original line 1
+        andi    a0, v0, 0xFFFF          // original line 2
+        mflo    ra                      // restore ra
+        jr      ra
+        nop
+
+        _countdown:
+        li      a0, VICTOR_ID           // a0 = victor character_id address
+        lw      a0, 0x0000(a0)          // a0 = victor character_id
+        lli     v0, Character.id.NONE   // v0 = Character.id.NONE
+        bne     a0, v0, _check_button_press
+        nop                             // skip timer check if not on splash screen
+
+        li      a0, TIMER               // a0 = countdown timer address
+        lw      v0, 0x0000(a0)          // v0 = countdown timer value
+        beqzl   v0, _return             // if the countdown timer is 0,
+        addiu   v0, r0, 0x0001          // then set v0 to nonzero to simulate button press
+
+        addiu   v0, v0, -0x0001         // otherwise, decrement the timer value
+        sw      v0, 0x0000(a0)          // and update the timer
+
+        // check for button press
+        _check_button_press:
+        jal     0x80131B6C              // original line 1
+        ori     a0, r0, 0xD000          // original line 2
+
+        _return:
+        j       _countdown_return
+        nop
+    }
 
     // @ Descritpion
     // Nintendo 64 logo cannot be skipped.

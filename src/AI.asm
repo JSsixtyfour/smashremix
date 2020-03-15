@@ -95,6 +95,12 @@ scope AI {
 
         Toggles.guard(Toggles.entry_improved_ai, j_random_teching__orginal_)
 
+        li      t0, Global.current_screen   // t0 = address of current screen
+        lbu     t0, 0x0000(t0)              // t0 = current screen
+        lli     t1, 0x003C                  // t1 = how to play screen id
+        beq     t1, t0, _original           // if we're on the how to play screen,
+        nop                                 // then skip all this
+
         li      t0, Global.match_info       // ~
         lw      t0, 0x0000(t0)              // t0 = address of match_info (0x800A4D08 in VS.)
         addiu   t0, t0, Global.vs.P_OFFSET  // t0 = address of first player sturct
@@ -200,6 +206,11 @@ scope AI {
         sw      v1, 0x0014(sp)              // ~
         sw      a0, 0x0018(sp)              // save registers
 
+        li      t0, Global.current_screen   // t0 = address of current screen
+        lbu     t0, 0x0000(t0)              // t0 = current screen
+        lli     t1, 0x003C                  // t1 = how to play screen id
+        beq     t1, t0, _end                // if we're on the how to play screen,
+        nop                                 // then skip all this
 
         li      t0, Global.match_info       // ~
         lw      t0, 0x0000(t0)              // t0 = address of match_info (0x800A4D08 in VS.)

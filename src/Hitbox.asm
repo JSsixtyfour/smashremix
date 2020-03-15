@@ -19,6 +19,8 @@ scope Hitbox {
     // 3 = ECB display
     // (all other values?) = hitbox display
     scope hitbox_mode_: {
+        constant FIRST_ITEM_PTR(0x80046700)
+    
         OS.patch_start(0x0006E3FC, 0x800F2BFC)
         j       hitbox_mode_
         nop
@@ -38,7 +40,7 @@ scope Hitbox {
         beql    t0, t1, _update_player      // if (hitbox_mode), set v1
         lli     v1, 0x0001                  // v1 = hitbox display
 
-        lli     t1, 0x0003                  // t1 = 3
+        lli     t1, 0x0002                  // t1 = 2
         beql    t0, t1, _update_player      // if (ecb_mode), set v1
         lli     v1, 0x0003                  // v1 = ecb display
         
@@ -46,20 +48,21 @@ scope Hitbox {
         sw      v1, 0x0B4C(s8)              // save hitbox display state
         
         _update_item:
-        li      t2, item_.buffer            // t2 = item_buffer
+        li      t0, FIRST_ITEM_PTR          // t0 = FIRST_ITEM_PTR
+        lw      t0, 0x0000(t0)              // t0 = address of first item object
         
         _loop:
-        lw      t1, 0x0000(t2)              // t1 = item pointer
-        beqz    t1, _exit_loop              // if t1 = NULL, exit loop
+        // t0 = object struct address
+        beqz    t0, _exit_loop              // if t0 = NULL, exit loop
         nop
-        sw      v1, 0x0374(t1)              // save hitbox display state
-        addiu   t2, t2, 0x0004              // increment buffer pointer
+        lw      t1, 0x0084(t0)              // t1 = item struct address
+        bnel    t1, r0, _loop_end           // ~
+        sw      v1, 0x0374(t1)              // if t1 != NULL, update hitbox display state
+        _loop_end:
         b       _loop                       // loop
-        nop
+        lw      t0, 0x0004(t0)              // t0 = next object struct
         
         _exit_loop:
-        li      t0, item_.saved_struct      // ~
-        sw      r0, 0x0000(t0)              // reset saved struct
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // ~
         lw      t2, 0x000C(sp)              // load t0 - t2
@@ -70,71 +73,7 @@ scope Hitbox {
     }
     
     // @ Description
-    // this hook generates a list of item struct pointers every time a frame advance occurs,
-    // intended to provide a simpler method of managing the hitbox display state for all items
-    // some stage hazards are also affected by this function
-    scope item_: {
-        // s7 - curr_struct
-        // comparing against the player struct ensures the buffer is not filled twice
-    
-        OS.patch_start(0x00060E28, 0x800E5628)
-        j       item_
-        nop
-        _item_return:
-        OS.patch_end()
-        lui     a1, 0x800A                  // original line 1
-        lw      s8, 0x0084(t8)              // original line 2 
-        addiu   sp, sp,-0x0010              // allocate stack space
-        sw      t0, 0x0004(sp)              // ~
-        sw      t1, 0x0008(sp)              // ~
-        sw      t2, 0x000C(sp)              // store t0 - t2
-        
-        _compare_struct:
-        li      t2, saved_struct            // t2 = saved_struct
-        li      t1, buffer_pointer          // t1 = buffer_pointer address
-        lw      t0, 0x0000(t2)              // t0 = saved struct address
-        beq     t0, s7, _continue           // if saved_struct = curr_struct, skip
-        nop
-        li      t0, buffer                  // t0 = buffer address
-        sw      t0, 0x0000(t1)              // reset buffer_pointer
-        
-        _continue:
-        li      t0, buffer                  // t0 = buffer address
-        addiu   t0, t0, 0x0078              // t0 = buffer + 0x78
-        lw      t1, 0x0000(t1)              // t1 = buffer_pointer
-        slt     t0, t0, t1                  // ~
-        bnez    t0, _end                    // skip if buffer end has been reached
-        nop
-        move    t0, t1                      // t0 = buffer_pointer
-        sw      s8, 0x0000(t0)              // store pointer
-        sw      r0, 0x0004(t0)              // store null terminator
-        li      t1, buffer_pointer          // t1 = buffer_pointer address
-        addiu   t0, t0, 0x0004              // ~
-        sw      t0, 0x0000(t1)              // increment buffer pointer
-        
-        _end:
-        lw      t0, 0x0000(t2)              // t0 = saved struct address
-        sw      s7, 0x0000(t2)              // saved_struct = curr_struct
-        lw      t0, 0x0004(sp)              // ~
-        lw      t1, 0x0008(sp)              // ~
-        lw      t2, 0x000C(sp)              // load t0 - t2
-        addiu   sp, sp, 0x0010              // deallocate stack space
-        j       _item_return
-        nop
-        
-        buffer_pointer:
-        dw  buffer
-        
-        buffer:
-        fill 0x0080
-        
-        saved_struct:
-        dw OS.NULL
-    }
-    
-    // @ Description
     // this is a hook into the function which loads the display state for projectiles
-    
     scope projectile_: {
         OS.patch_start(0x000E1F78, 0x80167538)
         j       projectile_
@@ -154,7 +93,7 @@ scope Hitbox {
         beql    t0, t1, _update_projectile  // if (hitbox_mode), set v1
         lli     v1, 0x0001                  // v1 = hitbox display
 
-        lli     t1, 0x0003                  // t1 = 3
+        lli     t1, 0x0002                  // t1 = 2
         beql    t0, t1, _update_projectile  // if (ecb_mode), set v1
         lli     v1, 0x0003                  // v1 = ecb display
         
@@ -197,6 +136,9 @@ scope Hitbox {
         nop
         addiu   t5, r0, 0x0018              // t5 = results screen id
         beq     t5, at, _fix                // if (screen id = results) then apply the fix
+        nop
+        addiu   t5, r0, 0x0030              // t5 = 1p leave in room screen id
+        beq     t5, at, _fix                // if (screen id = results) then apply the fix
         nop                                 // ...otherwise just do the original:
 
         _original:
@@ -210,8 +152,12 @@ scope Hitbox {
         addiu   t5, r0, 0x03EA              // intentionally set t5 equal to at
         j       _fix_hitbox_position_return  // return
         nop
-
     }
+
+    // Fixes bug where star KO'd player stays indefinitely after last stock is lost when hitbox or ECB display is enabled
+    OS.patch_start(0x6E1A0, 0x800F29A0)
+    addu    t3, r0, r0
+    OS.patch_end()
 }
 
 } // __HITBOX__
