@@ -9,8 +9,9 @@ print "included SRAM.asm\n"
 scope SRAM {
     // @ Description
     // Variable to hold current SRAM address. SSB only used 0x0BDC bytes out of 0x8000 available.
-    variable address(0x0BDC)
-    constant ADDRESS(0x0BDC)
+    // Start aligned at 16 bytes - may not be necessary, but we don't need to be stingy currently.
+    variable address(0x0BE0)
+    constant ADDRESS(0x0BE0)
 
     // @ Description
     // Constant to hold current revision. Increment this whenever:
@@ -18,7 +19,7 @@ scope SRAM {
     //  - A new MIDI is added
     //  - A new toggle is added
     //  - The order of the toggles is changed
-    constant REVISION(0x001E)
+    constant REVISION(0x002C)
 
     // @ Description
     // Struct that holds information for a block of save data. 
@@ -28,6 +29,10 @@ scope SRAM {
         dw {size}
         fill {size}
         SRAM.address = SRAM.address + {size}
+        // 16 byte align the next address - may not be necessary but let's do it anyway
+        while (SRAM.address % 16) {
+            SRAM.address = SRAM.address + 1
+        }
     }
 
     // @ Description
@@ -47,7 +52,7 @@ scope SRAM {
 
         li      a0, true                    // a0 - RAM source
         li      a1, ADDRESS                 // a1 - SRAM destination
-        lli     a2, 0x0008                  // a2 - size
+        lli     a2, 0x0010                  // a2 - size
         jal     write_                      // write true to has_saved
         nop
 
@@ -59,9 +64,12 @@ scope SRAM {
         jr      ra                          // return
         nop
 
+        // Reading/writing only 0x8 bytes didn't work properly on console, so we do 0x10 instead
         true:
         dw OS.TRUE
         dw REVISION
+        dw 0x0 // fill
+        dw 0x0 // fill
     }
 
     // @ Description
@@ -77,7 +85,7 @@ scope SRAM {
 
         li      a0, ADDRESS                 // a0 - SRAM source
         li      a1, return                  // a1 - RAM destination
-        li      a2, 0x0008                  // a2 - size
+        li      a2, 0x0010                  // a2 - size
         jal     read_                       // read from save_info
         nop
         li      v0, return                  // ~
@@ -99,9 +107,12 @@ scope SRAM {
         jr      ra                          // return
         nop
 
+        // Reading/writing only 0x8 bytes didn't work properly on console, so we do 0x10 instead
         return:
         dw OS.FALSE
-        dw 0x00000000
+        dw 0x0 // REVISION
+        dw 0x0 // fill
+        dw 0x0 // fill
     }
 
 

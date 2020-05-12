@@ -21,25 +21,6 @@ scope CharacterSelect {
     constant CSS_PLAYER_STRUCT_1P(0x80138EC0)
     constant CSS_PLAYER_STRUCT_BONUS(0x80137620)
 
-    OS.align(16)
-    // @ Description
-    // Display list for portraits
-    display_list:
-    fill 0x8000
-
-    display_list_info:
-    RCP.display_list_info(display_list, 0x8000)
-
-    OS.align(16)
-    // @ Description
-    // Display list for variant indicators
-    // The size can probably be reduced further
-    display_list_2:
-    fill 0x1000
-
-    display_list_info_2:
-    RCP.display_list_info(display_list, 0x1000)
-
     // @ Description
     // Subroutine which loads a character, but uses an alternate req list which loads only the main
     // and model file, instead of all of the character's files. This is safe on the select screen.
@@ -66,6 +47,10 @@ scope CharacterSelect {
         _end:
         jal     0x800D786C                  // load character
         nop
+        li      t8, alt_req_list            // t8 = alt_req_list address
+        sw      r0, 0x0000(t8)              // destroy alt_req_list pointer
+        li      t8, alt_malloc_size         // t8 = alt_malloc_size address
+        sw      r0, 0x0000(t8)              // destroy alt_malloc_size
         lw      ra, 0x0008(sp)              // load ra
         addiu   sp, sp, 0x0010              // deallocate stack space
         jr      ra                          // return
@@ -191,16 +176,29 @@ scope CharacterSelect {
     dw  0xD800                              // 0x1A - GDONKEY (file 0x013D - sams as DK)
     dw  0                                   // 0x1B - PLACEHOLDER
     dw  0                                   // 0x1C - PLACEHOLDER
-    dw  0x8810                              // 0x1D - FALCO
-    dw  0x19270                             // 0x1E - GND
-    dw  0x1365C                             // 0x1F - YLINK
-    dw  0x78A0                              // 0x20 - DRM
-    dw  0xD4F8                              // 0x21 - WARIO
-    dw  0x121D0                             // 0x22 - DARK SAMUS
-    dw  0x12170                             // 0x23 - ELINK
-    dw  0xE750                              // 0x24 - JSAMUS
-    dw  0xC5C0                              // 0x25 - JNESS
-    dw  0x11070                             // 0x26 - LUCAS
+    dw  0x7AE0 + 0x200                      // 0x1D - FALCO
+    dw  0x1A6D8 + 0x200                     // 0x1E - GND
+    dw  0x105D0 + 0x200                     // 0x1F - YLINK
+    dw  0x7720 + 0x200                      // 0x20 - DRM
+    dw  0xCA50 + 0x200                      // 0x21 - WARIO
+    dw  0xE708 + 0x200                      // 0x22 - DARK SAMUS
+    dw  0x0                                 // 0x23 - ELINK
+    dw  0x0                                 // 0x24 - JSAMUS
+    dw  0x0                                 // 0x25 - JNESS
+    dw  0x10580 + 0x200                     // 0x26 - LUCAS
+    dw  0x12170                             // 0x27 - JLINK
+    dw  0x0                                 // 0x28 - JFALCON
+    dw  0x0                                 // 0x29 - JFOX
+    dw  0x772C                              // 0x2A - JMARIO
+    dw  0x8110                              // 0x2B - JLUIGI
+    dw  0x0                                 // 0x2C - JDK
+    dw  0x0                                 // 0x2D - EPIKA
+    dw  0x0                                 // 0x2E - JPUFF
+    dw  0x0                                 // 0x2F - EPUFF
+    dw  0x0                                 // 0x30 - JKIRBY
+    dw  0x0                                 // 0x31 - JYOSHI
+    dw  0x0                                 // 0x32 - JPIKA
+    dw  0x0                                 // 0x33 - ESAMUS
 
     // @ Description
     // Holds the ROM offset of an alternate req list, used by get_alternate_req_list_
@@ -218,21 +216,26 @@ scope CharacterSelect {
     // @ Arguments
     // character - ID of the character to add an alternate req list for
     // filename - Name of a .req file in ..src, excluding extension 
+    // TODO: reuse pointers if the file has already been added and don't add the file again
     variable alt_req_list_count(0)
     macro add_alt_req_list(character, filename) {
         global variable alt_req_list_count(alt_req_list_count + 1)
         evaluate num(alt_req_list_count)
         
-        // Insert new req list
-        // TODO: these req lists don't need to be in the DMA segment/RAM (low priority)
-        // but they don't take up much space
+        pushvar origin, base
+
+        // Insert new req list in ROM
+        // TODO: Really should rename this variable to something more descriptive - it is used to track the end of used ROM space
+        origin MIDI.MIDI_BANK_END
         constant ALT_REQ_{num}(origin())
         insert "../src/{filename}.req"
-        
+        OS.align(4)
+        MIDI.MIDI_BANK_END = origin()
+
         // Add new req list to alt_req_table
-        pushvar origin, base
         origin alt_req_table_origin + ({character} * 0x4)
         dw ALT_REQ_{num}
+
         pullvar base, origin
     }
     
@@ -273,7 +276,20 @@ scope CharacterSelect {
     add_alt_req_list(Character.id.ELINK, req/LINK_MODEL)
     add_alt_req_list(Character.id.JSAMUS, req/SAMUS_MODEL)
     add_alt_req_list(Character.id.JNESS, req/NESS_MODEL)
-    // add_alt_req_list(Character.id.LUCAS, req/NESS_MODEL)
+    add_alt_req_list(Character.id.LUCAS, req/LUCAS_MODEL)
+    add_alt_req_list(Character.id.JLINK, req/JLINK_MODEL)
+    add_alt_req_list(Character.id.JFALCON, req/CAPTAIN_MODEL)
+    add_alt_req_list(Character.id.JFOX, req/FOX_MODEL)
+    add_alt_req_list(Character.id.JMARIO, req/JMARIO_MODEL)
+    add_alt_req_list(Character.id.JLUIGI, req/JLUIGI_MODEL)
+    add_alt_req_list(Character.id.JDK, req/DONKEY_MODEL)
+    add_alt_req_list(Character.id.EPIKA, req/PIKACHU_MODEL)
+    add_alt_req_list(Character.id.JPUFF, req/JIGGLY_MODEL)
+    add_alt_req_list(Character.id.EPUFF, req/JIGGLY_MODEL)
+    add_alt_req_list(Character.id.JKIRBY, req/KIRBY_MODEL)
+    add_alt_req_list(Character.id.JYOSHI, req/YOSHI_MODEL)
+    add_alt_req_list(Character.id.JPIKA, req/PIKACHU_MODEL)
+    add_alt_req_list(Character.id.ESAMUS, req/SAMUS_MODEL)
     OS.align(4)
 
     // @ Description
@@ -337,6 +353,11 @@ scope CharacterSelect {
         beqz    t0, _end                    // ...return
         lli     v0, Character.id.NONE       // v0 = ret = NONE
 
+        // discard values past given y value
+        sltiu   t0, v1, 86                  // if ypos greater than given value
+        beqz    t0, _end                    // ...return
+        lli     v0, Character.id.NONE       // v0 = ret = NONE
+
         // calculate id
         lli     t0, PORTRAIT_WIDTH          // t0 = PORTRAIT_WIDTH
         divu    a1, t0                      // ~
@@ -387,6 +408,15 @@ scope CharacterSelect {
         beq     t0, t4, _end                // skip if token isn't held
         nop
 
+        // if ypos is 85, then we could be hovering, but need to confirm the cursor is not in pointing state (0)
+        lli     t0, 85                      // t0 = 85
+        bne     t0, v1, _check_variant      // if ypos != 85, continue
+        nop
+        lw      t0, 0x0054(a3)              // t0 = cursor state
+        beqzl   t0, _end                    // if cursor is in pointing state, return
+        lli     v0, Character.id.NONE       // v0 = ret = NONE
+
+        _check_variant:
         li      t0, variant_offset          // t0 = address of variant_offset array
         addu    t0, t0, a0                  // t0 = address of variant_offset for port
         lbu     t0, 0x0000(t0)              // t0 = variant_offset
@@ -410,6 +440,165 @@ scope CharacterSelect {
         addiu   sp, sp, 0x0010              // deallocate stack space
         jr      ra                          // return (discard the rest of the function)
         addiu   sp, sp, 0x0028              // deallocate stack space (original function)
+    }
+
+    // @ Description
+    // Various fixes to ensure token autoposition functions properly
+    scope token_autoposition_: {
+        // fix portrait id for token recall
+        // vs
+        OS.patch_start(0x001303E8, 0x80132168)
+        // a0 = character_id
+        li      t2, portrait_id_table           // t2 = portraid_id_table
+        addu    t2, t2, a0                      // t2 = address of character's portrait_id
+        lbu     v0, 0x0000(t2)                  // v0 = portrait_id
+        jr      ra
+        nop
+        OS.patch_end()
+        // training
+        OS.patch_start(0x00141600, 0x80132020)
+        // a0 = character_id
+        li      t2, portrait_id_table           // t2 = portraid_id_table
+        addu    t2, t2, a0                      // t2 = address of character's portrait_id
+        lbu     v0, 0x0000(t2)                  // v0 = portrait_id
+        jr      ra
+        nop
+        OS.patch_end()
+    
+        // fix x position
+        // vs
+        OS.patch_start(0x0013772C, 0x801394AC)
+        lli     t8, NUM_COLUMNS             // ~
+        divu    v0, t8                      // ~
+        mfhi    t8                          // t8 = portrait_id % NUM_COLUMNS = column
+        lli     t9, PORTRAIT_WIDTH          // ~
+        multu   t9, t8                      // ~
+        mflo    t9                          // t2 = ulx
+        addiu   t9, t9, START_X + 12        // t9 = (int) ulx + offset
+        mtc1    t9, f4                      // original line 8
+        addu    t9, v0, r0                  // remember portrait_id
+        OS.patch_end()
+        // training
+        OS.patch_start(0x00145EB4, 0x801368D4)
+        lli     t8, NUM_COLUMNS             // ~
+        divu    v0, t8                      // ~
+        mfhi    t8                          // t8 = portrait_id % NUM_COLUMNS = column
+        lli     t9, PORTRAIT_WIDTH          // ~
+        multu   t9, t8                      // ~
+        mflo    t9                          // t2 = ulx
+        addiu   t9, t9, START_X + 12        // t9 = (int) ulx + offset
+        mtc1    t9, f4                      // original line 8
+        addu    t9, v0, r0                  // remember portrait_id
+        OS.patch_end()
+    
+        // fix y position
+        scope token_autoposition_y_fix_: {
+            // vs
+            OS.patch_start(0x001377C0, 0x80139540)
+            jal    token_autoposition_y_fix_
+            lui    at, 0x4120                   // original line 1
+            OS.patch_end()
+            // training
+            OS.patch_start(0x00145F48, 0x80136968)
+            jal    token_autoposition_y_fix_
+            lui    at, 0x4120                   // original line 1
+            OS.patch_end()
+    
+            lli     t1, NUM_COLUMNS             // ~
+            divu    t9, t1                      // ~
+            mflo    t1                          // t1 = portrait_id / NUM_COLUMS = row
+            lli     t2, PORTRAIT_HEIGHT         // ~
+            multu   t2, t1                      // ~
+            mflo    t2                          // t2 = uly
+            addiu   t2, t2, START_Y + 14        // t2 = (int) uly + offset
+    
+            jr      ra
+            nop
+        }
+
+        // fix right boundary check value
+        // vs
+        OS.patch_start(0x001377EC, 0x8013956C)
+        lui     at, 0x4200                      
+        OS.patch_end()
+        // training
+        OS.patch_start(0x00145F74, 0x80136994)
+        lui     at, 0x4200                      
+        OS.patch_end()
+
+        // fix bottom boundary check value
+        // vs
+        OS.patch_start(0x0013782C, 0x801395AC)
+        lui     at, 0x41D0                      
+        OS.patch_end()
+        // training
+        OS.patch_start(0x00145FB4, 0x801369D4)
+        lui     at, 0x41D0                      
+        OS.patch_end()
+
+        // fix variant token overlap detection
+        scope _fix_variant_overlap_detection: {
+            // vs
+            OS.patch_start(0x1379C8, 0x80139748)
+            jal     _fix_variant_overlap_detection._vs
+            nop
+            nop
+            nop
+            OS.patch_end()
+            // training
+            OS.patch_start(0x146168, 0x80136B88)
+            jal     _fix_variant_overlap_detection._training
+            nop
+            nop
+            nop
+            OS.patch_end()
+
+            _vs:
+            beql    s6, v0, _j_0x80139784           // original line 3, modified to jump
+            addiu   s0, s0, 0x0001                  // original line 4
+
+            // t3 and v0 are character IDs
+            // check if their portrait IDs match instead of character IDs
+
+            li      t4, portrait_id_table           // t4 = portraid_id_table
+            addu    v0, t4, v0                      // v0 = address of character's portrait_id
+            lbu     v0, 0x0000(v0)                  // v0 = portrait_id
+            addu    t3, t4, t3                      // t3 = address of character's portrait_id
+            lbu     t3, 0x0000(t3)                  // t3 = portrait_id
+
+            bnel    v0, t3, _j_0x80139784           // original line 1, modified to jump
+            addiu   s0, s0, 0x0001                  // original line 2
+
+            jr      ra
+            nop
+
+            _j_0x80139784:
+            j       0x80139784                      // jump
+            nop
+
+            _training:
+            beq     v0, at, _j_0x80136BC8           // original line 3, modified to jump
+            nop
+
+            // t9 and v0 are character IDs
+            // check if their portrait IDs match instead of character IDs
+
+            li      t0, portrait_id_table           // t0 = portraid_id_table
+            addu    v0, t0, v0                      // v0 = address of character's portrait_id
+            lbu     v0, 0x0000(v0)                  // v0 = portrait_id
+            addu    t9, t0, t9                      // t9 = address of character's portrait_id
+            lbu     t9, 0x0000(t9)                  // t9 = portrait_id
+
+            bne     v0, t9, _j_0x80136BC8           // original line 1, modified to jump
+            nop
+
+            jr      ra
+            nop
+
+            _j_0x80136BC8:
+            j       0x80136BC8                      // jump
+            nop
+        }
     }
 
     // disable drawing of default portraits on VS CSS
@@ -479,21 +668,21 @@ scope CharacterSelect {
         addiu   v1, v1, 0x0008              // increment v1
 
         // init
-        li      t0, RCP.display_list_info_p // t0 = display list info pointer 
-        li      at, display_list_info       // at = address of display list info
-        sw      at, 0x0000(t0)              // update display list info pointer
+        li      t0, RCP.display_list_info_p       // t0 = display list info pointer
+        li      at, DL.portrait_display_list_info // at = address of display list info
+        sw      at, 0x0000(t0)                    // update display list info pointer
 
         // reset
-        li      t0, display_list            // t0 = address of display_list
-        li      at, display_list_info       // at = address of display_list_info
-        sw      t0, 0x0000(at)              // ~
-        sw      t0, 0x0004(at)              // update display list address each frame
+        li      t0, DL.portrait_display_list      // t0 = address of DL.portrait_display_list
+        li      at, DL.portrait_display_list_info // at = address of DL.portrait_display_list_info
+        sw      t0, 0x0000(at)                    // ~
+        sw      t0, 0x0004(at)                    // update display list address each frame
 
         // highjack
-        li      t0, 0xDE000000              // ~
-        sw      t0, 0x0000(v1)              // ~
-        li      t0, display_list            // ~ 
-        sw      t0, 0x0004(v1)              // highjack ssb display list
+        li      t0, 0xDE000000               // ~
+        sw      t0, 0x0000(v1)               // ~
+        li      t0, DL.portrait_display_list // ~
+        sw      t0, 0x0004(v1)               // highjack ssb display list
 
         // draw
         addiu   sp, sp,-0x0030              // allocate stack space
@@ -665,21 +854,21 @@ scope CharacterSelect {
         sw      t1, 0x0000(v1)              // update v1
 
         // init
-        li      t1, RCP.display_list_info_p // t1 = display list info pointer
-        li      at, display_list_info_2     // at = address of display list info
-        sw      at, 0x0000(t1)              // update display list info pointer
+        li      t1, RCP.display_list_info_p                // t1 = display list info pointer
+        li      at, DL.variant_indicator_display_list_info // at = address of display list info
+        sw      at, 0x0000(t1)                             // update display list info pointer
 
         // reset
-        li      t1, display_list_2          // t1 = address of display_list
-        li      at, display_list_info_2     // at = address of display_list_info
-        sw      t1, 0x0000(at)              // ~
-        sw      t1, 0x0004(at)              // update display list address each frame
+        li      t1, DL.variant_indicator_display_list      // t1 = address of display_list
+        li      at, DL.variant_indicator_display_list_info // at = address of display_list_info
+        sw      t1, 0x0000(at)                             // ~
+        sw      t1, 0x0004(at)                             // update display list address each frame
 
         // highjack
-        li      t1, 0xDE000000              // ~
-        sw      t1, 0x0000(v0)              // ~
-        li      t1, display_list_2          // ~
-        sw      t1, 0x0004(v0)              // highjack ssb display list
+        li      t1, 0xDE000000                             // ~
+        sw      t1, 0x0000(v0)                             // ~
+        li      t1, DL.variant_indicator_display_list      // ~
+        sw      t1, 0x0004(v0)                             // highjack ssb display list
 
         // draw variant indicator
         jal     CharacterSelect.run_variant_check_
@@ -747,7 +936,7 @@ scope CharacterSelect {
         sw      ra, 0x0004(sp)              // ~
 
         _get_random_id:
-        jal     0x80018A30                  // original line 1
+        jal     Global.get_random_int_alt_  // original line 1
         addiu   a0, r0, NUM_SLOTS           // original line 2 modified to include all slots
         // v0 = random number between 0 and NUM_SLOTS
         li      s0, id_table                // s0 = id_table
@@ -764,7 +953,7 @@ scope CharacterSelect {
         nop                                 // otherwise, determine id taking variants into account:
 
         addu    s0, r0, v0                  // s0 = character id
-        jal     Global.get_random_int_      // get random number for variant offset
+        jal     Global.get_random_int_alt_  // get random number for variant offset
         addiu   a0, r0, 0x0005              // a0 = 5
         // v0 = random number between 0 and 4
         beqzl   v0, _end                    // if 0, just use original character
@@ -878,22 +1067,6 @@ scope CharacterSelect {
         addiu   sp, sp, 0x0018              // deallocate stack space
 
     }
-
-    // @ Description
-    // Bypasses CPU token being recalled when selecting a portrait with the
-    // character id NONE on VS CSS
-    OS.patch_start(0x00136D70, 0x80138AF0)
-//  lli     at, r0, Character.id.NONE       // original line
-    lli     at, 0x7FFF                      // at = really large unsigned value
-    OS.patch_end()
-
-    // @ Description
-    // Bypasses CPU token being recalled when selecting a portrait with the
-    // character id NONE on training CSS
-    OS.patch_start(0x00145550, 0x80135F70)
-//  lli     at, r0, Character.id.NONE       // original line
-    lli     at, 0x7FFF                      // at = really large unsigned value
-    OS.patch_end()
 
     // @ Description
     // removes white flash on vs character select
@@ -1056,20 +1229,6 @@ scope CharacterSelect {
         jr      ra
         nop
     }
-
-    // @ Description
-    // Disables token movement when token set down on vs css (migrates towards original spot)
-    OS.patch_start(0x001376E0, 0x80139460)
-    jr      ra
-    nop
-    OS.patch_end()
-
-    // @ Description
-    // Disables token movement when token set down on training css (migrates towards original spot)
-    OS.patch_start(0x00145E68, 0x80136888)
-    jr      ra
-    nop
-    OS.patch_end()
 
     // @ Description
     // Disables token movement when token set down on 1p css (migrates towards original spot)
@@ -1265,6 +1424,12 @@ scope CharacterSelect {
         lli     s0, Character.id.METAL
         
         _loop:
+        lli     a0, Character.id.PLACEHOLDER// a0 = PLACEHOLDER
+        beql    a0, s0, _loop               // if char_id = PLACEHOLDER, skip
+        addiu   s0, s0, 0x0001              // increment index
+        lli     a0, Character.id.NONE       // a0 = NONE
+        beql    a0, s0, _loop               // if char_id = NONE, skip
+        addiu   s0, s0, 0x0001              // increment index
         jal     load_character_model_       // load character function
         or      a0, s0, r0                  // a0 = index
         // end on x character (Character.NUM_CHARACTERS - 1 should work usually)
@@ -1867,6 +2032,16 @@ scope CharacterSelect {
         constant DSAMUS(0x00012E28)
         constant ELINK(0x00002BA0)
         constant WARIO(0x000175C8)
+        constant LUCAS(0x00018138)
+        constant JLINK(0x00002BA0)
+        constant JFALCON(0x00003998)
+        constant JFOX(0x000025B8)
+        constant JMARIO(0x00001838)
+        constant JLUIGI(0x00001B18)
+        constant JDK(0x00017AA8)
+        constant EPIKA(0x000032F8)
+        constant JPUFF(0x00017DD8)
+        constant JPIKA(0x000032F8)
         constant BLANK(0x0)
     }
 
@@ -1941,7 +2116,7 @@ scope CharacterSelect {
         // row 3
         define slot_17(DSAMUS)
         define slot_18(WARIO)
-        define slot_19(NONE)
+        define slot_19(LUCAS)
         define slot_20(NONE)
         define slot_21(NONE)
         define slot_22(NONE)
@@ -2482,16 +2657,30 @@ scope CharacterSelect {
     
     
     // ADD CHARACTERS
-    add_to_css(Character.id.FALCO, FGM.announcer.names.FALCO, 1.50, 0x00010004, series_logo.STARFOX, name_texture.FALCO, portrait_falco, -1)
-    add_to_css(Character.id.GND, FGM.announcer.names.GANONDORF, 1.50, 0x00010002, series_logo.ZELDA, name_texture.GND, portrait_ganondorf, -1)
-    add_to_css(Character.id.YLINK, FGM.announcer.names.YOUNG_LINK, 1.50, 0x00010002, series_logo.ZELDA, name_texture.YLINK, portrait_young_link, -1)
-    add_to_css(Character.id.DRM, FGM.announcer.names.DR_MARIO, 1.50, 0x00010001, series_logo.DR_MARIO, name_texture.DRM, portrait_dr_mario, -1)
-    add_to_css(Character.id.WARIO, FGM.announcer.names.WARIO, 1.50, 0x00010004, series_logo.MARIO_BROS, name_texture.WARIO, portrait_wario, -1)
-    add_to_css(Character.id.DSAMUS, FGM.announcer.names.DSAMUS, 1.50, 0x00010004, series_logo.METROID, name_texture.DSAMUS, portrait_dark_samus, -1)
-    add_to_css(Character.id.ELINK, FGM.announcer.names.ELINK, 1.50, 0x00010001, series_logo.ZELDA, name_texture.LINK, portrait_unknown, 4)
-    add_to_css(Character.id.JSAMUS, FGM.announcer.names.SAMUS, 1.50, 0x00010003, series_logo.METROID, name_texture.SAMUS, portrait_unknown, 5)
-    add_to_css(Character.id.JNESS, FGM.announcer.names.NESS, 1.50, 0x00010002, series_logo.EARTHBOUND, name_texture.NESS, portrait_unknown, 9)
-    add_to_css(Character.id.LUCAS, FGM.announcer.names.NESS, 1.50, 0x00010002, series_logo.EARTHBOUND, name_texture.NESS, portrait_unknown, -1)
+               // id                fgm                             circle size   action    series logo               name texture                portrait, portrait override                         
+    add_to_css(Character.id.FALCO,  FGM.announcer.names.FALCO,          1.50,   0x00010004, series_logo.STARFOX,      name_texture.FALCO,         portrait_falco, -1)
+    add_to_css(Character.id.GND,    FGM.announcer.names.GANONDORF,      1.50,   0x00010002, series_logo.ZELDA,        name_texture.GND,           portrait_ganondorf, -1)
+    add_to_css(Character.id.YLINK,  FGM.announcer.names.YOUNG_LINK,     1.50,   0x00010002, series_logo.ZELDA,        name_texture.YLINK,         portrait_young_link, -1)
+    add_to_css(Character.id.DRM,    FGM.announcer.names.DR_MARIO,       1.50,   0x00010001, series_logo.DR_MARIO,     name_texture.DRM,           portrait_dr_mario, -1)
+    add_to_css(Character.id.WARIO,  FGM.announcer.names.WARIO,          1.50,   0x00010004, series_logo.MARIO_BROS,   name_texture.WARIO,         portrait_wario, -1)
+    add_to_css(Character.id.DSAMUS, FGM.announcer.names.DSAMUS,         1.50,   0x00010004, series_logo.METROID,      name_texture.DSAMUS,        portrait_dark_samus, -1)
+    add_to_css(Character.id.ELINK,  FGM.announcer.names.ELINK,          1.50,   0x00010001, series_logo.ZELDA,        name_texture.LINK,          portrait_unknown, 4)
+    add_to_css(Character.id.JSAMUS, FGM.announcer.names.SAMUS,          1.50,   0x00010003, series_logo.METROID,      name_texture.SAMUS,         portrait_unknown, 5)
+    add_to_css(Character.id.JNESS,  FGM.announcer.names.NESS,           1.50,   0x00010002, series_logo.EARTHBOUND,   name_texture.NESS,          portrait_unknown, 9)
+    add_to_css(Character.id.LUCAS,  FGM.announcer.names.LUCAS,          1.50,   0x00010002, series_logo.EARTHBOUND,   name_texture.LUCAS,         portrait_lucas, -1)
+    add_to_css(Character.id.JLINK,  FGM.announcer.names.LINK,           1.50,   0x00010001, series_logo.ZELDA,        name_texture.LINK,          portrait_unknown, 4)
+    add_to_css(Character.id.JFALCON,FGM.announcer.names.CAPTAIN_FALCON, 1.50,   0x00010001, series_logo.FZERO,        name_texture.CAPTAIN_FALCON,portrait_unknown, 6)
+    add_to_css(Character.id.JFOX,   FGM.announcer.names.JFOX,           1.50,   0x00010004, series_logo.STARFOX,      name_texture.FOX,           portrait_unknown, 12)
+    add_to_css(Character.id.JMARIO, FGM.announcer.names.MARIO,          1.50,   0x00010003, series_logo.MARIO_BROS,   name_texture.MARIO,         portrait_unknown, 2)
+    add_to_css(Character.id.JLUIGI, FGM.announcer.names.LUIGI,          1.50,   0x00010001, series_logo.MARIO_BROS,   name_texture.LUIGI,         portrait_unknown, 1)
+    add_to_css(Character.id.JDK,    FGM.announcer.names.DONKEY_KONG,    1.50,   0x00010001, series_logo.DONKEY_KONG,  name_texture.JDK,           portrait_unknown, 3)
+    add_to_css(Character.id.EPIKA,  FGM.announcer.names.PIKACHU,        1.50,   0x00010001, series_logo.POKEMON,      name_texture.PIKACHU,       portrait_unknown, 13)
+    add_to_css(Character.id.JPUFF,  FGM.announcer.names.JPUFF,          1.50,   0x00010002, series_logo.POKEMON,      name_texture.JPUFF,         portrait_unknown, 14)
+    add_to_css(Character.id.EPUFF,  FGM.announcer.names.JIGGLYPUFF,     1.50,   0x00010002, series_logo.POKEMON,      name_texture.JIGGLYPUFF,    portrait_unknown, 14)
+    add_to_css(Character.id.JKIRBY, FGM.announcer.names.KIRBY,          1.50,   0x00010003, series_logo.KIRBY,        name_texture.KIRBY,         portrait_unknown, 11)
+    add_to_css(Character.id.JYOSHI, FGM.announcer.names.YOSHI,          1.50,   0x00010002, series_logo.YOSHI,        name_texture.YOSHI,         portrait_unknown, 10)
+    add_to_css(Character.id.JPIKA,  FGM.announcer.names.PIKACHU,        1.50,   0x00010001, series_logo.POKEMON,      name_texture.PIKACHU,       portrait_unknown, 13)
+    add_to_css(Character.id.ESAMUS, FGM.announcer.names.ESAMUS,         1.50,   0x00010003, series_logo.METROID,      name_texture.SAMUS,         portrait_unknown, 5)
 }
 
 } // __CHARACTER_SELECT__

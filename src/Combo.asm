@@ -16,7 +16,7 @@ scope Combo {
         j       improve_meter_._begin_loop
         nop
     }
-    
+
     // @ Description
     // This function makes the combo meter take grabs and wall bounces into account.
     scope improve_meter_: {
@@ -41,7 +41,7 @@ scope Combo {
         sw      t2, 0x000C(sp)              // store t0 - t2
 
         // the player's current action value is loaded into t1
-        // if this action value matches one of the action values defined in the action table, the 
+        // if this action value matches one of the action values defined in the action table, the
         // hitstun flag will be overwritten with 1
         li      t0, action_table            // t0 = action_table
         lhu     t1, 0x0026(a2)              // t1 = current action value
@@ -49,7 +49,7 @@ scope Combo {
         Toggles.guard(Toggles.entry_tech_chase_combo_meter, j_begin_loop)
         li      t0, action_table_tech_chase // t0 = action_table_tech_chase
         lhu     t2, 0x0000(t0)              // t2 = action_table value
-        
+
         _begin_loop:
         // loops until the player's current action value matches an action value from the table
         // or if the end of the table is reached
@@ -71,7 +71,7 @@ scope Combo {
         _overwrite_flag:
         //overwrites the hitstun flag with 1 for this frame, causing the combo meter to not reset
         lli     t9, 0x0001                  // overwrite hitstun flag
-        
+
         _skip:
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // ~
@@ -79,25 +79,27 @@ scope Combo {
         addiu   sp, sp, 0x0010              // load t0 - t2
         j       _improve_meter_return
         nop
-        
-        
+
+
         action_table_tech_chase:
-        // invludes combo meter overrides for tech chasing
-        dh 0x0043                           // action value: "miss tech (facing up)"
-        dh 0x0044                           // action value: "miss tech (facing down)"
-        dh 0x0049                           // action value: "tech forwards"
-        dh 0x004A                           // action value: "tech backwards"
-        dh 0x0051                           // action value: "tech in place"
+        // includes combo meter overrides for tech chasing
+        dh Action.DownBounceD
+        dh Action.DownBounceU
+        dh Action.TechF
+        dh Action.TechB
+        dh Action.Tech
         action_table:
         // this table is used to determine which action values will override the combo meter
-        dh 0x00AB                           // action value: "grabbed"
-        dh 0x00AC                           // action value: "held"
-        dh 0x00B3                           // action value: "falcon dive grabbed"
-        dh 0x00B5                           // action value: "cargo grabbed"
-        dh 0x00B8                           // action value: "cargo held"
-        dh 0x00BA                           // action value: "thrown"
-        dh 0x00BB                           // action value: "thrown 2"   
-        dh 0x003C                           // action value: "tornado"
+        dh Action.CapturePulled
+        dh Action.CaptureWait
+        dh Action.FalconDivePulled
+        dh Action.ThrownDKPulled
+        dh Action.ThrownDK
+        dh Action.Thrown1
+        dh Action.Thrown2
+        dh Action.Thrown3
+        dh Action.Tornado
+        dh Action.Barrel
         dh 0x0000                           // end table
 
 

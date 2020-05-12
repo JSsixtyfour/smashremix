@@ -7,22 +7,39 @@ print "included VsCombo.asm\n"
 // This file adds combo meters to VS. matches.
 
 include "Character.asm"
-include "Data.asm"
 include "FGM.asm"
 include "OS.asm"
-include "Overlay.asm"
-include "String.asm"
 include "Toggles.asm"
 
 scope VsCombo {
 
     // @ Description
     // Display constants for combo/hit meter positioning
-    constant COMBO_METER_Y_COORD(167)
-    constant P1_COMBO_METER_X_COORD(10)
-    constant P2_COMBO_METER_X_COORD(80)
-    constant P3_COMBO_METER_X_COORD(150)
-    constant P4_COMBO_METER_X_COORD(220)
+    constant COMBO_METER_Y_COORD(0x4327)         // 167
+    constant P1_COMBO_METER_X_COORD(0x4120)      // 10
+    constant P2_COMBO_METER_X_COORD(0x42A0)      // 80
+    constant P3_COMBO_METER_X_COORD(0x4316)      // 150
+    constant P4_COMBO_METER_X_COORD(0x435C)      // 220
+    constant COMBO_METER_NUMBERS_OFFSET(0x4280)  // 64
+    constant COMBO_METER_NUMBER_OFFSET(0x4110)   // 9
+
+    // @ Description
+    // Offsets in the VsComboTexture file to the "COMBO +" textures for each color
+    constant TEXT_OFFSET_R(0x0818)
+    constant TEXT_OFFSET_B(0x1078)
+    constant TEXT_OFFSET_Y(0x18D8)
+    constant TEXT_OFFSET_G(0x2138)
+    constant TEXT_OFFSET_S(0x2998)
+
+    // @ Description
+    // Offsets in the VsComboTexture file to the 0 texture for each color
+    // Subsequent numbers are offset at 0x260 in order
+    constant NUMBER_OFFSET_R(0x2BF8)
+    constant NUMBER_OFFSET_B(0x43B8)
+    constant NUMBER_OFFSET_Y(0x5B78)
+    constant NUMBER_OFFSET_G(0x7338)
+    constant NUMBER_OFFSET_S(0x8AF8)
+    constant NUMBER_OFFSET(0x0260)
 
     // @ Description
     // Player hit count addresses
@@ -35,32 +52,32 @@ scope VsCombo {
     // Default number of frames to keep a hit count displayed
     constant DEFAULT_FRAME_BUFFER(30)
 
-    // @ Description
-    // Player count
-    player_count:
-    dw 0x00
+    //@ Description
+    // Will be populated with base address of combo textures file which is loaded at match start
+    file_address:
+    dw      0x00000000
 
     // @ Description
     // This will hold the addresses of the combo text textures by port color
     // 0 = red (p1), 1 = blue (p2), 2 = yellow (p3), 3 = green (p4), 4 = silver (unattributed)
     // For teams, 1-4 will be set based on that player's team color
     combo_text_map:
-    dw      Data.combo_text_r_info
-    dw      Data.combo_text_b_info
-    dw      Data.combo_text_y_info
-    dw      Data.combo_text_g_info
-    dw      Data.combo_text_s_info
+    dw      0x00000000
+    dw      0x00000000
+    dw      0x00000000
+    dw      0x00000000
+    dw      0x00000000
 
     // @ Description
     // This will hold the addresses of the combo numbers textures by port color
     // 0 = red (p1), 1 = blue (p2), 2 = yellow (p3), 3 = green (p4), 4 = silver (unattributed)
     // For teams, 1-4 will be set based on that player's team color
     combo_numbers_map:
-    dw      Data.combo_numbers_r_info
-    dw      Data.combo_numbers_b_info
-    dw      Data.combo_numbers_y_info
-    dw      Data.combo_numbers_g_info
-    dw      Data.combo_numbers_s_info
+    dw      0x00000000
+    dw      0x00000000
+    dw      0x00000000
+    dw      0x00000000
+    dw      0x00000000
 
     // @ Description
     // This macro creates a combo struct for the given port
@@ -72,7 +89,7 @@ scope VsCombo {
             dw      0x00                        // 0x000C = combo_count
             dw      0x00                        // 0x0010 = combo color index (display)
             dw      0x00                        // 0x0014 = combo color index (current)
-            dw      0x00                        // 0x0018 = x_coord
+            dw      0x00                        // 0x0018 = x_coord in setup_, object address in run_
             dw      0x00                        // 0x001C = frame_buffer
             dw      0x00                        // 0x0020 = player struct address
             dw      0x00                        // 0x0024 = highest_combo_vs_p1
@@ -96,8 +113,8 @@ scope VsCombo {
         lbu     t0, 0x0004(t0)                // t0 = team (0 = red, 1 = blue, 2 = green)
         bnez    t0, _blue_or_green_p{port}    // if (t0 != 0) then check if blue or green
         nop                                   // otherwise set to red
-        li      t0, Data.combo_text_r_info    // t0 = address of red combo text texture
-        li      t1, Data.combo_numbers_r_info // t1 = address of red combo numbers texture
+        addiu   t0, a2, TEXT_OFFSET_R - 0x10  // t0 = address of red combo text texture
+        addiu   t1, a2, NUMBER_OFFSET_R - 0x10// t1 = address of red combo numbers texture
         b       _team_color_set_p{port}
         nop
 
@@ -105,14 +122,14 @@ scope VsCombo {
         addi    t0, -0x0001                   // t0 = 0 if blue, 1 if green
         bnez    t0, _green_p{port}            // if (t0 != 0) then set to green
         nop                                   // otherwise set to blue
-        li      t0, Data.combo_text_b_info    // t0 = address of blue combo text texture
-        li      t1, Data.combo_numbers_b_info // t1 = address of blue combo numbers texture
+        addiu   t0, a2, TEXT_OFFSET_B - 0x10  // t0 = address of blue combo text texture
+        addiu   t1, a2, NUMBER_OFFSET_B - 0x10// t1 = address of blue combo numbers texture
         b       _team_color_set_p{port}
         nop
 
         _green_p{port}:
-        li      t0, Data.combo_text_g_info    // t0 = address of green combo text texture
-        li      t1, Data.combo_numbers_g_info // t1 = address of green combo numbers texture
+        addiu   t0, a2, TEXT_OFFSET_G - 0x10  // t0 = address of green combo text texture
+        addiu   t1, a2, NUMBER_OFFSET_G - 0x10// t1 = address of green combo numbers texture
 
         _team_color_set_p{port}:
         sw      t0, {offset}(a0)                // set p{port} combo text color
@@ -133,13 +150,13 @@ scope VsCombo {
         li      a3, combo_struct_p4           // a3 = combo_struct_p4
 
         // Set X coords
-        lli     t0, P1_COMBO_METER_X_COORD    // t0 = p1 x coord
+        lui     t0, P1_COMBO_METER_X_COORD    // t0 = p1 x coord
         sw      t0, 0x0018(a0)                // store x coord
-        lli     t0, P2_COMBO_METER_X_COORD    // t0 = p2 x coord
+        lui     t0, P2_COMBO_METER_X_COORD    // t0 = p2 x coord
         sw      t0, 0x0018(a1)                // store x coord
-        lli     t0, P3_COMBO_METER_X_COORD    // t0 = p3 x coord
+        lui     t0, P3_COMBO_METER_X_COORD    // t0 = p3 x coord
         sw      t0, 0x0018(a2)                // store x coord
-        li      t0, P4_COMBO_METER_X_COORD    // t0 = p4 x coord
+        lui     t0, P4_COMBO_METER_X_COORD    // t0 = p4 x coord
         sw      t0, 0x0018(a3)                // store x coord
 
         // Set combo meter addresses
@@ -199,33 +216,46 @@ scope VsCombo {
         // We'll now determine each player's team and set the color maps up accordingly.
         li      a0, combo_text_map            // a0 = address of combo text map
         li      a1, combo_numbers_map         // a1 = address of combo numbers map
+        li      a2, file_address              // a2 = pointer to RAM address of loaded textures file
+        lw      a2, 0x0000(a2)                // a2 = RAM address of loaded textures file
 
         set_color_by_team(1, 0x0000)
         set_color_by_team(2, 0x0004)
         set_color_by_team(3, 0x0008)
         set_color_by_team(4, 0x000C)
+
+        addiu   t0, a2, TEXT_OFFSET_S - 0x10  // t0 = address of silver combo text texture
+        addiu   t1, a2, NUMBER_OFFSET_S - 0x10// t1 = address of silver combo numbers texture
+        sw      t0, 0x0010(a0)                // set unattributed combo text color
+        sw      t1, 0x0010(a1)                // set unattributed combo numbers color
         b       _end
         nop
 
         _initialize_by_port:
-        li      a0, Data.combo_text_r_info    // a0 = p1 combo text color (red)
-        li      a1, Data.combo_text_b_info    // a1 = p2 combo text color (blue)
-        li      a2, Data.combo_text_y_info    // a2 = p3 combo text color (yellow)
-        li      a3, Data.combo_text_g_info    // a3 = p4 combo text color (green)
+        li      t1, file_address              // t1 = pointer to RAM address of loaded textures file
+        lw      t1, 0x0000(t1)                // t1 = RAM address of loaded textures file
+        addiu   a0, t1, TEXT_OFFSET_R - 0x10  // a0 = p1 combo text color (red)
+        addiu   a1, t1, TEXT_OFFSET_B - 0x10  // a1 = p2 combo text color (blue)
+        addiu   a2, t1, TEXT_OFFSET_Y - 0x10  // a2 = p3 combo text color (yellow)
+        addiu   a3, t1, TEXT_OFFSET_G - 0x10  // a3 = p4 combo text color (green)
         li      t0, combo_text_map            // t0 = address of combo text map
         sw      a0, 0x0000(t0)                // store p1 combo text color
         sw      a1, 0x0004(t0)                // store p2 combo text color
         sw      a2, 0x0008(t0)                // store p3 combo text color
         sw      a3, 0x000C(t0)                // store p4 combo text color
-        li      a0, Data.combo_numbers_r_info // a0 = p1 combo text color (red)
-        li      a1, Data.combo_numbers_b_info // a1 = p2 combo text color (blue)
-        li      a2, Data.combo_numbers_y_info // a2 = p3 combo text color (yellow)
-        li      a3, Data.combo_numbers_g_info // a3 = p4 combo text color (green)
+        addiu   a0, t1, TEXT_OFFSET_S - 0x10  // a0 = unattributed combo text color (silver)
+        sw      a0, 0x0010(t0)                // store unattributed combo text color
+        addiu   a0, t1, NUMBER_OFFSET_R - 0x10// a0 = p1 combo text color (red)
+        addiu   a1, t1, NUMBER_OFFSET_B - 0x10// a1 = p2 combo text color (blue)
+        addiu   a2, t1, NUMBER_OFFSET_Y - 0x10// a2 = p3 combo text color (yellow)
+        addiu   a3, t1, NUMBER_OFFSET_G - 0x10// a3 = p4 combo text color (green)
         li      t0, combo_numbers_map         // t0 = address of combo numbers map
         sw      a0, 0x0000(t0)                // store p1 combo numbers color
         sw      a1, 0x0004(t0)                // store p2 combo numbers color
         sw      a2, 0x0008(t0)                // store p3 combo numbers color
         sw      a3, 0x000C(t0)                // store p4 combo numbers color
+        addiu   a0, t1, NUMBER_OFFSET_S - 0x10// a0 = unattributed combo text color (silver)
+        sw      a0, 0x0010(t0)                // store unattributed combo text color
 
         _end:
         lw      t0, 0x0004(sp)                // ~
@@ -259,15 +289,18 @@ scope VsCombo {
         lw      a0, 0x0000(t0)                    // a0 = hit count
         addiu   t0, -0x0004                       // t0 = combo damage address
         lw      t6, 0x0000(t0)                    // t6 = combo damage
-        lw      t4, 0x0018(t5)                    // t4 = player_x_coord
+        lw      t4, 0x0018(t5)                    // t4 = object struct
         lw      t7, 0x0014(t5)                    // t7 = previous color index
 
         // Check if player struct address is 0 - if so, don't draw anything
         beqz    a1, _end                          // if (player struct address == 0) then skip to _end
         nop                                       // ~
 
-        // Check if currently in a combo (hit count > 1)
+        // always toggle off the display list - we will turn it back on below if necessary
         lli     t0, 0x0001                        // t0 = 1
+        sw      t0, 0x007C(t4)                    // turn off display list render
+
+        // Check if currently in a combo (hit count > 1)
         sltu    t1, t0, a0                        // if (hit count > 1) then update frame buffer
         bnez    t1, _in_combo                     // skip to _in_combo to update frame buffer
         nop
@@ -388,25 +421,47 @@ scope VsCombo {
 
         // Draw combo meter
         _draw:
-        jal     String.itoa_                      // v0 = (string) hit count
-        nop
-        move    a0, t4                            // a0 - ulx
-        lli     a1, COMBO_METER_Y_COORD           // a1 - uly
+        // make sure the display list is set to render
+        sw      r0, 0x007C(t4)
+
+        // set up texture data pointers
         lw      t0, 0x0010(t5)                    // t0 - color index (0 = silver, 1 = p1, 2 = p2, 3 = p3, 4 = p4)
         sll     t1, t0, 0x0002                    // t1 = color index * 4 = offset in color maps
         li      t2, combo_text_map                // t2 = combo_text_map address
-        addu    t2, t2, t1                        // t2 = address of texture struct address
-        lw      a2, 0x0000(t2)                    // a2 = address of texture struct
-        jal     Overlay.draw_texture_             // draw combo text texture
-        nop
-        addiu   a0, t4, 64                        // a0 = ulx + 64
-        lli     a1, COMBO_METER_Y_COORD           // a1 = uly
-        move    a2, v0                            // a2 = address of string
+        addu    t2, t2, t1                        // t2 = address of texture address
+        lw      a2, 0x0000(t2)                    // a2 = combo text texture address
         li      t2, combo_numbers_map             // t2 = combo_numbers_map address
-        addu    t2, t2, t1                        // t2 = address of font struct address
-        lw      a3, 0x0000(t2)                    // a3 = address of font struct
-        jal     draw_string_                      // draw current hit count
+        addu    t2, t2, t1                        // t2 = address of numbers texture address
+        lw      a3, 0x0000(t2)                    // a3 = address of numbers texture
+        lw      t0, 0x0074(t4)                    // t0 = address of combo text image struct
+        sw      a2, 0x0044(t0)                    // set combo text image address
+        lw      t0, 0x0008(t0)                    // t0 = address of combo number image struct, 1st digit
+        lli     t3, 0x000A                        // t3 = 10
+        div     a0, t3                            // divide hitcount by 10
+        mfhi    t2                                // t2 = last digit
+        mflo    t3                                // t3 = 0 if < 10, else it is the index to use to calculate the offset
+        beqz    t3, _less_than_10                 // if less than 10 hits, then skip
+        lli     t4, NUMBER_OFFSET                 // t4 = NUMBER_OFFSET (delay slot always executes)
+
+        multu   t3, t4                            // calculate offset in texture file of first digit
+        mflo    t3                                // t3 = offset
+        addu    a1, a3, t3                        // a1 = address of first digit's texture
+        multu   t2, t4                            // calculate offset in texture file of second digit
+        mflo    t3                                // t3 = offset
+        addu    a2, a3, t3                        // a2 = address of 2nd digit's texture
+        b       _set_number_textures
         nop
+
+        _less_than_10:
+        multu   t2, t4                            // calculate offset in texture file of first digit
+        mflo    t3                                // t3 = offset
+        addu    a1, a3, t3                        // a1 = address of 1st digit's texture
+        or      a2, r0, r0                        // a2 = 0 (don't display)
+
+        _set_number_textures:
+        sw      a1, 0x0044(t0)                    // set combo number image address
+        lw      t1, 0x0008(t0)                    // t1 = address of combo number image struct, 2nd digit
+        sw      a2, 0x0044(t1)                    // set combo number image address
 
         _end:
         lw      t0, 0x0004(sp)                    // ~
@@ -438,7 +493,6 @@ scope VsCombo {
     // accordingly. Then it sets up the tables needed for swapping the combo meter
     // in singles and also stores the correct player struct address.
     macro port_check(port, next) {
-        // t0 = player_count address
         // t1 = player_count
         // t8 = x_coord_table
         // t9 = combo_struct_table
@@ -453,11 +507,10 @@ scope VsCombo {
         addu    t1, t1, t4                       // player_count++
         li      t4, combo_struct_p{port}         // t4 = combo struct address for right/left port
         sw      v0, 0x0020(t4)                   // store address of player struct
-        sw      t1, 0x0000(t0)                   // store player count
         sltiu   t5, t1, 0x0003                   // if (>=3 players) then not singles so don't set up swap tables
         beqz    t5, {next}                       // ~
         nop                                      // ~
-        li      t5, P{port}_COMBO_METER_X_COORD  // t5 = x coord for left/right port
+        lui     t5, P{port}_COMBO_METER_X_COORD  // t5 = x coord for left/right port
         sw      t5, 0x0000(t8)                   // store x coord for left/right port
         addiu   t8, t8, 0x0004                   // t8 = x_coord_table++
         sw      t4, 0x0000(t9)                   // store combo struct address for right/left port
@@ -465,84 +518,17 @@ scope VsCombo {
     }
 
     // @ Description
-    // Adds f3dex2 to draw characters.
-    // @ Arguments
-    // a0 - ulx
-    // a1 - uly
-    // a2 - char
-    // a3 - address of font
-    scope draw_char_: {
-        addiu   sp, sp,-0x0018              // allocate stack space
-        sw      t0, 0x0004(sp)              // ~
-        sw      t1, 0x0008(sp)              // ~
-        sw      a2, 0x000C(sp)              // ~
-        sw      a3, 0x0010(sp)              // ~
-        sw      ra, 0x0014(sp)              // save registers
-
-        lw      t0, 0x0008(a3)              // t0 = address of image_data
-
-
-        addiu   a2, a2, -0x0030             // a2 = char - 48 (we only care about numbers, sprite not padded)
-        sll     t1, a2, 0x0009              // t1 = char * width * height * 2 (or char * 512)
-        addu    t0, t0, t1                  // t0 = address of char_data
-        li      t1, texture                 // ~
-        sw      t0, 0x0008(t1)              // texture.data = char_data
-        li      a2, texture                 // a2 - texture data
-        jal     Overlay.draw_texture_
+    // This runs every once per match and sets up the display lists and combo structs
+    scope setup_: {
+        OS.patch_start(0x10A4A8, 0x8018D5B8)
+        j       setup_
         nop
+        _return:
+        OS.patch_end()
 
-        lw      t0, 0x0004(sp)              // ~
-        lw      t1, 0x0008(sp)              // ~
-        lw      a2, 0x000C(sp)              // ~
-        lw      a3, 0x0010(sp)              // ~
-        lw      ra, 0x0014(sp)              // restore registers
-        addiu   sp, sp, 0x0018              // deallocate stack space
-        jr      ra                          // return
-        nop
+        jal     0x800D4060                  // original line 1
+        addiu   a2, r0, 0x000A              // original line 2
 
-        texture:
-        Texture.info(16, 16)
-    }
-
-    // @ Description
-    // Draws a null terminated string.
-    // @ Arguments
-    // a0 - ulx
-    // a1 - uly
-    // a2 - address of string
-    // a3 - address of font
-    scope draw_string_: {
-        addiu   sp, sp,-0x0010              // allocate stack space
-        sw      t0, 0x0004(sp)              // ~
-        sw      s2, 0x0008(sp)              // ~
-        sw      ra, 0x000C(sp)              // save registers
-
-        or      s2, a2, r0                  // s2 = copy of a2 (address of string)
-
-        _loop:
-        lb      t0, 0x0000(s2)              // t0 = char
-        beq     t0, r0, _end                // if (t0 == 0x00), end
-        nop
-        or      a2, t0, 0x000               // a2 = char
-        jal     draw_char_                  // draw character
-        nop
-        addiu   s2, s2, 0x0001              // s2++
-        addiu   a0, a0, 0x0009              // a0 = (ulx + 9)
-        b       _loop                       // draw next char
-        nop
-
-        _end:
-        lw      t0, 0x0004(sp)              // ~
-        lw      s2, 0x0008(sp)              // ~
-        lw      ra, 0x000C(sp)              // restore registers
-        addiu   sp, sp, 0x0010              // deallocate stack space
-        jr      ra                          // return
-        nop
-    }
-
-    // @ Description
-    // This is the entry for Overlay.asm
-    scope run_: {
         b       _guard                      // check if toggle is on
         nop
 
@@ -551,24 +537,28 @@ scope VsCombo {
         nop
 
         _swap_toggle_off:
-        b       _draw_hit_counts            // 1v1 swap toggle is off, skip to _draw_hit_counts
+        b       _register_textures          // swap toggle is off, skip to _register_textures
         nop
 
         _guard:
         // If combo meter is off, skip to _end and don't draw hit counts
         Toggles.guard(Toggles.entry_vs_mode_combo_meter, _toggle_off)
 
-        OS.save_registers()                 // save registers
+        // First, load the combo textures file
+        li      a0, req_list                // a0 = req_list (array of file IDs)
+        li      a2, file_address            // a1 = file_address (array of file RAM addresses to use for later referencing)
+        li      a3, free_memory_pointer     // a3 = free_memory_pointer (free memory space to load the file to)
+        lw      a3, 0x0000(a3)              // a3 = address to load file to
+        jal     0x800CDE04
+        addiu   a1, r0, 0x0001              // a2 = 1 (number of files in array)
+        li      a3, free_memory_pointer     // a3 = free_memory_pointer (free memory space to load the file to)
+        sw      t7, 0x0000(a3)              // store updated free memory address
 
-        li      t0, player_count            // t0 = number of players
-        lw      t1, 0x0000(t0)              // t1 = player_count
-        bnez    t1, _draw_hit_counts        // if (player_count > 0) skip setup
-        nop
+        lli     t1, 0x0000                  // t1 = player_count
 
         // We swap hit count meter location for 1v1, so the next few blocks check
         // how many players there are and set up tables for the left and right
         // player ports. This is only run once per match.
-        _setup:
         li      t8, x_coord_table           // t8 = x_coord_table
         li      t9, combo_struct_table      // t9 = combo_struct_table
         jal     initialize_combo_structs_   // Reset variables from previous match
@@ -587,11 +577,11 @@ scope VsCombo {
         port_check(4, _check_singles)       // check port 4
 
         _check_singles:
-        // If 1v1 swap is off, skip to _draw_hit_counts
+        // If 1v1 swap is off, skip to _register_textures
         Toggles.guard(Toggles.entry_1v1_combo_meter_swap, _swap_toggle_off)
 
         lli     t5, 0x0002                  // t5 = 2
-        bne     t1, t5, _draw_hit_counts    // if (player_count != 2) then not singles
+        bne     t1, t5, _register_textures  // if (player_count != 2) then not singles
         nop
 
         _swap_for_singles:
@@ -604,19 +594,112 @@ scope VsCombo {
         lw      t1, 0x0000(t9)              // t1 = right player combo_struct address
         sw      t0, 0x0018(t1)              // update combo_struct_pX with x coord for right player
 
-        // end of setup
+        _register_textures:
+        // loop over combo struct and set up linked lists for combo textures
+        lli     s0, 0x0001                  // s0 = port
+        li      s1, combo_struct_p1         // s1 = combo_struct address
+        li      s2, run_                    // s2 = run_ (will get set on first registered object)
 
-        _draw_hit_counts:
-        draw_hit_count(1)                   // draw combo meter for port 1
-        draw_hit_count(2)                   // draw combo meter for port 2
-        draw_hit_count(3)                   // draw combo meter for port 3
-        draw_hit_count(4)                   // draw combo meter for port 4
+        _loop:
+        lw      t0, 0x0020(s1)              // t0 = player struct address
+        beqz    t0, _next                   // if no player struct, skip
+        nop
 
-        OS.restore_registers()              // restore registers
+        addiu   a0, r0, 0x03FE              // a0 = unique ID for this linked list
+        addiu   a2, r0, 0x000B              // a2 = linked list to append? this ensures the meter is not rendered during pause
+        or      a1, r0, s2                  // a1 = routine to run every frame
+        jal     0x80009968
+        lui     a3, 0x8000
+
+        addu    s3, v0, r0                  // save RAM location of object struct
+
+        // Set up object struct
+        addiu   sp, sp, -0x0020             // allocate stack space
+        addiu   a0, r0, 0xFFFF              // a0 = -1
+        sw      a0, 0x0010(sp)              // 0x0010(sp) = -1 (not sure why)
+        addu    a0, r0, s3                  // a0 = RAM address of object block
+        addiu   a2, r0, 0x0018              // a2 = room? z-index? set high to render on top of other elements
+        li      a1, 0x800CCF00              // a1 = RAM address of display list render routine to use
+        jal     0x80009DF4
+        lui     a3, 0x8000
+        addiu   sp, sp, 0x0020              // deallocate stack space
+
+        // Only register run_ to run every frame once
+        lli     s2, 0x0000
+
+        // Copy combo text image footer data into struct
+        addu    a0, r0, s3                  // a0 = RAM address of object block
+        li      a1, file_address            // a1 = pointer to RAM address of custom image file
+        lw      a1, 0x0000(a1)              // a1 = RAM address of custom image file
+        addiu   a1, a1, TEXT_OFFSET_R       // a1 = RAM address of image footer struct plus 0x10
+        jal     0x800CCFDC                  // v0 = RAM address of texture struct
+        nop
+
+        lw      a1, 0x0018(s1)              // a1 = P{s0}_COMBO_METER_X_COORD
+        sw      a1, 0x0058(v0)              // set X position
+        lui     a1, COMBO_METER_Y_COORD
+        sw      a1, 0x005C(v0)              // set Y position
+        lli     a1, 0x0201
+        sh      a1, 0x0024(v0)              // turn on blur
+
+        // Copy combo number image footer data into struct (1st digit)
+        addu    a0, r0, s3                  // a0 = RAM address of object block
+        li      a1, file_address            // a1 = pointer to RAM address of custom image file
+        lw      a1, 0x0000(a1)              // a1 = RAM address of custom image file
+        addiu   a1, a1, NUMBER_OFFSET_R     // a1 = RAM address of image footer struct plus 0x10
+        jal     0x800CCFDC
+        nop
+
+        lw      a1, 0x0018(s1)              // a1 = P{s0}_COMBO_METER_X_COORD
+        mtc1    a1, f4                      // f4 = a1
+        lui     a1, COMBO_METER_NUMBERS_OFFSET
+        mtc1    a1, f6                      // f6 = COMBO_METER_NUMBERS_OFFSET
+        add.s   f4, f4, f6                  // f4 = P{s0}_COMBO_METER_X_COORD + COMBO_METER_NUMBERS_OFFSET
+        mfc1    s4, f4                      // s4 = X position
+        sw      s4, 0x0058(v0)              // set X position
+        lui     a1, COMBO_METER_Y_COORD
+        sw      a1, 0x005C(v0)              // set Y position
+        lli     a1, 0x0201
+        sh      a1, 0x0024(v0)              // turn on blur
+
+        // Copy combo number image footer data into struct (2nd digit)
+        addu    a0, r0, s3                  // a0 = RAM address of object block
+        li      a1, file_address            // a1 = pointer to RAM address of custom image file
+        lw      a1, 0x0000(a1)              // a1 = RAM address of custom image file
+        addiu   a1, a1, NUMBER_OFFSET_R     // a1 = RAM address of image footer struct plus 0x10
+        jal     0x800CCFDC
+        nop
+
+        mtc1    s4, f4                      // f4 = X position of 1st digit
+        lui     a1, COMBO_METER_NUMBER_OFFSET
+        mtc1    a1, f6                      // f6 = COMBO_METER_NUMBER_OFFSET
+        add.s   f4, f4, f6                  // f4 = X position of 1st digit + COMBO_METER_NUMBER_OFFSET
+        mfc1    a1, f4                      // a1 = X position
+        sw      a1, 0x0058(v0)              // set X position
+        lui     a1, COMBO_METER_Y_COORD
+        sw      a1, 0x005C(v0)              // set Y position
+        lli     a1, 0x0201
+        sh      a1, 0x0024(v0)              // turn on blur
+
+        // store object address for easy display toggling
+        sw      s3, 0x0018(s1)
+
+        // turn off display initially
+        lli     t0, 0x0001                  // t0 = 1
+        sw      t0, 0x007C(s3)              // turn off display list render
+
+        _next:
+        sltiu   t0, s0, 0x0004              // t0 = 1 if s0 less than 4
+        addiu   s1, s1, 0x0038              // s1 = combo_struct_p{s0 + 1}
+        bnez    t0, _loop                   // if not through all yet, increment and loop
+        addiu   s0, s0, 0x0001              // s0++
 
         _end:
-        jr      ra                          // return
+        j       _return
         nop
+
+        req_list:
+        dw      File.VS_COMBO_METER_TEXTURES// file containing combo meter textures
 
         x_coord_table:
         dw 0x00                             // left player x_coord (singles)
@@ -625,7 +708,31 @@ scope VsCombo {
         combo_struct_table:
         dw 0x00                             // right player combo struct address (singles)
         dw 0x00                             // left player combo struct address (singles)
+    }
 
+    // @ Description
+    // This runs every frame and will draw the combo meter if appropriate
+    scope run_: {
+        addiu   sp, sp, -0x0010             // allocate stack space
+        sw      ra, 0x0004(sp)              // save ra
+
+        lui     v0, 0x8004
+        lw      v0, 0x671C(v0)              // v0 = pointer to start of linked list of HUD when not paused
+        lw      v0, 0x007C(v0)              // v0 = 1 when paused, 0 when not paused
+        bnez    v0, _end                    // if paused, then skip drawing combo meters
+        nop
+
+        _draw_hit_counts:
+        draw_hit_count(1)                   // draw combo meter for port 1
+        draw_hit_count(2)                   // draw combo meter for port 2
+        draw_hit_count(3)                   // draw combo meter for port 3
+        draw_hit_count(4)                   // draw combo meter for port 4
+
+        _end:
+        lw      ra, 0x0004(sp)              // restore ra
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        jr      ra
+        nop
     }
 } // VsCombo
 } // __VSCOMBO__

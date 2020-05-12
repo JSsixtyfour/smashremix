@@ -14,6 +14,50 @@ scope GFX {
     variable current_gfx_texture_count(0)                // Number of gfx textures in the current gfx texture block
 
     // @ Description
+    // Stores the current gfx_id for custom use during GFX processing.
+    // When 0, default functionality occurs.
+    current_gfx_id:
+    dw 0
+
+    // @ Description
+	// This may be necessary to ensure something below is aligned for console
+	OS.align(16)
+
+    // @ Description
+    // Modifies routines that load GFX Instructions so that we can use a custom GFX_INSTRUCTIONS_ID
+    scope augment_gfx_instructions_loader_: {
+        OS.patch_start(0x4A3CC, 0x800CE9EC)
+        sw      ra, 0x0014(sp)                        // original line 3
+        jal     augment_gfx_instructions_loader_
+        nop
+        OS.patch_end()
+        OS.patch_start(0x4A25C, 0x800CE87C)
+        jal     augment_gfx_instructions_loader_
+        nop
+        OS.patch_end()
+
+        // a1 = GFX_INSTRUCTIONS_ID
+
+        li      at, current_gfx_id                     // at = current_gfx_id address
+        lw      a2, 0x0000(at)                         // a2 = current_gfx_id - nonzero if a new gfx_id
+        beqzl   a2, _original                          // if not set, then use default values
+        or      a2, a1, r0                             // original line 1
+
+        // if we're here, then we have a new gfx_id and need to load the new gfx_instructions_id
+        li      a1, gfx_id_to_gfx_instructions_id_map  // a1 = gfx_id_to_gfx_instructions_id_map
+        addiu   a2, a2, -0x005C                        // a2 = slot in table
+        sll     a2, a2, 0x2                            // a2 = offset in table
+        addu    a1, a1, a2                             // a1 = address of gfx_instructions_id
+        lw      a2, 0x0000(a1)                         // a2 = gfx_instructions_id
+        sw      r0, 0x0000(at)                         // clear current_gfx_id
+
+        _original:
+        or      a1, a0, r0                             // original line 2
+        jr      ra
+        nop
+    }
+
+    // @ Description
     // Modifies the routine that maps GFX IDs in moveset commands to GFX routines so that we can use an extended table
     scope extend_gfx_command_jump_table_: {
         OS.patch_start(0x666A4, 0x800EAEA4)
@@ -30,6 +74,8 @@ scope GFX {
         nop
 
         _new_gfx_id:
+        li      at, current_gfx_id                       // at = address of current_gfx_id
+        sw      t8, 0x0000(at)                           // store current_gfx_id
         li      at, extended_gfx_command_jump_table      // at = address of extended table
         addiu   t8, t8, -0x005C                          // t8 = slot in extended table
         sll     t8, t8, 0x2                              // t8 = offset in extended table
@@ -64,7 +110,7 @@ scope GFX {
         lw      v0, 0x0000(at)                           // v0 = address of GFX instructions
         mtc1    r0, f0                                   // original line (important)
         j       0x800CE71C                               // return after v0 is originally set
-        nop                                           // ~
+        nop                                              // ~
     }
 
     // @ Description
@@ -115,29 +161,6 @@ scope GFX {
         lw      t6, 0x6420(t6)                           // original line 2
         j       0x800D16FC                               // return
         nop                                              // ~
-    }
-
-    // @ Description
-    // This routine is a copy of the first part of the explosion gfx instructions loader modified to accept
-    // the gfx_instructions_id as an argument. Then we piggyback off of the rest of the explosion code.
-    scope gfx_instructions_loader_: {
-        // a3 = gfx_instructions_id to load
-
-        // The next several lines are the first commands from the explosion gfx instructions loader (73)
-        addiu   sp, sp, 0xFFD8                           // original line 1
-        sw      a0, 0x0028(sp)                           // original line 2
-        lui     a0, 0x8013                               // original line 3
-        lw      a0, 0x13C4(a0)                           // original line 4
-        sw      ra, 0x001C(sp)                           // original line 5
-        sw      s0, 0x0018(sp)                           // original line 6
-
-        addu    a1, r0, a3                               // this is usually hard-coded, but we are reusing this block thus use a3
-
-        // Now let's go back to the original line that explosion uses
-        // This may need to change in the future if any of the stuff at this address isn't relevant for a new gfx
-        j       0x8010049C
-        nop
-
     }
 
     // @ Description
@@ -194,18 +217,17 @@ scope GFX {
     // Adds a new GFX
     // name - Used for display only
     // instructions_filename - The file containing the GFX instructions
-    macro add_gfx(name, instructions_filename) {
+    // base_gfx_id - original gfx_id used as a basis for the new GFX
+    macro add_gfx(name, instructions_filename, base_gfx_id) {
         global variable new_gfx_count(new_gfx_count + 1) // increment new_gfx_count
         evaluate n(new_gfx_count)
         print " - Added GFX_ID 0x"; OS.print_hex(0x5B + new_gfx_count); print " (Command ID "; OS.print_hex((0x5B + new_gfx_count) * 4); print ") with Instruction ID 0x"; OS.print_hex(0x76 + new_gfx_count); print "): {name}\n"
 
-        gfx_assembly_{n}:
-        lli     a3, 0x76 + {n}                           // this creates a new unique GFX_INSTRUCTION_ID
-        jal     gfx_instructions_loader_                 // send new GFX_INSTRUCTION_ID to our standard instructions block
-        // The next several lines are commands from the jump address for the explosion gfx (0x800EB17C - 0x800EB184)
-        or      a0, s0, r0                               // original line 1
-        j       0x800EB388                               // modified from branch to jump
-        or      v1, v0, r0                               // original line 3
+        // Use base_gfx_id to get RAM address from the GFX command jump table (0xAB764, 0x8012ff64)
+        read32 gfx_assembly_{n}, "../roms/original.z64", 0xAB764 + ({base_gfx_id} * 4)
+
+        // This will map this gfx_id to the new gfx_instructions_id
+        global variable gfx_instructions_id_{n}(0x76 + new_gfx_count)
 
         gfx_instructions_{n}:
         insert "{instructions_filename}"
@@ -283,8 +305,9 @@ scope GFX {
         j       0x800EB0F8                               // jump instead of branch to avoid out of bounds
         nop
 
+        // instructions not necessary, but leave in label and variable so write_gfx() doesn't fail
         gfx_instructions_{n}:
-        // instructions not necessary, but leave in label so write_gfx() doesn't fail
+        global variable gfx_instructions_id_{n}(0)
 
         OS.align(16)
     }
@@ -296,6 +319,13 @@ scope GFX {
         define n(1)
         while {n} <= new_gfx_count {
             dw       gfx_assembly_{n}                    // pointer to gfx_assembly
+            evaluate n({n}+1)
+        }
+
+        gfx_id_to_gfx_instructions_id_map:
+        define n(1)
+        while {n} <= new_gfx_count {
+            dw       gfx_instructions_id_{n}             // gfx_instructions_id to use for this gfx_id
             evaluate n({n}+1)
         }
 
@@ -323,6 +353,13 @@ scope GFX {
         pullvar origin, base
     }
 
+    scope id {
+        constant FIRE(0x6)
+	    constant EXPLOSION(0x1C)
+	    constant WHITE_SPARKLE(0x29)
+	    constant NOTE(0x5A)
+	}
+
     // ADD NEW GFX TEXTURES HERE
     // Add a texture block and specify the number of textures in the block, then add the textures.
     // Example:
@@ -347,31 +384,33 @@ scope GFX {
     add_gfx_texture(gfx/explosion-bw-8.rgba8888)
     add_gfx_texture(gfx/explosion-bw-9.rgba8888)
 
-    add_gfx_texture_block(Dr. Mario Pill Effect, 3, 0, 3)
-    add_gfx_texture(gfx/dr-mario-effect-1.rgba8888)
-    add_gfx_texture(gfx/dr-mario-effect-2.rgba8888)
-    add_gfx_texture(gfx/dr-mario-effect-3.rgba8888)
+    add_gfx_texture_block(Dr. Mario Pill Effect, 3, 0, 2)
+    add_gfx_texture(gfx/dr-mario-effect-1.rgba5551)
+    add_gfx_texture(gfx/dr-mario-effect-2.rgba5551)
+    add_gfx_texture(gfx/dr-mario-effect-3.rgba5551)
 
-    add_gfx_texture_block(PK Love, 3, 0, 3)
-    add_gfx_texture(gfx/lucas-pk-love-1.rgba8888)
-    add_gfx_texture(gfx/lucas-pk-love-2.rgba8888)
-    add_gfx_texture(gfx/lucas-pk-love-3.rgba8888)
+    add_gfx_texture_block(PK Love, 3, 0, 2)
+    add_gfx_texture(gfx/lucas-pk-love-1.rgba5551)
+    add_gfx_texture(gfx/lucas-pk-love-2.rgba5551)
+    add_gfx_texture(gfx/lucas-pk-love-3.rgba5551)
 
     // ADD NEW GFX HERE
-    add_gfx(Blue Explosion, gfx/blue_explosion_instructions.bin)
-    add_gfx(Blue Bomb Explosion, gfx/blue_bomb_explosion_instructions.bin)
-    add_gfx(Blue Bomb Explosion - Instruction 0x1B replacement, gfx/blue_bomb_explosion_instructions-1B.bin)
-    add_gfx(Blue Bomb Explosion - Instruction 0x1C replacement, gfx/blue_bomb_explosion_instructions-1C.bin)
-    add_gfx(Blue Bomb Explosion - Instruction 0x1D replacement, gfx/blue_bomb_explosion_instructions-1D.bin)
-    add_gfx(Blue Bomb Explosion - Instruction 0x1E replacement, gfx/blue_bomb_explosion_instructions-1E.bin)
-    add_gfx(Blue Bomb Explosion - Instruction 0x1F replacement, gfx/blue_bomb_explosion_instructions-1F.bin)
-    add_gfx(Blue Bomb Explosion - Instruction 0x20 replacement, gfx/blue_bomb_explosion_instructions-20.bin)
+    add_gfx(Blue Explosion, gfx/blue_explosion_instructions.bin, id.EXPLOSION)
+    add_gfx(Blue Bomb Explosion, gfx/blue_bomb_explosion_instructions.bin, id.EXPLOSION)
+    add_gfx(Blue Bomb Explosion - Instruction 0x1B replacement, gfx/blue_bomb_explosion_instructions-1B.bin, id.EXPLOSION)
+    add_gfx(Blue Bomb Explosion - Instruction 0x1C replacement, gfx/blue_bomb_explosion_instructions-1C.bin, id.EXPLOSION)
+    add_gfx(Blue Bomb Explosion - Instruction 0x1D replacement, gfx/blue_bomb_explosion_instructions-1D.bin, id.EXPLOSION)
+    add_gfx(Blue Bomb Explosion - Instruction 0x1E replacement, gfx/blue_bomb_explosion_instructions-1E.bin, id.EXPLOSION)
+    add_gfx(Blue Bomb Explosion - Instruction 0x1F replacement, gfx/blue_bomb_explosion_instructions-1F.bin, id.EXPLOSION)
+    add_gfx(Blue Bomb Explosion - Instruction 0x20 replacement, gfx/blue_bomb_explosion_instructions-20.bin, id.EXPLOSION)
 
     add_ground_effect_gfx(Blue/Black Ground Effect, 0x20)
 
-    add_gfx(Purple Explosion, gfx/purple_explosion_instructions.bin)
-    add_gfx(Dr Mario Effect, gfx/dr_mario_effect_instructions.bin)
-    // add_gfx(PK Love, gfx/pk_love_instructions.bin)
+    add_gfx(Purple Explosion, gfx/purple_explosion_instructions.bin, id.EXPLOSION)
+    add_gfx(Dr Mario Effect, gfx/dr_mario_effect_instructions.bin, id.EXPLOSION)
+    add_gfx(PK Love, gfx/pk_love_instructions.bin, id.WHITE_SPARKLE)
+    add_gfx(PK Love Rising, gfx/pk_love_rising_instructions.bin, id.NOTE)
+    add_gfx(PK Love Rising Small, gfx/pk_love_rising_small_instructions.bin, id.FIRE)
 
     // writes new GFX to ROM
     write_gfx()

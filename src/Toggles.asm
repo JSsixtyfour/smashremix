@@ -439,6 +439,32 @@ scope Toggles {
     dw model_skeleton
 
     // @ Description
+    // Japanese Sounds strings
+    jsounds_default:; db "DEFAULT", 0x00
+    jsounds_always:; db "ALWAYS", 0x00
+    jsounds_never:; db "NEVER", 0x00
+    OS.align(4)
+
+    string_table_jsounds:
+    dw jsounds_default
+    dw jsounds_always
+    dw jsounds_never
+
+    // @ Description
+    // Menu Music strings
+    menu_music_default:; db "DEFAULT", 0x00
+    menu_music_64:; db "64", 0x00
+    menu_music_melee:; db "MELEE", 0x00
+    menu_music_brawl:; db "BRAWL", 0x00
+    OS.align(4)
+
+    string_table_menu_music:
+    dw menu_music_default
+    dw menu_music_64
+    dw menu_music_melee
+    dw menu_music_brawl
+
+    // @ Description
     // SSS Layout strings
     sss_layout_normal:; db "NORMAL", 0x00
     sss_layout_tournament:; db "TOURNAMENT", 0x00
@@ -452,7 +478,68 @@ scope Toggles {
         constant NORMAL(0)
         constant TOURNAMENT(1)
     }
+
+    // @ Description
+    // Hazard Mode strings
+    hazard_mode_normal:; db "NORMAL", 0x00
+    hazard_mode_hazards_off:; db "HAZARDS OFF", 0x00
+    hazard_mode_movement_off:; db "MOVEMENT OFF", 0x00
+    hazard_mode_all_off:; db "ALL OFF", 0x00
+    OS.align(4)
+
+    string_table_hazard_mode:
+    dw hazard_mode_normal
+    dw hazard_mode_hazards_off
+    dw hazard_mode_movement_off
+    dw hazard_mode_all_off
+
+    scope hazard_mode {
+        constant NORMAL(0)
+        constant HAZARDS_OFF(1)
+        constant MOVEMENT_OFF(2)
+        constant ALL_OFF(3)
+    }
     
+    // @ Description
+    // Allows A button to play selected menu music preference
+    scope play_menu_music_: {
+        addiu   sp, sp,-0x0014              // allocate stack space
+        sw      a0, 0x0004(sp)              // ~
+        sw      a1, 0x0008(sp)              // ~
+        sw      t0, 0x000C(sp)              // ~
+        sw      ra, 0x0010(sp)              // save registers
+
+        li      t0, Toggles.entry_menu_music
+        lw      t0, 0x0004(t0)              // t0 = 0 if DEFAULT, 1 if 64, 2 if MELEE, 3 if BRAWL
+
+        lli     t1, 0x0001                  // t1 = 1 (64)
+        beql    t1, t0, _play               // if 64, then use 64 BGM
+        addiu   a1, r0, BGM.menu.MAIN
+        lli     t1, 0x0002                  // t1 = 2 (MELEE)
+        beql    t1, t0, _play               // if MELEE, then use MELEE BGM
+        addiu   a1, r0, BGM.menu.MAIN_MELEE
+        lli     t1, 0x0003                  // t1 = 3 (BRAWL)
+        beql    t1, t0, _play               // if BRAWL, then use BRAWL BGM
+        addiu   a1, r0, BGM.menu.MAIN_BRAWL
+
+        b       _finish                     // if DEFAULT, then let's let the current track keep playing
+        nop
+
+        _play:
+        lli     a0, 0x0000
+        jal     BGM.play_
+        nop
+
+        _finish:
+        lw      a0, 0x0004(sp)              // ~
+        lw      a1, 0x0008(sp)              // ~
+        lw      t0, 0x000C(sp)              // ~
+        lw      ra, 0x0010(sp)              // restore registers
+        addiu   sp, sp, 0x0014              // deallocate stack space
+        jr      ra
+        nop
+    }
+
     // @ Description
     // Contains list of submenus.
     head_super_menu:
@@ -470,11 +557,11 @@ scope Toggles {
     entry_flash_on_z_cancel:;           entry_bool("Flash On Z-Cancel", OS.FALSE, OS.FALSE, OS.FALSE, entry_fps)
     entry_fps:;                         entry("FPS Display *BETA", Menu.type.U8, OS.FALSE, OS.FALSE, OS.FALSE, 0, 2, OS.NULL, string_table_fps, OS.NULL, entry_special_model)
     entry_special_model:;               entry("Special Model Display", Menu.type.U8, OS.FALSE, OS.FALSE, OS.FALSE, 0, 3, OS.NULL, string_table_model, OS.NULL, entry_hold_to_pause)
-    entry_hold_to_pause:;               entry_bool("Hold To Pause", OS.TRUE, OS.TRUE, OS.TRUE, entry_improved_combo_meter)
+    entry_hold_to_pause:;               entry_bool("Hold To Pause", OS.FALSE, OS.TRUE, OS.FALSE, entry_improved_combo_meter)
     entry_improved_combo_meter:;        entry_bool("Improved Combo Meter", OS.TRUE, OS.FALSE, OS.TRUE, entry_tech_chase_combo_meter)
     entry_tech_chase_combo_meter:;      entry_bool("Tech Chase Combo Meter", OS.TRUE, OS.FALSE, OS.TRUE, entry_vs_mode_combo_meter)
-    entry_vs_mode_combo_meter:;         entry_bool("VS Mode Combo Meter *BETA", OS.FALSE, OS.FALSE, OS.FALSE, entry_1v1_combo_meter_swap)
-    entry_1v1_combo_meter_swap:;        entry_bool("1V1 Combo Meter Swap *BETA", OS.FALSE, OS.FALSE, OS.FALSE, entry_improved_ai)
+    entry_vs_mode_combo_meter:;         entry_bool("VS Mode Combo Meter", OS.TRUE, OS.FALSE, OS.TRUE, entry_1v1_combo_meter_swap)
+    entry_1v1_combo_meter_swap:;        entry_bool("1v1 Combo Meter Swap", OS.FALSE, OS.FALSE, OS.FALSE, entry_improved_ai)
     entry_improved_ai:;                 entry_bool("Improved AI", OS.TRUE, OS.FALSE, OS.TRUE, entry_neutral_spawns)
     entry_neutral_spawns:;              entry_bool("Neutral Spawns", OS.TRUE, OS.TRUE, OS.TRUE, entry_skip_results_screen)
     entry_skip_results_screen:;         entry_bool("Skip Results Screen", OS.FALSE, OS.FALSE, OS.FALSE, entry_stereo_sound)
@@ -482,14 +569,18 @@ scope Toggles {
     entry_stock_handicap:;              entry_bool("Stock Handicap", OS.TRUE, OS.FALSE, OS.TRUE, entry_salty_runback)
     entry_salty_runback:;               entry_bool("Salty Runback", OS.TRUE, OS.FALSE, OS.TRUE, entry_widescreen)
     entry_widescreen:;                  entry_bool("Widescreen", OS.FALSE, OS.FALSE, OS.FALSE, entry_japanese_hitlag)
-    entry_japanese_hitlag:;             entry_bool("Japanese Hitlag", OS.FALSE, OS.FALSE, OS.TRUE, entry_momentum_slide)
+    entry_japanese_hitlag:;             entry_bool("Japanese Hitlag", OS.FALSE, OS.FALSE, OS.TRUE, entry_japanese_di)
+    entry_japanese_di:;                 entry_bool("Japanese DI", OS.FALSE, OS.FALSE, OS.TRUE, entry_japanese_sounds)
+    entry_japanese_sounds:;             entry("Japanese Sounds", Menu.type.U8, 0, 0, 0, 0, 2, OS.NULL, string_table_jsounds, OS.NULL, entry_momentum_slide)
     entry_momentum_slide:;              entry_bool("Momentum Slide", OS.FALSE, OS.FALSE, OS.TRUE, entry_variant_random)
-    entry_variant_random:;              entry_bool("Random Select With Variants", OS.FALSE, OS.FALSE, OS.FALSE, OS.NULL)
+    entry_variant_random:;              entry_bool("Random Select With Variants", OS.FALSE, OS.FALSE, OS.FALSE, entry_disable_aa)
+    entry_disable_aa:;                  entry_bool("Disable Anti-Aliasing", OS.FALSE, OS.FALSE, OS.FALSE, OS.NULL)
 
     // @ Description
     // Random Music Toggles
     head_music_settings:
     entry_play_music:;                      entry_bool("Play Music", OS.TRUE, OS.TRUE, OS.TRUE, pc() + 16)
+    entry_menu_music:;                      entry("Menu Music", Menu.type.U8, 0, 0, 0, 0, 3, play_menu_music_, string_table_menu_music, OS.NULL, pc() + 16)
     entry_random_music:;                    entry_bool("Random Music", OS.FALSE, OS.FALSE, OS.FALSE, pc() + 20)
     entry_random_music_bonus:;              entry_bool("Bonus", OS.TRUE, OS.TRUE, OS.TRUE, pc() + 12)
     entry_random_music_congo_jungle:;       entry_bool("Congo Jungle", OS.TRUE, OS.TRUE, OS.TRUE, pc() + 20)
@@ -538,9 +629,10 @@ scope Toggles {
     }
 
     // @ Description
-    // Random Stage Toggles
+    // Stage Toggles
     head_stage_settings:
-    entry_sss_layout:;                          entry("Stage Select Layout", Menu.type.U8, sss.NORMAL, sss.TOURNAMENT, sss.NORMAL, 0, 1, OS.NULL, string_table_sss_layout, OS.NULL, entry_random_stage_title)
+    entry_sss_layout:;                          entry("Stage Select Layout", Menu.type.U8, sss.NORMAL, sss.TOURNAMENT, sss.NORMAL, 0, 1, OS.NULL, string_table_sss_layout, OS.NULL, entry_hazard_mode)
+    entry_hazard_mode:;                         entry("Hazard Mode", Menu.type.U8, hazard_mode.NORMAL, hazard_mode.NORMAL, hazard_mode.NORMAL, 0, 3, OS.NULL, string_table_hazard_mode, OS.NULL, entry_random_stage_title)
     entry_random_stage_title:;                  Menu.entry_title("Random Stage Toggles:", OS.NULL, entry_random_stage_congo_jungle)
     entry_random_stage_congo_jungle:;           entry_bool("Congo Jungle", OS.TRUE, OS.FALSE, OS.TRUE, pc() + 20)
     entry_random_stage_dream_land:;             entry_bool("Dream Land", OS.TRUE, OS.TRUE, OS.TRUE, pc() + 16)
@@ -590,9 +682,9 @@ scope Toggles {
 
     // @ Description
     // SRAM blocks for toggle saving.
-    block_misc:; SRAM.block(20 * 4)
-    block_music:; SRAM.block((18 + {toggled_custom_MIDIs}) * 4)
-    block_stages:; SRAM.block((17 + {toggled_custom_stages}) * 4)
+    block_misc:; SRAM.block(23 * 4)
+    block_music:; SRAM.block((19 + {toggled_custom_MIDIs}) * 4)
+    block_stages:; SRAM.block((18 + {toggled_custom_stages}) * 4)
 
     profile_defaults_CE:; write_defaults_for(CE)
     profile_defaults_TE:; write_defaults_for(TE)
