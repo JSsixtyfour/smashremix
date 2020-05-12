@@ -19,7 +19,16 @@ origin  0x02000000
 base    0x80400000
 include "src/OS.asm"
 include "src/RCP.asm"
-include "src/DL.asm"
+
+// @ Description
+// Custom display list goes here.
+OS.align(16)
+display_list:
+fill 0x20000
+
+display_list_info:
+RCP.display_list_info(display_list, 0x20000)
+
 include "src/Action.asm"
 include "src/File.asm"
 include "src/Boot.asm"
@@ -58,7 +67,6 @@ include "src/Training.asm"
 include "src/VsCombo.asm"
 include "src/VsStats.asm"
 include "src/Widescreen.asm"
-include "src/AA.asm"
 include "src/Japan.asm"
 include "src/FPS.asm"
 include "src/SinglePlayer.asm"
@@ -70,14 +78,6 @@ include "src/CharacterSelect.asm"
 include "src/Costumes.asm"
 include "src/Fireball.asm"
 include "src/ResultsScreen.asm"
-include "src/linkshared.asm"
-include "src/captainshared.asm"
-include "src/dkshared.asm"
-include "src/nessshared.asm"
-include "src/jigglypuffkirbyshared.asm"
-include "src/yoshishared.asm"
-include "src/pikashared.asm"
-include "src/samusshared.asm"
 // FALCO
 include "src/Falco/Phantasm.asm"
 include "src/Falco/Falco.asm"
@@ -101,41 +101,12 @@ include "src/JNess/JNess.asm"
 // LUCAS
 include "src/Lucas/LucasSpecial.asm"
 include "src/Lucas/Lucas.asm"
-// JLINK
-include "src/JLink/JLink.asm"
-// JFALCON
-include "src/JFalcon/JFalcon.asm"
-// JFOX
-include "src/JFox/JFox.asm"
-// JMARIO
-include "src/JMario/JMario.asm"
-// JLUIGI
-include "src/JLuigi/JLuigi.asm"
-// JDK
-include "src/JDK/JDK.asm"
-// EPIKA
-include "src/EPika/EPika.asm"
-// JPUFF
-include "src/JPuff/JPuff.asm"
-// EPUFF
-include "src/EPuff/EPuff.asm"
-// JKIRBY
-include "src/JKirby/JKirby.asm"
-// JYOSHI
-include "src/JYoshi/JYoshi.asm"
-// JPIKA
-include "src/JPika/JPika.asm"
-// ESAMUS
-include "src/ESamus/ESamus.asm"
 
 // MIDI
 include "src/MIDI.asm"
 
 file_table:  // This is where we move the file table to in order to load more files
-fill 0x400
-
-free_memory_pointer: // this will point to free memory so we can load any number of custom files
-dw   custom_heap
+fill 0x300
 
 custom_heap: // This is where we move the heap to when we need to increase its size
 

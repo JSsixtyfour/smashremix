@@ -187,7 +187,6 @@ scope ResultsScreen {
     
     // @ Description
     // Patch which gets the "WINS" string left x position for the winner from an extended table.
-    // Also changes the WINS! to WIN! for J characters.
     scope get_str_wins_lx_: {
         OS.patch_start(0x1534DC, 0x8013433C)
         j       get_str_wins_lx_
@@ -195,19 +194,6 @@ scope ResultsScreen {
         _return:
         OS.patch_end()
         
-        // t5 = char_id
-        // t4 = char_id * 4
-        // a0 = pointer to WINS! string
-        // a0 + 0xC = pointer to WIN! string (lmao)
-
-        li      a1, Character.sound_type.table
-        addu    a1, a1, t5                  // a1 = address of sound type
-        lbu     t6, 0x0000(a1)              // t6 = sound type
-        lli     a1, Character.sound_type.J  // a1 = J sound type
-        beql    a1, t6, _get_lx             // if not a J character, skip
-        addiu   a0, a0, 0x000C              // if J character, move the pointer to "WIN!"
-
-        _get_lx:
         li      t6, Character.str_wins_lx.table
         addu    t6, t6, t4                  // t6 = str_win_lx.table + (id * 4)
         lw      a1, 0x0000(t6)              // a1 = left x position of "WINS" string
@@ -531,21 +517,8 @@ scope ResultsScreen {
     add_to_results_screen(Character.id.DRM,      FGM.announcer.names.DR_MARIO,               DR_MARIO,    Character.id.MARIO,   185,     DR. MARIO,    20,     0.75,      0x46)
     add_to_results_screen(Character.id.DSAMUS,   FGM.announcer.names.DSAMUS,                 METROID,     Character.id.SAMUS,   185,     DARK SAMUS,   20,     0.6,       0x52)
     add_to_results_screen(Character.id.WARIO,    FGM.announcer.names.WARIO,                  MARIO_BROS,  Character.id.MARIO,   175,     WARIO,        25,     1,         0x5C)
-    add_to_results_screen(Character.id.ELINK,    FGM.announcer.names.ELINK,                  ZELDA,       Character.id.LINK,    170,     E LINK,       40,     1,         0x15)
-    add_to_results_screen(Character.id.JSAMUS,   FGM.announcer.names.SAMUS,                  METROID,     Character.id.SAMUS,   185,     J SAMUS,      35,     0.8,       0x0D)
-    add_to_results_screen(Character.id.JNESS,    FGM.announcer.names.NESS,                   EARTHBOUND,  Character.id.NESS,    180,     J NESS,       40,     1,         0x11)
-    add_to_results_screen(Character.id.LUCAS,    FGM.announcer.names.LUCAS,                  EARTHBOUND,  Character.id.NESS,    170,     LUCAS,        20,     1,         0x63)
-    add_to_results_screen(Character.id.JLINK,    FGM.announcer.names.LINK,                   ZELDA,       Character.id.LINK,    170,     J LINK,       50,     1,         0x15)
-    add_to_results_screen(Character.id.JFALCON,  FGM.announcer.names.FALCON,                 FZERO,       Character.id.CAPTAIN, 185,     J C. FALCON,  30,     0.65,      0x13)
-    add_to_results_screen(Character.id.JFOX,     FGM.announcer.names.JFOX,                   STARFOX,     Character.id.FOX,     170,     J FOX,        50,     1,         0x10)
-    add_to_results_screen(Character.id.JMARIO,   FGM.announcer.names.MARIO,                  MARIO_BROS,  Character.id.MARIO,   200,     J MARIO,      25,     1,         0x0C)
-    add_to_results_screen(Character.id.JLUIGI,   FGM.announcer.names.LUIGI,                  MARIO_BROS,  Character.id.LUIGI,   180,     J LUIGI,      45,     1,         0x0C)
-    add_to_results_screen(Character.id.JDK,      FGM.announcer.names.DK,                     DONKEY_KONG, Character.id.DK,      195,     D.KONG,       30,     1,         0x0E)
-    add_to_results_screen(Character.id.EPIKA,    FGM.announcer.names.PIKACHU,                POKEMON,     Character.id.PIKACHU, 185,     E PIKACHU,    25,     0.75,      0x14)
-    add_to_results_screen(Character.id.JPUFF,    FGM.announcer.names.JPUFF,                  POKEMON,     Character.id.JIGGLYPUFF, 185,  PURIN,        50,     1,         0x14)
-    add_to_results_screen(Character.id.EPUFF,    FGM.announcer.names.JIGGLYPUFF,             POKEMON,     Character.id.JIGGLYPUFF, 185,  E JIGGLYPUFF, 20,     0.6,       0x14)
-    add_to_results_screen(Character.id.JKIRBY,   FGM.announcer.names.KIRBY,                  KIRBY,       Character.id.KIRBY,   190,     J KIRBY,      35,     1,         0x0F)
-    add_to_results_screen(Character.id.JYOSHI,   FGM.announcer.names.YOSHI,                  YOSHI,       Character.id.YOSHI,   195,     J YOSHI,      30,     1,         0x12)
-    add_to_results_screen(Character.id.JPIKA,    FGM.announcer.names.PIKACHU,                POKEMON,     Character.id.PIKACHU, 195,     J PIKACHU,    35,     0.75,      0x14)
-    add_to_results_screen(Character.id.ESAMUS,   FGM.announcer.names.ESAMUS,                 METROID,     Character.id.SAMUS,   175,     E SAMUS,      35,     0.75,      0x0D)
+    add_to_results_screen(Character.id.ELINK,    FGM.announcer.names.ELINK,                  ZELDA,       Character.id.LINK,    170,     E LINK,       30,     1,         0x15)
+    add_to_results_screen(Character.id.JSAMUS,   FGM.announcer.names.SAMUS,                  METROID,     Character.id.SAMUS,   185,     J SAMUS,      30,     0.75,      0x0D)
+    add_to_results_screen(Character.id.JNESS,    FGM.announcer.names.NESS,                   EARTHBOUND,  Character.id.NESS,    170,     J NESS,       20,     1,         0x11)
+    add_to_results_screen(Character.id.LUCAS,    FGM.announcer.names.NESS,                   EARTHBOUND,  Character.id.NESS,    170,     LUCAS,        20,     1,         0x11)
 }

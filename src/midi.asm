@@ -13,7 +13,7 @@ scope MIDI {
     read32 MUSIC_TABLE, "../roms/original.z64", 0x3D768
     variable MUSIC_TABLE_END(MUSIC_TABLE + 0x17C)   // variable containing the current end of the music table
     constant MIDI_BANK(0x2400000)                   // defines the start of the additional MIDI bank
-    global variable MIDI_BANK_END(MIDI_BANK)        // variable containing the current end of the MIDI bank
+    variable MIDI_BANK_END(MIDI_BANK)               // variable containing the current end of the MIDI bank
     // These 2 variables will be used in FGM.asm to calculate the correct RAM offset for numerous pointers
     variable midi_count(0x2F)                       // variable containing total number of MIDIs
     variable largest_midi(0)                        // variable containing the largest MIDI size
@@ -120,9 +120,9 @@ scope MIDI {
     insert_midi(YOUNGLINK_VICTORY, OS.FALSE, -1)
     insert_midi(FALCO_VICTORY, OS.FALSE, -1)
     insert_midi(DRMARIO_VICTORY, OS.FALSE, -1)
-    insert_midi(DRAGONKING, OS.TRUE, Melee Menu)
+    insert_midi(DRAGONKING, OS.TRUE, Dragon King)
     insert_midi(DREAMLANDBETA, OS.TRUE, Dream Land Beta)
-    insert_midi(NORFAIR, OS.TRUE, Kraid's Lair)
+    insert_midi(SHOWDOWN, OS.TRUE, Showdown)
     insert_midi(BOWSERBOSS, OS.TRUE, Bowser Boss)
     insert_midi(POKEMON_STADIUM, OS.TRUE, Pokemon Stadium)
     insert_midi(BOWSERROAD, OS.TRUE, Bowser Road)
@@ -147,31 +147,6 @@ scope MIDI {
     insert_midi(GERUDO_VALLEY, OS.TRUE, Gerudo Valley)
     insert_midi(POP_STAR, OS.TRUE, Pop Star)
     insert_midi(STAR_WOLF, OS.TRUE, Star Wolf)
-    insert_midi(STARRING_WARIO, OS.TRUE, Starring Wario)
-    insert_midi(LUCAS_VICTORY, OS.FALSE, -1)
-    insert_midi(POKEMON_CHAMPION, OS.TRUE, Pokemon Champion)
-    insert_midi(ANIMAL_CROSSING, OS.TRUE, Animal Crossing)
-    insert_midi(HYRULE_TEMPLE, OS.TRUE, Hyrule Temple)
-    insert_midi(ALL_I_NEEDED_WAS_YOU, OS.TRUE, Polyanna)
-    insert_midi(PIGGYGUYS, OS.TRUE, Piggy Guys)
-    insert_midi(DCMC, OS.TRUE, DCMC Performance)
-    insert_midi(UNFOUNDED_REVENGE, OS.TRUE, Unfounded Revenge)
-    insert_midi(BLOOMING_VILLAIN, OS.TRUE, Blooming Villain)
-    insert_midi(Brawl, OS.TRUE, Brawl Menu)
-    insert_midi(NBA_JAM, OS.TRUE, NBA Jam)
-    insert_midi(KENGJR, OS.TRUE, Ken Griffey Jr.)
-	insert_midi(CLOCKTOWER, OS.TRUE, Clocktower)
-	insert_midi(I_BELIEVE_IN_YOU, OS.TRUE, I Believe in You)
-	insert_midi(KK_RIDER, OS.TRUE, Go KK Rider)
-	insert_midi(SNAKEY_CHANTEY, OS.TRUE, Snakey Chantey)
-	insert_midi(TAZMILY, OS.TRUE, Mom's Hometown)
-	insert_midi(FLAT_ZONE, OS.TRUE, Flat Zone)
-	insert_midi(FLAT_ZONE_2, OS.TRUE, Flat Zone II)
-	insert_midi(YOSHI_GOLF, OS.TRUE, Mario Golf Yoshi's Island)
-	insert_midi(TEMPLE_8BIT, OS.TRUE, Hyrule Temple 8 Bit)
-	insert_midi(OBSTACLE, OS.TRUE, Obstacle Course)
-	insert_midi(EVEN_DRIER_GUYS, OS.TRUE, Even Drier Guys)
-	insert_midi(FIRE_FIELD, OS.TRUE, Fire Field)
 
     pushvar origin, base
 
@@ -348,7 +323,7 @@ scope MIDI {
     // @ Description
     // Adds an instrument consisting of all the instrument samples added since the last add_instrument() call
     // name       - Name of the instrument (for display purposes only)
-    // volume     - (byte) volume
+    // volume     - (byte) volumn
     // pan        - (byte) pan
     // priority   - (byte) priority
     // bend_range - (hw) bend range
@@ -469,60 +444,15 @@ scope MIDI {
     add_instrument(Rock Organ, 0x7F, 0x40, 0x05, 0x04DD, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0)
 
     // TODO: for these samples, make sure values are correct (assuming we keep this instrument)
-    add_instrument_sample(distortion_guitar-1, 0x0, 0x004C4B40, 66 * 450, 0x7F, 0x0, 0x0, 0x7F, 0,   42, 40, 0x0, 0x3F, 0x7E, OS.TRUE, 0x3383, 0x677A, 0xFFFFFFFF, OS.FALSE)
-    add_instrument_sample(distortion_guitar-2, 0x0, 0x004C4B40, 66 * 450, 0x7F, 0x0, 0x0, 0x7F, 43,  48, 46, 0x0, 0x3F, 0x7E, OS.TRUE, 0x3333, 0x6686, 0xFFFFFFFF, OS.FALSE)
-    add_instrument_sample(distortion_guitar-3, 0x0, 0x004C4B40, 66 * 450, 0x7F, 0x0, 0x0, 0x7F, 49,  53, 52, 0x0, 0x3F, 0x7E, OS.TRUE, 0x3477, 0x684C, 0xFFFFFFFF, OS.FALSE)
-	add_instrument_sample(distortion_guitar-4, 0x0, 0x004C4B40, 66 * 450, 0x7F, 0x0, 0x0, 0x7F, 54,  56, 55, 0x0, 0x3F, 0x7E, OS.TRUE,  25240,  65462, 0xFFFFFFFF, OS.FALSE)
-	add_instrument_sample(distortion_guitar-5, 0x0, 0x004C4B40, 66 * 450, 0x7F, 0x0, 0x0, 0x7F, 57,  58, 57, 0x0, 0x3F, 0x7E, OS.TRUE,  21144,  48670, 0xFFFFFFFF, OS.FALSE)
-	add_instrument_sample(distortion_guitar-6, 0x0, 0x004C4B40, 66 * 450, 0x7F, 0x0, 0x0, 0x7F, 59,  63, 62, 0x0, 0x3F, 0x7E, OS.TRUE,  20292,  44855, 0xFFFFFFFF, OS.FALSE)
-	add_instrument_sample(distortion_guitar-7, 0x0, 0x004C4B40, 66 * 450, 0x7F, 0x0, 0x0, 0x7F, 64,  65, 64, 0x0, 0x3F, 0x7E, OS.TRUE,  24855,  49720, 0xFFFFFFFF, OS.FALSE)
-	add_instrument_sample(distortion_guitar-8, 0x0, 0x004C4B40, 66 * 450, 0x7F, 0x0, 0x0, 0x7F, 66,  70, 69, 0x0, 0x3F, 0x7E, OS.TRUE,  18279,  37962, 0xFFFFFFFF, OS.FALSE)
-	add_instrument_sample(distortion_guitar-9, 0x0, 0x004C4B40, 66 * 450, 0x7F, 0x0, 0x0, 0x7F, 71,  72, 71, 0x0, 0x3F, 0x7E, OS.TRUE,  11738,  37333, 0xFFFFFFFF, OS.FALSE)
-	add_instrument_sample(distortion_guitar-10, 0x0, 0x004C4B40, 66 * 450, 0x7F, 0x0, 0x0, 0x7F, 73,  77, 76, 0x0, 0x3F, 0x7E, OS.TRUE,  23164,  35483, 0xFFFFFFFF, OS.FALSE)
-	add_instrument_sample(distortion_guitar-11, 0x0, 0x004C4B40, 66 * 450, 0x7F, 0x0, 0x0, 0x7F, 78,  82, 81, 0x0, 0x3F, 0x7E, OS.TRUE,  14999,  37007, 0xFFFFFFFF, OS.FALSE)
-	add_instrument_sample(distortion_guitar-12, 0x0, 0x004C4B40, 66 * 450, 0x7F, 0x0, 0x0, 0x7F, 83,  95, 83, 0x0, 0x3F, 0x7E, OS.TRUE,  14439,  29101, 0xFFFFFFFF, OS.FALSE)
+    add_instrument_sample(distortion_guitar-1, 0x0, 0x0, 0x7530, 0x7F, 0x7F, 0x0, 0x7F, 0x00, 0x2A, 0x28, 0x0, 0x3F, 0x7E, OS.TRUE, 0x3383, 0x677A, 0xFFFFFFFF, OS.FALSE)
+    add_instrument_sample(distortion_guitar-2, 0x0, 0x0, 0x7530, 0x7F, 0x7F, 0x0, 0x7F, 0x2B, 0x30, 0x2E, 0x0, 0x3F, 0x7E, OS.TRUE, 0x3333, 0x6686, 0xFFFFFFFF, OS.FALSE)
+    add_instrument_sample(distortion_guitar-3, 0x0, 0x0, 0x7530, 0x7F, 0x7F, 0x0, 0x7F, 0x31, 0x7F, 0x34, 0x0, 0x3F, 0x7E, OS.TRUE, 0x3477, 0x684C, 0xFFFFFFFF, OS.FALSE)
     add_instrument(Distortion Guitar, 0x7E, 0x3F, 0x05, 0x04DD, 0x0, 0x0, 0x0, 0x0, 0x80, 0xF1, 0x64, 0x01)
 
     // TODO: for these samples, make sure values are correct (assuming we keep this instrument)
-    add_instrument_sample(saxophone-0, 0x0, 0x001E8480, 66 * 300, 0x7F, 0x0, 0x00, 0x7F,  0,  75, 64, 0x0, 0x3F, 0x7E, OS.TRUE, 6644, 8585, 0xFFFFFFFF, OS.FALSE)
-    add_instrument_sample(saxophone-1, 0x0, 0x001E8480, 66 * 300, 0x7F, 0x0, 0x00, 0x7F, 76, 127, 76, 0x0, 0x3F, 0x7E, OS.TRUE, 8887, 9906, 0xFFFFFFFF, OS.FALSE)
-    add_instrument(Saxophone, 0x7E, 0x3F, 0x05, 0x04DD, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0)
-
-    // TODO: for these samples, make sure values are correct (assuming we keep this instrument)
-    add_instrument_sample(overdriven_guitar-0, 0x0, 0x002DC6C0, 66 * 350, 0x7F, 0x0, 0x0, 0x7F, 0,  59,  59, 0x0, 0x3F, 0x7E, OS.TRUE, 39088, 66074, 0xFFFFFFFF, OS.FALSE)
-	add_instrument_sample(overdriven_guitar-1, 0x0, 0x002DC6C0, 66 * 350, 0x7F, 0x0, 0x0, 0x7F, 60, 64,  64, 0x0, 0x3F, 0x7E, OS.TRUE, 23395, 44703, 0xFFFFFFFF, OS.FALSE)
-    add_instrument_sample(overdriven_guitar-2, 0x0, 0x002DC6C0, 66 * 350, 0x7F, 0x0, 0x0, 0x7F, 65, 70,  69, 0x0, 0x3F, 0x7E, OS.TRUE, 14699, 27490, 0xFFFFFFFF, OS.FALSE)
-    add_instrument_sample(overdriven_guitar-3, 0x0, 0x002DC6C0, 66 * 350, 0x7F, 0x0, 0x0, 0x7F, 71, 74,  73, 0x0, 0x3F, 0x7E, OS.TRUE, 19841, 32444, 0xFFFFFFFF, OS.FALSE)
-    add_instrument_sample(overdriven_guitar-4, 0x0, 0x002DC6C0, 66 * 350, 0x7F, 0x0, 0x0, 0x7F, 75, 78,  77, 0x0, 0x3F, 0x7E, OS.TRUE, 18937, 31235, 0xFFFFFFFF, OS.FALSE)
-	add_instrument_sample(overdriven_guitar-5, 0x0, 0x002DC6C0, 66 * 350, 0x7F, 0x0, 0x0, 0x7F, 79, 127, 88, 0x0, 0x3F, 0x7E, OS.TRUE, 10849, 18728, 0xFFFFFFFF, OS.FALSE)
-    add_instrument(Overdriven Guitar, 0x7E, 0x3F, 0x05, 0x04DD, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0)
-
-    // TODO: for these samples, make sure values are correct (assuming we keep this instrument)
-    add_instrument_sample(piano-1, 0x0, 0x0, 66 * 1879, 0x7F, 0x7F, 0x0, 0x7F, 0,  53,  47, 0x0, 0x3F, 0x7E, OS.TRUE, 33089, 34385, 0xFFFFFFFF, OS.FALSE)
-    add_instrument_sample(piano-2, 0x0, 0x0, 66 * 1879, 0x7F, 0x7F, 0x0, 0x7F, 53, 71,  67, 0x0, 0x3F, 0x7E, OS.TRUE, 35630, 41007, 0xFFFFFFFF, OS.FALSE)
-    add_instrument_sample(piano-3, 0x0, 0x0, 66 * 1879, 0x7F, 0x7F, 0x0, 0x7F, 72, 127, 79, 0x0, 0x3F, 0x7E, OS.TRUE, 28842, 32304, 0xFFFFFFFF, OS.FALSE)
-    add_instrument(Piano, 0x7E, 0x3F, 0x05, 0x04DD, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0)
-
-    // TODO: for these samples, make sure values are correct (assuming we keep this instrument)
-    add_instrument_sample(slap_bass-1, 0x0, 0x0, 66 * 500, 0x7F, 0x7F, 0x0, 0x7F, 0,  39,  28, 0x0, 0x3F, 0x7E, OS.TRUE, 24607, 36249, 0xFFFFFFFF, OS.FALSE)
-    add_instrument_sample(slap_bass-2, 0x0, 0x0, 66 * 500, 0x7F, 0x7F, 0x0, 0x7F, 40, 127, 40, 0x0, 0x3F, 0x7E, OS.TRUE, 9445,  21094, 0xFFFFFFFF, OS.FALSE)
-    add_instrument(Slap Bass, 0x7E, 0x3F, 0x05, 0x04DD, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0)
-	
-	// TODO: for these samples, make sure values are correct (assuming we keep this instrument)
-    add_instrument_sample(orchestral_hit-1, 0x0, 0x000F4240, 66 * 3000, 0x7F, 0x0, 0x0, 0x7F, 0,  127,  72, 0x0, 0x3F, 0x7E, OS.TRUE, 12273, 18432, 0xFFFFFFFF, OS.FALSE)
-    add_instrument(Orchestral Hit, 0x7E, 0x3F, 0x05, 0x04DD, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0)
-	
-	// TODO: for these samples, make sure values are correct (assuming we keep this instrument)
-    add_instrument_sample(synth_alt-1, 0x0, 0x0, 66 * 150, 0x7F, 0x7F, 0x0, 0x7F, 0,  127,  84, 0x0, 0x3F, 0x7E, OS.TRUE, 2797, 4798, 0xFFFFFFFF, OS.FALSE)
-    add_instrument(Synth Alt, 0x7E, 0x3F, 0x05, 0x04DD, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0)
-    
-	// TODO: for these samples, make sure values are correct (assuming we keep this instrument)
-    add_instrument_sample(square_25-1, 0x0, 0x0, 66 * 30, 0x7F, 0x7F, 0x0, 0x7F,  0,  45,  36, 0x0, 0x3F, 0x7E, OS.TRUE,  8474, 38310, 0xFFFFFFFF, OS.FALSE)
-	add_instrument_sample(square_25-2, 0x0, 0x0, 66 * 30, 0x7F, 0x7F, 0x0, 0x7F, 46,  47,  48, 0x0, 0x3F, 0x7E, OS.TRUE, 10667, 28738, 0xFFFFFFFF, OS.FALSE)
-	add_instrument_sample(square_25-3, 0x0, 0x0, 66 * 30, 0x7F, 0x7F, 0x0, 0x7F, 58,  69,  60, 0x0, 0x3F, 0x7E, OS.TRUE,  3933, 22004, 0xFFFFFFFF, OS.FALSE)
-	add_instrument_sample(square_25-4, 0x0, 0x0, 66 * 30, 0x7F, 0x7F, 0x0, 0x7F, 70,  81,  72, 0x0, 0x3F, 0x7E, OS.TRUE,  5321, 26994, 0xFFFFFFFF, OS.FALSE)
-	add_instrument_sample(square_25-5, 0x0, 0x0, 66 * 30, 0x7F, 0x7F, 0x0, 0x7F, 82, 127,  84, 0x0, 0x3F, 0x7E, OS.TRUE, 10505, 23112, 0xFFFFFFFF, OS.FALSE)
-    add_instrument(NES Square Wave 25P, 0x7E, 0x3F, 0x05, 0x04DD, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0)
+    add_instrument_sample(french_horn-0, 0x00000000, 0xFFFFFFFF, 0x0000704E, 0x7F, 0x7F, 0x00, 0x7F, 0x00, 0x57, 0x55, 0x23, 0x40, 0x7F, OS.TRUE, 0x00000596, 0x0000099E, 0xFFFFFFFF, OS.TRUE)
+    add_instrument_sample(french_horn-1, 0x00000000, 0xFFFFFFFF, 0x0000704E, 0x7F, 0x7F, 0x00, 0x7F, 0x58, 0x7F, 0x5B, 0x1F, 0x40, 0x7F, OS.TRUE, 0x00000518, 0x00000934, 0xFFFFFFFF, OS.TRUE)
+    add_instrument(French Horn, 0x7F, 0x40, 0x05, 0x04DD, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0)
 
     move_instrument_bank_map()
 

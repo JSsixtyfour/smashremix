@@ -159,7 +159,6 @@ scope Surface {
     add_surface(big_blue_surface_1, 4.0, OS.TRUE, 8, 4, 105, 5, 0, 125, 1, -1)
     add_surface(cool_cool_surface_1, 0.3, OS.FALSE, 0, 0, 0, 0, 0, 0, 0, 0)
     add_surface(onett_car_1, 4.0, OS.TRUE, 8, 20, 45, 20, 0, 140, 0, 0x11F)
-    add_surface(big_blue_surface_2, 4.0, OS.TRUE, 8, 4, 90, 5, 0, 130, 1, -1)
     
     // write surfaces to ROM
     write_surfaces()

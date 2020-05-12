@@ -39,19 +39,19 @@ scope Overlay {
 
         // init
         li      t0, RCP.display_list_info_p // t0 = display list info pointer 
-        li      t1, DL.display_list_info    // t1 = address of display list info
+        li      t1, display_list_info       // t1 = address of display list info
         sw      t1, 0x0000(t0)              // update display list info pointer
 
         // reset
-        li      t0, DL.display_list         // t0 = address of DL.display_list
-        li      t1, DL.display_list_info    // t1 = address of DL.display_list_info
+        li      t0, display_list            // t0 = address of display_list
+        li      t1, display_list_info       // t1 = address of display_list_info 
         sw      t0, 0x0000(t1)              // ~
         sw      t0, 0x0004(t1)              // update display list address each frame
 
         // highjack
         li      t0, 0xDE010000              // ~
         sw      t0, 0x0000(v0)              // ~
-        li      t0, DL.display_list         // ~
+        li      t0, display_list            // ~ 
         sw      t0, 0x0004(v0)              // highjack ssb display list
 
         // HOOKS GO HERE
@@ -75,8 +75,6 @@ scope Overlay {
         nop
         jal     draw_version_               // draw version number
         nop
-        b       _finish_2                   // skip to end, skipping FPS render (handled in draw_version_)
-        nop
 
         // OPTION screen
         _option:
@@ -97,6 +95,8 @@ scope Overlay {
         _vs:
         lli     t1, 0x0016
         bne     t0, t1, _results            // if (screen_id != vs mode), skip
+        nop
+        jal     VsCombo.run_
         nop
         jal     VsStats.run_collect_
         nop
@@ -132,28 +132,16 @@ scope Overlay {
         jal     Stages.run_                 //
         nop
         
+        // Need this so that the combo meter correctly differentiates singles
+        li      t1, VsCombo.player_count    // t1 = address of number of players
+        sw      r0, 0x0000(t1)              // Set player_count to 0
         // Need this so that the match stats correctly resets each match (can't rely on VsCombo having run since it's a toggle)
         li      t1, VsStats.player_count    // t1 = address of number of players
         sb      r0, 0x0000(t1)              // Set player_count to 0
 
         _finish:
-        lli     t1, 0x0037                  // t1 = 1p victory screen
-        beq     t0, t1, _finish_2           // if (screen_id == 1p victory screen), skip due to unknown console issue
-        nop
-        li      a0, Global.previous_screen
-        lbu     a0, 0x0000(a0)
-        beq     a0, t1, _finish_2           // if (previous screen_id == 1p victory screen), skip due to unknown console issue
-        nop
         jal     FPS.run_                    // display fps
         nop
-
-        _finish_2:
-        // reset free memory pointer so that we don't introduce a memory leak
-        // TODO: I don't like this, so we should revisit how we handle loading custom files
-        li      t0, free_memory_pointer     // t0 = free_memory_pointer
-        li      t1, custom_heap             // t1 = custom_heap
-        sw      t1, 0x0000(t0)              // reset free memory pointer to custom heap address
-
         jal     end_                        // end display list
         nop
 
@@ -609,17 +597,13 @@ scope Overlay {
         jal     Overlay.draw_string_        // draw version
         nop
 
-        // Only draw FPS after timer in order to avoid console crash
-        jal     FPS.run_                    // display fps
-        nop
-
         _return:
         lw      ra, 0x0004(sp)              // save registers
         addiu   sp, sp, 0x0008              // deallocate stack space
         jr      ra                          // return
         nop
 
-        version:; String.insert("v0.9.3")
+        version:; String.insert("v0.9.2")
     }
 }
 

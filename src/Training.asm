@@ -324,10 +324,10 @@ scope Training {
         li      t0, struct.table            // t0 = struct table
         lbu     t1, 0x000D(v1)              // ~
         sll     t1, t1, 0x2                 // t1 = offset (player port * 4)
-        add     t2, t0, t1                  // t2 = struct table + offset
-        lw      t2, 0x0000(t2)              // t2 = port struct address
+        add     t2, t0, t1                  // t0 = struct table + offset
+        lw      t2, 0x0000(t2)              // t0 = port struct address
         lw      t0, 0x0010(t2)              // ~
-        slti    t0, t0, 0x4                 // t0 = 1 if spawn_id >= 0x4; else t0 = 0
+        slti    t0, t0, 0x4                 // t1 = 1 if spawn_id > 0x4; else t1 = 0
         bnez    t0, _update_percent         // skip if spawn_id != custom
         nop
         lw      t0, 0x001C(t2)              // t1 = spawn_dir
@@ -374,9 +374,6 @@ scope Training {
         li      t0, reset_counter           // t0 = reset_counter
         sw      r0, 0x0000(t0)              // reset reset_counter value
         
-        li      t0, player_shield_status    // t0 = player_shield_status
-        sw      r0, 0x0000(t0)              // reset player_shield_status value
-
         _initialize_spawns:
         li      t0, struct.port_1.spawn_id  // t0 = port 1 spawn id address
         or      t1, r0, r0                  // t1 = port 1 id
@@ -420,10 +417,6 @@ scope Training {
         lw      t1, 0x0000(t0)              // t1 = reset_counter value
         addiu   t1, t1, 0x00001             // t1 = reset counter value + 1
         sw      t1, 0x0000(t0)              // store reset_counter value
-
-        li      t0, player_shield_status    // t0 = player_shield_status
-        sw      r0, 0x0000(t0)              // reset player_shield_status value
-
         li      t1, advance_frame_.freeze   // ~
         sw      r0, 0x0000(t1)              // freeze = false
         bnez    t2, _reset_game             // modified original branch
@@ -444,57 +437,11 @@ scope Training {
         nop
     }
     
-    //init_struct_p1:; fill 0x40
-    //init_struct_p2:; fill 0x40
-    //init_struct_p3:; fill 0x40
-    //init_struct_p4:; fill 0x40
-    
-    //// @ Description
-    //// This hook copies the init_struct when a character is initialized in training mode. 
-    //// The struct is not fully understood, but contains things like character, port, spawn
-    //// position and direction, HMN/CPU status, and other match info.
-    //// The copied struct is then used for quick resets.
-    //// 0x800D7F3C is the function which initializes a player.
-    //scope copy_init_struct_: {
-    //    OS.patch_start(0x116CAC, 0x8019048C)
-    //    j   copy_init_struct_
-    //    sb  t5, 0x007B(sp)                  // original line 2
-    //    _return:
-    //    OS.patch_end()
-    //    
-    //    // a0 = init_struct
-    //    // s0 = player port
-    //    sll     t5, s0, 0x6                 // t5 = port * 0x40 (struct size)
-    //    ori     t6, r0, 0x40                // t6 = transfer size (0x40)
-    //    li      t7, init_struct_p1          // ~
-    //    addu    t7, t7, t5                  // t7 = init_struct_px
-    //    or      t8, a0, r0                  // t8 = current init_struct
-    //
-    //    _loop:
-    //    // transfer 0x40 bytes from current init_struct to init_struct_px
-    //    lw      t5, 0x0000(t8)              // ~
-    //    sw      t5, 0x0000(t7)              // transfer 0x4 bytes
-    //    addiu   t6, t6,-0x0004              // decrement transfer size
-    //    addiu   t7, t7, 0x0004              // ~
-    //    addiu   t8, t8, 0x0004              // increment init_struct position
-    //    bnez    t6, _loop                   // loop if transfer size !0
-    //    nop
-    //    
-    //    _exit_loop:
-    //    jal     0x800D7F3C                  // original line 1
-    //    nop
-    //    j       _return                     // return
-    //    nop       
-    //}
-    
-    allow_reset:
-    dw  0
-    
     // @ Description
     // This hook replaces a branch which determines whether the in-game advance frame
     // function should be called while in training mode.
     // Additionally, contains a shortcut for toggling hitbox mode.
-    scope advance_frame_: {      
+    scope advance_frame_: {
         OS.patch_start(0x00114260, 0x8018DA40)
         j   advance_frame_
         nop
@@ -509,129 +456,6 @@ scope Training {
         OS.save_registers()
         move    t6, v0                      // t6 = bool skip_advance
         _check_dl:
-        // check if reset is allowed
-        li      t0, allow_reset             // ~
-        lw      t1, 0x0000(t0)              // t1 = current allow_reset flag
-        lli     t2, OS.TRUE                 // t2 = TRUE
-        bne     t1, t2, _check_dd           // if allow_reset != TRUE, skip
-        sw      t2, 0x0000(t0)              // allow_reset = TRUE
-        // check for a DPAD LEFT press, reset if detected
-        lli     a0, Joypad.DL               // a0 - button_mask
-        lli     a1, 000069                  // a1 - whatever you like!
-        lli     a2, Joypad.PRESSED          // a2 - type
-        jal     Joypad.check_buttons_all_   // v0 - bool dd_pressed
-        nop
-        beqz    v0, _check_dd               // if (!dl_pressed), skip
-        nop
-        
-        _quick_reset:        
-        // play the reset sound effect
-        lli     a0, 0xA2                    // ~
-        jal     FGM.play_                   // play reset fgm
-        nop
-        // set allow_reset to FALSE
-        li      t0, allow_reset             // ~
-        sw      r0, 0x0000(t0)              // allow_reset = FALSE
-        // generate an interrupt
-        lli     t1, 0x0001                  // t1 = 0x0001
-        lui     t0, 0x8019                  // ~
-        sb      t1, 0x0C2A(t0)              // set this to 1 for reset instead of exit
-        li      t0, Global.screen_interrupt // ~
-        sw      t1, 0x0000(t0)              // generate screen_interrupt
-        
-        // TODO: Experimental quick reset function, disabled since it's not stable for now.
-        // TODO: If you run this function while a player is dead, their percent will no longer be drawn.
-        // It is unclear how stable this function will be on hardware etc.
-        // this loop destroys all of the GFX objects (type 1011)
-        // logic based on the inner loop of a "destroys all object" function at 0x8000B7E8
-        //constant FIRST_GFX_PTR(0x80046708)
-        // li      s0, FIRST_GFX_PTR           // s0 = FIRST_GFX_PTR
-        // lw      s0, 0x0000(s0)              // s0 = address of first GFX object
-        // _gfx_loop:
-        // beq     s0, r0, _gfx_loop_end       // if s0 = NULL, exit loop
-        // nop
-        // lw      s1, 0x0004(s0)              // s1 = next GFX object
-        // jal     0x80009A84                  // this function permanently destroys a given object
-        // or      a0, s0, r0                  // a0 = current FGX object
-        // b       _gfx_loop                   // ~
-        // or      s0, s1, r0                  // s0 = address of next GFX object
-        // 
-        // _gfx_loop_end:
-        // // after mercilessly destroying all of the GFX objects, we need to rebuild the object list
-        // // this function seems to be used to build the inital GFX object list while a screen loads,
-        // // I'm not sure if calling it here has any other side effects but it seems to be fine.
-        // jal     0x800FD300                  // this function builds the initial GFX object list
-        // nop
-        // 
-        // // this loop resets the position of all players
-        // _reset_players:
-        // li      t9, Global.p_struct_head    // t9 = pointer to player struct linked list
-        // lw      t9, 0x0000(t9)              // t9 = 1p player struct address
-        // addiu   sp, sp,-0x0018              // allocate stack space
-        // swc1    f4, 0x0010(sp)              // ~
-        // swc1    f6, 0x0014(sp)              // store f4, f6
-        // 
-        // _loop:
-        // beqz    t9, _exit_loop              // if t9 is zero, then player structs not initialized or we reached the end of the linked list, so exit the loop
-        // nop
-        // lw      a0, 0x0004(t9)              // a0 = player object struct
-        // beqz    a0, _end_loop               // if a0 is zero, then this player struct is not linked to an active object, so check the next player struct instead
-        // sw      t9, 0x0008(sp)              // store t9
-        // 
-        // // if we reach this point, reset the current player
-        // lbu     t0, 0x000D(t9)              // t0 = port
-        // sll     t1, t0, 0x6                 // t1 = port * 0x40 (struct size)
-        // li      t2, init_struct_p1          // ~
-        // addu    t2, t2, t1                  // t2 = init_struct_px
-        // move    a0, t0                      // a0 = port
-        // addiu   a1, t2, 0x0004              // a1 = spawn position in init_struct_px
-        // jal     0x800FAF64                  // this function sets up the spawn position in the initial struct
-        // sw      t2, 0x000C(sp)              // save init_struct_px
-        // lw      t9, 0x0008(sp)              // load t9
-        // lw      a1, 0x000C(sp)              // a1 = init_struct_px 
-        // // replicate original logic to determine facing position
-        // lwc1    f4, 0x0004(a1)              // f4 = spawn_x
-        // mtc1    r0, f6                      // f6 = 0
-        // addiu   t0, r0, 0x0001              // t0 = 1 (face right)
-        // addiu   t1, r0, 0xFFFF              // t1 = -1 (face left)
-        // c.le.s  f6, f4                      // fp compare
-        // nop
-        // bc1fl   _custom_spawn_dir           // branch if spawn_x < 0
-        // sw      t0, 0x0010(a1)              // spawn_dir = 1 (face right)
-        // // if spawn_x >= 0
-        // sw      t1, 0x0010(a1)              // spawn_dir = -1 (face left)
-        // 
-        // _custom_spawn_dir:
-        // // update facing position if the spawn point is custom
-        // li      t0, struct.table            // t0 = struct table
-        // lbu     t1, 0x000D(t9)              // ~
-        // sll     t1, t1, 0x2                 // t1 = offset (player port * 4)
-        // add     t2, t0, t1                  // t2 = struct table + offset
-        // lw      t2, 0x0000(t2)              // t2 = port struct address
-        // lw      t0, 0x0010(t2)              // ~
-        // slti    t0, t0, 0x4                 // t0 = 1 if spawn_id >= 0x4; else t0 = 0
-        // bnez    t0, _apply_reset            // skip if spawn_id != custom
-        // nop
-        // lw      t0, 0x001C(t2)              // t1 = custom spawn_dir
-        // sw      t0, 0x0010(a1)              // spawn_dir = custom
-        // 
-        // _apply_reset:
-        // jal     0x800D79F0                  // this function moves the player to their spawn position and initalizes their properties
-        // lw      a0, 0x0004(t9)              // a0 = player object struct
-        // lw      t9, 0x0008(sp)              // load t9
-        // jal     0x800DEE54                  // this function sets the player's initial action
-        // lw      a0, 0x0004(t9)              // a0 = player object struct
-        // 
-        // _end_loop:
-        // lw      t9, 0x0008(sp)              // load t9
-        // b       _loop                       // loop over all player structs
-        // lw      t9, 0x0000(t9)              // t9 = next player struct address   
-        // _exit_loop:
-        // lwc1    f4, 0x0010(sp)              // ~
-        // lwc1    f6, 0x0014(sp)              // load f4, f6
-        // addiu   sp, sp, 0x0018              // deallocate stack space
-        
-        _check_dd:
         // check for a DPAD DOWN press, cycles through special model display if detected
         lli     a0, Joypad.DD               // a0 - button_mask
         lli     a1, 000069                  // a1 - whatever you like!
@@ -641,9 +465,9 @@ scope Training {
         beqz    v0, _check_frame_advance    // if (!dd_pressed), skip
         nop
         li      t1, Toggles.entry_special_model
-        lw      t0, 0x0004(t1)              // t0 = 0 for off, 1 for hitbox_mode, 2 for ecb
-        addiu   t0, t0, 0x0001              // t0 = 1, 2, or 3
-        lli     t2, 0x0004                  // t2 = 3
+        lw      t0, 0x0004(t1)              // t0 = 0 for off, 1 for hitbox_mode, 2 for ecb, 3 for skeleton
+        addiu   t0, t0, 0x0001              // t0 = 1, 2, 3 or 4
+        lli     t2, 0x0004                  // t2 = 4
         beql    t0, t2, _update_model_display
         addu    t0, r0, r0                  // turn off special model display
         
@@ -785,8 +609,11 @@ scope Training {
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // ~
         sw      t2, 0x000C(sp)              // store t0-t2
+        lw      t0, 0x0024(a0)              // t0 = current action id
+        ori     t1, r0, 0x000A              // t1 = standing action id
+        bne     t0, t1, _end                // skip if current action id != standing
+        nop
         
-        // set custom spawn
         li      t2, struct.table            // t2 = struct table address
         lbu     t0, 0x000D(a0)              // ~
         sll     t0, t0, 0x2                 // t0 = offset (player port * 4)
@@ -799,17 +626,6 @@ scope Training {
         sw      t1, 0x0018(t2)              // save player y position to struct
         lw      t1, 0x0044(a0)              // t1 = player facing direction
         sw      t1, 0x001C(t2)              // save player facing direction to struct
-        
-        // set spawn type to custom
-        // TODO: this is hard coded and assumes menu structure won't change
-        // is there a better way to do this?
-        li      t2, tail_table              // t2 = tail_table
-        lbu     t0, 0x000D(a0)              // ~
-        sll     t0, t0, 0x2                 // t0 = offset (player port * 4)
-        add     t2, t2, t0                  // t2 = tail_table + offset
-        lw      t2, 0x0000(t2)              // t2 = tail_px
-        lli     t1, 0x0004                  // t1 = spawn_id: CUSTOM
-        sw      t1, 0x0080(t2)              // save spawn_id to tail_px
     
         _end:
         lw      t0, 0x0004(sp)              // ~
@@ -826,38 +642,6 @@ scope Training {
     // stage select and loads from the reset function
     reset_counter:
     dw 0
-    
-    // @ Description
-    // Macro which draws a highlighted DPAD icon with a string alongside it.
-    // ulx - upper left x position
-    // uly - upper left y position
-    // indicator_x - x position offset for indicator
-    // indicator_y - y position offset for indicator
-    // string - string pointer
-    macro draw_dpad_shortcut(ulx, uly, indicator_x, indicator_y, string) {
-        // draw dpad
-        lli     a0, {ulx}                   // a0 - ulx
-        lli     a1, {uly}                   // a1 - uly
-        li      a2, Data.dpad_info          // a2 - address of texture struct
-        jal     Overlay.draw_texture_       // draw dpad icon
-        nop
-        // draw direction indicator using yellow square
-        lli     a0, Color.low.YELLOW        // a0 - fill color
-        jal     Overlay.set_color_          // fill color = YELLOW
-        nop
-        lli     a0, {ulx}+{indicator_x}     // a0 - ulx
-        lli     a1, {uly}+{indicator_y}     // a1 - uly
-        lli     a2, 2                       // a2 - width
-        lli     a3, 2                       // a3 - height
-        jal     Overlay.draw_rectangle_     // draw rectangle
-        nop
-        // draw string
-        lli     a0, {ulx}+18                // a0 - ulx
-        lli     a1, {uly}+4                 // a1 - uly
-        li      a2, {string}                // a2 - address of string
-        jal     Overlay.draw_string_        // draw shortcut instructions
-        nop
-    }
 
     // @ Description
     // Runs the menu
@@ -871,11 +655,23 @@ scope Training {
         beq     t0, t1, _end                // branch accordingly
         nop
         
-        // draw dpad macro instructions
-        draw_dpad_shortcut(40, 200, 7, 3, dpad_pause)
-        draw_dpad_shortcut(40, 215, 3, 7, dpad_reset)
-        draw_dpad_shortcut(160, 200, 11, 7, dpad_frame)
-        draw_dpad_shortcut(160, 215, 7, 11, dpad_model)        
+        // draw advance_frame_ instructions
+        lli     a0, 000160                  // a0 - x
+        lli     a1, 000203                  // a1 - uly
+        li      a2, dpad_up                 // a2 - address of string
+        jal     Overlay.draw_centered_str_  // draw shortcut instructions
+        nop
+        lli     a0, 000160                  // a0 - x
+        lli     a1, 000212                  // a1 - uly
+        li      a2, dpad_right              // a2 - address of string
+        jal     Overlay.draw_centered_str_  // draw shortcut instructions
+        nop
+        lli     a0, 000160                  // a0 - x
+        lli     a1, 000221                  // a1 - uly
+        li      a2, dpad_down               // a2 - address of string
+        jal     Overlay.draw_centered_str_  // draw shortcut instructions
+        nop
+        
         
         // draw reset counter
         lli     a0, 000098                  // a0 - ulx
@@ -950,7 +746,7 @@ scope Training {
 
         // draw bgm name
         lli     a0, 000161                  // a0 - x
-        lli     a1, 000160                  // a1 - uly
+        lli     a1, 000150                  // a1 - uly
         li      t0, entry_music             // t0 - music menu entry address
         lw      t0, 0x0004(t0)              // t0 - string_table_music index
         sll     t0, t0, 0x0002              // t0 - string_table_music offset
@@ -1024,107 +820,12 @@ scope Training {
         jr      ra                          // return
         nop
     }
-
-    // @ Description
-    // This holds each player's shield status as a single byte
-    player_shield_status:
-    dw      0x00000000
-
-    // @ Description
-    // Forces CPUs to shield until hit and they can perform a move again
-    // Work in progress, but functional
-    scope shield_break_mode_: {
-        constant SHIELD(0x0000)
-        constant STUN(0x0001)
-        constant OOS(0x0002)
-
-        OS.patch_start(0x5CC2C, 0x800E142C)
-        jal     shield_break_mode_
-        lb      v1, 0x0006(v0)              // original line 2 (keep - this line is branched to)
-        OS.patch_end()
-
-        // a2 = player struct
-        addiu   sp, sp,-0x0010              // allocate stack space
-        swc1    f0, 0x0004(sp)              // ~
-        swc1    f2, 0x0008(sp)              // store f0, f2
-
-        li      v1, Global.current_screen   // ~
-        lbu     v1, 0x0000(v1)              // v1 = screen_id
-        addiu   v1, v1, -0x0036             // v1 = 0 if training
-        bnez    v1, _original               // skip if screen_id != training mode
-        nop
-        li      v1, entry_shield_break_mode
-        lw      v1, 0x0004(v1)              // v1 = shield break mode
-        beqz    v1, _original               // skip if shield break mode off
-        nop
-
-        lbu     v1, 0x000D(a2)              // v1 = player index (0 - 3)
-        li      t3, player_shield_status
-        addu    t3, t3, v1                  // t3 = address of shield status for this player
-        lbu     at, 0x0000(t3)              // at = shield status
-        lli     v1, SHIELD                  // v1 = SHIELD
-        beq     at, v1, _shielding          // if player isn't being attacked, force shield
-        lli     v1, STUN                    // v1 = STUN
-        beq     at, v1, _in_shield_stun     // if player is being attacked, allow shield damage but continue to force shield
-        nop
-
-        _oos:
-        // if we're here, then the player can execute their OOS option
-        // TODO: use a table to get best OOS option based on character ID
-        // for now, the player simply unshields
-        sb      r0, 0x0000(t3)              // update shield status to SHIELD
-        b       _original                   // skip _force_shield on this frame
-        nop
-
-        _shielding:
-        // let's first check if we're being hit - the character will be in the ShieldStun action while being hit
-        lw      v1, 0x0024(a2)              // a1 = current action
-        lli     at, Action.ShieldStun       // at = Action.ShieldStun
-        lli     t7, STUN                    // t7 = STUN
-        beql    v1, at, _force_shield       // if in shield stun, change shield status and allow damage but still force shield
-        sb      t7, 0x0000(t3)              // store new shield status
-
-        // until hit, force shield to stay 100% charged
-        lli     v1, 0x0037                  // v1 = max shield value, unstale
-        b       _force_shield
-        sw      v1, 0x0034(a2)              // force max shield
-
-        _in_shield_stun:
-        // check if the character is still in the ShieldStun action, update status to SHIELD if they are not
-        lw      v1, 0x0024(a2)              // a1 = current action
-        lli     at, Action.ShieldStun       // at = Action.ShieldStun
-        bnel    v1, at, _original           // if not in shield stun, change shield status back to SHIELD
-        sb      r0, 0x0000(t3)              // update shield status to SHIELD
-        
-        // check if shield stun is on final frame and input OOS option
-        lwc1    f0, 0x0B34(a2)              // f0 = shield stun (float)
-        lui     at, 0x3F80                  // ~
-        mtc1    at, f2                      // ~
-        sub.s   f0, f0, f2                  // ~
-        mfc1    v1, f0                      // v1 = shield stun -1
-        blez    v1, _oos                    // if shield stun is less than 1, perform OOS option
-        nop                                 // otherwise, CPU should keep shielding
-
-        _force_shield:
-        lli     a3, 0x2000                  // force CPU to shield
-
-        _original:
-        sh      a3, 0x0000(v0)              // original line 1
-
-        
-        lwc1    f0, 0x0004(sp)              // ~
-        lwc1    f2, 0x0008(sp)              // store f0, f2
-        addiu   sp, sp, 0x0010              // allocate stack space
-        jr      ra
-        lb      v1, 0x0006(v0)              // original line 2
-    }
-
+    
     // @ Description
     // Strings used to explain advance_frame_ shortcuts
-    dpad_pause:; db "TOGGLE PAUSE", 0x00
-    dpad_frame:; db "FRAME ADVANCE", 0x00
-    dpad_model:; db "MODEL DISPLAY", 0x00
-    dpad_reset:; db "QUICK RESET", 0x00
+    dpad_up:; db "DPAD UP - PAUSE AND RESUME", 0x00
+    dpad_right:; db "DPAD RIGHT - FRAME ADVANCE", 0x00
+    dpad_down:; db "DPAD DOWN - SPECIAL MODEL DISPLAY", 0x00
     OS.align(4)
     
     // @ Description
@@ -1189,20 +890,6 @@ scope Training {
     char_0x23:; db "E LINK", 0x00
     char_0x24:; db "J SAMUS", 0x00
     char_0x25:; db "J NESS", 0x00
-    char_0x26:; db "LUCAS", 0x00
-    char_0x27:; db "J LINK", 0x00
-    char_0x28:; db "J FALCON", 0x00
-    char_0x29:; db "J FOX", 0x00
-    char_0x2A:; db "J MARIO", 0x00
-    char_0x2B:; db "J LUIGI", 0x00
-    char_0x2C:; db "J DK", 0x00
-    char_0x2D:; db "E PIKACHU", 0x00
-    char_0x2E:; db "PURIN", 0x00
-    char_0x2F:; db "E JIGGLYPUFF", 0x00
-    char_0x30:; db "J KIRBY", 0x00
-    char_0x31:; db "J YOSHI", 0x00
-    char_0x32:; db "J PIKA", 0x00
-    char_0x33:; db "E SAMUS", 0x00
     OS.align(4)
 
     string_table_char:
@@ -1218,33 +905,15 @@ scope Training {
     dw char_0x09            // PIKACHU
     dw char_0x0A            // JIGGLYPUFF
     dw char_0x0B            // NESS
-
     dw char_0x1D            // FALCO
     dw char_0x1E            // GANONDORF
     dw char_0x1F            // YOUNG LINK
     dw char_0x20            // DR MARIO
     dw char_0x21            // WARIO
     dw char_0x22            // DARK SAMUS
-    dw char_0x26            // LUCAS
-
-    dw char_0x2A            // J MARIO
-    dw char_0x29            // J FOX
-    dw char_0x2C            // J DK
-    dw char_0x24            // J SAMUS
-    dw char_0x2B            // J LUIGI
-    dw char_0x27            // J LINK
-    dw char_0x31            // J YOSHI
-    dw char_0x28            // J FALCON
-    dw char_0x30            // J KIRBY
-    dw char_0x32            // J PIKA
-    dw char_0x2E            // PURIN
-    dw char_0x25            // J NESS
-
-    dw char_0x33            // E SAMUS
     dw char_0x23            // E LINK
-    dw char_0x2D            // E PIKACHU
-    dw char_0x2F            // E JIGGLYPUFF
-
+    dw char_0x24            // J SAMUS
+    dw char_0x25            // J NESS
     dw char_0x0D            // METAL MARIO
     dw char_0x1A            // GIANT DK
     dw char_0x0E            // POLYGON MARIO
@@ -1264,7 +933,6 @@ scope Training {
     // Training character id is really the order they are displayed in
     // constant names are loosely based on the debug names for characters
     scope id {
-        // original cast
         constant MARIO(0x00)
         constant FOX(0x01)
         constant DK(0x02)
@@ -1278,38 +946,19 @@ scope Training {
         constant JIGGLYPUFF(0x0A)
         constant NESS(0x0B)
 
-        // custom characters
         constant FALCO(0x0C)
         constant GND(0x0D)
         constant YLINK(0x0E)
         constant DRM(0x0F)
         constant WARIO(0x10)
         constant DSAMUS(0x11)
-        constant LUCAS(0x12)
+        constant ELINK(0x12)
+        constant JSAMUS(0x13)
+        constant JNESS(0x14)
+        constant LUCAS(0x15)
+        // Increment METAL after adding more characters here
 
-        // j characters
-        constant JMARIO(0x13)
-        constant JFOX(0x14)
-        constant JDK(0x15)
-        constant JSAMUS(0x16)
-        constant JLUIGI(0x17)
-        constant JLINK(0x18)
-        constant JYOSHI(0x19)
-        constant JFALCON(0x1A)
-        constant JKIRBY(0x1B)
-        constant JPIKA(0x1C)
-        constant JPUFF(0x1D)
-        constant JNESS(0x1E)
-
-        // e characters
-        constant ESAMUS(0x1F)
-        constant ELINK(0x20)
-        constant EPIKA(0x21)
-        constant EPUFF(0x22)
-
-        // Increment METAL after adding more characters above
-
-        constant METAL(0x23)
+        constant METAL(0x15)
         constant GDONKEY(METAL + 0x01)
         constant NMARIO(METAL + 0x02)
         constant NFOX(METAL + 0x03)
@@ -1339,33 +988,16 @@ scope Training {
     db Character.id.PIKACHU
     db Character.id.JIGGLYPUFF
     db Character.id.NESS
-
     db Character.id.FALCO
     db Character.id.GND
     db Character.id.YLINK
     db Character.id.DRM
     db Character.id.WARIO
     db Character.id.DSAMUS
-    db Character.id.LUCAS
-
-    db Character.id.JMARIO
-    db Character.id.JFOX
-    db Character.id.JDK
+    db Character.id.ELINK   
     db Character.id.JSAMUS
-    db Character.id.JLUIGI
-    db Character.id.JLINK
-    db Character.id.JYOSHI
-    db Character.id.JFALCON
-    db Character.id.JKIRBY
-    db Character.id.JPIKA
-    db Character.id.JPUFF
     db Character.id.JNESS
-
-    db Character.id.ESAMUS
-    db Character.id.ELINK
-    db Character.id.EPIKA
-    db Character.id.EPUFF
-
+    // db Character.id.LUCAS
     db Character.id.METAL
     db Character.id.GDONKEY
     db Character.id.NMARIO
@@ -1420,20 +1052,6 @@ scope Training {
     db id.ELINK   
     db id.JSAMUS
     db id.JNESS
-    db id.LUCAS
-    db id.JLINK
-    db id.JFALCON
-    db id.JFOX
-    db id.JMARIO
-    db id.JLUIGI
-    db id.JDK
-    db id.EPIKA
-    db id.JPUFF
-    db id.EPUFF
-    db id.JKIRBY
-    db id.JYOSHI
-    db id.JPIKA
-    db id.ESAMUS
 
     // @ Description 
     // Spawn Position Strings
@@ -1460,15 +1078,12 @@ scope Training {
         sw      ra, 0x000C(sp)              // save registers
 
         lli     a0, {player} - 1            // a0 - player (p1 = 0, p4 = 3)
-        jal     Character.port_to_struct_   // v0 = address of player struct
-        nop
-        beqz    v0, _skip_spawn_{player}    // skip if no player struct is returned
+        jal     Character.get_struct_       // v0 = address of player struct
         nop
         move    a0, v0                      // a0 = player pointer
         jal     set_custom_spawn_
         nop
-        
-        _skip_spawn_{player}:
+
         lw      a0, 0x0004(sp)              // ~
         lw      v0, 0x0008(sp)              // 
         lw      ra, 0x000C(sp)              // restore registers
@@ -1490,9 +1105,7 @@ scope Training {
         sw      ra, 0x0010(sp)              // save registers
     
         lli     a0, {player} - 1            // a0 - player (p1 = 0, p4 = 3)
-        jal     Character.port_to_struct_   // v0 = address of player struct
-        nop
-        beqz    v0, _skip_percent_{player}  // skip if no player struct is returned
+        jal     Character.get_struct_       // v0 = address of player struct
         nop
         move    a0, v0                      // a0 = player pointer
         jal     reset_percent_              // reset percent
@@ -1502,7 +1115,6 @@ scope Training {
         jal     Character.add_percent_
         nop
         
-        _skip_percent_{player}:
         lw      a0, 0x0004(sp)              // ~
         lw      a1, 0x0008(sp)              // ~
         lw      v0, 0x000C(sp)              // ~
@@ -1534,7 +1146,7 @@ scope Training {
         Menu.entry_title("SET CUSTOM SPAWN", {spawn_func}, pc() + 24)
         Menu.entry("PERCENT", Menu.type.U16, 0, 0, 999, OS.NULL, OS.NULL, {percent}, pc() + 12)
         Menu.entry_title("SET PERCENT", {percent_func}, entry_percent_toggle_p{player})
-        entry_percent_toggle_p{player}:; Menu.entry_bool("RESET SETS PERCENT", OS.TRUE, entry_shield_break_mode)
+        entry_percent_toggle_p{player}:; Menu.entry_bool("RESET SETS PERCENT", OS.TRUE, entry_music)
     }
 
     tail_p1:; tail_px(1)
@@ -1621,9 +1233,7 @@ scope Training {
 
     string_table_music:
     dw       string_training_mode
-    dw       Toggles.entry_random_music_bonus + 0x20
     dw       Toggles.entry_random_music_congo_jungle + 0x20
-    dw       Toggles.entry_random_music_credits + 0x20
     dw       Toggles.entry_random_music_data + 0x20
     dw       Toggles.entry_random_music_dream_land + 0x20
     dw       Toggles.entry_random_music_duel_zone + 0x20
@@ -1637,7 +1247,7 @@ scope Training {
     dw       Toggles.entry_random_music_saffron_city + 0x20
     dw       Toggles.entry_random_music_sector_z + 0x20
     dw       Toggles.entry_random_music_yoshis_island + 0x20
-    evaluate total(17)
+    evaluate total(15)
     evaluate n(0x2F)
     while {n} < MIDI.midi_count {
         evaluate can_toggle({MIDI.MIDI_{n}_TOGGLE})
@@ -1650,9 +1260,7 @@ scope Training {
 
     bgm_table:
     db      BGM.special.TRAINING
-    db      BGM.menu.BONUS
     db      BGM.stage.CONGO_JUNGLE
-    db      BGM.menu.CREDITS
     db      BGM.menu.DATA
     db      BGM.stage.DREAM_LAND
     db      BGM.stage.DUEL_ZONE
@@ -1676,7 +1284,6 @@ scope Training {
     }
     OS.align(4)
 
-    entry_shield_break_mode:; Menu.entry_bool("SHIELD BREAK MODE", OS.FALSE, entry_music)
     entry_music:; Menu.entry("MUSIC", Menu.type.U8, 0, 0, {total} - 1, OS.NULL, OS.NULL, OS.NULL, OS.NULL)
 
     // @ Description

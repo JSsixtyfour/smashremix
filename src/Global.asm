@@ -26,12 +26,6 @@ scope Global {
     constant get_random_int_(0x80018994)
     
     // @ Description
-    // Gets a random int from (0, N-1), perhaps a bit more random than get_random_int_
-    // @ Arguments
-    // a0 - N
-    constant get_random_int_alt_(0x80018A30)
-    
-    // @ Description
     // Byte, Current screen value is here (CSS = 0x10, Debug = 0x03/0x04)
     constant current_screen(0x800A4AD0)
 

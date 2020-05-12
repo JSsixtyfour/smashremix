@@ -658,11 +658,11 @@ scope Spawn {
     float32  0000,  1470
     float32  0000,  0035
     
-    // 32 - Flat Zone
-    float32 -1568, -0844
-    float32 -0708, -0844             
-    float32  0138, -0844
-    float32  1043, -0844
+    // 32 - CORNERIA CITY
+    float32 -1685,  0700
+    float32  1685,  0700              
+    float32 -1685,  0000
+    float32  1685,  0000
     
     // 33 - Dr. Mario
     float32 -1637,  1040
@@ -761,10 +761,10 @@ scope Spawn {
     float32  1182,  0035
     
     // 43 - Bowser's Stadium
-    float32 -2020,  0005
-    float32  2020,  0005
-    float32 -1010,  0005
-    float32  1010,  0005
+    float32 -2028,  1061
+    float32  2242,  1061
+    float32 -0915,  1061
+    float32  0915,  1061
     
     // 44 - Peach's Castle II
     float32 -2758,  0097
@@ -863,102 +863,6 @@ scope Spawn {
     float32  0000,  0000
     
     // 54 - BTT_WARIO
-    float32  0000,  0000
-    float32  0000,  0000
-    float32  0000,  0000
-    float32  0000,  0000
-    
-    // 55 - HYRULE TEMPLE
-    float32 -2799,  0496
-    float32  2846, -0006
-    float32 -0647,  2086
-    float32  0665, -0731
-    
-    // 56 - BTT_LUCAS
-    float32  0000,  0000
-    float32  0000,  0000
-    float32  0000,  0000
-    float32  0000,  0000
-    
-    // 57 - BTP_GND
-    float32  0000,  0000
-    float32  0000,  0000
-    float32  0000,  0000
-    float32  0000,  0000
-    
-    // 58 - New Pork City
-    float32 -1990,  0971
-    float32  1990,  0971
-    float32 -2575,  1772
-    float32  2575,  1772
-    
-    // 59 - Dark Samus BTP
-    float32  0000,  0000
-    float32  0000,  0000
-    float32  0000,  0000
-    float32  0000,  0000
-    
-    // 5A - Smashketball
-    float32 -3042,  0005
-    float32  3042,  0005
-    float32 -1615,  0005
-    float32  1615,  0005
-	
-    // 5B - BTP_DRM
-    float32  0000,  0000
-    float32  0000,  0000
-    float32  0000,  0000
-    float32  0000,  0000
-	
-    // 5C - Norfair
-    float32 -1645,  0709
-    float32  1000,  0954
-    float32 -1105, -0213
-    float32  1775,  0111
-	
-	// 5D - CORNERIA CITY
-    float32 -1685,  1700
-    float32  1685,  1700              
-    float32 -0740,  1100
-    float32  0740,  1100
-	
-	// 5E - Congo Falls
-    float32 -1000,  0915
-    float32  1000,  0915              
-    float32 -1000,  0125
-    float32  1000,  0125
-	
-	// 5F - Osohe
-    float32 -3443,  1358
-    float32  3443,  1358              
-    float32 -1778,  0023
-    float32  1778,  0023
-	
-	// 60 - Yoshi's Story II
-    float32  1594,  0900
-    float32 -1594,  0900              
-    float32  0000,  0035
-    float32  0000,  1580
-	
-	// 61 - World 1-1
-    float32 -1864, -1165
-    float32  1864, -1165 
-	float32 -0864, -1165              
-    float32  0864, -1165 
-	
-	// 62 - Flat Zone II
-    float32 -1980, -1685
-    float32  1980, -1685              
-    float32 -0660, -1685 
-    float32  0660, -1685 
-	
-	// 63 - Gerudo Valley
-    float32 -0484,  0915
-    float32  1310,  1135              
-    float32  1310,  0020 
-    float32 -1310,  0020 
-	
-	// 64 - Young Link Board the Platforms
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
@@ -1269,11 +1173,11 @@ scope Spawn {
     float32 -1262,  0035
     float32  1262,  0035
     
-    // 32 - Flat Zone
-    float32 -1568, -0844
-    float32 -0708, -0844             
-    float32  0138, -0844
-    float32  1043, -0844
+    // 32 - CORNERIA CITY
+    float32 -1685,  0700
+    float32  1685,  0700              
+    float32 -1685,  0000
+    float32  1685,  0000
     
     // 33 - Dr. Mario
     float32 -1637,  1040
@@ -1372,10 +1276,10 @@ scope Spawn {
     float32  1182,  0035
     
     // 43 - Bowser's Stadium
-    float32 -2020,  0005
-    float32  2020,  0005
-    float32 -1010,  0005
-    float32  1010,  0005
+    float32 -2028,  1061
+    float32  2242,  1061
+    float32 -0915,  1061
+    float32  0915,  1061
     
     // 44 - Peach's Castle II
     float32 -2758,  0097
@@ -1474,102 +1378,6 @@ scope Spawn {
     float32  0000,  0000
     
     // 54 - BTT_WARIO
-    float32  0000,  0000
-    float32  0000,  0000
-    float32  0000,  0000
-    float32  0000,  0000
-    
-    // 55 - HYRULE TEMPLE
-    float32 -2799,  0496
-    float32  2846, -0006
-    float32 -0647,  2086
-    float32  0665, -0731
-    
-    // 56 - BTT_LUCAS
-    float32  0000,  0000
-    float32  0000,  0000
-    float32  0000,  0000
-    float32  0000,  0000
-    
-    // 57 - BTP_GND
-    float32  0000,  0000
-    float32  0000,  0000
-    float32  0000,  0000
-    float32  0000,  0000
-    
-    // 58 - New Pork City
-    float32 -1990,  0971
-    float32  1990,  0971
-    float32 -2575,  1772
-    float32  2575,  1772
-        
-    // 59 - Dark Samus BTP
-    float32  0000,  0000
-    float32  0000,  0000
-    float32  0000,  0000
-    float32  0000,  0000
-    
-    // 5A - Smashketball
-    float32 -3042,  0005
-    float32  3042,  0005
-    float32 -1615,  0005
-    float32  1615,  0005
-	
-	// 5B - BTP_DRM
-    float32  0000,  0000
-    float32  0000,  0000
-    float32  0000,  0000
-    float32  0000,  0000
-	
-	// 5C - Norfair
-    float32 -1645,  0709
-    float32  1000,  0954
-    float32 -1105, -0213
-    float32  1775,  0111
-	
-	// 5D - CORNERIA CITY
-    float32 -1685,  1700
-    float32  1685,  1700              
-    float32 -1685,  1300
-    float32  1685,  1300
-	
-	// 5E - Congo Falls
-    float32 -1000,  0915
-    float32  1000,  0915              
-    float32 -1000,  0125
-    float32  1000,  0125
-	
-	// 5F - Osohe
-    float32 -3443,  1358
-    float32  3443,  1358              
-    float32 -1778,  0023
-    float32  1778,  0023
-	
-	// 60 - Yoshi's Story II
-    float32 -1594,  0900
-    float32  1594,  0900              
-    float32 -1594,  0000
-    float32  1594,  0000
-	
-	// 61 - World 1-1
-    float32 -1864, -1165
-    float32  1864, -1165 
-	float32 -0864, -1165              
-    float32  0864, -1165 
-	
-	// 62 - Flat Zone II
-    float32 -1980, -1685
-    float32  1980, -1685              
-    float32 -0660, -1685 
-    float32  0660, -1685 
-	
-	// 63 - Gerudo Valley
-    float32 -0484,  0915
-    float32  1310,  1135              
-    float32  1310,  0020 
-    float32 -1310,  0020 
-	
-	// 64 - Young Link Board the Platforms
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000

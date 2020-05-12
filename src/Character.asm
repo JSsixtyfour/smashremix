@@ -12,7 +12,7 @@ include "OS.asm"
 
 scope Character {
     // number of character slots to add
-    constant ADD_CHARACTERS(23)
+    constant ADD_CHARACTERS(10)
     // start and end offset for the main character struct table
     constant STRUCT_TABLE(0x92610)
     variable STRUCT_TABLE_END(STRUCT_TABLE + 0x6C)
@@ -313,11 +313,7 @@ scope Character {
         global evaluate num({num} + 1)
         read16 param_read_{num}, "../roms/original.z64", PARENT_ACTION_STRUCT
         variable param_offset(param_read_{num} >> 6)
-        
-        // Check for no parameters
-        if param_offset == 0x3FF {
-            print "\n\nWARNING: Action parameters do not exist for character: {name} action: {action} (0x" ; OS.print_hex({action}) ; print "). edit_action_parameters aborted.\n"
-        } else {
+
         // Modify parameter struct
         pushvar origin, base
         origin {Character.{name}_param_array_origin} + (param_offset * 0xC)
@@ -331,7 +327,6 @@ scope Character {
             dw {flags}                      // insert flags
         }
         pullvar base, origin
-        }
     }
     }
     
@@ -1797,7 +1792,6 @@ scope Character {
         constant NJIGGLY(0x18)
         constant NNESS(0x19)
         constant GDONKEY(0x1A)
-        constant PLACEHOLDER(0x1B)
         constant NONE(0x1C)
     }
 
@@ -1878,12 +1872,12 @@ scope Character {
         // update fgm_ids for J sounds
         pushvar base, origin
         origin  TABLE_ORIGIN
-        dh      FGM.hit.J_PUNCH_S            // Punch S
-        dh      FGM.hit.J_PUNCH_M            // Punch M
-        dh      FGM.hit.J_PUNCH_L            // Punch L
-        dh      FGM.hit.J_KICK_S             // Kick S
-        dh      FGM.hit.J_KICK_M             // Kick M
-        dh      FGM.hit.J_KICK_L             // Kick L
+        dh      0x0093                     // Punch S
+        dh      0x0092                     // Punch M
+        dh      0x0091                     // Punch L
+        dh      0x0090                     // Kick S
+        dh      0x008F                     // Kick M
+        dh      0x008E                     // Kick L
         pullvar origin, base
 
         scope apply_sound_type_: {
@@ -1893,14 +1887,6 @@ scope Character {
             _apply_sound_type_return:
             OS.patch_end()
 
-            li      a0, Toggles.entry_japanese_sounds
-            lw      a0, 0x0004(a0)              // a0 = 1 if always, 2 if never, 0 if default
-            lli     t3, 0x0001                  // t3 = always
-            beq     a0, t3, _j_sounds_on        // if set to always, then use j sounds
-            lli     t3, 0x0002                  // t3 = never
-            beq     a0, t3, _original           // if set to never, then use u sounds
-            nop                                 // otherwise, test if player is J player
-
             // a3 = attacking player struct
             lbu     t3, 0x000B(a3)              // t3 = character_id
             li      a0, sound_type.table        // a0 = address of sound_type table
@@ -1909,7 +1895,6 @@ scope Character {
             addiu   a0, r0, sound_type.U        // a0 = sound_type.U
             beq     t3, a0, _original           // if sound_type is U, then use original sounds
             nop                                 // else use J table
-            _j_sounds_on:
             li      a0, sound_type_J.table      // a0 = address of sound_type_J table
             addiu   a0, a0, -0x8D00             // a0 = adjusted address of sound_type_J table (later on is lhu a0, 0x8D00(a0))
             b       _end                        // skip to end
@@ -1937,17 +1922,17 @@ scope Character {
         table:
         constant TABLE_ORIGIN(origin())
         //  SPECIAL     //  POLYGON      //  J          //  E
-        db  id.METAL;   db  id.NMARIO;   db  id.JMARIO;   db  id.NONE        // 0x00 - MARIO
-        db  id.NONE;    db  id.NFOX;     db  id.JFOX;   db  id.NONE        // 0x01 - FOX
-        db  id.GDONKEY; db  id.NDONKEY;  db  id.JDK;   db  id.NONE        // 0x02 - DONKEY
-        db  id.NONE;    db  id.NSAMUS;   db  id.JSAMUS; db  id.ESAMUS        // 0x03 - SAMUS
-        db  id.NONE;    db  id.NLUIGI;   db  id.JLUIGI;   db  id.NONE        // 0x04 - LUIGI
-        db  id.NONE;    db  id.NLINK;    db  id.JLINK;  db  id.ELINK       // 0x05 - LINK
-        db  id.NONE;    db  id.NYOSHI;   db  id.JYOSHI;   db  id.NONE        // 0x06 - YOSHI
-        db  id.NONE;    db  id.NCAPTAIN; db  id.JFALCON;   db  id.NONE        // 0x07 - CAPTAIN
-        db  id.NONE;    db  id.NKIRBY;   db  id.JKIRBY;   db  id.NONE        // 0x08 - KIRBY
-        db  id.NONE;    db  id.NPIKACHU; db  id.JPIKA;   db  id.EPIKA        // 0x09 - PIKACHU
-        db  id.NONE;    db  id.NJIGGLY;  db  id.JPUFF;   db  id.EPUFF        // 0x0A - JIGGLY
+        db  id.METAL;   db  id.NMARIO;   db  id.NONE;   db  id.NONE        // 0x00 - MARIO
+        db  id.NONE;    db  id.NFOX;     db  id.NONE;   db  id.NONE        // 0x01 - FOX
+        db  id.GDONKEY; db  id.NDONKEY;  db  id.NONE;   db  id.NONE        // 0x02 - DONKEY
+        db  id.NONE;    db  id.NSAMUS;   db  id.JSAMUS; db  id.NONE        // 0x03 - SAMUS
+        db  id.NONE;    db  id.NLUIGI;   db  id.NONE;   db  id.NONE        // 0x04 - LUIGI
+        db  id.NONE;    db  id.NLINK;    db  id.NONE;   db  id.ELINK       // 0x05 - LINK
+        db  id.NONE;    db  id.NYOSHI;   db  id.NONE;   db  id.NONE        // 0x06 - YOSHI
+        db  id.NONE;    db  id.NCAPTAIN; db  id.NONE;   db  id.NONE        // 0x07 - CAPTAIN
+        db  id.NONE;    db  id.NKIRBY;   db  id.NONE;   db  id.NONE        // 0x08 - KIRBY
+        db  id.NONE;    db  id.NPIKACHU; db  id.NONE;   db  id.NONE        // 0x09 - PIKACHU
+        db  id.NONE;    db  id.NJIGGLY;  db  id.NONE;   db  id.NONE        // 0x0A - JIGGLY
         db  id.NONE;    db  id.NNESS;    db  id.JNESS;  db  id.NONE        // 0x0B - NESS
         db  id.NONE;    db  id.NONE;     db  id.NONE;   db  id.NONE        // 0x0C - BOSS
         db  id.NONE;    db  id.NONE;     db  id.NONE;   db  id.NONE        // 0x0D - METAL
@@ -1986,19 +1971,18 @@ scope Character {
     }
     
     // @ Description
-    // Returns the address of the player struct. Legacy 19XX function, probably not very useful.
+    // Returns the address of the player struct for the given player.
     // @ Arguments 
-    // a0 - player struct index
+    // a0 - player (p1 = 0, p4 = 3)
     // @ Returns
-    // v0 - address of player struct X
-    // TODO: rewrite this to loop through the linked list instead of using P_STRUCT_LENGTH
+    // v0 - address of player X struct
     scope get_struct_: {
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // save registers
 
         li      t0, Global.p_struct_head    // t0 = address of player struct list head
-        lw      t0, 0x0000(t0)              // t0 = address of first player struct
+        lw      t0, 0x0000(t0)              // t0 = address of player 1 struct
         lli     t1, Global.P_STRUCT_LENGTH  // t1 = player struct length
         mult    a0, t1                      // ~
         mflo    t1                          // t1 = offset = player struct length * player
@@ -2006,37 +1990,6 @@ scope Character {
 
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // restore registers
-        addiu   sp, sp, 0x0010              // deallocate stack space
-        jr      ra                          // return
-        nop
-    }
-    
-    // @ Description
-    // Returns the address of the player struct for the given port.
-    // @ Arguments 
-    // a0 - player port (p1 = 0, p4 = 3)
-    // @ Returns
-    // v0 - address of player X struct, or 0 if no struct found for player X
-    scope port_to_struct_: {
-        addiu   sp, sp,-0x0010              // allocate stack space
-        sw      t0, 0x0008(sp)              // store t0
-
-        li      v0, Global.p_struct_head    // v0 = address of player struct list head
-        lw      v0, 0x0000(v0)              // v0 = address of first player struct
-        
-        _loop:
-        // a0 = port to check for
-        // v0 = player struct to compare against
-        beq     v0, r0, _end                // exit loop if v0 does not contain a struct address
-        nop
-        lbu     t0, 0x000D(v0)              // t2 = first struct port
-        beq     t0, a0, _end                // exit loop if struct port id matches given port id
-        nop
-        b       _loop
-        lw      v0, 0x0000(v0)              // v0 = next struct
-        
-        _end:
-        lw      t0, 0x0008(sp)              // load t0
         addiu   sp, sp, 0x0010              // deallocate stack space
         jr      ra                          // return
         nop
@@ -2201,15 +2154,15 @@ scope Character {
     // 0x1D - FALCO
     define_character(FALCO, FOX, File.FALCO_MAIN, 0x0D0, 0, File.FALCO_CHARACTER, 0x13A, 0x0D2, 0x15A, 0x0A1, 0x013C, 0x474, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_FALCO, Stages.id.BTP_FOX, sound_type.U)
     // 0x1E - GND
-    define_character(GND, CAPTAIN, File.GND_MAIN, 0x0EB, 0, File.GND_CHARACTER, 0x14E, 0, File.GND_ENTRY_KICK, File.GND_PUNCH_GRAPHIC, 0, 0x488, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_GND, Stages.id.BTP_GND, sound_type.U)
+    define_character(GND, CAPTAIN, File.GND_MAIN, 0x0EB, 0, File.GND_CHARACTER, 0x14E, 0, File.GND_ENTRY_KICK, File.GND_PUNCH_GRAPHIC, 0, 0x488, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_GND, Stages.id.BTP_FALCON, sound_type.U)
     // 0x1F - YLINK
-    define_character(YLINK, LINK, File.YLINK_MAIN, 0x0E0, 0, File.YLINK_CHARACTER, 0x147, File.YLINK_BOOMERANG_HITBOX, 0x161, 0x145, 0, 0x760, 0, OS.TRUE, OS.FALSE, Stages.id.BTT_YL, Stages.id.BTP_YL, sound_type.U)
+    define_character(YLINK, LINK, File.YLINK_MAIN, 0x0E0, 0, File.YLINK_CHARACTER, 0x147, File.YLINK_BOOMERANG_HITBOX, 0x161, 0x145, 0, 0x760, 0, OS.TRUE, OS.FALSE, Stages.id.BTT_YL, Stages.id.BTP_LINK, sound_type.U)
     // 0x20 - DRM
-    define_character(DRM, MARIO, File.DRM_MAIN, 0x0CA, 0, File.DRM_CHARACTER, 0x12A, File.DRM_PROJECTILE_DATA, 0x164, File.DRM_PROJECTILE_GRAPHIC, 0, 0x454, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_DRM, Stages.id.BTP_DRM, sound_type.U)
+    define_character(DRM, MARIO, File.DRM_MAIN, 0x0CA, 0, File.DRM_CHARACTER, 0x12A, File.DRM_PROJECTILE_DATA, 0x164, File.DRM_PROJECTILE_GRAPHIC, 0, 0x454, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_DRM, Stages.id.BTP_MARIO, sound_type.U)
     // 0x21 - WARIO
-    define_character(WARIO, MARIO, File.WARIO_MAIN, 0x0CA, 0, File.WARIO_CHARACTER, 0x12A, 0x0CC, 0x164, 0x129, 0, 0x51C, 0x0, OS.FALSE, OS.FALSE, Stages.id.BTT_WARIO, Stages.id.BTP_JIGGLYPUFF, sound_type.U)
+    define_character(WARIO, MARIO, File.WARIO_MAIN, 0x0CA, 0, File.WARIO_CHARACTER, 0x12A, 0x0CC, 0x164, 0x129, 0, 0x56C, 0x0, OS.FALSE, OS.FALSE, Stages.id.BTT_WARIO, Stages.id.BTP_JIGGLYPUFF, sound_type.U)
     // 0x22 - DSAMUS
-    define_character(DSAMUS, SAMUS, File.DSAMUS_MAIN, 0x0D8, 0, File.DSAMUS_CHARACTER, 0x142, 0x15D, File.DSAMUS_SECONDARY, 0, 0, 0x6B4, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_DS, Stages.id.BTP_DS, sound_type.U)
+    define_character(DSAMUS, SAMUS, File.DSAMUS_MAIN, 0x0D8, 0, File.DSAMUS_CHARACTER, 0x142, 0x15D, File.DSAMUS_SECONDARY, 0, 0, 0x6B4, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_DS, Stages.id.BTP_SAMUS, sound_type.U)
     // 0x23 - ELINK
     define_character(ELINK, LINK, File.ELINK_MAIN, 0x0E0, 0, 0x144, 0x147, 0x0E2, 0x161, 0x145, 0, 0x708, 0, OS.TRUE, OS.FALSE, Stages.id.BTT_LINK, Stages.id.BTP_LINK, sound_type.U)
     // 0x24 - JSAMUS
@@ -2217,33 +2170,9 @@ scope Character {
     // 0x25 - JNESS
     define_character(JNESS, NESS, File.JNESS_MAIN, 0x0EE, 0, 0x14F, 0x150, 0x160, File.JNESS_PKFIRE, 0x151, 0, 0x5BC, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_NESS, Stages.id.BTP_NESS, sound_type.J)
     // 0x26 - LUCAS
-    define_character(LUCAS, NESS, File.LUCAS_MAIN, 0x0EE, 0, File.LUCAS_CHARACTER, 0x150, 0x160, File.LUCAS_PKFIRE, 0x151, 0, 0x614, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_LUCAS, Stages.id.BTP_NESS, sound_type.U)
-    // 0x27 - JLINK
-    define_character(JLINK, LINK, File.JLINK_MAIN, 0x0E0, 0, File.JLINK_CHARACTER, 0x147, 0x0E2, 0x161, 0x145, 0, 0x708, 0, OS.TRUE, OS.FALSE, Stages.id.BTT_LINK, Stages.id.BTP_LINK, sound_type.J)
-    // 0x28 - JFALCON
-    define_character(JFALCON, CAPTAIN, File.JFALCON_MAIN, 0x0EB, 0, 0x14C, 0x14E, 0, 0x15E, 0x14D, 0, 0x488, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_FALCON, Stages.id.BTP_FALCON, sound_type.J)
-    // 0x29 - JFOX
-    define_character(JFOX, FOX, File.JFOX_MAIN, 0x0D0, 0, 0x139, 0x13A, File.JFOX_PROJECTILE, 0x15A, 0x0A1, 0x013C, 0x46C, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_FOX, Stages.id.BTP_FOX, sound_type.J)
-    // 0x2A - JMARIO
-    define_character(JMARIO, MARIO, File.JMARIO_MAIN, 0x0CA, 0, File.JMARIO_CHARACTER, 0x12A, File.JMARIO_PROJECTILE_HITBOX, 0x164, 0x129, 0, 0x428, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_MARIO, Stages.id.BTP_MARIO, sound_type.J)
-    // 0x2B - JLUIGI
-    define_character(JLUIGI, LUIGI, File.JLUIGI_MAIN, 0x0DC, 0, File.JLUIGI_CHARACTER, 0x12A, File.JLUIGI_PROJECTILE_HITBOX, 0x164, 0x129, 0, 0x580, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_LUIGI, Stages.id.BTP_LUIGI, sound_type.J)
-    // 0x2C - JDK
-    define_character(JDK, DONKEY, File.JDK_MAIN, 0x0D4, 0, 0x13D, 0x13E, 0, 0x163, 0, 0, 0x4A4, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_DONKEY_KONG, Stages.id.BTP_DONKEY_KONG, sound_type.J)
-    // 0x2D - EPIKA
-    define_character(EPIKA, PIKACHU, 0x0F3, 0x0F2, 0, 0x155, 0x157, 0x0F4, 0x15B, 0x156, 0, 0x41C, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_PIKACHU, Stages.id.BTP_PIKACHU, sound_type.U)
-    // 0x2E - JPUFF
-    define_character(JPUFF, JIGGLYPUFF, File.JPUFF_MAIN, 0x0E8, 0, 0x14A, 0x14B, 0, 0x15F, 0, 0, 0x474, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_JIGGLYPUFF, Stages.id.BTP_JIGGLYPUFF, sound_type.J)
-    // 0x2F - EPUFF
-    define_character(EPUFF, JIGGLYPUFF, 0x0E9, 0x0E8, 0, 0x14A, 0x14B, 0, 0x15F, 0, 0, 0x474, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_JIGGLYPUFF, Stages.id.BTP_JIGGLYPUFF, sound_type.U)
-    // 0x30 - JKIRBY
-    define_character(JKIRBY, KIRBY, File.JKIRBY_MAIN, 0x0E4, 0, 0x148, 0x149, 0, 0x15C, 0, 0, 0x808, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_KIRBY, Stages.id.BTP_KIRBY, sound_type.J)
-    // 0x31 - JYOSHI
-    define_character(JYOSHI, YOSHI, File.JYOSHI_MAIN, 0x0F6, 0, 0x152, 0x154, 0, 0x162, 0x153, 0, 0x47C, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_KIRBY, Stages.id.BTP_KIRBY, sound_type.J)
-    // 0x32 - JPIKA
-    define_character(JPIKA, PIKACHU, File.JPIKA_MAIN, 0x0F2, 0, 0x155, 0x157, File.JPIKA_PROJECTILE, 0x15B, 0x156, 0, 0x41C, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_PIKACHU, Stages.id.BTP_PIKACHU, sound_type.J)
-    // 0x33 - ESAMUS
-    define_character(ESAMUS, SAMUS, File.ESAMUS_MAIN, 0x0D8, 0, 0x140, 0x142, 0x15D, 0x0DA, 0, 0, 0x610, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_SAMUS, Stages.id.BTP_SAMUS, sound_type.U)
+    define_character(LUCAS, NESS, File.LUCAS_MAIN, 0x0EE, 0, File.LUCAS_CHARACTER, 0x150, 0x160, File.LUCAS_PKFIRE, 0x151, 0, 0x5EC, 0x0, OS.TRUE, OS.FALSE, -1, -1, sound_type.U)
+    
+    // 5BC
     
     print "========================================================================== \n"
 }

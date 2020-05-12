@@ -219,19 +219,6 @@ scope Costumes {
         db 0x04                             // J Samus
         db 0x03                             // J Ness
         db 0x05                             // Lucas
-        db 0x03                             // J Link
-        db 0x05                             // J Falcon
-        db 0x03                             // J Fox
-        db 0x04                             // J Mario
-        db 0x03                             // J Luigi
-        db 0x04                             // J Donkey Kong
-        db 0x03                             // E Pikachu
-        db 0x04                             // J Jigglypuff
-        db 0x04                             // E Jigglypuff
-        db 0x04                             // J Kirby
-        db 0x05                             // J Yoshi
-        db 0x03                             // J Pikachu
-        db 0x04                             // E Samus
         OS.align(4)
 
         functions:
@@ -265,6 +252,76 @@ scope Costumes {
     // a1 - costume_id
     // a2 - shade_id
     constant update_(0x800E9248)
+
+    
+    // TODO: this is temporary (until stock icon palettes can be integrated into character files)
+    // However, the general concept could be applied to a more developed system for patching
+    // character files upon character load.
+    // @ Description
+    // Patch which overrides the icon palette array pointer with a hard coded array if a pointer is
+    // present in icon_palette_table. Runs when a character finishes loading.
+    scope icon_override_: {
+        OS.patch_start(0x530A8, 0x800D78A8)
+        j       icon_override_
+        nop
+        OS.patch_end()
+        
+        lw      a0, 0x0018(sp)              // a0 = character id
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      t0, 0x0004(sp)              // ~
+        sw      t1, 0x0008(sp)              // ~
+        sw      t2, 0x000C(sp)              // store t0 - t2
+        
+        sll     t0, a0, 0x3                 // t0 = character id * 8
+        li      t1, icon_palette_table      // t1 = icon_palette_table
+        addu    t1, t1, t0                  // t1 = icon_palette_table + id * 8
+        lw      t0, 0x0004(t1)              // t0 = icon palette array pointer for {character}
+        beq     t0, r0, _end                // end if t0 = NULL
+        nop
+        sll     t0, a0, 0x2                 // t0 = character id * 4
+        li      t2, 0x80116E10              // t2 = character struct table
+        addu    t2, t2, t0                  // t2 = character struct table + id * 4
+        lw      t2, 0x0000(t2)              // t2 = struct for {character}
+        lw      t2, 0x0028(t2)              // t2 = main file pointer address for {character}
+        lw      t2, 0x0000(t2)              // t2 = main file address for {character}
+        lw      t0, 0x0000(t1)              // t0 = icon palette array offset
+        addu    t2, t2, t0                  // t2 = main file address + offset
+        lw      t0, 0x0004(t1)              // t0 = icon palette array pointer for {character}
+        sw      t0, 0x0000(t2)              // store updated icon palette array pointer
+        
+        _end:
+        lw      t0, 0x0004(sp)              // ~
+        lw      t1, 0x0008(sp)              // ~
+        lw      t2, 0x000C(sp)              // load t0 - t2
+        addiu   sp, sp, 0x0028              // deallocate stack space + original line 1
+        jr      ra                          // original line 2
+        nop
+    }
+    
+    // @ Description
+    // Table of pointers to icon palette arrays, when a pointer is present it will override the
+    // default array and load from the one in this table instead.
+    // Format:
+    // XXXXXXXX YYYYYYYY
+    // XXXXXXXX = offset of palette array pointer in main file
+    // YYYYYYYY = pointer to new palette array
+    icon_palette_table:
+    constant icon_palette_table_origin(origin())
+    fill Character.NUM_CHARACTERS * 0x8
+    
+    // @ Description
+    // Adds a hard coded icon palette array for a given character.
+    // @ Arguments
+    // id - character id to modify costumes for
+    // offset - offset of palette array pointer in main file
+    // array - pointer to new palette array
+    macro add_icon_palette_array(id, offset, array) {
+        pushvar origin, base
+        origin Costumes.icon_palette_table_origin + ({id} * 8)
+        dw  {offset}
+        dw  {array}
+        pullvar base, origin
+    }
     
     // @ Description
     // Revises attribute location within main file to adjust for Polygon Characters and Metal Mario's new costumes

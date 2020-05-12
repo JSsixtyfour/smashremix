@@ -27,7 +27,7 @@ scope JSamus {
     
     // Set crowd chant FGM.
     Character.table_patch_start(crowd_chant_fgm, Character.id.JSAMUS, 0x2)
-    dh  0x0317
+    dh  0x0265
     OS.patch_end()
     
     

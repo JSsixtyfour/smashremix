@@ -251,21 +251,10 @@ scope Wario {
         beq     a3, r0, _recoil             // branch if contact type = hurtbox
         nop
         ori     s2, r0, 0x0001              // ~
-        beq     a3, s2, _recoil             // branch if contact type = shield
-        nop
-        
-        _clang:
-        // when clanging, Wario should recoil if his invincibility is not active
-        ori     s2, r0, 0x0003              // ~
-        bne     a3, s2, _end                // skip if contact type != clang
-        nop
-        lw      s0, 0x05BC(a0)              // s0 = shoulder hurtbox vulnerability
-        ori     s1, r0, 0x0002              // at = 0x2 (invincible)
-        beq     s0, s1, _end                // skip if shoulder hurtbox is invincible
+        bne     a3, s2, _end                // skip if contact type != shield
         nop
         
         _recoil:
-        ori     s2, r0, 0x0001              // ~
         sw      s2, 0x017C(a0)              // temp variable 1 = 0x1 (recoil flag = true)
         
         _end:
@@ -294,10 +283,6 @@ scope Wario {
         nop
         
         _body_slam:
-        lw      {r1}, 0x05BC(a0)            // {r1} = shoulder hurtbox vulnerability
-        ori     at, r0, 0x0002              // at = 0x2 (invincible)
-        bne     {r1}, at, _end              // skip if shoulder hurtbox isn't invincible
-        nop
         or      at, r0, r0                  // at = 0 (beats other hitbox)
         j       _return
         nop
@@ -310,7 +295,7 @@ scope Wario {
     }
     
     // @ Description
-    // Forces Wario's body slam to beat any other hitbox on clang when the shoulder is invincible. (1/4)
+    // Forces Wario's body slam to beat any other hitbox on clang. (1/4)
     // This patch is for check 1/2 in the hitbox vs hitbox clang function.
     scope body_slam_clang_1_: {
         OS.patch_start(0x5E14C, 0x800E294C)
@@ -322,7 +307,7 @@ scope Wario {
     }
     
     // @ Description
-    // Forces Wario's body slam to beat any other hitbox on clang when the shoulder is invincible. (2/4)
+    // Forces Wario's body slam to beat any other hitbox on clang. (2/4)
     // This patch is for check 2/2 in the hitbox vs hitbox clang function.
     scope body_slam_clang_2_: {
         OS.patch_start(0x5E1EC, 0x800E29EC)
@@ -334,7 +319,7 @@ scope Wario {
     }
     
     // @ Description
-    // Forces Wario's body slam to beat any other hitbox on clang when the shoulder is invincible. (3/4)
+    // Forces Wario's body slam to beat any other hitbox on clang. (3/4)
     // This patch is for the hitbox vs projectile clang function.
     scope body_slam_clang_3_: {
         OS.patch_start(0x5E750, 0x800E2F50)
@@ -346,7 +331,7 @@ scope Wario {
     }
     
     // @ Description
-    // Forces Wario's body slam to beat any other hitbox on clang when the shoulder is invincible. (4/4)
+    // Forces Wario's body slam to beat any other hitbox on clang. (4/4)
     // This patch is for the an unknown clang function. The function is almost identical to the
     // hitbox vs projectile clang function but I'm not sure what it is actually for.
     // TODO: figure out what this clang function is used for (800E35BC)

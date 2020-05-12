@@ -20,9 +20,9 @@
 0855 Ganon downsmash
 0856 Ganon forward air trident
 0857 Ganon forward air melee style punch
-0858 Dr. Mario down air
-0859 Dr. Mario forward air
-085A Dr. Mario taunt
+0858 dr. mario down air
+0859 dr. mario forward air
+085A dr. mario taunt
 085B Wario D-Smash
 085C Wario Air Neutral Special
 085D Wario Ground Neutral Special
@@ -72,9 +72,9 @@
 0889 Warioware Header
 088A Warioware Stage 43DC
 088B Warioware BG
-088C Flat Zone Header
-088D Flat Zone Stage File
-088E Flat Zone BG
+088C Corneria City Header
+088D Corneria City Stage File
+088E Corneria City BG
 088F Doctor Mario Stage Header
 0890 Doctor Mario Stage
 0891 Doctor Mario Stage BG
@@ -148,7 +148,7 @@
 08D4 Dark Samus Character
 08D5 Dark Samus Secondary File
 08D6 Dark Samus Neutral Special Graphic
-08D7 UNUSED - REPLACE WITH CHARACTER HEADER
+08D7 UNUSED -- REPLACE WITH DARK SAMUS ANIMATION
 08D8 Dark Samus Roll F
 08D9 Dark Samus Roll B
 08DA Dark Samus Jump F
@@ -295,81 +295,6 @@
 0967 Young Link Target Test Stage
 0968 Wario Target Test Header
 0969 Wario Target Test Stage
-096A Ganondorf Victory Animation 1
-096B Ganondorf Selected Animation
-096C JLink Main
-096D JLink Character
-096E JFalcon Main
-096F JFox Main
-0970 JFox Projectile
-0971 Lucas Grab
-0972 Lucas Grab Pull
-0973 JMario Main
-0974 JMario Character
-0975 JLuigi Main
-0976 JLuigi Character
-0977 Lucas Forward Throw
-0978 JMario Fireball Projectile Hitbox
-0979 JLuigi Fireball Projectile Hitbox
-097A Lucas Up Aerial
-097B Lucas Down Tilt
-097C JDK Main
-097D JPuff Main
-097E JKirby Main
-097F JYoshi Main
-0980 Lucas Taunt
-0981 Hyrule Temple Header
-0982 Hyrule Temple Stage
-0983 Hyrule Temple BG
-0984 Lucas Selected Animation
-0985 Lucas Break the Targets Header
-0986 Lucas Break the Targets Stage
-0987 JPika Main
-0988 JPika Projectile
-0989 Ganondorf Board the Platforms Header
-098A Ganondorf Board the Platforms Stage
-098B ESamus Main
-098C New Pork City Header
-098D New Pork City Stage
-098E New Pork City BG
-098F Dark Samus Board the Platforms Header
-0990 Dark Samus Board the Platforms Stage
-0991 Smashketball Header
-0992 Smashketball Stage
-0993 Smashketball BG
-0994 Lucas 1P Pose
-0995 Dr. Mario Board the Platforms Header
-0996 Dr. Mario Board the Platforms Stage
-0997 Lucas Victory Needle
-0998 Norfair Header
-0999 Norfair Stage
-099A Norfair BG
-099B Norfair Lava
-099C Corneria City Header
-099D Corneria City Stage
-099E Corneria City BG
-099F Corneria City Image 2
-09A0 Osohe Castle Header
-09A1 Osohe Castle
-09A2 Osohe Castle BG
-09A3 Yoshi's Story II Header
-09A4 Yoshi's Story II
-09A5 Yoshi's Story II BG
-09A6 Vs Combo Meter Textures
-09A7 Lucas Entry Animation Right
-09A8 Lucas Entry Animation Left
-09A9 World 1-1 Header
-09AA World 1-1
-09AB Flat Zone II Header
-09AC Flat Zone II
-09AD Gerudo Valley Header
-09AE Gerudo Valley
-09AF Gerudo Valley BG
-09B0 Lucas PK Victory Animation
-09B1 Bowser Bomb
-09B2 Bowser Bomb Header
-09B3 Young Link Board the Platforms Header
-09B4 Young Link Board the Platforms Stage
 
 0611 CAPTAIN DeadU
 0611 CAPTAIN ScreenKO
