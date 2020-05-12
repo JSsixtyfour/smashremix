@@ -6,9 +6,6 @@ print "included SinglePlayer.asm\n"
 // @ Description
 // This file allows new characters to use 1P and Bonus features.
 
-// TODO
-// Name textures for MM, GDK and polygons
-
 include "OS.asm"
 
 scope SinglePlayer {
@@ -755,14 +752,22 @@ scope SinglePlayer {
     // @ Description
     // Modify the code that sets the stage ID for BTT during 1P so we can use new characters
     scope set_btt_stage_id_1p_: {
-        OS.patch_start(0x1118F8, 0x8018D1B8)
+        OS.patch_start(0x1118E8, 0x8018D1A8)
         j       set_btt_stage_id_1p_
+        lw      t8, 0x0000(a2)              // original line 2
+        nop
+        nop
+        nop
         nop
         _set_btt_stage_id_1p_return:
         OS.patch_end()
 
-        lw      t8, 0x0000(a2)              // original line 1
+        beq     t6, at, _skip_timer         // original line 1 (modified from beql)
+        nop
+        lw      t9, 0x0000(a2)              // original line 3
+        sb      a3, 0x0006(t9)              // original line 4
 
+        _skip_timer:
         // v0 is character ID
         slti    t7, v0, Character.id.BOSS   // if (it's not an original character) then use extended table
         bnez    t7, _original               // otherwise use original table
@@ -783,14 +788,22 @@ scope SinglePlayer {
     // @ Description
     // Modify the code that sets the stage ID for BTP during 1P so we can use new characters
     scope set_btp_stage_id_1p_: {
-        OS.patch_start(0x111920, 0x8018D1E0)
+        OS.patch_start(0x111910, 0x8018D1D0)
         j       set_btp_stage_id_1p_
+        lw      t2, 0x0000(a2)              // original line 2
+        nop
+        nop
+        nop
         nop
         _set_btp_stage_id_1p_return:
         OS.patch_end()
 
-        lw      t2, 0x0000(a2)              // original line 1
+        beq     t3, at, _skip_timer         // original line 1 (modified from beql)
+        nop
+        lw      t4, 0x0000(a2)              // original line 3
+        sb      a3, 0x0006(t4)              // original line 4
 
+        _skip_timer:
         // v0 is character ID
         slti    t5, v0, Character.id.BOSS   // if (it's not an original character) then use extended table
         bnez    t5, _original               // otherwise use original table
@@ -812,21 +825,22 @@ scope SinglePlayer {
     // This piggybacks off the code that writes SSB data to SRAM to write our extended table as well
     scope write_extended_high_score_table_: {
         OS.patch_start(0x00050014, 0x800D4634)
-        jal     write_extended_high_score_table_
+        j       write_extended_high_score_table_
         nop
+        _return:
         OS.patch_end()
 
         li      a0, Character.EXTENDED_HIGH_SCORE_TABLE_BLOCK
         jal     SRAM.save_
         nop
 
-        jal     SRAM.mark_saved_            // mark save file present
-        nop
+        jal     Toggles.save_               // save all toggles and mark save file present
+        nop                                 // we save all toggles so that things stay in sync
 
         lw      ra, 0x0014(sp)              // original line 1
         addiu   sp, sp, 0x0018              // original line 2
 
-        jr      ra                          // return
+        j       _return                     // return
         nop
     }
 
@@ -834,9 +848,12 @@ scope SinglePlayer {
     // This piggybacks off the code that loads SSB data from SRAM to load our extended table as well
     scope load_extended_high_score_table_: {
         OS.patch_start(0x000500C4, 0x800D46E4)
-        jal     load_extended_high_score_table_
+        j       load_extended_high_score_table_
         nop
+        _return:
         OS.patch_end()
+
+        mtlo    v0                          // save v0
 
         jal     SRAM.check_saved_           // v0 = has_saved
         nop
@@ -865,10 +882,12 @@ scope SinglePlayer {
         bnez    a1, _loop                   // if (more characters to loop over) then loop
         nop
 
+        mflo    v0                          // restore v0
+
         lw      ra, 0x0014(sp)              // original line 1
         addiu   sp, sp, 0x0018              // original line 2
 
-        jr      ra                          // return
+        j       _return                     // return
         nop
     }
 
@@ -908,10 +927,25 @@ scope SinglePlayer {
         constant DRM(0x00001868)
         constant WARIO(0x000019E8)
         constant DSAMUS(0x00001C28)
+        constant LUCAS(0x00003D88)
+        // TODO: update J names
+        constant JSAMUS(0x00004268)
+        constant JNESS(0x00004688)
+        constant JLINK(0x000049E8)
+        constant JFALCON(0x00003A88)
+        constant JFOX(0x000040E8)
+        constant JMARIO(0x00004568)
+        constant JLUIGI(0x000043E8)
+        constant JDK(0x00004E68)
+        constant JPUFF(0x00004B68)
+        constant JPIKA(0x00004868)
+        constant JKIRBY(0x00003F08)
+        constant JYOSHI(0x00003C08)
+        // TODO: update E names
+        constant ESAMUS(0x00005048)
         constant ELINK(0x000038A8)
-        constant JSAMUS(0x00003A88)
-        constant JNESS(0x00003C08)
-        constant LUCAS(0x00001C28)
+        constant EPIKA(0x00005228)
+        constant EPUFF(0x00005468)
         constant BLANK(0x0)
     }
 
@@ -947,16 +981,7 @@ scope SinglePlayer {
     dw name_texture.BLANK                   // (Placeholder)
     dw name_texture.BLANK                   // None (Placeholder)
     // new characters
-    dw name_texture.FALCO                   // Falco
-    dw name_texture.GND                     // Ganondorf
-    dw name_texture.YLINK                   // Young Link
-    dw name_texture.DRM                     // Dr. Mario
-    dw name_texture.WARIO                   // Wario
-    dw name_texture.DSAMUS                  // Dark Samus
-    dw name_texture.ELINK                   // E Link
-    dw name_texture.JSAMUS                  // J Samus
-    dw name_texture.JNESS                   // J Ness
-    dw name_texture.LUCAS                   // Lucas
+    fill Character.NUM_CHARACTERS * 0x4
 
     // @ Description
     // allows for custom entries of name texture based on file offset (+0x10 for DF000000 00000000)
@@ -1051,10 +1076,25 @@ scope SinglePlayer {
         constant DRM(0x00000052)
         constant WARIO(0x0000003C)
         constant DSAMUS(0x00000046)
-        constant ELINK(0x00000038)
+        constant LUCAS(0x00000046)
+        // TODO: make sure these are good
         constant JSAMUS(0x00000032)
         constant JNESS(0x00000032)
-        constant LUCAS(0x00000046)
+        constant JLINK(0x00000038)
+        constant JFALCON(0x00000046)
+        constant JFOX(0x00000032)
+        constant JMARIO(0x00000032)
+        constant JLUIGI(0x00000032)
+        constant JDK(0x00000046)
+        constant JPUFF(0x00000032)
+        constant JPIKA(0x00000032)
+        constant JKIRBY(0x00000032)
+        constant JYOSHI(0x00000032)
+        // TODO: make sure these are good
+        constant ESAMUS(0x00000032)
+        constant ELINK(0x00000038)
+        constant EPIKA(0x00000032)
+        constant EPUFF(0x00000032)
         constant PLACEHOLDER(0x00000032)
     }
 
@@ -1090,16 +1130,7 @@ scope SinglePlayer {
     dw name_delay.PLACEHOLDER             // (Placeholder)
     dw name_delay.PLACEHOLDER             // None (Placeholder)
     // new characters
-    dw name_delay.FALCO                   // Falco
-    dw name_delay.GND                     // Ganondorf
-    dw name_delay.YLINK                   // Young Link
-    dw name_delay.DRM                     // Dr. Mario
-    dw name_delay.WARIO                   // Wario
-    dw name_delay.DSAMUS                  // Dark Samus
-    dw name_delay.ELINK                   // E Link
-    dw name_delay.JSAMUS                  // J Samus
-    dw name_delay.JNESS                   // J Ness
-    dw name_delay.LUCAS                   // Lucas
+    fill Character.NUM_CHARACTERS * 0x4
 
     // @ Description
     // Allows for custom entries of name delays (time from when announcer says name to when he says "VS")
@@ -1223,6 +1254,103 @@ scope SinglePlayer {
     }
 
     // @ Description
+    // Patch which changes GDK's costume if human player is GDK
+    // or polygon team's costume if human player is a purple polygon
+    // on the VS preview screen
+    scope singleplayer_gdk_polygon_team_costume_preview_fix_: {
+        OS.patch_start(0x12C738, 0x801333F8)
+        j       singleplayer_gdk_polygon_team_costume_preview_fix_
+        sw      a0, 0x0070(sp)                 // original line 1
+        _return:
+        OS.patch_end()
+
+        // check human costume_id to see if it's 0
+        li      t7, 0x80135CCC                 // t7 = address of human costume_id
+        lw      t7, 0x0000(t7)                 // t7 = human costume_id
+        bnez    t7, _original                  // if costume_id != 0, then skip
+        nop
+
+        // check human character_id to see if it's GDK or a polygon
+        li      t7, 0x80135CC8                 // t7 = address of human character_id
+        lw      t7, 0x0000(t7)                 // t7 = human character_id
+        sltiu   t6, t7, Character.id.NMARIO    // t6 = 1 if not a polygon character
+        bnez    t6, _original                  // skip if not GDK or a polygon character
+        sltiu   t6, t7, Character.id.NNESS+1   // t6 = 1 if a polygon character
+        bnez    t6, _polygons                  // if a polygon character, check CPU to see if it's a polygon
+        lli     t6, Character.id.GDONKEY       // t6 = Character.id.GDONKEY
+        bne     t6, t7, _original              // if not GDK, skip
+        nop
+
+        // a0 = CPU character_id
+        // a0 is Character.id.DK for GDK
+        lli     t6, Character.id.DK            // t6 = Character.id.DK
+        beql    t6, a0, _original              // if GDK, adjust costume - otherwise skip
+        addiu   a1, r0, 0x0001                 // a1 = costume index 1 instead of 0
+
+        b       _original
+        nop
+
+        _polygons:
+        sltiu   t6, a0, Character.id.NMARIO    // t6 = 1 if not GDK or a polygon character
+        bnez    t6, _original                  // skip if not GDK or a polygon character
+        sltiu   t6, a0, Character.id.NNESS+1   // t6 = 1 if GDK or a polygon character
+        beqz    t6, _original                  // skip if not GDK or a polygon character
+        nop
+
+        addiu   a1, r0, 0x0001                 // a1 = costume index 1 instead of 0
+
+        _original:
+        jal     0x800EC0EC
+        nop
+        j       _return
+        nop
+    }
+
+    // @ Description
+    // Patch which changes the polygon team's costume if human player is a purple polygon
+    // in the match
+    scope singleplayer_polygon_team_costume_fix_: {
+        OS.patch_start(0x10BDF4, 0x8018D594)
+        j       singleplayer_polygon_team_costume_fix_
+        lw      t6, 0x0000(t1)                 // original line 2
+        _singleplayer_polygon_team_costume_fix_return:
+        OS.patch_end()
+
+        // check human costume_id to see if it's 0
+        li      t9, Global.match_info          // t9 = address of match info
+        lw      t9, 0x0000(t9)                 // t9 = match info start
+        lbu     t7, 0x0026(t9)                 // t7 = costume_id of human
+        bnezl   t7, _return                    // if costume_id != 0, then use purple costume
+        sb      r0, 0x0026(t8)                 // original line 1
+
+        // check if human is a polygon
+        lbu     t7, 0x0023(t9)                 // t7 = character_id of human
+        sltiu   t5, t7, Character.id.NMARIO    // t5 = 1 if not a polygon character
+        bnezl   t5, _return                    // if not a polygon character, then use original costume
+        sb      r0, 0x0026(t8)                 // original line 1
+        sltiu   t5, t7, Character.id.NNESS+1   // t5 = 1 if a polygon character
+        beqzl   t5, _return                    // if not a polygon character, then use original costume
+        sb      r0, 0x0026(t8)                 // original line 1
+
+        // check if on polygon team or RTTF stage
+        lbu     t7, 0x0001(t9)                 // t7 = stage_id
+        sltiu   t5, t7, Stages.id.DUEL_ZONE    // t5 = 1 if not a polygon stage
+        bnezl   t5, _return                    // if not a polygon stage, then use original costume
+        sb      r0, 0x0026(t8)                 // original line 1
+        sltiu   t5, t7, Stages.id.RACE_TO_THE_FINISH + 1   // t5 = 1 if a polygon character
+        beqzl   t5, _return                    // if not a polygon stage, then use original costume
+        sb      r0, 0x0026(t8)                 // original line 1
+
+        // human is polygon, on a polygon stage, so use alt costume
+        addiu   t7, r0, 0x0001                 // t7 = costume index 1 instead of 0
+        sb      t7, 0x0026(t8)                 // store costume_id
+
+        _return:
+        j       _singleplayer_polygon_team_costume_fix_return
+        nop
+    }
+
+    // @ Description
     // constants for defining the victory picture
     constant VICTORY_FILE_1(File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM)
     constant VICTORY_OFFSET_1(0x00020718)
@@ -1300,20 +1428,6 @@ scope SinglePlayer {
         nop
 
         _splash_1:
-        // To fix a blue line frame buffer glitch, we're going to overwrite the current frame buffer
-        // For now, we'll comment this out since it introduces bugs on PJ64K and is not a perfect fix elsewhere
-        // May be useful in development if not interested in having bleeding eyes
-        // li      t0, 0xA4400000              // t0 = VI Base Register
-        // lw      t0, 0x0004(t0)              // t0 = Origin (frame buffer origin in bytes)
-        // lui     t1, 0x8000                  // t1 = 0x80000000
-        // addu    t0, t0, t1                  // t0 = frame buffer RAM address
-        // li      t1, 0x00023F00              // t1 = size of frame buffer
-        // addu    a0, t0, t1                  // a0 = end of frame buffer
-        // _loop:
-        // sw      r0, 0x0000(t0)              // clear frame buffer
-        // bnel    a0, t0, _loop               // loop until we reach the end of the frame buffer
-        // addiu   t0, t0, 0x0004              // ~
-
         lli     a0, SPLASH_FILE_1           // use custom file
 
         jr      ra
@@ -1386,12 +1500,12 @@ scope SinglePlayer {
     custom_lighting_1:
     dw 0x00000000 // RGB
     dw 0x44000000 // RGB
-    dw 0x00008100 // Direction ([Signed] X, Y, Z)
+    dw 0x40000200 // Direction ([Signed] X, Y, Z)
     dw 0x00000000 // Pad
     custom_lighting_2:
     dw 0x00800000 // RGB
     dw 0x00800000 // RGB
-    dw 0x31750000 // Direction ([Signed] X, Y, Z)
+    dw 0x01750000 // Direction ([Signed] X, Y, Z)
     dw 0x00000000 // Pad
 
     // @ Description
@@ -1477,4 +1591,49 @@ scope SinglePlayer {
         nop
     }
 
+    // @ Description
+    // Adds a character to single player mode
+    // @ Arguments
+    // character - character id
+    // name_texture - name texture to use
+    // name_delay - name delay to use
+    macro add_to_single_player(character, name_texture, name_delay) {
+        pushvar origin, base
+        // add to name texture table
+        origin name_texture_table_origin + ({character} * 4)
+        dw  {name_texture}
+        // add to name texture table
+        origin name_delay_table_origin + ({character} * 4)
+        dw  {name_delay}
+        pullvar base, origin
+    }
+
+    // CUSTOM CHARS      character id          name texture          name delay
+    add_to_single_player(Character.id.FALCO,   name_texture.FALCO,   name_delay.FALCO)
+    add_to_single_player(Character.id.GND,     name_texture.GND,     name_delay.GND)
+    add_to_single_player(Character.id.YLINK,   name_texture.YLINK,   name_delay.YLINK)
+    add_to_single_player(Character.id.DRM,     name_texture.DRM,     name_delay.DRM)
+    add_to_single_player(Character.id.WARIO,   name_texture.WARIO,   name_delay.WARIO)
+    add_to_single_player(Character.id.DSAMUS,  name_texture.DSAMUS,  name_delay.DSAMUS)
+    add_to_single_player(Character.id.LUCAS,   name_texture.LUCAS,   name_delay.LUCAS)
+
+    // J CHARS           character id          name texture          name delay
+    add_to_single_player(Character.id.JSAMUS,  name_texture.JSAMUS,  name_delay.JSAMUS)
+    add_to_single_player(Character.id.JNESS,   name_texture.JNESS,   name_delay.JNESS)
+    add_to_single_player(Character.id.JLINK,   name_texture.JLINK,   name_delay.JLINK)
+    add_to_single_player(Character.id.JFALCON, name_texture.JFALCON, name_delay.JFALCON)
+    add_to_single_player(Character.id.JFOX,    name_texture.JFOX,    name_delay.JFOX)
+    add_to_single_player(Character.id.JMARIO,  name_texture.JMARIO,  name_delay.JMARIO)
+    add_to_single_player(Character.id.JLUIGI,  name_texture.JLUIGI,  name_delay.JLUIGI)
+    add_to_single_player(Character.id.JDK,     name_texture.JDK,     name_delay.JDK)
+    add_to_single_player(Character.id.JPUFF,   name_texture.JPUFF,   name_delay.JPUFF)
+    add_to_single_player(Character.id.JPIKA,   name_texture.JPIKA,   name_delay.JPIKA)
+    add_to_single_player(Character.id.JKIRBY,  name_texture.JKIRBY,  name_delay.JKIRBY)
+    add_to_single_player(Character.id.JYOSHI,  name_texture.JYOSHI,  name_delay.JYOSHI)
+
+    // E CHARS           character id          name texture          name delay
+    add_to_single_player(Character.id.ESAMUS,  name_texture.ESAMUS,  name_delay.ESAMUS)
+    add_to_single_player(Character.id.ELINK,   name_texture.ELINK,   name_delay.ELINK)
+    add_to_single_player(Character.id.EPIKA,   name_texture.EPIKA,   name_delay.EPIKA)
+    add_to_single_player(Character.id.EPUFF,   name_texture.EPUFF,   name_delay.EPUFF)
 } // __SINGLE_PLAYER__

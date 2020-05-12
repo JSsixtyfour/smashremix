@@ -49,6 +49,11 @@ scope Boot {
         nop
         _countdown_return:
         OS.patch_end()
+        // prevent frame buffer blue screen glitch
+        OS.patch_start(0x17EA2C, 0x8013201C)
+        jal     splash_._frame_buffer_glitch_fix
+        nop
+        OS.patch_end()
 
         lli     t8, 0x0000              // t8 = 0 (original value stored in 0x801322E0)
 
@@ -101,6 +106,21 @@ scope Boot {
         _return:
         j       _countdown_return
         nop
+
+        _frame_buffer_glitch_fix:
+        li      a1, Global.previous_screen
+        lbu     a1, 0x0000(a1)          // a1 = previous_screen
+        lli     v0, 0x001B              // v0 = N64 logo screen id
+        bne     v0, a1, _end_fb_fix     // if previous screen is not the N64 logo screen
+        addiu   v0, r0, 0x00FF          // then use original value (original line 2)
+
+        // otherwise, just use r0 to clear the frame buffer (actually the rest of normal RAM)
+        // I don't know why this matters, but it works
+        addu    v0, r0, r0
+
+        _end_fb_fix:
+        jr      ra                      // return
+        lui     a1, 0x8040              // original line 1
     }
 
     // @ Descritpion

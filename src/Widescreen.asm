@@ -12,7 +12,7 @@ include "OS.asm"
 scope Widescreen {
 
     // @ Description
-    // The following code enables widescreen [Danny_SsB]. I have no iddea how it works
+    // The following code enables widescreen [Danny_SsB]. I have no idea how it works
     OS.patch_start(0x000AA37C, 0x00000000)
     dw      0x3FEF311A
     OS.patch_end()

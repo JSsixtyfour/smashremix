@@ -40,6 +40,28 @@ scope Fireball: {
     }
     
     // @ Description
+    // Macro which changes the fireball struct for a given character.
+    // @ Arguments
+    // id - ID of the character to change the fireball struct for
+    // struct - fireball struct to use
+    evaluate patch_num(0)
+    macro add_to_character(id, struct) {
+        global evaluate patch_num({patch_num} + 1)
+        // This creates a routine for the fireball jump table to load the ID for the given struct.
+        scope id_patch_{patch_num}_: {
+            li      a0, {struct}_id         // a0 = struct id
+            sw      a0, 0x001C(sp)          // store struct id
+            j       0x80155EE4              // return
+            nop
+        }
+        
+        // This patches the routine into the fireball jump table for the given character id.
+        Character.table_patch_start(fireball, {id}, 0x4)
+        dw      id_patch_{patch_num}_
+        OS.patch_end()
+    }
+    
+    // @ Description
     // Updates the Fireball to use new GFX/SFX on hit when different damage types are used.
     scope hit_effect_: {
         // v1 = projectile struct
@@ -78,7 +100,7 @@ scope Fireball: {
         lw      t7, 0x003C(sp)              // t7 = damage
         li      a1, NORMAL_HIT_GFX_INST_ID_ADDRESS
         lli     a2, DR_MARIO_EFFECT_GFX_INST_ID
-        // sb      a2, 0x0000(a1)              // temporarilty update the GFX_INSTRUCTIONS_ID for "normal hit" gfx
+        sb      a2, 0x0000(a1)              // temporarilty update the GFX_INSTRUCTIONS_ID for "normal hit" gfx
         or      a1, r0, r0                  // a1 = 0
         or      a2, t7, r0                  // a2 = damage           
         jal     0x800FDC04                  // create "normal hit" gfx
@@ -176,15 +198,6 @@ scope Fireball: {
         }
         
         // @ Description
-        // Subroutine which loads the struct id for Dr Mario's capsule.
-        scope load_capsule_id_: {
-            li      a0, struct_capsule_id   // a0 = capsule struct id
-            sw      a0, 0x001C(sp)          // store struct id
-            j       0x80155EE4              // return
-            nop
-        }
-        
-        // @ Description
         // Loads the capsule subroutine when Dr. Mario uses neutral special.
         scope load_capsule_subroutine_: {
             // v0 = player struct
@@ -215,12 +228,14 @@ scope Fireball: {
             nop
         }    
             
-        // Initialize capsule struct
-        struct(struct_capsule, 0, 140, 60, 25, 1.5, 0.95, 0.3, -0.4, -0.4, 40, Character.DRM_file_6_ptr, 0) 
+        // Define fireball structs.
+        struct(struct_capsule, 0, 140, 60, 25, 1.5, 0.95, 0.3, -0.4, -0.4, 40, Character.DRM_file_6_ptr, 0)
+        struct(struct_jmario, 0, 140, 55, 30, 1.2, 0.85, 0.3490659, -0.08726647, -0.08726647, 50, Character.JMARIO_file_6_ptr, 0)   
+        struct(struct_jluigi, 0, 90, 55, 30, 0, 0.85, 0.4363323, 0, 0, 36, Character.JLUIGI_file_6_ptr, 1)
         
-        // change id subroutine for Dr. Mario
-        Character.table_patch_start(fireball, Character.id.DRM, 0x4)
-        dw      load_capsule_id_
-        OS.patch_end()
+        // Add fireball structs to characters.
+       add_to_character(Character.id.DRM, struct_capsule)
+       add_to_character(Character.id.JMARIO, struct_jmario)
+       add_to_character(Character.id.JLUIGI, struct_jluigi)
     }
 }

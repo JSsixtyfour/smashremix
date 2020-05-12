@@ -23,8 +23,7 @@ scope Skeleton {
         bne     t0, t1, _end                // if not skeleton mode, skip
         nop
         
-        lui     t0, 0x0800                  // ~
-        or      {register}, {register}, t0  // enable skeleton bitflag
+        lui     {register}, 0x0800          // ~
         
         _end:
         lw      t0, 0x0004(sp)              // ~
