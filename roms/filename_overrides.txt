@@ -370,6 +370,7 @@
 09B2 Bowser Bomb Header
 09B3 Young Link Board the Platforms Header
 09B4 Young Link Board the Platforms Stage
+09B5 E Pikachu Main
 
 0611 CAPTAIN DeadU
 0611 CAPTAIN ScreenKO

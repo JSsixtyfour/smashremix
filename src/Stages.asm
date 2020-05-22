@@ -1871,9 +1871,9 @@ scope Stages {
     db id.FOD					            // 2C
     db id.MEMENTOS                          // 29
     db id.DUEL_ZONE                         // 0A
-    db id.YOSHIS_ISLAND                     // 06
     db id.RANDOM                            // 0
     // Page 3 - Non-Viable
+	db id.YOSHIS_ISLAND                     // 06
 	db id.FALLS                     		// 06
 	db id.FLAT_ZONE_2                     	// 06
 	db id.FLAT_ZONE                     	// 06
@@ -2790,7 +2790,7 @@ scope Stages {
     add_stage(battlefield, "Battlefield", {MIDI.id.DRAGONKING}, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
     add_stage(flat_zone, "Flat Zone", {MIDI.id.FLAT_ZONE_2}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
     add_stage(dr_mario, "Dr. Mario", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(cool_cool_mountain, "Cool Cool Mountain", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(cool_cool_mountain, "Cool Cool Mountain", -1, {MIDI.id.WING_CAP}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
     add_stage(dragon_king, "Dragon King", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
     add_stage(great_bay, "Great Bay", -1, {MIDI.id.GERUDO_VALLEY}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
     add_stage(frays_stage, "Fray's Stage", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
@@ -2799,14 +2799,14 @@ scope Stages {
     add_stage(muda, "Muda Kingdom", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
     add_stage(mementos, "Mementos", {MIDI.id.BLOOMING_VILLAIN}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
     add_stage(showdown, "Showdown", {MIDI.id.FIRST_DESTINATION}, {MIDI.id.NORFAIR}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(spiralm, "Spiral Mountain", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(spiralm, "Spiral Mountain", {MIDI.id.CLICKCLOCKWOODS}, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
     add_stage(n64, "N64", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
     add_stage(mute, "Mute City", {MIDI.id.FIRE_FIELD}, {MIDI.id.MACHRIDER}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
     add_stage(madmm, "Mad Monster Mansion", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
     add_stage(smbbf, "Mushroom Kingdom BF", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
     add_stage(smbo, "Mushroom Kingdom O", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
     add_stage(bowserb, "Bowser's Stadium", {MIDI.id.BOWSERROAD}, {MIDI.id.BOWSERFINAL}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(peach2, "Peach's Castle II", {MIDI.id.WING_CAP}, {MIDI.id.METAL_CAP}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
+    add_stage(peach2, "Peach's Castle II", {MIDI.id.PEACH_CASTLE}, {MIDI.id.METAL_CAP}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
     add_stage(delfino, "Delfino Plaza", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
     add_stage(corneria2, "Corneria", {MIDI.id.STAR_WOLF}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
     add_stage(kitchen, "Kitchen Island", {MIDI.id.STARRING_WARIO}, {MIDI.id.HORROR_MANOR}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
@@ -2815,8 +2815,8 @@ scope Stages {
     add_stage(zlanding, "Zebes Landing", {MIDI.id.NORFAIR}, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
     add_stage(frosty, "Frosty Village", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
     add_stage(smashville2, "Smashville", {MIDI.id.KK_RIDER}, {MIDI.id.SMASHVILLE}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(drm_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x000038F0, 0x00003D10, 0x00003F20)
-    add_stage(gnd_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x00004A50, 0x00005040, 0x00005250)
+    add_stage(drm_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x000056A8, 0x00005B10, 0x00005D20)
+    add_stage(gnd_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x00004178, 0x000045F0, 0x00004800)
     add_stage(yl_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x000035D0, 0x000038A0, 0x00003AB0)
     add_stage(great_bay_sss, "Great Bay", -1, -1, OS.FALSE, OS.FALSE, class.SSS_PREVIEW, -1, -1, -1)
     add_stage(ds_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x00006188, 0x00006720, 0x00006930)

@@ -8,11 +8,14 @@ scope EPika {
     FSMASH:; Moveset.CONCURRENT_STREAM(FSMASHLOOP); insert "moveset/FSMASH.bin"
     insert FSMASHLOOP, "moveset/FSMASHLOOP.bin"
     insert UTILT, "moveset/UTILT.bin"
+	insert DOWN_SPECIAL_CONNECT, "moveset/DOWN_SPECIAL_CONNECT.bin"
 
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(EPIKA,   Action.AttackAirD,       -1,                      DAIR,                      -1)
     Character.edit_action_parameters(EPIKA,   Action.FSmash,        -1,                         FSMASH,                    -1)
     Character.edit_action_parameters(EPIKA,   Action.UTilt,         -1,                         UTILT,                     -1)
+	Character.edit_action_parameters(EPIKA,   0xE2,         		-1,                         DOWN_SPECIAL_CONNECT,      -1)
+	Character.edit_action_parameters(EPIKA,   0xE6,         		-1,                         DOWN_SPECIAL_CONNECT,      -1)
 
     
     // Set crowd chant FGM.

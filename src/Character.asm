@@ -2231,7 +2231,7 @@ scope Character {
     // 0x2C - JDK
     define_character(JDK, DONKEY, File.JDK_MAIN, 0x0D4, 0, 0x13D, 0x13E, 0, 0x163, 0, 0, 0x4A4, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_DONKEY_KONG, Stages.id.BTP_DONKEY_KONG, sound_type.J)
     // 0x2D - EPIKA
-    define_character(EPIKA, PIKACHU, 0x0F3, 0x0F2, 0, 0x155, 0x157, 0x0F4, 0x15B, 0x156, 0, 0x41C, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_PIKACHU, Stages.id.BTP_PIKACHU, sound_type.U)
+    define_character(EPIKA, PIKACHU, File.EPIKA_MAIN, 0x0F2, 0, 0x155, 0x157, 0x0F4, 0x15B, 0x156, 0, 0x41C, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_PIKACHU, Stages.id.BTP_PIKACHU, sound_type.U)
     // 0x2E - JPUFF
     define_character(JPUFF, JIGGLYPUFF, File.JPUFF_MAIN, 0x0E8, 0, 0x14A, 0x14B, 0, 0x15F, 0, 0, 0x474, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_JIGGLYPUFF, Stages.id.BTP_JIGGLYPUFF, sound_type.J)
     // 0x2F - EPUFF
@@ -2239,7 +2239,7 @@ scope Character {
     // 0x30 - JKIRBY
     define_character(JKIRBY, KIRBY, File.JKIRBY_MAIN, 0x0E4, 0, 0x148, 0x149, 0, 0x15C, 0, 0, 0x808, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_KIRBY, Stages.id.BTP_KIRBY, sound_type.J)
     // 0x31 - JYOSHI
-    define_character(JYOSHI, YOSHI, File.JYOSHI_MAIN, 0x0F6, 0, 0x152, 0x154, 0, 0x162, 0x153, 0, 0x47C, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_KIRBY, Stages.id.BTP_KIRBY, sound_type.J)
+    define_character(JYOSHI, YOSHI, File.JYOSHI_MAIN, 0x0F6, 0, 0x152, 0x154, 0, 0x162, 0x153, 0, 0x47C, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_YOSHI, Stages.id.BTP_YOSHI, sound_type.J)
     // 0x32 - JPIKA
     define_character(JPIKA, PIKACHU, File.JPIKA_MAIN, 0x0F2, 0, 0x155, 0x157, File.JPIKA_PROJECTILE, 0x15B, 0x156, 0, 0x41C, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_PIKACHU, Stages.id.BTP_PIKACHU, sound_type.J)
     // 0x33 - ESAMUS

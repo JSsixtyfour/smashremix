@@ -29,8 +29,27 @@ scope AI {
     // This removes the up b check allowing the CPU to recover multiple times [bit].
     scope recovery_fix_: {
         OS.patch_start(0x000AFFBC, 0x8013557C)
-        nop                                 // bnez t1, 0x80135628
+        jal     recovery_fix_._guard
+        nop                                 // original line 2
         OS.patch_end()
+
+        _original:
+        // if here, improved AI is off, so we use the original logic
+        bnez    t1, _j_0x80135628           // original line 1 (modified to branch to jump)
+        nop
+        jr      ra
+        nop
+
+        _guard:
+        Toggles.guard(Toggles.entry_improved_ai, _original)
+
+        // if here, improved AI is on, so we skip the up b check
+        jr      ra
+        nop
+
+        _j_0x80135628:
+        j       0x80135628                  // jump to 0x80135628
+        nop
     }
 
     // @ Description

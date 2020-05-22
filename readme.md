@@ -232,6 +232,11 @@ Use the toggle or cycle using D-Pad down in Training Mode.
 
 #### Toggle Name: _Momentum Slide_
 
+### Japanese Shield Stun
+- Use the Japanese version's shield stun value.
+
+#### Toggle Name: _Japanese Shield Stun_
+
 ## Profiles
 - Toggles can be controlled quickly by choosing one of three built-in profiles: Community, Tournament and Japanese
 
@@ -260,6 +265,7 @@ Japanese Hitlag            | Off                | Off               | On
 Japanese DI                | Off                | Off               | On
 Japanese Sounds            | Default            | Default           | Default
 Momentum Slide             | Off                | Off               | On
+Japanese Shield Stun       | Off                | Off               | On
 Random Select With Variants| Off                | Off               | Off
 Disable Anti-Aliasing      | Off                | Off               | Off
 

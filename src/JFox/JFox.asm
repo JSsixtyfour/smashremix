@@ -33,6 +33,40 @@ scope JFox {
      Character.table_patch_start(crowd_chant_fgm, Character.id.JFOX, 0x2)
      dh  0x031A
      OS.patch_end()
+	 
+	 
+    // @ Description
+    // loads a different special struct when JFox uses his up special.
+    scope get_laser_special_struct_: {
+        OS.patch_start(0xE34C4, 0x80168A84)
+        j       get_laser_special_struct_
+        addiu	a1, a1, 0x8ED0
+        _return:
+        OS.patch_end()
+        
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      t0, 0x0004(sp)              // ~
+        sw      t1, 0x0008(sp)              // store t0, t1
+		lw		t0, 0x0074(sp)				// load player struct
+		lw		t0, 0x0008(t0)				// load player id
+		ori     t1, r0, Character.id.JFOX  	// t1 = id.FOX
+		bne		t1, t0, _end
+		nop
+        li      a1, laser_special_struct  		// a1 = laser_special_struct
+                
+        _end:
+        lw      t0, 0x0004(sp)              // ~
+        lw      t1, 0x0008(sp)              // load t0, t1
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        j       _return                     // return
+        lw		a2, 0x0024(sp)
+    }
     
+	OS.align(16)
+    laser_special_struct:
+    dw 0x00000000
+    dw 0x00000001
+    dw Character.JFOX_file_6_ptr
+    OS.copy_segment(0x10391C, 0x28)
 
 }

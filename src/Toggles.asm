@@ -572,8 +572,9 @@ scope Toggles {
     entry_japanese_hitlag:;             entry_bool("Japanese Hitlag", OS.FALSE, OS.FALSE, OS.TRUE, entry_japanese_di)
     entry_japanese_di:;                 entry_bool("Japanese DI", OS.FALSE, OS.FALSE, OS.TRUE, entry_japanese_sounds)
     entry_japanese_sounds:;             entry("Japanese Sounds", Menu.type.U8, 0, 0, 0, 0, 2, OS.NULL, string_table_jsounds, OS.NULL, entry_momentum_slide)
-    entry_momentum_slide:;              entry_bool("Momentum Slide", OS.FALSE, OS.FALSE, OS.TRUE, entry_variant_random)
-    entry_variant_random:;              entry_bool("Random Select With Variants", OS.FALSE, OS.FALSE, OS.FALSE, entry_disable_aa)
+    entry_momentum_slide:;              entry_bool("Momentum Slide", OS.FALSE, OS.FALSE, OS.TRUE, entry_japanese_shieldstun)
+    entry_japanese_shieldstun:;         entry_bool("Japanese Shield Stun", OS.FALSE, OS.FALSE, OS.TRUE, entry_variant_random)
+	entry_variant_random:;              entry_bool("Random Select With Variants", OS.FALSE, OS.FALSE, OS.FALSE, entry_disable_aa)
     entry_disable_aa:;                  entry_bool("Disable Anti-Aliasing", OS.FALSE, OS.FALSE, OS.FALSE, OS.NULL)
 
     // @ Description
@@ -682,7 +683,7 @@ scope Toggles {
 
     // @ Description
     // SRAM blocks for toggle saving.
-    block_misc:; SRAM.block(23 * 4)
+    block_misc:; SRAM.block(24 * 4)
     block_music:; SRAM.block((19 + {toggled_custom_MIDIs}) * 4)
     block_stages:; SRAM.block((18 + {toggled_custom_stages}) * 4)
 

@@ -1319,12 +1319,18 @@ scope SinglePlayer {
         // check human costume_id to see if it's 0
         li      t9, Global.match_info          // t9 = address of match info
         lw      t9, 0x0000(t9)                 // t9 = match info start
-        lbu     t7, 0x0026(t9)                 // t7 = costume_id of human
+        addiu   t9, t9, Global.vs.P_OFFSET     // t9 = 1p player struct
+        _loop:
+        lbu     t7, 0x0006(t9)                 // t7 = costume_id of human
+        lbu     t5, 0x0002(t9)                 // t5 = type (0 = man, 1 = cpu, 2 = none)
+        bnezl   t5, _loop                      // if not human, go to next port
+        addiu   t9, t9, Global.vs.P_DIFF       // t9 = next player struct
+
         bnezl   t7, _return                    // if costume_id != 0, then use purple costume
         sb      r0, 0x0026(t8)                 // original line 1
 
         // check if human is a polygon
-        lbu     t7, 0x0023(t9)                 // t7 = character_id of human
+        lbu     t7, 0x0003(t9)                 // t7 = character_id of human
         sltiu   t5, t7, Character.id.NMARIO    // t5 = 1 if not a polygon character
         bnezl   t5, _return                    // if not a polygon character, then use original costume
         sb      r0, 0x0026(t8)                 // original line 1
@@ -1333,6 +1339,8 @@ scope SinglePlayer {
         sb      r0, 0x0026(t8)                 // original line 1
 
         // check if on polygon team or RTTF stage
+        li      t9, Global.match_info          // t9 = address of match info
+        lw      t9, 0x0000(t9)                 // t9 = match info start
         lbu     t7, 0x0001(t9)                 // t7 = stage_id
         sltiu   t5, t7, Stages.id.DUEL_ZONE    // t5 = 1 if not a polygon stage
         bnezl   t5, _return                    // if not a polygon stage, then use original costume

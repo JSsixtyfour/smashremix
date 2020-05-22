@@ -19,7 +19,7 @@ scope SRAM {
     //  - A new MIDI is added
     //  - A new toggle is added
     //  - The order of the toggles is changed
-    constant REVISION(0x002C)
+    constant REVISION(0x002D)
 
     // @ Description
     // Struct that holds information for a block of save data. 

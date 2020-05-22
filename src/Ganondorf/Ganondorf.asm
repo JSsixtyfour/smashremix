@@ -46,6 +46,7 @@ scope Ganondorf {
     insert VICTORY_POSE_1,"moveset/VICTORY_POSE_1.bin"
     insert VICTORY_POSE_2,"moveset/VICTORY_POSE_2.bin"
     insert VICTORY_POSE_3,"moveset/VICTORY_POSE_3.bin"
+	insert ONEP,"moveset/ONEP.bin"
 
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(GND,   Action.Idle,            -1,                         IDLE,                       -1)
@@ -97,7 +98,7 @@ scope Ganondorf {
     Character.edit_menu_action_parameters(GND,   0x2,               File.GND_SELECT,            VICTORY_POSE_2,             -1)
     Character.edit_menu_action_parameters(GND,   0x3,               File.GND_VICTORY1,          VICTORY_POSE_3,             -1)
     Character.edit_menu_action_parameters(GND,   0x4,               -1,                         VICTORY_POSE_3,             -1)
-    Character.edit_menu_action_parameters(GND,   0xD,               File.GND_POSE_1P,           -1,                         -1)
+    Character.edit_menu_action_parameters(GND,   0xD,               File.GND_POSE_1P,           ONEP,                       -1)
     
     // Set menu zoom size.
     Character.table_patch_start(menu_zoom, Character.id.GND, 0x4)

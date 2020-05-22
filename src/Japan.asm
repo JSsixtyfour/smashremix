@@ -62,6 +62,27 @@ scope Japan {
         j      japanese_di_end_          // return
         nop
     }
+	
+	// @ Description
+    // Toggle for Japanese Style Shield Stun.
+    // The length of shield stun is different in the international vs J versions.
+    // In the US 0x3FCF5C29 (1.62) and in Japan 0x3FE00000 (1.75)
+    scope japanese_shieldstun_: {
+        OS.patch_start(0xC3B78, 0x80149138)
+        j       japanese_shieldstun_
+        lwc1	f8, 0xC200(at)				// original line 1
+        japanese_shieldstun_end_:
+        OS.patch_end()
+        
+        
+        lw		t7, 0x07C8(v0)              // original line 2
+        Toggles.guard(Toggles.entry_japanese_shieldstun, japanese_shieldstun_end_)
+        lui     at, 0x3FE0                  // Japanese coding part 1
+        mtc1    at, f8                      // Japanese coding part 2
+        
+        j      japanese_shieldstun_end_     // return
+        nop
+    }
     
     // @ Description
     // Toggle for the Momentum Sliding Glitch present in the Japanese version.

@@ -148,12 +148,6 @@ scope Overlay {
         nop
 
         _finish_2:
-        // reset free memory pointer so that we don't introduce a memory leak
-        // TODO: I don't like this, so we should revisit how we handle loading custom files
-        li      t0, free_memory_pointer     // t0 = free_memory_pointer
-        li      t1, custom_heap             // t1 = custom_heap
-        sw      t1, 0x0000(t0)              // reset free memory pointer to custom heap address
-
         jal     end_                        // end display list
         nop
 
@@ -598,7 +592,7 @@ scope Overlay {
         nop
         lli     a0, ULX                     // a0 = ulx
         lli     a1, ULY                     // a1 = uly
-        lli     a2, 52                      // a2 = width
+        lli     a2, 58                      // a2 = width
         lli     a3, 11                      // a3 = height
         jal     Overlay.draw_rectangle_     // draw rectangle
         nop
@@ -619,7 +613,7 @@ scope Overlay {
         jr      ra                          // return
         nop
 
-        version:; String.insert("v0.9.3")
+        version:; String.insert("v0.9.3b")
     }
 }
 

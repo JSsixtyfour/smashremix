@@ -1560,6 +1560,8 @@ scope CharacterSelect {
     // @ Description
     // This patch increases the heap space by moving it to expansion RAM.
     // This enables us to load an unlimited number of character models.
+    // It also ensures large stages don't crash with large characters.
+    // NOTE: As RAM starts to fill up, this will stop working!
     scope increase_heap_: {
         OS.patch_start(0x7450, 0x80006850)
         jal     increase_heap_
@@ -1567,28 +1569,15 @@ scope CharacterSelect {
         _increase_heap_return:
         OS.patch_end()
 
-        li      at, Global.current_screen   // at = address of current screen
-        lbu     at, 0x0000(at)              // at = current screen
-
-        // css screen ids: vs - 0x10, 1p - 0x11, training - 0x12, bonus1 - 0x13, bonus2 - 0x14
-        slti    a1, at, 0x0010              // if (screen id < 0x10)...
-        bnez    a1, _original               // ...then skip (not on a CSS)
-        nop
-        slti    a1, at, 0x0015              // if (screen id is not between 0x10 and 0x14)...
-        beqz    a1, _original               // ...then skip (not on a CSS)
-        nop
+        lw      a0, 0x000C(a0)              // original line 2 (original start of heap)
+        li      a1, free_memory_pointer     // a1 = pointer to free memory for loading custom files
+        sw      a0, 0x0000(a1)              // use original heap start as free memory location
 
         li      a0, custom_heap             // a0 = address of start of our custom heap
-        lui     a1, 0x0060                  // a1 = custom heap size (0x00600000) - increase as needed
+        lui     a1, 0x8080                  // a1 = 0x80800000 (end of expansion RAM)
+        subu    a1, a1, a0                  // a1 = custom heap size, filling to end of expansion RAM
         jal     0x80004950                  // original line 1
         nop
-        j       _increase_heap_return       // return
-        nop
-
-        _original:
-        lw      a1, 0x0010(s0)              // original line 0
-        jal     0x80004950                  // original line 1
-        lw      a0, 0x000C(a0)              // original line 2
         j       _increase_heap_return       // return
         nop
     }

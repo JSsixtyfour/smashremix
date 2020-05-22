@@ -1066,16 +1066,28 @@ scope Training {
         beq     at, v1, _shielding          // if player isn't being attacked, force shield
         lli     v1, STUN                    // v1 = STUN
         beq     at, v1, _in_shield_stun     // if player is being attacked, allow shield damage but continue to force shield
+        lli     v1, OOS                     // v1 = OOS
+        beq     at, v1, _end_oos            // if player has executed their OOS option, reset shield status
         nop
 
         _oos:
         // if we're here, then the player can execute their OOS option
-        // TODO: use a table to get best OOS option based on character ID
-        // for now, the player simply unshields
-        sb      r0, 0x0000(t3)              // update shield status to SHIELD
-        b       _original                   // skip _force_shield on this frame
+        // TODO: expand this to allow for multiple OOS options to be used, potentially allow for selection
+        // for now, the cpu will just short hop
+        lli     t7, OOS                     // t7 = OOS
+        sb      t7, 0x0000(t3)              // update shield status to OOS
+        lli     a3, 0x0002                  // force CPU to jump out of shield
+        sh      a3, 0x0002(v0)              // store button press
+        b       _force_shield               // continue holding shield on this frame
         nop
-
+        
+        _end_oos:
+        sb      r0, 0x0000(t3)              // reset shield status to SHIELD
+        lli     a3, 0x0002                  // force CPU to release jump button
+        sh      a3, 0x0004(v0)              // store button release
+        b       _force_shield               // continue holding shield on this frame
+        nop
+        
         _shielding:
         // let's first check if we're being hit - the character will be in the ShieldStun action while being hit
         lw      v1, 0x0024(a2)              // a1 = current action

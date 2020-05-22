@@ -355,4 +355,5 @@ scope File {
     constant BOWSER_BOMB_HEADER(0x9B2)
 	constant STG_YLPLATFORM_HEADER(0x9B3)
     constant STG_YLPLATFORM(0x9B4)
+	constant EPIKA_MAIN(0x9B5)
 }
