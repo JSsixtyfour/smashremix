@@ -94,6 +94,7 @@ scope Combo {
         dh Action.CaptureWait
         dh Action.FalconDivePulled
         dh Action.ThrownDKPulled
+        dh Action.ThrownMarioBros
         dh Action.ThrownDK
         dh Action.Thrown1
         dh Action.Thrown2

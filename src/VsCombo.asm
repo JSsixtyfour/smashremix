@@ -38,7 +38,7 @@ scope VsCombo {
     constant NUMBER_OFFSET_B(0x43B8)
     constant NUMBER_OFFSET_Y(0x5B78)
     constant NUMBER_OFFSET_G(0x7338)
-    constant NUMBER_OFFSET_S(0x8AF8)
+    constant NUMBER_OFFSET_S(0x8AF8) // note this is over 0x8000, so we'll have to treat differently
     constant NUMBER_OFFSET(0x0260)
 
     // @ Description
@@ -225,7 +225,8 @@ scope VsCombo {
         set_color_by_team(4, 0x000C)
 
         addiu   t0, a2, TEXT_OFFSET_S - 0x10  // t0 = address of silver combo text texture
-        addiu   t1, a2, NUMBER_OFFSET_S - 0x10// t1 = address of silver combo numbers texture
+        addiu   t1, a2, NUMBER_OFFSET_S - 0x1010 // t1 = address of silver combo numbers texture, minus 0x1000 to avoid subtraction
+        addiu   t1, t1, 0x1000                // t1 = address of silver combo numbers texture, addjusted for 0x1000 subtracted above
         sw      t0, 0x0010(a0)                // set unattributed combo text color
         sw      t1, 0x0010(a1)                // set unattributed combo numbers color
         b       _end
@@ -254,7 +255,8 @@ scope VsCombo {
         sw      a1, 0x0004(t0)                // store p2 combo numbers color
         sw      a2, 0x0008(t0)                // store p3 combo numbers color
         sw      a3, 0x000C(t0)                // store p4 combo numbers color
-        addiu   a0, t1, NUMBER_OFFSET_S - 0x10// a0 = unattributed combo text color (silver)
+        addiu   a0, t1, NUMBER_OFFSET_S - 0x1010 // a0 = unattributed combo text color (silver), minus 0x1000 to avoid subtraction
+        addiu   a0, a0, 0x1000                // a0 = unattributed combo text color (silver), addjusted for 0x1000 subtracted above
         sw      a0, 0x0010(t0)                // store unattributed combo text color
 
         _end:
@@ -432,36 +434,50 @@ scope VsCombo {
         lw      a2, 0x0000(t2)                    // a2 = combo text texture address
         li      t2, combo_numbers_map             // t2 = combo_numbers_map address
         addu    t2, t2, t1                        // t2 = address of numbers texture address
-        lw      a3, 0x0000(t2)                    // a3 = address of numbers texture
+        lw      at, 0x0000(t2)                    // at = address of numbers texture
         lw      t0, 0x0074(t4)                    // t0 = address of combo text image struct
         sw      a2, 0x0044(t0)                    // set combo text image address
         lw      t0, 0x0008(t0)                    // t0 = address of combo number image struct, 1st digit
-        lli     t3, 0x000A                        // t3 = 10
-        div     a0, t3                            // divide hitcount by 10
+        sltiu   t6, a0, 1000                      // t6 = 1 if hitcount <= 999
+        beqzl   t6, pc() + 8                      // if hitcount > 999, then stay at 999
+        lli     a0, 999                           // a0 = 999
+        lli     t6, 0x000A                        // t6 = 10
+        div     a0, t6                            // divide hitcount by 10
         mfhi    t2                                // t2 = last digit
-        mflo    t3                                // t3 = 0 if < 10, else it is the index to use to calculate the offset
-        beqz    t3, _less_than_10                 // if less than 10 hits, then skip
-        lli     t4, NUMBER_OFFSET                 // t4 = NUMBER_OFFSET (delay slot always executes)
+        mflo    t3                                // t3 = 0 if < 10
+        div     t3, t6                            // divide hitcount by 100, essentially
+        mfhi    t3                                // t3 = 2nd digit
+        mflo    t4                                // t4 = 1st digit
 
-        multu   t3, t4                            // calculate offset in texture file of first digit
-        mflo    t3                                // t3 = offset
-        addu    a1, a3, t3                        // a1 = address of first digit's texture
-        multu   t2, t4                            // calculate offset in texture file of second digit
-        mflo    t3                                // t3 = offset
-        addu    a2, a3, t3                        // a2 = address of 2nd digit's texture
-        b       _set_number_textures
-        nop
+        lli     t5, NUMBER_OFFSET                 // t5 = NUMBER_OFFSET
 
-        _less_than_10:
-        multu   t2, t4                            // calculate offset in texture file of first digit
-        mflo    t3                                // t3 = offset
-        addu    a1, a3, t3                        // a1 = address of 1st digit's texture
-        or      a2, r0, r0                        // a2 = 0 (don't display)
+        multu   t4, t5                            // calculate offset in texture file of first digit
+        mflo    t6                                // t6 = offset
+        addu    a1, at, t6                        // a1 = address of 1st digit's texture
+        multu   t3, t5                            // calculate offset in texture file of second digit
+        mflo    t6                                // t6 = offset
+        addu    a2, at, t6                        // a1 = address of 2nd digit's texture
+        multu   t2, t5                            // calculate offset in texture file of third digit
+        mflo    t6                                // t6 = offset
+        addu    a3, at, t6                        // a2 = address of 3rd digit's texture
+
+        bnez    t4, _set_number_textures          // if > 100, go ahead and draw
+        nop                                       // otherwise, last digit should be hidden and the others shifted left
+        or      a1, r0, a2                        // 2nd digit -> 1st digit
+        or      a2, r0, a3                        // 3rd digit -> 2nd digit
+        or      a3, r0, r0                        // don't display 3rd digit
+
+        bnez    t3, _set_number_textures          // if > 10, go ahead and draw
+        nop                                       // otherwise, 2nd digit should be hidden and the others shifted left
+        or      a1, r0, a2                        // 2nd digit -> 1st digit
+        or      a2, r0, r0                        // don't display 2nd digit
 
         _set_number_textures:
         sw      a1, 0x0044(t0)                    // set combo number image address
         lw      t1, 0x0008(t0)                    // t1 = address of combo number image struct, 2nd digit
         sw      a2, 0x0044(t1)                    // set combo number image address
+        lw      t1, 0x0008(t1)                    // t1 = address of combo number image struct, 3rd digit
+        sw      a3, 0x0044(t1)                    // set combo number image address
 
         _end:
         lw      t0, 0x0004(sp)                    // ~
@@ -520,14 +536,8 @@ scope VsCombo {
     // @ Description
     // This runs every once per match and sets up the display lists and combo structs
     scope setup_: {
-        OS.patch_start(0x10A4A8, 0x8018D5B8)
-        j       setup_
-        nop
-        _return:
-        OS.patch_end()
-
-        jal     0x800D4060                  // original line 1
-        addiu   a2, r0, 0x000A              // original line 2
+        addiu   sp, sp, -0x0010             // allocate stack space
+        sw      ra, 0x0004(sp)              // save ra
 
         b       _guard                      // check if toggle is on
         nop
@@ -674,8 +684,27 @@ scope VsCombo {
         lui     a1, COMBO_METER_NUMBER_OFFSET
         mtc1    a1, f6                      // f6 = COMBO_METER_NUMBER_OFFSET
         add.s   f4, f4, f6                  // f4 = X position of 1st digit + COMBO_METER_NUMBER_OFFSET
-        mfc1    a1, f4                      // a1 = X position
-        sw      a1, 0x0058(v0)              // set X position
+        mfc1    s4, f4                      // s4 = X position
+        sw      s4, 0x0058(v0)              // set X position
+        lui     a1, COMBO_METER_Y_COORD
+        sw      a1, 0x005C(v0)              // set Y position
+        lli     a1, 0x0201
+        sh      a1, 0x0024(v0)              // turn on blur
+
+        // Copy combo number image footer data into struct (3rd digit)
+        addu    a0, r0, s3                  // a0 = RAM address of object block
+        li      a1, file_address            // a1 = pointer to RAM address of custom image file
+        lw      a1, 0x0000(a1)              // a1 = RAM address of custom image file
+        addiu   a1, a1, NUMBER_OFFSET_R     // a1 = RAM address of image footer struct plus 0x10
+        jal     0x800CCFDC
+        nop
+
+        mtc1    s4, f4                      // f4 = X position of 1st digit
+        lui     a1, COMBO_METER_NUMBER_OFFSET
+        mtc1    a1, f6                      // f6 = COMBO_METER_NUMBER_OFFSET
+        add.s   f4, f4, f6                  // f4 = X position of 1st digit + COMBO_METER_NUMBER_OFFSET
+        mfc1    s4, f4                      // s4 = X position
+        sw      s4, 0x0058(v0)              // set X position
         lui     a1, COMBO_METER_Y_COORD
         sw      a1, 0x005C(v0)              // set Y position
         lli     a1, 0x0201
@@ -695,7 +724,9 @@ scope VsCombo {
         addiu   s0, s0, 0x0001              // s0++
 
         _end:
-        j       _return
+        lw      ra, 0x0004(sp)              // restore ra
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        jr      ra
         nop
 
         req_list:

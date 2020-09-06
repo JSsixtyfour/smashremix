@@ -727,13 +727,19 @@ scope SinglePlayer {
     // Modifies the tally loop for 1P to include new characters
     scope extend_1p_tally_: {
         OS.patch_start(0x13CD90, 0x80134B90)
-        j       extend_1p_tally_
+        j       extend_1p_tally_._high_score
         nop
-        _extend_1p_tally_return:
+        _extend_1p_tally_high_score_return:
+        OS.patch_end()
+        OS.patch_start(0x13CEE4, 0x80134CE4)
+        j       extend_1p_tally_._bonus
+        nop
+        _extend_1p_tally_bonus_return:
         OS.patch_end()
 
+        _high_score:
         addiu   a0, r0, 0x000C                   // a0 = 12
-        bne     a0, s0, _original_check          // if (we are finished with new characters) then jump to original path
+        bne     a0, s0, _original_check_hs       // if (we are finished with new characters) then jump to original path
         nop                                      // otherwise set to new characters and loop some more:
         addiu   s2, r0, Character.NUM_CHARACTERS // end at last character
         addiu   s0, r0, Character.id.BOSS        // start after original cast
@@ -741,11 +747,28 @@ scope SinglePlayer {
         j       0x80134B84                       // jump to loop start
         nop
 
-        _original_check:
+        _original_check_hs:
         bne     s0, s2, _j_80134B84              // original line 1
         addu    s1, s1, v0                       // original line 2
 
-        j       _extend_1p_tally_return          // return
+        j       _extend_1p_tally_high_score_return
+        nop
+
+        _bonus:
+        addiu   a0, r0, 0x000C                   // a0 = 12
+        bne     a0, s0, _original_check_bonus   // if (we are finished with new characters) then jump to original path
+        nop                                      // otherwise set to new characters and loop some more:
+        addiu   s2, r0, Character.NUM_CHARACTERS // end at last character
+        addiu   s0, r0, Character.id.BOSS        // start after original cast
+        _j_80134CD8:
+        j       0x80134CD8                       // jump to loop start
+        nop
+
+        _original_check_bonus:
+        bne     s0, s2, _j_80134CD8              // original line 1
+        addu    s1, s1, v0                       // original line 2
+
+        j       _extend_1p_tally_bonus_return
         nop
     }
 
@@ -863,6 +886,18 @@ scope SinglePlayer {
         li      a0, Character.EXTENDED_HIGH_SCORE_TABLE_BLOCK
         jal     SRAM.load_
         nop
+		
+        li      a0, Character.MULTIMAN_HIGH_SCORE_TABLE_BLOCK
+        jal     SRAM.load_
+        nop
+		
+		li      a0, Character.CRUEL_HIGH_SCORE_TABLE_BLOCK
+        jal     SRAM.load_
+        nop
+		
+		li      a0, Character.BONUS3_HIGH_SCORE_TABLE_BLOCK
+        jal     SRAM.load_
+        nop
 
         _initialize:
         // make sure times are correctly initialized
@@ -928,6 +963,8 @@ scope SinglePlayer {
         constant WARIO(0x000019E8)
         constant DSAMUS(0x00001C28)
         constant LUCAS(0x00003D88)
+        constant BOWSER(0x000055E8)
+        constant GBOWSER(0x00005828)
         // TODO: update J names
         constant JSAMUS(0x00004268)
         constant JNESS(0x00004688)
@@ -1076,7 +1113,9 @@ scope SinglePlayer {
         constant DRM(0x00000052)
         constant WARIO(0x0000003C)
         constant DSAMUS(0x00000046)
-        constant LUCAS(0x00000046)
+        constant LUCAS(0x00000032)
+        constant BOWSER(0x0000003C)
+        constant GBOWSER(0x00000014 + BOWSER)
         // TODO: make sure these are good
         constant JSAMUS(0x00000032)
         constant JNESS(0x00000032)
@@ -1624,6 +1663,8 @@ scope SinglePlayer {
     add_to_single_player(Character.id.WARIO,   name_texture.WARIO,   name_delay.WARIO)
     add_to_single_player(Character.id.DSAMUS,  name_texture.DSAMUS,  name_delay.DSAMUS)
     add_to_single_player(Character.id.LUCAS,   name_texture.LUCAS,   name_delay.LUCAS)
+    add_to_single_player(Character.id.BOWSER,  name_texture.BOWSER,  name_delay.BOWSER)
+    add_to_single_player(Character.id.GBOWSER, name_texture.GBOWSER, name_delay.GBOWSER)
 
     // J CHARS           character id          name texture          name delay
     add_to_single_player(Character.id.JSAMUS,  name_texture.JSAMUS,  name_delay.JSAMUS)

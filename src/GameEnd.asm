@@ -35,6 +35,12 @@ scope GameEnd {
         _salty_runback:
         lli     t6, 0x0018                  // original line 1
         sb      t6, 0x0000(v0)              // original line 2
+
+        li      t6, TwelveCharBattle.twelve_cb_flag
+        lw      t6, 0x0000(t6)              // t6 = 1 if 12cb mode
+        bnez    t6, _skip_results_screen    // if 12cb mode, don't allow salty runback
+        nop
+
         Toggles.guard(Toggles.entry_salty_runback, _skip_results_screen)
         addiu   sp, sp,-0x0020              // allocate stack space
         sw      t0, 0x0004(sp)              // ~

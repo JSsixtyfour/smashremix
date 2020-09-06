@@ -118,16 +118,16 @@ scope ResultsScreen {
 
     // @ Description
     // Extends the series logo offset table so we can use more than the original character logos
-    scope winner_logo_color_fix_: {
+    scope winner_logo_zoom_fix_: {
         OS.patch_start(0x151E64, 0x80132CC4)
-        jal     winner_logo_color_fix_
+        jal     winner_logo_zoom_fix_
         nop
         OS.patch_end()
 
         // t8 is offset in table (character id * 4)
 
-        li      t5, series_logo_color_table   // t5 = series_logo_offset_table address
-        addu    t5, t5, t8                    // t5 = address of logo offset
+        li      t5, series_logo_zoom_table   // t5 = series_logo_zoom_table address
+        addu    t5, t5, t8                    // t5 = address of logo zoom offset
         lw      t5, 0x0000(t5)                // t5 = logo offset
 
         jr      ra                            // return
@@ -136,15 +136,15 @@ scope ResultsScreen {
 
     // @ Description
     // Extends the series logo offset table so we can use more than the original character logos
-    scope winner_logo_zoom_fix_: {
+    scope winner_logo_color_fix_: {
         OS.patch_start(0x151E88, 0x80132CE8)
-        jal     winner_logo_zoom_fix_
+        jal     winner_logo_color_fix_
         nop
         OS.patch_end()
 
         // t1 is offset in table (character id * 4)
 
-        li      t3, series_logo_zoom_table    // t3 = series_logo_offset_table address
+        li      t3, series_logo_color_table    // t3 = series_logo_color_table address
         addu    t3, t3, t1                    // t3 = address of logo offset
         lw      t3, 0x0000(t3)                // t3 = logo offset
 
@@ -289,11 +289,12 @@ scope ResultsScreen {
         constant EARTHBOUND(0x5A00)
         constant SMASH(0x5E10)
         constant DR_MARIO(0x6420)
+        constant BOWSER(0x8340)
     }
 
     // @ Description
-    // logo color offsets
-    scope series_logo_color: {
+    // logo zoom offsets
+    scope series_logo_zoom: {
         constant MARIO_BROS(0x0000)
         constant STARFOX(0x1940)
         constant DONKEY_KONG(0x0B00)
@@ -306,11 +307,12 @@ scope ResultsScreen {
         constant EARTHBOUND(0x4840)
         constant SMASH(POKEMON)
         constant DR_MARIO(MARIO_BROS)
+        constant BOWSER(0x8448)
     }
 
     // @ Description
-    // logo zoom offsets
-    scope series_logo_zoom: {
+    // logo color offsets
+    scope series_logo_color: {
         constant MARIO_BROS(0x0A14)
         constant STARFOX(0x2254)
         constant DONKEY_KONG(0x13CC)
@@ -323,6 +325,7 @@ scope ResultsScreen {
         constant EARTHBOUND(0x5A84)
         constant SMASH(POKEMON)
         constant DR_MARIO(0x64A4)
+        constant BOWSER(0x84A0)
     }
 
     // @ Description
@@ -548,4 +551,6 @@ scope ResultsScreen {
     add_to_results_screen(Character.id.JYOSHI,   FGM.announcer.names.YOSHI,                  YOSHI,       Character.id.YOSHI,   195,     J YOSHI,      30,     1,         0x12)
     add_to_results_screen(Character.id.JPIKA,    FGM.announcer.names.PIKACHU,                POKEMON,     Character.id.PIKACHU, 195,     J PIKACHU,    35,     0.75,      0x14)
     add_to_results_screen(Character.id.ESAMUS,   FGM.announcer.names.ESAMUS,                 METROID,     Character.id.SAMUS,   175,     E SAMUS,      35,     0.75,      0x0D)
+	add_to_results_screen(Character.id.BOWSER,   FGM.announcer.names.BOWSER,                 BOWSER,      Character.id.YOSHI,   180,     BOWSER,       30,     0.85,      0x7D)
+	add_to_results_screen(Character.id.GBOWSER,  FGM.announcer.names.GBOWSER,                BOWSER,      Character.id.YOSHI,   180,     GIGA BOWSER,  20,     0.55,      0x7D)
 }

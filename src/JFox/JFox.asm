@@ -8,6 +8,7 @@ scope JFox {
     insert USP_LOOP,"moveset/UP_SPECIAL_LOOP.bin"; Moveset.GO_TO(USP_LOOP)
     insert USP_AIR_MOVE,"moveset/UP_SPECIAL_AIR_MOVE.bin"; Moveset.GO_TO(USP_LOOP)
     insert NEUTRAL_INF,"moveset/NEUTRAL_INF.bin"; Moveset.GO_TO(NEUTRAL_INF)
+			dw	0x00000000
     insert DSMASH,"moveset/DSMASH.bin"
     insert DTILT,"moveset/DTILT.bin"
     UPSPECIALMID:; Moveset.CONCURRENT_STREAM(UPSPECIALMIDCONCURRENT); insert "moveset/UPSPECIALMID.bin"

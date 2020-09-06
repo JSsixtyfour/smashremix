@@ -217,16 +217,34 @@ scope Surface {
     scope get_struct_: {
         OS.patch_start(0x61474, 0x800E5C74)
         // t0 = surface id - 7
-        bltz    t0, _end                    // skip if surface id < 7
+        bltzl   t0, _end                    // skip if surface id < 7
         or      v0, r0, r0                  // v0 = 0 (disable knockback)
         sll     t0, t0, 0x2                 // t0 = offset ((surface id - 7) * 0x4)
         li      at, knockback_table         // at = knockback_table
         addu    at, at, t0                  // at = knockback_table + offset
         lw      t0, 0x000(at)               // t0 = knockback struct address
-        beq     t0, r0, _end                // branch if knockback struct = NULL
+        beql    t0, r0, _end                // branch if knockback struct = NULL
         or      v0, r0, r0                  // v0 = 0 (disable knockback)
         
         _struct:
+        li      at, Global.current_screen   // at = pointer to current screen
+        lbu     at, 0x0000(at)              // at = current screen_id
+        lli     v0, 0x0016                  // v0 = vs screen_id
+        beq     at, v0, _check_hazard_mode  // if vs, check hazard mode
+        lli     v0, 0x0036                  // v0 = training screen_id
+        beq     at, v0, _check_hazard_mode  // if training, check hazard mode
+        nop
+        b       _enable                     // everywhere else, don't obey toggle
+        nop
+
+        _check_hazard_mode:
+        li      at, Toggles.entry_hazard_mode
+        lw      at, 0x0004(at)              // at = hazard_mode (hazards disabled when at = 1 or 3)
+        andi    at, at, 0x0001              // at = 1 if hazard_mode is 1 or 3, 0 otherwise
+        bnezl   at, _end                    // branch if hazards are disabled
+        or      v0, r0, r0                  // v0 = 0 (disable knockback)
+
+        _enable:
         sw      t0, 0x0000(a1)              // store knockback struct
         ori     v0, r0, 0x0001              // v0 = 1 (enable knockback)
         

@@ -8,3 +8,8 @@
 # Dev Info
 *.log
 *.sym
+
+# Build
+build/original/*.bin
+build/original/*.vpk
+build/original/*.txt

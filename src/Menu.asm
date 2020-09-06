@@ -8,13 +8,9 @@ include "FGM.asm"
 include "Global.asm"
 include "Joypad.asm"
 include "OS.asm"
-include "Overlay.asm"
 include "String.asm"
 
 scope Menu {
-
-    constant ROW_HEIGHT(000010)
-    constant MAX_PER_PAGE(19)
 
     scope type {
         constant U8(0x0000)                 // 08 bit integer (unsigned)
@@ -29,16 +25,31 @@ scope Menu {
 
     // @ Description
     // Struct for menu arguments.
-    macro info(head, ulx, uly, rgba5551, width) {
+    macro info(head, ulx, uly, room, group, width, cursor_color, label_color, value_color, scale, row_height, max_per_page, blur) {
         dw {head}                           // 0x0000 - address of menu head
-        dw {ulx}                            // 0x0004 - ulx
-        dw {uly}                            // 0x0008 - uly
+        dh {ulx}                            // 0x0004 - ulx
+        dh {uly}                            // 0x0006 - uly
+        dw 0x00000000                       // 0x0008 - object reference for cursor
         dw 0x00000000                       // 0x000C - selection
-        dh {rgba5551}                       // 0x0010 - color of background
-        dh {rgba5551}                       // ^
+        dh {room}                           // 0x0010 - room
+        dh {group}                          // 0x0012 - group
         dw {width}                          // 0x0014 - width of menu in chars
         dw {head}                           // 0x0018 - first entry currently displayed (default to head)
         dw {head}                           // 0x001C - last entry currently displayed (default to head)
+        dw {cursor_color}                   // 0x0020 - cursor color
+        dw {label_color}                    // 0x0024 - label color
+        dw {value_color}                    // 0x0028 - value color
+        dw {scale}                          // 0x002C - scale
+        dh {row_height}                     // 0x0030 - row height
+        dh {max_per_page}                   // 0x0032 - max rows per page
+        dh {blur}                           // 0x0034 - blur
+        dh 0x0000                           // free
+    }
+
+    // @ Description
+    // Struct for menu arguments using default scale.
+    macro info(head, ulx, uly, room, group, width, cursor_color, label_color, value_color) {
+        Menu.info({head}, {ulx}, {uly}, {room}, {group}, {width}, {cursor_color}, {label_color}, {value_color}, Render.FONTSIZE_DEFAULT, 0x0E, 12, 0x0001)
     }
 
     // @ Description
@@ -53,7 +64,8 @@ scope Menu {
         dw {string_table}                   // 0x0014 - if (!null), use table of string pointers
         dw {copy_address}                   // 0x0018 - if (!null), copies curr_value to address
         dw {next}                           // 0x001C - if !(null), address of next entry
-        db {title}                          // 0x0020 - title
+        dw 0x00000000                       // 0x0020 - will store reference to string object of label
+        db {title}                          // 0x0024 - title
         db 0x00
         OS.align(4)
 
@@ -96,14 +108,56 @@ scope Menu {
     }
 
     // @ Description
+    // Updates the string object with the correct value
+    // @ Arguments
+    // v0 - address of entry
+    scope update_pointer_: {
+        addiu   sp, sp,-0x0030              // allocate stack space
+        sw      t0, 0x0004(sp)              // ~
+        sw      t1, 0x0008(sp)              // ~
+        sw      at, 0x000C(sp)              // ~
+
+        // v0 = selected entry
+        lw      t0, 0x0020(v0)              // t0 = label object
+        beqz    t0, _end
+        nop
+        lw      t0, 0x0030(t0)              // t0 = value object
+        lw      t1, 0x004C(t0)              // t1 = string_type
+        srl     t1, t1, 0x0001              // t1 = 1 if number, 0 if not
+        bnez    t1, _end                    // if a number, skip
+        nop
+
+        lw      t1, 0x0004(v0)              // t1 = current value
+        lw      at, 0x0014(v0)              // at = entry.string_table
+        sll     t1, t1, 0x0002              // t1 = curr * sizeof(string pointer)
+        addu    t1, at, t1                  // ~
+        lw      t1, 0x0000(t1)              // a2 - address of string
+        sw      t1, 0x0034(t0)              // update current value in object
+
+        _end:
+        lw      t0, 0x0004(sp)              // ~
+        lw      t1, 0x0008(sp)              // ~
+        lw      at, 0x000C(sp)              // ~
+        addiu   sp, sp, 0x0030              // deallocate stack space
+        jr      ra
+        nop
+    }
+
+    // @ Description
     // Draw a menu entry (title, on/off)
     // @ Arguments
     // a0 - address of entry
     // a1 - ulx
     // a2 - uly
-    // a3 - address of info()
+    // a3 - urx
+    // t0 - room
+    // t1 - group
+    // t2 - label color
+    // t3 - value color
+    // t4 - scale
+    // t5 - blur
     scope draw_entry_: {
-        addiu   sp, sp,-0x0030              // allocate stack space
+        addiu   sp, sp,-0x0040              // allocate stack space
         sw      s0, 0x0004(sp)              // ~
         sw      s1, 0x0008(sp)              // ~
         sw      s2, 0x000C(sp)              // ~
@@ -113,48 +167,80 @@ scope Menu {
         sw      a0, 0x001C(sp)              // ~
         sw      a1, 0x0020(sp)              // ~
         sw      a2, 0x0024(sp)              // ~
-        sw      a3, 0x0028(sp)              // save registers
+        sw      a3, 0x0028(sp)              // ~
+        sw      t2, 0x002C(sp)              // ~
+        sw      t3, 0x0030(sp)              // ~
+        sw      t4, 0x0034(sp)              // ~
+        sw      t5, 0x0038(sp)              // save registers
 
-        move    s0, a0                      // s0 = entry
-        move    s1, a1                      // s1 = ulx
-        move    s2, a2                      // s2 = uly
+        lw      s0, 0x001C(sp)              // s0 = entry
 
-        move    a0, s1                      // a1 - ulx
-        move    a1, s2                      // a1 - uly
-        addiu   a2, s0, 0x0020              // a2 - address of string (title = entry + 0x0020)
-        jal     Overlay.draw_string_
-        nop
+        lwc1    f0, 0x0020(sp)              // f0 = ulx
+        cvt.s.w f0, f0                      // ~
+        mfc1    s1, f0                      // s1 = ulx
+        lwc1    f0, 0x0024(sp)              // f0 = uly
+        cvt.s.w f0, f0                      // ~
+        mfc1    s2, f0                      // s2 = uly
+
+        lw      a0, 0x0010(sp)              // a0 = room
+        lw      a1, 0x0014(sp)              // a1 = group
+        addiu   a2, s0, 0x0024              // a2 - address of string (title = entry + 0x0024)
+        lli     a3, 0x0000                  // a3 = routine (Render.NOOP)
+        lw      s3, 0x002C(sp)              // s3 = color
+        or      s4, r0, t4                  // s4 = scale
+        lli     s5, Render.alignment.LEFT
+        lli     s6, Render.string_type.TEXT
+        jal     Render.draw_string_
+        lw      t8, 0x0038(sp)              // t8 = blur
+
+        lw      s0, 0x001C(sp)              // s0 = entry
+        sw      v0, 0x0020(s0)              // save reference to label object
+        // 0x0030(v0) will be the value string object, if applicable
 
         lli     t0, Menu.type.TITLE         // t0 = title type
         lw      t1, 0x0000(s0)              // t1 = type
-        beq     t0, t1, _end                // if (type == title), end
-        nop
+        beql    t0, t1, _end                // if (type == title), end
+        sw      r0, 0x0030(v0)              // clear reference to value string object
 
         lw      t0, 0x0014(s0)              // at = entry.string_table
         bnez    t0, _string                 // if (entry.string_table != null), skip
         nop                                 // else, continue
 
         _number:
-        lw      a0, 0x0004(s0)              // a0 - (int) current value
-        jal     String.itoa_                // v0 = (string) current value
-        nop
-        lw      a0, 0x0028(sp)              // a0 = urx
-        move    a1, s2                      // a1 - uly
-        move    a2, v0                      // a2 - address of string
-        jal     Overlay.draw_string_urx_    // draw value
-        nop
-        b       _end                        // skip draw string
+        addiu   a2, s0, 0x0004              // a0 - pointer to value
+        lli     s6, Render.string_type.NUMBER
+        lli     s7, 0x0000                  // s7 = adjust amount = 0
+        b       _draw_value                 // skip draw string
         nop
 
         _string:
-        lw      t1, 0x0004(s0)              // at =  (int) current value
+        lw      t1, 0x0004(s0)              // at = (int) current value
         sll     t1, t1, 0x0002              // t1 = curr * sizeof(string pointer)
         addu    a2, t0, t1                  // ~
         lw      a2, 0x0000(a2)              // a2 - address of string
-        lw      a0, 0x0028(sp)              // a0 = urx
-        move    a1, s2                      // a1 - uly
-        jal     Overlay.draw_string_urx_    // draw string
-        nop
+        lli     s6, Render.string_type.TEXT
+
+        _draw_value:
+        lwc1    f0, 0x0028(sp)              // f0 = urx
+        cvt.s.w f0, f0                      // ~
+        mfc1    s1, f0                      // s1 = ulx
+        lwc1    f0, 0x0024(sp)              // f0 = uly
+        cvt.s.w f0, f0                      // ~
+        mfc1    s2, f0                      // s2 = uly
+
+        lw      a0, 0x0010(sp)              // a0 = room
+        lw      a1, 0x0014(sp)              // a1 = group
+        li      a3, Render.update_live_string_ // a3 = routine
+        lw      s3, 0x0030(sp)              // s3 = color
+        lw      s4, 0x0034(sp)              // s4 = scale
+        lli     s5, Render.alignment.RIGHT
+        jal     Render.draw_string_
+        lw      t8, 0x0038(sp)              // t8 = blur
+        lw      s0, 0x001C(sp)              // s0 = entry
+        lw      t0, 0x0020(s0)              // t0 = reference to label object
+        sw      v0, 0x0030(t0)              // save reference to value object
+        addiu   t0, t0, 0x0030              // t0 = address of reference to value object
+        sw      t0, 0x0054(v0)              // store address of reference to value object
 
         _end:
         lw      s0, 0x0004(sp)              // ~
@@ -166,8 +252,82 @@ scope Menu {
         lw      a0, 0x001C(sp)              // ~
         lw      a1, 0x0020(sp)              // ~
         lw      a2, 0x0024(sp)              // ~
-        lw      a3, 0x0028(sp)              // srestore registers
-        addiu   sp, sp, 0x0030              // deallocate stack space
+        lw      a3, 0x0028(sp)              // ~
+        lw      t2, 0x002C(sp)              // ~
+        lw      t3, 0x0030(sp)              // ~
+        lw      t4, 0x0034(sp)              // ~
+        lw      t5, 0x0038(sp)              // restore registers
+        addiu   sp, sp, 0x0040              // deallocate stack space
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // Destroys rendered menu entries
+    // @ Arguments
+    // a0 - address of first entry currently displayed
+    scope destroy_rendered_objects_: {
+        addiu   sp, sp,-0x0020              // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+        sw      a0, 0x0008(sp)              // ~
+        sw      a1, 0x000C(sp)              // ~
+        sw      s0, 0x0010(sp)              // ~
+        sw      a0, 0x0014(sp)              // ~
+
+        _loop:
+        lw      a0, 0x0020(a0)              // a0 = label object for this entry
+        beqz    a0, _end                    // skip if no object
+        nop
+        jal     Render.DESTROY_OBJECT_
+        nop
+        lw      a1, 0x0008(sp)              // a1 = address of current entry
+        lw      a1, 0x0020(a1)              // a1 = label object for this entry
+        lw      a0, 0x0030(a1)              // a0 = value object for this entry
+        beqz    a0, _continue               // skip if no object
+        sw      r0, 0x0030(a1)              // clear value object reference
+        jal     Render.DESTROY_OBJECT_
+        nop
+
+        _continue:
+        lw      a1, 0x0008(sp)              // a1 = address of current entry
+        sw      r0, 0x0020(a1)              // clear object reference
+        lw      a0, 0x001C(a1)              // a0 = address of next entry
+        bnez    a0, _loop                   // loop if there is a next entry
+        sw      a0, 0x0008(sp)              // save address of next entry
+
+        _end:
+        lw      ra, 0x0004(sp)              // ~
+        lw      a1, 0x000C(sp)              // ~
+        lw      s0, 0x0010(sp)              // ~
+        lw      a0, 0x0014(sp)              // ~
+        addiu   sp, sp, 0x0020              // deallocate stack space
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // Redraw linked list of menu entries
+    // @ Arguments
+    // a0 - address of Menu.info()
+    // a1 - address of first entry currently displayed
+    scope redraw_: {
+        addiu   sp, sp,-0x0020              // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+        sw      a0, 0x0008(sp)              // ~
+        sw      a1, 0x000C(sp)              // ~
+        sw      s0, 0x0010(sp)              // ~
+
+        jal     destroy_rendered_objects_
+        or      a0, r0, a1                  // a0 = address of first entry currently displayed
+        jal     draw_
+        lw      a0, 0x0008(sp)              // a0 = address of Menu.info()
+        jal     update_cursor_
+        lw      a0, 0x0008(sp)              // a0 = address of Menu.info()
+
+        lw      ra, 0x0004(sp)              // ~
+        lw      a0, 0x0008(sp)              // ~
+        lw      s0, 0x0010(sp)              // ~
+        addiu   sp, sp, 0x0020              // deallocate stack space
         jr      ra
         nop
     }
@@ -177,7 +337,7 @@ scope Menu {
     // @ Arguments
     // a0 - address of Menu.info()
     scope draw_: {
-        addiu   sp, sp,-0x0028              // allocate stack space
+        addiu   sp, sp,-0x0050              // allocate stack space
         sw      s0, 0x0004(sp)              // ~
         sw      t0, 0x0008(sp)              // ~
         sw      ra, 0x000C(sp)              // ~
@@ -188,115 +348,116 @@ scope Menu {
         sw      t1, 0x0020(sp)              // ~
         sw      at, 0x0024(sp)              // save registers
 
-        // draw rectangle
-        lw      a0, 0x0010(a0)              // a0 - fill color
-        beq     a0, r0, _draw_entries       // skip if fill color = 0
-        nop
-        jal     Overlay.set_color_          // set fill color
-        nop
-        lw      a0, 0x0010(sp)              // a0 - address of info()
-        jal     get_num_entries_            // v0 = num_entries
-        nop
-        lli     at, ROW_HEIGHT              // at = ROW_HEIGHT
-        mult    v0, at                      // ~
-        mflo    v0                          // v0 = num_entries * NUM_PIXELS
-       
+        // PJ64K has some weird memory issues, so we save a lot of info to the stack instead of using info() in the loop
         lw      at, 0x0010(sp)              // at = address of info()
-        lw      a0, 0x0004(at)              // ~
-        addiu   a1, a1,-0x0002              // a0 - ulx
-        lw      a1, 0x0008(at)              // ~
-        addiu   a1, a1,-0x0002              // a1 - uly
-        lw      a2, 0x0014(at)              // a2 = width
-        sll     a2, a2, 0x0003              // a2 = (width) * NUM_PIXELS
-        addiu   a2, a2, 0x0004              // a2 - (width) * NUM_PIXELS + 4
-        move    a3, v0                      // ~
-        addiu   a3, a3, 0x0004              // a3 - height
-        jal     Overlay.draw_rectangle_     // draw rectangle
-        nop
-
-         _draw_entries:
-        // draw first entry
-        lw      at, 0x0010(sp)              // at = address of info()
-        lw      a0, 0x0018(at)              // a0 - first entry
-        lw      a1, 0x0004(at)              // a1 - ulx, unadjusted
-        lw      a2, 0x0008(at)              // a2 - uly
+        lw      s0, 0x0018(at)              // s0 = head (aka current_entry)
+        lhu     a1, 0x0004(at)              // a1 - ulx, unadjusted
         lw      a3, 0x0014(at)              // a3 = width
         sll     a3, a3, 0x0003              // a3 = urx_difference
         addu    a3, a3, a1                  // a3 - urx
         addiu   a1, a1, 0x0008              // a1 - ulx, adjusted
-        jal     draw_entry_                 // draw first entry
-        nop
-
-        // draw following entries
-        lw      a0, 0x0010(sp)              // a0 = address of info
-        lw      s0, 0x0018(a0)              // s0 = head (aka current_entry)
-        lw      t0, 0x0008(a0)              // t0 = uly
+        lhu     a2, 0x0006(at)              // a2 - uly
+        sh      a1, 0x0028(sp)              // save adjusted ulx
+        sh      a2, 0x002A(sp)              // save uly
+        sh      a3, 0x002C(sp)              // save urx
+        lhu     t0, 0x0030(at)              // t0 = row_height
+        lhu     t1, 0x0032(at)              // t1 = max_per_page
+        multu   t0, t1
+        mflo    t0                          // t0 = row_height * max_per_page
+        addu    t0, t0, a2                  // t0 = max height
+        sh      t0, 0x002E(sp)              // save max height
+        lhu     t0, 0x0010(at)              // t0 = room
+        sh      t0, 0x0030(sp)              // save room
+        lhu     t1, 0x0012(at)              // t1 = group
+        sh      t1, 0x0032(sp)              // save group
+        lw      t2, 0x0024(at)              // t2 = label color
+        sw      t2, 0x0034(sp)              // save label color
+        lw      t3, 0x0028(at)              // t3 = value color
+        sw      t3, 0x0038(sp)              // save value color
+        lw      t4, 0x002C(at)              // t4 = scale
+        sw      t4, 0x003C(sp)              // save scale
+        lhu     t5, 0x0034(at)              // t5 = blur
+        sw      t5, 0x0040(sp)              // save blur
 
         _loop:
-        lw      s0, 0x001C(s0)              // s0 = entry->next
-        beqz    s0, _end                    // if (entry->next == NULL), end
-        nop
-        addiu   t0, t0, ROW_HEIGHT          // increment height
-        slti    at, t0, 00217               // if we don't have enough room to draw any more entries, end
+        lhu     t0, 0x002A(sp)              // t0 = current uly
+        lhu     at, 0x002E(sp)              // at = max height
+        sltu    at, t0, at                  // if we don't have enough room to draw any more entries, end
         beqz    at, _end                    // ~
         nop
-        lw      at, 0x0010(sp)              // at = address of Menu.info()
         move    a0, s0                      // a0 - entry
+        lw      at, 0x0010(sp)              // at = address of info()
         sw      a0, 0x001C(at)              // update last entry displayed
-        lw      a1, 0x0004(at)              // a1 - ulx, unadjusted
+        lhu     a1, 0x0028(sp)              // a1 - ulx
         move    a2, t0                      // a2 - uly
-        lw      a3, 0x0014(at)              // a3 = width
-        sll     a3, a3, 0x0003              // a3 = urx_difference
-        addu    a3, a3, a1                  // a3 - urx
-        addiu   a1, a1, 0x0008              // a1 - ulx, adjusted
+        lhu     t1, 0x0030(at)              // t1 = height of row, unadjusted
+        mtc1    t1, f0                      // f0 = height of row, unadjusted
+        cvt.s.w f0, f0                      // ~
+        li      t2, Render.default_font_size
+        lw      t2, 0x0000(t2)              // t2 = normal scale
+        mtc1    t2, f2                      // f2 = normal scale
+        lwc1    f4, 0x003C(sp)              // f4 = scale
+        div.s   f4, f4, f2                  // f4 = multiplier
+        mul.s   f0, f4, f0                  // f0 = height of row, adjusted
+        trunc.w.s f0, f0                    // ~
+        mfc1    t1, f0                      // s0 = height of row, adjusted
+        addu    t0, t0, t1                  // increment height
+        sh      t0, 0x002A(sp)              // save height
+        lhu     a3, 0x002C(sp)              // a3 = urx
+        lhu     t0, 0x0030(sp)              // t0 = room
+        lhu     t1, 0x0032(sp)              // t1 = group
+        lw      t2, 0x0034(sp)              // t2 = label color
+        lw      t3, 0x0038(sp)              // t3 = value color
+        lw      t4, 0x003C(sp)              // t4 = scale
         jal     draw_entry_
-        nop
-        b       _loop
+        lw      t5, 0x0040(sp)              // t5 = blur
+        lw      s0, 0x001C(s0)              // s0 = entry->next
+        bnez    s0, _loop                   // if (entry->next != NULL), loop
         nop
 
         _end:
         // draw selection cursor
-        lli     a0, 0x7DFF                  // a0 - fill color (cursor blue)
-        jal     Overlay.set_color_          // set fill color
-        nop
         lw      at, 0x0010(sp)              // at = address of Menu.info()
-        lw      t0, 0x000C(at)              // t0 = selection
-        addiu   t1, r0, MAX_PER_PAGE        // t1 = max rows per page
-        div     t0, t1                      // divide selection by rows per page to get row
-        mfhi    t0                          // t0 - row
-        lli     s0, ROW_HEIGHT              // ~
-        mult    t0, s0                      // ~
-        mflo    a1                          // a1 = height of row
-        lw      t0, 0x0008(at)              // t0 = menu uly
-        addu    a1, a1, t0                  // a1 - uly
-        addiu   a1, a1, 0x0002              // a1 - uly + 2
-        lw      a0, 0x0004(at)              // a0 - menu ulx
-        addiu   a0, a0, 0x0002              // a0 - ulx + 2
-        lli     a2, 0x0004                  // a2 - cursor width
-        lli     a3, 0x0004                  // a3 - cursor height
-        jal     Overlay.draw_rectangle_     // draw cursor
-        nop
+        lw      t0, 0x0008(at)              // t0 = reference to cursor object
+        bnez    t0, _update_cursor          // if the cursor object exists, update it
+        nop                                 // otherwise, create it
+
+        lhu     a0, 0x0010(at)              // a0 = room
+        lhu     a1, 0x0012(at)              // a1 = group
+        lhu     s1, 0x0004(at)              // s1 = menu ulx
+        addiu   s1, s1, 0x0002              // s1 = ulx + 2
+        lli     s2, 0                       // s2 = uly (temporary)
+        lli     s3, 0x0004                  // s3 = width
+        lli     s4, 0x0004                  // s4 = height
+        lw      s5, 0x0020(at)              // s5 = color
+        jal     Render.draw_rectangle_
+        lli     s6, OS.FALSE                // s6 = enable_alpha
+        lw      at, 0x0010(sp)              // at = address of Menu.info()
+        sw      v0, 0x0008(at)              // save reference to cursor object
+
         //  draw selection line
         lw      at, 0x0010(sp)              // at = address of Menu.info()
-        lw      t0, 0x000C(at)              // t0 = selecion
-        addiu   t1, r0, MAX_PER_PAGE        // t1 = max rows per page
-        div     t0, t1                      // divide selection by rows per page to get row
-        mfhi    t0                          // t0 - row
-        lli     s0, ROW_HEIGHT              // ~
-        mult    t0, s0                      // ~
-        mflo    a1                          // a1 = height of row
-        lw      t0, 0x0008(at)              // t0 = menu uly
-        addu    a1, a1, t0                  // a1 - uly
-        addiu   a1, a1, 0x0008              // a1 - uly + 8
-        lw      a0, 0x0004(at)              // a0 - menu ulx
-        addiu   a0, a0, 0x0002              // a0 - ulx + 2
-        lw      a2, 0x0014(at)              // a2 - width
-        sll     a2, a2, 0x0003              // a2 = (width) * NUM_PIXELS
-        addiu   a2, a2,-0x0002              // a2 - line width ((width * NUM_PIXELS) - 2)
-        lli     a3, 0x0001                  // a3 - line height
-        jal     Overlay.draw_rectangle_     // draw line
-        nop
-        
+        lhu     a0, 0x0010(at)              // a0 = room
+        lhu     a1, 0x0012(at)              // a1 = group
+        lhu     s1, 0x0004(at)              // s1 = menu ulx
+        addiu   s1, s1, 0x0002              // s1 = ulx + 2
+        lli     s2, 0                       // s2 = uly (temporary)
+        lw      s3, 0x0014(at)              // s3 = width
+        sll     s3, s3, 0x0003              // s3 = (width) * NUM_PIXELS
+        addiu   s3, s3,-0x0002              // s3 = line width ((width * NUM_PIXELS) - 2)
+        lli     s4, 0x0001                  // s4 = line height
+        lw      s5, 0x0020(at)              // s5 = color
+        jal     Render.draw_rectangle_
+        lli     s6, OS.FALSE                // s6 = enable_alpha
+        lw      at, 0x0010(sp)              // at = address of Menu.info()
+        lw      t0, 0x0008(at)              // t0 = reference to cursor object
+        sw      v0, 0x0084(t0)              // save reference to underline
+
+        _update_cursor:
+        jal     update_cursor_
+        or      a0, at, r0                  // a0 = Menu.info()
+
+        _finish:
         lw      s0, 0x0004(sp)              // ~
         lw      t0, 0x0008(sp)              // ~
         lw      ra, 0x000C(sp)              // ~
@@ -306,7 +467,57 @@ scope Menu {
         lw      a3, 0x001C(sp)              // ~
         sw      t1, 0x0020(sp)              // ~
         lw      at, 0x0024(sp)              // restore registers
-        addiu   sp, sp, 0x0028              // deallocate stack space
+        addiu   sp, sp, 0x0050              // deallocate stack space
+        jr      ra                          // return
+        nop
+    }
+
+    // @ Description
+    // Updates cursor position
+    // @ Arguments
+    // a0 - address of info()
+    scope update_cursor_: {
+        addiu   sp, sp,-0x0030              // allocate stack space
+        sw      v0, 0x0004(sp)              // ~
+        sw      t0, 0x0008(sp)              // ~
+        sw      t1, 0x000C(sp)              // ~
+        sw      s0, 0x0010(sp)              // ~
+        sw      a1, 0x0014(sp)              // save registers
+
+        lw      v0, 0x0008(a0)              // v0 = reference to cursor object
+        lw      t0, 0x000C(a0)              // t0 = selection
+        lhu     t1, 0x0032(a0)              // t1 = max rows per page
+        div     t0, t1                      // divide selection by rows per page to get row
+        mfhi    t0                          // t0 - row
+        lhu     s0, 0x0030(a0)              // s0 = height of row, unadjusted
+        mtc1    s0, f0                      // f0 = height of row, unadjusted
+        cvt.s.w f0, f0                      // ~
+        li      a1, Render.default_font_size
+        lw      a1, 0x0000(a1)              // a1 = normal scale
+        mtc1    a1, f2                      // f2 = normal scale
+        lwc1    f4, 0x002C(a0)              // f4 = scale
+        div.s   f4, f4, f2                  // f4 = multiplier
+        mul.s   f0, f4, f0                  // f0 = height of row, adjusted
+        trunc.w.s f0, f0                    // ~
+        mfc1    s0, f0                      // s0 = height of row, adjusted
+        mult    t0, s0                      // ~
+        mflo    a1                          // a1 = height of row
+        lhu     t0, 0x0006(a0)              // t0 = menu uly
+        addu    a1, a1, t0                  // a1 - uly
+        addu    t1, a1, s0                  // t1 - uly of next
+        addiu   t1, t1, -0x0001             // t1 - uly of underline
+        addiu   a1, t1, -0x0006             // a1 - uly of cursor
+        sw      a1, 0x0034(v0)              // update cursor y
+        addiu   a1, a1, 0x0006              // a1 - uly + 6
+        lw      v0, 0x0084(v0)              // v0 = underline object
+        sw      t1, 0x0034(v0)              // update underline y
+
+        lw      v0, 0x0004(sp)              // ~
+        lw      t0, 0x0008(sp)              // ~
+        lw      t1, 0x000C(sp)              // ~
+        lw      s0, 0x0010(sp)              // ~
+        lw      a1, 0x0014(sp)              // restore registers
+        addiu   sp, sp, 0x0030              // deallocate stack space
         jr      ra                          // return
         nop
     }
@@ -346,35 +557,38 @@ scope Menu {
         nop        
         addiu   v0, v0,-0x0001              // v0 = num_entries - 1
         lw      t0, 0x0014(sp)              // t0 = address of info()
+        lhu     a0, 0x0032(t0)              // a0 = MAX_PER_PAGE
         addiu   t0, t0, 0x000C              // t0 = address of selection
         lw      t1, 0x0000(t0)              // t1 = selection
         sltu    at, t1, v0                  // ~
         beqz    at, _wrap_down              // if (selection == (num_entries - 1), wrap
         nop
         addiu   t1, t1, 0x0001              // t1 = selection++
-        lli     a0, MAX_PER_PAGE            // a0 = MAX_PER_PAGE
         div     t1, a0                      // divide to get remainder
-        mfhi    a0                          // a0 = t1 % 19
-        bnez    a0, _update_down_finish     // if cursor is now on an entry not on this page, 
+        mfhi    a1                          // a1 = t1 % 18
+        bnez    a1, _update_down_finish     // if cursor is now on an entry not on this page,
         nop                                 // then we need to adjust:
-        addiu   t1, t1, -MAX_PER_PAGE       // t1 = selection corrected
+        subu    t1, t1, a0                  // t1 = selection corrected
         _update_down_finish:
         sw      t1, 0x0000(t0)              // update selection
+        jal     update_cursor_
+        lw      a0, 0x0014(sp)              // a0 - address of info()
         b       _copy                       // only allow one update
         nop
 
         _wrap_down:
-        lli     a0, MAX_PER_PAGE            // a0 = MAX_PER_PAGE
         sltu    at, a0, t1                  // if not on the fist page
         bnez    at, _update_down_page_top   // then update to top of page
         nop                                 // otherwise update to 0:
         sw      r0, 0x0000(t0)              // update selection
+        jal     update_cursor_
+        lw      a0, 0x0014(sp)              // a0 - address of info()
         b       _copy                       // only allow one update
         nop
 
         _update_down_page_top:
         div     t1, a0                      // ~
-        mflo    t1                          // t1 = t1 / 19 no remainder
+        mflo    t1                          // t1 = t1 / 18 no remainder
         mult    t1, a0                      // ~
         mflo    t1                          // t1 = first row on page
         b       _update_down_finish         // update selection
@@ -400,14 +614,16 @@ scope Menu {
         lw      at, 0x0014(sp)              // at = address of info()
         addiu   t0, at, 0x000C              // t0 = address of selection
         lw      t1, 0x0000(t0)              // t1 = selection
-        lli     a0, MAX_PER_PAGE            // a0 = max_per_page
+        lhu     a0, 0x0032(at)              // a0 = max_per_page
         div     t1, a0                      // ~
-        mfhi    a0                          // a0 (row) = t1 % 19
+        mfhi    a0                          // a0 (row) = t1 % 18
         beqz    a0, _wrap_up                // if (row == 0), go to bottom option
         nop
         addiu   t1, t1,-0x0001              // t1 = selection--
         _wrap_up_finish:
         sw      t1, 0x0000(t0)              // update selection
+        jal     update_cursor_
+        lw      a0, 0x0014(sp)              // a0 - address of info()
         b       _copy                       // only allow one update
         nop
 
@@ -416,11 +632,16 @@ scope Menu {
         jal     get_num_entries_            // v0 = num_entries
         nop
         addiu   v0, v0,-0x0001              // ~
-        addiu   t1, t1, 00018               // t1 - last on page
+        lw      at, 0x0014(sp)              // at = address of info()
+        lhu     a0, 0x0032(at)              // a0 = max_per_page
+        addu    t1, t1, a0                  // t1 - last on page
+        addiu   t1, t1, -0x0001             // ~
         sltu    at, t1, v0                  // if the last entry is not higher than the number of entries
         bnez    at, _wrap_up_finish         // then we can use it
         nop                                 // otherwise:
         sw      v0, 0x0000(t0)              // update selection to bottom option
+        jal     update_cursor_
+        lw      a0, 0x0014(sp)              // a0 - address of info()
         b       _copy                       // only allow one update
         nop
 
@@ -451,6 +672,8 @@ scope Menu {
         nop                                 // else, continue
         addiu   t0, t0, 0x0001              // ~
         sw      t0, 0x0004(v0)              // entry.current_value++
+        jal     update_pointer_
+        nop
         b       _copy                       // only allow one update
         nop
 
@@ -481,6 +704,8 @@ scope Menu {
         nop                                 // else, continue
         addiu   t0, t0,-0x0001              // ~
         sw      t0, 0x0004(v0)              // entry.current_value--
+        jal     update_pointer_
+        nop
         b       _copy                       // only allow one update
         nop
 
@@ -499,27 +724,32 @@ scope Menu {
         jal     get_num_entries_            // v0 = num_entries
         nop
         lw      t0, 0x000C(a0)              // t0 - selection
-        addiu   t0, t0, MAX_PER_PAGE        // t0 - selection on next page
+        lhu     a2, 0x0032(a0)              // a2 = max_per_page
+        addu    t0, t0, a2                  // t0 - selection on next page
         sw      t0, 0x000C(a0)              // update selection but maintain cursor row
         lw      t0, 0x001C(a0)              // t0 - last entry
         lw      t0, 0x001C(t0)              // t0 - next entry
         bnez    t0, _update_r_continued     // if (last entry) then go back to first page
         nop
         lw      t0, 0x000C(a0)              // t0 - selection
-        lli     a2, MAX_PER_PAGE            // a2 - max_per_page
         div     t0, a2                      // ~
         mfhi    a2                          // a0 (row) = t1 % 19
         sw      a2, 0x000C(a0)              // store selection
         lw      t0, 0x0000(a0)              // t0 - head
         _update_r_continued:
+        lw      a1, 0x0018(a0)              // a1 = first entry
         sw      t0, 0x0018(a0)              // update first entry
         sw      t0, 0x001C(a0)              // update last entry
         lw      t0, 0x000C(a0)              // t0 - selection
         addiu   v0, v0, -0x0001             // v0 - num_entries, 0 based
         sltu    at, v0, t0                  // if selection is not higher than the total number
-        beqz    at, _copy                   // then we're done
+        beqz    at, _redraw                 // then we're done
         nop
         sw      v0, 0x000C(a0)              // otherwise set the total number as the selection
+
+        _redraw:
+        jal     redraw_
+        nop
         b       _copy                       // only allow one update
         nop
 

@@ -10,9 +10,7 @@ include "Color.asm"
 include "FGM.asm"
 include "Global.asm"
 include "OS.asm"
-include "Overlay.asm"
 include "String.asm"
-include "Texture.asm"
 
 scope Stages {
 
@@ -125,8 +123,32 @@ scope Stages {
 		constant FLAT_ZONE_2(0x62)
 		constant GERUDO(0x63)
 		constant BTP_YL(0x64)
+		constant BTP_FALCO(0x65)
+		constant BTP_POLY(0x66)
+		constant HCASTLE_DL(0x67)
+		constant HCASTLE_O(0x68)
+		constant CONGOJ_DL(0x69)
+		constant CONGOJ_O(0x6A)
+		constant PCASTLE_DL(0x6B)
+		constant PCASTLE_O(0x6C)
+        constant BTP_WARIO(0x6D)
+        constant FRAYS_STAGE_NIGHT(0x6E)
+		constant GOOMBA_ROAD(0x6F)
+		constant BTP_LUCAS2(0x70)
+		constant SECTOR_Z_DL(0x71)
+		constant SAFFRON_DL(0x72)
+		constant YOSHI_ISLAND_DL(0x73)
+		constant ZEBES_DL(0x74)
+		constant SECTOR_Z_O(0x75)
+		constant SAFFRON_O(0x76)
+		constant YOSHI_ISLAND_O(0x77)
+		constant DREAM_LAND_O(0x78)
+		constant ZEBES_O(0x79)
+		constant BTT_BOWSER(0x7A)
+		constant BTP_BOWSER(0x7B)
+		constant BOWSERS_KEEP(0x7C)
 
-        constant MAX_STAGE_ID(0x64)
+        constant MAX_STAGE_ID(0x7C)
 
         // not an actual id, some arbitary number Sakurai picked(?)
         constant RANDOM(0xDE)
@@ -265,6 +287,30 @@ scope Stages {
 		constant FLAT_ZONE_2(0x9AB)
 		constant GERUDO(0x9AD)
 		constant BTP_YL(0x9B3)
+		constant BTP_FALCO(0xA17)
+		constant BTP_POLY(0xA19)
+		constant HCASTLE_DL(0xA1B)
+		constant HCASTLE_O(0xA1D)
+		constant CONGOJ_DL(0xA1F)
+		constant CONGOJ_O(0xA21)
+		constant PCASTLE_DL(0xA23)
+		constant PCASTLE_O(0xA25)
+        constant BTP_WARIO(0xA2E)
+        constant FRAYS_STAGE_NIGHT(0xA32)
+		constant GOOMBA_ROAD(0xA4C)
+		constant BTP_LUCAS2(0xA4F)
+		constant SECTOR_Z_DL(0xA63)
+		constant SAFFRON_DL(0xA66)
+		constant YOSHI_ISLAND_DL(0xA68)
+		constant ZEBES_DL(0xA6A)
+		constant SECTOR_Z_O(0xA6C)
+		constant SAFFRON_O(0xA65)
+		constant YOSHI_ISLAND_O(0xA6F)
+		constant DREAM_LAND_O(0xA71)
+		constant ZEBES_O(0xA73)
+		constant BTT_BOWSER(0xA7E)
+		constant BTP_BOWSER(0xA82)
+		constant BOWSERS_KEEP(0xA8A)
     }
 
     scope function {
@@ -290,6 +336,14 @@ scope Stages {
         constant BTP(0x02)
         constant BTT(0x03)
         constant SSS_PREVIEW(0x04)
+    }
+
+    // @ Description
+    // Describes the types of stage variants available
+    scope variant_type {
+        constant DEFAULT(0x00)
+        constant DL(0x01)
+        constant OMEGA(0x02)
     }
 
     constant ICON_WIDTH(40)
@@ -650,11 +704,36 @@ scope Stages {
     // @ Description
     // Prevents "Stage Select" texture from being drawn.
     OS.patch_start(0x0014DDF8, 0x80132288)
-    jr      ra                              // return immediately
-    nop
+    //jr      ra                              // return immediately
+    //nop
     OS.patch_end()
 
-    // @ Descirption
+    // @ Description
+    // Repositions "Stage Select" texture a little lower.
+    OS.patch_start(0x0014DE80, 0x80132310)
+    lui     at, 0x4300                      // original: lui     at, 0x42F4
+    OS.patch_end()
+
+    // @ Description
+    // Prevents yellow stage name holder from being drawn.
+    OS.patch_start(0x0014DEC4, 0x80132354)
+    b       0x8013240C                      // skip to end of routine
+    OS.patch_end()
+
+    // @ Description
+    // Repositions the blue bar behind "Stage Select" a little lower.
+    OS.patch_start(0x0014DD34, 0x801321C4)
+    ori     t7, t7, 0x0232                  // original line 1: ori     t7, t7, 0x0218
+    ori     t8, t8, 0x021A                  // original line 2: ori     t8, t8, 0x0200
+    OS.patch_end()
+
+    // @ Description
+    // Skips rendering a semitransparent rectangle on the wooden circle
+    OS.patch_start(0x0014DD44, 0x801321D4)
+    fill 16 * 4, 0x0 // nop 16 lines
+    OS.patch_end()
+
+    // @ Description
     // Prevents the wooden circle from being drawn.
     OS.patch_start(0x0014DBB8, 0x80132048)
 //  jr      ra                              // return immediately
@@ -878,261 +957,100 @@ scope Stages {
         nop
     }
 
-    // @ Descirption
-    // Draw stage icons to the screen
-    scope draw_icons_: {
-        addiu   sp, sp,-0x0028              // allocate stack space
-        sw      t0, 0x0004(sp)              // ~
-        sw      t1, 0x0008(sp)              // ~
-        sw      t2, 0x000C(sp)              // ~
-        sw      t3, 0x0010(sp)              // ~
-        sw      t4, 0x0014(sp)              // ~
-        sw      ra, 0x0018(sp)              // ~
-        sw      at, 0x001C(sp)              // ~
-        sw      t5, 0x0020(sp)              // ~
-        sw      t6, 0x0024(sp)              // save registers
+    // @ Description
+    // Increases the available object heap space on the stage select screen.
+    // This is necessary to support the extra icons.
+    // Can probably reduce how much is added, but shouldn't hurt anything.
+    OS.patch_start(0x1504B4, 0x80134944)
+    dw      0x00004268 + 0x2000                 // pad object heap space (0x00004289 is original amount)
+    OS.patch_end()
 
-        _setup:
-        lli     at, NUM_ICONS               // at = number of icons to draw
-        li      t0, icon_table              // t0 = address of icon_table
-        li      t1, position_table          // t1 = address of position_table
-        lli     t2, 0x0000                  // t2 = index
-        li      t3, stage_table             // t3 = address of stage_table pointers
-        li      t5, Toggles.entry_sss_layout
-        lw      t5, 0x0004(t5)              // t5 = stage table index
-        sll     t5, t5, 0x0002              // t5 = offset to stage_table to use
-        addu    t3, t3, t5                  // t3 = address of stage_table pointer
-        lw      t3, 0x0000(t3)              // t3 = address of stage_table to use
-        lli     t5, NUM_ICONS               // ~
-        li      t6, page_number             // ~
+    // @ Description
+    //
+    scope update_stage_icons_: {
+        // a0 = stage icons base file address
+
+        lli     a1, NUM_ICONS * NUM_PAGES   // a1 = number of stage icon addresses to calculate
+        li      t0, image_table             // t0 = image table start
+        li      t2, stage_table             // t2 = stage_table
+        li      t1, Toggles.entry_sss_layout
+        lw      t1, 0x0004(t1)              // t1 = stage table index
+        sll     t1, t1, 0x0002              // t1 = offset to stage_table to use
+        addu    t2, t2, t1                  // t2 = address of stage_table pointer
+        lw      t1, 0x0000(t2)              // t1 = current stage table
+        li      t5, icon_offset_table       // t5 = icon_offset_table
+        li      t6, icon_offset_random      // t6 = random icon offset
         lw      t6, 0x0000(t6)              // ~
-        mult    t5, t6                      // ~
-        mflo    t6                          // t6 = stage_table page offset
-        addu    t3, t3, t6                  // t3 = stage_table + page offset
 
-        _draw_icon:
-        sltiu   at, t2, NUM_ICONS           // ~
-        beqz    at, _end                    // check to stop drawing stage icons
-        nop
-        lw      a0, 0x0000(t1)              // a0 - ulx
-        lw      a1, 0x0004(t1)              // a1 - uly
-        addu    t4, t3, t2                  // t4 = address of stage_table[index]
-        lbu     t4, 0x0000(t4)              // t4 = stage_id
+        _loop:
+        lbu     t4, 0x0000(t1)              // t4 = stage id
+        lli     t2, id.RANDOM               // t2 = id.RANDOM
+        beql    t4, t2, pc() + 20           // if RANDOM, then skip getting from icon_offset_table
+        addu    t4, r0, t6                  // ...and use random offset instead
+        sll     t4, t4, 0x0002              // t4 = offset to offset table offset (lol)
+        addu    t4, t5, t4                  // t4 = address of offset
+        lw      t4, 0x0000(t4)              // t4 = offset to icon image footer
+        addu    t2, a0, t4                  // t4 = icon image footer address
+        sw      t2, 0x0000(t0)              // set new address
 
-        // this interupts flow to check for random
-        lli     at, id.RANDOM               // at = id.RANDOM
-        bne     t4, at, _not_random         // if (stage_id != id.RANDOM), skip
-        nop
-        li      t4, icon_random             // ~
-        b       _continue
-        nop
-
-        _not_random:
-        sll     t4, t4, 0x0002              // t4 = stage_id * 4 (aka stage_id * sizeof(u32))
-        addu    t4, t0, t4                  // t4 = address of icon_table + offset
-        lw      t4, 0x0000(t4)              // t4 = address of image data
-
-        _continue:
-        li      a2, info                    // a2 - address of texture struct
-        sw      t4, 0x00008(a2)             // update info image data
-        jal     Overlay.draw_texture_       // draw icon
-        nop
-
-        _increment:
-        addiu   t1, t1, 0x0008              // increment position_table
-        addiu   t2, t2, 0x0001              // increment index
-        b       _draw_icon                  // draw next icon
-        nop
+        addiu   a1, a1, -0x0001             // a1 = remaining images
+        addiu   t0, t0, 0x0004              // t0 = next image in image table to set
+        bnezl   a1, _loop                   // if there is another image, loop
+        addiu   t1, t1, 0x0001              // t1 = next stage id
 
         _end:
-        lw      t0, 0x0004(sp)              // ~
-        lw      t1, 0x0008(sp)              // ~
-        lw      t2, 0x000C(sp)              // ~
-        lw      t3, 0x0010(sp)              // ~
-        lw      t4, 0x0014(sp)              // ~
-        lw      ra, 0x0018(sp)              // ~
-        lw      at, 0x001C(sp)              // ~
-        lw      t5, 0x0020(sp)              // ~
-        lw      t6, 0x0024(sp)              // restore registers
-        addiu   sp, sp, 0x0028              // deallocate stack space
-        jr      ra                          // return
-        nop
-
-        info:
-        Texture.info(ICON_WIDTH, ICON_HEIGHT)
-    }
-
-    // @ Description
-    // This replaces the previous the original draw cursor function. The new function draws based on
-    // the Stages.row and Stages.column variables as well as the position_table. It also replaces
-    // the cursor itself with a filled rectangle
-    scope draw_cursor_: {
-
-        // @ Description
-        // Set original cursor position.
-        OS.patch_start(0x0014E5C8, 0x80132A58)
-        // not used, for documentation only
-        OS.patch_end()
-
-        // @ Description
-        // (part of set cursor position)
-        OS.patch_start(0x0014E5F4, 0x80132A84)
-//      lui     at, 0x41B8                  // original line (at = (float cursor y))
-        lui     at, 0xC800                  // at =  a very negative float
-        OS.patch_end()
-
-        // @ Description
-        // (part of set cursor position)
-        OS.patch_start(0x0014E62C, 0x80132ABC)
-//      lui     at, 0x4274                  // original line (at = (float cursor y))
-        lui     at, 0xC800                  // at =  a very negative float
-        OS.patch_end()
-
-        addiu   sp, sp,-0x0010              // allocate stack space
-        sw      t0, 0x0004(sp)              // ~
-        sw      ra, 0x0008(sp)              // save registesr
-
-        // this block gets the position
-        jal     get_index_                  // v0 = index
-        nop
-        sll     v0, v0, 0x0003              // v0 = index *= sizeof(position_table entry) = offset
-        li      t0, position_table          // ~
-        addu    t0, t0, v0                  // t0 = position_table + offset
-
-        // this block selects color based of rectangle (based on hazard mode)
-        li      at, Toggles.entry_hazard_mode
-        lw      at, 0x0004(at)              // t0 = hazard mode
-        beqzl   at, _skip
-        lli     a0, Color.low.RED           // a0 - fill color
-        lli     a0, Color.low.BLUE          // a0 - fill color
-
-        _skip:
-        // this block draws the cursor (with a border of 2)
-        jal     Overlay.set_color_          // fill color = RED
-        nop
-        lw      a0, 0x0000(t0)              // a0 - ulx
-        addiu   a0, a0,-0x0002              // decrement ulx
-        lw      a1, 0x0004(t0)              // a1 - uly
-        addiu   a1, a1,-0x0002              // decrement uly
-        lli     a2, ICON_WIDTH + 4          // a2 - width
-        lli     a3, ICON_HEIGHT + 4         // a3 - height
-        jal     Overlay.draw_rectangle_     // draw curso
-        nop
-
-        lw      t0, 0x0004(sp)              // ~
-        lw      ra, 0x0008(sp)              // restore registers
-        addiu   sp, sp, 0x0010              // deallocate stack sapce
-        jr      ra                          // return
+        jr      ra
         nop
     }
 
     // @ Description
-    // Temporary. Draws names of stages where the stage text usually appears.
-    scope draw_names_: {
-        addiu   sp, sp,-0x0018              // allocate stack space
-        sw      a0, 0x0004(sp)              // ~
-        sw      a1, 0x0008(sp)              // ~
-        sw      a2, 0x000C(sp)              // ~
-        sw      v0, 0x0010(sp)              // ~
-        sw      ra, 0x0014(sp)              // save registers
+    // Modify the code that runs after the cursor's TEXTURE_INIT_ call.
+    // Do it more efficiently so we can also update the scale and color.
+    OS.patch_start(0x0014E6B0, 0x80132B40)
+    lli     t1, 0x0201                  // t1 = 0x201
+    sh      t1, 0x0024(v0)              // set image type flags
+    lui     t2, 0x3F58                  // t2 = scale = 0.84375
+    sw      t2, 0x0018(v0)              // set X scale
+    sw      t2, 0x001C(v0)              // set Y scale
+    li      t0, Toggles.entry_hazard_mode
+    jal     update_cursor_color_
+    lw      a0, 0x0004(t0)              // a0 = hazard_mode
+    OS.patch_end()
 
-        // this block draws "Smash Remix"
-        lli     a0, 232                     // a0 - ulx
-        lli     a1, 130                     // a1 - uly
-        li      a2, string_title            // a2 - address of string
-        jal     Overlay.draw_centered_str_  // draw string
-        nop
+    // @ Description
+    // The routine starting here sets the cursor position based on
+    // the value passed in a1, which can be thought of as the index.
+    // Let's just ignore and use our column and row values.
+    OS.patch_start(0x0014E5C8, 0x80132A58)
+    // a0 = object struct
+    // a1 = index
+    lw      t8, 0x0074(a0)              // t8 = cursor image struct
 
-        // this block draws "<stage_name>"
-        jal     get_stage_id_               // v0 = stage_id
-        nop
-        lli     a0, id.RANDOM               // a0 = random
-        beq     a0, v0, _end                // don't draw RANDOM
-        nop
-        sll     v0, v0, 0x0002              // v0 = offset = stage_id * 4
-        lli     a0, 232                     // a0 - x
-        lli     a1, 210                     // a1 - uly
-        li      a2, string_table            // a2 = address of string_table
-        addu    a2, a2, v0                  // a2 = address of string_table + offset
-        lw      a2, 0x0000(a2)              // a2 - adress of string
-        jal     Overlay.draw_centered_str_  // draw string
-        nop
+    // Set X position
+    li      a1, column                  // a1 = COLUMN address
+    lbu     t9, 0x0000(a1)              // t9 = COLUMN
+    lli     t6, ICON_WIDTH + 2          // t6 = ICON_WIDTH
+    multu   t6, t9                      // t6 = ICON_WIDTH * COLUMN
+    mflo    t6                          // ~
+    addiu   t7, t6, 0x0018              // t7 = X position, adjusted for left padding
+    mtc1    t7, f4                      // f4 = X position
+    cvt.s.w f6, f4                      // f6 = X position as float
+    swc1    f6, 0x0058(t8)              // set X position
 
-        _end:
-        lw      a0, 0x0004(sp)              // ~
-        lw      a1, 0x0008(sp)              // ~
-        lw      a2, 0x000C(sp)              // ~
-        lw      v0, 0x0010(sp)              // ~
-        lw      ra, 0x0014(sp)              // restore registers
-        addiu   sp, sp, 0x0018              // deallocate stack space
-        jr      ra                          // return
-        nop
+    // Set Y position
+    li      a1, row                     // a1 = ROW address
+    lbu     t9, 0x0000(a1)              // t9 = ROW
+    lli     t6, ICON_HEIGHT + 2         // t6 = ICON_HEIGHT
+    multu   t6, t9                      // t6 = ICON_HEIGHT * ROW
+    mflo    t6                          // ~
+    addiu   t7, t6, 0x000E              // t7 = Y position, adjusted for top padding
+    mtc1    t7, f4                      // f4 = Y position
+    cvt.s.w f6, f4                      // f6 = Y position as float
+    swc1    f6, 0x005C(t8)              // set Y position
 
-        string_title:
-        String.insert("Smash Remix")
-    }
-
-    scope draw_page_number_: {
-        addiu   sp, sp,-0x0018              // allocate stack space
-        sw      a0, 0x0004(sp)              // ~
-        sw      a1, 0x0008(sp)              // ~
-        sw      a2, 0x000C(sp)              // ~
-        sw      v0, 0x0010(sp)              // ~
-        sw      ra, 0x0014(sp)              // save registers
-
-        // this block draws the legend text
-        lli     a0, 160                     // a0 - x
-        lli     a1, 117                     // a1 - uly
-        li      a2, string_page             // a2 - address of string
-        jal     Overlay.draw_centered_str_  // draw string
-        nop
-
-        // this block draws page number 
-        li      a0, page_number             // ~
-        lw      a0, 0x0000(a0)              // a0 - (int) page_number
-        addiu   a0, a0, 0x0001              // make it normie readable
-        jal     String.itoa_                // v0 = (string) page_number
-        nop
-        lli     a0, 000081                  // a0 - x
-        lli     a1, 000117                  // a1 - uly
-        move    a2, v0                      // a2 - address of string
-        jal     Overlay.draw_string_        // draw string
-        nop
-
-        // draw "R" button
-        lli     a0, 000111                  // a0 - ulx
-        lli     a1, 000114                  // a1 - uly
-        li      a2, Data.r_button_info      // a2 - address of texture struct
-        jal     Overlay.draw_texture_       // draw options text texture
-        nop
-
-        // draw "Z" button
-        lli     a0, 000095                  // a0 - ulx
-        lli     a1, 000113                  // a1 - uly
-        li      a2, Data.z_button_info      // a2 - address of texture struct
-        jal     Overlay.draw_texture_       // draw options text texture
-        nop
-
-        // draw "L" button
-        lli     a0, 000169                  // a0 - ulx
-        lli     a1, 000114                  // a1 - uly
-        li      a2, Data.l_button_info      // a2 - address of texture struct
-        jal     Overlay.draw_texture_       // draw options text texture
-        nop
-
-        _end:
-        lw      a0, 0x0004(sp)              // ~
-        lw      a1, 0x0008(sp)              // ~
-        lw      a2, 0x000C(sp)              // ~
-        lw      v0, 0x0010(sp)              // ~
-        lw      ra, 0x0014(sp)              // restore registers
-        addiu   sp, sp, 0x0018              // deallocate stack space
-        jr      ra                          // return
-        nop
-
-        string_page:
-        String.insert("Page:   /  :+/-   :Hazard Mode")
-    }
+    jr      ra
+    nop
+    OS.patch_end()
 
     // @ Description
     // Returns an index based on column and row
@@ -1145,9 +1063,9 @@ scope Stages {
         sw      t2, 0x000C(sp)              // save registers
 
         li      t0, row                     // ~
-        lw      t0, 0x0000(t0)              // t0 = row
+        lbu     t0, 0x0000(t0)              // t0 = row
         li      t1, column                  // ~
-        lw      t1, 0x0000(t1)              // t1 = column
+        lbu     t1, 0x0000(t1)              // t1 = column
         lli     t2, NUM_COLUMNS             // t2 = NUM_COLUMNS
         multu   t0, t2                      // ~
         mflo    v0                          // v0 = row * NUM_COLUMNS
@@ -1187,8 +1105,27 @@ scope Stages {
         addu    t0, t0, t1                  // t0 = address of stage_table pointer
         lw      t0, 0x0000(t0)              // t0 = address of stage_table to use
         addu    t0, t0, v0                  // t0 = address of stage table + offset
-        lbu     v0, 0x0000(t0)              // v0 = ret = stage_id
+        lbu     v0, 0x0000(t0)              // v0 = stage_id
+        li      t0, original_stage_id
+        sb      v0, 0x0000(t0)              // save stage_id without variant
+        lli     t0, id.RANDOM
+        beq     t0, v0, _end                // if on the random ID square, skip variant check
+        nop
+        li      t0, variant
+        lbu     t0, 0x0000(t0)              // t0 = variant_type selected
+        beqz    t0, _end                    // if not variant selected, skip
+        nop
+        sll     t2, v0, 0x0002              // t2 = offset in variant_table
+        li      t1, variant_table           // t1 = address of variant stage_id table
+        addu    t1, t1, t0                  // t1 = address of variant, unadjusted
+        addiu   t1, t1, -0x0001             // t1 = address of variant, adjusted
+        addu    t1, t1, t2                  // t1 = address of variant for the selected stage
+        lbu     t0, 0x0000(t1)              // t0 = variant stage_id
+        ori     t1, r0, 0x00FF
+        bnel    t0, t1, _end                // if there is a defined variant stage_id,
+        or      v0, t0, r0                  // then use it
 
+        _end:
         lw      t0, 0x0004(sp)              // ~
         lw      ra, 0x0008(sp)              // ~
         lw      t1, 0x000C(sp)              // ~
@@ -1199,101 +1136,123 @@ scope Stages {
     }
 
     // @ Description
-    // This is what Overlay.HOOKS_GO_HERE_ calls. It is the main() of Stages.asm
-    scope run_: {
-        addiu   sp, sp,-0x0028              // allocate stack space
-        sw      ra, 0x0004(sp)              // ~
-        sw      a0, 0x0008(sp)              // ~
-        sw      a1, 0x000C(sp)              // ~
-        sw      a2, 0x0010(sp)              // ~
-        sw      v0, 0x0014(sp)              // ~
-        sw      t0, 0x0018(sp)              // ~
-        sw      t1, 0x001C(sp)              // ~
-        sw      at, 0x0020(sp)              // save registers
+    // Updates pointers to strings so the live strings update
+    scope update_text_: {
+        addiu   sp, sp, -0x0010             // allocate stack space
+        sw      ra, 0x0004(sp)              // save ra
 
-        // check for L button press to toggle hazard mode
-        li      a0, Joypad.L                // a0 - button mask
-        li      a2, Joypad.PRESSED          // a2 - type
-        jal     Joypad.check_buttons_all_   // v0 = L pressed
+        // update the stage name text
+        _stage_name:
+        jal     get_stage_id_               // v0 = stage_id
         nop
-        beqz    v0, _draw                   // if not pressed, skip
-        nop
-        li      t0, Toggles.entry_hazard_mode
-        lw      t1, 0x0004(t0)              // t1 = hazard_mode
-        addiu   t1, t1, 0x0001              // t1 = t1 + 1
-        andi    t1, t1, 0x0003              // t1 between 0 and 3
-        sw      t1, 0x0004(t0)
-        lli     a0, FGM.menu.TOGGLE         // a0 - fgm_id
-        jal     FGM.play_                   // play menu sound
-        nop
+        li      a1, stage_name              // a1 = stage_name
+        lli     a0, id.RANDOM               // a0 = random
+        beql    a0, v0, _hazard_text        // don't draw RANDOM
+        sw      r0, 0x0000(a1)              // set stage name to blank
+        sll     v0, v0, 0x0002              // v0 = offset = stage_id * 4
+        li      a2, string_table            // a2 = address of string_table
+        addu    a2, a2, v0                  // a2 = address of string_table + offset
+        lw      a2, 0x0000(a2)              // a2 = address of string
+        sw      a2, 0x0000(a1)              // set stage name
 
-        _draw:
-        jal     draw_cursor_                // draw selection cursor
-        nop
-
-        jal     draw_icons_                 // draw stage icons
-        nop
-
-        jal     draw_names_                 // draw stage names
-        nop
-
-        jal     draw_page_number_           // draw page number
-        nop
-
-        // this block draws the hazards/movement on/off modal messages
-        lli     a0, 193                     // a0 - x
-        lli     a1, 158                     // a1 - uly
-        li      a2, string_hazards          // a2 = string table
-        jal     Overlay.draw_string_        // draw string
-        nop
-
-        lli     a0, 185                     // a0 - x
-        lli     a1, 168                     // a1 - uly
-        li      a2, string_movement         // a2 = string table
-        jal     Overlay.draw_string_        // draw string
-        nop
-
+        // update the hazards/movement on/off text
+        _hazard_text:
         li      t0, Toggles.entry_hazard_mode
         lw      t1, 0x0004(t0)              // t1 = hazard_mode
 
-        lli     a0, 255                     // a0 - x
-        lli     a1, 158                     // a1 - uly
+        li      a0, hazards_onoff           // a0 = pointer to string
         andi    t0, t1, 0x0001              // t0 = 1 if hazard_mode is 1 or 3, 0 otherwise
         li      a2, string_on               // a2 = string on
-        beqz    t0, _draw_hazards_on_off    // if hazards off, show off string
+        beqz    t0, _update_hazards_on_off  // if hazards on, use current a2
         nop
         li      a2, string_off              // a2 = string off
-        _draw_hazards_on_off:
-        jal     Overlay.draw_string_        // draw string
-        nop
+        _update_hazards_on_off:
+        sw      a2, 0x0000(a0)              // update pointer
 
-        lli     a0, 255                     // a0 - x
-        lli     a1, 168                     // a1 - uly
+        li      a0, movement_onoff          // a0 = pointer to string
         srl     t0, t1, 0x0001              // t0 = 1 if hazard_mode is 2 or 3, 0 otherwise
         li      a2, string_on               // a2 = string on
-        beqz    t0, _draw_movement_on_off   // if hazards off, show off string
+        beqz    t0, _update_movement_on_off // if movement on, use current a2
         nop
         li      a2, string_off              // a2 = string off
-        _draw_movement_on_off:
-        jal     Overlay.draw_string_        // draw string
+        _update_movement_on_off:
+        sw      a2, 0x0000(a0)              // update pointer
         nop
 
-        lw      ra, 0x0004(sp)              // ~
-        lw      a0, 0x0008(sp)              // ~
-        lw      a1, 0x000C(sp)              // ~
-        lw      a2, 0x0010(sp)              // ~
-        lw      v0, 0x0014(sp)              // ~
-        lw      t0, 0x0018(sp)              // ~
-        lw      t1, 0x001C(sp)              // ~
-        lw      at, 0x0020(sp)              // restore registers
-        addiu   sp, sp, 0x0028              // deallocate stack space
+        // show Layout text when there are alt layouts
+        lli     a0, id.RANDOM               // a0 = random
+        li      t0, original_stage_id
+        lbu     v1, 0x0000(t0)              // v1 = stage_id without variant
+        beql    a0, v1, _layout_group       // don't draw layout text for RANDOM
+        lli     a1, 0x0001                  // a1 = 1 (Display Off)
+
+        li      t1, variant_table           // t1 = address of variant stage_id table
+        sll     a2, v1, 0x0002              // a2 = offset of original stage_id
+        addu    t1, t1, a2                  // t1 = address of variants for the selected stage
+        lw      t3, 0x0000(t1)              // t3 = variants array
+        addiu   t2, r0, -0x0001             // t2 = 0xFFFFFFFF (no variants)
+        beql    t2, t3, _layout_group       // if no variants, then don't draw layout text
+        lli     a1, 0x0001                  // a1 = 1 (Display Off)
+
+        lli     a1, 0x0000                  // a1 = 0 (Display On)
+        li      t0, variant
+        lbu     t0, 0x0000(t0)              // t0 = variant_type selected
+        sll     t0, t0, 0x0002              // t0 = offset to layout text
+        li      a0, layout_pointer
+        li      t1, layout_text_table
+        addu    t1, t1, t0                  // t1 = address of layout string pointer
+        lw      t1, 0x0000(t1)              // t1 = address of layout string
+        sw      t1, 0x0000(a0)              // update pointer
+
+        _layout_group:
+        jal     Render.toggle_group_display_
+        lli     a0, 0xC                     // a0 = group
+
+        lw      ra, 0x0004(sp)              // restore ra
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        jr      ra
+        nop
+
+        string_on:;  String.insert("On")
+        string_off:;  String.insert("Off")
+
+        layout_NORMAL:; String.insert("Def.")
+        layout_DL:; String.insert("DL")
+        layout_O:; String.insert('~' + 1) // Omega
+
+        layout_text_table:
+        dw layout_NORMAL
+        dw layout_DL
+        dw layout_O
+    }
+
+    // @ Arguments
+    // a0 - hazard mode (0 - red, 1 - light blue, 2 - lighter blue, 3 - blue)
+    scope update_cursor_color_: {
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      t0, 0x0004(sp)              // ~
+        sw      t1, 0x0008(sp)              // ~
+
+        li      t0, colors                  // t0 = colors
+        sll     t1, a0, 0x0002              // t1 = offset to color
+        addu    t0, t0, t1                  // t0 = address of color
+        lw      t0, 0x0000(t0)              // t0 = color
+        lui     t1, 0x8013                  // t1 = cursor object
+        lw      t1, 0x4BDC(t1)              // ~
+        lw      t1, 0x0074(t1)              // t1 = cursor image struct
+        sw      t0, 0x0028(t1)              // update cursor color
+
+        lw      t0, 0x0004(sp)              // ~
+        lw      t1, 0x0008(sp)              // ~
+        addiu   sp, sp, 0x0010              // deallocate stack space
         jr      ra                          // return
         nop
 
-        string_hazards:; String.insert("Hazards:")
-        string_movement:;  String.insert("Movement:")
-        string_on:;  String.insert("On")
-        string_off:;  String.insert("Off")
+        colors:
+        dw      Color.high.RED              // RED
+        dw      0x0088FFFF                  // blue
+        dw      0x00BBFFFF                  // lighter blue
+        dw      Color.high.BLUE             // BLUE
     }
 
     // @ Description
@@ -1354,7 +1313,7 @@ scope Stages {
         li      a2, Joypad.PRESSED          // a2 - type
         jal     Joypad.check_buttons_all_   // v0 = z pressed?
         nop
-        beqz    v0, _end                   // if z not pressed, skip
+        beqz    v0, _hazard_toggle          // if z not pressed, skip
         nop
         li      t0, page_number             // ~
         lw      t1, 0x0000(t0)              // t1 = page number
@@ -1371,7 +1330,63 @@ scope Stages {
         b       _end_update
         nop
 
+        // check for L button press to toggle hazard mode
+        _hazard_toggle:
+        li      a0, Joypad.L                // a0 - button mask
+        li      a2, Joypad.PRESSED          // a2 - type
+        jal     Joypad.check_buttons_all_   // v0 = L pressed
+        nop
+        beqz    v0, _stage_variant          // if not pressed, skip
+        nop
+        li      t0, Toggles.entry_hazard_mode
+        lw      a0, 0x0004(t0)              // a0 = hazard_mode
+        addiu   a0, a0, 0x0001              // a0 = a0 + 1
+        andi    a0, a0, 0x0003              // a0 between 0 and 3
+        jal     update_cursor_color_
+        sw      a0, 0x0004(t0)              // update hazard_mode
+
+        _play_hazard_toggle_fgm:
+        lli     a0, FGM.menu.TOGGLE         // a0 - fgm_id
+        jal     FGM.play_                   // play menu sound
+        nop
+        b       _end
+        nop
+
+        // check for C-Down button press to enable cycling through stage variants
+        _stage_variant:
+        li      a0, Joypad.CD               // a0 - button mask
+        li      a2, Joypad.PRESSED          // a2 - type
+        jal     Joypad.check_buttons_all_   // v0 = C-Down pressed
+        nop
+        beqz    v0, _end                    // if not pressed, skip
+        nop
+        li      t0, variant
+        lbu     t1, 0x0000(t0)              // t1 = variant
+        addiu   t1, t1, 0x0001              // t1++
+        sltiu   at, t1, 0x0003              // at = 1 if t1 < 3
+        beqzl   at, pc() + 8                // if t1 >= 3, then set t1 to 0
+        or      t1, r0, r0                  // t1 = 0
+        sb      t1, 0x0000(t0)              // save variant
+        // update preview
+        lui     a0, 0x8013
+        jal     0x801329AC
+        lw      a0, 0x04BD8(a0)
+        lui     a1, 0x8013
+        lw      a1, 0x04BD8(a1)
+        lui     a0, 0x8013
+        jal     0x80132A58
+        lw      a0, 0x04BDC(a0)
+        lui     a0, 0x8013
+        jal     0x80132430
+        lw      a0, 0x04BD8(a0)
+        jal     0x801333B4
+        or      a0, v0, r0
+
         _end:
+        // update text
+        jal     update_text_
+        nop
+
         lw      ra, 0x0004(sp)              // ~
         lw      a0, 0x0008(sp)              // ~
         lw      a1, 0x000C(sp)              // ~
@@ -1383,9 +1398,23 @@ scope Stages {
         addiu   sp, sp, 0x0028              // deallocate stack space
         j       0x801342F4                  // skip (from original line 1)
         nop
-        
 
         _end_update:
+        // update the image_table_pointer so the icons update based on page
+        lw      t1, 0x0000(t0)              // t1 = PAGE
+        li      t0, image_table_pointer     // t0 = image_table_pointer
+        lli     at, NUM_ICONS               // at = NUM_ICONS
+        multu   at, t1                      // at = NUM_ICONS * PAGE
+        mflo    at                          // ~
+        sll     at, at, 0x0002              // at = offset to first image address in image_table
+        li      t1, image_table             // t1 = image_table start addres
+        addu    t1, t1, at                  // t1 = new image_table start address
+        sw      t1, 0x0000(t0)              // store new image_table address
+
+        // update text
+        jal     update_text_
+        nop
+
         lw      ra, 0x0004(sp)              // ~
         lw      a0, 0x0008(sp)              // ~
         lw      a1, 0x000C(sp)              // ~
@@ -1402,10 +1431,6 @@ scope Stages {
         nop
     }
     
-
-
-
-
     // right
     scope right_: {
         OS.patch_start(0x0014FD78, 0x80134208)
@@ -1428,20 +1453,20 @@ scope Stages {
 
         // check bounds
         li      t0, column                  // ~
-        lw      t1, 0x0000(t0)              // t1 = column
+        lbu     t1, 0x0000(t0)              // t1 = column
         slti    at, t1, NUM_COLUMNS - 1     // if (column < NUM_COLUMNS - 1)
         bnez    at, _normal                 // then go to next colum
         nop
 
         // update cursor (go to first column)
-        sw      r0, 0x0000(t0)              // else go to first column
+        sb      r0, 0x0000(t0)              // else go to first column
         b       _end                        // skip to end
         nop
 
         // update cursor (go right one)
         _normal:
         addi    t1, t1, 0x0001              // t1 = column++
-        sw      t1, 0x0000(t0)              // update column
+        sb      t1, 0x0000(t0)              // update column
 
         _end:
         lw      t0, 0x0004(sp)              // ~
@@ -1478,20 +1503,20 @@ scope Stages {
 
         // check bounds
         li      t0, column                  // ~
-        lw      t1, 0x0000(t0)              // t1 = column
+        lbu     t1, 0x0000(t0)              // t1 = column
         bnez    t1, _normal                 // if (!first_column)
         nop
 
         // update cursor (go to last column)
         lli     t1, NUM_COLUMNS - 1         // ~
-        sw      t1, 0x0000(t0)              // else go to last column
+        sb      t1, 0x0000(t0)              // else go to last column
         b       _end                        // skip to end
         nop
 
         // update cursor (go left one)
         _normal:
         addi    t1, t1,-0x0001              // t1 = column--
-        sw      t1, 0x0000(t0)              // update column
+        sb      t1, 0x0000(t0)              // update column
 
         _end:
         lw      t0, 0x0004(sp)              // ~
@@ -1527,20 +1552,20 @@ scope Stages {
 
         // check bounds
         li      t0, row                     // ~
-        lw      t1, 0x0000(t0)              // t1 = row
+        lbu     t1, 0x0000(t0)              // t1 = row
         slti    at, t1, NUM_ROWS - 1        // if (row < NUM_ROWS - 1)
         bnez    at, _normal                 // then go to next colum
         nop
 
         // update cursor (go to first row)
-        sw      r0, 0x0000(t0)              // else go to first column
+        sb      r0, 0x0000(t0)              // else go to first row
         b       _end                        // skip to end
         nop
 
         // update cursor (go down one)
         _normal:
         addi    t1, t1, 0x0001              // t1 = row++
-        sw      t1, 0x0000(t0)              // update row
+        sb      t1, 0x0000(t0)              // update row
 
         _end:
         lw      t0, 0x0004(sp)              // ~
@@ -1575,20 +1600,20 @@ scope Stages {
 
         // check bounds
         li      t0, row                     // ~
-        lw      t1, 0x0000(t0)              // t1 = row
+        lbu     t1, 0x0000(t0)              // t1 = row
         bnez    t1, _normal                 // if (!first_row)
         nop
 
         // update cursor (go to last row)
         lli     t1, NUM_ROWS - 1            // ~
-        sw      t1, 0x0000(t0)              // else go to last row
+        sb      t1, 0x0000(t0)              // else go to last row
         b       _end                        // skip to end
         nop
 
         // update cursor (go up one)
         _normal:
         addi    t1, t1,-0x0001              // t1 = row--
-        sw      t1, 0x0000(t0)              // update row
+        sb      t1, 0x0000(t0)              // update row
 
         _end:
         lw      t0, 0x0004(sp)              // ~
@@ -1600,10 +1625,6 @@ scope Stages {
         j       _return
         nop
     }
-
-    // @ Description
-    // These patches disable the cursor id from being updated in update_?_ functions.
-
 
     // @ Description
     // Adds a stage to the random list if it's toggled on.
@@ -1741,10 +1762,81 @@ scope Stages {
     OS.patch_end()
 
     // @ Description
+    // Sets up custom display
+    scope setup_: {
+        addiu   sp, sp,-0x0030              // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+
+        Render.load_font()                                        // load font for strings
+        Render.load_file(0xC5, Render.file_pointer_1)             // load button images into file_pointer_1
+        Render.load_file(File.STAGE_ICONS, Render.file_pointer_2) // load stage icons into file_pointer_2
+        Render.load_file(File.CSS_IMAGES, Render.file_pointer_3)  // load CSS images into file_pointer_3
+
+        // update string pointers for the strings we're about to draw
+        jal     update_text_
+        nop
+
+        // draw icons
+        li      a0, Render.file_pointer_2                // a0 = pointer to base address for stock icons
+        lw      a0, 0x0000(a0)                           // a0 = base address for stock icons
+        jal     update_stage_icons_
+        nop
+        Render.draw_texture_grid(1, 4, image_table_pointer, Render.update_live_grid_, 0x220, 0x41F00000, 0x41A00000, 0xFFFFFFFF, 0xFFFFFFFF, NUM_ICONS, 6, 2)
+
+        // draw strings
+        Render.draw_string(4, 3, string_page, Render.NOOP, 0x41E80000, 0x42E70000, 0xFFFFFFFF, 0x3F600000, Render.alignment.LEFT)
+        Render.draw_number_adjusted(4, 3, page_number, 1, Render.update_live_string_, 0x42800000, 0x42E70000, 0xFFFFFFFF, 0x3F600000, Render.alignment.LEFT)
+        Render.draw_string(4, 3, string_pagination, Render.NOOP, 0x42A80000, 0x42E70000, 0xFFFFFFFF, 0x3F600000, Render.alignment.LEFT)
+        Render.draw_string(4, 3, string_hazard_mode, Render.NOOP, 0x43440000, 0x42E70000, 0xFFFFFFFF, 0x3F600000, Render.alignment.LEFT)
+        Render.draw_string(4, 3, string_hazards, Render.NOOP, 0x43780000, 0x431D0000, 0xFFFFFFFF, Render.FONTSIZE_DEFAULT, Render.alignment.RIGHT)
+        Render.draw_string_pointer(4, 3, hazards_onoff, Render.update_live_string_, 0x437C0000, 0x431d0000, 0xFFFFFFFF, Render.FONTSIZE_DEFAULT, Render.alignment.LEFT)
+        Render.draw_string(4, 3, string_movement, Render.NOOP, 0x43780000, 0x43270000, 0xFFFFFFFF, Render.FONTSIZE_DEFAULT, Render.alignment.RIGHT)
+        Render.draw_string_pointer(4, 3, movement_onoff, Render.update_live_string_, 0x437C0000, 0x43270000, 0xFFFFFFFF, Render.FONTSIZE_DEFAULT, Render.alignment.LEFT)
+        Render.draw_string_pointer(4, 3, stage_name, Render.update_live_string_, 0x43650000, 0x43510000, 0xFFFFFFFF, Render.FONTSIZE_DEFAULT, Render.alignment.CENTER)
+
+        // draw button images
+        Render.draw_texture_at_offset(4, 3, Render.file_pointer_1, Render.file_c5_offsets.Z, Render.NOOP, 0x42960000, 0x42E20000, 0x848484FF, 0x303030FF, 0x3F800000)
+        Render.draw_texture_at_offset(4, 3, Render.file_pointer_1, Render.file_c5_offsets.R, Render.NOOP, 0x42B40000, 0x42E50000, 0x848484FF, 0x303030FF, 0x3F800000)
+        Render.draw_texture_at_offset(4, 3, Render.file_pointer_1, Render.file_c5_offsets.L, Render.NOOP, 0x43340000, 0x42E50000, 0x848484FF, 0x303030FF, 0x3F800000)
+
+        Render.draw_string(4, 0xC, string_layout, Render.NOOP, 0x43780000, 0x43380000, 0xFFFFFFFF, Render.FONTSIZE_DEFAULT, Render.alignment.RIGHT)
+        Render.draw_string_pointer(4, 0xC, layout_pointer, Render.update_live_string_, 0x437C0000, 0x43380000, 0xFFFFFFFF, Render.FONTSIZE_DEFAULT, Render.alignment.LEFT)
+        Render.draw_texture_at_offset(4, 0xC, Render.file_pointer_3, 0x0688, Render.NOOP, 0x43650000, 0x43380000, 0xC0CC00FF, 0x000000FF, 0x3F800000)
+
+        lw      ra, 0x0004(sp)              // restore registers
+        addiu   sp, sp, 0x0030              // deallocate stack space
+
+        jr      ra
+        nop
+    }
+
+    string_page:;  String.insert("Page:")
+    string_pagination:;  String.insert("/     : Next/Prev")
+    string_hazard_mode:;  String.insert(": Hazard Mode")
+    string_hazards:; String.insert("Hazards:")
+    string_movement:;  String.insert("Movement:")
+    string_layout:;  String.insert("Layout (  ):")
+
+    layout_pointer:; dw 0x00000000
+
+    // @ Description
     // Pointers to the stage tables that are utilized via toggles
     stage_table:
     dw stage_table_normal
     dw stage_table_tournament
+
+    // @ Description
+    // Pointers to On/Off strings for the given toggle
+    hazards_onoff:; dw 0x00000000
+    movement_onoff:; dw 0x00000000
+
+    // @ Description
+    // Holds the RAM address of the stage icons
+    image_table:; fill NUM_ICONS * 4 * NUM_PAGES
+
+    // @ Description
+    // Pointer to the first image for a page in image_table, used when rendering the grid
+    image_table_pointer:; dw image_table
 
     OS.align(16)
 
@@ -1800,8 +1892,8 @@ scope Stages {
     db id.GREAT_BAY                         // 2B
     db id.FOD					            // 2C
     db id.TOH                               // 2D
-    db id.SMBBF                             // 2E
-    db id.SMBO                              // 2F
+    db id.SMASHKETBALL                      // 39
+    db id.NORFAIR                           // 3A
     db id.DELFINO                           // 30
     db id.PEACH2                            // 31
     db id.CORNERIA2                         // 32
@@ -1812,19 +1904,19 @@ scope Stages {
     db id.GLACIAL                           // 36
     db id.HTEMPLE                           // 37
     db id.NPC                               // 38
-    db id.SMASHKETBALL                      // 39
-    db id.NORFAIR                           // 3A
     db id.FALLS                             // 3C
 	db id.FLAT_ZONE							// 3B
     db id.FLAT_ZONE_2                       // 40   
     db id.OSOHE                             // 3D
     db id.YOSHI_STORY_2                     // 3E
     db id.GERUDO                            // 41
-    db id.RANDOM                            // 42
-    db id.RANDOM                            // 43
-    db id.RANDOM                            // 44
+    db id.GOOMBA_ROAD                       // 42
+    db id.WORLD1                            // 43
+    db id.BOWSERS_KEEP                      // 44
     db id.RANDOM                            // 45
     db id.RANDOM                            // 46
+    db id.RANDOM                            // 47
+	db id.RANDOM                            // 47
     db id.RANDOM                            // 47
 	db id.RANDOM                            // 47
 
@@ -1844,7 +1936,6 @@ scope Stages {
     db id.SPIRALM                           // 14
     db id.TOH                               // 2D
     db id.MUTE                              // 1C
-    db id.SMBBF                             // 2E
     db id.BATTLEFIELD                       // 10
     db id.WARIOWARE                         // 24
     db id.FIRST_DESTINATION                 // 0E
@@ -1852,16 +1943,17 @@ scope Stages {
     db id.GLACIAL                           // 35
     db id.DR_MARIO                          // 16
     db id.SMASHVILLE2                       // 28
+    db id.YOSHI_STORY_2						// 23
     db id.RANDOM                            // 0D
     // Page 2 - Semi-Viable
-    db id.SMBO                              // 2F
-	db id.YOSHI_STORY_2						// 23
+	db id.GOOMBA_ROAD                       // 28
 	db id.NPC                       		// 28
 	db id.MINI_YOSHIS_ISLAND                // 0D
     db id.BOWSERB                           // 17
 	db id.FINAL_DESTINATION                 // 0B
     db id.CORNERIACITY                      // 2A
     db id.GANONS_TOWER                      // 13
+	db id.BOWSERS_KEEP
 	db id.SKYLOFT                           // 27
     db id.DELFINO                           // 30
     db id.META_CRYSTAL                      // 05
@@ -1892,7 +1984,7 @@ scope Stages {
     db id.PLANET_ZEBES                      // 1E
     db id.RANDOM                            // 0
     // Page 4 - Non-Viable
-    db id.PEACH2                            // 31
+	db id.PEACH2                            // 31
 	db id.OSOHE                     		// 06
 	db id.MUSHROOM_KINGDOM                  // 04
 	db id.BLUE					            // 33
@@ -1900,7 +1992,8 @@ scope Stages {
 	db id.SHOWDOWN                          // 0F
 	db id.ONETT                             // 34
 	db id.SMASHKETBALL                      // 0
-    db id.DREAM_LAND_BETA_1                 // 20
+    db id.WORLD1                            // 0
+	db id.DREAM_LAND_BETA_1                 // 20
     db id.DREAM_LAND_BETA_2                 // 21
     db id.HOW_TO_PLAY                       // 22
     db id.RANDOM                            // 0
@@ -1909,35 +2002,7 @@ scope Stages {
     db id.RANDOM                            // 0
     db id.RANDOM                            // 0
     db id.RANDOM                            // 0
-    db id.RANDOM                            // 0
     OS.align(4)
-
-    // @ Description
-    // Coordinates of stage icons in vanilla Super Smash Bros.
-    position_table:
-    // row 0
-    dw 033, 020                             // 00
-    dw 075, 020                             // 01
-    dw 117, 020                             // 02
-    dw 159, 020                             // 03
-    dw 201, 020                             // 04
-    dw 243, 020                             // 05
-
-    // row 1
-    dw 033, 052                             // 06
-    dw 075, 052                             // 07
-    dw 117, 052                             // 08
-    dw 159, 052                             // 09
-    dw 201, 052                             // 0A
-    dw 243, 052                             // 0B
-
-    // row 2
-    dw 033, 084                             // 0C
-    dw 075, 084                             // 0D
-    dw 117, 084                             // 0E
-    dw 159, 084                             // 0F
-    dw 201, 084                             // 10
-    dw 243, 084                             // 11
 
     // something something function funciton
     function_table:
@@ -2008,10 +2073,10 @@ scope Stages {
     dw function.CLONE                       // N64
     dw function.CLONE                       // Mute City
     dw function.CLONE                       // Mad Monster Mansion
-    dw function.CLONE                       // SMBBF
-    dw function.CLONE                       // SMBO
+    dw function.MUSHROOM_KINGDOM            // Mushroom Kingdom DL
+    dw function.MUSHROOM_KINGDOM            // Mushroom Kingdom Omega
     dw function.PEACHS_CASTLE               // Bowser's Stadium
-    dw function.CLONE                       // Peach's Castle II
+    dw function.PEACHS_CASTLE               // Peach's Castle II
     dw function.CLONE                       // Delfino
     dw function.CLONE                       // Corneria
     dw function.PEACHS_CASTLE               // Kitchen Island
@@ -2044,197 +2109,192 @@ scope Stages {
 	dw function.PEACHS_CASTLE               // Flat Zone II
 	dw function.CLONE                       // Gerudo Valley
 	dw OS.NULL                              // Young Link Board the Platforms
+	dw OS.NULL                              // Falco Board the Platforms
+	dw OS.NULL                              // Poly Board the Platforms
+	dw function.HYRULE_CASTLE               // Hyrule Castle DL
+	dw function.HYRULE_CASTLE               // Hyrule Castle Omega
+	dw function.CONGO_JUNGLE                // Congo Jungle DL
+	dw function.CONGO_JUNGLE                // Congo Jungle Omega
+	dw function.PEACHS_CASTLE               // Peach's Castle DL
+	dw function.PEACHS_CASTLE               // Peach's Castle Omega
+    dw OS.NULL                              // Wario Board the Platforms
+    dw function.CLONE                       // Fray's Stage - Night
+	dw function.CLONE                       // Goomba Road
+	dw OS.NULL                              // Lucas Board the Platforms
+	dw function.SECTOR_Z                    // Sector Z Dreamland
+	dw function.CONGO_JUNGLE                // Saffron City DL
+	dw function.YOSHIS_ISLAND				// Yoshi's Island DL
+	dw function.PLANET_ZEBES                // Planet Zebes DL
+	dw function.SECTOR_Z                    // Sector Z Omega
+	dw function.CONGO_JUNGLE                // Saffron City Omega
+	dw function.YOSHIS_ISLAND				// Yoshi's Island Omega
+	dw function.DREAM_LAND					// Dreamland Omega
+	dw function.PLANET_ZEBES			    // Zebes Omega
+	dw OS.NULL                              // Bowser Break the Targets
+	dw OS.NULL                              // Bowser Board the Platforms
+	dw function.PEACHS_CASTLE               // Bowser's Keep
+
 
     // @ Description
-    // Textures for the SSS icons
+    // Offsets to image footer struct for stage icons sorted by stage id
+    icon_offset_table:
+    dw 0x00000978                           // Peach's Castle
+    dw 0x00001338                           // Sector Z
+    dw 0x00001CF8                           // Congo Jungle
+    dw 0x000026B8                           // Planet Zebes
+    dw 0x00003078                           // Hyrule Castle
+    dw 0x00003A38                           // Yoshi's Island
+    dw 0x000043F8                           // Dream Land
+    dw 0x00004DB8                           // Saffron City
+    dw 0x00005778                           // Mushroom Kingdom
+    dw 0x00006138                           // Dream Land Beta 1
+    dw 0x00006AF8                           // Dream Land Beta 2
+    dw 0x000074B8                           // How to Play
+    dw 0x00003A38                           // Mini Yoshi's Island
+    dw 0x00007E78                           // Meta Crystal
+    dw 0x00008838                           // Duel Zone
+    dw 0x0000A578                           // Race to the Finish
+    dw 0x000091F8                           // Final Destination
+    dw 0x0000A578                           // BTT Mario
+    dw 0x0000A578                           // BTT Fox
+    dw 0x0000A578                           // BTT DK
+    dw 0x0000A578                           // BTT Samus
+    dw 0x0000A578                           // BTT Luigi
+    dw 0x0000A578                           // BTT Link
+    dw 0x0000A578                           // BTT Yoshi
+    dw 0x0000A578                           // BTT Falcon
+    dw 0x0000A578                           // BTT Kirby
+    dw 0x0000A578                           // BTT Pikachu
+    dw 0x0000A578                           // BTT Jigglypuff
+    dw 0x0000A578                           // BTT Ness
+    dw 0x0000A578                           // BTP Mario
+    dw 0x0000A578                           // BTP Fox
+    dw 0x0000A578                           // BTP DK
+    dw 0x0000A578                           // BTP Samus
+    dw 0x0000A578                           // BTP Luigi
+    dw 0x0000A578                           // BTP Link
+    dw 0x0000A578                           // BTP Yoshi
+    dw 0x0000A578                           // BTP Falcon
+    dw 0x0000A578                           // BTP Kirby
+    dw 0x0000A578                           // BTP Pikachu
+    dw 0x0000A578                           // BTP Jigglypuff
+    dw 0x0000A578                           // BTP Ness
+    dw 0x0000AF38                           // Deku Tree
+    dw 0x0000B8F8                           // First Destination
+    dw 0x0000C2B8                           // Ganon's Tower
+    dw 0x0000CC78                           // Kalos Pokemon League
+    dw 0x0000D638                           // Pokemon Stadium 2
+    dw 0x0000DFF8                           // Skyloft
+    dw 0x0000E9B8                           // Glacial River
+    dw 0x0000F378                           // WarioWare
+    dw 0x0000FD38                           // Batlefield
+    dw 0x00023EF8                           // Flat Zone
+    dw 0x000110B8                           // Dr. Mario
+    dw 0x00011A78                           // Cool Cool Mountain
+    dw 0x00012438                           // Dragon King
+    dw 0x00012DF8                           // Great Bay
+    dw 0x000137B8                           // Fray's Stage
+    dw 0x00014178                           // Tower of Heaven
+    dw 0x00014B38                           // Fountain of Dreams
+    dw 0x000154F8                           // Muda Kingdom
+    dw 0x00015EB8                           // Mementos
+    dw 0x00016878                           // Showdown
+    dw 0x00017238                           // Spiral Mountain
+    dw 0x00017BF8                           // N64
+    dw 0x000185B8                           // Mute City
+    dw 0x00018F78                           // Mad Monster Mansion
+    dw 0x00019938                           // Mushroom Kingdom DL
+    dw 0x0001A2F8                           // Mushroom Kingdom Omega
+    dw 0x0001ACB8                           // Bowser's Stadium
+    dw 0x0001B678                           // Peach's Castle II
+    dw 0x0001C038                           // Delfino Plaza
+    dw 0x0001C9F8                           // Corneria
+    dw 0x0001D3B8                           // Kitchen Island
+    dw 0x0001DD78                           // Big Blue
+    dw 0x0001E738                           // Onett
+    dw 0x0001F0F8                           // Zebes Landing
+    dw 0x0001FAB8                           // Frosty Village
+    dw 0x00020478                           // Smashville
+    dw 0x0000A578                           // BTT Dr. Mario
+    dw 0x0000A578                           // BTT Ganondorf
+    dw 0x0000A578                           // BTT Young Link
+    dw 0x00012DF8                           // Great Bay SSS
+    dw 0x0000A578                           // BTT Dark Samus
+    dw 0x0000A578                           // BTT Stage 1
+    dw 0x0000A578                           // BTT Falco
+    dw 0x0000A578                           // BTT Wario
+    dw 0x000217F8                           // Hyrule Temple
+    dw 0x0000A578                           // BTT Lucas
+    dw 0x0000A578                           // BTP Ganondorf
+    dw 0x000221B8                           // New Pork City
+    dw 0x0000A578                           // BTP Dark Samus
+    dw 0x00022B78                           // Smashketball
+    dw 0x0000A578                           // BTP Dr. Mario
+    dw 0x00023538                           // Norfair
+    dw 0x000106F8                           // Corneria City
+    dw 0x00020E38                           // Congo Falls
+    dw 0x000248B8                           // Osohe
+    dw 0x00025278                           // Yoshi's Story II
+    dw 0x00025C38                           // World 1-1
+    dw 0x000265F8                           // Flat Zone II
+    dw 0x00026FB8                           // Gerudo Valley
+    dw 0x0000A578                           // BTP Young Link
+	dw 0x0000A578                           // BTP Falco
+	dw 0x0000A578                           // BTP Poly
+	dw 0x00003078                           // Hyrule Castle DL
+	dw 0x00003078                           // Hyrule Castle Omega
+	dw 0x00001CF8                           // Congo Jungle DL
+	dw 0x00001CF8                           // Congo Jungle Omega
+	dw 0x00000978                           // Peach's Castle DL
+	dw 0x00000978                           // Peach's Castle Omega
+    dw 0x0000A578                           // BTP Wario
+    dw 0x000137B8                           // Fray's Stage
+	dw 0x00027978                           // Goomba Road
+	dw 0x0000A578                           // BTP Lucas
+	dw 0x00001338                           // Sector Z Dreamland
+	dw 0x00004DB8                           // Saffron City Dreamland
+	dw 0x00003A38                           // Yoshi's Island Dreamland
+	dw 0x000026B8                           // Planet Zebes Dreamland
+	dw 0x00001338                           // Sector Z Omega
+	dw 0x00004DB8                           // Saffron City Omega
+	dw 0x00003A38                           // Yoshi's Island Omega
+	dw 0x000043F8                           // Dream Land Omega
+	dw 0x000026B8                           // Planet Zebes Omega
+	dw 0x0000A578                           // BTT Bowser
+	dw 0x0000A578                           // BTP Bowser
+	dw 0x00028338                           // Bowser's Keep
 
-    // default stages
-    insert icon_peachs_castle,          "../textures/icon_peachs_castle.rgba5551"
-    insert icon_sector_z,               "../textures/icon_sector_z.rgba5551"
-    insert icon_congo_jungle,           "../textures/icon_congo_jungle.rgba5551"
-    insert icon_planet_zebes,           "../textures/icon_planet_zebes.rgba5551"
-    insert icon_hyrule_castle,          "../textures/icon_hyrule_castle.rgba5551"
-    insert icon_yoshis_island,          "../textures/icon_yoshis_island.rgba5551"
-    insert icon_dream_land,             "../textures/icon_dream_land.rgba5551"
-    insert icon_saffron_city,           "../textures/icon_saffron_city.rgba5551"
-    insert icon_mushroom_kingdom,       "../textures/icon_mushroom_kingdom.rgba5551"
-    insert icon_dream_land_beta_1,      "../textures/icon_dream_land_beta_1.rgba5551"
-    insert icon_dream_land_beta_2,      "../textures/icon_dream_land_beta_2.rgba5551"
-    insert icon_how_to_play,            "../textures/icon_how_to_play.rgba5551"
-    insert icon_mini_yoshis_island,     "../textures/icon_yoshis_island.rgba5551"
-    insert icon_meta_crystal,           "../textures/icon_meta_crystal.rgba5551"
-    insert icon_duel_zone,              "../textures/icon_duel_zone.rgba5551"
-    insert icon_final_destination,      "../textures/icon_final_destination.rgba5551"
-    insert icon_random,                 "../textures/icon_random.rgba5551"
-    insert icon_btx,                    "../textures/icon_btx.rgba5551"
-
-    // new stages
-    insert icon_deku_tree,              "../textures/icon_deku_tree.rgba5551"
-    insert icon_first_destination,      "../textures/icon_first_destination.rgba5551"
-    insert icon_ganons_tower,           "../textures/icon_ganons_tower.rgba5551"
-    insert icon_kalos_pokemon_league,   "../textures/icon_kalos_pokemon_league.rgba5551"
-    insert icon_pokemon_stadium_2,      "../textures/icon_pokemon_stadium_2.rgba5551"
-    insert icon_skyloft,                "../textures/icon_skyloft.rgba5551"
-    insert icon_glacial,                "../textures/icon_glacial.rgba5551"
-    insert icon_warioware,              "../textures/icon_warioware.rgba5551"
-    insert icon_battlefield,            "../textures/icon_battlefield.rgba5551"
-    insert icon_corneria_city,          "../textures/icon_corneria_city.rgba5551"
-    insert icon_dr_mario,               "../textures/icon_dr_mario.rgba5551"
-    insert icon_cool_cool_mountain,     "../textures/icon_cool_cool_mountain.rgba5551"
-    insert icon_dragon_king,            "../textures/icon_dragon_king.rgba5551"
-    insert icon_great_bay,              "../textures/icon_great_bay.rgba5551"
-    insert icon_frays_stage,            "../textures/icon_frays_stage.rgba5551"
-    insert icon_toh,                    "../textures/icon_toh.rgba5551"
-	insert icon_fod,					"../textures/icon_fod.rgba5551"
-    insert icon_muda,                   "../textures/icon_muda.rgba5551"
-    insert icon_mementos,               "../textures/icon_mementos.rgba5551"
-    insert icon_showdown,               "../textures/icon_showdown.rgba5551"
-    insert icon_spiralm,                "../textures/icon_spiralm.rgba5551"
-    insert icon_n64,                    "../textures/icon_n64.rgba5551"
-    insert icon_mute,                   "../textures/icon_mute.rgba5551"
-    insert icon_madmm,                  "../textures/icon_madmm.rgba5551"
-    insert icon_smbbf,                  "../textures/icon_smbbf.rgba5551"
-    insert icon_smbo,                   "../textures/icon_smbo.rgba5551"
-    insert icon_bowserb,                "../textures/icon_bowserb.rgba5551"
-    insert icon_peach2,                 "../textures/icon_peach2.rgba5551"
-    insert icon_delfino,                "../textures/icon_delfino.rgba5551"
-    insert icon_corneria2,              "../textures/icon_corneria2.rgba5551"
-    insert icon_kitchen,                "../textures/icon_kitchen.rgba5551"
-    insert icon_blue,                   "../textures/icon_blue.rgba5551"
-    insert icon_onett,                  "../textures/icon_onett.rgba5551"
-    insert icon_zlanding,               "../textures/icon_zlanding.rgba5551"
-    insert icon_frosty,                 "../textures/icon_frosty.rgba5551"
-    insert icon_smashville2,            "../textures/icon_smashville.rgba5551"
-    insert icon_falls,                  "../textures/icon_falls.rgba5551"
-    insert icon_hyrule_temple,          "../textures/icon_hyrule_temple.rgba5551"
-    insert icon_npc,                    "../textures/icon_npc.rgba5551"
-    insert icon_smashketball,           "../textures/icon_smashketball.rgba5551"
-	insert icon_norfair,           		"../textures/icon_norfair.rgba5551"
-	insert icon_flat_zone,           	"../textures/icon_flat_zone.rgba5551"
-	insert icon_osohe,           		"../textures/icon_osohe.rgba5551"
-	insert icon_yoshi_story_2,          "../textures/icon_yoshi_story_2.rgba5551"
-	insert icon_world1,          		"../textures/icon_world1.rgba5551"
-	insert icon_flat_zone_2,          	"../textures/icon_flat_zone_2.rgba5551"
-	insert icon_gerudo,          	    "../textures/icon_gerudo.rgba5551"
-	
-
-    // sorted by stage id
-    icon_table:
-    dw icon_peachs_castle                   // Peach's Castle
-    dw icon_sector_z                        // Sector Z
-    dw icon_congo_jungle                    // Congo Jungle
-    dw icon_planet_zebes                    // Planet Zebes
-    dw icon_hyrule_castle                   // Hyrule Castle
-    dw icon_yoshis_island                   // Yoshi's Island
-    dw icon_dream_land                      // Dream Land
-    dw icon_saffron_city                    // Saffron City
-    dw icon_mushroom_kingdom                // Mushroom Kingdom
-    dw icon_dream_land_beta_1               // Dream Land Beta 1
-    dw icon_dream_land_beta_2               // Dream Land Beta 2
-    dw icon_how_to_play                     // How to Play
-    dw icon_mini_yoshis_island              // Mini Yoshi's Island
-    dw icon_meta_crystal                    // Meta Crystal
-    dw icon_duel_zone                       // Duel Zone
-    dw icon_btx                             // Race to the Finish
-    dw icon_final_destination               // Final Destination
-    dw icon_btx                             // BTT Mario
-    dw icon_btx                             // BTT Fox
-    dw icon_btx                             // BTT DK
-    dw icon_btx                             // BTT Samus
-    dw icon_btx                             // BTT Luigi
-    dw icon_btx                             // BTT Link
-    dw icon_btx                             // BTT Yoshi
-    dw icon_btx                             // BTT Falcon
-    dw icon_btx                             // BTT Kirby
-    dw icon_btx                             // BTT Pikachu
-    dw icon_btx                             // BTT Jigglypuff
-    dw icon_btx                             // BTT Ness
-    dw icon_btx                             // BTP Mario
-    dw icon_btx                             // BTP Fox
-    dw icon_btx                             // BTP DK
-    dw icon_btx                             // BTP Samus
-    dw icon_btx                             // BTP Luigi
-    dw icon_btx                             // BTP Link
-    dw icon_btx                             // BTP Yoshi
-    dw icon_btx                             // BTP Falcon
-    dw icon_btx                             // BTP Kirby
-    dw icon_btx                             // BTP Pikachu
-    dw icon_btx                             // BTP Jigglypuff
-    dw icon_btx                             // BTP Ness
-    dw icon_deku_tree                       // Deku Tree
-    dw icon_first_destination               // First Destination
-    dw icon_ganons_tower                    // Ganon's Tower
-    dw icon_kalos_pokemon_league            // Kalos Pokemon League
-    dw icon_pokemon_stadium_2               // Pokemon Stadium 2
-    dw icon_skyloft                         // Skyloft
-    dw icon_glacial                         // Glacial River
-    dw icon_warioware                       // WarioWare
-    dw icon_battlefield                     // Batlefield
-    dw icon_flat_zone	                    // Flat Zone
-    dw icon_dr_mario                        // Dr. Mario
-    dw icon_cool_cool_mountain              // Cool Cool Mountain
-    dw icon_dragon_king                     // Dragon King
-    dw icon_great_bay                       // Great Bay
-    dw icon_frays_stage                     // Fray's Stage
-    dw icon_toh                             // Tower of Heaven
-	dw icon_fod								// Fountain of Dreams
-    dw icon_muda                            // Muda Kingdom
-    dw icon_mementos                        // Mementos
-    dw icon_showdown                        // Showdown
-    dw icon_spiralm                         // Spiral Mountain
-    dw icon_n64                             // N64
-    dw icon_mute                            // Mute City
-    dw icon_madmm                           // Mad Monster Mansion
-    dw icon_smbbf                           // Mushroom Kingdom BF
-    dw icon_smbo                            // Mushroom Kingdom Omega
-    dw icon_bowserb                         // Bowser's Stadium
-    dw icon_peach2                          // Peach's Castle II
-    dw icon_delfino                         // Delfino Plaza
-    dw icon_corneria2                       // Corneria
-    dw icon_kitchen                         // Kitchen Island
-    dw icon_blue                            // Big Blue
-    dw icon_onett                           // Onett
-    dw icon_zlanding                        // Zebes Landing
-    dw icon_frosty                          // Frosty Village
-    dw icon_smashville2                     // Smashville
-    dw icon_btx                             // BTT Dr. Mario
-    dw icon_btx                             // BTT Ganondorf
-    dw icon_btx                             // BTT Young Link
-    dw icon_great_bay                       // Great Bay SSS
-    dw icon_btx                             // BTT Dark Samus
-    dw icon_btx                             // BTT Stage 1
-    dw icon_btx                             // BTT Falco
-    dw icon_btx                             // BTT Wario
-    dw icon_hyrule_temple                   // Hyrule Temple
-    dw icon_btx                             // BTT Lucas
-    dw icon_btx                             // BTP Ganondorf
-    dw icon_npc                             // New Pork City
-    dw icon_btx                             // BTP Dark Samus
-    dw icon_smashketball                    // Smashketball
-	dw icon_btx                             // BTP Dr. Mario
-	dw icon_norfair                         // Norfair
-	dw icon_corneria_city                   // Corneria City
-	dw icon_falls                   		// Congo Falls
-	dw icon_osohe                   		// Osohe
-	dw icon_yoshi_story_2                   // Yoshi's Story II
-	dw icon_world1		                    // World 1-1
-	dw icon_flat_zone_2                   	// Flat Zone II
-	dw icon_gerudo		                    // Gerudo Valley
-	dw icon_btx                             // BTP Young Link
+    icon_offset_random:
+    dw 0x00009BB8                           // Random
 
     // @ Description
     // Row the cursor is on
     row:
-    dw 0
+    db 0
 
     // @ Description
     // column the cursor is on
     column:
-    dw 0
+    db 0
 
     // @ Description
-    // Page number for the CSS
+    // When there are variants, it's the stage ID of the Def. stage
+    original_stage_id:
+    db 0x0
+
+    // @ Description
+    // Selected stage variant
+    variant:
+    db 0x0
+
+    // @ Description
+    // Page number for the SSS
     page_number:
+    dw 0x00000000
+
+    // @ Description
+    // Pointer to stage name address
+    stage_name:
     dw 0x00000000
 
     zoom_table:
@@ -2293,7 +2353,7 @@ scope Stages {
     float32 0.5                         // Cool Cool Mountain
     float32 0.5                         // Dragon King
     float32 0.5                         // Great Bay
-    float32 0.5                         // Fray's Stage
+    float32 0.4                         // Fray's Stage
     float32 0.5                         // Tower of Heaven
 	float32 0.5							// Fountain of Dreams
     float32 0.5                         // Muda Kingdom
@@ -2339,6 +2399,30 @@ scope Stages {
 	float32 0.2                         // Flat Zone II
 	float32 0.5                         // Gerudo Valley
 	float32 0.5                         // Young Link Board the Platforms
+	float32 0.5                         // Falco Board the Platforms
+	float32 0.5                         // Lucas Board the Platforms
+	float32 0.4                         // Hyrule Castle DL
+	float32 0.4                         // Hyrule Castle Omega
+	float32 0.4                         // Congo Jungle DL
+	float32 0.4                         // Congo Jungle Omega
+	float32 0.4                         // Peach's Castle DL
+	float32 0.4                         // Peach's Castle Omega
+    float32 0.5                         // Wario Board the Platforms
+    float32 0.4                         // Fray's Stage - Night
+	float32 0.5                         // Goomba Road
+	float32 0.5                         // Lucas Board the Platforms
+	float32 0.4                         // Sector Z Dream Land
+	float32 0.4                         // Saffron City Dream Land
+	float32 0.4                         // Yoshi's Island Dreamland
+	float32 0.4                         // Planet Zebes Dreamland
+	float32 0.4                         // Sector Z Omega
+	float32 0.4                         // Saffron City Omega
+	float32 0.4                         // Yoshi's Island Omega
+	float32 0.4                         // Dream Land Omega
+	float32 0.4                         // Planet Zebes Omega
+	float32 0.5                         // Bowser Break the Targets
+	float32 0.5                         // Bowser Board the Platforms
+	float32 0.5                         // Bowser's Keep
 
     background_table:
     db id.PEACHS_CASTLE                 // Peach's Castle
@@ -2406,7 +2490,7 @@ scope Stages {
     db id.PEACHS_CASTLE                 // N64
     db id.PEACHS_CASTLE                 // Mute City
     db id.SECTOR_Z                      // Mad Monster Mansion
-    db id.MUSHROOM_KINGDOM              // Mushroom Kingdom BF
+    db id.MUSHROOM_KINGDOM              // Mushroom Kingdom DL
     db id.MUSHROOM_KINGDOM              // Mushroom Kingdom Omega
     db id.SECTOR_Z                      // Bowser's Stadium
     db id.PEACHS_CASTLE                 // Peach's Castle II
@@ -2442,7 +2526,31 @@ scope Stages {
 	db id.SECTOR_Z                      // Flat Zone II
 	db id.YOSHIS_ISLAND                 // Gerudo Valley
 	db id.SECTOR_Z                      // Young Link Board the Platforms
-    OS.align(4)
+	db id.SECTOR_Z                      // Falco Board the Platforms
+	db id.SECTOR_Z                      // Poly Board the Platforms
+	db id.HYRULE_CASTLE                 // Hyrule Castle DL
+	db id.HYRULE_CASTLE                 // Hyrule Castle Omega
+	db id.CONGO_JUNGLE                  // Congo Jungle DL
+	db id.CONGO_JUNGLE                  // Congo Jungle Omega
+	db id.PEACHS_CASTLE                 // Peach's Castle DL
+	db id.PEACHS_CASTLE                 // Peach's Castle Omega
+    db id.SECTOR_Z                      // Wario Board the Platforms
+    db id.SECTOR_Z                      // Fray's Stage - Night
+	db id.PEACHS_CASTLE                 // Goomba Road
+	db id.SECTOR_Z                      // Lucas Board the Platforms
+	db id.SECTOR_Z                      // Sector Z Dreamland
+	db id.PEACHS_CASTLE                 // Saffron City Dreamland
+	db id.YOSHIS_ISLAND                 // Yoshi's Island Dreamland
+	db id.PLANET_ZEBES                  // Planet Zebes Dreamland
+	db id.SECTOR_Z                      // Sector Z Omega
+	db id.PEACHS_CASTLE                 // Saffron City Omega
+	db id.YOSHIS_ISLAND                 // Yoshi's Island Omega
+	db id.DREAM_LAND                    // Dream Land Omega
+	db id.PLANET_ZEBES                  // Planet Zebes Omega
+	db id.SECTOR_Z                      // Bowser Break the Targets
+	db id.SECTOR_Z                      // Bowser Board the Platforms
+	db id.CONGO_JUNGLE                  // Bowser's Keep
+	OS.align(4)
 
     stage_file_table:
     // header file, type
@@ -2511,10 +2619,10 @@ scope Stages {
     dw header.N64,                    type.CLONE
     dw header.MUTE,                   type.CLONE
     dw header.MADMM,                  type.CLONE
-    dw header.SMBBF,                  type.CLONE
-    dw header.SMBO,                   type.CLONE
+    dw header.SMBBF,                  type.MUSHROOM_KINGDOM
+    dw header.SMBO,                   type.MUSHROOM_KINGDOM
     dw header.BOWSERB,                type.CLONE
-    dw header.PEACH2,                 type.CLONE
+    dw header.PEACH2,                 type.PEACHS_CASTLE
     dw header.DELFINO,                type.CLONE
     dw header.CORNERIA2,              type.CLONE
     dw header.KITCHEN,                type.PEACHS_CASTLE
@@ -2547,6 +2655,30 @@ scope Stages {
 	dw header.FLAT_ZONE_2,            type.PEACHS_CASTLE
 	dw header.GERUDO,                 type.CLONE
 	dw header.BTP_YL,                 type.BTP
+	dw header.BTP_FALCO,              type.BTP
+	dw header.BTP_POLY,               type.BTP
+	dw header.HCASTLE_DL,             type.HYRULE_CASTLE
+	dw header.HCASTLE_O,              type.HYRULE_CASTLE
+	dw header.CONGOJ_DL,              type.CONGO_JUNGLE
+	dw header.CONGOJ_O,               type.CONGO_JUNGLE
+	dw header.PCASTLE_DL,             type.PEACHS_CASTLE
+	dw header.PCASTLE_O,              type.PEACHS_CASTLE
+    dw header.BTP_WARIO,              type.BTP
+    dw header.FRAYS_STAGE_NIGHT,      type.CLONE
+	dw header.GOOMBA_ROAD,		      type.CLONE
+	dw header.BTP_LUCAS2,             type.BTP
+	dw header.SECTOR_Z_DL,            type.SECTOR_Z
+	dw header.SAFFRON_DL,             type.CONGO_JUNGLE
+	dw header.YOSHI_ISLAND_DL,        type.YOSHIS_ISLAND
+	dw header.ZEBES_DL,               type.PLANET_ZEBES
+	dw header.SECTOR_Z_O,             type.SECTOR_Z
+	dw header.SAFFRON_O,              type.CONGO_JUNGLE
+	dw header.YOSHI_ISLAND_O,         type.YOSHIS_ISLAND
+	dw header.DREAM_LAND_O,           type.DREAM_LAND
+	dw header.ZEBES_O,                type.PLANET_ZEBES
+	dw header.BTT_BOWSER,             type.BTT
+	dw header.BTP_BOWSER,             type.BTP
+	dw header.BOWSERS_KEEP,           type.PEACHS_CASTLE
 
     class_table:
     constant class_table_origin(origin())
@@ -2713,6 +2845,18 @@ scope Stages {
     constant alternate_music_table_origin(origin())
     fill 4 * (id.MAX_STAGE_ID + 1), 0xFF
 
+    // @ Description
+    // Holds stage IDs for each stage's variants:
+    // The index of each word corresponds to stage_id.
+    // The word is split into bytes:
+    // 0x0000 - DL variant stage_id
+    // 0x0001 - Omega variant stage_id
+    // 0x0002 - Unused
+    // 0x0003 - Unused
+    variant_table:
+    constant variant_table_origin(origin())
+    fill 4 * (id.MAX_STAGE_ID + 1), 0xFF
+
     variable new_stages(0)
 
     // @ Description
@@ -2729,7 +2873,9 @@ scope Stages {
     // btx_word_1 - first BTT related word in table 0x113604 or first BTP related word in table 0x113694
     // btx_word_2 - second BTT related word in table 0x113604 or second BTP related word in table 0x113694
     // btx_word_3 - third BTT related word in table 0x113604
-    macro add_stage(name, display_name, bgm_occasional, bgm_rare, tournament_legal, can_toggle, class, btx_word_1, btx_word_2, btx_word_3) {
+    // variant_for_stage_id - If this stage is meant to be a variant, then this variable holds the stage_id this stage is a variant of
+    // variant_type - stage variant type (see variant_type scope)
+    macro add_stage(name, display_name, bgm_occasional, bgm_rare, tournament_legal, can_toggle, class, btx_word_1, btx_word_2, btx_word_3, variant_for_stage_id, variant_type) {
         global variable new_stages(new_stages + 1)
         evaluate new_stage_id(0x28 + new_stages)
         global define STAGE_{new_stage_id}_TITLE({display_name})
@@ -2775,80 +2921,122 @@ scope Stages {
         dh     {bgm_occasional}
         dh     {bgm_rare}
 
+        // update variant table
+        if ({variant_for_stage_id} >= 0) {
+            origin variant_table_origin + ({variant_for_stage_id} * 4) + (({variant_type} - 1))
+            db     {new_stage_id}
+        }
+
         pullvar base, origin
     }
 
+    map 0x7E, 0x7F, 1 // temporarily make ~ be Omega
+
     // Add stages here
-    add_stage(deku_tree, "Deku Tree", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(first_destination, "First Destination", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(ganons_tower, "Ganon's Tower", {MIDI.id.GERUDO_VALLEY}, {MIDI.id.GERUDO_VALLEY}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(kalos_pokemon_league, "Kalos Pokemon League", {MIDI.id.ELITE_FOUR}, {MIDI.id.POKEMON_CHAMPION}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(pokemon_stadium_2, "Pokemon Stadium", {MIDI.id.POKEMON_CHAMPION}, {MIDI.id.PIKA_CUP}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(skyloft, "Skyloft", -1, {MIDI.id.GERUDO_VALLEY}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(glacial, "Glacial River", {MIDI.id.CLOCKTOWER}, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(warioware, "WarioWare, Inc.", {MIDI.id.STARRING_WARIO}, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(battlefield, "Battlefield", {MIDI.id.DRAGONKING}, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(flat_zone, "Flat Zone", {MIDI.id.FLAT_ZONE_2}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(dr_mario, "Dr. Mario", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(cool_cool_mountain, "Cool Cool Mountain", -1, {MIDI.id.WING_CAP}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(dragon_king, "Dragon King", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(great_bay, "Great Bay", -1, {MIDI.id.GERUDO_VALLEY}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(frays_stage, "Fray's Stage", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(toh, "Tower of Heaven", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
-	add_stage(fod, "Fountain of Dreams", {MIDI.id.POP_STAR}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(muda, "Muda Kingdom", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(mementos, "Mementos", {MIDI.id.BLOOMING_VILLAIN}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(showdown, "Showdown", {MIDI.id.FIRST_DESTINATION}, {MIDI.id.NORFAIR}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(spiralm, "Spiral Mountain", {MIDI.id.CLICKCLOCKWOODS}, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(n64, "N64", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(mute, "Mute City", {MIDI.id.FIRE_FIELD}, {MIDI.id.MACHRIDER}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(madmm, "Mad Monster Mansion", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(smbbf, "Mushroom Kingdom BF", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(smbo, "Mushroom Kingdom O", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(bowserb, "Bowser's Stadium", {MIDI.id.BOWSERROAD}, {MIDI.id.BOWSERFINAL}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(peach2, "Peach's Castle II", {MIDI.id.PEACH_CASTLE}, {MIDI.id.METAL_CAP}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(delfino, "Delfino Plaza", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(corneria2, "Corneria", {MIDI.id.STAR_WOLF}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(kitchen, "Kitchen Island", {MIDI.id.STARRING_WARIO}, {MIDI.id.HORROR_MANOR}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(blue, "Big Blue", {MIDI.id.MACHRIDER}, {MIDI.id.MACHRIDER}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(onett, "Onett", {MIDI.id.ALL_I_NEEDED_WAS_YOU}, {MIDI.id.I_BELIEVE_IN_YOU}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(zlanding, "Zebes Landing", {MIDI.id.NORFAIR}, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(frosty, "Frosty Village", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(smashville2, "Smashville", {MIDI.id.KK_RIDER}, {MIDI.id.SMASHVILLE}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(drm_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x000056A8, 0x00005B10, 0x00005D20)
-    add_stage(gnd_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x00004178, 0x000045F0, 0x00004800)
-    add_stage(yl_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x000035D0, 0x000038A0, 0x00003AB0)
-    add_stage(great_bay_sss, "Great Bay", -1, -1, OS.FALSE, OS.FALSE, class.SSS_PREVIEW, -1, -1, -1)
-    add_stage(ds_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x00006188, 0x00006720, 0x00006930)
-    add_stage(stg1_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x00008B10, 0x00008FE0, 0x000091F0)
-    add_stage(falco_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x00004430, 0x00004930, 0x00004B40)
-    add_stage(wario_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x00002F90, 0x00003300, 0x00003510)
-    add_stage(htemple, "Hyrule Temple", {MIDI.id.TEMPLE_8BIT}, {MIDI.id.GANONDORF_BATTLE}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(lucas_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x000032D8, 0x00003650, 0x00003860)
-    add_stage(gnd_btp, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x00003C70, 0x00003DA8, -1)
-    add_stage(npc, "New Pork City", {MIDI.id.PIGGYGUYS}, {MIDI.id.UNFOUNDED_REVENGE}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-    add_stage(ds_btp, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x00003F10, 0x00003FC0, -1)
-    add_stage(smashketball, "Smashketball", {MIDI.id.KENGJR}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-	add_stage(drm_btp, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x00004E08, 0x00004EC0, -1)
-	add_stage(norfair, "Norfair", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-	add_stage(corneriacity, "Corneria City", {MIDI.id.STAR_WOLF}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-	add_stage(falls, "Congo Falls", {MIDI.id.SNAKEY_CHANTEY}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-	add_stage(osohe, "Osohe Castle", {MIDI.id.EVEN_DRIER_GUYS}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-	add_stage(yoshi_story_2, "Yoshi's Story", -1, {MIDI.id.YOSHI_GOLF}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-	add_stage(world1, "World 1-1", -1, -1, OS.FALSE, OS.FALSE, class.BATTLE, -1, -1, -1)
-	add_stage(flat_zone_2, "Flat Zone II", {MIDI.id.FLAT_ZONE}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1)
-	add_stage(gerudo, "Gerudo Valley", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1)
-	add_stage(yl_btp, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x00004D80, 0x00004EB8, -1)
+    add_stage(deku_tree, "Deku Tree", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(first_destination, "First Destination", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(ganons_tower, "Ganon's Tower", {MIDI.id.GERUDO_VALLEY}, {MIDI.id.GERUDO_VALLEY}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(kalos_pokemon_league, "Kalos Pokemon League", {MIDI.id.ELITE_FOUR}, {MIDI.id.POKEMON_CHAMPION}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(pokemon_stadium_2, "Pokemon Stadium", {MIDI.id.POKEMON_CHAMPION}, {MIDI.id.PIKA_CUP}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(skyloft, "Skyloft", -1, {MIDI.id.GERUDO_VALLEY}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(glacial, "Glacial River", {MIDI.id.CLOCKTOWER}, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(warioware, "WarioWare, Inc.", {MIDI.id.STARRING_WARIO}, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(battlefield, "Battlefield", {MIDI.id.MULTIMAN}, {MIDI.id.CRUEL}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(flat_zone, "Flat Zone", {MIDI.id.FLAT_ZONE_2}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(dr_mario, "Dr. Mario", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(cool_cool_mountain, "Cool Cool Mountain", -1, {MIDI.id.WING_CAP}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(dragon_king, "Dragon King", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(great_bay, "Great Bay", {MIDI.id.ASTRAL_OBSERVATORY}, {MIDI.id.GERUDO_VALLEY}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(frays_stage, "Fray's Stage", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(toh, "Tower of Heaven", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+	add_stage(fod, "Fountain of Dreams", {MIDI.id.POP_STAR}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(muda, "Muda Kingdom", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(mementos, "Mementos", {MIDI.id.BLOOMING_VILLAIN}, {MIDI.id.ARIA_OF_THE_SOUL}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(showdown, "Showdown", {MIDI.id.FIRST_DESTINATION}, {MIDI.id.NORFAIR}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(spiralm, "Spiral Mountain", {MIDI.id.CLICKCLOCKWOODS}, {MIDI.id.MRPATCH}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(n64, "N64", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(mute, "Mute City", {MIDI.id.FIRE_FIELD}, {MIDI.id.MACHRIDER}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(madmm, "Mad Monster Mansion", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(smbbf, "Mushroom Kingdom DL", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, id.MUSHROOM_KINGDOM, variant_type.DL)
+    add_stage(smbo, "Mushroom Kingdom ~", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, id.MUSHROOM_KINGDOM, variant_type.OMEGA)
+    add_stage(bowserb, "Bowser's Stadium", {MIDI.id.BOWSERROAD}, {MIDI.id.BOWSERFINAL}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(peach2, "Peach's Castle II", {MIDI.id.PEACH_CASTLE}, {MIDI.id.METAL_CAP}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(delfino, "Delfino Plaza", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(corneria2, "Corneria", {MIDI.id.STAR_WOLF}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(kitchen, "Kitchen Island", {MIDI.id.STARRING_WARIO}, {MIDI.id.HORROR_MANOR}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(blue, "Big Blue", {MIDI.id.MACHRIDER}, {MIDI.id.MACHRIDER}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(onett, "Onett", {MIDI.id.ALL_I_NEEDED_WAS_YOU}, {MIDI.id.POLLYANNA}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(zlanding, "Zebes Landing", {MIDI.id.NORFAIR}, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(frosty, "Frosty Village", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(smashville2, "Smashville", {MIDI.id.KK_RIDER}, {MIDI.id.SMASHVILLE}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(drm_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x000056A8, 0x00005B10, 0x00005D20, -1, -1)
+    add_stage(gnd_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x00004178, 0x000045F0, 0x00004800, -1, -1)
+    add_stage(yl_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x000035D0, 0x000038A0, 0x00003AB0, -1, -1)
+    add_stage(great_bay_sss, "Great Bay", -1, -1, OS.FALSE, OS.FALSE, class.SSS_PREVIEW, -1, -1, -1, -1, -1)
+    add_stage(ds_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x00006188, 0x00006720, 0x00006930, -1, -1)
+    add_stage(stg1_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x00008B10, 0x00008FE0, 0x000091F0, -1, -1)
+    add_stage(falco_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x00004430, 0x00004930, 0x00004B40, -1, -1)
+    add_stage(wario_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x00002F90, 0x00003300, 0x00003510, -1, -1)
+    add_stage(htemple, "Hyrule Temple", {MIDI.id.TEMPLE_8BIT}, {MIDI.id.GANONDORF_BATTLE}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(lucas_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x000032D8, 0x00003650, 0x00003860, -1, -1)
+    add_stage(gnd_btp, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x00003C70, 0x00003DA8, -1, -1, -1)
+    add_stage(npc, "New Pork City", {MIDI.id.PIGGYGUYS}, {MIDI.id.UNFOUNDED_REVENGE}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(ds_btp, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x00003F10, 0x00003FC0, -1, -1, -1)
+    add_stage(smashketball, "Smashketball", {MIDI.id.KENGJR}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+	add_stage(drm_btp, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x00004E08, 0x00004EC0, -1, -1, -1)
+	add_stage(norfair, "Norfair", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+	add_stage(corneriacity, "Corneria City", {MIDI.id.STAR_WOLF}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+	add_stage(falls, "Congo Falls", {MIDI.id.SNAKEY_CHANTEY}, {MIDI.id.DK_RAP}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+	add_stage(osohe, "Osohe Castle", {MIDI.id.EVEN_DRIER_GUYS}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+	add_stage(yoshi_story_2, "Yoshi's Story", -1, {MIDI.id.YOSHI_GOLF}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+	add_stage(world1, "World 1-1", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+	add_stage(flat_zone_2, "Flat Zone II", {MIDI.id.FLAT_ZONE}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+	add_stage(gerudo, "Gerudo Valley", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+	add_stage(yl_btp, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x000056C0, 0x000057F8, -1, -1, -1)
+	add_stage(falco_btp, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x00004830, 0x00004968, -1, -1, -1)
+	add_stage(poly_btp, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x00004F80, 0x00005030, -1, -1, -1)
+	add_stage(hcastle_dl, "Hyrule Castle DL", {MIDI.id.TEMPLE_8BIT}, {MIDI.id.GODDESSBALLAD}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, id.HYRULE_CASTLE, variant_type.DL)
+	add_stage(hcastle_o, "Hyrule Castle ~", {MIDI.id.TEMPLE_8BIT}, {MIDI.id.GODDESSBALLAD}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, id.HYRULE_CASTLE, variant_type.OMEGA)
+	add_stage(congoj_dl, "Congo Jungle DL", {MIDI.id.KROOLS_ACID_PUNK}, {MIDI.id.SNAKEY_CHANTEY}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, id.CONGO_JUNGLE, variant_type.DL)
+	add_stage(congoj_o, "Congo Jungle ~", {MIDI.id.KROOLS_ACID_PUNK}, {MIDI.id.SNAKEY_CHANTEY}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, id.CONGO_JUNGLE, variant_type.OMEGA)
+	add_stage(pcastle_dl, "Peach's Castle DL", {MIDI.id.PEACH_CASTLE}, {MIDI.id.CASTLEWALL}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, id.PEACHS_CASTLE, variant_type.DL)
+	add_stage(pcastle_o, "Peach's Castle ~", {MIDI.id.PEACH_CASTLE}, {MIDI.id.CASTLEWALL}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, id.PEACHS_CASTLE, variant_type.OMEGA)
+    add_stage(wario_btp, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x00004570, 0x000046A8, -1, -1, -1)
+    add_stage(frays_stage_night, "Fray's Stage - Night", -1, -1, OS.FALSE, OS.FALSE, class.BATTLE, -1, -1, -1, id.FRAYS_STAGE, variant_type.DL)
+	add_stage(goomba_road, "Goomba Road", {MIDI.id.KING_OF_THE_KOOPAS}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+	add_stage(lucas_btp2, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x00004C50, 0x00004D88, -1, -1, -1)
+	add_stage(sector_z_dl, "Sector Z DL", {MIDI.id.STAR_WOLF}, {MIDI.id.CORNERIA}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, id.SECTOR_Z, variant_type.DL)
+	add_stage(saffron_dl, "Saffron City DL", {MIDI.id.POKEMON_CHAMPION}, {MIDI.id.PIKA_CUP}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, id.SAFFRON_CITY, variant_type.DL)
+	add_stage(yoshi_island_dl, "Yoshi's Island DL", {MIDI.id.OBSTACLE}, {MIDI.id.YOSHI_GOLF}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, id.YOSHIS_ISLAND, variant_type.DL)
+	add_stage(zebes_dl, "Zebes DL", {MIDI.id.NORFAIR}, {MIDI.id.ZEBES_LANDING}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, id.PLANET_ZEBES, variant_type.DL)
+	add_stage(sector_z_o, "Sector Z ~", {MIDI.id.STAR_WOLF}, {MIDI.id.CORNERIA}, OS.TRUE, OS.FALSE, class.BATTLE, -1, -1, -1, id.SECTOR_Z, variant_type.OMEGA)
+	add_stage(saffron_o, "Saffron City ~", {MIDI.id.POKEMON_CHAMPION}, {MIDI.id.PIKA_CUP}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, id.SAFFRON_CITY, variant_type.OMEGA)
+	add_stage(yoshi_island_o, "Yoshi's Island ~", {MIDI.id.OBSTACLE}, {MIDI.id.YOSHI_GOLF}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, id.YOSHIS_ISLAND, variant_type.OMEGA)
+	add_stage(dream_land_o, "Dream Land ~", {MIDI.id.DREAMLANDBETA}, {MIDI.id.POP_STAR}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, id.DREAM_LAND, variant_type.OMEGA)
+	add_stage(zebes_O, "Zebes ~", {MIDI.id.NORFAIR}, {MIDI.id.ZEBES_LANDING}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, id.PLANET_ZEBES, variant_type.OMEGA)
+	add_stage(bowser_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x00004040, 0x000043F0, 0x00004600, -1, -1)
+	add_stage(bowser_btp, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x00003260, 0x00003398, -1, -1, -1)
+	add_stage(bowsers_keep, "Bowser's Keep", {MIDI.id.KING_OF_THE_KOOPAS}, {MIDI.id.BEWARE_THE_FORESTS_MUSHROOMS}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+
+    map 0, 0, 256 // restore string mappings
 
     // @ Description
-    // This function replaces the logic to convert the default cursor_id to a stage_id.
+    // This function replaces the logic to convert the default cursor_id to a stage_id when on stage select screen.
+    // When stage select is off, it adds custom stages to the random stage functionality.
     // @ Returns
     // v0 - stage_id
     scope swap_stage_: {
+        // State Select Screen
         OS.patch_start(0x0014F774, 0x80133C04)
 //      jal     0x80132430                  // original line 1
 //      nop                                 // original line 2
         jal     swap_stage_
+        nop
+        OS.patch_end()
+
+        // Stage Select is off
+        OS.patch_start(0x00138C9C, 0x8013AA2C)
+        jal     swap_stage_._stage_select_off_begin
         nop
         OS.patch_end()
 
@@ -2865,7 +3053,16 @@ scope Stages {
         lli     t0, id.RANDOM               // t0 = id.RANDOM
         bne     v0, t0, _end                // if (stage_id != id.RANDOM), end
         nop
+        b       _get_random_stage_id
+        nop
 
+        _stage_select_off_begin:
+        addiu   sp, sp,-0x0014              // allocate stack space
+        sw      t0, 0x0004(sp)              // ~
+        sw      ra, 0x0008(sp)              // ~
+        sw      at, 0x000C(sp)              // save registers
+
+        _get_random_stage_id:
         li      t0, random_count            // ~
         sw      r0, 0x0000(t0)              // reset count
 
@@ -2902,7 +3099,7 @@ scope Stages {
 
         // this block loads from the random list using a random int
         move    a0, v1                      // a0 - range (0, N-1)
-        jal     Global.get_random_int_alt_  // v0 = (0, N-1)
+        jal     Global.get_random_int_      // v0 = (0, N-1)
         nop
         li      t0, random_table            // t0 = random_table
         addu    t0, t0, v0                  // t0 = random_table + offset
@@ -2912,7 +3109,7 @@ scope Stages {
 
         _any_valid_stage:
         lli     a0, 16 + id.MAX_STAGE_ID - id.BTX_LAST // a0 = number of new stages + original valid 16 stages
-        jal     Global.get_random_int_alt_             // v0 = (0, N-1)
+        jal     Global.get_random_int_                  // v0 = (0, N-1)
         nop
         slti    t0, v0, id.RACE_TO_THE_FINISH          // if it's a stage_id low enough, then we don't have to correct it
         bnez    t0, _end                               // so skip to end
@@ -2937,7 +3134,45 @@ scope Stages {
         jr      ra                          // return
         nop
     }
-
+    
+    // @ Description
+    // This patch advances the RNG seed pseudorandomly when transitioning from character select
+    // to stage selection. This should fix random stage/music being the same the first time without
+    // causing desync issues on netplay.
+    scope random_fix_: {
+        OS.patch_start(0x138C50, 0x8013A9D0)
+        j       random_fix_
+        lui     t9, 0x800A                  // original line 2
+        _return:
+        OS.patch_end()
+        
+        addiu   sp, sp,-0x0020              // allocate stack space
+        sw      a0, 0x0004(sp)              // ~
+        sw      at, 0x0008(sp)              // ~
+        sw      v0, 0x0010(sp)              // ~
+        sw      v1, 0x0014(sp)              // store a0, at, v0, v1 (for safety)
+        
+        li      t8, 0x8003B6E4              // ~
+        lw      t8, 0x0000(t8)              // t8 = frame count for current screen
+        andi    t8, t8, 0x003F              // t8 = frame count % 64
+        
+        _loop:
+        // advances rng between 1 - 64 times based on frame count when entering stage selection
+        jal     0x80018910                  // this function advances the rng seed
+        nop
+        bnez    t8, _loop                   // loop if t8 != 0
+        addiu   t8, t8,-0x0001              // subtract 1 from t8
+        
+        _end:
+        lw      a0, 0x0004(sp)              // ~
+        lw      at, 0x0008(sp)              // ~
+        lw      v0, 0x0010(sp)              // ~
+        lw      v1, 0x0014(sp)              // load a0, at, v0, v1
+        addiu   sp, sp, 0x0020              // deallocate stack space
+        
+        j       _return                     // return
+        lbu     t8, 0x0000(v1)              // original line 1
+    }
 }
 
 } // __STAGES__

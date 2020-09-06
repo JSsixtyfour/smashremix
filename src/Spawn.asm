@@ -748,7 +748,7 @@ scope Spawn {
     float32 -1148,  0719
     float32  1300,  0719
     
-    // 41 - Super Mario Bros. BF
+    // 41 - Super Mario Bros. DL
     float32 -1262,  0932
     float32  1262,  0932
     float32  0000,  1569
@@ -757,8 +757,8 @@ scope Spawn {
     // 42 - Super Mario Bros. O
     float32 -1831,  0035
     float32  1831,  0035
-    float32 -0919,  0035
-    float32  1182,  0035
+    float32 -0915,  0035
+    float32  0915,  0035
     
     // 43 - Bowser's Stadium
     float32 -2020,  0005
@@ -941,10 +941,10 @@ scope Spawn {
     float32  0000,  1580
 	
 	// 61 - World 1-1
-    float32 -1864, -1165
-    float32  1864, -1165 
-	float32 -0864, -1165              
-    float32  0864, -1165 
+    float32 -1590, -1150
+    float32  1590, -1150 
+	float32 -0530, -1150              
+    float32  0530, -1150 
 	
 	// 62 - Flat Zone II
     float32 -1980, -1685
@@ -963,6 +963,150 @@ scope Spawn {
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
+    
+    // 65 - Falco Board the Platforms
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // 66 - Polygon Board the Platforms
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // 67 - Hyrule Castle DL
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32  0000,  1545
+    float32  0000,  0005
+    
+    // 68 - Hyrule Castle O
+    float32 -1831,  0035
+    float32  1831,  0035
+    float32 -0915,  0035
+    float32  0915,  0035
+    
+    // 69 - Congo Jungle DL
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32  0000,  1545
+    float32  0000,  0005
+    
+    // 6A - Congo Jungle O
+    float32 -1831,  0035
+    float32  1831,  0035
+    float32 -0915,  0035
+    float32  0915,  0035
+    
+    // 6B - Peach's Castle DL
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32  0000,  1545
+    float32  0000,  0005
+    
+    // 6C - Peach's Castle O
+    float32 -1831,  0035
+    float32  1831,  0035
+    float32 -0915,  0035
+    float32  0915,  0035
+    
+    // 6D - Wario Board the Platforms
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // 6E - Fray's Stage - Night
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32  0000,  1545
+    float32  0000,  0005
+	
+	// 6F - Goomba Road
+    float32 -1400,  0005
+    float32  1400,  0005
+    float32 -1400,  1547
+    float32  1400,  1547
+	
+	// 70 - Lucas Board the Platforms
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+	
+	// 71 - Sector Z DL
+    float32 -1400,  2656
+    float32  1400,  2659
+    float32  0000,  3295
+    float32  0000,  1756
+	
+	// 72 - Saffron City DL
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32  0000,  1545
+    float32  0000,  0005
+
+	// 73 - Yoshi's Island DL
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32  0000,  1545
+    float32  0000,  0005
+
+	// 74 - Zebes DL
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32  0000,  1545
+    float32  0000,  0005
+	
+	// 75 - Sector Z Omega
+    float32 -1831,  1785
+    float32  1831,  1785
+    float32 -0915,  1785
+    float32  0915,  1785
+	
+	// 76 - Saffron City Omega
+    float32 -1831,  0035
+    float32  1831,  0035
+    float32 -0915,  0035
+    float32  0915,  0035
+	
+	// 77 - Yoshi's Island Omega
+    float32 -1831,  0035
+    float32  1831,  0035
+    float32 -0915,  0035
+    float32  0915,  0035
+	
+	// 78 - Dream Land Omega
+    float32 -1831,  0035
+    float32  1831,  0035
+    float32 -0915,  0035
+    float32  0915,  0035
+	
+	// 79 - Planet Zebes Omega
+    float32 -1831,  0035
+    float32  1831,  0035
+    float32 -0915,  0035
+    float32  0915,  0035
+	
+	// 7A - Bowser Break the Targets
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+	
+	// 7B - Bowser Board the Platforms
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+	
+	// 7C - Bowser's Keep
+    float32 -1470,  0550
+    float32  1470,  0550
+    float32 -2430,  1380
+    float32  2430,  1380
 
     neutral_table:
     // 00 - Peach's Castle
@@ -1359,17 +1503,17 @@ scope Spawn {
     float32 -1148,  0719
     float32  1300,  0719
     
-    // 41 - Super Mario Bros. BF
-    float32 -1262,  0932
-    float32  1262,  0932
-    float32 -1262,  0035
-    float32  1262,  0035
+    // 41 - Super Mario Bros. DL
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32 -1400,  0005
+    float32  1400,  0005
     
     // 42 - Super Mario Bros. O
     float32 -1831,  0035
     float32  1831,  0035
-    float32 -0919,  0035
-    float32  1182,  0035
+    float32 -0915,  0035
+    float32  0915,  0035
     
     // 43 - Bowser's Stadium
     float32 -2020,  0005
@@ -1530,8 +1674,8 @@ scope Spawn {
 	// 5D - CORNERIA CITY
     float32 -1685,  1700
     float32  1685,  1700              
-    float32 -1685,  1300
-    float32  1685,  1300
+    float32 -1685,  0990
+    float32  1685,  0990
 	
 	// 5E - Congo Falls
     float32 -1000,  0915
@@ -1552,10 +1696,10 @@ scope Spawn {
     float32  1594,  0000
 	
 	// 61 - World 1-1
-    float32 -1864, -1165
-    float32  1864, -1165 
-	float32 -0864, -1165              
-    float32  0864, -1165 
+    float32 -1590, -1150
+    float32  1590, -1150 
+	float32 -0530, -1150              
+    float32  0530, -1150 
 	
 	// 62 - Flat Zone II
     float32 -1980, -1685
@@ -1574,6 +1718,150 @@ scope Spawn {
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
+    
+    // 65 - Falco Board the Platforms
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // 66 - Polygon Board the Platforms
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // 67 - Hyrule Castle DL
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32 -1400,  0005
+    float32  1400,  0005
+    
+    // 68 - Hyrule Castle O
+    float32 -1831,  0035
+    float32  1831,  0035
+    float32 -0915,  0035
+    float32  0915,  0035
+    
+    // 69 - Congo Jungle DL
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32 -1400,  0005
+    float32  1400,  0005
+    
+    // 6A - Congo Jungle O
+    float32 -1831,  0035
+    float32  1831,  0035
+    float32 -0915,  0035
+    float32  0915,  0035
+    
+    // 6B - Peach's Castle DL
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32 -1400,  0005
+    float32  1400,  0005
+    
+    // 6C - Peach's Castle O
+    float32 -1831,  0035
+    float32  1831,  0035
+    float32 -0915,  0035
+    float32  0915,  0035
+    
+    // 6D - Wario Board the Platforms
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // 6E - Fray's Stage - Night
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32 -1400,  0005
+    float32  1400,  0005
+	
+	// 6F - Goomba Road
+    float32 -1400,  0005
+    float32  1400,  0005
+    float32 -1400,  1547
+    float32  1400,  1547
+	
+	// 70 - Lucas Board the Platforms
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+	
+	// 71 - Sector Z DL
+    float32 -1400,  2656
+    float32  1400,  2659
+    float32 -1400,  1756
+    float32  1400,  1756
+	
+	// 72 - Saffron City DL
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32 -1400,  0005
+    float32  1400,  0005
+	
+	// 73 - Yoshi's Island DL
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32 -1400,  0005
+    float32  1400,  0005
+	
+	// 74 - Zebes DL
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32 -1400,  0005
+    float32  1400,  0005
+	
+	// 75 - Sector Z O
+    float32 -1831,  1756
+    float32  1831,  1756
+    float32 -0915,  1756
+    float32  0915,  1756
+	
+	// 76 - Saffron City O
+    float32 -1831,  0035
+    float32  1831,  0035
+    float32 -0915,  0035
+    float32  0915,  0035
+	
+	// 77 - Yoshi's Island O
+    float32 -1831,  0035
+    float32  1831,  0035
+    float32 -0915,  0035
+    float32  0915,  0035
+	
+	// 78 - Dream Land O
+    float32 -1831,  0035
+    float32  1831,  0035
+    float32 -0915,  0035
+    float32  0915,  0035
+	
+	// 79 - Planet Zebes O
+    float32 -1831,  0035
+    float32  1831,  0035
+    float32 -0915,  0035
+    float32  0915,  0035
+	
+	// 7A - Bowser Break the Targets
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+	
+	// 7B - Bowser Board the Platforms
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+	
+	// 7C - Bowser's Keep
+    float32 -1470,  0550
+    float32  1470,  0550
+    float32 -2430,  1380
+    float32  2430,  1380
 }
 
 } // __SPAWN__

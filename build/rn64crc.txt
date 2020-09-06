@@ -1,0 +1,156 @@
+Real N64 CRC Tool V2.1 - [By RaO 1999/2001]
+===========================================
+
+Disclaimer.
+===========
+Anyone using this program does so at their own risk. The author does not accept 
+any liability for loss or damage arising from its use.
+
+
+Copyrights.
+===========
+You are free to copy and distribute this product as long as this package is 
+distributed in its entirety. You are not allowed to change the program in any form.
+
+
+What's new ?
+============
+In V2.1:
+- Fixed a bug in V2 which could cause unpredictable results
+- Changed the default maners so RN64CRC (with no parameters) dosen't check every file in the current folder, but
+  shows the help page. 
+- You can now use wildcards in filename (* and ?).
+
+In V2:
+- Corrected the 6101 vs. 6102 bug! :)
+- Support for V64Jr. / PVB Unit 
+- Windows NT / 2000  - [See: Using Windows NT / 2000 with backup unit]
+
+
+What is it?
+===========
+It's a DOS32 tool that will check / calculate / extract the bootcode of a Nintendo 64
+ROM file. It can also check the origen of an already ripped bootcode.
+
+
+Who is it for?
+===============
+It's designed for programmers (like me :) ) who has a wish to make N64 programs 
+run under other bootcode than the *usual* 6102 .. :)
+
+
+What is a bootcode?
+===================
+The bootcode is (in short) Nintendo's "weapon" to stop hacking / change code in a 
+N64 cartridge / ROM file. The bootcode calculate and match the result with the CRC's 
+located in the header of a N64 ROM file and if they don't match then the game / demo 
+or whatever refuses to start. 
+
+The Bootcode is located at file offset $40 to $FFFF (4032 bytes).. Nintendo did it 
+clever enough by not placing the bootchip (CIC-NUS) in the N64 unit but in every 
+cartridge, so they can change the chip (and the bootcode) as often as they like to. 
+
+
+Filesize.
+=========
+RN64CRC can calculate CRC's for a 1Mbit (131,072 bytes) file for all bootcodes but
+I am not sure if they will work (read "To change a bootcode.." for the reason).
+In the N64 assembly code it uses the first $100000 bytes of data from offset $1000 
+so the smallest file should be $101000 (1,052,672 bytes = 8Mbit +  header and bootcode) 
+in length. You can send a smaller file to your backup unit and then recalc the CRC to get
+your ROM running..
+
+
+What bootcodes can RN64CRC handle?
+==================================
+It can handle all known bootcodes : 6101, 6102, 6103, 6105 and 6106. All the other
+programs which calculate N64 ROM file CRC's can only handle the 6102 (and 6101). 
+(Hence: Thats why I named this program REAL :) )
+
+
+
+How to use.
+===========
+Syntax : <command> <filename/path> <other options>
+
+Commands:
+  -Check   / -c   : Check CRC of a N64 ROM file(s)            
+  -Update  / -u   : Update the CRC on N64 ROM file(s)
+  -Search  / -s   : Search for valid bootcode files
+  -Extract / -e   : Extract the bootcode from N64 Rom file(s)
+  -Help    /-h /-?: Shows a help page.  			(Default)
+
+<FileName/path>  wildcards (* or ?) is allowed.
+
+<Other Options> is only for the -Extract command:
+                -V64 will save bootcode in V64 file format (Middle Endian)
+                -SavePath / -sp location for bootfiles to be saved
+                -Overwrite / -o it will overwrite existing bootfiles
+
+V64Jr. / PVB Support
+====================
+Syntax : <-Check / -C> OR <-Update / -U > [-v64jr<port> OR -pvb<port>] (Default is -Check)
+
+<port> : Here you specify the port it can either be in hex eg. $378 or decimal eg. 888 
+	 If <port> is left out then RN64CRC will search for the unit on all available LPT
+         ports.
+
+Make sure you are using EPP setting in BIOS and Windows Properties for the LPT port.
+
+
+Using Windows NT / 2000 with V64Jr./ PVB support
+================================================
+I have included DLPORTIO.sys which should be placed in your in your 
+\WinNT\System32\Drivers folder. Put DLPORTIO.dll in \WinNT\System32 folder.
+RN64CRC will load the driver by itself when needed.
+
+The 2 files DLPORTIO.DLL and DLPORTIO.SYS can be deleted if you don't use/own V64Jr. or a PV-B. 
+
+If the program fails to load the driver or the DLL make sure that the files aren't 
+located anywhere else on your HD or PATH..
+
+Furthermore it has been tested on 4 Win2K machines and one of them didn't work. I suspect the
+user haven't enabled EPP in BIOS, but if you stumble over any bugs then don't hasitate to 
+contact me..
+
+Bootcode filenames.
+===================
+When extracting (-e / -extract) RN64CRC will save the file named as 61<01, 02, 
+03, 05 or 06>CIC.<BIN = binary format OR v64 = middle Endian format> so a file named 
+6103CIC.V64 contains a 6103 bootcode and it is saved in V64 format.
+
+FileNames dosen't really matter for RN64CRC since it has its own (true) CRC to check if it is
+a propper bootcode file or not.
+
+
+To change a bootcode.
+=====================
+Read N64CICC documentation for more info.
+
+
+Future plans/updates.
+=====================
+- None! (Unless you find some errors!) :)
+
+
+Credits and contact.
+====================
+All programming and reverse engineering is done by RaO.
+
+If you find any bugs or if you have any ideas, comments or spelling mistakes since 
+english is not my "first language" then e-mail me @: rao@mailroom.com
+
+For more info on how to build your own PV-Backup unit see Valery Pudov's site at 
+http://www.pro.com.ru/
+
+
+Thanks.
+=======
+- Pitou! for testing the PV-Backup Unit part.
+- Valery Pudov for inventing the PV-Backup Unit. (http://www.pro.com.ru/)
+- MMR for the 6103 and 6106 carts! See you in PAL! :)
+- To people in #consolepal and #dextrose on EFNet!
+- All the ppl. who keeps the scene going! (You know who you are) :)
+
+
+[EOT]

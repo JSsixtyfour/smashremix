@@ -21,6 +21,8 @@ scope String {
     // This function populates a string buffer from an integer in base 10.
     // @ Arguments
     // a0 - int to convert
+    // a1 - signed?
+    // a2 - show + for signed value?
     // @ Returns
     // v0 - address of character buffer
     scope itoa_: {
@@ -38,17 +40,24 @@ scope String {
         li      t1, buffer          // t1 = buffer
         lli     t2, 000010          // t2 = base 10
 
+        // if signed, then check if negative
+        beqz    a1, _zero_check     // if unsigned, skip
+        nop
+        slti    t3, t0, 0x0000      // t3 = 1 if negative
+        bnezl   t3, _write_string   // if negative, negate a0
+        subu    t0, r0, t0          // t0 = -a0
+
         _zero_check:
         bnez    t0, _write_string   // if zero, make a zero string
         nop
-        lli     at, 0x0030          // t0 = zero ascii value
+        lli     at, '0'             // at = zero ascii value
         sb      at, 0x0000(t1)      // store char
         sb      r0, 0x0001(t1)      // store null terminator
         b       _reverse_setup      // next
         addiu   t1, t1, 0x0001      // increment buffer pointer
 
         _write_string:
-        beqz    t0, _reverse_setup  // while (num != 0)
+        beqz    t0, _check_minus    // while (num != 0)
         nop
         divu    t0, t2              // t0 div t2
         mfhi    t3                  // t3 = t0 % t2
@@ -59,12 +68,32 @@ scope String {
         b       _write_string       // loop
         addiu   t1, t1, 0x0001      // increment buffer pointer
 
+        _check_minus:
+        beqz    a1, _reverse_setup  // if unsigned, skip
+        nop
+        slti    t3, a0, 0x0000      // t3 = 1 if negative
+        beqz    t3, _check_plus     // if non-negative, check if we should show + sign
+        nop
+        lli     at, '-'             // at = minus ascii value
+        sb      at, 0x0000(t1)      // store char
+        sb      r0, 0x0001(t1)      // store null terminator
+        b       _reverse_setup
+        addiu   t1, t1, 0x0001      // increment buffer pointer
+
+        _check_plus:
+        beqz    a2, _reverse_setup  // if never show + sign, skip
+        nop
+        lli     at, '+'             // at = plus ascii value
+        sb      at, 0x0000(t1)      // store char
+        sb      r0, 0x0001(t1)      // store null terminator
+        addiu   t1, t1, 0x0001      // increment buffer pointer
+
         _reverse_setup:
         addiu   t1, t1,-0x0001      // t1 = end of buffer (not including null terminator)
         li      t3, buffer          // t3 = start of buffer
 
         _reverse_loop:
-        sub     at, t1, t3          // original pointer - currrent pointer  
+        sub     at, t1, t3          // original pointer - current pointer
         slti    at, at, 0x0001      // set if 0 or less (should be 0 or -1)
         bnez    at, _end            // if set, end
         nop

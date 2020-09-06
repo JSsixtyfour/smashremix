@@ -171,7 +171,7 @@ scope Wario {
     Character.edit_menu_action_parameters(WARIO,    0x2,                File.WARIO_VICTORY_2,       VICTORY_2,                  0)
     Character.edit_menu_action_parameters(WARIO,    0x3,                File.WARIO_VICTORY_3,       VICTORY_3,                  0)
     Character.edit_menu_action_parameters(WARIO,    0x4,                File.WARIO_VICTORY_3,       SELECT,                     0)
-    Character.edit_menu_action_parameters(WARIO,    0x5,                -1,                         CLAPPING,                   0)
+    Character.edit_menu_action_parameters(WARIO,    0x5,                File.WARIO_CLAP,            CLAPPING,                   0)
     Character.edit_menu_action_parameters(WARIO,    0xD,                File.WARIO_POSE_1P,         POSE_1P,                    -1)
     
     Character.table_patch_start(ground_nsp, Character.id.WARIO, 0x4)

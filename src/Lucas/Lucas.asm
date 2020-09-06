@@ -21,6 +21,7 @@ scope Lucas {
     insert GRAB_PULL,"moveset/GRAB_PULL.bin"
     insert PKFIREGROUND, "moveset/PKFIREGROUND.bin"
     insert PKFIREAIR, "moveset/PKFIREAIR.bin"
+    insert JUMP1, "moveset/JUMP1.bin"
     insert JAB1, "moveset/JAB1.bin"
     insert JAB2, "moveset/JAB2.bin"
     insert JAB3, "moveset/JAB3.bin"
@@ -72,6 +73,8 @@ scope Lucas {
     Character.edit_action_parameters(LUCAS, Action.ThrowF,          File.LUCAS_FTHROW,          FTHROW,                     -1)
     Character.edit_action_parameters(LUCAS, Action.FSmash,          -1,                         FSMASH,                     -1)
     Character.edit_action_parameters(LUCAS, Action.DashAttack,      File.LUCAS_DASHATTACK,      DASHATTACK,                 -1)
+    Character.edit_action_parameters(LUCAS, Action.JumpF,           -1,          		JUMP1,                         -1)
+    Character.edit_action_parameters(LUCAS, Action.JumpB,           -1,          		JUMP1,                         -1)
     Character.edit_action_parameters(LUCAS, Action.Taunt,           File.LUCAS_TAUNT,           TAUNT,                      0x00000000)
     Character.edit_action_parameters(LUCAS, Action.CliffAttackQuick2, -1,                       EDGE_ATTACK_F,              -1)
     Character.edit_action_parameters(LUCAS, Action.CliffAttackSlow2, -1,                        EDGE_ATTACK_S,              -1)

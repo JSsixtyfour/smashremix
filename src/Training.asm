@@ -8,13 +8,11 @@ print "included Training.asm\n"
 
 include "Character.asm"
 include "Color.asm"
-include "Data.asm"
 include "FGM.asm"
 include "Global.asm"
 include "Joypad.asm"
 include "Menu.asm"
 include "OS.asm"
-include "Overlay.asm"
 include "String.asm"
 include "Toggles.asm"
 
@@ -681,6 +679,7 @@ scope Training {
         _skip_input:
         // replicate the original branch if skip_advance = true
         li      ra, 0x8018DA58              // return value - skip
+        sw      ra, 0x006C(sp)              // save ra
         bnez    t6, _skip                   // if (skip_advance), skip
         nop
         
@@ -696,6 +695,7 @@ scope Training {
         _load_dr:
         // advance one frame and freeze if a dpad right input is given
         li      ra, _advance_frame_return   // return value - advance frame
+        sw      ra, 0x006C(sp)              // save ra
         lw      t5, 0x0000(t3)              // t5 = bool dr_pressed
         beqz    t5, _check_freeze           // if !(dr_pressed), check freeze
         nop
@@ -709,38 +709,58 @@ scope Training {
         beqz    t0, _end                    // if (!freeze), end
         nop
         li      ra, 0x8018DA50              // return value - freeze
+        sw      ra, 0x006C(sp)              // save ra
         
         _end:
         sw      r0, 0x0000(t2)              // du_pressed = false
         sw      r0, 0x0000(t3)              // dr_pressed = false
+
         _skip:
-        lw      at, 0x0004(sp)              // ~
-        lw      v0, 0x0008(sp)              // ~
-        lw      v1, 0x000C(sp)              // ~
-        lw      a0, 0x0010(sp)              // ~
-        lw      a1, 0x0014(sp)              // ~
-        lw      a2, 0x0018(sp)              // ~
-        lw      a3, 0x001C(sp)              // ~
-        lw      t0, 0x0020(sp)              // ~
-        lw      t1, 0x0024(sp)              // ~
-        lw      t2, 0x0028(sp)              // ~
-        lw      t3, 0x002C(sp)              // ~
-        lw      t4, 0x0030(sp)              // ~
-        lw      t5, 0x0034(sp)              // ~
-        lw      t6, 0x0038(sp)              // ~
-        lw      t7, 0x003C(sp)              // ~
-        lw      t8, 0x0040(sp)              // ~
-        lw      t9, 0x0044(sp)              // ~
-        lw      s0, 0x0048(sp)              // ~
-        lw      s1, 0x004C(sp)              // ~
-        lw      s2, 0x0050(sp)              // ~
-        lw      s3, 0x0054(sp)              // ~
-        lw      s4, 0x0058(sp)              // ~
-        lw      s5, 0x005C(sp)              // ~
-        lw      s6, 0x0060(sp)              // ~
-        lw      s7, 0x0064(sp)              // ~
-        lw      s8, 0x0068(sp)              // restore registers (excluding ra)
-        addiu   sp, sp, 0x0070              // deallocate stack space
+        li      t0, Global.screen_interrupt // ~
+        lw      t1, 0x0000(t0)              // generate screen_interrupt
+        bnez    t1, _finish                 // skip custom menu updates if currently resetting
+        nop
+
+        // if frame advance is off, the joystick also won't get updated correctly, so call that here
+        li      t1, freeze                  // t1 = freeze
+        lw      t0, 0x0000(t1)              // t0 = bool freeze
+        beqz    t0, _run                    // if (!freeze), finish
+        nop
+        jal     Joypad.update_stick_
+        nop
+
+        _run:
+        jal     run_
+        nop
+
+        // if frame advance is off, then we need to call Render.update_live_string_ for the entry currently selected
+        li      t1, freeze                  // t1 = freeze
+        lw      t0, 0x0000(t1)              // t0 = bool freeze
+        beqz    t0, _finish                 // if (!freeze), finish
+        nop
+
+        li      a0, info                    // a0 = menu info
+        jal     Menu.get_selected_entry_    // v0 = selected entry
+        nop
+        lw      a0, 0x0020(v0)              // a0 = label object
+        beqz    a0, _finish                 // skip if no label object (shouldn't happen)
+        nop
+        lw      a0, 0x0030(a0)              // a0 = value object
+        beqz    a0, _finish                 // skip if no value object (can happen for titles)
+        nop
+        jal     Render.update_live_string_
+        nop
+
+        // we may have just updated the bgm name, so update that too
+        li      t0, bgm_name_object
+        lw      a0, 0x0000(t0)              // a0 = bgm name object
+        beqz    a0, _finish                 // skip if no bgm name object (shouldn't happen)
+        nop
+        jal     Render.update_live_string_
+        nop
+
+        _finish:
+        OS.restore_registers()
         jr      ra
         nop 
 
@@ -780,11 +800,14 @@ scope Training {
     // as well as copying the player's facing direction to Training.struct.port_x.spawn_dir
     // @ Arguments
     // a0 - address of the player struct
+    // a1 - address of player's custom spawn entry
     scope set_custom_spawn_: {
-        addiu   sp, sp,-0x0010              // allocate stack space
+        addiu   sp, sp,-0x0020              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // ~
-        sw      t2, 0x000C(sp)              // store t0-t2
+        sw      t2, 0x000C(sp)              // ~
+        sw      ra, 0x0010(sp)              // ~
+        sw      v0, 0x0014(sp)              // save registers
         
         // set custom spawn
         li      t2, struct.table            // t2 = struct table address
@@ -801,21 +824,25 @@ scope Training {
         sw      t1, 0x001C(t2)              // save player facing direction to struct
         
         // set spawn type to custom
-        // TODO: this is hard coded and assumes menu structure won't change
-        // is there a better way to do this?
-        li      t2, tail_table              // t2 = tail_table
-        lbu     t0, 0x000D(a0)              // ~
-        sll     t0, t0, 0x2                 // t0 = offset (player port * 4)
-        add     t2, t2, t0                  // t2 = tail_table + offset
-        lw      t2, 0x0000(t2)              // t2 = tail_px
         lli     t1, 0x0004                  // t1 = spawn_id: CUSTOM
-        sw      t1, 0x0080(t2)              // save spawn_id to tail_px
-    
+        sw      t1, 0x0004(a1)              // save spawn_id to tail_px
+
+        // update the string displayed
+        jal     Menu.update_pointer_
+        or      v0, r0, a1                  // v0 = custom spawn entry
+
+        // when freeze is on, need to force update
+        lw      t0, 0x0020(a1)              // t0 = label object
+        jal     Render.update_live_string_
+        lw      a0, 0x0030(t0)              // a0 = value object
+
         _end:
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // ~
-        lw      t2, 0x000C(sp)              // load t0-t2
-        addiu   sp, sp, 0x0010              // deallocate stack space
+        lw      t2, 0x000C(sp)              // ~
+        lw      ra, 0x0010(sp)              // ~
+        lw      v0, 0x0014(sp)              // restore registers
+        addiu   sp, sp, 0x0020              // deallocate stack space
         jr      ra                          // return
         nop
     }
@@ -826,78 +853,115 @@ scope Training {
     // stage select and loads from the reset function
     reset_counter:
     dw 0
-    
+
     // @ Description
-    // Macro which draws a highlighted DPAD icon with a string alongside it.
-    // ulx - upper left x position
-    // uly - upper left y position
-    // indicator_x - x position offset for indicator
-    // indicator_y - y position offset for indicator
-    // string - string pointer
-    macro draw_dpad_shortcut(ulx, uly, indicator_x, indicator_y, string) {
-        // draw dpad
-        lli     a0, {ulx}                   // a0 - ulx
-        lli     a1, {uly}                   // a1 - uly
-        li      a2, Data.dpad_info          // a2 - address of texture struct
-        jal     Overlay.draw_texture_       // draw dpad icon
+    // Renders the frame to the training menu modal for our custom menu.
+    // Reuses the routine at 8018EBB4.
+    // @ Arguments
+    // a0 - address of display object
+    scope draw_modal_frame_: {
+        addiu   sp, sp,-0x0040              // allocate stack space
+        OS.copy_segment(0x1153E0, 0x20)     // save registers
+
+        lli     a0, 0x0000                  // a0 = routine (Render.NOOP)
+        li      a1, Render.TEXTURE_RENDER_  // a1 = display list routine
+        lli     a2, 0x17                    // a2 = room
+        jal     Render.create_display_object_
+        lli     a3, 0x16                    // a3 = group
+
+        or      s6, v0, r0                  // s6 = object reference
+        li      s7, 0x80190B58              // s7 = table of image data
+
+        j       0x8018EC28                  // jump to original routine which will end up jr ra'ing for us
+        lli     s0, 0x0030                  // s0 = offset in table to modal border start
+    }
+
+    // @ Description
+    // Sets up the custom objects for the custom menu
+    scope setup_: {
+        addiu   sp, sp,-0x0030              // allocate stack space
+        sw      ra, 0x0004(sp)              // ~
+
+        Render.load_font()
+        Render.load_file(0xC5, Render.file_pointer_1)                 // load button images into file_pointer_1
+        Render.load_file(File.CSS_IMAGES, Render.file_pointer_2)      // load CSS images into file_pointer_2 (for dpad image)
+
+        li      a0, info                    // a0 - info
+        sw      r0, 0x0008(a0)              // clear cursor object reference on page load
+        sw      r0, 0x000C(a0)              // reset cursor to top
+
+        Render.draw_string(0x17, 0xE, press_z, Render.NOOP, 0x43200000, 0x42480000, 0xFFFFFFFF, 0x3F800000, Render.alignment.CENTER, OS.FALSE)
+        Render.draw_texture_at_offset(0x17, 0xE, Render.file_pointer_1, Render.file_c5_offsets.Z, Render.NOOP, 0x42EB0000, 0x42440000, 0x848484FF, 0x303030FF, 0x3F800000)
+
+        // Reset counter
+        Render.draw_string(0x17, 0x15, reset_string, Render.NOOP, 0x42C70000, 0x41C80000, 0xFFFFFFFF, 0x3F800000, Render.alignment.LEFT, OS.FALSE)
+        Render.draw_number(0x17, 0x15, reset_counter, Render.NOOP, 0x435D0000, 0x41C80000, 0xFFFFFFFF, 0x3F800000, Render.alignment.RIGHT, OS.FALSE)
+
+        // Dpad images
+        Render.draw_texture_at_offset(0x17, 0x15, Render.file_pointer_2, 0x0218, Render.NOOP, 0x42350000, 0x43480000, 0x848484FF, 0x303030FF, 0x3F800000)
+        Render.draw_texture_at_offset(0x17, 0x15, Render.file_pointer_2, 0x0218, Render.NOOP, 0x42350000, 0x43570000, 0x848484FF, 0x303030FF, 0x3F800000)
+        Render.draw_texture_at_offset(0x17, 0x15, Render.file_pointer_2, 0x0218, Render.NOOP, 0x43200000, 0x43480000, 0x848484FF, 0x303030FF, 0x3F800000)
+        Render.draw_texture_at_offset(0x17, 0x15, Render.file_pointer_2, 0x0218, Render.NOOP, 0x43200000, 0x43570000, 0x848484FF, 0x303030FF, 0x3F800000)
+        Render.draw_rectangle(0x17, 0x15, 52, 203, 2, 2, Color.high.YELLOW, OS.FALSE)
+        Render.draw_rectangle(0x17, 0x15, 48, 222, 2, 2, Color.high.YELLOW, OS.FALSE)
+        Render.draw_rectangle(0x17, 0x15, 171, 207, 2, 2, Color.high.YELLOW, OS.FALSE)
+        Render.draw_rectangle(0x17, 0x15, 167, 226, 2, 2, Color.high.YELLOW, OS.FALSE)
+        Render.draw_string(0x17, 0x15, dpad_pause, Render.NOOP, 0x427D0000, 0x434A0000, 0xFFFFFFFF, 0x3F800000, Render.alignment.LEFT, OS.FALSE)
+        Render.draw_string(0x17, 0x15, dpad_reset, Render.NOOP, 0x427D0000, 0x43590000, 0xFFFFFFFF, 0x3F800000, Render.alignment.LEFT, OS.FALSE)
+        Render.draw_string(0x17, 0x15, dpad_frame, Render.NOOP, 0x43320000, 0x434A0000, 0xFFFFFFFF, 0x3F800000, Render.alignment.LEFT, OS.FALSE)
+        Render.draw_string(0x17, 0x15, dpad_model, Render.NOOP, 0x43320000, 0x43590000, 0xFFFFFFFF, 0x3F800000, Render.alignment.LEFT, OS.FALSE)
+
+        // Transparent background and frame
+        Render.draw_rectangle(0x16, 0x16, 66, 45, 189, 154, 0x0064FF64, OS.TRUE)
+        jal     draw_modal_frame_
         nop
-        // draw direction indicator using yellow square
-        lli     a0, Color.low.YELLOW        // a0 - fill color
-        jal     Overlay.set_color_          // fill color = YELLOW
+
+        // BGM name
+        Render.draw_string_pointer(0x17, 0x16, bgm_pointer, Render.update_live_string_, 0x43200000, 0x43380000, 0xFFFFFFFF, 0x3F5C0000, Render.alignment.CENTER, OS.FALSE)
+        li      t0, bgm_name_object
+        sw      v0, 0x0000(t0)              // save reference to bgm name object
+        sw      t0, 0x0054(v0)              // store address of reference to bgm name object
+
+        li      a0, info                    // a0 - address of Menu.info()
+        jal     Menu.draw_                  // draw menu
         nop
-        lli     a0, {ulx}+{indicator_x}     // a0 - ulx
-        lli     a1, {uly}+{indicator_y}     // a1 - uly
-        lli     a2, 2                       // a2 - width
-        lli     a3, 2                       // a3 - height
-        jal     Overlay.draw_rectangle_     // draw rectangle
-        nop
-        // draw string
-        lli     a0, {ulx}+18                // a0 - ulx
-        lli     a1, {uly}+4                 // a1 - uly
-        li      a2, {string}                // a2 - address of string
-        jal     Overlay.draw_string_        // draw shortcut instructions
+
+        lli     a0, 0x000E                  // a0 = normal menu group (added objects)
+        jal     Render.toggle_group_display_
+        lli     a1, 0x0001                  // a1 = display off
+
+        lli     a0, 0x0015                  // a0 = custom pause group
+        jal     Render.toggle_group_display_
+        lli     a1, 0x0001                  // a1 = display off
+
+        lli     a0, 0x0016                  // a0 = custom menu group
+        jal     Render.toggle_group_display_
+        lli     a1, 0x0001                  // a1 = display off
+
+        _end:
+        lw      ra, 0x0004(sp)              // restore ra
+        addiu   sp, sp, 0x0030              // deallocate stack space
+        jr      ra                          // return
         nop
     }
 
     // @ Description
-    // Runs the menu
+    // Runs every frame to correctly update the menu
     scope run_: {
         OS.save_registers()
 
         li      t0, toggle_menu             // t0 = address of toggle_menu
         lbu     t0, 0x0000(t0)              // t0 = toggle_menu
-        
+
         lli     t1, BOTH_DOWN               // t1 = both menus are down
-        beq     t0, t1, _end                // branch accordingly
+        beq     t0, t1, _both_down          // branch accordingly
         nop
-        
-        // draw dpad macro instructions
-        draw_dpad_shortcut(40, 200, 7, 3, dpad_pause)
-        draw_dpad_shortcut(40, 215, 3, 7, dpad_reset)
-        draw_dpad_shortcut(160, 200, 11, 7, dpad_frame)
-        draw_dpad_shortcut(160, 215, 7, 11, dpad_model)        
-        
-        // draw reset counter
-        lli     a0, 000098                  // a0 - ulx
-        lli     a1, 000025                  // a1 - uly
-        li      a2, reset_string            // a2 - address of string
-        jal     Overlay.draw_string_        // draw "reset counter" string
-        nop
-        li      a2, reset_counter           // a2 = reset_count
-        lw      a0, 0x0000(a2)              // a2 = (int) reset count
-        jal     String.itoa_                // v0 = (string) reset count
-        nop
-        lli     a0, 000222                  // a0 - urx
-        lli     a1, 000025                  // a1 - uly
-        move    a2, v0                      // a2 - address of string
-        jal     Overlay.draw_string_urx_    // draw reset count number
-        nop
-        
+
         // check if the ssb menu is up
         lli     t1, SSB_UP                  // t1 = ssb menu is up
         beq     t0, t1, _ssb_up             // branch accordingly
         nop
-        
+
         // check if the custom menu is up
         lli     t1, CUSTOM_UP               // t1 = custom menu is up
         beq     t0, t1, _custom_up          // branch accordingly
@@ -908,58 +972,47 @@ scope Training {
         nop
 
         _custom_up:
-        // the first option in the custom training menu has it's next pointer modified for the
-        // rest of the option based on the value it holds. this block updates the next pointer
-        li      t0, info                    // t0 = info
-        lw      t0, 0x0000(t0)              // t0 = address of head (entry)
-        lw      t1, 0x0004(t0)              // t1 = entry.curr
-        addiu   t1, t1,-0x0001              // t1 = entry.curr-- (p1 = 0, p2 = 1 etc.)
-        sll     t1, t1, 0x0002              // t1 = offset
-        li      t2, tail_table              // t2 = address of tail_table
-        addu    t2, t2, t1                  // t2 = address of tail_table + offset
-        lw      t2, 0x0000(t2)              // t2 = address of tail
-        sw      t2, 0x001C(t0)              // entry.next = address of head
-
-        // draw background
-        lli     a0, Color.low.MENU_BG
-        jal     Overlay.set_color_          // set fill color
-        nop
-        lli     a0, 000062                  // a0 - ulx
-        lli     a1, 000043                  // a1 - uly
-        lli     a2, 000196                  // a2 - width
-        lli     a3, 000159                  // a3 - height
-        jal     Overlay.draw_rectangle_     // draw background rectangle
-        nop
-        
-        // draw logo
-        lli     a0, 000065                  // a0 - ulx
-        lli     a1, 000060                  // a1 - uly
-        li      a2, Data.menu_logo_info     // a2 - address of texture struct
-        jal     Overlay.draw_texture_big_   // draw logo texture
-        nop
-
         // update menu
         li      a0, info                    // a0 - address of Menu.info()
         jal     Menu.update_                // check for updates
         nop
 
-        // draw menu
-        li      a0, info                    // a0 - address of Menu.inf()
-        jal     Menu.draw_                  // draw menu
-        nop
-
-        // draw bgm name
-        lli     a0, 000161                  // a0 - x
-        lli     a1, 000160                  // a1 - uly
         li      t0, entry_music             // t0 - music menu entry address
         lw      t0, 0x0004(t0)              // t0 - string_table_music index
         sll     t0, t0, 0x0002              // t0 - string_table_music offset
-        li      a2, string_table_music      // a2 - address of music tring table
-        addu    a2, a2, t0                  // a2 - address of BGM name string pointer
-        lw      a2, 0x0000(a2)              // a2 - address of BGM name string
-        jal     Overlay.draw_centered_str_  // draw BGM name
-        nop
+        li      t1, string_table_music      // t1 - address of music string table
+        addu    t1, t1, t0                  // t1 - address of BGM name string pointer
+        lw      t1, 0x0000(t1)              // t1 - address of BGM name string
+        li      t0, bgm_pointer             // t0 - bgm_pointer
+        sw      t1, 0x0000(t0)              // save address of BGM name string
 
+        // the first option in the custom training menu has it's next pointer modified for the
+        // rest of the option based on the value it holds. this block updates the next pointer
+        li      a0, info                    // a0 = info
+        lw      t0, 0x0000(a0)              // t0 = address of head (entry)
+        lw      t1, 0x0004(t0)              // t1 = entry.curr
+        addiu   t1, t1,-0x0001              // t1 = entry.curr-- (p1 = 0, p2 = 1 etc.)
+        sll     t1, t1, 0x0002              // t1 = offset
+        li      t2, tail_table              // t2 = address of tail_table
+        addu    t2, t2, t1                  // t2 = address of tail_table + offset
+        lw      a1, 0x0000(t2)              // a1 = address of tail
+        lw      t1, 0x001C(t0)              // t1 = current entry.next
+        beq     t1, a1, _check_b            // if they are the same, then continue
+        nop                                 // otherwise, update and redraw the menu
+
+        jal     Menu.destroy_rendered_objects_
+        lw      a0, 0x0018(a0)              // a0 = address of first entry currently displayed
+
+        li      a0, info                    // a0 = info
+        lw      t0, 0x0000(a0)              // t0 = address of head (entry)
+        sw      a1, 0x001C(t0)              // entry.next = address of head
+
+        // redraw menu
+        li      a0, info                    // a0 - address of Menu.info()
+        jal     Menu.redraw_                // check for updates
+        lw      a1, 0x0018(a0)              // a1 - first entry
+
+        _check_b:
         // check for b press
         lli     a0, Joypad.B                // a0 - button_mask
         lli     a1, 000069                  // a1 - whatever you like!
@@ -971,16 +1024,22 @@ scope Training {
         li      t0, toggle_menu             // t0 = toggle_menu
         lli     t1, SSB_UP                  // ~
         sb      t1, 0x0000(t0)              // toggle menu = SSB_UP
+
+        lli     a0, 0x0016                  // a0 = custom menu group
+        jal     Render.toggle_group_display_
+        lli     a1, 0x0001                  // a1 = display off
+
+        lli     a0, 0x000E                  // a0 = normal menu group
+        jal     Render.toggle_group_display_
+        lli     a1, 0x0000                  // a1 = display on
+
         b       _end                        // end execution
         nop
 
         _ssb_up:
-        // tell the user they can bring up the custom menu
-        lli     a0, 000161                  // a0 - x
-        lli     a1, 000050                  // a1 - uly
-        li      a2, press_z                 // a2 - address of string
-        jal     Overlay.draw_centered_str_  // draw custom menu instructions
-        nop
+        lli     a0, 0x0015                  // a0 = custom pause group
+        jal     Render.toggle_group_display_
+        lli     a1, 0x0000                  // a1 = display on
 
         // check for z press
         lli     a0, Joypad.Z                // a0 - button_mask
@@ -997,9 +1056,25 @@ scope Training {
         lli     t1, CUSTOM_UP               // ~
         sb      t1, 0x0000(t0)              // toggle menu = CUSTOM_UP
 
+        // draw menu
+        lli     a0, 0x0016                  // a0 = custom menu group
+        jal     Render.toggle_group_display_
+        lli     a1, 0x0000                  // a1 = display on
+
+        lli     a0, 0x000E                  // a0 = normal menu group
+        jal     Render.toggle_group_display_
+        lli     a1, 0x0001                  // a1 = display off
+
         _end:
         OS.restore_registers()
         jr      ra
+        nop
+
+        _both_down:
+        lli     a0, 0x0015                  // a0 = custom pause group
+        jal     Render.toggle_group_display_
+        lli     a1, 0x0001                  // a1 = display off
+        b       _end
         nop
     }
     
@@ -1017,7 +1092,7 @@ scope Training {
         lw      at, 0x0004(at)              // at = bgm_table index
         li      t7, bgm_table               // t7 = address of bgm_table
         addu    a1, at, t7                  // a1 = address of bgm_id
-        lb      a1, 0x0000(a1)              // a1 = bgm_id
+        lbu     a1, 0x0000(a1)              // a1 = bgm_id
 
         sw      a1, 0x0000(v0)              // original line 2
 
@@ -1133,27 +1208,27 @@ scope Training {
 
     // @ Description
     // Strings used to explain advance_frame_ shortcuts
-    dpad_pause:; db "TOGGLE PAUSE", 0x00
-    dpad_frame:; db "FRAME ADVANCE", 0x00
-    dpad_model:; db "MODEL DISPLAY", 0x00
-    dpad_reset:; db "QUICK RESET", 0x00
+    dpad_pause:; db "Toggle Pause", 0x00
+    dpad_frame:; db "Frame Advance", 0x00
+    dpad_model:; db "Model Display", 0x00
+    dpad_reset:; db "Quick Reset", 0x00
     OS.align(4)
     
     // @ Description
     // String used for reset counter which appears while the training menu is up
-    reset_string:; db "RESET COUNT", 0x00
+    reset_string:; db "Reset Count:", 0x00
     OS.align(4)
     
     
     // @ Description
     // Message/visual indicator to press Z for custom menu
-    press_z:; db "PRESS Z FOR CUSTOM MENU", 0x00
+    press_z:; db "Press    for Custom Menu", 0x00
 
     // @ Description
     // Type strings
-    type_1:; db "HUMAN", 0x00
+    type_1:; db "Human", 0x00
     type_2:; db "CPU", 0x00
-    type_3:; db "DISABLED", 0x00
+    type_3:; db "Disabled", 0x00
     OS.align(4)
 
     string_table_type:
@@ -1163,58 +1238,60 @@ scope Training {
 
     // @ Description
     // Character Strings
-    char_0x00:; db "MARIO" , 0x00
-    char_0x01:; db "FOX", 0x00
+    char_0x00:; db "Mario" , 0x00
+    char_0x01:; db "Fox", 0x00
     char_0x02:; db "DK", 0x00
-    char_0x03:; db "SAMUS", 0x00
-    char_0x04:; db "LUIGI", 0x00
-    char_0x05:; db "LINK", 0x00
-    char_0x06:; db "YOSHI", 0x00
-    char_0x07:; db "C. FALCON", 0x00
-    char_0x08:; db "KIRBY", 0x00
-    char_0x09:; db "PIKACHU", 0x00
-    char_0x0A:; db "JIGGLYPUFF", 0x00
-    char_0x0B:; db "NESS", 0x00
-    //char_0x0C:; db "MASTER HAND", 0x00
-    char_0x0D:; db "METAL MARIO", 0x00
-    char_0x0E:; db "POLY MARIO", 0x00
-    char_0x0F:; db "POLY FOX", 0x00
-    char_0x10:; db "POLY DK", 0x00
-    char_0x11:; db "POLY SAMUS", 0x00
-    char_0x12:; db "POLY LUIGI", 0x00
-    char_0x13:; db "POLY LINK", 0x00
-    char_0x14:; db "POLY YOSHI", 0x00
-    char_0x15:; db "POLY FALCON", 0x00
-    char_0x16:; db "POLY KIRBY", 0x00
-    char_0x17:; db "POLY PIKACHU", 0x00
-    char_0x18:; db "POLY PUFF", 0x00
-    char_0x19:; db "POLY NESS", 0x00
-    char_0x1A:; db "GIANT DK", 0x00
+    char_0x03:; db "Samus", 0x00
+    char_0x04:; db "Luigi", 0x00
+    char_0x05:; db "Link", 0x00
+    char_0x06:; db "Yoshi", 0x00
+    char_0x07:; db "C. Falcon", 0x00
+    char_0x08:; db "Kirby", 0x00
+    char_0x09:; db "Pikachu", 0x00
+    char_0x0A:; db "Jigglypuff", 0x00
+    char_0x0B:; db "Ness", 0x00
+    //char_0x0C:; db "Master Hand", 0x00
+    char_0x0D:; db "Metal Mario", 0x00
+    char_0x0E:; db "Poly Mario", 0x00
+    char_0x0F:; db "Poly Fox", 0x00
+    char_0x10:; db "Poly DK", 0x00
+    char_0x11:; db "Poly Samus", 0x00
+    char_0x12:; db "Poly Luigi", 0x00
+    char_0x13:; db "Poly Link", 0x00
+    char_0x14:; db "Poly Yoshi", 0x00
+    char_0x15:; db "Poly Falcon", 0x00
+    char_0x16:; db "Poly Kirby", 0x00
+    char_0x17:; db "Poly Pikachu", 0x00
+    char_0x18:; db "Poly Puff", 0x00
+    char_0x19:; db "Poly Ness", 0x00
+    char_0x1A:; db "Giant DK", 0x00
     //char_0x1B:; db "NONE", 0x00
     //char_0x1C:; db "NONE", 0x00
-    char_0x1D:; db "FALCO", 0x00
-    char_0x1E:; db "GANONDORF", 0x00
-    char_0x1F:; db "YOUNG LINK", 0x00
-    char_0x20:; db "DR. MARIO", 0x00
-    char_0x21:; db "WARIO", 0x00
-    char_0x22:; db "DARK SAMUS", 0x00
-    char_0x23:; db "E LINK", 0x00
-    char_0x24:; db "J SAMUS", 0x00
-    char_0x25:; db "J NESS", 0x00
-    char_0x26:; db "LUCAS", 0x00
-    char_0x27:; db "J LINK", 0x00
-    char_0x28:; db "J FALCON", 0x00
-    char_0x29:; db "J FOX", 0x00
-    char_0x2A:; db "J MARIO", 0x00
-    char_0x2B:; db "J LUIGI", 0x00
+    char_0x1D:; db "Falco", 0x00
+    char_0x1E:; db "Ganondorf", 0x00
+    char_0x1F:; db "Young Link", 0x00
+    char_0x20:; db "Dr. Mario", 0x00
+    char_0x21:; db "Wario", 0x00
+    char_0x22:; db "Dark Samus", 0x00
+    char_0x23:; db "E Link", 0x00
+    char_0x24:; db "J Samus", 0x00
+    char_0x25:; db "J Ness", 0x00
+    char_0x26:; db "Lucas", 0x00
+    char_0x27:; db "J Link", 0x00
+    char_0x28:; db "J Falcon", 0x00
+    char_0x29:; db "J Fox", 0x00
+    char_0x2A:; db "J Mario", 0x00
+    char_0x2B:; db "J Luigi", 0x00
     char_0x2C:; db "J DK", 0x00
-    char_0x2D:; db "E PIKACHU", 0x00
-    char_0x2E:; db "PURIN", 0x00
-    char_0x2F:; db "E JIGGLYPUFF", 0x00
-    char_0x30:; db "J KIRBY", 0x00
-    char_0x31:; db "J YOSHI", 0x00
-    char_0x32:; db "J PIKA", 0x00
-    char_0x33:; db "E SAMUS", 0x00
+    char_0x2D:; db "E Pikachu", 0x00
+    char_0x2E:; db "Purin", 0x00
+    char_0x2F:; db "E Jigglypuff", 0x00
+    char_0x30:; db "J Kirby", 0x00
+    char_0x31:; db "J Yoshi", 0x00
+    char_0x32:; db "J Pikachu", 0x00
+    char_0x33:; db "E Samus", 0x00
+    char_0x34:; db "Bowser", 0x00
+	char_0x35:; db "Giga Bowser", 0x00
     OS.align(4)
 
     string_table_char:
@@ -1238,6 +1315,7 @@ scope Training {
     dw char_0x21            // WARIO
     dw char_0x22            // DARK SAMUS
     dw char_0x26            // LUCAS
+	dw char_0x34            // BOWSER
 
     dw char_0x2A            // J MARIO
     dw char_0x29            // J FOX
@@ -1259,6 +1337,7 @@ scope Training {
 
     dw char_0x0D            // METAL MARIO
     dw char_0x1A            // GIANT DK
+	dw char_0x35            // GIGA BOWSER
     dw char_0x0E            // POLYGON MARIO
     dw char_0x0F            // POLYGON FOX
     dw char_0x10            // POLYGON DK
@@ -1298,43 +1377,45 @@ scope Training {
         constant WARIO(0x10)
         constant DSAMUS(0x11)
         constant LUCAS(0x12)
+		constant BOWSER(0x13)
 
         // j characters
-        constant JMARIO(0x13)
-        constant JFOX(0x14)
-        constant JDK(0x15)
-        constant JSAMUS(0x16)
-        constant JLUIGI(0x17)
-        constant JLINK(0x18)
-        constant JYOSHI(0x19)
-        constant JFALCON(0x1A)
-        constant JKIRBY(0x1B)
-        constant JPIKA(0x1C)
-        constant JPUFF(0x1D)
-        constant JNESS(0x1E)
+        constant JMARIO(0x14)
+        constant JFOX(0x15)
+        constant JDK(0x16)
+        constant JSAMUS(0x17)
+        constant JLUIGI(0x18)
+        constant JLINK(0x19)
+        constant JYOSHI(0x1A)
+        constant JFALCON(0x1B)
+        constant JKIRBY(0x1C)
+        constant JPIKA(0x1D)
+        constant JPUFF(0x1E)
+        constant JNESS(0x1F)
 
         // e characters
-        constant ESAMUS(0x1F)
-        constant ELINK(0x20)
-        constant EPIKA(0x21)
-        constant EPUFF(0x22)
+        constant ESAMUS(0x20)
+        constant ELINK(0x21)
+        constant EPIKA(0x22)
+        constant EPUFF(0x23)
 
         // Increment METAL after adding more characters above
 
-        constant METAL(0x23)
+        constant METAL(0x24)
         constant GDONKEY(METAL + 0x01)
-        constant NMARIO(METAL + 0x02)
-        constant NFOX(METAL + 0x03)
-        constant NDONKEY(METAL + 0x04)
-        constant NSAMUS(METAL + 0x05)
-        constant NLUIGI(METAL + 0x06)
-        constant NLINK(METAL + 0x07)
-        constant NYOSHI(METAL + 0x08)
-        constant NCAPTAIN(METAL + 0x09)
-        constant NKIRBY(METAL + 0x0A)
-        constant NPIKACHU(METAL + 0x0B)
-        constant NJIGGLY(METAL + 0x0C)
-        constant NNESS(METAL + 0x0D)
+        constant GBOWSER(METAL + 0x02)
+		constant NMARIO(METAL + 0x03)
+        constant NFOX(METAL + 0x04)
+        constant NDONKEY(METAL + 0x05)
+        constant NSAMUS(METAL + 0x06)
+        constant NLUIGI(METAL + 0x07)
+        constant NLINK(METAL + 0x08)
+        constant NYOSHI(METAL + 0x09)
+        constant NCAPTAIN(METAL + 0x0A)
+        constant NKIRBY(METAL + 0x0B)
+        constant NPIKACHU(METAL + 0x0C)
+        constant NJIGGLY(METAL + 0x0D)
+        constant NNESS(METAL + 0x0E)
     }
 
 
@@ -1359,6 +1440,7 @@ scope Training {
     db Character.id.WARIO
     db Character.id.DSAMUS
     db Character.id.LUCAS
+	db Character.id.BOWSER
 
     db Character.id.JMARIO
     db Character.id.JFOX
@@ -1380,6 +1462,7 @@ scope Training {
 
     db Character.id.METAL
     db Character.id.GDONKEY
+	db Character.id.GBOWSER
     db Character.id.NMARIO
     db Character.id.NFOX
     db Character.id.NDONKEY
@@ -1446,14 +1529,16 @@ scope Training {
     db id.JYOSHI
     db id.JPIKA
     db id.ESAMUS
+	db id.BOWSER
+	db id.GBOWSER
 
     // @ Description 
     // Spawn Position Strings
-    spawn_1:; db "PORT 1", 0x00
-    spawn_2:; db "PORT 2", 0x00
-    spawn_3:; db "PORT 3", 0x00
-    spawn_4:; db "PORT 4", 0x00
-    spawn_5:; db "CUSTOM", 0x00
+    spawn_1:; db "Port 1", 0x00
+    spawn_2:; db "Port 2", 0x00
+    spawn_3:; db "Port 3", 0x00
+    spawn_4:; db "Port 4", 0x00
+    spawn_5:; db "Custom", 0x00
     OS.align(4)
 
     string_table_spawn:
@@ -1477,6 +1562,7 @@ scope Training {
         beqz    v0, _skip_spawn_{player}    // skip if no player struct is returned
         nop
         move    a0, v0                      // a0 = player pointer
+        li      a1, entry_spawn_p{player}
         jal     set_custom_spawn_
         nop
         
@@ -1539,14 +1625,14 @@ scope Training {
         define percent_func(Training.percent_func_{player}_)
 
 
-        Menu.entry("CHARACTER", Menu.type.U8, 0, 0, char_id_to_entry_id - entry_id_to_char_id - 1, OS.NULL, string_table_char, {character}, pc() + 16)
-        Menu.entry("COSTUME", Menu.type.U8, 0, 0, 5, OS.NULL, OS.NULL, {costume}, pc() + 12)
-        Menu.entry("TYPE", Menu.type.U8, 2, 0, 2, OS.NULL, string_table_type, {type}, pc() + 12)
-        Menu.entry("SPAWN", Menu.type.U8, 0, 0, 4, OS.NULL, string_table_spawn, {spawn_id}, pc() + 12)
-        Menu.entry_title("SET CUSTOM SPAWN", {spawn_func}, pc() + 24)
-        Menu.entry("PERCENT", Menu.type.U16, 0, 0, 999, OS.NULL, OS.NULL, {percent}, pc() + 12)
-        Menu.entry_title("SET PERCENT", {percent_func}, entry_percent_toggle_p{player})
-        entry_percent_toggle_p{player}:; Menu.entry_bool("RESET SETS PERCENT", OS.TRUE, entry_shield_break_mode)
+        Menu.entry("Character:", Menu.type.U8, 0, 0, char_id_to_entry_id - entry_id_to_char_id - 1, OS.NULL, string_table_char, {character}, entry_costume_p{player})
+        entry_costume_p{player}:; Menu.entry("Costume:", Menu.type.U8, 0, 0, 5, OS.NULL, OS.NULL, {costume}, entry_type_p{player})
+        entry_type_p{player}:; Menu.entry("Type:", Menu.type.U8, 2, 0, 2, OS.NULL, string_table_type, {type}, entry_spawn_p{player})
+        entry_spawn_p{player}:; Menu.entry("Spawn:", Menu.type.U8, 0, 0, 4, OS.NULL, string_table_spawn, {spawn_id}, entry_set_custom_spawn_p{player})
+        entry_set_custom_spawn_p{player}:; Menu.entry_title("Set Custom Spawn", {spawn_func}, entry_percent_p{player})
+        entry_percent_p{player}:; Menu.entry("Percent:", Menu.type.U16, 0, 0, 999, OS.NULL, OS.NULL, {percent}, entry_set_percent_p{player})
+        entry_set_percent_p{player}:; Menu.entry_title("Set Percent", {percent_func}, entry_percent_toggle_p{player})
+        entry_percent_toggle_p{player}:; Menu.entry_bool("Reset Sets Percent:", OS.TRUE, entry_shield_break_mode)
     }
 
     tail_p1:; tail_px(1)
@@ -1623,39 +1709,39 @@ scope Training {
     }
 
     info:
-    Menu.info(head, 62, 50, 0, 24)
+    Menu.info(head, 68, 50, 0x17, 0x16, 23, Color.high.RED, Color.high.WHITE, Color.high.WHITE, 0x3F6C0000, 0xE, 12, OS.FALSE)
 
     head:
     entry_port_x:
-    Menu.entry("PORT", Menu.type.U8, 1, 1, 4, OS.NULL, OS.NULL, OS.NULL, tail_p1)
+    Menu.entry("Port:", Menu.type.U8, 1, 1, 4, OS.NULL, OS.NULL, OS.NULL, tail_p1)
 
     string_training_mode:; String.insert("Training Mode")
 
     string_table_music:
     dw       string_training_mode
-    dw       Toggles.entry_random_music_bonus + 0x20
-    dw       Toggles.entry_random_music_congo_jungle + 0x20
-    dw       Toggles.entry_random_music_credits + 0x20
-    dw       Toggles.entry_random_music_data + 0x20
-    dw       Toggles.entry_random_music_dream_land + 0x20
-    dw       Toggles.entry_random_music_duel_zone + 0x20
-    dw       Toggles.entry_random_music_final_destination + 0x20
-    dw       Toggles.entry_random_music_how_to_play + 0x20
-    dw       Toggles.entry_random_music_hyrule_castle + 0x20
-    dw       Toggles.entry_random_music_meta_crystal + 0x20
-    dw       Toggles.entry_random_music_mushroom_kingdom + 0x20
-    dw       Toggles.entry_random_music_peachs_castle + 0x20
-    dw       Toggles.entry_random_music_planet_zebes + 0x20
-    dw       Toggles.entry_random_music_saffron_city + 0x20
-    dw       Toggles.entry_random_music_sector_z + 0x20
-    dw       Toggles.entry_random_music_yoshis_island + 0x20
+    dw       Toggles.entry_random_music_bonus + 0x24
+    dw       Toggles.entry_random_music_congo_jungle + 0x24
+    dw       Toggles.entry_random_music_credits + 0x24
+    dw       Toggles.entry_random_music_data + 0x24
+    dw       Toggles.entry_random_music_dream_land + 0x24
+    dw       Toggles.entry_random_music_duel_zone + 0x24
+    dw       Toggles.entry_random_music_final_destination + 0x24
+    dw       Toggles.entry_random_music_how_to_play + 0x24
+    dw       Toggles.entry_random_music_hyrule_castle + 0x24
+    dw       Toggles.entry_random_music_meta_crystal + 0x24
+    dw       Toggles.entry_random_music_mushroom_kingdom + 0x24
+    dw       Toggles.entry_random_music_peachs_castle + 0x24
+    dw       Toggles.entry_random_music_planet_zebes + 0x24
+    dw       Toggles.entry_random_music_saffron_city + 0x24
+    dw       Toggles.entry_random_music_sector_z + 0x24
+    dw       Toggles.entry_random_music_yoshis_island + 0x24
     evaluate total(17)
     evaluate n(0x2F)
     while {n} < MIDI.midi_count {
         evaluate can_toggle({MIDI.MIDI_{n}_TOGGLE})
         if ({can_toggle} == OS.TRUE) {
             evaluate total({total}+1)
-            dw       Toggles.entry_random_music_{n} + 0x20
+            dw       Toggles.entry_random_music_{n} + 0x24
         }
         evaluate n({n}+1)
     }
@@ -1688,12 +1774,22 @@ scope Training {
     }
     OS.align(4)
 
-    entry_shield_break_mode:; Menu.entry_bool("SHIELD BREAK MODE", OS.FALSE, entry_music)
-    entry_music:; Menu.entry("MUSIC", Menu.type.U8, 0, 0, {total} - 1, OS.NULL, OS.NULL, OS.NULL, OS.NULL)
+    entry_shield_break_mode:; Menu.entry_bool("Shield Break Mode:", OS.FALSE, entry_music)
+    entry_music:; Menu.entry("Music:", Menu.type.U8, 0, 0, {total} - 1, OS.NULL, OS.NULL, OS.NULL, OS.NULL)
 
     // @ Description
     // Holds the initial value of the special model display toggle
     initial_model_display:
+    dw      0x00000000
+
+    // @ Description
+    // Pointer to the address of the BGM name object
+    bgm_name_object:
+    dw      0x00000000
+
+    // @ Description
+    // Pointer to the address of the BGM string
+    bgm_pointer:
     dw      0x00000000
 }
 

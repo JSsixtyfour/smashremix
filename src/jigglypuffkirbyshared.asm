@@ -36,7 +36,7 @@ scope JigglypuffKirbyShared {
     scope jump_fix_2: {
         OS.patch_start(0xBAA8C, 0x8014004C)
         j       jump_fix_2              
-        nop
+        addiu	t6, r0, 0x0050
         _return:
         OS.patch_end()
         
@@ -242,6 +242,12 @@ scope JigglypuffKirbyShared {
         beq     v0, at, _kirbyfthrow_1          // modified original line 1
         addiu   at, r0, Character.id.JKIRBY     // JKIRBY ID
         beq     v0, at, _kirbyfthrow_1
+        nop
+		addiu	t3, r0, 0x00E5					// Set correct action ID for bowser
+		addiu   at, r0, Character.id.BOWSER     // BOWSER ID
+		beq     v0, at, _kirbyfthrow_1
+		addiu   at, r0, Character.id.GBOWSER    // GBOWSER ID
+		beq     v0, at, _kirbyfthrow_1
         nop
         j       _return                     // return
         nop   

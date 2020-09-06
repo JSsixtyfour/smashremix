@@ -4,7 +4,7 @@ define __FGM__()
 print "included FGM.asm\n"
 
 // @ Description
-// This file allows FGM (forground music) to be played.
+// This file allows FGM (foreground music) to be played.
 
 include "OS.asm"
 include "MIDI.asm"
@@ -86,6 +86,7 @@ scope FGM {
     variable new_sample_count(0)
     variable new_sfx_count(0)
     variable new_fgm_count(0)
+    variable new_sound_test_count(0)
     variable new_sfx_fgm_size(0)
     variable new_fgm_microcode_size(0)
 
@@ -136,9 +137,11 @@ scope FGM {
         global variable new_sample_count(new_sample_count + 1)
         global variable new_sfx_count(new_sfx_count + 1)
         global variable new_fgm_count(new_fgm_count + 1)
+        global variable new_sound_test_count(new_sound_test_count + 1)
         evaluate num(new_sample_count)
         evaluate sfx_num(new_sfx_count)
         evaluate fgm_num(new_fgm_count)
+        evaluate st_num(new_sound_test_count)
         global define SOUND_NAME_{num}({name})
         global evaluate SOUND_SFX_FGM_INDEX_{fgm_num}(ORIGINAL_SFX_FGM_COUNT - 1 + new_sfx_count)
         global evaluate SOUND_SFX_SOUND_ID_{sfx_num}(0x8141 + new_sample_count)
@@ -146,6 +149,7 @@ scope FGM {
         global evaluate SOUND_TYPE_FGM_{fgm_num}({fgm_type})
         global evaluate SOUND_TYPE_SFX_{sfx_num}({fgm_type})
         global evaluate SOUND_REVERB_{sfx_num}({reverb})
+        global evaluate SOUND_TEST_FGM_ID_{st_num}({fgm_num})
 
         // Sample size is 2 words too long
         read32 SOUND_SAMPLE_SIZE_{num}, "../src/{SOUND_NAME_{num}}.aifc", 0xF4
@@ -165,7 +169,7 @@ scope FGM {
         global define SOUND_LOOP_PARAMS_{num}(0x00000000)
 
         print "Added {SOUND_NAME_{num}}\nFGM_ID: 0x"; OS.print_hex(ORIGINAL_FGM_COUNT - 1 + {fgm_num}); print " (", ORIGINAL_FGM_COUNT - 1 + {fgm_num},")\n"
-        print "Sound Test Voice ID: ", 244 + {fgm_num}, "\n\n"
+        print "Sound Test Voice ID: ", 244 + new_sound_test_count, "\n\n"
     }
 
     // @ Description
@@ -186,14 +190,17 @@ scope FGM {
         global variable new_sample_count(new_sample_count + 1)
         global variable new_sfx_count(new_sfx_count + 1)
         global variable new_fgm_count(new_fgm_count + 1)
+        global variable new_sound_test_count(new_sound_test_count + 1)
         evaluate num(new_sample_count)
         evaluate sfx_num(new_sfx_count)
         evaluate fgm_num(new_fgm_count)
+        evaluate st_num(new_sound_test_count)
         global define SOUND_NAME_{num}({file_name})
         global evaluate SOUND_SFX_FGM_INDEX_{fgm_num}(ORIGINAL_SFX_FGM_COUNT - 1 + new_sfx_count)
         global evaluate SOUND_SFX_SOUND_ID_{sfx_num}(0x8141 + new_sample_count)
         global define SOUND_FGM_MICROCODE_FILE_{fgm_num}({fgm_microcode_file})
         global define SOUND_SFX_MICROCODE_FILE_{sfx_num}({sfx_microcode_file})
+        global evaluate SOUND_TEST_FGM_ID_{st_num}({fgm_num})
 
         // Sample size is 2 words too long
         read32 SOUND_SAMPLE_SIZE_{num}, "../src/{SOUND_NAME_{num}}.aifc", 0xF4
@@ -218,7 +225,7 @@ scope FGM {
         }
 
         print "Added {SOUND_NAME_{num}}\nFGM_ID: 0x"; OS.print_hex(ORIGINAL_FGM_COUNT - 1 + {fgm_num}); print " (", ORIGINAL_FGM_COUNT - 1 + {fgm_num},")\n"
-        print "Sound Test Voice ID: ", 244 + {fgm_num}, "\n\n"
+        print "Sound Test Voice ID: ", 244 + new_sound_test_count, "\n\n"
     }
 
     // @ Description
@@ -232,9 +239,12 @@ scope FGM {
     // sound_id - The raw sample sound_id to use
     macro add_fgm(name, fgm_microcode_file, fgm_microcode_file_size, sfx_id, sfx_microcode_file, sfx_microcode_file_size, sound_id) {
         global variable new_fgm_count(new_fgm_count + 1)
+        global variable new_sound_test_count(new_sound_test_count + 1)
         evaluate fgm_num(new_fgm_count)
+        evaluate st_num(new_sound_test_count)
         global define SOUND_FGM_MICROCODE_FILE_{fgm_num}({fgm_microcode_file})
         global variable new_fgm_microcode_size(new_fgm_microcode_size + {fgm_microcode_file_size})
+        global evaluate SOUND_TEST_FGM_ID_{st_num}({fgm_num})
 
         if {sfx_id} == -1 {
             global variable new_sfx_count(new_sfx_count + 1)
@@ -248,7 +258,15 @@ scope FGM {
         }
 
         print "Added {name}\nFGM_ID: 0x"; OS.print_hex(ORIGINAL_FGM_COUNT - 1 + {fgm_num}); print " (", ORIGINAL_FGM_COUNT - 1 + {fgm_num},")\n"
-        print "Sound Test Voice ID: ", 244 + {fgm_num}, "\n\n"
+        print "Sound Test Voice ID: ", 244 + new_sound_test_count, "\n\n"
+    }
+
+    // @ Description
+    // Increments fgm_id without adding to sound test and without adding a sample.
+    macro reserve_fgm() {
+        global variable new_fgm_count(new_fgm_count + 1)
+        evaluate fgm_num(new_fgm_count)
+        print "Reserved FGM_ID: 0x"; OS.print_hex(ORIGINAL_FGM_COUNT - 1 + {fgm_num}); print " (", ORIGINAL_FGM_COUNT - 1 + {fgm_num},")\n"
     }
 
     // @ Description
@@ -346,7 +364,7 @@ scope FGM {
 
         extended_voice_map_table:
         global variable extended_voice_map_table_origin(origin())
-        fill new_fgm_count * 0x4, 0x00
+        fill new_sound_test_count * 0x4, 0x00
 
         // @ Description
         // Moves the default sound parameters to clear space for expanding BANK_MAP.
@@ -535,7 +553,9 @@ scope FGM {
             // add the microcode
             origin microcode_origin
             evaluate s({n}+1)
-            if !{defined SOUND_FGM_MICROCODE_FILE_{s}} {
+            if !{defined SOUND_SFX_FGM_INDEX_{s}} {
+                // skip
+            } else if !{defined SOUND_FGM_MICROCODE_FILE_{s}} {
                 add_microcode({SOUND_SFX_FGM_INDEX_{s}}, {SOUND_TYPE_FGM_{s}}, {SOUND_LENGTH_{s}})
             } else {
                 add_microcode({SOUND_SFX_FGM_INDEX_{s}}, {SOUND_FGM_MICROCODE_FILE_{s}})
@@ -647,23 +667,23 @@ scope FGM {
             evaluate n({n}+1)
         }
 
-        // add voice ID 244's fgm_id to our extended voice ID map table
+        // add new fgm_ids to our extended voice ID map table
         origin  extended_voice_map_table_origin
         define n(0)
-        while {n} < new_fgm_count {
-            dw      ORIGINAL_FGM_COUNT + {n}
+        while {n} < new_sound_test_count {
             evaluate n({n}+1)
+            dw      ORIGINAL_FGM_COUNT - 1 + {SOUND_TEST_FGM_ID_{n}}
         }
 
         // Extend Sound Test Voice numbers so we can test in game easier
         origin  0x188422
-        dh      0xF4 + new_fgm_count
+        dh      0xF4 + new_sound_test_count
         origin  0x18842A
-        dh      0xF4 + new_fgm_count
+        dh      0xF4 + new_sound_test_count
         origin  0x188436
-        dh      0xF3 + new_fgm_count
+        dh      0xF3 + new_sound_test_count
         origin  0x18829E
-        dh      0xF3 + new_fgm_count
+        dh      0xF3 + new_sound_test_count
 
         pullvar base, origin
 
@@ -841,7 +861,51 @@ scope FGM {
     add_sound(Lucas/sounds/TAUNTLUCAS, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound(ESamus/sounds/ANNOUNCER, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 40, -1)
     add_sound(Lucas/sounds/ANNOUNCER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 40, -1)
-
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    add_sound(Bowser/sounds/BOWSER_CHEER, SAMPLE_RATE_16000, FGM_TYPE_CHANT, 0, -1)
+    add_sound(Bowser/sounds/BOWSER_STUNNED, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Bowser/sounds/BOWSER_DAMAGED, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Bowser/sounds/BOWSER_SLEEP, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Bowser/sounds/BOWSER_STAR_KO, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Bowser/sounds/BOWSER_FOOTSTEP, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Bowser/sounds/BOWSER_SMASH1, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Bowser/sounds/BOWSER_SMASH2, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Bowser/sounds/BOWSER_SMASH3, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Bowser/sounds/BOWSER_SMASH4, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Bowser/sounds/BOWSER_TAUNT, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Bowser/sounds/BOWSER_UPSPECIAL, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Bowser/sounds/BOWSER_VICTORY_LAUGH, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+	add_sound(Bowser/sounds/BOWSER_KO, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+	add_sound(Bowser/sounds/BOWSER_LIFT, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+	add_sound(Bowser/sounds/ANNOUNCER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 40, -1)
+	add_sound(GBowser/sounds/ANNOUNCER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 40, -1)
+	add_sound(Bowser/sounds/BOWSER_ENTRY_LAUGH, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    
     // This is always last
     write_sounds()
 
@@ -929,6 +993,8 @@ scope FGM {
             constant JPUFF(804)
             constant ESAMUS(839)
             constant LUCAS(840)
+			constant BOWSER(882)
+			constant GBOWSER(883)
         }
 
         scope css {

@@ -71,17 +71,18 @@ Computer controlled players have recieved a variety of improvements.
 
 #### Toggle Name: _Salty Runback_
 
-### Stock Handicap
-- Handicap changes stock count instead of modifying knockback. Useful for 12 character and crew battles. The Handicap setting located in VS. Options.
-
-#### Toggle Name: _Stock Handicap_
-
 ### Timed Stock Matches
 - Stock matches have a timer. Enabled by default but can be toggled off by setting TIME to "infinity."
 
 ### Match Stats
 - Results screen has the option to show stats about the match such as damage given to each player.
 - If the Vs Mode Combo Meter toggle is on, combo stats are also displayed.
+
+### 12-Character Battle Mode
+- New VS mode for easily tracking 12cbs.
+- Features 3 preset character sets (Default, Japanese, Remix) and allows for a custom character set per player.
+- Best character for each player is tracked as the number of TKOs the opposing player experiences against your character.
+- Only ports 1 and 2 work with this mode.
 
 ## Customization
 ### Costume Selection Improvements
@@ -237,6 +238,16 @@ Use the toggle or cycle using D-Pad down in Training Mode.
 
 #### Toggle Name: _Japanese Shield Stun_
 
+## Single Player
+### Bonus 3 (Race to the Finish)
+- Record best times for completing the RTTF stage using all characters just like for Bonus 1 and Bonus 2.
+
+### Multiman Mode
+- Fight a neverending polygon team and track KOs as highscores.
+
+### Cruel Multiman
+- Same as Multiman Mode but much more difficult.
+
 ## Profiles
 - Toggles can be controlled quickly by choosing one of three built-in profiles: Community, Tournament and Japanese
 
@@ -258,7 +269,6 @@ Improved AI                | On                 | Off               | On
 Neutral Spawns             | On                 | On                | On
 Skip Results Screen        | Off                | Off               | Off
 Stereo Sound               | On                 | On                | On
-Stock Handicap             | On                 | Off               | On
 Salty Runback              | On                 | Off               | On
 Widescreen                 | Off                | Off               | Off
 Japanese Hitlag            | Off                | Off               | On
@@ -299,8 +309,15 @@ _Random Toggles for All Stages_ | On                 | Off*              | On
 - Tower of Heaven
 - Spiral Mountain
 - Mute City
-- Mushroom Kingdom BF
-- Mushroom Kingdom O
+- Mushroom Kingdom DL
 - Zebes Landing
 - Smashville
 - Gerudo Valley
+- Hyrule Castle DL
+- Congo Jungle DL
+- Peach's Castle DL
+- Sector Z DL
+- Saffron City DL
+- Saffron City O
+- Yoshi's Island DL
+- Planet Zebes DL

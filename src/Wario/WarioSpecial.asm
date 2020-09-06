@@ -760,6 +760,10 @@ scope WarioUSP {
         swc1    f4, 0x004C(s0)              // store y velocity
         ori     t0, r0, MOVE                // t0 = MOVE
         sw      t0, 0x0184(s0)              // temp variable 3 = MOVE
+        // take mid-air jumps away at this point
+        lw      t0, 0x09C8(s0)              // t0 = attribute pointer
+        lw      t0, 0x0064(t0)              // t0 = max jumps
+        sb      t0, 0x0148(s0)              // jumps used = max jumps
         b       _end                        // end
         nop
         

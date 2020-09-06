@@ -18,8 +18,8 @@ fill 0x34 - origin(), 0x20
 origin  0x02000000
 base    0x80400000
 include "src/OS.asm"
-include "src/RCP.asm"
-include "src/DL.asm"
+include "src/String.asm"
+include "src/Render.asm"
 include "src/Action.asm"
 include "src/File.asm"
 include "src/Boot.asm"
@@ -38,18 +38,14 @@ include "src/FD.asm"
 include "src/FGM.asm"
 include "src/GameEnd.asm"
 include "src/Global.asm"
-include "src/Handicap.asm"
 include "src/Hazards.asm"
 include "src/Hitbox.asm"
 include "src/Joypad.asm"
 include "src/Menu.asm"
-include "src/Overlay.asm"
 include "src/Pause.asm"
 include "src/Practice.asm"
 include "src/Spawn.asm"
 include "src/Stages.asm"
-include "src/String.asm"
-include "src/Texture.asm"
 include "src/Toggles.asm"
 include "src/Cheats.asm"
 include "src/TimedStock.asm"
@@ -64,6 +60,8 @@ include "src/FPS.asm"
 include "src/SinglePlayer.asm"
 include "src/Skeleton.asm"
 include "src/Surface.asm"
+include "src/Multiman.asm"
+include "src/TwelveCharBattle.asm"
 // CHARACTER
 include "src/Character.asm"
 include "src/CharacterSelect.asm"
@@ -127,6 +125,12 @@ include "src/JYoshi/JYoshi.asm"
 include "src/JPika/JPika.asm"
 // ESAMUS
 include "src/ESamus/ESamus.asm"
+// BOWSER
+include "src/Bowser/BowserSpecial.asm"
+include "src/Bowser/Bowser.asm"
+// GBOWSER
+include "src/GBowser/GBowser.asm"
+
 
 // MIDI
 include "src/MIDI.asm"

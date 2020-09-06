@@ -371,6 +371,221 @@
 09B3 Young Link Board the Platforms Header
 09B4 Young Link Board the Platforms Stage
 09B5 E Pikachu Main
+09B6 Bowser Main
+09B7 Bowser Character
+09B8 Bowser Up Special Ground
+09B9 Bowser Up Special Air
+09BA Bowser Special Fall
+09BB Bowser Idle
+09BC Bowser Jab 1
+09BD Bowser Jab 2
+09BE Bowser Landing
+09BF Bowser Fire Breath
+09C0 Bowser Falling
+09C1 Bowser Forward Air
+09C2 Bowser Grab
+09C3 Bowser Grab Pull
+09C4 Bowser Forward Smash
+09C5 Bowser Forward Throw 1
+09C6 Bowser Forward Throw 2
+09C7 Bowser Forward Throw 3
+09C8 Bowser Bomb Ground
+09C9 Bowser Bomb Air
+09CA Bowser Bomb Land
+09CB Bowser Damage High 1
+09CC Bowser Damage High 2
+09CD Bowser Damage High 3
+09CE Bowser Damage Mid 1
+09CF Bowser Damage Mid 2
+09D0 Bowser Damage Mid 3
+09D1 Bowser Damage Low 1
+09D2 Bowser Damage Low 2
+09D3 Bowser Damage Low 3
+09D4 Bowser Damage Air 1
+09D5 Bowser Damage Air 2
+09D6 Bowser Damage Air 3
+09D7 Bowser Damage Fly Mid
+09D8 Bowser Damage Fly Low
+09D9 Bowser Damage Fly Top
+09DA Bowser Damage Fly Roll
+09DB Bowser Tumble
+09DC Bowser Ceiling Bonk
+09DD Bowser Down Bounce D
+09DE Bowser Down Bounce U
+09DF Bowser Down Stand D
+09E0 Bowser Tech
+09E1 Bowser Light Item Pick up
+09E2 Bowser Item Drop
+09E3 Bowser Egg Lay Pulled
+09E4 Bowser Thrown DK Pulled
+09E5 Bowser Thrown DK
+09E6 Bowser Thrown 1
+09E7 Bowser Thrown 2
+09E8 Bowser Turn
+09E9 Bowser Laugh
+09EA Bowser Crouch
+09EB Bowser Crouch Idle
+09EC Bowser Crouch End
+09ED Bowser Fair Land
+09EE Bowser Raygun Ground
+09EF Bowser Raygun Air
+09F0 Bowser Back Throw
+09F1 Bowser Down Tilt
+09F2 Bowser Neutral Air
+09F3 Bowser Down Air
+09F4 Bowser Down  Air Land
+09F5 Bowser Up Tilt
+09F6 Bowser Teeter Start
+09F7 Bowser Teeter Loop
+09F8 Bowser Forward Tilt
+09F9 Bowser Up Smash
+09FA Bowser Dash
+09FB Bowser Run
+09FC Bowser Dash Attack
+09FD Bowser CSS
+09FE Bowser Jump Forward
+09FF Bowser Back Air
+0A00 Bowser FTilt High
+0A01 Bowser FTilt Low
+0A02 Bowser Jab 3
+0A03 Bowser Up Air
+0A04 Stage Icons
+0A05 Character Portraits
+0A06 CSS Images
+0A07 Remix Menu BG
+0A08 Bowser Clap
+0A09 Bowser Taunt
+0A0A Bowser Down Stand U
+0A0B Bowser Jump Back
+0A0C Bowser Jump 2
+0A0D Bowser Fall 2
+0A0E Bowser CliffAttackQuick1
+0A0F Bowser CliffAttackQuick2
+0A10 Bowser CliffAttackSlow1
+0A11 Bowser CliffAttackSlow2
+0A12 Bowser CliffCatch
+0A13 Bowser CliffWait
+0A14 Bowser CliffQuick
+0A15 Custom Font (Kabel)
+0A16 Bowser Victory Dance
+0A17 Falco Platform Header
+0A18 Falco Platform Stage
+0A19 Poly Platform Header
+0A1A Poly Platform Stage
+0A1B Hyrule Castle DL Header
+0A1C Hyrule Castle DL Stage
+0A1D Hyrule Castle Omega Header
+0A1E Hyrule Castle Omega Stage
+0A1F Congo Jungle DL Header
+0A20 Congo Jungle DL Stage
+0A21 Congo Jungle Omega Header
+0A22 Congo Jungle Omega Stage
+0A23 Peach's Castle DL Header
+0A24 Peach's Castle DL Stage
+0A25 Peach's Castle Omega Header
+0A26 Peach's Castle Omega Stage
+0A27 Bowser Enter Pipe
+0A28 Bowser Damage Elec
+0A29 Bowser Continue Fall
+0A2A Bowser Continue Up
+0A2B Bowser Run Brake
+0A2C Bowser Turn Run
+0A2D Bowser 1P Pose
+0A2E Wario Board the Platforms Header
+0A2F Wario Board the Platforms Stage
+0A30 Bowser Exit Pipe
+0A31 Bowser Stunned
+0A32 Fray's Stage Night Header
+0A33 Fray's Stage Night Stage
+0A34 Fray's Stage Night BG
+0A35 Bowser Heavy Item Throw
+0A36 Bowser Heavy Item Pickup
+0A37 Bowser Down Forward D
+0A38 Bowser Hammer Idle
+0A39 Bowser Hammer Walk
+0A3A Bowser Item Throw Dash
+0A3B Bowser Item Throw F
+0A3C Bowser Item Throw U
+0A3D Bowser Item Throw D
+0A3E Bowser Item Throw F Air
+0A3F Bowser Item Throw U Air
+0A40 Bowser Item Throw D Air
+0A41 Bowser Down Forward U
+0A42 Bowser Cliff Climb Quick 1
+0A43 Bowser Cliff Climb Quick 2
+0A44 Bowser Cliff Slow
+0A45 Bowser Cliff Climb Slow 1
+0A46 Bowser Cliff Climb Slow 2
+0A47 Bowser Cliff Escape Quick 1
+0A48 Bowser Cliff Escape Quick 2
+0A49 Bowser Cliff Escape Slow 1
+0A4A Bowser Cliff Escape Slow 2
+0A4B Bowser Thrown Mario Bros.
+0A4C Goomba Road Header
+0A4D Goomba Road Stage
+0A4E Goomba Road BG
+0A4F Lucas Board the Platforms Header
+0A50 Lucas Board the Platforms Stage
+0A51 Bowser Down Back D
+0A52 Bowser Down Back U
+0A53 Bowser Damage Fly High
+0A54 Bowser Swing Neutral
+0A55 Bowser Swing Smash
+0A56 Bowser Swing Dash
+0A57 Bowser Double Jump B
+0A58 Bowser Swing Tilt
+0A59 Bowser Clown Copter
+0A5A Bowser Entry
+0A5B Bowser Walk 1
+0A5C Bowser Walk 2
+0A5D Bowser Walk 3
+0A5E Bowser Down Smash
+0A5F Wario Clap
+0A60 Bowser Down Attack U
+0A61 Bowser Tech Forward
+0A62 Bowser Tech Backward
+0A63 Sector Z DL Header
+0A64 Sector Z DL Stage
+0A65 Saffron City O Header
+0A66 Saffron City DL Header
+0A67 Saffron City DL Stage
+0A68 Yoshi's Island DL Header
+0A69 Yoshi's Island DL Stage
+0A6A Zebes DL Header
+0A6B Zebes DL Stage
+0A6C Sector Z Omega Header
+0A6D Sector Z Omega Stage
+0A6E Saffron City Omega Stage
+0A6F Yoshi's Island Omega Header
+0A70 Yoshi's Island Omega Stage
+0A71 Dreamland Omega Header
+0A72 Dreamland Omega Stage
+0A73 Zebes Omega Header
+0A74 Zebes Omega Stage
+0A75 Bowser Down Attack D
+0A76 Bowser Back Air Landing
+0A77 Bowser Shield Pose
+0A78 Bowser Shield On
+0A79 Bowser Shield Off
+0A7A Bowser Shield Drop
+0A7B Bowser Roll F
+0A7C Bowser Roll B
+0A7D Congo Falls Barrel
+0A7E Bowser Targets Header
+0A7F Bowser Targets Stage
+0A80 Giga Bowser Main
+0A81 Giga Bowser Character
+0A82 Bowser Platforms Header
+0A83 Bowser Platforms Stage
+0A84 Giga Bowser Entry Right
+0A85 Giga Bowser Entry Left
+0A86 Ganondorf Entry 1 Right
+0A87 Ganondorf Entry 1 Left
+0A88 Ganondorf Entry 2 Right
+0A89 Ganondorf Entry 2 Left
+0A8A Bowser's Keep Header
+0A8B Bowser's Keep 
+0A8C Bowser's Keep BG
 
 0611 CAPTAIN DeadU
 0611 CAPTAIN ScreenKO

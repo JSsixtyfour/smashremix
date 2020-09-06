@@ -74,12 +74,15 @@ scope Costumes {
         nop
         lw      t2, 0x0050(s0)              // t2 = current shade_id
         li      at, 0x80136B68              // at = ra for 1p
-        beq     at, ra, _1p                 // if we're in 1p, then skip next part
+        beql    at, ra, _1p_or_bonus        // if we're in 1p, then skip next part
+        nop
+        li      at, 0x80135608              // at = ra for bonus
+        beq     at, ra, _1p_or_bonus        // if we're in bonus, then skip next part
         nop
         b       _go_to_function
         nop
 
-        _1p:
+        _1p_or_bonus:
         jr      t0                          // go to function
         lw      v0, 0x0024(s0)              // v0 = current costume_id
 
@@ -146,6 +149,15 @@ scope Costumes {
         beq     at, ra, _1p_2               // if we're in 1p, then skip next part
         nop
 
+        li      at, 0x80137F3C              // at = ra for vs
+        bne     at, ra, _store_costume      // if we're not in vs, then skip next part
+        nop
+        lui     at, 0x8014
+        lw      at, 0xBDA8(at)              // at = 0 if FFA, 1 for Team Battle
+        bnezl   at, _store_costume          // if Team Battle,
+        lw      v0, 0x004C(s0)              // then let's not allow updating the costume
+
+        _store_costume:
         sw      v0, 0x004C(s0)              // store updated costume_id
 
         li      at, 0x80135620              // at = ra for training
@@ -232,6 +244,8 @@ scope Costumes {
         db 0x05                             // J Yoshi
         db 0x03                             // J Pikachu
         db 0x04                             // E Samus
+		db 0x05                             // Bowser
+		db 0x05                             // Giga Bowser
         OS.align(4)
 
         functions:
@@ -242,7 +256,7 @@ scope Costumes {
     }
 
     // @ Description
-    // This is a bug fix to prevent the costume written to using CLeft and CRight from being updated.
+    // These prevent the costume/shade from being overwritten when selecting with C buttons or when in team battle.
     scope disable_update: {
         // vs
         OS.patch_start(0x001361EC, 0x80137F6C)
@@ -252,10 +266,37 @@ scope Costumes {
         nop                                 // jal update_
         OS.patch_end()
 
+        // vs team battle - prevent skipping individual C-button checks
+        OS.patch_start(0x0013679C, 0x8013851C)
+        jal     disable_update
+        sw      t8, 0x001C(sp)              // original line 2
+        OS.patch_end()
+        // vs team battle - prevent updating costume when teammate has same character
+        OS.patch_start(0x00137D04, 0x80139A84)
+        lw      v0, 0x0050(s0)              // original: sw      v0, 0x0050(s0)
+        OS.patch_end()
+
         // training
         OS.patch_start(0x00144C28, 0x80135648)
         nop                                 // jal update_
         OS.patch_end()
+
+        // original line 1: bnez t9, 0x80138650
+        beqz    t9, _end                    // if not teams, go forth normally
+        // (use delay slot below)
+
+        // otherwise we'll only check C buttons if character is selected
+        lw      t0, 0x0088(t8)              // t0 = 1 if character selected
+        bnez    t0, _end                    // if character is selected, allow c button checks
+        nop
+
+        // if here, then we should skip c button checks
+        j       0x80138650
+        nop
+
+        _end:
+        jr      ra
+        nop
     }
 
     // @ Description

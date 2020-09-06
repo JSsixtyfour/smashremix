@@ -16,8 +16,22 @@ scope Hazards {
     macro hazard_toggle(function_address) {
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
-        sw      ra, 0x0008(sp)              // save registers
+        sw      ra, 0x0008(sp)              // ~
+        sw      t1, 0x000C(sp)              // save registers
 
+        li      t0, Global.current_screen   // t0 = pointer to current screen
+        lbu     t0, 0x0000(t0)              // t0 = current screen_id
+        lli     t1, 0x0016                  // t1 = vs screen_id
+        variable _check_hazard(pc() + 4 * 5)
+        beq     t1, t0, _check_hazard       // if vs, check hazard mode
+        lli     t1, 0x0036                  // t1 = training screen_id
+        beq     t1, t0, _check_hazard       // if training, check hazard mode
+        nop
+        variable _original(pc() + 4 * 7)
+        b       _original                   // otherwise, don't check hazard mode
+        nop
+
+        // _check_hazard:
         li      t0, Toggles.entry_hazard_mode
         lw      t0, 0x0004(t0)              // t0 = hazard_mode (hazards disabled when t0 = 1 or 3)
         andi    t0, t0, 0x0001              // t0 = 1 if hazard_mode is 1 or 3, 0 otherwise
@@ -25,12 +39,14 @@ scope Hazards {
         bnez    t0, _end                    // if hazard_mode enabled, skip original
         nop
 
+        // _original:
         jal     {function_address}          // original line 1
         nop                                 // original line 2
 
         // _end:
         lw      t0, 0x0004(sp)              // ~
-        lw      ra, 0x0008(sp)              // restore registers
+        lw      ra, 0x0008(sp)              // ~
+        lw      t1, 0x000C(sp)              // restore registers
         addiu   sp, sp, 0x0010              // deallocate stack space
         jr      ra                          // return
         nop
@@ -79,6 +95,36 @@ scope Hazards {
 
         hazard_toggle(0x80109774)
     }
+	
+	// @ Description
+    // Remove pirhana plants and swing platform from the Mushroom Kingdom clones
+    scope mk_clone_hazard_removal_: {
+        OS.patch_start(0x0008541C, 0x80109C1C)
+        j       mk_clone_hazard_removal_
+        nop
+		return:
+        OS.patch_end()
+
+		li      a0, Global.match_info
+        lw      a0, 0x0000(a0)              // t7 = match info
+        lbu     a0, 0x0001(a0)              // t7 = current stage ID
+		lli     a1, Stages.id.SMBBF         // t0 = Stages.id.SMBBF
+        beq     a1, a0, _mk_clone     		// if current stage is SMBBF, then skip pirahna and platforms
+		nop
+		lli     a1, Stages.id.SMBO         // t0 = Stages.id.SMBO
+        beq     a1, a0, _mk_clone     		// if current stage is SMBO, then skip pirahna and platforms
+		nop
+
+        jal		0x801094A0					// original line 1
+		nop									// original line 2
+		
+		j		return
+		nop
+		
+		_mk_clone:
+		j		0x80109C2C
+		nop
+    }
 
     // @ Description
     // Toggles and a CPU fix for Planet Zebes acid
@@ -105,24 +151,47 @@ scope Hazards {
         OS.patch_end()
 
         _no_hazards_check:
-        li      a1, Toggles.entry_hazard_mode
-        lw      a1, 0x0004(a1)              // a1 = hazard_mode (hazards disabled when a1 = 1 or 3)
-        andi    a1, a1, 0x0001              // a1 = 1 if hazard_mode is 1 or 3, 0 otherwise
-
         lui     at, 0x8013                  // ~
         lwc1    f4, 0xEB1C(at)              // f4 = correct camera position
         lui     at, 0x8013                  // ~
         swc1    f4, 0x13FC(at)              // store correct camera position
 
+        li      a0, Global.current_screen   // a0 = pointer to current screen
+        lbu     a0, 0x0000(a0)              // a0 = current screen_id
+        lli     a1, 0x0016                  // a1 = vs screen_id
+        beq     a1, a0, _check_hazard_1     // if vs, check hazard mode
+        lli     a1, 0x0036                  // a1 = training screen_id
+        beq     a1, a0, _check_hazard_1     // if training, check hazard mode
+        nop
+        b       _no_hazards_original        // otherwise, don't check hazard mode
+        nop
+
+        _check_hazard_1:
+        li      a1, Toggles.entry_hazard_mode
+        lw      a1, 0x0004(a1)              // a1 = hazard_mode (hazards disabled when a1 = 1 or 3)
+        andi    a1, a1, 0x0001              // a1 = 1 if hazard_mode is 1 or 3, 0 otherwise
+
         bnezl   a1, _end                    // if hazard_mode is on, don't create acid object
         addiu   sp, sp, 0x0020              // original line before original jr ra
 
+        _no_hazards_original:
         addiu   a0, r0, 0x03F2              // original line 1
         or      a1, r0, r0                  // original line 2
         j       _no_hazards_check_return
         nop
 
         _no_movement_check:
+        li      a0, Global.current_screen   // a0 = pointer to current screen
+        lbu     a0, 0x0000(a0)              // a0 = current screen_id
+        lli     a1, 0x0016                  // a1 = vs screen_id
+        beq     a1, a0, _check_hazard_2     // if vs, check hazard mode
+        lli     a1, 0x0036                  // a1 = training screen_id
+        beq     a1, a0, _check_hazard_2     // if training, check hazard mode
+        nop
+        b       _no_movement_original       // otherwise, don't check hazard mode
+        nop
+
+        _check_hazard_2:
         li      a1, Toggles.entry_hazard_mode
         lw      a1, 0x0004(a1)              // a1 = hazard_mode (hazards disabled when a1 = 2 or 3)
         srl     a1, a1, 0x0001              // a1 = 1 if hazard_mode is 2 or 3, 0 otherwise
@@ -130,6 +199,7 @@ scope Hazards {
         bnez    a1, _end                    // if hazard_mode is on, don't allow acid to rise
         nop
 
+        _no_movement_original:
         addiu   sp, sp, -0x0010             // allocate stack space
         sw      ra, 0x0004(sp)              // save registers
 
@@ -138,9 +208,6 @@ scope Hazards {
 
         lw      ra, 0x0004(sp)              // restore registers
         addiu   sp, sp, 0x0010              // deallocate stack space
-
-        jr      ra
-        nop
 
         _end:
         jr      ra                          // return
@@ -195,7 +262,11 @@ scope Hazards {
         beq     t6, t7, _nba_jam            // if current stage is NBA_JAM, then add custom barrels
         nop
         lli     t6, Stages.id.CONGO_JUNGLE  // t6 = Stages.id.CONGO_JUNGLE
-        beq		t6, t7, standard_barrel_						
+        beq		t6, t7, standard_barrel_
+		lli     t6, Stages.id.CONGOJ_DL  	// t6 = Congo Jungle DL
+        beq		t6, t7, standard_barrel_		
+		lli     t6, Stages.id.CONGOJ_O  	// t6 = Congo Jungle O
+        beq		t6, t7, standard_barrel_
 		lli     t6, Stages.id.FALLS  		// t6 = Stages.id.FALLS
 		beq		t6, t7, standard_barrel_	
 		nop
@@ -247,14 +318,27 @@ scope Hazards {
 
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
-        sw      ra, 0x0008(sp)              // save registers
+        sw      ra, 0x0008(sp)              // ~
+        sw      t1, 0x000C(sp)              // save registers
 
+        li      t0, Global.current_screen   // t0 = pointer to current screen
+        lbu     t0, 0x0000(t0)              // t0 = current screen_id
+        lli     t1, 0x0016                  // t1 = vs screen_id
+        beq     t1, t0, _check_hazard       // if vs, check hazard mode
+        lli     t1, 0x0036                  // t1 = training screen_id
+        beq     t1, t0, _check_hazard       // if training, check hazard mode
+        nop
+        b       _original                   // otherwise, don't check hazard mode
+        nop
+
+        _check_hazard:
         li      t0, Toggles.entry_hazard_mode
         lw      t0, 0x0004(t0)              // t0 = hazard_mode (hazards disabled when t0 = 1 or 3)
         andi    t0, t0, 0x0001              // t0 = 1 if hazard_mode is 1 or 3, 0 otherwise
         bnez    t0, _end                    // if hazard_mode enabled, skip original
         nop
 
+        _original:
         jal     0x8010AF48                  // original line 1
         nop                                 // original line 2
         jal     0x8010B108                  // original line 3
@@ -279,9 +363,16 @@ scope Hazards {
         
         lli     t0, Stages.id.BOWSERB       // t0 = Stages.id.BOWSERB
         beq     v1, t0, _bowser_stadium     // if current stage is BOWSERB, then add bombs
+        lli     t0, Stages.id.PCASTLE_DL    // t0 = Stages.id.PCASTLE_DL
+        beq		v1, t0, _pc_clone			// if stage Peach's Castle Dreamland, load the bumper if hazards not off
+		nop
+		lli     t0, Stages.id.PCASTLE_O     // t0 = Stages.id.PCASTLE_O
+        beq		v1, t0, _pc_clone			// if stage Peach's Castle Dreamland, load the bumper if hazards not off
+		nop
+		
+		bnez    v1, _end                    // if current stage is not Peach's Castle (stage_id = 0), then always disable bumper
         nop
-        bnez    v1, _end                    // if current stage is not Peach's Castle (stage_id = 0), then always disable bumper
-        nop
+		_pc_clone:
         hazard_toggle(0x8010B378)           // standard toggle
 
         _bowser_stadium:
@@ -319,6 +410,29 @@ scope Hazards {
         _end:
         jr      ra                          // return
         nop
+    }
+
+    // @ Description
+    // Toggle for Yoshi's Island clouds.
+    scope yoshis_island_clouds_: {
+        OS.patch_start(0x84488, 0x80108C88)
+        j       yoshis_island_clouds_
+        addiu   a0, r0, 0x03F2              // original line 1
+        _return:
+        OS.patch_end()
+
+        li      t0, Toggles.entry_hazard_mode
+        lw      t0, 0x0004(t0)              // t0 = hazard_mode (hazards disabled when t0 = 1 or 3)
+        andi    t0, t0, 0x0001              // t0 = 1 if hazard_mode is 1 or 3, 0 otherwise
+        beqz    t0, _original               // if hazards enabled, do original
+        nop
+
+        j       0x80108CBC                  // otherwise skip to the end of the function
+        nop
+
+        _original:
+        j       _return
+        or      a1, r0, r0                  // original line 2
     }
 
     // @ Description
@@ -675,7 +789,7 @@ scope Hazards {
         constant MEW(0x002C)
     }
 	
-	    // @ Description
+	// @ Description
     // Alt Y positions for Zebes level acid
     scope alt_acid_levels_: {
         OS.patch_start(0x000839E0, 0x801081E0)
@@ -689,14 +803,29 @@ scope Hazards {
         lli     t6, Stages.id.NORFAIR       // t6 = Stages.id.NORFAIR
         beq     t6, t7, _norfair            // if current stage is Norfair, then use alt y positions
         nop
+		lli     t6, Stages.id.ZEBES_DL      // t6 = Stages.id.ZEBES_DL 
+        beq     t6, t7, _zebes_dl           // if current stage is Zebes DL, then use alt y positions
+        nop
+		lli     t6, Stages.id.ZEBES_O       // t6 = Stages.id.ZEBES_O 
+        beq     t6, t7, _zebes_o            // if current stage is Zebes Omega, then use alt y positions
+        nop
         b       _original
         nop
 
         _norfair:
         li      t6, norfair_lava_levels     // t6 = norfair_lava_levels
-        // uncomment below 2 lines if we do more levels with custom lava
+        b       _loop_setup
+        nop
+		
+		_zebes_dl:
+        li      t6, zebes_dl_lava_levels     // t6 = norfair_lava_levels
+        b       _loop_setup
+        nop
+		
+		_zebes_o:
+        li      t6, zebes_o_lava_levels     // t6 = norfair_lava_levels
         //b       _loop_setup
-        //nop
+        // nop
 
         _loop_setup:
         li      at, 0x8012EA60
@@ -736,6 +865,71 @@ scope Hazards {
     dw 0xc2c80000
     dw 0x43480000
 	dw 0xC5160000
+	
+	zebes_dl_lava_levels:
+    dw 0x43480000
+    dw 0xc4160000
+    dw 0xc2c80000
+	dw 0xC5160000
+    dw 0xC5160000
+    dw 0xc4160000
+    dw 0xc2c80000
+    dw 0x44898000
+    dw 0xC5160000
+    dw 0xc4160000
+    dw 0xc2c80000
+    dw 0x44610000
+    dw 0xc4160000
+    dw 0xc2c80000
+    dw 0x43960000
+	dw 0xC5160000
+	
+	zebes_o_lava_levels:
+    dw 0xc3960000
+    dw 0xc4160000
+    dw 0xC5160000
+	dw 0xC5160000
+    dw 0xC5160000
+    dw 0xc4160000
+    dw 0xc2c80000
+    dw 0xc3960000
+    dw 0xC5160000
+    dw 0xc4160000
+    dw 0xc4160000
+    dw 0xc3960000
+    dw 0xc4160000
+    dw 0xC5160000
+    dw 0xc3960000
+	dw 0xC5160000
+
+	// @ Description
+    // Use the correct Bumper Hitbox for Peach's Castle clones
+    scope peach_bumper_hitbox_: {
+        OS.patch_start(0xF8150, 0x8017D710)
+        j     peach_bumper_hitbox_
+        nop
+		_return:
+        OS.patch_end()
+		
+		addiu   sp, sp,-0x0010              // allocate stack space
+        sw      t0, 0x0004(sp)              // ~
+		beq		t3, r0, _classic_bumper	    // original line 1 modified
+		addiu	t0, r0, Stages.id.PCASTLE_DL
+		beq		t3, t0, _classic_bumper	    // check for Peach's Castle DL
+		addiu	t0, r0, Stages.id.PCASTLE_O
+		beq		t3, t0, _classic_bumper	    // original line 1 modified
+		nop
+		lw      t0, 0x0004(sp)              // ~
+        addiu   sp, sp, 0x0010              // deallocate stack space
+		j		0x8017D724
+		lw		ra, 0x001C(sp)				// original line 2
+			
+		_classic_bumper:
+		lw      t0, 0x0004(sp)              // ~
+        addiu   sp, sp, 0x0010              // deallocate stack space
+		j		_return
+		nop
+		}
 
 	// @ Description
 	// Respawns bombs on Bowser's Stadium after they've been destroyed

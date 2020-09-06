@@ -47,6 +47,8 @@ scope Ganondorf {
     insert VICTORY_POSE_2,"moveset/VICTORY_POSE_2.bin"
     insert VICTORY_POSE_3,"moveset/VICTORY_POSE_3.bin"
 	insert ONEP,"moveset/ONEP.bin"
+	insert ENTRY_1,"moveset/ENTRY_1.bin"
+	insert ENTRY_2,"moveset/ENTRY_2.bin"
 
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(GND,   Action.Idle,            -1,                         IDLE,                       -1)
@@ -82,7 +84,11 @@ scope Ganondorf {
     Character.edit_action_parameters(GND,   Action.AttackAirD,      -1,                         DAIR,                       -1)
     Character.edit_action_parameters(GND,   Action.LandingAirN,     0x66B,                      0x1720,                     -1)
     Character.edit_action_parameters(GND,   Action.LandingAirF,     0,                          0x80000000,                 -1)
-    Character.edit_action_parameters(GND,   0xE4,                   -1,                         NSP_GROUND,                 -1)
+    Character.edit_action_parameters(GND,   0xE0,                   File.GND_ENTRY_1_LEFT,      ENTRY_1,                    0x40000000)
+	Character.edit_action_parameters(GND,   0xE1,                   File.GND_ENTRY_1_RIGHT,     ENTRY_1,                    0x40000000)
+	Character.edit_action_parameters(GND,   0xE2,                   File.GND_ENTRY_2_LEFT,     ENTRY_2,                         0x40000000)
+	Character.edit_action_parameters(GND,   0xE3,                   File.GND_ENTRY_2_RIGHT,      ENTRY_2,                         0x40000000)
+	Character.edit_action_parameters(GND,   0xE4,                   -1,                         NSP_GROUND,                 -1)
     Character.edit_action_parameters(GND,   0xE5,                   -1,                         NSP_AIR,                    -1)
     Character.edit_action_parameters(GND,   0xE6,                   -1,                         DSP_GROUND,                 -1)
     Character.edit_action_parameters(GND,   0xE7,                   -1,                         DSP_FLIP,                   -1)
@@ -105,7 +111,12 @@ scope Ganondorf {
     float32 1.2
     OS.patch_end()
     
-    // Set crowd chant FGM.
+    // Remove entry script.
+    //Character.table_patch_start(entry_script, Character.id.GND, 0x4)
+    //dw 0x8013DD68                           // skips entry script
+    //OS.patch_end()
+	
+	// Set crowd chant FGM.
     Character.table_patch_start(crowd_chant_fgm, Character.id.GND, 0x2)
     dh  0x02EA
     OS.patch_end()

@@ -282,11 +282,10 @@ scope Joypad {
 
     // @ Description
     // Function to update how many frames a direction has been held (should be called once a frame)
-    // @ Arguments
-    // a0 - POSITIVE/uint min coordinate (deadzone)
     scope update_stick_: {
         constant ORIGINAL_INSTRUCTION(0x27BDFFD8) //addiu sp, sp, 0xFFD8
     
+        lli     a0, Joypad.DEADZONE         // a0 - min coordinate (deadzone)
         OS.save_registers()                 // allocate stack space, save registers
         addiu   sp, sp,-0x0008              // deallocate stack space
         sw      a0, 0x0004(sp)              // restore a0
@@ -364,7 +363,6 @@ scope Joypad {
         jr      ra                          // return
         nop
     }
-
 
     frames_held:
     dw 0x00000000                       // left

@@ -74,6 +74,13 @@ scope FD {
         bne     t0, t9, _end                // if not the exact end of intro, then skip to end
         nop
 
+        lui     t0, 0x800A
+        lw      t0, 0xD974(t0)              // t0 = pointer to previous bgm_id
+        lw      t0, 0x0000(t0)              // t0 = previous bgm_id
+        lli     t9, BGM.stage.MASTER_HAND_1 // t9 = FD intro music
+        bne     t0, t9, _end                // if we didn't just play the FD intro music, then skip
+        nop
+
         addiu   sp, sp,-0x0014              // allocate stack space
         sw      a0, 0x0004(sp)              // ~
         sw      a1, 0x0008(sp)              // ~

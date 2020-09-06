@@ -8,12 +8,9 @@ print "included CharacterSelect.asm\n"
 
 // TODO: 
 // - Names for variants (improve quality)
-// - Console not rendering env mapping for MM or polygons
 
 include "Global.asm"
 include "OS.asm"
-include "RCP.asm"
-include "Texture.asm"
 
 scope CharacterSelect {
     constant CSS_PLAYER_STRUCT(0x8013BA88)
@@ -199,6 +196,8 @@ scope CharacterSelect {
     dw  0x0                                 // 0x31 - JYOSHI
     dw  0x0                                 // 0x32 - JPIKA
     dw  0x0                                 // 0x33 - ESAMUS
+	dw  0x11020 + 0x200                     // 0x34 - BOWSER
+	dw  0xFA40 + 0x200                      // 0x35 - GBOWSER
 
     // @ Description
     // Holds the ROM offset of an alternate req list, used by get_alternate_req_list_
@@ -290,6 +289,8 @@ scope CharacterSelect {
     add_alt_req_list(Character.id.JYOSHI, req/YOSHI_MODEL)
     add_alt_req_list(Character.id.JPIKA, req/PIKACHU_MODEL)
     add_alt_req_list(Character.id.ESAMUS, req/SAMUS_MODEL)
+	add_alt_req_list(Character.id.BOWSER, req/BOWSER_MODEL)
+	add_alt_req_list(Character.id.GBOWSER, req/GBOWSER_MODEL)
     OS.align(4)
 
     // @ Description
@@ -343,18 +344,31 @@ scope CharacterSelect {
         addiu   a1, a1, -START_X            // a1 = xpos - X_START
         addiu   v1, v1, -START_Y            // v1 = ypos - Y_START
 
-        addiu   sp, sp,-0x0010              // allocate stack space
+        addiu   sp, sp,-0x0020              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // ~
-        sw      t2, 0x000C(sp)              // save registers
-
-        // discard values right of certain given x value
-        sltiu   t0, a1, 240                 // if xpos less than given value
-        beqz    t0, _end                    // ...return
-        lli     v0, Character.id.NONE       // v0 = ret = NONE
+        sw      t2, 0x000C(sp)              // ~
+        sw      ra, 0x0010(sp)              // save registers
 
         // discard values past given y value
         sltiu   t0, v1, 86                  // if ypos greater than given value
+        beqz    t0, _end                    // ...return
+        lli     v0, Character.id.NONE       // v0 = ret = NONE
+
+        // use different algorithm for 12cb
+        li      t0, TwelveCharBattle.twelve_cb_flag
+        lw      t0, 0x0000(t0)              // t0 = 1 if 12cb
+        beqz    t0, _normal                 // if not 12cb, calculate normally
+        nop                                 // otherwise, we'll have to do some different calculations
+
+        jal     TwelveCharBattle.get_character_id_
+        addiu   a1, a1, START_X             // a1 = xpos, unadjusted
+        b       _end
+        nop
+
+        _normal:
+        // discard values right of certain given x value
+        sltiu   t0, a1, 240                 // if xpos less than given value
         beqz    t0, _end                    // ...return
         lli     v0, Character.id.NONE       // v0 = ret = NONE
 
@@ -379,21 +393,16 @@ scope CharacterSelect {
         beqz    t2, _end                    // explained above lol
         lli     v0, Character.id.NONE       // also explained above lol
 
-        li      t1, id_table                // t1 = id_table
+        li      t1, id_table_pointer
+        lw      t1, 0x0000(t1)              // t1 = id_table
         addu    t0, t0, t1                  // t1 = id_table[index]
         lbu     v0, 0x0000(t0)              // v0 = character id
         
-        // Only check variants on the VS and Training screens
+        // Variant check requires some setup based on screen
         li      t0, Global.current_screen   // ~
         lbu     t0, 0x0000(t0)              // t0 = screen id
 
         // css screen ids: vs - 0x10, 1p - 0x11, training - 0x12, bonus1 - 0x13, bonus2 - 0x14
-        slti    t1, t0, 0x0010              // if (screen id < 0x10)...
-        bnez    t1, _end                    // ...then skip (not on a CSS)
-        nop
-        slti    t1, t0, 0x0015              // if (screen id is between 0x10 and 0x14)...
-        beqz    t1, _end                    // ...then we're on a CSS
-        nop
         lli     t1, 0x0010                  // t1 = VS CSS
         bnel    t1, t0, pc() + 8            // if we're not on the VS CSS,
         lli     t1, 0x0012                  // then spoof training so the offsets are correct
@@ -436,8 +445,9 @@ scope CharacterSelect {
         _end:
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // ~
-        lw      t2, 0x000C(sp)              // save registers
-        addiu   sp, sp, 0x0010              // deallocate stack space
+        lw      t2, 0x000C(sp)              // ~
+        lw      ra, 0x0010(sp)              // save registers
+        addiu   sp, sp, 0x0020              // deallocate stack space
         jr      ra                          // return (discard the rest of the function)
         addiu   sp, sp, 0x0028              // deallocate stack space (original function)
     }
@@ -449,16 +459,56 @@ scope CharacterSelect {
         // vs
         OS.patch_start(0x001303E8, 0x80132168)
         // a0 = character_id
-        li      t2, portrait_id_table           // t2 = portraid_id_table
+        li      t2, portrait_id_table_pointer
+        lw      t2, 0x0000(t2)                  // t2 = portraid_id_table
         addu    t2, t2, a0                      // t2 = address of character's portrait_id
         lbu     v0, 0x0000(t2)                  // v0 = portrait_id
+
+        li      t0, TwelveCharBattle.twelve_cb_flag
+        lw      t0, 0x0000(t0)                  // t0 = 1 if 12cb mode
+        beqz    t0, _end_vs_portrait_id_fix     // skip if not 12cb
+        // intentially use delay slot to save space
+
+        // This is a bit hacky...
+        // The port is in s2 most of the time, but from one call it is at 0x0040(sp).
+        // So check ra to determine the port.
+        or      a1, s2, r0                      // a1 = port_id (maybe)
+        li      t1, 0x80139494                  // ra when s2 is port_id
+        bnel    t1, ra, pc() + 8                // if s2 is not port_id, use 0x0040(sp)
+        lw      a1, 0x0040(sp)                  // a1 = port_id
+
+        j       TwelveCharBattle.get_portrait_id_
+        nop                                     // a0 = character_id
+
+        _end_vs_portrait_id_fix:
         jr      ra
         nop
         OS.patch_end()
         // training
         OS.patch_start(0x00141600, 0x80132020)
         // a0 = character_id
-        li      t2, portrait_id_table           // t2 = portraid_id_table
+        li      t2, portrait_id_table_pointer
+        lw      t2, 0x0000(t2)                  // t2 = portraid_id_table
+        addu    t2, t2, a0                      // t2 = address of character's portrait_id
+        lbu     v0, 0x0000(t2)                  // v0 = portrait_id
+        jr      ra
+        nop
+        OS.patch_end()
+        // 1p
+        OS.patch_start(0x0013A9EC, 0x801327EC)
+        // a0 = character_id
+        li      t2, portrait_id_table_pointer
+        lw      t2, 0x0000(t2)                  // t2 = portraid_id_table
+        addu    t2, t2, a0                      // t2 = address of character's portrait_id
+        lbu     v0, 0x0000(t2)                  // v0 = portrait_id
+        jr      ra
+        nop
+        OS.patch_end()
+        // bonus
+        OS.patch_start(0x00148410, 0x801323E0)
+        // a0 = character_id
+        li      t2, portrait_id_table_pointer
+        lw      t2, 0x0000(t2)                  // t2 = portraid_id_table
         addu    t2, t2, a0                      // t2 = address of character's portrait_id
         lbu     v0, 0x0000(t2)                  // v0 = portrait_id
         jr      ra
@@ -474,10 +524,25 @@ scope CharacterSelect {
         lli     t9, PORTRAIT_WIDTH          // ~
         multu   t9, t8                      // ~
         mflo    t9                          // t2 = ulx
+        jal     token_autoposition_._vs_x_position
         addiu   t9, t9, START_X + 12        // t9 = (int) ulx + offset
-        mtc1    t9, f4                      // original line 8
         addu    t9, v0, r0                  // remember portrait_id
         OS.patch_end()
+
+        _vs_x_position:
+        li      t0, TwelveCharBattle.twelve_cb_flag
+        lw      t0, 0x0000(t0)              // t0 = 1 if 12cb mode
+        beqz    t0, _end_vs_x_position      // skip if not 12cb
+        nop
+        sltiu   t0, t8, 0x0004              // t0 = 1 if left grid
+        addiu   t9, t9, -0x0008             // adjust x for left grid
+        beqzl   t0, _end_vs_x_position      // if right grid, then adjust x for right grid
+        addiu   t9, t9, 0x0010              // adjust x for right grid (8 * 2 to unadjust fo rleft)
+
+        _end_vs_x_position:
+        jr      ra
+        mtc1    t9, f4                      // original line 8
+
         // training
         OS.patch_start(0x00145EB4, 0x801368D4)
         lli     t8, NUM_COLUMNS             // ~
@@ -560,7 +625,8 @@ scope CharacterSelect {
             // t3 and v0 are character IDs
             // check if their portrait IDs match instead of character IDs
 
-            li      t4, portrait_id_table           // t4 = portraid_id_table
+            li      t4, portrait_id_table_pointer
+            lw      t4, 0x0000(t4)                  // t4 = portraid_id_table
             addu    v0, t4, v0                      // v0 = address of character's portrait_id
             lbu     v0, 0x0000(v0)                  // v0 = portrait_id
             addu    t3, t4, t3                      // t3 = address of character's portrait_id
@@ -583,7 +649,8 @@ scope CharacterSelect {
             // t9 and v0 are character IDs
             // check if their portrait IDs match instead of character IDs
 
-            li      t0, portrait_id_table           // t0 = portraid_id_table
+            li      t0, portrait_id_table_pointer
+            lw      t0, 0x0000(t0)                  // t0 = portraid_id_table
             addu    v0, t0, v0                      // v0 = address of character's portrait_id
             lbu     v0, 0x0000(v0)                  // v0 = portrait_id
             addu    t9, t0, t9                      // t9 = address of character's portrait_id
@@ -626,292 +693,6 @@ scope CharacterSelect {
     OS.patch_end()
 
     // @ Description
-    // Highjacks the display list of the portraits
-    scope highjack_: {
-        OS.patch_start(0x47AD0, 0x800CC0F0)
-        j       highjack_
-        nop
-        _return:
-        OS.patch_end()
-
-        sw      t7, 0x0000(v1)              // original line 1
-        sw      r0, 0x0004(v1)              // original line 2   
-
-        addiu   sp, sp,-0x0010              // allocate stack space
-        sw      at, 0x0004(sp)              // ~
-        sw      t0, 0x0008(sp)              // save registers
-
-        // lazy attempt to see if the texture drawn is the "back" texture 
-        li      t0, Global.current_screen   // ~
-        lbu     t0, 0x0000(t0)              // t0 = screen id
-
-        // css screen ids: vs - 0x10, 1p - 0x11, training - 0x12, bonus1 - 0x13, bonus2 - 0x14
-        slti    at, t0, 0x0010              // if (screen id < 0x10)...
-        bnez    at, _skip                   // ...then skip (not on a CSS)
-        nop
-        slti    at, t0, 0x0015              // if (screen id is between 0x10 and 0x14)...
-        beqz    at, _skip                   // ...then we're on a CSS
-        nop
-
-        lli     at, 0x0030                  // at = expected height
-        lhu     t0, 0x0014(s1)              // t0 = height
-        bne     at, t0, _skip               // if test fails, end
-        nop    
-
-        lli     at, 0x000B                  // at = expected height
-        lhu     t0, 0x0016(s1)              // t0 = width
-        bne     at, t0, _skip               // if test fails, end
-        nop
-
-        // highjack here
-        addiu   v0, v0, 0x0008              // increment v0
-        addiu   v1, v1, 0x0008              // increment v1
-
-        // init
-        li      t0, RCP.display_list_info_p       // t0 = display list info pointer
-        li      at, DL.portrait_display_list_info // at = address of display list info
-        sw      at, 0x0000(t0)                    // update display list info pointer
-
-        // reset
-        li      t0, DL.portrait_display_list      // t0 = address of DL.portrait_display_list
-        li      at, DL.portrait_display_list_info // at = address of DL.portrait_display_list_info
-        sw      t0, 0x0000(at)                    // ~
-        sw      t0, 0x0004(at)                    // update display list address each frame
-
-        // highjack
-        li      t0, 0xDE000000               // ~
-        sw      t0, 0x0000(v1)               // ~
-        li      t0, DL.portrait_display_list // ~
-        sw      t0, 0x0004(v1)               // highjack ssb display list
-
-        // draw
-        addiu   sp, sp,-0x0030              // allocate stack space
-        sw      ra, 0x0004(sp)              // ~
-        sw      t0, 0x0008(sp)              // ~
-        sw      t1, 0x000C(sp)              // ~
-        sw      t2, 0x0010(sp)              // ~
-        sw      t3, 0x0014(sp)              // ~
-        sw      a0, 0x0018(sp)              // ~
-        sw      a1, 0x001C(sp)              // ~
-        sw      a2, 0x0020(sp)              // ~
-        sw      a3, 0x0024(sp)              // ~
-        sw      t4, 0x0028(sp)              // ~
-        sw      v1, 0x002C(sp)              // save registers
-
-        // draw each character portrait
-        // for each row
-        // for each column
-
-        lli     t0, NUM_ROWS                // init rows
-        _outer_loop:
-        beqz    t0, _end                    // once every row complete, draw cursor (hand/token)
-        nop
-        addiu   t0, t0,-0x0001              // decrement outer loop
-
-        
-        lli     t1, NUM_COLUMNS             // init columns
-        _inner_loop:
-        beqz    t1, _outer_loop             // once every column in row drawn, draw next row
-        nop
-        addiu   t1, t1,-0x0001              // decrement inner loop
-
-
-        // calculate ulx/uly offset
-        lli     a2, PORTRAIT_WIDTH
-        multu   a2, t1                      // ~
-        mflo    t3                          // t3 = ulx offset
-        lli     a2, PORTRAIT_HEIGHT
-        multu   a2, t0                      // ~
-        mflo    t4                          // t4 = uly offset
-
-        // add to ulx/uly
-        lli     a0, START_X + START_VISUAL  // ~
-        addu    a0, a0, t3                  // a0 - ulx
-        lli     a1, START_Y + START_VISUAL  // ~
-        addu    a1, a1, t4                  // a1 - uly
-        
-        // get id of character to draw
-        lli     t2, NUM_COLUMNS             // ~
-        multu   t0, t2                      // ~
-        mflo    t2                          // ~
-        addu    t2, t2, t1                  // ~
-        li      t3, id_table                // ~
-        addu    t3, t3, t2                  // t3 = (id_table + ((y * NUM_COLUMNS) + x))
-        lbu     t3, 0x0000(t3)              // t3 = id of character to draw
-        
-        // check for selection flash
-        li      a2, flash_table             // a2 = flash_table
-        addu    a2, a2, t3                  // a2 = flash_table + character id
-        lbu     t4, 0x0000(a2)              // t4 = flash timer for {character}
-        beq     t4, r0, _draw_portrait      // if flash = 0, _draw_portrait
-        nop
-        addiu   t4, t4,-0x0001              // decrement flash timer
-        sb      t4, 0x0000(a2)              // store updated flash timer
-        lli     a2, 0x0002                  // ~
-        divu    t4, a2                      // ~
-        mfhi    a2                          // a2 = flash % 2
-        beq     a2, r0, _draw_portrait      // if flash % 2 = 0, _draw_portrait
-        nop
-        
-        // draw selection flash
-        li      t4, portrait_flash_table    // t4 = portrait flash table
-        b       _draw
-        nop
-
-        // draw character portrait
-        _draw_portrait:
-        li      t4, portrait_table          // t4 = portrait table
-
-        _draw:
-        sll     t3, t3, 0x0002              // t3 = id * 4
-        addu    t4, t4, t3                  // t4 = portrait_table[id]
-        lw      t4, 0x0000(t4)              // t4 = address of texture
-        li      a2, portrait_info           // a2 - address of texture struct
-        sw      t4, 0x008(a2)               // update texture to draw
-        jal     Overlay.draw_texture_       // draw portrait
-        nop
-
-        b       _inner_loop                 // loop
-        nop
-        
-        _end:
-        li      a0, 0xEF00AC3F              // ~ 
-        li      a1, 0x00504241              // restore RDP other modes
-        jal     RCP.append_
-        nop
-        jal     RCP.pipe_sync_
-        nop
-        jal     RCP.end_list_
-        nop
-        lw      ra, 0x0004(sp)              // ~
-        lw      t0, 0x0008(sp)              // ~
-        lw      t1, 0x000C(sp)              // ~
-        lw      t2, 0x0010(sp)              // ~
-        lw      t3, 0x0014(sp)              // ~
-        lw      a0, 0x0018(sp)              // ~
-        lw      a1, 0x001C(sp)              // ~
-        lw      a2, 0x0020(sp)              // ~
-        lw      a3, 0x0024(sp)              // ~
-        lw      t4, 0x0028(sp)              // ~
-        lw      v1, 0x002C(sp)              // restore registers
-        addiu   sp, sp, 0x0030              // deallocate stack space
-        lw      at, 0x0004(sp)              // ~
-        lw      t0, 0x0008(sp)              // restore registers registers
-        addiu   sp, sp, 0x0010              // deallocate stack space
-        j       _return                     // return
-        nop
-
-        _skip:
-        lw      at, 0x0004(sp)              // ~
-        lw      t0, 0x0008(sp)              // restore registers
-        addiu   sp, sp, 0x0010              // deallocate stack space
-        j       _return                     // return
-        nop
-    }
-
-    // @ Description
-    // Highjacks the display list before the cursor so the variant indicators show under them
-    scope highjack_2_: {
-        OS.patch_start(0x787EC, 0x800FCFEC)
-        j       highjack_2_
-        nop
-        _return:
-        OS.patch_end()
-
-        sw      t7, 0x0000(v0)              // original line 1
-        sw      r0, 0x0004(v0)              // original line 2
-
-        addiu   sp, sp,-0x0020              // allocate stack space
-        sw      at, 0x0004(sp)              // ~
-        sw      t0, 0x0008(sp)              // ~
-        sw      t1, 0x000C(sp)              // ~
-        sw      a0, 0x0010(sp)              // ~
-        sw      a3, 0x0014(sp)              // ~
-        sw      v0, 0x0018(sp)              // ~
-        sw      ra, 0x001C(sp)              // save registers
-
-        // Make sure we're on a CSS
-        li      t0, Global.current_screen   // ~
-        lbu     t0, 0x0000(t0)              // t0 = screen id
-
-        // css screen ids: vs - 0x10, 1p - 0x11, training - 0x12, bonus1 - 0x13, bonus2 - 0x14
-        slti    at, t0, 0x0010              // if (screen id < 0x10)...
-        bnez    at, _continue               // ...then skip
-        nop
-        slti    at, t0, 0x0015              // if (screen id is between 0x10 and 0x14)...
-        beqz    at, _skip                   // ...then we're on a CSS
-        nop
-
-        _continue:
-        // This appears to be called twice, so let's use the first one when 0xF is the value in a1
-        lli     at, 0x000F                  // at = expected value
-        bne     at, a1, _skip               // if test fails, end
-        nop
-
-        // highjack here
-        addiu   v0, v0, 0x0008              // increment v0
-        addiu   t1, v0, 0x0008              // t1 = v0 + 8
-        sw      t1, 0x0000(v1)              // update v1
-
-        // init
-        li      t1, RCP.display_list_info_p                // t1 = display list info pointer
-        li      at, DL.variant_indicator_display_list_info // at = address of display list info
-        sw      at, 0x0000(t1)                             // update display list info pointer
-
-        // reset
-        li      t1, DL.variant_indicator_display_list      // t1 = address of display_list
-        li      at, DL.variant_indicator_display_list_info // at = address of display_list_info
-        sw      t1, 0x0000(at)                             // ~
-        sw      t1, 0x0004(at)                             // update display list address each frame
-
-        // highjack
-        li      t1, 0xDE000000                             // ~
-        sw      t1, 0x0000(v0)                             // ~
-        li      t1, DL.variant_indicator_display_list      // ~
-        sw      t1, 0x0004(v0)                             // highjack ssb display list
-
-        // draw variant indicator
-        jal     CharacterSelect.run_variant_check_
-        nop
-
-        // This probably isn't 100% correct, but the subsequent commands in the original
-        // display list most likely make up for it...
-        li      a0, 0xEF002C0F              // restore RDP other modes
-        li      a1, 0x00504240              // ~
-        jal     RCP.append_
-        nop
-
-        jal     RCP.pipe_sync_
-        nop
-        jal     RCP.end_list_
-        nop
-
-        lw      at, 0x0004(sp)              // ~
-        lw      t0, 0x0008(sp)              // ~
-        lw      t1, 0x000C(sp)              // ~
-        lw      a0, 0x0010(sp)              // ~
-        lw      a3, 0x0014(sp)              // ~
-        lw      v0, 0x0018(sp)              // ~
-        lw      ra, 0x001C(sp)              // restore registers
-        addiu   sp, sp, 0x0020              // deallocate stack space
-
-        j       _return                     // return
-        nop
-
-        _skip:
-        lw      at, 0x0004(sp)              // ~
-        lw      t0, 0x0008(sp)              // ~
-        lw      t1, 0x000C(sp)              // ~
-        lw      a0, 0x0010(sp)              // ~
-        lw      a3, 0x0014(sp)              // ~
-        lw      v0, 0x0018(sp)              // ~
-        lw      ra, 0x001C(sp)              // restore registers
-        addiu   sp, sp, 0x0020              // deallocate stack space
-        j       _return                     // return
-        nop
-    }
-
-    // @ Description
     // Allows random character to include remix characters
     scope get_random_char_id_: {
         // VS
@@ -932,19 +713,89 @@ scope CharacterSelect {
 
         // s1 is port id, except when first entering training mode
 
-        addiu   sp, sp,-0x0004              // allocate stack space
+        addiu   sp, sp,-0x0020              // allocate stack space
         sw      ra, 0x0004(sp)              // ~
+        // 0x0008(sp) reserved
+        sw      a1, 0x000C(sp)              // ~
+        sw      v1, 0x0010(sp)              // ~
+        sw      s0, 0x0014(sp)              // ~
 
         _get_random_id:
         jal     Global.get_random_int_alt_  // original line 1
         addiu   a0, r0, NUM_SLOTS           // original line 2 modified to include all slots
         // v0 = random number between 0 and NUM_SLOTS
-        li      s0, id_table                // s0 = id_table
+
+        // Check if 12cb and if so check if character is defeated/invalid for port or not
+        li      s0, TwelveCharBattle.twelve_cb_flag
+        lw      s0, 0x0000(s0)              // s0 = 1 if 12cb
+        beqz    s0, _not_12cb               // if not 12cb, skip defeated check
+        nop
+
+        lli     a0, NUM_COLUMNS             // a0 = NUM_COLUMNS
+        divu    v0, a0                      // a0 = column
+        mfhi    a0                          // ~
+        sltiu   a0, a0, 0x0004              // a0 = 1 if left grid, 0 if right grid
+        beqzl   s1, pc() + 8                // if p1, then change a0 so we can adjust the portrait_id correctly
+        addiu   a0, a0, -0x0001             // a0 = 0 if left grid and p1 (ok) or right grid and p2 (ok), -1 if right grid and p1 (bad), 1 if left grid and p2 (bad)
+        sll     a0, a0, 0x0002              // a0 = 0 if left grid and p1 (ok) or right grid and p2 (ok), -4 if right grid and p1 (bad), 4 if left grid and p2 (bad)
+        addu    v0, v0, a0                  // v0 = portrait_id, adjusted for port
+
+        lw      s0, 0x0014(sp)              // s0 = CSS player struct
+        sw      v0, 0x00B4(s0)              // save the portrait_id so any duplicate character_ids are accounted for correctly
+
+        li      s0, id_table_pointer
+        lw      s0, 0x0000(s0)              // s0 = id_table
         addu    s0, s0, v0                  // s0 = id_table + offset
         lbu     v0, 0x0000(s0)              // v0 = character_id
         lli     s0, Character.id.NONE       // s0 = Character.id.NONE
         beq     s0, v0, _get_random_id      // if v0 is not a valid character then get a new random number
-        nop                                 // ~
+        sw      v0, 0x0008(sp)              // save v0
+
+        li      s0, TwelveCharBattle.config.status
+        lw      s0, 0x0000(s0)              // s0 = battle status
+        lli     a0, TwelveCharBattle.config.STATUS_COMPLETE  // a0 = completed status
+        beq     s0, a0, _check_valid_for_port // if completed, skip defeated check (to avoid infinite loop)
+        nop
+
+        or      a0, r0, s1                  // a0 = port_id
+        jal     TwelveCharBattle.get_stocks_remaining_for_char_ // v0 = remaining_stocks
+        or      a1, r0, v0                  // a1 = character_id
+        beqz    v0, _get_random_id          // if the character is defeated/invalid for port then get a new random number
+        lw      v0, 0x0008(sp)              // restore v0
+
+        // so the random character is not defeated... if the match is started, then force that character_id if the player won
+        jal     TwelveCharBattle.get_last_match_portrait_and_stocks_ // v0 = remaining stocks, v1 = portrait_id of last game
+        lli     s0, 0x00FF                  // s0 = 0x000000FF (no portrait)
+        beqz    v0, _end                    // if the character was defeated last match, then keep new character_id
+        lw      v0, 0x0008(sp)              // restore v0
+        beq     v1, s0, _end                // if no portrait, then skip
+        nop
+        // otherwise, the player won previously so we need to get the character_id and force it
+        lw      s0, 0x0014(sp)              // s0 = CSS player struct
+        sw      v1, 0x00B4(s0)              // save portrait_id
+        li      s0, CharacterSelect.id_table_pointer
+        lw      s0, 0x0000(s0)              // s0 = id_table
+        addu    s0, s0, v1                  // s0 = address of character_id
+        b       _end
+        lbu     v0, 0x0000(s0)              // v0 = previous character_id
+
+        _check_valid_for_port:
+        or      a0, r0, s1                  // a0 = port_id
+        jal     TwelveCharBattle.is_character_valid_for_port_
+        or      a1, r0, v0                  // a1 = character_id
+        beqz    v0, _get_random_id          // if the character is invalid for port then get a new random number
+        lw      v0, 0x0008(sp)              // restore v0
+        b       _end                        // skip variants check, keep new character_id
+        nop
+
+        _not_12cb:
+        li      s0, id_table_pointer
+        lw      s0, 0x0000(s0)              // s0 = id_table
+        addu    s0, s0, v0                  // s0 = id_table + offset
+        lbu     v0, 0x0000(s0)              // v0 = character_id
+        lli     s0, Character.id.NONE       // s0 = Character.id.NONE
+        beq     s0, v0, _get_random_id      // if v0 is not a valid character then get a new random number
+        sw      v0, 0x0008(sp)              // save v0
 
         // Check toggle to see if we should include variants
         li      s0, Toggles.entry_variant_random
@@ -972,7 +823,11 @@ scope CharacterSelect {
 
         _end:
         lw      ra, 0x0004(sp)              // ~
-        addiu   sp, sp, 0x0004              // deallocate stack space
+        // 0x0008(sp) reserved
+        lw      a1, 0x000C(sp)              // ~
+        lw      v1, 0x0010(sp)              // ~
+        lw      s0, 0x0014(sp)              // ~
+        addiu   sp, sp, 0x0020              // deallocate stack space
 
         jr      ra                          // return
         nop                                 // ~
@@ -1018,12 +873,32 @@ scope CharacterSelect {
         sw      t1, 0x0008(sp)              // ~
         sw      t2, 0x000C(sp)              // ~
         // allocate stack space for v0
-        sw      a0, 0x0014(sp)              // save registers
+        sw      a0, 0x0014(sp)              // ~
+        sw      a1, 0x0018(sp)              // save registers
 
         // get portrait id
-        li      t0, portrait_id_table       // t0 = portrait_id_table
+        li      t0, portrait_id_table_pointer
+        lw      t0, 0x0000(t0)              // t0 = portrait_id_table
         addu    t0, t0, a0                  // t0 = portrait_id_table + character id
         lbu     v0, 0x0000(t0)              // v0 = portrait_id for character in a0
+
+        li      t0, TwelveCharBattle.twelve_cb_flag
+        lw      t0, 0x0000(t0)              // t0 = 1 if 12cb mode
+        beqz    t0, _store_portrait_id      // skip if not 12cb
+        nop
+
+        // This is a bit hacky...
+        // The port is in s1 most of the time, but from one call it is at 0x0084(s0).
+        // So check ra to determine the port.
+        or      a1, s1, r0                      // a1 = port_id (maybe)
+        li      t1, 0x80139274                  // ra when s1 is not port_id
+        beql    t1, ra, pc() + 8                // if s1 is not port_id, use 0x0084(s0)
+        lw      a1, 0x0084(s0)                  // a1 = port_id
+
+        jal     TwelveCharBattle.get_portrait_id_
+        nop                                     // a0 = character_id
+
+        _store_portrait_id:
         sw      v0, 0x0010(sp)              // store v0 in stack
         
         // get token location
@@ -1034,6 +909,17 @@ scope CharacterSelect {
         multu   t0, t1                      // ~
         mflo    t2                          // t2 = ulx
         addiu   t2, t2, START_X + 12        // t2 = (int) ulx + offset
+
+        li      t0, TwelveCharBattle.twelve_cb_flag
+        lw      t0, 0x0000(t0)              // t0 = 1 if 12cb mode
+        beqz    t0, _continue               // skip if not 12cb
+        nop
+        sltiu   t0, t1, 0x0004              // t0 = 1 if left grid
+        addiu   t2, t2, -0x0008             // adjust x for left grid
+        beqzl   t0, _continue               // if right grid, then adjust x for right grid
+        addiu   t2, t2, 0x0010              // adjust x for right grid (8 * 2 to unadjust fo rleft)
+
+        _continue:
         move    a0, t2                      // ~
         jal     OS.int_to_float_            // ~
         nop
@@ -1058,7 +944,8 @@ scope CharacterSelect {
         lw      t1, 0x0008(sp)              // ~
         lw      t2, 0x000C(sp)              // ~
         lw      v0, 0x0010(sp)              // ~
-        lw      a0, 0x0014(sp)              // restore registers
+        lw      a0, 0x0014(sp)              // ~
+        lw      a1, 0x0018(sp)              // restore registers
         addiu   sp, sp, 0x0020              // deallocate stack space
 
         // actual end
@@ -1069,26 +956,120 @@ scope CharacterSelect {
     }
 
     // @ Description
-    // removes white flash on vs character select
-    OS.patch_start(0x134730, 0x801364B0)
+    // This helper macro will overwrite some of the white flash routine for each screen.
+    macro set_white_flash_texture(check_12cb) {
+        li      t2, portrait_offset_table_pointer
+        lw      t2, 0x0000(t2)              // t2 = portrait_offset_table
+        sll     t3, s0, 0x0002              // t3 = offset in portrait offset table
+        addu    t2, t2, t3                  // t2 = address of portrait offset
+        lw      t2, 0x0000(t2)              // t2 = portrait offset
+        li      a1, Render.file_pointer_1   // a1 = base address of character portraits file
+        lw      a1, 0x0000(a1)              // ~
+        addu    a1, a1, t2                  // a1 = portrait image footer address
+        jal     0x800CCFDC
+        addiu   a1, a1, 0x0860              // a1 = flash portrait image footer address
+
+        lli     t3, NUM_COLUMNS             // t3 = NUM_COLUMNS
+        divu    s0, t3                      // mflo = ROW, mfhi = COLUMN
+        mfhi    t0                          // t0 = COLUMN
+        mflo    t1                          // t1 = ROW
+
+        lli     t2, PORTRAIT_WIDTH          // t2 = PORTRAIT_WIDTH
+        multu   t0, t2                      // t2 = COLUMN * PORTRAIT_WIDTH
+        mflo    t2                          // ~
+        addiu   t2, t2, START_X + START_VISUAL // t2 = ulx, adjusted for left padding
+
+        if {check_12cb} == OS.TRUE {
+            jal     TwelveCharBattle.adjust_white_flash_position_
+            nop
+        }
+
+        mtc1    t2, f0                      // f0 = ulx
+        cvt.s.w f0, f0                      // ~
+        swc1    f0, 0x0058(v0)              // set ulx
+
+        lli     t2, PORTRAIT_HEIGHT         // t2 = PORTRAIT_HEIGHT
+        multu   t1, t2                      // t2 = ROW * PORTRAIT_HEIGHT
+        mflo    t2                          // ~
+        addiu   t2, t2, START_Y + START_VISUAL // t2 = uly, adjusted for top padding
+        mtc1    t2, f0                      // f0 = uly
+        cvt.s.w f0, f0                      // ~
+        swc1    f0, 0x005C(v0)              // set uly
+    }
+
+    // @ Description
+    // The following patches reposition the white flash on vs character select.
+    // The assumption is the white flash portrait is always 0x860 after the character portrait.
+    OS.patch_start(0x13474C, 0x801364CC)
+    addiu   a2, r0, 0x0012
+    OS.patch_end()
+    OS.patch_start(0x134778, 0x801364F8)
+    addiu   a2, r0, 0x001B
+    OS.patch_end()
+    OS.patch_start(0x1347A4, 0x80136524)
+    //      s0 = portrait ID
+    lw      a0, 0x003C(sp)              // a0 = object struct (original line 6)
+
+    set_white_flash_texture(OS.TRUE)
+
+    j       0x801365BC                  // skip rest of routine
     nop
     OS.patch_end()
 
     // @ Description
-    // removes white flash on Training character select
-    OS.patch_start(0x143670, 0x80134090)
+    // The following patches reposition the white flash on training character select.
+    // The assumption is the white flash portrait is always 0x860 after the character portrait.
+    OS.patch_start(0x14368C, 0x801340AC)
+    addiu   a2, r0, 0x0012
+    OS.patch_end()
+    OS.patch_start(0x1436B8, 0x801340D8)
+    addiu   a2, r0, 0x001B
+    OS.patch_end()
+    OS.patch_start(0x1436E4, 0x80134104)
+    //      s0 = portrait ID
+    lw      a0, 0x003C(sp)              // a0 = object struct (original line 6)
+
+    set_white_flash_texture(OS.FALSE)
+
+    j       0x8013419C                  // skip rest of routine
     nop
     OS.patch_end()
 
     // @ Description
-    // removes white flash on 1p character select
-    OS.patch_start(0x13DC10, 0x80135A10)
+    // The following patches reposition the white flash on 1p character select.
+    // The assumption is the white flash portrait is always 0x860 after the character portrait.
+    OS.patch_start(0x13DC2C, 0x80135A2C)
+    addiu   a2, r0, 0x0012
+    OS.patch_end()
+    OS.patch_start(0x13DC58, 0x80135A58)
+    addiu   a2, r0, 0x001B
+    OS.patch_end()
+    OS.patch_start(0x13DC84, 0x80135A84)
+    //      s0 = portrait ID
+    lw      a0, 0x002C(sp)              // a0 = object struct (original line 5)
+
+    set_white_flash_texture(OS.FALSE)
+
+    j       0x80135B1C                  // skip rest of routine
     nop
     OS.patch_end()
 
     // @ Description
-    // removes white flash on BTT/BTP character select
-    OS.patch_start(0x14A960, 0x80134930)
+    // The following patches reposition the white flash on BTT/BTP character select.
+    // The assumption is the white flash portrait is always 0x860 after the character portrait.
+    OS.patch_start(0x14A97C, 0x8013494C)
+    addiu   a2, r0, 0x0012
+    OS.patch_end()
+    OS.patch_start(0x14A9A8, 0x80134978)
+    addiu   a2, r0, 0x001B
+    OS.patch_end()
+    OS.patch_start(0x14A9D4, 0x801349A4)
+    //      s0 = portrait ID
+    lw      a0, 0x002C(sp)              // a0 = object struct (original line 5)
+
+    set_white_flash_texture(OS.FALSE)
+
+    j       0x80134A3C                  // skip rest of routine
     nop
     OS.patch_end()
 
@@ -1437,10 +1418,6 @@ scope CharacterSelect {
         bnez    at, _loop
         addiu   s0, s0, 0x0001              // increment index
 
-        li      s0, chars_loaded            // s0 = chars_loaded
-        lli     v1, 0x0001                  // v1 = 1
-        sw      v1, 0x0000(s0)              // set chars_loaded to 1
-
         lui     v1, 0x8014                  // original line 1
         lui     s0, 0x8013                  // original line 2
 
@@ -1472,7 +1449,6 @@ scope CharacterSelect {
 
     // @ Description
     // Changes the loads from fgm_table instead of the original function table
-    // Also sets the selection flash timer
     scope get_fgm_: {
         // vs
         OS.patch_start(0x00134B10, 0x80136890)
@@ -1528,20 +1504,14 @@ scope CharacterSelect {
 
         addu    v1, t4, r0                  // v1 = character id
         sltiu   t1, s1, 0x0004              // t1 = 1 if s1 is a port id
-        beq     t1, r0, _update_flash_timer // if s1 is port id, use it to get original character id
+        beq     t1, r0, _get_fgm_id         // if s1 is port id, use it to get original character id
         nop
         li      t1, Character.variant_original.table
         sll     v1, v1, 0x0002              // v1 = offset in variant_original table
         addu    t1, t1, v1                  // t1 = address of original character id
         lw      v1, 0x0000(t1)              // v1 = original character id
 
-        _update_flash_timer:
-        // update flash timer
-        lli     t5, FLASH_TIME              // t5 = FLASH_TIME
-        li      a0, flash_table             // a0 = flash_table
-        addu    a0, a0, v1                  // a0 = flash_table + character id
-        sb      t5, 0x0000(a0)              // store FLASH_TIME
-
+        _get_fgm_id:
         // get fgm_id
         li      a0, fgm_table               // a0 = fgm_table 
         sll     t5, t4, 0x0001              // ~
@@ -1604,7 +1574,7 @@ scope CharacterSelect {
         OS.patch_end()
 
         // Bonus
-        OS.patch_start(0x0014B9B0, 0x80135988)
+        OS.patch_start(0x0014B9B0, 0x80135980)
         jal     check_variant_input_._bonus
         nop
         OS.patch_end()
@@ -1622,9 +1592,23 @@ scope CharacterSelect {
         sw      ra, 0x0008(sp)              // ~
 
         lhu     t8, 0x0002(t8)              // unique press button state
+
+        li      v1, TwelveCharBattle.twelve_cb_flag
+        lw      v1, 0x0000(v1)              // v1 = 1 if 12cb mode
+        beqz    v1, _not_12cb               // if not 12cb mode, continue normally
+        nop
+
+        // jump to 12cb's input code and skip the variant stuff
+        jal     TwelveCharBattle.check_input_
+        nop
+        b       _end_vs
+        nop
+
+        _not_12cb:
         jal     _shared                     // call main routine (shared between vs and training)
         addu    v1, v0, r0                  // v1 = pointer to player CSS struct
 
+        _end_vs:
         lw      v1, 0x0004(sp)              // ~
         lw      ra, 0x0008(sp)              // ~
         addiu   sp, sp, 0x000C              // deallocate stack space
@@ -1741,19 +1725,19 @@ scope CharacterSelect {
 
         andi    at, t8, Joypad.DU           // D-pad up
         bnel    at, r0, _set_variant_offset // if pressed, update to SPECIAL
-        addiu   t8, r0, Character.variants.SPECIAL + 1
+        addiu   t8, r0, Character.variants.DU + 1
 
         andi    at, t8, Joypad.DD           // D-pad down
         bnel    at, r0, _set_variant_offset // if pressed, update to POLYGON
-        addiu   t8, r0, Character.variants.POLYGON + 1
+        addiu   t8, r0, Character.variants.DD + 1
 
         andi    at, t8, Joypad.DL           // D-pad left
         bnel    at, r0, _set_variant_offset // if pressed, update to J
-        addiu   t8, r0, Character.variants.J + 1
+        addiu   t8, r0, Character.variants.DL + 1
 
         andi    at, t8, Joypad.DR           // D-pad right
         bnel    at, r0, _set_variant_offset // if pressed, update to E
-        addiu   t8, r0, Character.variants.E + 1
+        addiu   t8, r0, Character.variants.DR + 1
 
         andi    at, t8, Joypad.Z            // Z
         bnel    at, r0, _set_variant_offset // if pressed, reset to normal character
@@ -1762,42 +1746,11 @@ scope CharacterSelect {
         addu    t8, r0, r0                  // t8 = 0
 
         _set_variant_offset:
-        beqzl   t8, _determine_variant      // if t8 = 0, then use previous variant_offset
+        beqzl   t8, _end                    // if t8 = 0, then use previous variant_offset
         sb      a0, 0x0000(t1)              // ~
-        beql    a0, t8, _determine_variant  // if the same direction already selected is selected again...
+        beql    a0, t8, _end                // if the same direction already selected is selected again...
         sb      r0, 0x0000(t1)              // ...then reset to normal character
         sb      t8, 0x0000(t1)              // ...else store new variant_offset
-
-        _determine_variant:
-        bnez    t0, _end                    // if the token is being held, then skip
-        nop                                 // otherwise, check if the player already has a character selected
-        lw      at, 0x0088(v1)              // at = is_char_selected
-        beqz    at, _end                    // if no character is selected, skip to end
-        nop                                 // otherwise, check the variant to see if we need to update the selection
-
-        lbu     t8, 0x0000(t1)              // t8 = variant_offset
-        beqz    t8, _check_selectable       // if Z was pressed, update character
-        lbu     a0, 0x0004(t1)              // a0 = selected character's portrait's character_id
-
-        lbu     t0, 0x0004(t1)              // t0 = selected character's portrait's character_id
-        li      a0, Character.variants.table// a0 = variant table
-        sll     at, t0, 0x0002              // at = character variant array index
-        addu    a0, a0, at                  // a0 = character variant array
-        addu    a0, a0, t8                  // a0 = character variant ID address, unadjusted
-        addiu   a0, a0, -0x0001             // a0 = character variant ID address
-        lbu     a0, 0x0000(a0)              // a0 = variant ID
-        _check_selectable:
-        lw      t0, 0x0048(v0)              // t0 = selected character_id
-        beq     a0, t0, _end                // if variant is already selected, skip to end
-        nop                                 // ~
-        addiu   at, r0, Character.id.NONE   // at = id.NONE
-        beq     a0, at, _end                // if no variant defined, skip to end
-        nop                                 // ~
-
-        _select_character:
-        // TODO: it would be nice to be able to change selection while the character is selected...
-        // ...however, I haven't had much luck in doing something that didn't crash console.
-        // So for now, you'll have to deselect the character before it can be changed to the original or variant.
 
         _end:
         lw      at, 0x0004(sp)              // ~
@@ -1818,10 +1771,6 @@ scope CharacterSelect {
     db 0x00                                 // player 2
     db 0x00                                 // player 3
     db 0x00                                 // player 4
-
-    // @ Description
-    // Struct for portrait textures
-    portrait_info:;     Texture.info(PORTRAIT_WIDTH_FILE, PORTRAIT_HEIGHT_FILE)
 
     // @ Description
     // New table for sound fx (for each character)
@@ -1935,6 +1884,71 @@ scope CharacterSelect {
     fill (selection_action_table + (Character.NUM_CHARACTERS * 0x4)) - pc()
     
     // @ Description
+    // Offsets to the portrait image footers in the Character Portraits file.
+    // It is assumed that the white flash version of the portraits are immediately following the corresponding normal portrait.
+    // The size of each block is 0x860, so Mario's flash would be at portrait_offsets.MARIO + 0x860 for example.
+    scope portrait_offsets: {
+        constant NONE(0x00000818)
+        // original
+        constant MARIO(0x00001078)
+        constant FOX(0x00002138)
+        constant DONKEY(0x000031F8)
+        constant SAMUS(0x000042B8)
+        constant LUIGI(0x00005378)
+        constant LINK(0x00006438)
+        constant YOSHI(0x000074F8)
+        constant CAPTAIN(0x000085B8)
+        constant KIRBY(0x00009678)
+        constant PIKACHU(0x0000A738)
+        constant JIGGLYPUFF(0x0000B7F8)
+        constant NESS(0x0000C8B8)
+        // poly
+        constant NMARIO(0x00001078)
+        constant NFOX(0x00002138)
+        constant NDONKEY(0x000031F8)
+        constant NSAMUS(0x000042B8)
+        constant NLUIGI(0x00005378)
+        constant NLINK(0x00006438)
+        constant NYOSHI(0x000074F8)
+        constant NCAPTAIN(0x000085B8)
+        constant NKIRBY(0x00009678)
+        constant NPIKACHU(0x0000A738)
+        constant NJIGGLY(0x0000B7F8)
+        constant NNESS(0x0000C8B8)
+        // special
+        constant METAL(0x00001078)
+        constant GDONKEY(0x000031F8)
+		constant GBOWSER(0x00014EB8)
+        // custom
+        constant FALCO(0x0000D978)
+        constant GND(0x0000EA38)
+        constant YLINK(0x0000FAF8)
+        constant DRM(0x00010BB8)
+        constant DSAMUS(0x00011C78)
+        constant WARIO(0x00012D38)
+        constant LUCAS(0x00013DF8)
+        constant BOWSER(0x00014EB8)
+        // j
+        constant JMARIO(0x00001078)
+        constant JFOX(0x00002138)
+        constant JDK(0x000031F8)
+        constant JSAMUS(0x000042B8)
+        constant JLUIGI(0x00005378)
+        constant JLINK(0x00006438)
+        constant JYOSHI(0x000074F8)
+        constant JFALCON(0x000085B8)
+        constant JKIRBY(0x00009678)
+        constant JPIKA(0x0000A738)
+        constant JPUFF(0x0000B7F8)
+        constant JNESS(0x0000C8B8)
+        // e
+        constant ESAMUS(0x000042B8)
+        constant ELINK(0x00006438)
+        constant EPIKA(0x0000A738)
+        constant EPUFF(0x0000B7F8)
+    }
+
+    // @ Description
     // Logo offsets in file 0x14
     scope series_logo {
         constant MARIO_BROS(0x00000618)
@@ -1949,6 +1963,7 @@ scope CharacterSelect {
         constant EARTHBOUND(0x00003F78)
         constant SMASH(0x000045D8)
         constant DR_MARIO(0x00004C38)
+		constant BOWSER(0x00005298)
     }
 
     series_logo_offset_table:
@@ -2022,6 +2037,8 @@ scope CharacterSelect {
         constant ELINK(0x00002BA0)
         constant WARIO(0x000175C8)
         constant LUCAS(0x00018138)
+        constant BOWSER(0x00018618)
+		constant GBOWSER(0x00018BC8)
         constant JLINK(0x00002BA0)
         constant JFALCON(0x00003998)
         constant JFOX(0x000025B8)
@@ -2079,7 +2096,6 @@ scope CharacterSelect {
     constant PORTRAIT_WIDTH(30)
     constant PORTRAIT_HEIGHT(30)
 
-
     // @ Description
     // CHARACTER SELECT SCREEN LAYOUT
     constant NUM_SLOTS(24)
@@ -2106,14 +2122,232 @@ scope CharacterSelect {
         define slot_17(DSAMUS)
         define slot_18(WARIO)
         define slot_19(LUCAS)
-        define slot_20(NONE)
+        define slot_20(BOWSER)
         define slot_21(NONE)
         define slot_22(NONE)
         define slot_23(NONE)
         define slot_24(NONE)
     }
     
-    
+    // @ Description
+    // This renders the portraits, using the slide in animation.
+    // @ Arguments
+    // a0 - 12cb flag: 1 if 12cb, 0 if not
+    scope draw_portraits_: {
+        constant SLIDE_IN_TRAINING(0x1D90)
+        constant SLIDE_IN_VS(0x1EE4)
+        constant SLIDE_IN_1P(0x255C)
+        constant SLIDE_IN_BONUS(0x2150)
+
+        addiu   sp, sp, -0x0020             // allocate stack space
+        sw      ra, 0x0004(sp)              // save ra
+        sw      a0, 0x0008(sp)              // ~
+
+        lli     s0, 0x0000                  // s0 = slot index = 0
+        lli     s1, NUM_SLOTS               // s1 = NUM_SLOTS
+        li      s2, id_table_pointer
+        lw      s2, 0x0000(s2)              // s2 = id_table
+        li      s3, Render.file_pointer_1   // s3 = base address of character portraits file
+        lw      s3, 0x0000(s3)              // ~
+        li      s4, portrait_offset_table_pointer
+        lw      s4, 0x0000(s4)              // s4 = portrait_offset_table
+
+        // set the animation slide in routine depending on the screen
+        // screen ids: vs - 0x10, 1p - 0x11, training - 0x12, bonus1 - 0x13, bonus2 - 0x14
+        lui     s6, 0x8013                  // s6 = 0x80130000
+        li      t0, Global.current_screen   // ~
+        lbu     t0, 0x0000(t0)              // t0 = current screen
+        lli     t1, 0x0010
+        beql    t0, t1, _loop
+        addiu   s6, s6, SLIDE_IN_VS         // VS
+        lli     t1, 0x0011
+        beql    t0, t1, _loop
+        addiu   s6, s6, SLIDE_IN_1P         // 1P
+        lli     t1, 0x0012
+        beql    t0, t1, _loop
+        addiu   s6, s6, SLIDE_IN_TRAINING   // Training
+        addiu   s6, s6, SLIDE_IN_BONUS      // Bonus
+
+        _loop:
+        sll     s5, s0, 0x0002              // s5 = slot index * 4
+        lli     t3, NUM_COLUMNS             // t3 = NUM_COLUMNS
+        divu    s0, t3                      // mflo = ROW, mfhi = COLUMN
+        mfhi    t0                          // t0 = COLUMN
+        mflo    t1                          // t1 = ROW
+
+        // first, draw the portrait texture
+        addiu   sp, sp, -0x0030             // allocate stack space
+        sw      s0, 0x0004(sp)              // save registers
+        sw      s1, 0x0008(sp)              // ~
+        sw      s2, 0x000C(sp)              // ~
+        sw      s3, 0x0010(sp)              // ~
+        sw      s4, 0x0014(sp)              // ~
+        sw      s5, 0x0018(sp)              // ~
+        sw      s6, 0x001C(sp)              // ~
+        sw      t0, 0x0020(sp)              // ~
+
+        li      a3, TwelveCharBattle.draw_disabled_rectangle_
+        beqzl   a0, pc() + 8                // if not 12cb mode, then don't pass a routine
+        lli     a3, 0x0000                  // a3 = (no) routine
+        lli     a0, 0x1B                    // a0 = room
+        lli     a1, 0x12                    // a1 = group
+        addu    a2, s4, s5                  // a2 = address of portrait offset
+        lw      a2, 0x0000(a2)              // a2 = portrait offset
+        addu    a2, s3, a2                  // a2 = image footer
+
+        sltiu   t2, t0, NUM_COLUMNS / 2     // t2 = 1 if left of middle, 0 if right of middle
+        bnezl   t2, _get_y                  // set ulx appropriately:
+        lui     s1, 0xC1A0                  // s1 = ulx when left of middle (-20)
+        lui     s1, 0x439B                  // s1 = ulx when right of middle (310)
+
+        _get_y:
+        lli     t2, PORTRAIT_HEIGHT         // t2 = PORTRAIT_HEIGHT
+        multu   t1, t2                      // t2 = ROW * PORTRAIT_HEIGHT
+        mflo    t2                          // ~
+        addiu   t2, t2, START_Y + START_VISUAL // t2 = uly, adjusted for top padding
+        mtc1    t2, f0                      // f0 = uly
+        cvt.s.w f0, f0                      // ~
+        mfc1    s2, f0                      // s2 = uly
+
+        li      s3, 0xFFFFFFFF              // s3 = color
+        li      s4, 0x00000000              // s4 = palette
+        jal     Render.draw_texture_
+        lui     s5, 0x3F80                  // s5 = scale
+
+        lw      s0, 0x0004(sp)              // restore registers
+        lw      s1, 0x0008(sp)              // ~
+        lw      s2, 0x000C(sp)              // ~
+        lw      s3, 0x0010(sp)              // ~
+        lw      s4, 0x0014(sp)              // ~
+        lw      s5, 0x0018(sp)              // ~
+        lw      s6, 0x001C(sp)              // ~
+        lw      t0, 0x0020(sp)              // ~
+        addiu   sp, sp, 0x0030              // deallocate stack space
+
+        // setup 12cb related fields
+        sw      s0, 0x0030(v0)              // save portrait_id in object struct
+        sw      r0, 0x0034(v0)              // clear out rectangle pointer in object struct
+        sw      v0, 0x0010(sp)              // save portrait_id object address
+
+        // then, register the slide in animation
+        sw      t0, 0x0084(v0)              // save column index in object struct
+        addiu   sp, sp, -0x0030             // move stack pointer (0x80008188 is not safe)
+        addu    a0, r0, v0                  // a0 = object struct
+        addu    a1, r0, s6                  // a1 = animation slide in routine
+        lli     a2, 0x0001                  // a2 = 1
+        jal     0x80008188
+        lli     a3, 0x0001                  // a3 = 1
+        addiu   sp, sp, 0x0030              // restore stack pointer
+
+        lw      t0, 0x0008(sp)              // t0 = 12cb flag
+        beqz    t0, _next                   // if not 12cb mode, then don't add flag/icon image
+        nop                                 // otherwise, add an image struct to this object for variant indicators
+        jal     TwelveCharBattle.update_portrait_variant_indicator_
+        lw      a0, 0x0010(sp)              // a0 = portrait_id object address
+
+        _next:
+        addiu   s0, s0, 0x0001              // increment slot index
+        bne     s0, s1, _loop               // if not finished drawing all slots, loop
+        lw      a0, 0x0008(sp)              // restore a0
+
+        lw      ra, 0x0004(sp)              // restore ra
+        addiu   sp, sp, 0x0020              // deallocate stack space
+        jr      ra
+        nop
+    }
+
+    // Patch portrait animation routine
+    // 1p
+    OS.patch_start(0x13A640, 0x80132440)
+    mtc1    a1, f12                         // original line 3
+    // v1 needs to be the location of the end X position table
+    // a1 needs to be the location of the portrait velocity table
+    // a0 needs to be the index in those tables, but is originaly the portrait ID
+    li      v1, portrait_x_position
+    li      a1, portrait_velocity
+
+    j       0x801324B4                      // skip the rest of the routine
+    nop
+    OS.patch_end()
+
+    // Patch portrait animation routine
+    // Training
+    OS.patch_start(0x141254, 0x80131C74)
+    mtc1    a1, f12                         // original line 3
+    // v1 needs to be the location of the end X position table
+    // a1 needs to be the location of the portrait velocity table
+    // a0 needs to be the index in those tables, but is originaly the portrait ID
+    li      v1, portrait_x_position
+    li      a1, portrait_velocity
+
+    j       0x80131CE8                      // skip the rest of the routine
+    nop
+    OS.patch_end()
+
+    // Patch portrait animation routine
+    // VS
+    OS.patch_start(0x130048, 0x80131DC8)
+    mtc1    a1, f12                         // original line 3
+    // v1 needs to be the location of the end X position table
+    // a1 needs to be the location of the portrait velocity table
+    // a0 needs to be the index in those tables, but is originaly the portrait ID
+    li      v1, portrait_x_position_pointer
+    lw      v1, 0x0000(v1)
+    li      a1, portrait_velocity
+
+    j       0x80131E3C                      // skip the rest of the routine
+    nop
+    OS.patch_end()
+
+    // Patch portrait animation routine
+    // Bonus
+    OS.patch_start(0x148064, 0x80132034)
+    mtc1    a1, f12                         // original line 3
+    // v1 needs to be the location of the end X position table
+    // a1 needs to be the location of the portrait velocity table
+    // a0 needs to be the index in those tables, but is originaly the portrait ID
+    li      v1, portrait_x_position
+    li      a1, portrait_velocity
+
+    j       0x801320A8                      // skip the rest of the routine
+    nop
+    OS.patch_end()
+
+    // @ Description
+    // Pointer to portrait_x_position
+    portrait_x_position_pointer:
+    dw portrait_x_position
+
+    // @ Description
+    // This table holds the final X position for portraits
+    // This could just be based on column, but it is set for each portrait to make code simpler
+    portrait_x_position:
+    evaluate n(0)
+    while NUM_COLUMNS > {n} {
+        evaluate x(START_VISUAL + START_X + PORTRAIT_WIDTH * {n})
+        float32 {x}
+        evaluate n({n} + 1)
+    }
+
+    // @ Description
+    // This table holds the velocity for portrait slide in animations
+    // This could just be based on column, but it is set for each portrait to permit finer control
+    // The custom characters' portraits slide in slower then the original cast's portraits
+    portrait_velocity:
+    float32 1.9                               // column 1
+    float32 3.9                               // column 2
+    float32 7.8                               // column 3
+    float32 11.8                              // column 4
+    float32 -11.8                             // column 5
+    float32 -7.8                              // column 6
+    float32 -3.8                              // column 7
+    float32 -1.8                              // column 8
+
+    // @ Description
+    // Pointer to id_table
+    id_table_pointer:
+    dw id_table
+
     // @ Description
     // CSS characters in order of portrait ID
     id_table:
@@ -2123,7 +2357,63 @@ scope CharacterSelect {
         db Character.id.{layout.slot_{n}}
     }
     OS.align(4)
+
+    // @ Description
+    // Pointer to portrait_offset_table
+    portrait_offset_table_pointer:
+    dw portrait_offset_table
+
+    // @ Description
+    // Portrait offsets in order of portrait ID
+    portrait_offset_table:
+    evaluate n(0)
+    while NUM_SLOTS > {n} {
+        evaluate n({n} + 1)
+        dw portrait_offsets.{layout.slot_{n}}
+    }
+    OS.align(4)
     
+    // @ Description
+    // Portrait offsets in order of character ID
+    portrait_offset_by_character_table:
+    constant portrait_offset_by_character_table_origin(origin())
+    dw portrait_offsets.MARIO                   // Mario
+    dw portrait_offsets.FOX                     // Fox
+    dw portrait_offsets.DONKEY                  // Donkey Kong
+    dw portrait_offsets.SAMUS                   // Samus
+    dw portrait_offsets.LUIGI                   // Luigi
+    dw portrait_offsets.LINK                    // Link
+    dw portrait_offsets.YOSHI                   // Yoshi
+    dw portrait_offsets.CAPTAIN                 // Captain Falcon
+    dw portrait_offsets.KIRBY                   // Kirby
+    dw portrait_offsets.PIKACHU                 // Pikachu
+    dw portrait_offsets.JIGGLYPUFF              // Jigglypuff
+    dw portrait_offsets.NESS                    // Ness
+    dw portrait_offsets.NONE                    // Master Hand
+    dw portrait_offsets.METAL                   // Metal Mario
+    dw portrait_offsets.NMARIO                  // Polygon Mario
+    dw portrait_offsets.NFOX                    // Polygon Fox
+    dw portrait_offsets.NDONKEY                 // Polygon Donkey Kong
+    dw portrait_offsets.NSAMUS                  // Polygon Samus
+    dw portrait_offsets.NLUIGI                  // Polygon Luigi
+    dw portrait_offsets.NLINK                   // Polygon Link
+    dw portrait_offsets.NYOSHI                  // Polygon Yoshi
+    dw portrait_offsets.NCAPTAIN                // Polygon Captain Falcon
+    dw portrait_offsets.NKIRBY                  // Polygon Kirby
+    dw portrait_offsets.NPIKACHU                // Polygon Pikachu
+    dw portrait_offsets.NJIGGLY                 // Polygon Jigglypuff
+    dw portrait_offsets.NNESS                   // Polygon Ness
+    dw portrait_offsets.GDONKEY                 // Giant Donkey Kong
+    dw portrait_offsets.NONE                    // (Placeholder)
+    dw portrait_offsets.NONE                    // None (Placeholder)
+    // add space for new characters
+    fill (portrait_offset_by_character_table + (Character.NUM_CHARACTERS * 0x4)) - pc()
+    
+    // @ Description
+    // Pointer to portrait_id_table
+    portrait_id_table_pointer:
+    dw portrait_id_table
+
     // @ Description
     // CSS portraits IDs in order of character ID
     portrait_id_table:
@@ -2153,133 +2443,10 @@ scope CharacterSelect {
             db {n} - 1
         }
     }
+    // Always return 0 for Character.id.NONE (the game does this)
+    origin portrait_id_table_origin + Character.id.NONE
+    db 0x00
     pullvar base, origin
-    
-    // @ Description
-    // used for storing white flash timer
-    flash_table:
-    constant FLASH_TIME(0xF)
-    fill Character.NUM_CHARACTERS
-    OS.align(4)
-    
-    // @ Description
-    // Texture inserts for portraits
-    insert portrait_donkey_kong,         "../textures/portrait_donkey_kong.rgba5551"
-    insert portrait_falcon,              "../textures/portrait_falcon.rgba5551"
-    insert portrait_fox,                 "../textures/portrait_fox.rgba5551"
-    insert portrait_jigglypuff,          "../textures/portrait_jigglypuff.rgba5551"
-    insert portrait_kirby,               "../textures/portrait_kirby.rgba5551"
-    insert portrait_link,                "../textures/portrait_link.rgba5551"
-    insert portrait_luigi,               "../textures/portrait_luigi.rgba5551"
-    insert portrait_mario,               "../textures/portrait_mario.rgba5551"
-    insert portrait_ness,                "../textures/portrait_ness.rgba5551"
-    insert portrait_pikachu,             "../textures/portrait_pikachu.rgba5551"
-    insert portrait_samus,               "../textures/portrait_samus.rgba5551"
-    insert portrait_yoshi,               "../textures/portrait_yoshi.rgba5551"
-    insert portrait_donkey_kong_flash,   "../textures/portrait_donkey_kong_flash.rgba5551"
-    insert portrait_falcon_flash,        "../textures/portrait_falcon_flash.rgba5551"
-    insert portrait_fox_flash,           "../textures/portrait_fox_flash.rgba5551"
-    insert portrait_jigglypuff_flash,    "../textures/portrait_jigglypuff_flash.rgba5551"
-    insert portrait_kirby_flash,         "../textures/portrait_kirby_flash.rgba5551"
-    insert portrait_link_flash,          "../textures/portrait_link_flash.rgba5551"
-    insert portrait_luigi_flash,         "../textures/portrait_luigi_flash.rgba5551"
-    insert portrait_mario_flash,         "../textures/portrait_mario_flash.rgba5551"
-    insert portrait_ness_flash,          "../textures/portrait_ness_flash.rgba5551"
-    insert portrait_pikachu_flash,       "../textures/portrait_pikachu_flash.rgba5551"
-    insert portrait_samus_flash,         "../textures/portrait_samus_flash.rgba5551"
-    insert portrait_yoshi_flash,         "../textures/portrait_yoshi_flash.rgba5551"
-    // allow add_portrait to use portrait_unknown
-    define __portrait_unknown__()
-    portrait_unknown_flash: // we don't need a flash, but this prevents compile errors
-    insert portrait_unknown,        "../textures/portrait_unknown.rgba5551"
-
-    portrait_table:
-    constant portrait_table_origin(origin())
-    dw portrait_mario                   // Mario
-    dw portrait_fox                     // Fox
-    dw portrait_donkey_kong             // Donkey Kong
-    dw portrait_samus                   // Samus
-    dw portrait_luigi                   // Luigi
-    dw portrait_link                    // Link
-    dw portrait_yoshi                   // Yoshi
-    dw portrait_falcon                  // Captain Falcon
-    dw portrait_kirby                   // Kirby
-    dw portrait_pikachu                 // Pikachu
-    dw portrait_jigglypuff              // Jigglypuff
-    dw portrait_ness                    // Ness
-    dw portrait_unknown                 // Masterhand
-    dw portrait_unknown                 // Metal Mario
-    dw portrait_unknown                 // Polygon Mario
-    dw portrait_unknown                 // Polygon Fox
-    dw portrait_unknown                 // Polygon Donkey Kong
-    dw portrait_unknown                 // Polygon Samus
-    dw portrait_unknown                 // Polygon Luigi
-    dw portrait_unknown                 // Polygon Link
-    dw portrait_unknown                 // Polygon Yoshi
-    dw portrait_unknown                 // Polygon Captain Falcon
-    dw portrait_unknown                 // Polygon Kirby
-    dw portrait_unknown                 // Polygon Pikachu
-    dw portrait_unknown                 // Polygon Jigglypuff
-    dw portrait_unknown                 // Polygon Ness
-    dw portrait_unknown                 // Giant Donkey Kong
-    dw portrait_unknown                 // (Placeholder)
-    dw portrait_unknown                 // None (Placeholder)
-    // add space for new characters
-    fill (portrait_table + (Character.NUM_CHARACTERS * 0x4)) - pc()
-
-    portrait_flash_table:
-    constant portrait_flash_table_origin(origin())
-    dw portrait_mario_flash             // Mario
-    dw portrait_fox_flash               // Fox
-    dw portrait_donkey_kong_flash       // Donkey Kong
-    dw portrait_samus_flash             // Samus
-    dw portrait_luigi_flash             // Luigi
-    dw portrait_link_flash              // Link
-    dw portrait_yoshi_flash             // Yoshi
-    dw portrait_falcon_flash            // Captain Falcon
-    dw portrait_kirby_flash             // Kirby
-    dw portrait_pikachu_flash           // Pikachu
-    dw portrait_jigglypuff_flash        // Jigglypuff
-    dw portrait_ness_flash              // Ness
-    dw portrait_unknown                 // Masterhand
-    dw portrait_unknown                 // Metal Mario
-    dw portrait_unknown                 // Polygon Mario
-    dw portrait_unknown                 // Polygon Fox
-    dw portrait_unknown                 // Polygon Donkey Kong
-    dw portrait_unknown                 // Polygon Samus
-    dw portrait_unknown                 // Polygon Luigi
-    dw portrait_unknown                 // Polygon Link
-    dw portrait_unknown                 // Polygon Yoshi
-    dw portrait_unknown                 // Polygon Captain Falcon
-    dw portrait_unknown                 // Polygon Kirby
-    dw portrait_unknown                 // Polygon Pikachu
-    dw portrait_unknown                 // Polygon Jigglypuff
-    dw portrait_unknown                 // Polygon Ness
-    dw portrait_unknown                 // Giant Donkey Kong
-    dw portrait_unknown                 // (Placeholder)
-    dw portrait_unknown                 // None (Placeholder)
-    // add space for new characters
-    fill (portrait_flash_table + (Character.NUM_CHARACTERS * 0x4)) - pc()
-    
-    // @ Description
-    // Adds a portrait for a character.
-    // @ Arguments
-    // character - character id to add a portrait for
-    // portrait - portrait file name (.rgba5551 file in ../textures/)
-    macro add_portrait(character, portrait) {
-        if !{defined __{portrait}__} {
-            define __{portrait}__()
-            insert {portrait}, "../textures/{portrait}.rgba5551"
-            insert {portrait}_flash, "../textures/{portrait}_flash.rgba5551"
-        }
-        
-        pushvar origin, base
-        origin portrait_table_origin + ({character} * 0x4)
-        dw  {portrait}
-        origin portrait_flash_table_origin + ({character} * 0x4)
-        dw  {portrait}_flash
-        pullvar base, origin
-    }
     
     // Set menu zoom size for GDK
     Character.table_patch_start(menu_zoom, Character.id.GDONKEY, 0x4)
@@ -2287,317 +2454,781 @@ scope CharacterSelect {
     OS.patch_end()
 
     // @ Description
-    // This indicates when all characters have been loaded and helps to not display
-    // the variant indicator until after the screen fully transitions
-    chars_loaded:
-    dw     0x00000000
+    // Settings for the different CSS pages for easy access
+    css_settings:
+    // # panels;  // room     // X padding  // panel offset
+    db 0x04;      db 0x20;    db 34;        db 69            // VS
+    db 0x01;      db 0x1E;    db 38;        db 69            // 1P
+    db 0x02;      db 0x20;    db 65;        db 132           // TRAINING
+    db 0x01;      db 0x1E;    db 71;        db 69            // BONUS
+    db 0x01;      db 0x1E;    db 71;        db 69            // BONUS
 
     // @ Description
-    // This adds variant-related indicators to the screen.
-    scope run_variant_check_: {
-        constant CSS_PLAYER_STRUCT_SIZE(0xBC)
-        constant CSS_PLAYER_STRUCT_SIZE_TRAINING(0xB8)
-        constant HELD_TOKEN_OFFSET(0x80)
-        constant HELD_TOKEN_OFFSET_TRAINING(0x7C)
-        constant PANEL_OFFSET(000069)
-        constant PANEL_OFFSET_TRAINING(000132)
-        constant DPAD_X(000034)
-        constant DPAD_X_TRAINING(000065)
-        constant DPAD_X_1P(000038)
-        constant DPAD_X_BONUS(000071)
-        constant DPAD_Y(000177)
+    // Addresses for the different CSS pages' player panel structs for easy access
+    // 1P and Bonus are actually not the start but normalized so that offsets we care about are the same across screens
+    css_player_structs:
+    dw CSS_PLAYER_STRUCT
+    dw CSS_PLAYER_STRUCT_1P
+    dw CSS_PLAYER_STRUCT_TRAINING
+    dw CSS_PLAYER_STRUCT_BONUS
+    dw CSS_PLAYER_STRUCT_BONUS
 
-        // t0 = screen_id - is 0x0010 if VS CSS, 0x0011 if 1p, 0x0012 if Training CSS
+    // @ Description
+    // This points to the object that olds the dpad objects
+    render_control_object:
+    dw 0x00000000
 
-        addiu   sp, sp,-0x0044              // allocate stack space
+    // @ Description
+    // This sets up variant-related indicators and renders the portraits to the screen.
+    // Called from Render.asm.
+    scope setup_: {
+        constant DPAD_Y(0x4331)
+
+        // a0 = screen id
+        addiu   a0, a0, -0x0010             // a0 = 0, 1, 2, 3, 4 for VS, 1P, TRAINING, BONUS1, BONUS2
+        sll     a0, a0, 0x0002              // a0 = CSS screen index * 4
+        li      t0, css_settings
+        addu    t0, t0, a0                  // t0 = CSS settings
+        lbu     s0, 0x0000(t0)              // s0 = number of panels
+        lbu     s1, 0x0001(t0)              // s1 = room
+        lbu     s2, 0x0002(t0)              // s2 = X padding
+        lbu     s3, 0x0003(t0)              // s3 = panel offset
+        lli     s4, 0x0000                  // s4 = offset for panel index for storing reference
+        lli     s5, 0x00B8                  // s5 = css player struct size
+        beqzl   a0, _begin                  // In VS, the css player struct is 0xBC (includes shade)
+        lli     s5, 0x00BC                  // s5 = css player struct size
+        addiu   t0, a0, -0x0008             // t0 = 0 if TRAINING
+        bnez    t0, _begin                  // In TRAINING, the css player struct is at the port index for the human
+        nop                                 // so we need to do some stuff
+        lui     t0, 0x8014                  // t0 = port index of human
+        lw      t0, 0x8894(t0)              // ~
+        beqz    t0, _begin                  // if human is port 1, fuggedaboutit
+        nop                                 // otherwise, make the offset 0xBC * player index
+        multu   t0, s5                      // s5 = player index * 0xBC
+        mflo    s5                          // ~
+
+        _begin:
+        // ensure pointers are correct
+        li      t0, id_table_pointer
+        li      t1, id_table
+        sw      t1, 0x0000(t0)
+
+        li      t0, portrait_id_table_pointer
+        li      t1, portrait_id_table
+        sw      t1, 0x0000(t0)
+
+        li      t0, portrait_offset_table_pointer
+        li      t1, portrait_offset_table
+        sw      t1, 0x0000(t0)
+
+        li      t0, portrait_x_position_pointer
+        li      t1, portrait_x_position
+        sw      t1, 0x0000(t0)
+
+        addiu   sp, sp,-0x0030              // allocate stack space
         sw      ra, 0x0004(sp)              // ~
         sw      a0, 0x0008(sp)              // ~
-        sw      a1, 0x000C(sp)              // ~
-        sw      a2, 0x0010(sp)              // ~
-        sw      v0, 0x0014(sp)              // ~
-        sw      v1, 0x0018(sp)              // ~
-        sw      t0, 0x001C(sp)              // ~
-        sw      t1, 0x0020(sp)              // ~
-        sw      t2, 0x0024(sp)              // ~
-        sw      s0, 0x0028(sp)              // ~
-        sw      s1, 0x002C(sp)              // ~
-        sw      s2, 0x0030(sp)              // ~
-        sw      s3, 0x0034(sp)              // ~
-        sw      s4, 0x0038(sp)              // ~
-        sw      s5, 0x003C(sp)              // ~
-        sw      at, 0x0040(sp)              // save registers
+        sw      s0, 0x000C(sp)              // ~
+        sw      s1, 0x0010(sp)              // ~
+        sw      s2, 0x0014(sp)              // ~
+        sw      s3, 0x0018(sp)              // ~
+        sw      s4, 0x001C(sp)              // ~
+        sw      s5, 0x0020(sp)              // save registers
 
-        lli     s0, 0x0000                  // s0 = 0 (player 1)
-        li      s1, CSS_PLAYER_STRUCT
-        lli     s2, CSS_PLAYER_STRUCT_SIZE
-        lli     s3, HELD_TOKEN_OFFSET
-        lli     s4, PANEL_OFFSET
-        lli     s5, DPAD_X
+        Render.load_file(File.CHARACTER_PORTRAITS, Render.file_pointer_1) // load character portraits into file_pointer_1
+        Render.load_file(File.CSS_IMAGES, Render.file_pointer_2)          // load CSS images into file_pointer_2
 
-        lli     t2, 0x0010                  // t2 = stage_id for VS CSS
-        beq     t0, t2, _loop               // if on the VS CSS, we have the right values set
-        nop                                 // ~
+        // Create a control object which runs the variant update code every frame.
+        // D-pad textures will be created and references to their objects will be stored in this control object
+        Render.register_routine(update_variant_indicators_)
+        sw      v0, 0x0024(sp)              // save control object reference
+        li      a0, render_control_object
+        sw      v0, 0x0000(a0)              // save control object reference for outside routine
+        sw      r0, 0x0034(v0)              // 0 out panel reference slots we may not need
+        sw      r0, 0x0038(v0)              // 0 out panel reference slots we may not need
+        sw      r0, 0x003C(v0)              // 0 out panel reference slots we may not need
+        lw      a0, 0x0008(sp)              // a0 = offset in css_player_structs
+        li      a1, css_player_structs      // a1 = css_player_structs
+        addu    a1, a1, a0                  // a1 = pointer to player struct address
+        lw      a0, 0x0000(a1)              // a0 = player struct start
+        sw      a0, 0x0040(v0)              // save player struct start address
 
-        // if on the training or 1p CSS, need to use different constants
-        li      s1, CSS_PLAYER_STRUCT_TRAINING
-        lli     s2, CSS_PLAYER_STRUCT_SIZE_TRAINING
-        lli     s3, HELD_TOKEN_OFFSET_TRAINING
-        lli     s4, PANEL_OFFSET_TRAINING
-        lli     s5, DPAD_X_TRAINING
+        _add_dpad_image:
+        // set display order to 0 to force this to render after tokens
+        li      t0, Render.display_order_value
+        sw      r0, 0x0000(t0)              // set order to 0 to force this to render after tokens
 
-        lli     t2, 0x0012                  // t2 = stage_id for training CSS
-        beq     t0, t2, _loop               // if on the training CSS, we have the right values set
-        nop                                 // ~
+        lw      a0, 0x0010(sp)              // a0 = room
+        lli     a1, 0x13                    // a1 = group
+        li      a2, Render.file_pointer_2   // a2 = pointer to CSS images file start address
+        lw      a2, 0x0000(a2)              // a2 = base file address
+        addiu   a2, a2, 0x0218              // a2 = address of d-pad image TODO: make constant
+        lli     a3, 0x0000                  // a3 = routine (Render.NOOP)
+        lwc1    f0, 0x0014(sp)              // f0 = ulx
+        cvt.s.w f0, f0                      // ~
+        mfc1    s1, f0                      // s1 = ulx
+        lui     s2, DPAD_Y                  // s2 = uly
+        lli     s3, 0x0000                  // s3 = color
+        lli     s4, 0x0000                  // s4 = palette
+        jal     Render.draw_texture_
+        lui     s5, 0x3F80                  // s5 = scale
 
-        // use these settings for 1p CSS
-        li      s1, CSS_PLAYER_STRUCT_1P
-        lli     s2, 0x0000                  // there is only one element in the array, so no need to calculate offsets
-        lli     s4, 0x0000                  // there is only one element in the array, so no need to calculate offsets
-        lli     s5, DPAD_X_1P
+        lw      t1, 0x0024(sp)              // t1 = control object reference
+        lw      s4, 0x001C(sp)              // s4 = offset in control object reference for panel
+        addu    t1, t1, s4                  // t1 = control object reference offset for panel
+        sw      v0, 0x0030(t1)              // store port X dpad object pointer in control object
+        sw      r0, 0x0034(v0)              // 0 out reference to variant icons
+        addiu   t0, r0, 0x0001              // t0 = 1 (display off)
+        sw      t0, 0x007C(v0)              // turn display off initially
+        srl     t0, s4, 0x0002              // t0 = css player struct index
+        lw      s5, 0x0020(sp)              // s5 = css player struct size
+        mult    s5, t0                      // t0 = css player struct offset
+        mflo    t0                          // ~
+        lw      t1, 0x0024(sp)              // t1 = control object reference
+        lw      t1, 0x0040(t1)              // t1 = css player struct base address
+        addu    t1, t1, t0                  // t1 = css player struct address for this dpad image
+        sw      t1, 0x0084(v0)              // save reference to css player struct
+        addiu   t0, t1, -0x00BC             // t0 = normalized css player struct reference
+        addu    t0, t0, s5                  // ~ (now we can reference 0x50 and higher offsets the same)
+        sw      t0, 0x0038(v0)              // save normalized css player struct reference
+        lw      t1, 0x0058(t0)              // t1 = initial player selected flag
+        sw      t1, 0x003C(v0)              // store player selected status
+        sw      r0, 0x0040(v0)              // 0 out reference to regional flag
 
-        lli     t2, 0x0011                  // t2 = stage_id for 1p CSS
-        beq     t0, t2, _loop               // if on the 1p CSS, we have the right values set
-        nop                                 // ~
+        sw      v0, 0x0028(sp)              // save dpad object reference
 
-        // on Bonus CSS, override some more values
-        li      s1, CSS_PLAYER_STRUCT_BONUS
-        lli     s5, DPAD_X_BONUS
+        lw      a0, 0x0010(sp)              // a0 = room
+        lli     a1, 0x13                    // a1 = group
+        lli     s1, 0x0000                  // s1 = ulx
+        lli     s2, 0x0000                  // s2 = uly
+        lli     s3, 0x0002                  // s3 = width
+        lli     s4, 0x0002                  // s4 = height
+        li      s5, Color.high.YELLOW       // s5 = color
+        jal     Render.draw_rectangle_
+        lli     s6, OS.FALSE                // s6 = enable_alpha
+        lli     t0, 0x0001                  // t0 = display off
+        sw      t0, 0x007C(v0)              // turn off dpad direction indicator initially
+        lw      t0, 0x0028(sp)              // t0 = dpad object reference
+        sw      v0, 0x0030(t0)              // save dpad direction indicator reference
+        lw      t0, 0x0074(t0)              // t0 = dpad image struct
+        lwc1    f0, 0x0058(t0)              // f0 = dpad X, floating point
+        trunc.w.s f0, f0                    // f0 = dpad X, word
+        mfc1    t1, f0                      // t1 = dpad X
+        addiu   t1, t1, 0x0003              // t1 = ulx for dpad-left
+        sh      t1, 0x0058(v0)              // store ulx for dpad-left
+        addiu   t1, t1, 0x0004              // t1 = ulx for dpad-up and dpad-down
+        sh      t1, 0x0050(v0)              // store ulx for dpad-up
+        sh      t1, 0x0054(v0)              // store ulx for dpad-down
+        addiu   t1, t1, 0x0004              // t1 = ulx for dpad-right
+        sh      t1, 0x005C(v0)              // store ulx for dpad-right
+        lwc1    f0, 0x005C(t0)              // f0 = dpad Y, floating point
+        trunc.w.s f0, f0                    // f0 = dpad Y, word
+        mfc1    t1, f0                      // t1 = dpad Y
+        addiu   t1, t1, 0x0003              // t1 = uly for dpad-up
+        sh      t1, 0x0052(v0)              // store uly for dpad-up
+        addiu   t1, t1, 0x0004              // t1 = uly for dpad-left and dpad-right
+        sh      t1, 0x005A(v0)              // store uly for dpad-left
+        sh      t1, 0x005E(v0)              // store uly for dpad-right
+        addiu   t1, t1, 0x0004              // t1 = uly for dpad-down
+        sh      t1, 0x0056(v0)              // store uly for dpad-down
 
-        _loop:
-        li      t1, chars_loaded            // t1 = chars_loaded address
-        lw      t1, 0x0000(t1)              // t1 = chars_loaded
-        beqz    t1, _end                    // if characters aren't loaded, skip
-        nop                                 // ~
-        multu   s0, s2                      // t1 = offset to CSS player struct
-        mflo    t1                          // ~
-        addu    at, s1, t1                  // at = CSS player struct for player X
-        lw      v1, 0x0004(at)              // v1 = 0 if screen not completely loaded
-        beqz    v1, _next                   // if screen not loaded, skip
-        nop                                 // ~
-        addu    at, at, s3                  // at = address of player_index (held token)
-        lw      v1, 0x0000(at)              // v1 = player_index (held token)
-        sltiu   at, v1, 0x0004              // at = 1 if token is held
-        beqz    at, _next                   // if token is not held, then skip
+        lw      t0, 0x000C(sp)              // t0 = number of panels remaining
+        addiu   t0, t0, -0x0001             // ~
+        beqz    t0, _end                    // if no more panels remaining, skip to end
+        sw      t0, 0x000C(sp)              // save number of panels remaining
+
+        lw      t0, 0x0014(sp)              // t0 = X padding
+        lw      t1, 0x0018(sp)              // t1 = panel offset
+        addu    t0, t0, t1                  // t0 = X position of next panel
+        sw      t0, 0x0014(sp)              // save next panel's X position
+        lw      s4, 0x001C(sp)              // s4 = offset in control object reference for panel
+        addiu   s4, s4, 0x0004              // s4 = offset for next panel's control object reference
+        sw      s4, 0x001C(sp)              // save s4
+        b       _add_dpad_image             // add next image
         nop
-        multu   v1, s2                      // at = offset to CSS player struct of held token
-        mflo    at                          // ~
-        addu    at, s1, at                  // at = CSS player struct for held token
-        lw      v0, 0x0048(at)              // v0 = character_id
+
+        _end:
+        li      t0, Render.display_order_value
+        lui     t1, Render.DISPLAY_ORDER_DEFAULT
+        sw      t1, 0x0000(t0)              // reset display order
+
+        // In Training, if human is not 1p, then we may need to swap some references
+        lw      a0, 0x0008(sp)              // a0 = offset in css_player_structs = 8 for training
+        addiu   a0, a0, -0x0008             // a0 = 0 if training
+        bnez    a0, _portraits              // if not training, skip
+        lw      t0, 0x0024(sp)              // t0 = control object reference
+        lw      t1, 0x0030(t0)              // t1 = dpad object 1
+        lw      t3, 0x0084(t1)              // t0 = css player struct
+        lw      t5, 0x0000(t3)              // t5 = cursor object pointer - 0 if CPU
+        bnez    t5, _portraits              // if first css player struct element is not the CPU, skip
+        lw      t5, 0x0074(t1)              // t5 = dpad 1 image pointer
+        lw      t2, 0x0034(t0)              // t2 = dpad object 2
+        lw      t4, 0x0084(t2)              // t4 = css player struct
+        lw      t6, 0x0074(t2)              // t5 = dpad 2 image pointer
+        sw      t4, 0x0084(t1)              // swap css player struct pointers
+        sw      t3, 0x0084(t2)              // ~
+        addiu   t3, t3, -0x0004             // t3 = normalized css player struct
+        addiu   t4, t4, -0x0004             // t4 = normalized css player struct
+        sw      t4, 0x0038(t1)              // swap normalized css player struct pointers
+        sw      t3, 0x0038(t2)              // ~
+
+        _portraits:
+        jal     draw_portraits_
+        lli     a0, OS.FALSE                // a0 = 12cb mode flag
+
+        lw      ra, 0x0004(sp)              // restore registers
+        addiu   sp, sp, 0x0030              // deallocate stack space
+
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // This hook runs when a new character ID is hovered over.
+    // We'll use it to toggle/update the variant indicator.
+    scope character_change_: {
+        // VS
+        OS.patch_start(0x136DC8, 0x80138B48)
+        jal     character_change_._vs
+        sw      t0, 0x0048(a3)              // original line 2
+        _return_vs:
+        OS.patch_end()
+        // 1P
+        OS.patch_start(0x13F43C, 0x8013723C)
+        jal     character_change_._1p
+        sw      v0, 0x0020(v1)              // original line 1
+        nop
+        OS.patch_end()
+        // Training
+        OS.patch_start(0x1455A4, 0x80135FC4)
+        jal     character_change_._training
+        sw      a2, 0x0048(v1)              // original line 1
+        nop
+        OS.patch_end()
+        // Bonus
+        OS.patch_start(0x14BD0C, 0x80135CDC)
+        jal     character_change_._bonus
+        sw      v0, 0x0020(v1)              // original line 1
+        nop
+        OS.patch_end()
+
+        _vs:
+        // t0 = new character ID
+        // a3 = css player struct
+        // a0 = panel index
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+        sw      a0, 0x0008(sp)              // ~
+
+        or      a1, r0, a0                  // a1 = panel index
+        jal     draw_variant_indicator_
+        or      a0, r0, t0                  // a0 = character ID
+
+        jal     0x80136128                  // original line 1
+        lw      a0, 0x0008(sp)              // a0 = panel index
+
+        lw      ra, 0x0004(sp)              // restore registers
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        jr      ra
+        nop
+
+        _1p:
+        // v0 = new character ID
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+
+        lli     a1, 0x0000                  // a1 = panel index (only 1)
+        jal     draw_variant_indicator_
+        or      a0, r0, v0                  // a0 = character ID
+
+        jal     0x80135804                  // original line 2
+        lw      a0, 0x0028(sp)              // original line 3, adjusted for sp
+
+        lw      ra, 0x0004(sp)              // restore registers
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        jr      ra
+        nop
+
+        _training:
+        // a2 = new character ID
+        // v1 = css player struct
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+
+        lw      a1, 0x0080(v1)              // a1 = panel index
+        jal     draw_variant_indicator_
+        or      a0, r0, a2                  // a0 = character ID
+
+        jal     0x80133E30                  // original line 2
+        lw      a0, 0x0030(sp)              // original line 3, adjusted for sp
+
+        lw      ra, 0x0004(sp)              // restore registers
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        jr      ra
+        nop
+
+        _bonus:
+        // v0 = new character ID
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+
+        lli     a1, 0x0000                  // a1 = panel index (only 1)
+        jal     draw_variant_indicator_
+        or      a0, r0, v0                  // a0 = character ID
+
+        jal     0x8013476C                  // original line 2
+        lw      a0, 0x0028(sp)              // original line 3, adjusted for sp
+
+        lw      ra, 0x0004(sp)              // restore registers
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        jr      ra
+        nop
+
+    }
+
+    // @ Description
+    // Draws the variant icons and toggles the dpad
+    scope draw_variant_indicator_: {
+        // a0 = character id
+        // a1 = panel index
+
+        li      t0, TwelveCharBattle.twelve_cb_flag
+        lw      t0, 0x0000(t0)              // t0 = 1 if 12cb mode
+        beqz    t0, _begin                  // if not 12cb mode, draw variant indicator
+        nop                                 // otherwise, return
+        lli     t0, Character.id.NONE
+        addiu   t2, r0, -0x0001             // t2 = -1
+        beql    a0, t0, pc() + 8            // if no character, then set portrait_id to -1
+        sw      t2, 0x00B4(a3)              // save portrait_id
+        jr      ra
+        nop
+
+        _begin:
+        // first, destroy existing indicator icons
+        li      t2, render_control_object
+        lw      t2, 0x0000(t2)              // t2 = render control object
+        sll     t0, a1, 0x0002              // t0 = offset to dpad object
+        addu    t2, t2, t0                  // t2 = dpad object
+        lw      t2, 0x0030(t2)              // ~
+        lw      t3, 0x0034(t2)              // t3 = variant icons object reference
+        beqz    t3, _check_for_variants     // if there is not currently any variant icons displayed, skip
+        nop
+
+        sw      r0, 0x0034(t2)              // 0 out variant icons object reference
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+        sw      a0, 0x0008(sp)              // ~
+        sw      t2, 0x000C(sp)              // ~
+
+        jal     Render.DESTROY_OBJECT_
+        or      a0, r0, t3                  // a0 = variant icons object struct
+
+        lw      ra, 0x0004(sp)              // restore registers
+        lw      a0, 0x0008(sp)              // ~
+        lw      t2, 0x000C(sp)              // ~
+        addiu   sp, sp, 0x0010              // deallocate stack space
+
+        _check_for_variants:
         li      at, Character.variant_original.table
-        sll     v0, v0, 0x0002              // v0 = offset in variant_original table
-        addu    at, at, v0                  // at = address of original character id
-        lw      v0, 0x0000(at)              // v0 = character_id of hovered portrait
+        sll     a0, a0, 0x0002              // a0 = offset in variant_original table
+        addu    at, at, a0                  // at = address of original character id
+        lw      a0, 0x0000(at)              // a0 = character_id of hovered portrait
 
         li      t0, 0x1C1C1C1C              // t0 = mask for no variants
         li      at, Character.variants.table// at = variant table
-        sll     t1, v0, 0x0002              // t1 = character variant array index
+        sll     t1, a0, 0x0002              // t1 = character variant array index
         addu    at, at, t1                  // at = character variant array
         lw      t1, 0x0000(at)              // t1 = character variants
-        beq     t0, t1, _next               // if there are no variants, skip
+        beq     t0, t1, _end                // if there are no variants, skip
+        lli     t4, 0x0001                  // t4 = 1 (dpad will be set to not display)
+
+        addiu   sp, sp,-0x0020              // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+        sw      t1, 0x0008(sp)              // ~
+        sw      t2, 0x000C(sp)              // ~
+        sw      at, 0x0010(sp)              // ~
+
+        // Create the variant icons object
+        li      t0, Render.display_order_value
+        sw      r0, 0x0000(t0)              // set display order to 0 to render after tokens
+        
+        lli     a0, 0x0000                  // a0 = routine (Render.NOOP)
+        li      a1, Render.TEXTURE_RENDER_  // a1 = display list routine
+        lbu     a2, 0x000D(t2)              // a2 = room
+        lbu     a3, 0x000C(t2)              // a3 = group
+        jal     Render.create_display_object_
+        nop
+        
+        li      t0, Render.display_order_value
+        lui     t1, Render.DISPLAY_ORDER_DEFAULT
+        sw      t1, 0x0000(t0)              // reset display order
+        
+        lw      a0, 0x000C(sp)              // t2 = dpad object
+        sw      v0, 0x0034(a0)              // save reference to variant icon object
+
+        // Now, check each entry and add the variant icon as needed
+        lw      at, 0x0010(sp)              // at = character variant array
+
+        // D-UP
+        lbu     a1, 0x0000(at)              // a1 = variant id
+        lli     t4, Character.id.NONE       // t4 = Character.id.NONE
+        beq     a1, t4, _d_down             // if no variant, skip
         nop
 
-        // calculate X using player_index and PANEL_OFFSET
-        addu    a0, r0, s5                  // a0 - ulx
-        multu   v1, s4                      // t0 = player_index * PANEL_OFFSET
-        mflo    t0                          // ~
-        lli     t1, DPAD_X                  // t1 = DPAD_X
-        beq     t1, s5, _draw_dpad          // if we are on training or 1p CSS, we have different maths
-        nop
-        // Training:
-        //  - The CPU is port 1 unless the human is port 1 - then it is port 2.
-        //  - The Human is always in position 1, and the CPU in position 2.
-        // 1P:
-        //  - Always port 1, but since s4 is 0 for 1P, we can reuse the logic below
-        beql    s0, v1, _draw_dpad          // if holding human token, set t0 to 0
-        addu    t0, r0, r0                  // ~
-        addu    t0, r0, s4                  // otherwise we have the CPU token, so t0 should be the offset
+        jal     draw_variant_icon_
+        lli     a2, 0x0000                  // a2 = up
 
-        _draw_dpad:
-        // draw dpad
-        addu    a0, a0, t0                  // a0 = adjusted ulx
-        lli     a1, DPAD_Y                  // a1 - uly
-        li      a2, Data.dpad_info          // a2 - address of texture struct
-        jal     Overlay.draw_texture_       // draw options text texture
-        nop                                 // ~
-
-        // draw MM/GDK indicator
-        lbu     a0, 0x0000(at)              // a0 = Character.id.NONE if no variant
-        lli     a1, Character.id.NONE       // a1 = Character.id.NONE
-        beq     a0, a1, _check_polygon      // if there is no special variant, skip
-        nop                                 // ~
-        li      a2, Data.stock_icon_mm_info // a2 - address of texture struct
-        lli     a1, Character.id.METAL      // a1 = Character.id.METAL
-        beq     a0, a1, _draw_special       // if this is Metal Mario, a2 is correct
-        nop                                 // if not, set a2 to GDK's icon instead
-        li      a2, Data.stock_icon_gdk_info// a2 - address of texture struct
-        _draw_special:
-        addiu   a0, s5, 000004              // a0 - ulx
-        addu    a0, a0, t0                  // a0 = adjusted ulx
-        lli     a1, DPAD_Y - 8              // a1 - uly
-        jal     Overlay.draw_texture_       // draw MM/GDK icon
+        _d_down:
+        lbu     a1, 0x0001(at)              // a1 = variant id
+        lli     t4, Character.id.NONE       // t4 = Character.id.NONE
+        beq     a1, t4, _d_left             // if no variant, skip
         nop
 
-        _check_polygon:
-        // draw polygon indicator
-        lbu     a0, 0x0001(at)              // a0 = Character.id.NONE if no variant
-        lli     a1, Character.id.NONE       // a1 = Character.id.NONE
-        beq     a0, a1, _check_eu           // if there is no polygon variant, skip
-        nop                                 // ~
-        addiu   a0, s5, 000004              // a0 - ulx
-        addu    a0, a0, t0                  // a0 = adjusted ulx
-        lli     a1, DPAD_Y + 16             // a1 - uly
-        li      a2, Data.stock_icon_poly_info
-        jal     Overlay.draw_texture_       // draw EU flag
+        jal     draw_variant_icon_
+        lli     a2, 0x0001                  // a2 = down
+
+        _d_left:
+        lbu     a1, 0x0002(at)              // a1 = variant id
+        lli     t4, Character.id.NONE       // t4 = Character.id.NONE
+        beq     a1, t4, _d_right            // if no variant, skip
         nop
 
-        _check_eu:
-        // draw EU flag
-        lbu     a0, 0x0003(at)              // a0 = Character.id.NONE if no variant
-        lli     a1, Character.id.NONE       // a1 = Character.id.NONE
-        beq     a0, a1, _check_jp           // if there is no EU variant, skip
-        nop                                 // ~
-        addiu   a0, s5, 000016              // a0 - ulx
-        addu    a0, a0, t0                  // a0 = adjusted ulx
-        lli     a1, DPAD_Y + 4              // a1 - uly
-        li      a2, Data.flag_eu_info       // a2 - address of texture struct
-        jal     Overlay.draw_texture_       // draw EU flag
+        jal     draw_variant_icon_
+        lli     a2, 0x0002                  // a2 = left
+
+        _d_right:
+        lbu     a1, 0x0003(at)              // a1 = variant id
+        lli     t4, Character.id.NONE       // t4 = Character.id.NONE
+        beq     a1, t4, _finish             // if no variant, skip
         nop
 
-        _check_jp:
-        // draw JP flag
-        lbu     a0, 0x0002(at)              // a0 = Character.id.NONE if no variant
-        lli     a1, Character.id.NONE       // a1 = Character.id.NONE
-        beq     a0, a1, _draw_indicator     // if there is no JP variant, skip
-        nop                                 // ~
-        addiu   a0, s5, -000010             // a0 - ulx
-        addu    a0, a0, t0                  // a0 = adjusted ulx
-        lli     a1, DPAD_Y + 4              // a1 - uly
-        li      a2, Data.flag_jp_info       // a2 - address of texture struct
-        jal     Overlay.draw_texture_       // draw JP flag
-        nop
+        jal     draw_variant_icon_
+        lli     a2, 0x0003                  // a2 = right
 
-        _draw_indicator:
-        // draw selected direction using yellow square
-        li      t1, variant_offset          // t1 = address of variant_offset array
-        addu    t1, t1, v1                  // t1 = address of variant_offset for port
-        lbu     t1, 0x0000(t1)              // t1 = variant_offset
-        beqz    t1, _next                   // if variant_offset is 0, then skip
-        nop                                 // else, get the variant ID
-        lli     a0, Color.low.YELLOW        // a0 - fill color
-        jal     Overlay.set_color_          // fill color = YELLOW
-        nop
-        slti    t2, t1, 0x0003              // t2 = 1 if special or polygon
-        beqz    t2, _regional               // if variant_offset is special or polygon, set x and y accordingly:
-        addiu   a0, s5, 000007              // a0 - ulx
-        lli     a1, DPAD_Y - 5              // a1 - uly
-        sll     t2, t1, 0x0003              // t2 = t1 * 3 (8 for special, 16 for polygon)
-        b       _draw_indicator_rectangle
-        addu    a1, a1, t2                  // a1 = adjusted uly
+        _finish:
+        lw      ra, 0x0004(sp)              // restore registers
+        lw      t1, 0x0008(sp)              // ~
+        lw      t2, 0x000C(sp)              // ~
+        addiu   sp, sp, 0x0020              // deallocate stack space
 
-        _regional:
-        addiu   a0, s5, -000021             // a0 - ulx
-        lli     a1, DPAD_Y + 7              // a1 - uly
-        sll     t2, t1, 0x0003              // t2 = t1 * 3 (8 for E, 16 for J)
-        addu    a0, a0, t2                  // a0 = adjusted uly
-
-        _draw_indicator_rectangle:
-        addu    a0, a0, t0                  // a0 = adjusted ulx
-        lli     a2, 2                       // a2 - width
-        lli     a3, 2                       // a3 - height
-        jal     Overlay.draw_rectangle_     // draw rectangle
-        nop
-
-        _next:
-        // draw selected character's EU/JP flag
-        multu   s0, s2                      // t1 = offset to CSS player struct
-        mflo    t1                          // ~
-        addu    at, s1, t1                  // at = CSS player struct for player X
-        addu    at, at, s3                  // at = address of player_index (held token)
-        lw      v1, 0x0008(at)              // v1 = bool_character_selected
-        beqz    v1, _continue               // if no character selected, continue
-        nop                                 // otherwise, check if this is a variant and display flags if so
-        addiu   v1, v1, -0x0001             // v0 = 0 if we still should draw
-        bnez    v1, _end                    // end if we shouldn't draw
-        nop
-        subu    at, at, s3                  // at = CSS player struct for player X
-        lw      v1, 0x0048(at)              // v1 = character_id
-        addu    at, at, s3                  // at = address of player_index (held token)
-        lw      t2, 0x0004(at)              // t2 = panel state (0 = HMN, 1 = CPU, 2 = N/A)
-        li      at, Character.variant_original.table
-        sll     v0, v1, 0x0002              // v0 = offset in variant_original table
-        addu    at, at, v0                  // at = address of original
-        lw      v0, 0x0000(at)              // v0 = variant original
-        li      at, Character.variants.table// at = address of variants table
-        sll     v0, v0, 0x0002              // v0 = offset in variants table
-        addu    at, at, v0                  // at = address of variants array
-
-        // calculate X using player_index and PANEL_OFFSET
-        multu   s0, s4                      // t0 = panel_index * PANEL_OFFSET
-        mflo    t0                          // ~
-        lli     t1, DPAD_X                  // t1 = DPAD_X
-        beq     t1, s5, _check_flag_jp      // if we are on training or 1p CSS, we have different maths
-        nop
-        // Training:
-        //  - The CPU is port 1 unless the human is port 1 - then it is port 2.
-        //  - The Human is always in position 1, and the CPU in position 2.
-        // 1P:
-        //  - Always port 1, but since s4 is 0 for 1P, we can reuse the logic below
-        beqzl   t2, _check_flag_jp          // if panel is human, set t0 to first position
-        addiu   t0, r0, 000008              // ~
-        addu    t0, r0, s4                  // otherwise it is the CPU, so t0 should be the offset
-        addiu   t0, t0, 000008              // ~
-
-        _check_flag_jp:
-        lbu     t2, 0x0002(at)              // t2 = J variant_id
-        bne     t2, v1, _check_flag_eu      // if not J, check E
-        nop
-        addu    a0, s5, t0                  // a0 = adjusted ulx
-        addiu   a0, a0, -000008             // a0 = adjusted ulx
-        lli     a1, 000189                  // a1 - uly
-        li      a2, Data.flag_jp_big_info   // a2 - address of texture struct
-        jal     Overlay.draw_texture_       // draw JP flag
-        nop
-        b       _continue
-        nop
-
-        _check_flag_eu:
-        lbu     t2, 0x0003(at)              // t2 = E variant_id
-        bne     t2, v1, _continue           // if not E, continue
-        nop
-        addu    a0, s5, t0                  // a0 = adjusted ulx
-        addiu   a0, a0, -000008             // a0 = adjusted ulx
-        lli     a1, 000189                  // a1 - uly
-        li      a2, Data.flag_eu_big_info   // a2 - address of texture struct
-        jal     Overlay.draw_texture_       // draw JP flag
-        nop
-
-        _continue:
-        lli     t0, DPAD_X_1P               // t0 = DPAD_X_1P
-        beq     t0, s5, _end                // if we are on 1P CSS, we don't have to loop
-        nop
-        slti    t0, s0, 0x0003              // t0 = 1 if we haven't looped through all player ports
-        bnez    t0, _loop                   // if we have more to loop over, then loop
-        addiu   s0, s0, 0x0001              // increment s0
+        lli     t4, 0x0000                  // t4 = 0 (dpad will be displayed)
 
         _end:
-        lw      ra, 0x0004(sp)              // ~
-        lw      a0, 0x0008(sp)              // ~
-        lw      a1, 0x000C(sp)              // ~
-        lw      a2, 0x0010(sp)              // ~
-        lw      v0, 0x0014(sp)              // ~
-        lw      v1, 0x0018(sp)              // ~
-        lw      t0, 0x001C(sp)              // ~
-        lw      t1, 0x0020(sp)              // ~
-        lw      t2, 0x0024(sp)              // ~
-        lw      s0, 0x0028(sp)              // ~
-        lw      s1, 0x002C(sp)              // ~
-        lw      s2, 0x0030(sp)              // ~
-        lw      s3, 0x0034(sp)              // ~
-        lw      s4, 0x0038(sp)              // ~
-        lw      s5, 0x003C(sp)              // ~
-        lw      at, 0x0040(sp)              // restore registers
-        addiu   sp, sp, 0x0044              // deallocate stack space
-        jr      ra                          // return
+        lw      t0, 0x0030(t2)              // t0 = dpad direction indicator object
+        sw      t4, 0x007C(t0)              // update dpad direction indicator display
+        jr      ra
+        sw      t4, 0x007C(t2)              // update dpad display
+    }
+
+    // @ Description
+    // This adds variant icons (stock icons/flags) to the dpad image
+    // @ Arguments
+    // a0 - dpad object RAM address
+    // a1 - variant ID
+    // a2 - direction (0 = up, 1 = down, 2 = left, 3 = right)
+    scope draw_variant_icon_: {
+        addiu   sp, sp,-0x0030              // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+        sw      t1, 0x0008(sp)              // ~
+        sw      t2, 0x000C(sp)              // ~
+        sw      a0, 0x0010(sp)              // ~
+        sw      a1, 0x0014(sp)              // ~
+        sw      a2, 0x0018(sp)              // ~
+        sw      at, 0x001C(sp)              // ~
+
+        lw      t1, 0x0074(a0)              // t1 = dpad image struct
+        lw      t1, 0x0058(t1)              // t1 = dpad X position
+        sw      t1, 0x0020(sp)              // save X position for easy reference
+        lui     t1, 0x3F20                  // t1 = scale for flags (0.625)
+        sw      t1, 0x0024(sp)              // save scale for flags
+
+        li      t1, Character.variant_type.table
+        addu    t1, t1, a1
+        lbu     t1, 0x0000(t1)              // t0 = variant type
+        li      at, Render.file_pointer_2   // at = CSS images file
+        lw      at, 0x0000(at)              // ~
+        lli     t2, Character.variant_type.J
+        beql    t1, t2, _draw_icon          // if a J variant, then draw J flag
+        addiu   a1, at, 0x558               // a1 = J flag footer struct TODO: make offset a constant
+        lli     t2, Character.variant_type.E
+        beql    t1, t2, _draw_icon          // if an E variant, then draw E flag
+        addiu   a1, at, 0x3B8               // a1 = E flag footer struct TODO: make offset a constant
+
+        // if we're here, then we will use the character's stock icon
+        lui     t1, 0x3F80                  // t1 = scale for stock icons (1.0)
+        sw      t1, 0x0024(sp)              // save scale for stock icons
+
+        li      t1, 0x80116E10              // t1 = main character struct table
+        sll     t2, a1, 0x0002              // t2 = a1 * 4 (offset in struct table)
+        addu    t1, t1, t2                  // t1 = pointer to character struct
+        lw      t1, 0x0000(t1)              // t1 = character struct
+        lw      t2, 0x0028(t1)              // t2 = main character file address pointer
+        lw      t2, 0x0000(t2)              // t2 = main character file address
+        lw      t1, 0x0060(t1)              // t1 = offset to attribute data
+        addu    t1, t2, t1                  // t1 = attribute data address
+        lw      t1, 0x0340(t1)              // t1 = pointer to stock icon footer address
+        lw      a1, 0x0000(t1)              // a1 = stock icon footer address
+
+        _draw_icon:
+        lw      a0, 0x0034(a0)              // a0 = RAM address of object block
+        jal     Render.TEXTURE_INIT_        // v0 = RAM address of texture struct
+        addiu   sp, sp, -0x0030             // allocate stack space for TEXTURE_INIT_
+        addiu   sp, sp, 0x0030              // restore stack space
+
+        lw      a1, 0x0024(sp)              // a1 = scale
+        sw      a1, 0x0018(v0)              // save X scale
+        sw      a1, 0x001C(v0)              // save Y scale
+
+        lwc1    f0, 0x0020(sp)              // a1 = X position
+        lui     a2, 0x4331                  // a1 = Y position
+        mtc1    a2, f2
+        lw      at, 0x0018(sp)              // at = direction
+        lui     t1, 0x4080                  // t1 = X adjustment (4)
+        lui     t2, 0x4080                  // t2 = Y adjustment (4)
+        beqzl   at, pc() + 8                // adjust t2 if direction = up
+        lui     t2, 0xC110                  // t2 = Y adjustment (-9)
+        addiu   at, at, -0x0001
+        beqzl   at, pc() + 8                // adjust t2 if direction = down
+        lui     t2, 0x4160                  // t2 = Y adjustment (14)
+        addiu   at, at, -0x0001
+        beqzl   at, pc() + 8                // adjust t1 if direction = left
+        lui     t1, 0xC120                  // t1 = X adjustment (-10)
+        addiu   at, at, -0x0001
+        beqzl   at, pc() + 8                // adjust t1 if direction = right
+        lui     t1, 0x4180                  // t1 = X adjustment (16)
+        mtc1    t1, f4
+        add.s   f0, f0, f4
+        mtc1    t2, f4
+        add.s   f2, f2, f4
+        swc1    f0, 0x0058(v0)              // set X position
+        swc1    f2, 0x005C(v0)              // set Y position
+
+        lli     a1, 0x0201
+        sh      a1, 0x0024(v0)              // turn on blur
+
+        _end:
+        lw      ra, 0x0004(sp)              // restore registers
+        lw      t1, 0x0008(sp)              // ~
+        lw      t2, 0x000C(sp)              // ~
+        lw      a0, 0x0010(sp)              // ~
+        lw      a1, 0x0014(sp)              // ~
+        lw      a2, 0x0018(sp)              // ~
+        lw      at, 0x001C(sp)              // ~
+        addiu   sp, sp, 0x0030              // deallocate stack space
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // This adds/updates variant-related indicators to the screen.
+    scope update_variant_indicators_: {
+        // a0 = control object
+        // 0x0030(a0) - 0x003C(a0) = pointers to dpad image objects (0 if non-existent)
+        OS.save_registers()
+        // a0 => 0x0010(sp)
+
+        lli     s0, 0x0000                  // s0 = panel index = start at 0
+        addiu   s1, a0, 0x0030              // s1 = address of first dpad image object pointer
+
+        _loop:
+        lw      t0, 0x0000(s1)              // t0 = dpad image object address
+        beqz    t0, _end                    // if 0, then no more panels
+        nop
+        lw      t1, 0x0084(t0)              // t1 = pointer to css player struct
+        lw      t2, 0x0034(t0)              // t2 = pointer to variant icons object
+        lw      t3, 0x0038(t0)              // t3 = normalized pointer to css player struct (for 0x50 and higher offsets)
+        lw      t4, 0x003C(t0)              // t4 = previous selected flag value
+
+        lw      t5, 0x0058(t3)              // t5 = current selected flag value
+        beq     t4, t5, _flag_check         // if the selected status has changed this frame,
+        sw      t5, 0x003C(t0)              // then we'll need to handle
+
+        // if player is selected, hide the dpad
+        lw      t4, 0x0030(t0)              // t4 = direction indicator object
+        sw      t5, 0x007C(t4)              // sets display of direction indicator object
+        bnez    t5, _flag_check             // if t5 = 1 (selected), then we can skip ahead and hide the dpad
+        sw      t5, 0x007C(t0)              // this hides the dpad
+
+        // we need to check if the variant indicators should be shown
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      s0, 0x0004(sp)              // save registers
+        sw      s1, 0x0008(sp)              // ~
+        sw      t1, 0x000C(sp)              // ~
+
+        lw      a0, 0x0040(t0)              // a0 = regional flag object
+        beqz    a0, _draw_variant_indicator
+        sw      r0, 0x0040(t0)              // clear regional flag object reference
+        jal     Render.DESTROY_OBJECT_
+        nop
+
+        _draw_variant_indicator:
+        li      t3, render_control_object
+        lw      t3, 0x0000(t3)              // t3 = render control object
+        lw      t6, 0x0040(t3)              // t6 = base css player struct address
+        li      t5, CSS_PLAYER_STRUCT_TRAINING
+        lw      a1, 0x0004(sp)              // a1 = panel index
+        lw      t1, 0x000C(sp)              // t1 = pointer to css player struct
+        beql    t5, t6, pc() + 8            // if TRAINING, panel index is based on human/CPU
+        lw      a1, 0x0080(t1)              // a1 = HUMAN = 0, CPU = 1
+
+        lw      a0, 0x0048(t1)              // a0 = character index
+        jal     draw_variant_indicator_
+        nop
+
+        lw      s0, 0x0004(sp)              // restore registers
+        lw      s1, 0x0008(sp)              // ~
+        addiu   sp, sp, 0x0010              // deallocate stack space
+
+        b       _next
+        nop
+
+        _flag_check:
+        // here, check if flag should be drawn
+        lw      t4, 0x003C(t0)              // t4 = selected flag value
+        beqz    t4, _next                   // skip if not selected
+        lw      a0, 0x0034(t0)              // a0 = variant icons object
+        lli     a1, 0x0001                  // a1 = 1 (display off)
+        bnezl   a0, pc() + 8                // if there is a variant icons object, turn its display of
+        sw      a1, 0x007C(a0)              // turn off display of variant icons object
+        lw      a0, 0x0048(t1)              // a0 = character index
+        li      a1, Character.variant_type.table
+        addu    a1, a1, a0                  // a1 = variant type
+        lbu     a1, 0x0000(a1)              // ~
+        lli     a0, Character.variant_type.J
+        beql    a1, a0, _draw_flag          // if selected char is a J variant, draw J flag
+        lli     a0, 0x0558                  // a0 = j flag offset TODO: make constant
+        lli     a0, Character.variant_type.E
+        beql    a1, a0, _draw_flag          // if selected char is a J variant, draw J flag
+        lli     a0, 0x03B8                  // a0 = e flag offset TODO: make constant
+        b       _next
+        nop
+
+        _draw_flag:
+        lw      t1, 0x0040(t0)              // t1 = flag object pointer
+        bnez    t1, _next                   // skip if flag object defined already
+        nop
+
+        li      t1, Render.display_order_value
+        sw      r0, 0x0000(t1)              // set display order to 0 to render after tokens
+
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      s0, 0x0004(sp)              // save registers
+        sw      s1, 0x0008(sp)              // ~
+        sw      t0, 0x000C(sp)              // ~
+
+        li      a2, Render.file_pointer_2   // a2 = pointer to CSS images file start address
+        lw      a2, 0x0000(a2)              // a2 = base file address
+        addu    a2, a2, a0                  // a2 = pointer to flag image footer
+        lbu     a0, 0x000D(t0)              // a0 = room
+        lbu     a1, 0x000C(t0)              // a1 = group
+        lli     a3, 0x0000                  // a3 = routine (Render.NOOP)
+        lw      t1, 0x0074(t0)              // t1 = dpad image struct
+        lwc1    f0, 0x0058(t1)              // f0 = ulx
+        li      t3, render_control_object
+        lw      t3, 0x0000(t3)              // t3 = render control object
+        lw      t6, 0x0040(t3)              // t6 = base css player struct address
+        li      t5, CSS_PLAYER_STRUCT
+        bne     t5, t6, pc() + 0x10         // if not on VS, then we don't need to adjust X
+        lui     t1, 0xC100                  // t1 = -8
+        mtc1    t1, f2                      // f2 = -8
+        add.s   f0, f0, f2                  // f0 = ulx
+        mfc1    s1, f0                      // s1 = ulx
+        lui     s2, 0x433F                  // s2 = uly
+        lli     s3, 0x0000                  // s3 = color
+        lli     s4, 0x0000                  // s4 = palette
+        jal     Render.draw_texture_
+        lui     s5, 0x3F80                  // s5 = scale
+
+        lw      s0, 0x0004(sp)              // restore registers
+        lw      s1, 0x0008(sp)              // ~
+        lw      t0, 0x000C(sp)              // ~
+        addiu   sp, sp, 0x0010              // deallocate stack space
+
+        sw      v0, 0x0040(t0)              // save reference to flag object
+
+        li      t0, Render.display_order_value
+        lui     t1, Render.DISPLAY_ORDER_DEFAULT
+        sw      t1, 0x0000(t0)              // reset display order
+
+        _next:
+        // ensure the direction indicator is correctly positioned
+        lw      t0, 0x0000(s1)              // t0 = dpad image object address
+        lw      t4, 0x0038(t0)              // t4 = normalized css player struct
+        lw      t2, 0x0080(t4)              // t2 = player port index
+        li      t1, variant_offset          // t1 = address of variant_offset array
+        addu    t1, t1, t2                  // t1 = address of variant_offset for port
+        lbu     t1, 0x0000(t1)              // t1 = variant_offset
+        addiu   t3, r0, -0x0001             // t3 = -1
+        bne     t2, t3, _onscreen           // if token is held by this port, then render rectangle onscreen
+        nop                                 // if no token held by this port, we need to check a few more conditions
+
+        // if no character is selected AND it's a CPU, then skip forcing offscreen
+        lw      t1, 0x0058(t4)              // t1 = 1 if character is selected
+        bnezl   t1, _offscreen              // if character is selected, render offscreen
+        lw      t0, 0x0030(t0)              // t0 = direction indicator object address
+        lw      t1, 0x0084(t4)              // t1 = MAN = 0, CPU = 1, Closed = 2
+        addiu   t1, t1, -0x0001             // t1 = 0 if CPU
+        bnezl   t1, _offscreen              // if not a CPU panel, render offscreen
+        lw      t0, 0x0030(t0)              // t0 = direction indicator object address
+
+        // if we're here, skip updating since it's held by another port and will be handled by that port's dpad object
+        b       _loop_check
+        nop
+
+        _onscreen:
+        li      t3, render_control_object
+        lw      t3, 0x0000(t3)              // t3 = render control object
+        lw      t6, 0x0040(t3)              // t6 = base css player struct address
+        li      t5, CSS_PLAYER_STRUCT       // t5 = VS CSS_PLAYER_STRUCT address
+        beql    t6, t5, _onscreen_2         // on VS, port index is dpad index
+        sll     t2, t2, 0x0002              // t2 = offset to dpad object based on port
+
+        li      t5, CSS_PLAYER_STRUCT_TRAINING
+        bnel    t6, t5, _onscreen_2         // on 1P and BONUS, dpad index is always 0
+        lli     t2, 0x0000                  // t2 = offset to dpad object
+
+        // For Training, the CPU comes first in the css player struct if the human is not port 1
+        lli     t5, 0x0000                  // ~
+        bnezl   t2, pc() + 8                // t5 = 0 or 1
+        lli     t5, 0x0001                  // ~
+        lui     t0, 0x8014                  // t0 = port index of CPU
+        lw      t0, 0x8898(t0)              // ~
+        lli     t2, 0x0000                  // t2 = offset to dpad object
+        beql    t5, t0, pc() + 2            // if port index equals port index of CPU, return 1
+        lli     t2, 0x0001                  // t2 = offset to dpad object
+        sll     t2, t2, 0x0002              // ~
+
+        _onscreen_2:
+        addu    t2, t3, t2                  // t2 = dpad object
+        lw      t2, 0x0030(t2)              // ~
+        lw      t0, 0x0030(t2)              // t0 = direction indicator object address
+        beqz    t1, _offscreen              // if variant_offset is 0, then render rectangle offscreen
+        addiu   t1, t1, -0x0001             // else, get the position and set it
+        addiu   t2, t0, 0x0050              // t2 = offset to positions by direction
+        sll     t1, t1, 0x0002              // t1 = offset to positions for direction
+        addu    t1, t1, t2                  // t1 = positions
+        lhu     t2, 0x0000(t1)              // t2 = X
+        sw      t2, 0x0030(t0)              // store X
+        lhu     t2, 0x0002(t1)              // t2 = Y
+        sw      t2, 0x0034(t0)              // store Y
+
+        b       _loop_check
+        nop
+
+        _offscreen:
+        sw      r0, 0x0030(t0)              // store X position as 0
+        sw      r0, 0x0034(t0)              // store Y position as 0
+
+        _loop_check:
+        sltiu   t0, s0, 0x0003              // t0 = 1 if we need to keep looking
+        beqz    t0, _end
+        addiu   s0, s0, 0x0001              // s0++
+        b       _loop
+        addiu   s1, s1, 0x0004              // s1++
+
+        _end:
+        OS.restore_registers()
+        jr      ra
         nop
     }
 
@@ -2610,9 +3241,9 @@ scope CharacterSelect {
     // action - action id (format 0x000100??) for menu action
     // logo - series logo to use
     // name_texture - name texture to use
-    // portrait - portrait file name (.rgba5551 file in ../textures/)
+    // portrait_offset - portrait offset to use
     // portrait_id_override - if not -1, then it updates the portrait_id table (used for new variants)
-    macro add_to_css(character, fgm, circle_size, action, logo, name_texture, portrait, portrait_id_override) {
+    macro add_to_css(character, fgm, circle_size, action, logo, name_texture, portrait_offset, portrait_id_override) {
         pushvar origin, base
         // add to fgm table
         origin fgm_table_origin + ({character} * 2)
@@ -2629,6 +3260,9 @@ scope CharacterSelect {
         // add to name texture table
         origin name_texture_table_origin + ({character} * 4)
         dw  {name_texture}
+        // add to portrait offset by character table
+        origin portrait_offset_by_character_table_origin + ({character} * 4)
+        dw  {portrait_offset}
         // optionally override portrait_id_table (for variants)
         if ({portrait_id_override} != -1) {
             origin portrait_id_table_origin + {character}
@@ -2639,37 +3273,35 @@ scope CharacterSelect {
             dw {character}
         }
         pullvar base, origin
-
-        // add portrait
-        add_portrait({character}, {portrait})
     }
     
-    
     // ADD CHARACTERS
-               // id                fgm                             circle size   action    series logo               name texture                portrait, portrait override                         
-    add_to_css(Character.id.FALCO,  FGM.announcer.names.FALCO,          1.50,   0x00010004, series_logo.STARFOX,      name_texture.FALCO,         portrait_falco, -1)
-    add_to_css(Character.id.GND,    FGM.announcer.names.GANONDORF,      1.50,   0x00010002, series_logo.ZELDA,        name_texture.GND,           portrait_ganondorf, -1)
-    add_to_css(Character.id.YLINK,  FGM.announcer.names.YOUNG_LINK,     1.50,   0x00010002, series_logo.ZELDA,        name_texture.YLINK,         portrait_young_link, -1)
-    add_to_css(Character.id.DRM,    FGM.announcer.names.DR_MARIO,       1.50,   0x00010001, series_logo.DR_MARIO,     name_texture.DRM,           portrait_dr_mario, -1)
-    add_to_css(Character.id.WARIO,  FGM.announcer.names.WARIO,          1.50,   0x00010004, series_logo.MARIO_BROS,   name_texture.WARIO,         portrait_wario, -1)
-    add_to_css(Character.id.DSAMUS, FGM.announcer.names.DSAMUS,         1.50,   0x00010004, series_logo.METROID,      name_texture.DSAMUS,        portrait_dark_samus, -1)
-    add_to_css(Character.id.ELINK,  FGM.announcer.names.ELINK,          1.50,   0x00010001, series_logo.ZELDA,        name_texture.LINK,          portrait_unknown, 4)
-    add_to_css(Character.id.JSAMUS, FGM.announcer.names.SAMUS,          1.50,   0x00010003, series_logo.METROID,      name_texture.SAMUS,         portrait_unknown, 5)
-    add_to_css(Character.id.JNESS,  FGM.announcer.names.NESS,           1.50,   0x00010002, series_logo.EARTHBOUND,   name_texture.NESS,          portrait_unknown, 9)
-    add_to_css(Character.id.LUCAS,  FGM.announcer.names.LUCAS,          1.50,   0x00010002, series_logo.EARTHBOUND,   name_texture.LUCAS,         portrait_lucas, -1)
-    add_to_css(Character.id.JLINK,  FGM.announcer.names.LINK,           1.50,   0x00010001, series_logo.ZELDA,        name_texture.LINK,          portrait_unknown, 4)
-    add_to_css(Character.id.JFALCON,FGM.announcer.names.CAPTAIN_FALCON, 1.50,   0x00010001, series_logo.FZERO,        name_texture.CAPTAIN_FALCON,portrait_unknown, 6)
-    add_to_css(Character.id.JFOX,   FGM.announcer.names.JFOX,           1.50,   0x00010004, series_logo.STARFOX,      name_texture.FOX,           portrait_unknown, 12)
-    add_to_css(Character.id.JMARIO, FGM.announcer.names.MARIO,          1.50,   0x00010003, series_logo.MARIO_BROS,   name_texture.MARIO,         portrait_unknown, 2)
-    add_to_css(Character.id.JLUIGI, FGM.announcer.names.LUIGI,          1.50,   0x00010001, series_logo.MARIO_BROS,   name_texture.LUIGI,         portrait_unknown, 1)
-    add_to_css(Character.id.JDK,    FGM.announcer.names.DONKEY_KONG,    1.50,   0x00010001, series_logo.DONKEY_KONG,  name_texture.JDK,           portrait_unknown, 3)
-    add_to_css(Character.id.EPIKA,  FGM.announcer.names.PIKACHU,        1.50,   0x00010001, series_logo.POKEMON,      name_texture.PIKACHU,       portrait_unknown, 13)
-    add_to_css(Character.id.JPUFF,  FGM.announcer.names.JPUFF,          1.50,   0x00010002, series_logo.POKEMON,      name_texture.JPUFF,         portrait_unknown, 14)
-    add_to_css(Character.id.EPUFF,  FGM.announcer.names.JIGGLYPUFF,     1.50,   0x00010002, series_logo.POKEMON,      name_texture.JIGGLYPUFF,    portrait_unknown, 14)
-    add_to_css(Character.id.JKIRBY, FGM.announcer.names.KIRBY,          1.50,   0x00010003, series_logo.KIRBY,        name_texture.KIRBY,         portrait_unknown, 11)
-    add_to_css(Character.id.JYOSHI, FGM.announcer.names.YOSHI,          1.50,   0x00010002, series_logo.YOSHI,        name_texture.YOSHI,         portrait_unknown, 10)
-    add_to_css(Character.id.JPIKA,  FGM.announcer.names.PIKACHU,        1.50,   0x00010001, series_logo.POKEMON,      name_texture.PIKACHU,       portrait_unknown, 13)
-    add_to_css(Character.id.ESAMUS, FGM.announcer.names.ESAMUS,         1.50,   0x00010003, series_logo.METROID,      name_texture.SAMUS,         portrait_unknown, 5)
+               // id                fgm                             circle size   action    series logo               name texture                 portrait offset                  portrait override
+    add_to_css(Character.id.FALCO,  FGM.announcer.names.FALCO,          1.50,   0x00010004, series_logo.STARFOX,      name_texture.FALCO,          portrait_offsets.FALCO,          -1)
+    add_to_css(Character.id.GND,    FGM.announcer.names.GANONDORF,      1.50,   0x00010002, series_logo.ZELDA,        name_texture.GND,            portrait_offsets.GND,            -1)
+    add_to_css(Character.id.YLINK,  FGM.announcer.names.YOUNG_LINK,     1.50,   0x00010002, series_logo.ZELDA,        name_texture.YLINK,          portrait_offsets.YLINK,          -1)
+    add_to_css(Character.id.DRM,    FGM.announcer.names.DR_MARIO,       1.50,   0x00010001, series_logo.DR_MARIO,     name_texture.DRM,            portrait_offsets.DRM,            -1)
+    add_to_css(Character.id.WARIO,  FGM.announcer.names.WARIO,          1.50,   0x00010004, series_logo.MARIO_BROS,   name_texture.WARIO,          portrait_offsets.WARIO,          -1)
+    add_to_css(Character.id.DSAMUS, FGM.announcer.names.DSAMUS,         1.50,   0x00010004, series_logo.METROID,      name_texture.DSAMUS,         portrait_offsets.DSAMUS,         -1)
+    add_to_css(Character.id.ELINK,  FGM.announcer.names.ELINK,          1.50,   0x00010001, series_logo.ZELDA,        name_texture.LINK,           portrait_offsets.ELINK,          4)
+    add_to_css(Character.id.JSAMUS, FGM.announcer.names.SAMUS,          1.50,   0x00010003, series_logo.METROID,      name_texture.SAMUS,          portrait_offsets.JSAMUS,         5)
+    add_to_css(Character.id.JNESS,  FGM.announcer.names.NESS,           1.50,   0x00010002, series_logo.EARTHBOUND,   name_texture.NESS,           portrait_offsets.JNESS,          9)
+    add_to_css(Character.id.LUCAS,  FGM.announcer.names.LUCAS,          1.50,   0x00010002, series_logo.EARTHBOUND,   name_texture.LUCAS,          portrait_offsets.LUCAS,          -1)
+    add_to_css(Character.id.JLINK,  FGM.announcer.names.LINK,           1.50,   0x00010001, series_logo.ZELDA,        name_texture.LINK,           portrait_offsets.JLINK,          4)
+    add_to_css(Character.id.JFALCON,FGM.announcer.names.CAPTAIN_FALCON, 1.50,   0x00010001, series_logo.FZERO,        name_texture.CAPTAIN_FALCON, portrait_offsets.JFALCON,        6)
+    add_to_css(Character.id.JFOX,   FGM.announcer.names.JFOX,           1.50,   0x00010004, series_logo.STARFOX,      name_texture.FOX,            portrait_offsets.JFOX,           12)
+    add_to_css(Character.id.JMARIO, FGM.announcer.names.MARIO,          1.50,   0x00010003, series_logo.MARIO_BROS,   name_texture.MARIO,          portrait_offsets.JMARIO,         2)
+    add_to_css(Character.id.JLUIGI, FGM.announcer.names.LUIGI,          1.50,   0x00010001, series_logo.MARIO_BROS,   name_texture.LUIGI,          portrait_offsets.JLUIGI,         1)
+    add_to_css(Character.id.JDK,    FGM.announcer.names.DONKEY_KONG,    1.50,   0x00010001, series_logo.DONKEY_KONG,  name_texture.JDK,            portrait_offsets.JDK,            3)
+    add_to_css(Character.id.EPIKA,  FGM.announcer.names.PIKACHU,        1.50,   0x00010001, series_logo.POKEMON,      name_texture.PIKACHU,        portrait_offsets.EPIKA,          13)
+    add_to_css(Character.id.JPUFF,  FGM.announcer.names.JPUFF,          1.50,   0x00010002, series_logo.POKEMON,      name_texture.JPUFF,          portrait_offsets.JPUFF,          14)
+    add_to_css(Character.id.EPUFF,  FGM.announcer.names.JIGGLYPUFF,     1.50,   0x00010002, series_logo.POKEMON,      name_texture.JIGGLYPUFF,     portrait_offsets.EPUFF,          14)
+    add_to_css(Character.id.JKIRBY, FGM.announcer.names.KIRBY,          1.50,   0x00010003, series_logo.KIRBY,        name_texture.KIRBY,          portrait_offsets.JKIRBY,         11)
+    add_to_css(Character.id.JYOSHI, FGM.announcer.names.YOSHI,          1.50,   0x00010002, series_logo.YOSHI,        name_texture.YOSHI,          portrait_offsets.JYOSHI,         10)
+    add_to_css(Character.id.JPIKA,  FGM.announcer.names.PIKACHU,        1.50,   0x00010001, series_logo.POKEMON,      name_texture.PIKACHU,        portrait_offsets.JPIKA,          13)
+    add_to_css(Character.id.ESAMUS, FGM.announcer.names.ESAMUS,         1.50,   0x00010003, series_logo.METROID,      name_texture.SAMUS,          portrait_offsets.ESAMUS,         5)
+    add_to_css(Character.id.BOWSER, FGM.announcer.names.BOWSER,         1.50,   0x00010002, series_logo.BOWSER,       name_texture.BOWSER,         portrait_offsets.BOWSER,         -1)
+	add_to_css(Character.id.GBOWSER,FGM.announcer.names.GBOWSER,        1.50,   0x00010002, series_logo.BOWSER,       name_texture.GBOWSER,        portrait_offsets.GBOWSER,        19)
 }
 
 } // __CHARACTER_SELECT__

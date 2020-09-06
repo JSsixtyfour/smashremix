@@ -70,6 +70,32 @@ scope Pause {
         db 0x00                             // p4
     }
 
+    // @ Description
+    // Disables the HUD on the VS pause screen
+    scope disable_hud_: {
+        OS.patch_start(0x0008F738, 0x80113F38)
+        jal     Pause.disable_hud_
+        lw      a0, 0x0024(sp)              // original line 2
+        OS.patch_end()
+
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      ra, 0x0004(sp)              // ~
+
+        jal     0x80113E04                  // original line 1
+        nop
+
+        li      a1, Toggles.entry_disable_pause_hud
+        lw      a1, 0x0004(a1)              // a1 = 1 if the HUD should be disabled, 0 else
+
+        jal     Render.toggle_group_display_
+        lli     a0, 0x000E                  // a0 = group of HUD
+
+        lw      ra, 0x0004(sp)              // restore registers
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        jr      ra                          // return
+        nop
+    }
+
 }
 
 } // __PAUSE__

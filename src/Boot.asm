@@ -124,6 +124,24 @@ scope Boot {
     }
 
     // @ Descritpion
+    // Draws the version on the title screen
+    scope draw_version_on_title_screen_: {
+        addiu   sp, sp,-0x0030              // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+
+        Render.load_font()
+        Render.draw_string(1, 3, string_version, Render.NOOP, 0x43200000, 0x435A0000, 0x888800FF, 0x3F700000, Render.alignment.CENTER)
+
+        lw      ra, 0x0004(sp)              // restore registers
+        addiu   sp, sp, 0x0030              // deallocate stack space
+
+        jr      ra
+        nop
+    }
+
+    string_version:; String.insert("Smash Remix v0.9.4")
+
+    // @ Descritpion
     // Nintendo 64 logo cannot be skipped.
     // Instead of checking for a button press, the check has been disabled.
     OS.patch_start(0x0017EE18, 0x80131C58)

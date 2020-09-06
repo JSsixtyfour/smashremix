@@ -25,24 +25,6 @@ scope BGM {
     constant stop_(0x80020A74)
 
     // @ Description
-    // This function implements the mono/stero toggle (boolean stereo_enabled - 0x8003CB24)
-    scope get_type_: {
-        OS.patch_start(0x00020F1C, 0x8002031C)
-        j       get_type_
-        nop
-        _get_type_return:
-        OS.patch_end()
-
-        lw      t8, 0xCB24(t8)              // original line 1 (t8 = stereo_enabled, overwritten.)
-        mfhi    s3                          // original line 2
-
-        li      t8, Toggles.entry_stereo_sound // ~
-        lw      t8, 0x0004(t8)              // t8 = custom stereo_enabled
-        j       _get_type_return            // return
-        nop
-    }
-
-    // @ Description
     // This function replaces a1 with alternate ids defined for the stage, sometimes.
     // a1 holds BGM_ID.
     // The alternate BGM_ID could be replaced by a random one if that toggle is on.

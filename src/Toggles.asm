@@ -4,7 +4,6 @@ define __TOGGLES__()
 print "included Toggles.asm\n"
 
 include "Color.asm"
-include "Data.asm"
 include "Menu.asm"
 include "MIDI.asm"
 include "OS.asm"
@@ -42,116 +41,377 @@ scope Toggles {
 
     // @ Description
     // This patch disables functionality on the OPTION screen.
-    OS.patch_start(0x001205FC, 0x80132E4C)
-    jr      ra
+    scope disable_options_functionality_: {
+        OS.patch_start(0x0012060C, 0x80132E5C)
+        jal     disable_options_functionality_
+        addiu   t7, t7, 0x36EC              // original line 1
+        OS.patch_end()
+
+        li      t9, normal_options          // t9 = normal options flag
+        lbu     t9, 0x0000(t9)              // t9 = 1 if custom toggles
+        beqz    t9, _custom                 // if custom toggles, skip
+        nop
+        jr      ra                          // return as normal
+        lw      t9, 0x0000(t7)              // original line 2
+
+        _custom:
+        lw      ra, 0x0014(sp)              // ra = original ra
+        jr      ra                          // exit original routine
+        addiu   sp, sp, 0x0038              // restore stack
+    }
+
+    // @ Description
+    // The following patches enable a new button on the Mode Select menu
+    scope add_mode_select_remix_button_: {
+        // Adjust max index from 3 to 4
+        OS.patch_start(0x11D942, 0x801329B2)
+        dh      0x0004
+        OS.patch_end()
+        OS.patch_start(0x11D962, 0x801329D2)
+        dh      0x0004
+        OS.patch_end()
+        OS.patch_start(0x11D866, 0x801328D6)
+        dh      0x0004
+        OS.patch_end()
+
+        // Adjust X position by 19 for all buttons
+        OS.patch_start(0x11CB30, 0x80131BA0)
+        lui     at, 0x433C              // original was 0x4329
+        OS.patch_end()
+        OS.patch_start(0x11CB8C, 0x80131BFC)
+        lui     at, 0x433C              // original was 0x4329
+        OS.patch_end()
+        OS.patch_start(0x11CC50, 0x80131CC0)
+        lui     at, 0x4313              // original was 0x4300
+        OS.patch_end()
+        OS.patch_start(0x11CCB0, 0x80131D20)
+        lui     at, 0x4313              // original was 0x4300
+        OS.patch_end()
+        OS.patch_start(0x11CD74, 0x80131DE4)
+        lui     at, 0x42D4              // original was 0x42AE
+        OS.patch_end()
+        OS.patch_start(0x11CDD4, 0x80131E44)
+        lui     at, 0x42D4              // original was 0x42AE
+        OS.patch_end()
+        OS.patch_start(0x11CE98, 0x80131F08)
+        lui     at, 0x4282              // original was 0x4238
+        OS.patch_end()
+        OS.patch_start(0x11CEF8, 0x80131F68)
+        lui     at, 0x4282              // original was 0x4238
+        OS.patch_end()
+
+        // Adjust X position by 12 for all button labels
+        OS.patch_start(0x11CFA4, 0x80132014)
+        lui     at, 0x436C              // original was 0x4360
+        OS.patch_end()
+        OS.patch_start(0x11CFFC, 0x8013206C)
+        lui     at, 0x4343              // original was 0x4337
+        OS.patch_end()
+        OS.patch_start(0x11D054, 0x801320C4)
+        lui     at, 0x431A              // original was 0x430E
+        OS.patch_end()
+        OS.patch_start(0x11D0AC, 0x8013211C)
+        lui     at, 0x42E4              // original was 0x42CC
+        OS.patch_end()
+
+    }
+
+    // @ Description
+    // Flag to indicate if we should show the custom toggles or the normal options page
+    // TRUE = normal options, FALSE = custom toggles
+    normal_options:
+    db OS.TRUE
+    OS.align(4)
+
+    // @ Description
+    // Strings for the settings submenu headers
+    string_remix_settings:; String.insert("Remix Settings")
+    string_stage_settings:; String.insert("Stage Settings")
+    string_music_settings:; String.insert("Music Settings")
+
+    // @ Description
+    // Pointer to current submenu header string
+    page_title_pointer:
+    dw 0x00000000
+
+    // @ Description
+    // Pointer to current profile string
+    profile_pointer:
+    dw 0x00000000
+
+    // @ Description
+    // Helper routine to set the settings button's visibility based on the selected button index
+    scope set_settings_button_display_: {
+        lui     t0, 0x8013               // t1 = index
+        lw      t1, 0x2C88(t0)           // ~
+        lli     t2, 0x0004               // t2 = 4 (index of new button)
+        lw      t3, 0x2CA8(t0)           // t3 = object struct of new button, unselected
+        lw      t4, 0x2CAC(t0)           // t4 = object struct of new button, selected
+        lli     t5, 0x0001               // t5 = 1 (display off)
+        sw      t5, 0x007C(t3)           // turn of display
+        sw      t5, 0x007C(t4)           // turn of display
+        beql    t1, t2, pc() + 12        // based on the index, turn the appropriate button on
+        sw      r0, 0x007C(t4)
+        sw      r0, 0x007C(t3)
+
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // Shrinks the buttons and text on the mode select screen to make a 5th button fit
+    scope rescale_mode_select_buttons_: {
+        constant SCALE(0x3F68)
+        // Down scroll
+        OS.patch_start(0x11D984, 0x801329F4)
+        jal     rescale_mode_select_buttons_
+        nop
+        OS.patch_end()
+        // Up scroll
+        OS.patch_start(0x11D89C, 0x8013290C)
+        jal     rescale_mode_select_buttons_
+        nop
+        OS.patch_end()
+
+        addiu   sp, sp,-0x0030              // allocate stack space
+        sw      ra, 0x0004(sp)              // ~
+
+        jal     0x801324D8                  // original line 1
+        nop                                 // original line 2
+
+        jal     rescale_mode_select_buttons_._rescale
+        nop
+
+        jal     set_settings_button_display_
+        nop
+
+        lw      ra, 0x0004(sp)              // restore ra
+        addiu   sp, sp, 0x0030              // deallocate stack space
+
+        jr      ra
+        nop
+
+        _rescale:
+        li      t0, Render.GROUP_TABLE      // t0 = group pointer table
+        lw      t0, 0x000C(t0)              // t0 = group 3's first object address
+        lui     t1, SCALE                   // t1 = scale
+
+        _loop:
+        lw      t2, 0x0074(t0)              // t2 = image struct
+        sw      t1, 0x0018(t2)              // set X scale
+        sw      t1, 0x001C(t2)              // set Y scale
+        lw      t0, 0x0004(t0)              // t0 = next object
+        bnez    t0, _loop                   // if there is a next object, loop
+        nop                                 // otherwise we're done
+
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // Overwrites the original routine to allow a 5th button to be used when A/Start is pressed on Mode Select screen.
+    scope mode_select_screen_change_: {
+        OS.patch_start(0x11D668, 0x801326D8)
+        // v0 = index of selected button
+        beqzl   v0, _change
+        addiu   t5, r0, 0x0008              // 1P Game Mode menu
+        lli     at, 0x0001
+        beql    v0, at, _change
+        addiu   t5, r0, 0x0009              // VS Game Mode menu
+        lli     at, 0x0002
+        beql    v0, at, _change
+        addiu   t5, r0, 0x0039              // Options
+        lli     at, 0x0003
+        beql    v0, at, _change
+        addiu   t5, r0, 0x003A              // Data
+        lli     at, 0x0004
+        beql    v0, at, _change
+        addiu   t5, r0, 0x0039              // Settings
+
+        // probably not necessary, but a catch-all
+        j       0x80132A00
+        lw      ra, 0x0014(sp)
+
+        _change:
+        sltiu   at, at, 0x0004              // 0 if custom options should be displayed
+        li      v1, normal_options          // v1 = normal options flag
+        sb      at, 0x0000(v1)              // set normal options flag
+        li      v1, Global.current_screen
+        lbu     t4, 0x0000(v1)              // t4 = current screen
+        sb      t4, 0x0001(v1)              // set previous screen to current value
+        sb      t5, 0x0000(v1)              // set next screen
+        jal     0x800269C0                  // play sound
+        addiu   a0, r0, 0x009E
+        jal     0x80005C74
+        nop
+        j       0x80132A00
+        lw      ra, 0x0014(sp)
+        OS.patch_end()
+    }
+
+    // @ Description
+    // Sets the correct index when coming from options
+    OS.patch_start(0x11D4F8, 0x80132568)
+    beq     v0, at, 0x801325C0              // original line 1, altered to jump to 0x801325C0
+    lli     t8, 0x0000                      // t8 = 0 (index)
+    lli     at, 0x0009                      // original line 2
+    beq     v0, at, 0x801325C0              // original line 3, altered to jump to 0x801325C0
+    lli     t8, 0x0001                      // t8 = 1 (index)
+    lli     at, 0x0039                      // original line 5
+    beq     v0, at, _options                // original line 6, altered to jump to _options
+    lli     t8, 0x0002                      // t8 = 1 (index)
+    lli     at, 0x003A                      // original line 8
+    beq     v0, at, 0x801325C0              // original line 9, altered to jump to 0x801325C0
+    lli     t8, 0x0003                      // t8 = 1 (index)
+    b       0x801325C0                      // original line 11, altered to jump to 0x801325C0
+    lli     t8, 0x0000                      // t8 = 0 (index)
+    _options:
+    li      at, normal_options              // at = normal options flag
+    lbu     at, 0x0000(at)                  // ~
+    beqzl   at, 0x801325C0                  // if normal options flag was false,
+    lli     t8, 0x0004                      // then use new button index
+    b       0x801325C0                      // continue to where t8 is stored as index
     nop
     OS.patch_end()
 
     // @ Description
-    // This patch disables back (press B) on Main Menu
-    OS.patch_start(0x0011D768, 0x801327D8)
-    //nop
-    //nop
-    //nop
-    //nop
+    // Creates the custom objects for the mode select screen (5th button)
+    scope mode_select_setup_: {
+        constant SETTINGS_OFFSET(0x9748)
+        constant SETTINGS_OFFSET_SELECTED(0x9080)
+        constant SETTINGS_LABEL_OFFSET(0x99B0)
+
+        addiu   sp, sp,-0x0030              // allocate stack space
+        sw      ra, 0x0004(sp)              // ~
+
+        // Render unselected icon
+        Render.draw_texture_at_offset(1, 3, 0x80132D6C, SETTINGS_OFFSET, Render.NOOP, 0x41C00000, 0x432E0000, 0x969696FF, 0x00000000, 0x3F800000)
+        lui     t0, 0x8013
+        sw      v0, 0x2CA8(t0)              // store object pointer in free memory
+        Render.draw_texture_at_offset(1, 3, 0x80132D6C, SETTINGS_OFFSET_SELECTED, Render.NOOP, 0x41C00000, 0x432E0000, 0xFFFFFFFF, 0x00000000, 0x3F800000)
+        lui     t0, 0x8013
+        sw      v0, 0x2CAC(t0)              // store object pointer in free memory
+        Render.draw_texture_at_offset(1, 3, 0x80132D6C, SETTINGS_LABEL_OFFSET, Render.NOOP, 0x42900000, 0x43470000, 0xFF0000FF, 0x00000000, 0x3F800000)
+
+        // rescale all the buttons on load
+        jal     rescale_mode_select_buttons_._rescale
+        nop
+
+        // update display state of each new button icon
+        jal     set_settings_button_display_
+        nop
+
+        lw      ra, 0x0004(sp)              // restore ra
+        addiu   sp, sp, 0x0030              // deallocate stack space
+        jr      ra                          // return
+        nop
+    }
+
+    // @ Description
+    // Increases the available object heap space on the options screen.
+    // This is necessary to support when there are lots of long strings.
+    // Can probably reduce how much is added, but shouldn't hurt anything.
+    OS.patch_start(0x120EE0, 0x80134944)
+    dw      0x0000EA60 + 0x2000                 // pad object heap space (0x0000EA60 is original amount)
     OS.patch_end()
 
-    press_r:; db ": NEXT PAGE", 0x00
-    OS.align(4)
-
-    scope run_: {
-        addiu   sp, sp,-0x0020              // allocate stack space
+    // @ Description
+    // Sets up the custom objects for the custom settings menu
+    scope setup_: {
+        addiu   sp, sp,-0x0030              // allocate stack space
         sw      ra, 0x0004(sp)              // ~
-        sw      a0, 0x0008(sp)              // ~
-        sw      a1, 0x000C(sp)              // ~
-        sw      a2, 0x0010(sp)              // ~
-        sw      a3, 0x0014(sp)              // ~
-        sw      t0, 0x0018(sp)              // ~
-        sw      t1, 0x001C(sp)              // save registers
 
-        // draw logo
-        lli     a0, 000010                  // a0 - ulx
-        lli     a1, 000010                  // a1 - uly
-        li      a2, Data.menu_bg_info     // a2 - address of texture struct
-        jal     Overlay.draw_texture_big_   // draw logo texture
+        li      t9, normal_options          // t9 = normal options flag
+        lbu     t9, 0x0000(t9)              // t9 = 0 if custom toggles
+        bnez    t9, _end                    // skip if not custom
         nop
 
-        // draw "options" text
-        lli     a0, 000026                  // a0 - ulx
-        lli     a1, 000011                  // a1 - uly
-        li      a2, Data.options_text_info  // a2 - address of texture struct
-        jal     Overlay.draw_texture_       // draw options text texture
+        Render.load_font()
+        Render.load_file(0x4E, Render.file_pointer_1)                 // load option images
+        Render.load_file(File.REMIX_MENU_BG, Render.file_pointer_2)   // load remix menu bg
+        Render.load_file(0xC5, Render.file_pointer_3)                 // load button images into file_pointer_3
+
+        Render.draw_rectangle(3, 0, 10, 10, 300, 220, 0x000000FF, OS.FALSE)
+
+        Render.draw_texture_at_offset(3, 12, Render.file_pointer_1, 0xB40, Render.NOOP, 0x41C00000, 0x41880000, 0x5F5846FF, 0x00000000, 0x3F800000)
+        Render.draw_rectangle(3, 12, 43, 24, 60, 16, 0x000000FF, OS.FALSE)
+        Render.draw_string(3, 12, settings, Render.NOOP, 0x42320000, 0x41E40000, 0x5F5846FF, 0x3F600000, Render.alignment.LEFT)
+        Render.draw_string_pointer(3, 12, page_title_pointer, Render.update_live_string_, 0x43900000, 0x41A80000, 0xF2C70DFF, 0x3FB00000, Render.alignment.RIGHT)
+        Render.draw_texture_at_offset(3, 12, Render.file_pointer_3, Render.file_c5_offsets.R, Render.NOOP, 0x43830000, 0x42180000, 0x848484FF, 0x303030FF, 0x3F700000)
+        Render.draw_texture_at_offset(3, 12, 0x801338B0, 0xDD90, Render.NOOP, 0x438C0000, 0x42240000, 0xFFAE00FF, 0x00000000, 0x3F2F0000)
+
+        Render.draw_texture_at_offset(3, 13, Render.file_pointer_2, 0x20718, Render.NOOP, 0x41200000, 0x41200000, 0xFFFFFFFF, 0x00000000, 0x3F800000)
+        Render.draw_string(3, 13, current_profile, Render.NOOP, 0x432D0000, 0x434D0000, 0xFFFFFFFF, Render.FONTSIZE_DEFAULT, Render.alignment.RIGHT)
+        Render.draw_string_pointer(3, 13, profile_pointer, Render.update_live_string_, 0x43530000, 0x434D0000, 0xFFFFFFFF, Render.FONTSIZE_DEFAULT, Render.alignment.CENTER)
+
+        Render.draw_string(3, 14, toggles_note_line_1, Render.NOOP, 0x43200000, 0x432E0000, 0xFFFFFFFF, Render.FONTSIZE_DEFAULT, Render.alignment.CENTER)
+        Render.draw_string(3, 14, toggles_note_line_2, Render.NOOP, 0x43200000, 0x433C0000, 0xFFFFFFFF, Render.FONTSIZE_DEFAULT, Render.alignment.CENTER)
+        Render.draw_texture_at_offset(3, 14, Render.file_pointer_3, Render.file_c5_offsets.A, Render.NOOP, 0x42B20000, 0x432E0000, 0x50A8FFFF, 0x0010FFFF, 0x3F800000)
+
+        li      a0, info                    // a0 - info
+        sw      r0, 0x0008(a0)              // clear cursor object reference on page load
+        sw      r0, 0x000C(a0)              // reset cursor to top
+        jal     Menu.draw_                  // draw menu
         nop
 
-        li      a0, info                    // a0 = address of info
-        jal     Menu.get_num_entries_       // v0 = number of entries
-        nop
-        slti    a0, v0, Menu.MAX_PER_PAGE+1 // if there is only one page
-        bnez    a0, _draw_menu              // then don't draw pagination instructions
-        nop
+        Render.register_routine(run_)
 
-        // draw "R" button
-        lli     a0, 000181                  // a0 - ulx
-        lli     a1, 000011                  // a1 - uly
-        li      a2, Data.r_button_info      // a2 - address of texture struct
-        jal     Overlay.draw_texture_       // draw options text texture
+        _end:
+        lw      ra, 0x0004(sp)              // restore ra
+        addiu   sp, sp, 0x0030              // deallocate stack space
+        jr      ra                          // return
         nop
+    }
 
-        // tell the user they can bring up the custom menu
-        lli     a0, 000199                  // a0 - ulx
-        lli     a1, 000014                  // a1 - uly
-        li      a2, press_r                 // a2 - address of string
-        jal     Overlay.draw_string_        // draw custom menu instructions
-        nop
+    // @ Description
+    // Runs every frame to correctly update the menu
+    scope run_: {
+        OS.save_registers()
 
-        _draw_menu:
-        // update menu
         li      a0, info
         jal     Menu.update_                // check for updates
         nop
 
-        // draw menu
-        li      a0, info                    // a0 - info
-        jal     Menu.draw_                  // draw menu
-        nop
-
-        // draw current profile
         li      t0, info                    // t0 - address of info
         lw      t1, 0x0000(t0)              // t1 - address of head
         li      t2, head_super_menu         // t2 - address of head_super_menu
         bne     t1, t2, _check_b            // if (not in super menu), skip
-        nop                                 // else, exit sub menu
-        lli     a0, 000055                  // a0 - x
-        lli     a1, 000221                  // a1 - uly
-        li      a2, current_profile         // a2 - address of string
-        jal     Overlay.draw_string_        // draw current profile label
-        nop
+        nop                                 //
+
         jal     get_current_profile_        // v0 - current profile
         nop
         li      a2, string_table_profile    // a2 - profile string table address
-        sll     v0, v0, 0x0002              // v0 - offset to profile string address
-        lli     a0, 000230                  // a0 - x
-        lli     a1, 000221                  // a1 - uly
-        addu    a2, a2, v0                  // a2 - address of string address
+        sll     v1, v0, 0x0002              // v1 - offset to profile string address
+        addu    a2, a2, v1                  // a2 - address of string address
         lw      a2, 0x0000(a2)              // a2 - address of string
-        jal     Overlay.draw_centered_str_  // draw current profile
-        nop
+        li      t0, profile_pointer         // t0 = profile_pointer
+        sw      a2, 0x0000(t0)              // save updated address
 
         // draw toggles note
-        li      t0, info                    // t0 - address of info
-        lw      t1, 0x000C(t0)              // t1 - cursor... 0 if Load Profile is selected
-        bnez    t1, _check_b                // if (Load Profile not selected), skip
-        nop                                 // else, exit sub menu
-        lli     a0, 000160                  // a0 - x
-        lli     a1, 000180                  // a1 - uly
-        li      a2, toggles_note_line_1     // a2 - address of string
-        jal     Overlay.draw_centered_str_  // draw current profile label
+        li      a0, info                    // a0 - address of info
+        lw      t1, 0x000C(a0)              // t1 - cursor... 0 if Load Profile is selected
+        lli     a1, 0x0001                  // a1 = 1 (display off)
+        bnez    t1, _set_notes_display      // if (Load Profile is not selected), then don't display it
         nop
-        lli     a0, 000160                  // a0 - x
-        lli     a1, 000190                  // a1 - uly
-        li      a2, toggles_note_line_2     // a2 - address of string
-        jal     Overlay.draw_centered_str_  // draw current profile label
+        or      s0, v0, r0                  // s0 = current profile
+        jal     Menu.get_selected_entry_    // v0 = selected entry
         nop
+        lw      t0, 0x0004(v0)              // t0 = entry.current_value
+        beq     t0, s0, _set_notes_display  // if (current profile is not the selected profile), then don't display it
+        nop
+        li      t0, notes_blink_timer
+        lw      t1, 0x0000(t0)              // t0 = current blink timer value
+        addiu   t1, t1, 0x0001              // increment timer
+        sw      t1, 0x0000(t0)              // ~
+        lli     t2, 0x001E                  // t2 = 0x1E
+        sltu    a1, t2, t1                  // if timer is less than 0x1E, then show it: a1 = 0 (display on)
+        sltiu   t2, t1, 0x0028              // reset timer if we reach 0x28
+        beqzl   t2, _set_notes_display
+        sw      r0, 0x0000(t0)
+
+        _set_notes_display:
+        jal     Render.toggle_group_display_
+        lli     a0, 14                      // a0 = group
 
         // check for exit
         _check_b:
@@ -159,11 +419,11 @@ scope Toggles {
         lli     a1, 000069                  // a1 - whatever you like!
         lli     a2, Joypad.PRESSED          // a2 - type
         jal     Joypad.check_buttons_all_   // check if B pressed
-        nop 
+        nop
         beqz    v0, _end                    // nop
         nop
-        li      t0, info                    // t0 = address of info
-        lw      t1, 0x0000(t0)              // t1 = address of head
+        li      a0, info                    // a0 = address of info
+        lw      t1, 0x0000(a0)              // t1 = address of head
         li      t2, head_super_menu         // t2 = address of head_super_menu
         beq     t1, t2, _exit_super_menu    // if (in super menu), exit
         nop                                 // else, exit sub menu
@@ -178,10 +438,13 @@ scope Toggles {
         ori     t0, r0, 0x0003              // if (returning from random stage settings) then set cursor accordingly
 
         _exit_sub_menu:
-        jal     set_info_1_                 // bring up super menu
+        jal     Menu.get_selected_entry_    // v0 = selected entry
         nop
         li      t1, info                    // t1 = address of info
         sw      t0, 0x000C(t1)              // restore cursor
+        jal     set_info_1_                 // bring up super menu
+        nop
+
         b       _end                        // end menu execution
         nop
 
@@ -193,17 +456,12 @@ scope Toggles {
         nop
 
         _end:
-        lw      ra, 0x0004(sp)              // ~
-        lw      a0, 0x0008(sp)              // ~
-        lw      a1, 0x000C(sp)              // ~
-        lw      a2, 0x0010(sp)              // ~
-        lw      a3, 0x0014(sp)              // ~
-        lw      t0, 0x0018(sp)              // ~
-        lw      t1, 0x001C(sp)              // restore registers
-        lw      ra, 0x0004(sp)              // restore ra
-        addiu   sp, sp, 0x0020              // deallocate stack space
-        jr      ra                          // return
+        OS.restore_registers()
+        jr      ra
         nop
+
+        notes_blink_timer:
+        dw 0x00000000
     }
     
     // @ Description
@@ -297,61 +555,55 @@ scope Toggles {
         nop
     }
 
-    macro set_info_head(address_of_head) {
+    macro set_info_head(address_of_head, hide_bg_image) {
+        // a0 = address of info()
+        // v0 = selected entry
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // save t0
         sw      t1, 0x0008(sp)              // save t1
+        sw      ra, 0x000C(sp)              // save ra
 
         li      t0, info                    // t0 = info
         li      t1, {address_of_head}       // t1 = address of head
         sw      t1, 0x0000(t0)              // update info->head
-        sw      r0, 0x000C(t0)              // update info.selection
+        if {hide_bg_image} == OS.TRUE {
+            sw      r0, 0x000C(t0)          // update info.selection on sub menus
+        }
+        lw      a1, 0x0018(t0)              // a1 = 1st displayed currently
         sw      t1, 0x0018(t0)              // update info->1st displayed
         sw      t1, 0x001C(t0)              // update info->last displayed
+        li      t0, page_title_pointer      // t0 = page_title pointer
+        if {hide_bg_image} == OS.TRUE {
+            addiu   t1, v0, 0x0024          // t1 = select entry's title
+            sw      t1, 0x0000(t0)          // set the page title
+        } else {
+            sw      r0, 0x0000(t0)          // clear the page title
+        }
+
+        jal     Menu.redraw_                // redraw menu
+        nop
+
+        lli     a0, 13                      // a0 = group 13
+        jal     Render.toggle_group_display_
+        lli     a1, {hide_bg_image}         // toggle the main menu elements
 
         lw      t0, 0x0004(sp)              // restore t0
         lw      t1, 0x0008(sp)              // restore t1
+        lw      ra, 0x000C(sp)              // restore ra
         addiu   sp, sp, 0x0010              // deallocate stack space
         jr      ra                          // return
         nop
     }
 
     info:
-    Menu.info(head_super_menu, 30, 35, 0, 32)
+    Menu.info(head_super_menu, 30, 50, 3, 0, 32, 0xF2C70DFF, Color.high.WHITE, Color.high.WHITE)
 
     // @ Description
     // Functions to change the menu currently displayed.
-    set_info_1_:; set_info_head(head_super_menu)
-    set_info_2_:; set_info_head(head_remix_settings)
-    set_info_3_:; set_info_head(head_music_settings)
-    set_info_4_:; set_info_head(head_stage_settings)
-
-    // @ Description
-    // This function will transition to "SCREEN ADJUST"
-    scope load_screen_adjust_: {
-        addiu   sp, sp,-0x0018              // allocate stack space
-        sw      ra, 0x0004(sp)              // ~
-        sw      t0, 0x0008(sp)              // ~
-        sw      t1, 0x000C(sp)              // ~
-        sw      a0, 0x0010(sp)              // save registers
-
-        // this block resets the arrow to 0
-        li      t0, info                    // t0 = info
-        sw      r0, 0x000C(t0)              // update info.selection
-
-        // this block changes screens
-        lli     a0, 0x000F                  // a0 - int next_screen
-        jal     Menu.change_screen_         // go to SCREEN ADJUST
-        nop
-
-        lw      ra, 0x0004(sp)              // ~
-        lw      t0, 0x0008(sp)              // ~
-        lw      t1, 0x000C(sp)              // ~
-        lw      a0, 0x0010(sp)              // restore registers
-        addiu   sp, sp, 0x0018              // deallocate stack sapce
-        jr      ra                          // return 
-        nop
-    }
+    set_info_1_:; set_info_head(head_super_menu, OS.FALSE)
+    set_info_2_:; set_info_head(head_remix_settings, OS.TRUE)
+    set_info_3_:; set_info_head(head_music_settings, OS.TRUE)
+    set_info_4_:; set_info_head(head_stage_settings, OS.TRUE)
 
     variable num_toggles(0)
 
@@ -402,8 +654,9 @@ scope Toggles {
     profile_jp:; db "Japanese", 0x00
     profile_custom:; db "Custom", 0x00
     current_profile:; db "Current Profile: ", 0x00
-    toggles_note_line_1:; db "Press A to load selected profile,", 0x00
+    toggles_note_line_1:; db "Press     to load selected profile,", 0x00
     toggles_note_line_2:; db "which will affect all settings.", 0x00
+    settings:; db "SETTINGS", 0x00
     OS.align(4)
 
     string_table_profile:
@@ -543,11 +796,10 @@ scope Toggles {
     // @ Description
     // Contains list of submenus.
     head_super_menu:
-    Menu.entry("Load Profile:", Menu.type.U8, OS.FALSE, 0, 2, load_profile_, string_table_profile, OS.NULL, pc() + 20)
-    Menu.entry_title("Remix Settings", set_info_2_, pc() + 20)
-    Menu.entry_title("Music Settings", set_info_3_, pc() + 20)
-    Menu.entry_title("Stage Settings", set_info_4_, pc() + 20)
-    Menu.entry_title("Screen Adjust", load_screen_adjust_, OS.NULL)
+    Menu.entry("Load Profile:", Menu.type.U8, OS.FALSE, 0, 2, load_profile_, string_table_profile, OS.NULL, entry_remix_settings)
+    entry_remix_settings:; Menu.entry_title("Remix Settings", set_info_2_, entry_music_settings)
+    entry_music_settings:; Menu.entry_title("Music Settings", set_info_3_, entry_stage_settings)
+    entry_stage_settings:; Menu.entry_title("Stage Settings", set_info_4_, OS.NULL)
 
     // @ Description 
     // Miscellaneous Toggles
@@ -564,9 +816,7 @@ scope Toggles {
     entry_1v1_combo_meter_swap:;        entry_bool("1v1 Combo Meter Swap", OS.FALSE, OS.FALSE, OS.FALSE, entry_improved_ai)
     entry_improved_ai:;                 entry_bool("Improved AI", OS.TRUE, OS.FALSE, OS.TRUE, entry_neutral_spawns)
     entry_neutral_spawns:;              entry_bool("Neutral Spawns", OS.TRUE, OS.TRUE, OS.TRUE, entry_skip_results_screen)
-    entry_skip_results_screen:;         entry_bool("Skip Results Screen", OS.FALSE, OS.FALSE, OS.FALSE, entry_stereo_sound)
-    entry_stereo_sound:;                entry_bool("Stereo Sound", OS.TRUE, OS.TRUE, OS.TRUE, entry_stock_handicap)
-    entry_stock_handicap:;              entry_bool("Stock Handicap", OS.TRUE, OS.FALSE, OS.TRUE, entry_salty_runback)
+    entry_skip_results_screen:;         entry_bool("Skip Results Screen", OS.FALSE, OS.FALSE, OS.FALSE, entry_salty_runback)
     entry_salty_runback:;               entry_bool("Salty Runback", OS.TRUE, OS.FALSE, OS.TRUE, entry_widescreen)
     entry_widescreen:;                  entry_bool("Widescreen", OS.FALSE, OS.FALSE, OS.FALSE, entry_japanese_hitlag)
     entry_japanese_hitlag:;             entry_bool("Japanese Hitlag", OS.FALSE, OS.FALSE, OS.TRUE, entry_japanese_di)
@@ -574,32 +824,34 @@ scope Toggles {
     entry_japanese_sounds:;             entry("Japanese Sounds", Menu.type.U8, 0, 0, 0, 0, 2, OS.NULL, string_table_jsounds, OS.NULL, entry_momentum_slide)
     entry_momentum_slide:;              entry_bool("Momentum Slide", OS.FALSE, OS.FALSE, OS.TRUE, entry_japanese_shieldstun)
     entry_japanese_shieldstun:;         entry_bool("Japanese Shield Stun", OS.FALSE, OS.FALSE, OS.TRUE, entry_variant_random)
-	entry_variant_random:;              entry_bool("Random Select With Variants", OS.FALSE, OS.FALSE, OS.FALSE, entry_disable_aa)
+	entry_variant_random:;              entry_bool("Random Select With Variants", OS.FALSE, OS.FALSE, OS.FALSE, entry_disable_pause_hud)
+    entry_disable_pause_hud:;           entry_bool("Disable VS Pause HUD", OS.FALSE, OS.FALSE, OS.FALSE, entry_disable_aa)
     entry_disable_aa:;                  entry_bool("Disable Anti-Aliasing", OS.FALSE, OS.FALSE, OS.FALSE, OS.NULL)
 
     // @ Description
     // Random Music Toggles
     head_music_settings:
-    entry_play_music:;                      entry_bool("Play Music", OS.TRUE, OS.TRUE, OS.TRUE, pc() + 16)
-    entry_menu_music:;                      entry("Menu Music", Menu.type.U8, 0, 0, 0, 0, 3, play_menu_music_, string_table_menu_music, OS.NULL, pc() + 16)
-    entry_random_music:;                    entry_bool("Random Music", OS.FALSE, OS.FALSE, OS.FALSE, pc() + 20)
-    entry_random_music_bonus:;              entry_bool("Bonus", OS.TRUE, OS.TRUE, OS.TRUE, pc() + 12)
-    entry_random_music_congo_jungle:;       entry_bool("Congo Jungle", OS.TRUE, OS.TRUE, OS.TRUE, pc() + 20)
-    entry_random_music_credits:;            entry_bool("Credits", OS.TRUE, OS.TRUE, OS.TRUE, pc() + 12)
-    entry_random_music_data:;               entry_bool("Data", OS.TRUE, OS.TRUE, OS.TRUE, pc() + 12)
-    entry_random_music_dream_land:;         entry_bool("Dream Land", OS.TRUE, OS.TRUE, OS.TRUE, pc() + 16)
-    entry_random_music_duel_zone:;          entry_bool("Duel Zone", OS.TRUE, OS.TRUE, OS.TRUE, pc() + 16)
-    entry_random_music_final_destination:;  entry_bool("Final Destination", OS.TRUE, OS.TRUE, OS.TRUE, pc() + 24)
-    entry_random_music_how_to_play:;        entry_bool("How To Play", OS.TRUE, OS.TRUE, OS.TRUE, pc() + 16)
-    entry_random_music_hyrule_castle:;      entry_bool("Hyrule Castle", OS.TRUE, OS.TRUE, OS.TRUE, pc() + 20)
-    entry_random_music_meta_crystal:;       entry_bool("Meta Crystal", OS.TRUE, OS.TRUE, OS.TRUE, pc() + 20)
-    entry_random_music_mushroom_kingdom:;   entry_bool("Mushroom Kingdom", OS.TRUE, OS.TRUE, OS.TRUE, pc() + 24)
-    entry_random_music_peachs_castle:;      entry_bool("Peach's Castle", OS.TRUE, OS.TRUE, OS.TRUE, pc() + 20)
-    entry_random_music_planet_zebes:;       entry_bool("Planet Zebes", OS.TRUE, OS.TRUE, OS.TRUE, pc() + 20)
-    entry_random_music_saffron_city:;       entry_bool("Saffron City", OS.TRUE, OS.TRUE, OS.TRUE, pc() + 20)
-    entry_random_music_sector_z:;           entry_bool("Sector Z", OS.TRUE, OS.TRUE, OS.TRUE, pc() + 16)
-    entry_random_music_yoshis_island:;      entry_bool("Yoshi's Island", OS.TRUE, OS.TRUE, OS.TRUE, pc() + 20)
+    entry_play_music:;                      entry_bool("Play Music", OS.TRUE, OS.TRUE, OS.TRUE, entry_menu_music)
+    entry_menu_music:;                      entry("Menu Music", Menu.type.U8, 0, 0, 0, 0, 3, play_menu_music_, string_table_menu_music, OS.NULL, entry_random_music)
+    entry_random_music:;                    entry_bool("Random Music", OS.FALSE, OS.FALSE, OS.FALSE, entry_random_music_bonus)
+    entry_random_music_bonus:;              entry_bool("Bonus", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_congo_jungle)
+    entry_random_music_congo_jungle:;       entry_bool("Congo Jungle", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_credits)
+    entry_random_music_credits:;            entry_bool("Credits", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_data)
+    entry_random_music_data:;               entry_bool("Data", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_dream_land)
+    entry_random_music_dream_land:;         entry_bool("Dream Land", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_duel_zone)
+    entry_random_music_duel_zone:;          entry_bool("Duel Zone", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_final_destination)
+    entry_random_music_final_destination:;  entry_bool("Final Destination", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_how_to_play)
+    entry_random_music_how_to_play:;        entry_bool("How To Play", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_hyrule_castle)
+    entry_random_music_hyrule_castle:;      entry_bool("Hyrule Castle", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_meta_crystal)
+    entry_random_music_meta_crystal:;       entry_bool("Meta Crystal", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_mushroom_kingdom)
+    entry_random_music_mushroom_kingdom:;   entry_bool("Mushroom Kingdom", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_peachs_castle)
+    entry_random_music_peachs_castle:;      entry_bool("Peach's Castle", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_planet_zebes)
+    entry_random_music_planet_zebes:;       entry_bool("Planet Zebes", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_saffron_city)
+    entry_random_music_saffron_city:;       entry_bool("Saffron City", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_sector_z)
+    entry_random_music_sector_z:;           entry_bool("Sector Z", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_yoshis_island)
+    entry_random_music_yoshis_island:;      entry_bool("Yoshi's Island", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_first_custom)
 
+    entry_random_music_first_custom:
     // Add custom MIDIs
     define toggled_custom_MIDIs(0)
     define last_toggled_custom_MIDI(0)
@@ -635,23 +887,24 @@ scope Toggles {
     entry_sss_layout:;                          entry("Stage Select Layout", Menu.type.U8, sss.NORMAL, sss.TOURNAMENT, sss.NORMAL, 0, 1, OS.NULL, string_table_sss_layout, OS.NULL, entry_hazard_mode)
     entry_hazard_mode:;                         entry("Hazard Mode", Menu.type.U8, hazard_mode.NORMAL, hazard_mode.NORMAL, hazard_mode.NORMAL, 0, 3, OS.NULL, string_table_hazard_mode, OS.NULL, entry_random_stage_title)
     entry_random_stage_title:;                  Menu.entry_title("Random Stage Toggles:", OS.NULL, entry_random_stage_congo_jungle)
-    entry_random_stage_congo_jungle:;           entry_bool("Congo Jungle", OS.TRUE, OS.FALSE, OS.TRUE, pc() + 20)
-    entry_random_stage_dream_land:;             entry_bool("Dream Land", OS.TRUE, OS.TRUE, OS.TRUE, pc() + 16)
-    entry_random_stage_dream_land_beta_1:;      entry_bool("Dream Land Beta 1", OS.FALSE, OS.FALSE, OS.FALSE, pc() + 24)
-    entry_random_stage_dream_land_beta_2:;      entry_bool("Dream Land Beta 2", OS.FALSE, OS.FALSE, OS.FALSE, pc() + 24)
-    entry_random_stage_duel_zone:;              entry_bool("Duel Zone", OS.TRUE, OS.FALSE, OS.TRUE, pc() + 16)
-    entry_random_stage_final_destination:;      entry_bool("Final Destination", OS.TRUE, OS.FALSE, OS.TRUE, pc() + 24)
-    entry_random_stage_how_to_play:;            entry_bool("How to Play", OS.FALSE, OS.FALSE, OS.FALSE, pc() + 16)
-    entry_random_stage_hyrule_castle:;          entry_bool("Hyrule Castle", OS.TRUE, OS.FALSE, OS.TRUE, pc() + 20)
-    entry_random_stage_meta_crystal:;           entry_bool("Meta Crystal", OS.TRUE, OS.FALSE, OS.TRUE, pc() + 20)
-    entry_random_stage_mushroom_kingdom:;       entry_bool("Mushroom Kingdom", OS.TRUE, OS.FALSE, OS.TRUE, pc() + 24)
-    entry_random_stage_peachs_castle:;          entry_bool("Peach's Castle", OS.TRUE, OS.FALSE, OS.TRUE, pc() + 20)
-    entry_random_stage_planet_zebes:;           entry_bool("Planet Zebes", OS.TRUE, OS.FALSE, OS.TRUE, pc() + 20)
-    entry_random_stage_saffron_city:;           entry_bool("Saffron City", OS.TRUE, OS.FALSE, OS.TRUE, pc() + 20)
-    entry_random_stage_sector_z:;               entry_bool("Sector Z", OS.TRUE, OS.FALSE, OS.TRUE, pc() + 16)
-    entry_random_stage_yoshis_island:;          entry_bool("Yoshi's Island", OS.TRUE, OS.FALSE, OS.TRUE, pc() + 20)
-    entry_random_stage_mini_yoshis_island:;     entry_bool("Mini Yoshi's Island", OS.TRUE, OS.TRUE, OS.TRUE, pc() + 24)
+    entry_random_stage_congo_jungle:;           entry_bool("Congo Jungle", OS.TRUE, OS.FALSE, OS.TRUE, entry_random_stage_dream_land)
+    entry_random_stage_dream_land:;             entry_bool("Dream Land", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_stage_dream_land_beta_1)
+    entry_random_stage_dream_land_beta_1:;      entry_bool("Dream Land Beta 1", OS.FALSE, OS.FALSE, OS.FALSE, entry_random_stage_dream_land_beta_2)
+    entry_random_stage_dream_land_beta_2:;      entry_bool("Dream Land Beta 2", OS.FALSE, OS.FALSE, OS.FALSE, entry_random_stage_duel_zone)
+    entry_random_stage_duel_zone:;              entry_bool("Duel Zone", OS.TRUE, OS.FALSE, OS.TRUE, entry_random_stage_final_destination)
+    entry_random_stage_final_destination:;      entry_bool("Final Destination", OS.TRUE, OS.FALSE, OS.TRUE, entry_random_stage_how_to_play)
+    entry_random_stage_how_to_play:;            entry_bool("How to Play", OS.FALSE, OS.FALSE, OS.FALSE, entry_random_stage_hyrule_castle)
+    entry_random_stage_hyrule_castle:;          entry_bool("Hyrule Castle", OS.TRUE, OS.FALSE, OS.TRUE, entry_random_stage_meta_crystal)
+    entry_random_stage_meta_crystal:;           entry_bool("Meta Crystal", OS.TRUE, OS.FALSE, OS.TRUE, entry_random_stage_mushroom_kingdom)
+    entry_random_stage_mushroom_kingdom:;       entry_bool("Mushroom Kingdom", OS.TRUE, OS.FALSE, OS.TRUE, entry_random_stage_peachs_castle)
+    entry_random_stage_peachs_castle:;          entry_bool("Peach's Castle", OS.TRUE, OS.FALSE, OS.TRUE, entry_random_stage_planet_zebes)
+    entry_random_stage_planet_zebes:;           entry_bool("Planet Zebes", OS.TRUE, OS.FALSE, OS.TRUE, entry_random_stage_saffron_city)
+    entry_random_stage_saffron_city:;           entry_bool("Saffron City", OS.TRUE, OS.FALSE, OS.TRUE, entry_random_stage_sector_z)
+    entry_random_stage_sector_z:;               entry_bool("Sector Z", OS.TRUE, OS.FALSE, OS.TRUE, entry_random_stage_yoshis_island)
+    entry_random_stage_yoshis_island:;          entry_bool("Yoshi's Island", OS.TRUE, OS.FALSE, OS.TRUE, entry_random_stage_mini_yoshis_island)
+    entry_random_stage_mini_yoshis_island:;     entry_bool("Mini Yoshi's Island", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_stage_first_custom)
 
+    entry_random_stage_first_custom:
     // Add custom stages
     define toggled_custom_stages(0)
     define last_toggled_custom_stage(0)
@@ -665,6 +918,7 @@ scope Toggles {
         evaluate n({n}+1)
     }
 
+    map 0x7E, 0x7F, 1 // temporarily make ~ be Omega
     evaluate n(0x29)
     while {n} <= Stages.id.MAX_STAGE_ID {
         entry_random_stage_{n}:                                        // always create the label even if we don't create the entry
@@ -680,10 +934,11 @@ scope Toggles {
         }
         evaluate n({n}+1)
     }
+    map 0, 0, 256 // restore string mappings
 
     // @ Description
     // SRAM blocks for toggle saving.
-    block_misc:; SRAM.block(24 * 4)
+    block_misc:; SRAM.block(23 * 4)
     block_music:; SRAM.block((19 + {toggled_custom_MIDIs}) * 4)
     block_stages:; SRAM.block((18 + {toggled_custom_stages}) * 4)
 

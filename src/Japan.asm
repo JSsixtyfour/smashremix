@@ -12,9 +12,7 @@ include "Color.asm"
 include "FGM.asm"
 include "Global.asm"
 include "OS.asm"
-include "Overlay.asm"
 include "String.asm"
-include "Texture.asm"
 
 scope Japan {
     // @ Description

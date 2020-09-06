@@ -178,6 +178,7 @@ scope Action {
     constant EggLay(0x0B2)
     constant FalconDivePulled(0x0B3)
     constant ThrownDKPulled(0x0B5)
+    constant ThrownMarioBros(0x0B6)
     constant ThrownDK(0x0B8)
     constant Thrown1(0x0B9)
     constant Thrown2(0x0BA)

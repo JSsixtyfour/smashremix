@@ -5,7 +5,6 @@ define __FPS__()
 include "Color.asm"
 include "Global.asm"
 include "OS.asm"
-include "Overlay.asm"
 include "String.asm"
 include "Toggles.asm"
 
@@ -39,7 +38,7 @@ scope FPS {
     constant UPDATE_LENGTH_OC(SECOND_LENGTH_OC / UPDATES_PER_SECOND)
 
     // @ Description
-    constant FPS_HEIGHT(11)
+    constant FPS_HEIGHT(12)
     constant FPS_WIDTH(32)
     constant FPS_X_COORD(20)
     constant FPS_Y_COORD(21)
@@ -56,7 +55,49 @@ scope FPS {
     last_os_get_count:
     dw 0x00000000
 
+    decimal:; String.insert(".")
+
+    // @ Description
+    // Sets up the FPS display objects if the FPS toggle is on
+    scope setup_: {
+        addiu   sp, sp,-0x0030              // allocate stack space
+        sw      ra, 0x0004(sp)              // ~
+
+        li      at, Toggles.entry_fps       // ~
+        lw      at, 0x0004(at)              // at = 0 if off
+        beqz    at, _end                    // skip if off
+        nop
+
+        Render.load_font()
+
+        Render.create_room(0x37, 0x18, 0x01, 0x41200000, 0x41200000, 0x42480000, 0x41F00000)
+        Render.draw_rectangle(0x37, 0x19, FPS_X_COORD - 2, FPS_Y_COORD - 2, FPS_WIDTH, FPS_HEIGHT, 0x000000B0, OS.TRUE)
+        Render.draw_number(0x37, 0x19, current_fps, Render.update_live_string_, 0x42090000, 0x419C0000, 0xFFFFFFFF, 0x3F600000, Render.alignment.RIGHT)
+        Render.draw_string(0x37, 0x19, decimal, Render.NOOP, 0x42080000, 0x419C0000, 0xFFFFFFFF, 0x3F600000, Render.alignment.LEFT)
+        Render.draw_number(0x37, 0x19, current_partial_fps, Render.update_live_string_, 0x423B0000, 0x419C0000, 0xFFFFFFFF, 0x3F600000, Render.alignment.RIGHT)
+
+        // Registering the routine here results in a constant 62.5 reading - perhaps evidence the game is attempting to compensate for lag?
+        // Render.register_routine(run_, 0x0, 0x19)
+
+        _end:
+        lw      ra, 0x0004(sp)              // restore ra
+        addiu   sp, sp, 0x0030              // deallocate stack space
+        jr      ra                          // return
+        nop
+    }
+
+    // @ Description
+    // Calculates the FPS
     scope run_: {
+        OS.patch_start(0x00005FD0, 0x800053D0)
+        j        run_
+        nop
+        _run_return:
+        OS.patch_end()
+
+        lui     v1, 0x8004                  // original line 1
+        lui     v0, 0x8004                  // original line 2
+
         b       _guard                      // check if toggle is on
         nop
 
@@ -102,51 +143,11 @@ scope FPS {
         beqz    at, _calculate_fps          // calculate fps to display
         nop
 
-        _draw_background:
-        lli     a0, Color.BLACK             // a0 = color
-        jal     Overlay.set_color_          // set fill color to black
-        nop
-        lli     a0, FPS_X_COORD - 2         // a0 = ulx
-        lli     a1, FPS_Y_COORD - 2         // a1 = uly
-        lli     a2, FPS_WIDTH               // a2 = width
-        lli     a3, FPS_HEIGHT              // a3 = height
-        jal     Overlay.draw_rectangle_     // draw rectangle in corner
-        nop
-
-        _draw_fps:
-        li      a1, current_fps             // a1 = address of current_fps
-        lw      a0, 0x0000(a1)              // a0 = current_fps
-        jal     String.itoa_                // v0 = (string) current_fps
-        nop
-        slti    at, a0, 0x000A              // if (current_fps < 10), set at
-        bne     at, r0, _draw_single_fps    // make single fps look pretty
-        nop
-        lli     a0, FPS_X_COORD             // a0 = ulx
-        lli     a1, FPS_Y_COORD             // a1 = uly
-        move    a2, v0                      // a2 = address of string
-        jal     Overlay.draw_string_        // draw current fps count
-        nop
-
-        _draw_partial_fps:
-        lli     a0, FPS_X_COORD + 15        // a0 = ulx
-        lli     a1, FPS_Y_COORD             // a1 = uly
-        lli     a2, '.'                     // a2 = period
-        jal     Overlay.draw_char_          // draw current fps count
-        nop
-        li      a1, current_partial_fps     // a1 = address of current_partial_fps
-        lw      a0, 0x0000(a1)              // a0 = current_partial_fps
-        jal     String.itoa_                // v0 = (string) current_partial_fps
-        nop
-        lli     a0, FPS_X_COORD + 20        // a0 = ulx
-        lli     a1, FPS_Y_COORD             // a1 = uly
-        move    a2, v0                      // a2 = address of string
-        jal     Overlay.draw_string_        // draw current fps count
-        nop
-
+        _done:
         OS.restore_registers()              // restore registers
 
         _end:
-        jr      ra                          // return
+        j       _run_return                 // return
         nop
 
         _calculate_fps:
@@ -190,27 +191,10 @@ scope FPS {
         sw      r0, 0x0000(t0)              // reset frame_count
         li      t0, last_os_get_count       // t0 = address of last_os_get_count
         sw      t7, 0x0000(t0)              // update last_os_get_count
-        j       _draw_background
-        nop
-
-        _draw_single_fps:
-        lli     a0, FPS_X_COORD             // a0 = ulx
-        lli     a1, FPS_Y_COORD             // a1 = uly
-        lli     a2, '0'                     // a2 = 0
-        jal     Overlay.draw_char_          // draw current fps count
-        nop
-        lli     a0, FPS_X_COORD + 8            // a0 = ulx
-        lli     a1, FPS_Y_COORD             // a1 = uly
-        move    a2, v0                      // a2 = address of string
-        jal     Overlay.draw_string_        // draw current fps count
-        nop
-        j       _draw_partial_fps           // continue drawing fps
-        nop
+        b      _done
 
     }
 
 }
-
-
 
 }
