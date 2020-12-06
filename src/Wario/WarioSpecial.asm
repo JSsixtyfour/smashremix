@@ -24,7 +24,19 @@ scope WarioNSP {
     // Subroutine which runs when Wario initiates a grounded neutral special.
     // Changes action, and sets up initial variable values.
     scope ground_initial_: {
-        OS.copy_segment(0xD0A54, 0x28)      // copy beginning of subroutine from Mario
+        OS.copy_segment(0xD0A54, 0x10)      // copy beginning of subroutine from Mario
+        
+        lw      a2, 0x0084(a0)              // ~
+        lw      a2, 0x0008(a2)              // a2 = current character ID
+        lli     a1, Character.id.KIRBY      // a1 = id.KIRBY
+        beql    a1, a2, pc() + 24           // if Kirby, load alternate action ID
+        lli     a1, Kirby.Action.WARIO_NSP_Ground
+        lli     a1, Character.id.JKIRBY     // a1 = id.JKIRBY
+        beql    a1, a2, pc() + 12           // if J Kirby, load alternate action ID
+        lli     a1, Kirby.Action.WARIO_NSP_Ground
+        
+        OS.copy_segment(0xD0A64, 0x18)      // copy next part of subroutine from Mario
+        
         lw      a0, 0x0020(sp)              // ~
         lw      a0, 0x0084(a0)              // a0 = player struct
         sw      r0, 0x017C(a0)              // temp variable 1 = 0
@@ -41,7 +53,18 @@ scope WarioNSP {
     // Subroutine which runs when Wario initiates an aerial neutral special.
     // Changes action, and sets up initial variable values.
     scope air_initial_: {
-        OS.copy_segment(0xD0A94, 0x2C)      // copy beginning of subroutine from Mario
+        OS.copy_segment(0xD0A94, 0x14)      // copy beginning of subroutine from Mario
+        
+        lw      a2, 0x0084(a0)              // ~
+        lw      a2, 0x0008(a2)              // a2 = current character ID
+        lli     a1, Character.id.KIRBY      // a1 = id.KIRBY
+        beql    a1, a2, pc() + 24           // if Kirby, load alternate action ID
+        lli     a1, Kirby.Action.WARIO_NSP_Air
+        lli     a1, Character.id.JKIRBY     // a1 = id.JKIRBY
+        beql    a1, a2, pc() + 12           // if J Kirby, load alternate action ID
+        lli     a1, Kirby.Action.WARIO_NSP_Air
+        
+        OS.copy_segment(0xD0AA8, 0x18)      // copy next part of subroutine from Mario
         lw      a0, 0x0020(sp)              // ~
         lw      a0, 0x0084(a0)              // a0 = player struct
         sw      r0, 0x017C(a0)              // temp variable 1 = 0
@@ -167,6 +190,23 @@ scope WarioNSP {
         lw      a0, 0x0010(sp)              // load a0
         lw      a0, 0x0010(sp)              // load a0
         lw      a0, 0x0084(a0)              // a0 = player struct
+        
+        lw      a1, 0x0008(a0)              // a1 = current character id
+        lli     a2, Character.id.KIRBY      // a2 = id.KIRBY
+        beq     a1, a2, _kirby              // branch if character id = KIRBY
+        lli     a2, Character.id.JKIRBY     // a2 = id.JKIRBY
+        bne     a1, a2, _wario              // branch if character id != JKIRBY
+        nop
+        
+        _kirby:
+        lw      a1, 0x0024(a0)              // a1 = current action
+        lli     a2, Kirby.Action.WARIO_NSP_Ground
+        bne     a1, a2, _end                // skip if action id != ground nsp
+        nop
+        b       _jump                       // check for jump
+        nop
+        
+        _wario:
         lw      a1, 0x0024(a0)              // a1 = current action
         ori     a2, r0, 0x00DF              // a2 = action id: ground nsp
         bne     a1, a2, _end                // skip if action id != ground nsp
@@ -209,7 +249,18 @@ scope WarioNSP {
     scope ground_to_air_: {
         OS.copy_segment(0xDE2EC, 0x18)      // copy beginning of subroutine from Link NSP
         ori     t7, r0, 0x0003              // t7 = 0x0003 (hitbox persist)
+        
+        lw      a2, 0x0084(a0)              // ~
+        lw      a2, 0x0008(a2)              // a2 = current character ID
+        lli     a1, Character.id.KIRBY      // a1 = id.KIRBY
+        beql    a1, a2, pc() + 24           // if Kirby, load alternate action ID
+        lli     a1, Kirby.Action.WARIO_NSP_Air
+        lli     a1, Character.id.JKIRBY     // a1 = id.JKIRBY
+        beql    a1, a2, pc() + 12           // if J Kirby, load alternate action ID
+        lli     a1, Kirby.Action.WARIO_NSP_Air
+        
         ori     a1, r0, 0x00E0              // a1 = 0xE0
+        
         OS.copy_segment(0xDE30C, 0x20)      // copy end of subroutine from Link NSP
     }
     
@@ -390,7 +441,18 @@ scope WarioNSP {
     scope air_to_ground_: {
         OS.copy_segment(0xD098C, 0x1C)      // copy beginning of subroutine from Mario NSP
         ori     t7, r0, 0x0003              // t7 = 0x0003 (hitbox persist)
+        
+        lw      a2, 0x0084(a0)              // ~
+        lw      a2, 0x0008(a2)              // a2 = current character ID
+        lli     a1, Character.id.KIRBY      // a1 = id.KIRBY
+        beql    a1, a2, pc() + 24           // if Kirby, load alternate action ID
+        lli     a1, Kirby.Action.WARIO_NSP_Ground
+        lli     a1, Character.id.JKIRBY     // a1 = id.JKIRBY
+        beql    a1, a2, pc() + 12           // if J Kirby, load alternate action ID
+        lli     a1, Kirby.Action.WARIO_NSP_Ground
+        
         ori     a1, r0, 0x00DF              // a1 = 0xDF
+        
         lw      a2, 0x0078(a0)              // a2 = current animation frame
         sw      t7, 0x0010(sp)              // store t7 (some kind of parameter for change action)
         jal     0x800E6F24                  // change action
@@ -411,10 +473,11 @@ scope WarioNSP {
         // a2 = player struct
         // 0x180 in player struct = temp variable 2
         
-        addiu   sp, sp,-0x0010              // allocate stack space
+        addiu   sp, sp,-0x0018              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
-        swc1    f0, 0x0008(sp)              // ~
-        swc1    f2, 0x000C(sp)              // store t0, f0, f2
+        sw      t1, 0x0008(sp)              // ~
+        swc1    f0, 0x000C(sp)              // ~
+        swc1    f2, 0x0010(sp)              // store t0, f0, f2
         
         _check_movement:
         lw      t0, 0x0180(a2)              // t0 = temp variable 2
@@ -427,16 +490,26 @@ scope WarioNSP {
         mul.s   f0, f0, f2                  // f0 = x velocity * 0.96875
         swc1    f0, 0x0048(a2)              // x velocity = (x velocity * 0.96875)
         // slow falling speed
-        lui     t0, 0x3FA0                  // ~
-        mtc1    t0, f0                      // f0 = 1.25
+        lw      t0, 0x0008(a2)              // t0 = character id
+        lli     t1, Character.id.WARIO      // t1 = id.WARIO
+        beq     t1, t0, _modify_y_velocity  // branch if character id = WARIO
+        lui     t0, 0x3FA0                  // t0 = 1.25
+        
+        // if we're here, the character is Kirby or J Kirby
+        // (unless another character is eventually allowed to use Wario's neutral special)
+        li      t0, 0x3F0CCCCD              // t0 = 0.55
+        
+        _modify_y_velocity:
+        mtc1    t0, f0                      // f0 = 1.25/0.55
         lwc1    f2, 0x004C(a2)              // f2 = y velocity
-        add.s   f0, f2, f0                  // f0 = y velocity + 1.25
+        add.s   f0, f2, f0                  // f0 = y velocity + 1.25/0.55
         swc1    f0, 0x004C(a2)              // store updated y velocity
         _end:
         lw      t0, 0x0004(sp)              // ~
-        lwc1    f0, 0x0008(sp)              // ~
-        lwc1    f2, 0x000C(sp)              // load t0, t1, f0, f2
-        addiu   sp, sp, 0x0010              // deallocate stack space
+        lw      t1, 0x0008(sp)              // ~
+        lwc1    f0, 0x000C(sp)              // ~
+        lwc1    f2, 0x0010(sp)              // load t0, t1, f0, f2
+        addiu   sp, sp, 0x0018              // deallocate stack space
         jr      ra                          // return
         nop
     }
@@ -539,6 +612,16 @@ scope WarioNSP {
         _end:
         lw      a0, 0x0020(sp)              // a0 = entity struct?
         ori     t7, r0, 0x0003              // t7 = 0x0003 (hitbox persist)
+        
+        lw      a2, 0x0084(a0)              // ~
+        lw      a2, 0x0008(a2)              // a2 = current character ID
+        lli     a1, Character.id.KIRBY      // a1 = id.KIRBY
+        beql    a1, a2, pc() + 24           // if Kirby, load alternate action ID
+        lli     a1, Kirby.Action.WARIO_NSP_Recoil
+        lli     a1, Character.id.JKIRBY     // a1 = id.JKIRBY
+        beql    a1, a2, pc() + 12           // if J Kirby, load alternate action ID
+        lli     a1, Kirby.Action.WARIO_NSP_Recoil
+        
         ori     a1, r0, 0x00DC              // a1 = 0xDC
         or      a2, r0, r0                  // a2 = 0(begin action frame)
         sw      t7, 0x0010(sp)              // store t7 (some kind of parameter for change action)

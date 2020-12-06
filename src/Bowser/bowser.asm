@@ -357,9 +357,14 @@ scope Bowser {
     float32 1.2
     OS.patch_end()
 	
-	// Set Kirby star damage override ID
-    Character.table_patch_start(inhale_star_damage, Character.id.BOWSER, 0x4)
-    dw Character.id.DK
+	// Set Kirby star damage
+    Character.table_patch_start(kirby_inhale_struct, 0x8, Character.id.BOWSER, 0xC)
+    dw Character.kirby_inhale_struct.star_damage.DK
+    OS.patch_end()
+
+    // Set Kirby hat_id
+    Character.table_patch_start(kirby_inhale_struct, 0x2, Character.id.BOWSER, 0xC)
+    dh 0x15
     OS.patch_end()
 	
 	// Set Yoshi Egg Size override ID, these values are just copied from DK

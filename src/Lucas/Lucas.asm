@@ -136,6 +136,11 @@ scope Lucas {
     Character.table_patch_start(overlay_end, Character.id.LUCAS, 0x4)
     dw  0x800E9A60                          // skips overlay ending script
     OS.patch_end()
+
+    // Set Kirby hat_id
+    Character.table_patch_start(kirby_inhale_struct, 0x2, Character.id.LUCAS, 0xC)
+    dh 0x14
+    OS.patch_end()
 	
     // Set default costumes
     Character.set_default_costumes(Character.id.LUCAS, 0, 1, 2, 4, 0, 2, 5)
@@ -146,10 +151,15 @@ scope Lucas {
     // then it will be 1 and will proceed to go diagonal. A character check is done, player struct in s1 and v0.
     // If lucas, the number will be changed to 0
     scope pkfire_horizontal: {
+        // Ness (or Ness clone)
         OS.patch_start(0xCE414, 0x801539D4)
-        j       pkfire_horizontal
+        jal     pkfire_horizontal
         nop
-        _return:
+        OS.patch_end()
+        // Kirby w/Ness (or Ness clone) power
+        OS.patch_start(0xD0600, 0x80155BC0)
+        jal     pkfire_horizontal
+        nop
         OS.patch_end()
         
         swc1    f18, 0x0028(sp)             // original line 1
@@ -158,17 +168,25 @@ scope Lucas {
         sw      t1, 0x0004(sp)              // store t2, t1
         sw      t2, 0x0008(sp)              // store t2, t1
         lw      t1, 0x0008(v0)              // load character ID
+
+        lli     t2, Character.id.KIRBY      // t2 = id.KIRBY
+        beql    t1, t2, pc() + 8            // if Kirby, get held power character_id
+        lw      t1, 0x0ADC(v0)              // t1 = character id of copied power
+        lli     t2, Character.id.JKIRBY     // t2 = id.JKIRBY
+        beql    t1, t2, pc() + 8            // if J Kirby, get held power character_id
+        lw      t1, 0x0ADC(v0)              // t1 = character id of copied power
+
         ori     t2, r0, Character.id.LUCAS  // t1 = id.LUCAS
         addiu   t9, r0, r0                  // set LUCAS as if grounded always
         beq     t1, t2, _end                
         nop
-        lw      t9, 0x14C(v0)               // original line 2 - load Ness current position, grounded (0) or air (1)
+        lw      t9, 0x14C(v0)               // original line 2 - load current position, grounded (0) or air (1)
         
         _end:
         lw      t1, 0x0004(sp)              // ~
         lw      t2, 0x0008(sp)              // load t0, t1
         addiu   sp, sp, 0x0010              // deallocate stack space
-        j       _return                     // return
+        jr      ra                          // return
         nop
     }    
 
@@ -185,17 +203,28 @@ scope Lucas {
         swc1    f18, 0x0030(sp)             // original line 2
         
         addiu   sp, sp,-0x0010              // allocate stack space
-        sw      t1, 0x0004(sp)              // store t2, t1
-        sw      t2, 0x0008(sp)              // store t2, t1
-        lw      t1, 0x0078(v0)              // load player struct from projectile struct as placed in previously by pkfire1pointer
-        lw      t1, 0x0008(t1)              // load character ID
+        sw      t1, 0x0004(sp)              // store registers
+        sw      t2, 0x0008(sp)              // ~
+        sw      t3, 0x000C(sp)              // ~
+
+        lw      t3, 0x0078(v0)              // load player struct from projectile struct as placed in previously by pkfire1pointer
+        lw      t1, 0x0008(t3)              // load character ID
+
+        lli     t2, Character.id.KIRBY      // t2 = id.KIRBY
+        beql    t1, t2, pc() + 8            // if Kirby, get held power character_id
+        lw      t1, 0x0ADC(t3)              // t1 = character id of copied power
+        lli     t2, Character.id.JKIRBY     // t2 = id.JKIRBY
+        beql    t1, t2, pc() + 8            // if J Kirby, get held power character_id
+        lw      t1, 0x0ADC(t3)              // t1 = character id of copied power
+
         ori     t2, r0, Character.id.LUCAS  // t1 = id.JNESS
         beq     t1, t2, lucas_explosion_
         nop
        
         _end:
         lw      t1, 0x0004(sp)              // ~
-        lw      t2, 0x0008(sp)              // load t0, t1
+        lw      t2, 0x0008(sp)              // ~
+        lw      t3, 0x000C(sp)              // restore registers
         addiu   sp, sp, 0x0010              // deallocate stack space
         jal     0x80185824                  // original line 1 - modified
         nop
@@ -205,7 +234,8 @@ scope Lucas {
         lucas_explosion_:
         addiu   a0, a1, 0x0000
         lw      t1, 0x0004(sp)              // ~
-        lw      t2, 0x0008(sp)              // load t0, t1
+        lw      t2, 0x0008(sp)              // ~
+        lw      t3, 0x000C(sp)              // restore registers
         addiu   sp, sp, 0x0010              // deallocate stack space
         jal     0x80100480                  // jump to explosion process
         nop

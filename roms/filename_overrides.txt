@@ -129,11 +129,10 @@
 08C2 Mad Monster Mansion Header
 08C3 Mad Monster Mansion Stage
 08C4 Mad Monster Mansion BG
-08C5 Super Mario Bros BF Header
-08C6 Super Mario Bros BF Stage
-08C7 Super Mario Bros O Header
-08C8 Super Mario Bros O Stage
-08C8 Super Mario Bros O Stage
+08C5 Mushroom Kingdom DL Header
+08C6 Mushroom Kingdom DL Stage
+08C7 Mushroom Kingdom O Header
+08C8 Mushroom Kingdom O Stage
 08C9 Young Link's Up Smash
 08CA Bowser's Stadium Header
 08CB Bowser's Stadium Stage
@@ -586,6 +585,148 @@
 0A8A Bowser's Keep Header
 0A8B Bowser's Keep 
 0A8C Bowser's Keep BG
+0A8D Kirby Custom Hats
+0A8E Kirby Wario Neutral Special Ground
+0A8F Kirby Wario Neutral Special Air
+0A90 Kirby Wario Neutral Special Recoil
+0A91 Kirby Falco Neutral Special Ground
+0A92 Kirby Falco Neutral Special Air
+0A93 Kirby Lucas Neutral Special Ground
+0A94 Kirby Lucas Neutral Special Air
+0A95 Kirby Bowser Neutral Special
+0A96 Custom Items
+0A97 EMPTY - REPLACE
+0A98 Piano Main
+0A99 Piano Character
+0A9A Piano Shield Pose
+0A9B Piano Projectile Hitbox
+0A9C Piano Projectile Graphic
+0A9D Piano Idle
+0A9E Piano Dash
+0A9F Piano Run
+0AA0 Piano Walk
+0AA1 Piano Turn
+0AA2 Piano Crouch Begin
+0AA3 Piano Crouch Idle
+0AA4 Piano Crouch End
+0AA5 Piano Run Brake
+0AA6 Piano Run Turn
+0AA7 Piano Jump F
+0AA8 Piano Jump B
+0AA9 Piano Jump Aerial F
+0AAA Piano Jump Aerial B
+0AAB Piano Fall
+0AAC Piano Fall Aerial
+0AAD Piano Landing
+0AAE Piano Forward Tilt
+0AAF Piano Forward Smash/Dash Attack
+0AB0 Piano Jab
+0AB1 Piano Up Tilt
+0AB2 Piano Down Tilt
+0AB3 Piano Up Smash
+0AB4 Piano Down Smash
+0AB5 Piano Neutral Aerial
+0AB6 Piano Forward Aerial
+0AB7 Piano Back Aerial
+0AB8 Piano Up Aerial
+0AB9 Piano Down Aerial
+0ABA Piano Up Special
+0ABB Piano Fall Special
+0ABC Piano Platform Drop
+0ABD Piano Teeter
+0ABE Piano Teeter Start
+0ABF Piano Damage 1
+0AC0 Piano Damage 2
+0AC1 Piano Damage 3
+0AC2 Piano Damage Electric
+0AC3 Piano Damage Fly
+0AC4 Piano Damage Fly Top
+0AC5 Piano Damage Fly Roll
+0AC6 Piano Tumble
+0AC7 Piano Pipe Enter
+0AC8 Piano Pipe Exit
+0AC9 Piano Pipe Exit Walk
+0ACA Piano Ceiling Bonk
+0ACB Piano Down Bounce D
+0ACC Piano Down Stand D
+0ACD Piano Down Forward D
+0ACE Piano Down Back D
+0ACF Piano Down Attack D
+0AD0 Piano Down Bounce U
+0AD1 Piano Down Stand U
+0AD2 Piano Down Forward U
+0AD3 Piano Down Back U
+0AD4 Piano Down Attack U
+0AD5 Piano Tech Forward
+0AD6 Piano Tech Back
+0AD7 Piano Tech
+0AD8 Piano Unknown 053
+0AD9 Piano Cliff Catch
+0ADA Piano Cliff Wait
+0ADB Piano Cliff Quick
+0ADC Piano Cliff Climb Quick 1
+0ADD Piano Cliff Climb Quick 2
+0ADE Piano Cliff Attack Quick 2
+0ADF Piano Cliff Escape Quick 2
+0AE0 Piano Cliff Slow
+0AE1 Piano Cliff Climb Slow 1
+0AE2 Piano Cliff Climb Slow 2
+0AE3 Piano Cliff Attack Slow 1
+0AE4 Piano Cliff Attack Slow 2
+0AE5 Piano Cliff Escape Slow 1
+0AE6 Piano Cliff Escape Slow 2
+0AE7 Piano Light Item Pickup
+0AE8 Piano Item Drop
+0AE9 Piano Item Throw F
+0AEA Piano Item Throw U
+0AEB Piano Item Throw D
+0AEC Piano Item Throw Air U
+0AED Piano Item Throw Air D
+0AEE Piano Heavy Item Pickup
+0AEF Piano Heavy Item Throw
+0AF0 Piano Item Neutral
+0AF1 Piano Item Tilt
+0AF2 Piano Item Smash
+0AF3 Piano Item Dash
+0AF4 Piano Ray Gun Shoot
+0AF5 Piano Hammer
+0AF6 Piano Shield On
+0AF7 Piano Shield Off
+0AF8 Piano Roll F
+0AF9 Piano Roll B
+0AFA Piano Stun
+0AFB Piano Grab
+0AFC Piano Grab Pull
+0AFD Piano Throw F
+0AFE Piano Throw B
+0AFF Piano Capture Pulled
+0B00 Piano Thrown DK Pulled
+0B01 Piano Thrown DK
+0B02 Piano Thrown Mario Bros
+0B03 Piano Thrown 1
+0B04 Piano Thrown 2
+0B05 Piano Item Throw Dash
+0B06 Piano Taunt
+0B07 Piano DSP Begin Ground
+0B08 Piano DSP Begin Air
+0B09 Piano DSP Wait
+0B0A Piano DSP Absorb
+0B0B Piano DSP End Ground
+0B0C Piano DSP End Air
+0B0D Piano DSP Throw Ground
+0B0E Piano DSP Throw Air
+0B0F Piano NSP Ground
+0B10 Piano NSP Air
+0B11 Piano Entry R
+0B12 Piano Entry L
+0B13 Piano Victory 1
+0B14 Piano Victory 2
+0B15 Piano Select Pose
+0B16 Kirby Piano Neutral Special Ground
+0B17 Kirby Piano Neutral Special Air
+0B18 Piano Pose 1P
+0B19 Piano Continue Fall
+0B1A Piano Continue Up
 
 0611 CAPTAIN DeadU
 0611 CAPTAIN ScreenKO

@@ -2112,6 +2112,9 @@ scope TwelveCharBattle {
         lw      a1, 0x0000(t1)              // a1 = stock icon footer address
 
         lli     t1, 0x0205                  // t1 = render flags to disable display
+        lli     t2, Character.variant_type.SPECIAL
+        beql    t0, t2, _add_indicator      // if a special character, then turn off display (we add custom portraits)
+        sw      t1, 0x0010(sp)              // store render flags
         beqzl   t0, _add_indicator          // if not a variant, then turn off display
         sw      t1, 0x0010(sp)              // store render flags
 
@@ -2377,6 +2380,9 @@ scope TwelveCharBattle {
         sw      t1, 0x0044(t4)              // update portrait image footer pointer
         jal     update_portrait_variant_indicator_
         or      a0, r0, t0                  // a0 = portrait object struct
+        lw      t1, 0x0030(t0)              // t1 = portrait_id
+        sltiu   t4, t1, NUM_SLOTS - 1       // t4 = 1 if we should continue looping
+        beqz    t4, _end                    // if we've hit our last portrait_id, then stop looping
         lw      t0, 0x0020(t0)              // t0 = next portrait object
         b       _loop                       // loop while there are still more portraits
         nop
@@ -2870,6 +2876,7 @@ scope TwelveCharBattle {
     add_defeat_parameters(0x3E8,                        defeated_moveset,           0)          // 0x33 - ESAMUS
     add_defeat_parameters(File.BOWSER_DOWN_STAND_U,     defeated_moveset_yoshi,     0)          // 0x34 - BOWSER
     add_defeat_parameters(File.BOWSER_DOWN_STAND_U,     defeated_moveset_yoshi,     0)          // 0x35 - GBOWSER
+    add_defeat_parameters(File.PIANO_DOWN_STND_U,       defeated_moveset_mario,     0)          // 0x36 - PIANO
 
     // @ Description
     // This prevents picking up the token of a character with stocks remaining after a match.
@@ -3799,6 +3806,9 @@ scope TwelveCharBattle {
         li      t0, config.status
         lw      t0, 0x0000(t0)              // t0 = battle status
         bnez    t0, _end                    // if not NOT_STARTED, skip
+        nop
+        andi    t1, t8, Joypad.A | Joypad.CU | Joypad.CD | Joypad.CL | Joypad.CR // check if A or any C button pressed
+        bnez    t1, _end                    // if A or any C button pressed this frame, skip cycling portrait since it will get selected
         nop
 
         li      t0, config.p1.character_set

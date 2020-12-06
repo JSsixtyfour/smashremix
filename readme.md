@@ -35,7 +35,7 @@ Computer controlled players have recieved a variety of improvements.
 #### Toggle Names: _VS Mode Combo Meter_, _1v1 Combo Meter Swap_
 
 ### Expanded Character Select Screen
-- The character select screen is now expanded 24 slots including 7 custom characters.
+- The character select screen is now expanded to 24 slots including 8 custom characters.
 - Metal Mario, Giant DK, and polygon versions of the original cast are available via d-pad up or down.
 - Japanese versions of the original cast are available via d-pad left.
 - European versions of some of the original cast are available via d-pad right.
@@ -83,6 +83,18 @@ Computer controlled players have recieved a variety of improvements.
 - Features 3 preset character sets (Default, Japanese, Remix) and allows for a custom character set per player.
 - Best character for each player is tracked as the number of TKOs the opposing player experiences against your character.
 - Only ports 1 and 2 work with this mode.
+
+### Additional Items
+ - New items available in training mode and in VS mode.
+ - VS Mode Item Switch expanded to allowing toggling new items.
+#### Cloaking Device
+ - Renders the player invisible and impervious to damage for 10 seconds.
+#### Super Mushroom 
+ - Player grows into giant form with added passive armor while dealing higher damage.
+ - Lasts 10 seconds. 
+#### Poison Mushroom 
+ - Player shrinks into tiny form and deals less damage.
+ - Lasts 10 seconds. 
 
 ## Customization
 ### Costume Selection Improvements
@@ -148,10 +160,10 @@ Use the toggle or cycle using D-Pad down in Training Mode.
 ### Crash Debugger
 - When a game crash occurs, attempts to display a screen with detailed information on what went wrong.
 
-### Disable Cinematic Camera
-- Disables the cinematic camera zooms which occasionally occur at the start of a versus match.
+### Cinematic Camera
+- Controls the cinematic camera zooms which occasionally occur at the start of a versus match.
 
-#### Toggle Name: _Disable Cinematic Camera_
+#### Toggle Name: _Cinematic Camera_
 
 ### Idle Timeouts Disabled
 - Remaining idle on various menu screen for 5 minutes no longer results in returning to the START screen.
@@ -238,6 +250,11 @@ Use the toggle or cycle using D-Pad down in Training Mode.
 
 #### Toggle Name: _Japanese Shield Stun_
 
+### Japanese Whispy
+- Use the Japanese version's wind speed for Whispy.
+
+#### Toggle Name: _Japanese Whispy_
+
 ## Single Player
 ### Bonus 3 (Race to the Finish)
 - Record best times for completing the RTTF stage using all characters just like for Bonus 1 and Bonus 2.
@@ -256,7 +273,7 @@ Use the toggle or cycle using D-Pad down in Training Mode.
 Toggle                     | Community          | Tournament        | Japanese
 ---------------------------|--------------------|-------------------|-------------------
 Color Overlays             | Off                | Off               | Off
-Disable Cinematic Camera   | Off                | Off               | Off
+Cinematic Camera           | Default            | Default           | Default
 Flash On Z-Cancel          | Off                | Off               | Off
 FPS Display *BETA          | Off                | Off               | Off
 Special Model Display      | Off                | Off               | Off
@@ -292,6 +309,7 @@ Toggle                          | Community          | Tournament        | Japan
 --------------------------------|--------------------|-------------------|-------------------
 Stage Select Layout             | NORMAL             | TOURNAMENT        | NORMAL
 Hazard Mode                     | Off                | Off               | Off
+Japanese Whispy                 | Off                | Off               | On
 _Random Toggles for All Stages_ | On                 | Off*              | On
 
 \* These stages are set to on in the Tournament profile:

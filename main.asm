@@ -40,6 +40,7 @@ include "src/GameEnd.asm"
 include "src/Global.asm"
 include "src/Hazards.asm"
 include "src/Hitbox.asm"
+include "src/Item.asm"
 include "src/Joypad.asm"
 include "src/Menu.asm"
 include "src/Pause.asm"
@@ -62,6 +63,8 @@ include "src/Skeleton.asm"
 include "src/Surface.asm"
 include "src/Multiman.asm"
 include "src/TwelveCharBattle.asm"
+include "src/Size.asm"
+include "src/CharEnvColor.asm"
 // CHARACTER
 include "src/Character.asm"
 include "src/CharacterSelect.asm"
@@ -117,8 +120,6 @@ include "src/EPika/EPika.asm"
 include "src/JPuff/JPuff.asm"
 // EPUFF
 include "src/EPuff/EPuff.asm"
-// JKIRBY
-include "src/JKirby/JKirby.asm"
 // JYOSHI
 include "src/JYoshi/JYoshi.asm"
 // JPIKA
@@ -130,7 +131,15 @@ include "src/Bowser/BowserSpecial.asm"
 include "src/Bowser/Bowser.asm"
 // GBOWSER
 include "src/GBowser/GBowser.asm"
+// PIANO
+include "src/Piano/PianoSpecial.asm"
+include "src/Piano/Piano.asm"
 
+// KIRBY
+include "src/Kirby/Kirby.asm"
+include "src/KirbyHats.asm"
+// JKIRBY
+include "src/JKirby/JKirby.asm"
 
 // MIDI
 include "src/MIDI.asm"

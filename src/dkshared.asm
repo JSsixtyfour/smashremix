@@ -12,7 +12,7 @@ scope DKShared {
         _return:
         OS.patch_end()
         
-        beq     v0, at, _dkcargo_jump_1       // modified original line 1
+        beq     v0, at, _dkcargo_jump_1     // modified original line 1
         addiu   at, r0, Character.id.JDK    // JDK ID
         beq     v0, at, _dkcargo_jump_1
         nop
@@ -32,7 +32,7 @@ scope DKShared {
         _return:
         OS.patch_end()
         
-        beq     v0, at, _dkcargo_jump_2       // modified original line 1
+        beq     v0, at, _dkcargo_jump_2     // modified original line 1
         addiu   at, r0, Character.id.JDK    // JDK ID
         beq     v0, at, _dkcargo_jump_2
         nop
@@ -52,7 +52,7 @@ scope DKShared {
         _return:
         OS.patch_end()
         
-        beq     v0, at, _item_jump_1       // modified original line 1
+        beq     v0, at, _item_jump_1        // modified original line 1
         addiu   at, r0, Character.id.JDK    // JDK ID
         beq     v0, at, _item_jump_1
         nop
@@ -72,7 +72,7 @@ scope DKShared {
         _return:
         OS.patch_end()
         
-        beq     v0, at, _item_jump_2       // modified original line 1
+        beq     v0, at, _item_jump_2        // modified original line 1
         addiu   at, r0, Character.id.JDK    // JDK ID
         beq     v0, at, _item_jump_2
         nop
@@ -92,7 +92,7 @@ scope DKShared {
         _return:
         OS.patch_end()
         
-        beq     v0, at, _item_jump_3       // modified original line 1
+        beq     v0, at, _item_jump_3        // modified original line 1
         addiu   at, r0, Character.id.JDK    // JDK ID
         beq     v0, at, _item_jump_3
         nop
@@ -112,7 +112,7 @@ scope DKShared {
         _return:
         OS.patch_end()
         
-        beq     v0, at, _item_jump_4       // modified original line 1
+        beq     v0, at, _item_jump_4        // modified original line 1
         addiu   at, r0, Character.id.JDK    // JDK ID
         beq     v0, at, _item_jump_4
         nop
@@ -132,7 +132,7 @@ scope DKShared {
         _return:
         OS.patch_end()
         
-        beq     v0, at, _item_jump_5       // modified original line 1
+        beq     v0, at, _item_jump_5        // modified original line 1
         addiu   at, r0, Character.id.JDK    // JDK ID
         beq     v0, at, _item_jump_5
         nop
@@ -152,7 +152,7 @@ scope DKShared {
         _return:
         OS.patch_end()
         
-        beq     v0, at, _item_jump_6       // modified original line 1
+        beq     v0, at, _item_jump_6        // modified original line 1
         addiu   at, r0, Character.id.JDK    // JDK ID
         beq     v0, at, _item_jump_6
         nop
@@ -163,5 +163,70 @@ scope DKShared {
         j       0x80140DDC
         addiu   at, r0, 0x0010              // original line 2
     }
-    
+
+    // @ Description
+    // Extends a check on ID that occurs when fully charged.
+    scope fully_charged_check_: {
+        OS.patch_start(0x66410, 0x800EAC10)
+        jal     fully_charged_check_
+        nop
+        OS.patch_end()
+
+        beq     v0, at, j_0x800EAC64        // original line 1, modified to use jump
+        lli     at, Character.id.JDK        // at = JDK
+        beq     v0, at, j_0x800EAC64        // if JDK, take DK branch
+        nop
+
+        jr      ra
+        addiu   at, r0, 0x0003              // original line 2
+
+        j_0x800EAC64:
+        j       0x800EAC64
+        nop
     }
+    
+    // @ Description
+    // Extends check in end_overlay that allows a DK-powered Kirby to
+    // retain the charged flashing effect when fully charged.
+    scope kirby_power_check_flash_: {
+        OS.patch_start(0x65200, 0x800E9A00)
+        jal     kirby_power_check_flash_
+        nop
+        OS.patch_end()
+
+        beq     v1, at, j_0x800E9A18        // original line 1, modified to use jump
+        lli     at, Character.id.JDK        // at = JDK
+        beq     v1, at, j_0x800E9A18        // if JDK, take DK branch
+        nop
+
+        jr      ra
+        lli     at, Character.id.NDONKEY    // original line 2
+
+        j_0x800E9A18:
+        j       0x800E9A18
+        nop
+    }
+
+    // @ Description
+    // Extends a check on ID that occurs when Kirby absorbs or ejects a power.
+    scope kirby_power_change_: {
+        OS.patch_start(0xDC8FC, 0x80161EBC)
+        j       kirby_power_change_
+        nop
+        _kirby_power_change_return:
+        OS.patch_end()
+
+        beq     v0, at, j_0x80161EF0        // original line 1, modified to use jump
+        lli     at, Character.id.JDK        // at = JDK
+        beq     v0, at, j_0x80161EF0        // if JDK, take DK branch
+        nop
+
+        j       _kirby_power_change_return
+        addiu   at, r0, 0x0003              // original line 2
+
+        j_0x80161EF0:
+        j       0x80161EF0
+        nop
+    }
+
+}

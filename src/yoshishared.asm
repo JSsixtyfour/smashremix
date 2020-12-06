@@ -183,6 +183,7 @@ scope YoshiShared {
     }
     
     // Hardcoding for Yoshi Clones to execute Yoshi's throw
+    // Also used by Mad Piano.
     scope yoshi_throw_fix_1: {
         OS.patch_start(0xC5748, 0x8014AD08)
         j       yoshi_throw_fix_1                     
@@ -191,6 +192,8 @@ scope YoshiShared {
         OS.patch_end()
         
         beq     v0, at, _yoshi_throw_1             // modified original line 1 part 2
+        addiu   at, r0, Character.id.PIANO         // Piano ID
+        beq     at, v0, _yoshi_throw_1
         addiu   at, r0, Character.id.JYOSHI       // j yoshi ID
         beq     at, v0, _yoshi_throw_1
         nop

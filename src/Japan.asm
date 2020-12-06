@@ -85,7 +85,7 @@ scope Japan {
     // @ Description
     // Toggle for the Momentum Sliding Glitch present in the Japanese version.
     // A very straightforward fix was added to the international version of Smash
-    // Duing a momentum slide input it checks the current velocity of the character against character's max run speed
+    // During a momentum slide input it checks the current velocity of the character against character's max run speed
     // If current velocity is higher, then velocity is overwritten to max run speed
     // 8013F14C is where it stores the updated x velocity
     // Player's current velocity is stored at 8027E988
@@ -107,6 +107,26 @@ scope Japan {
         _end:
         j       momentum_slide_end_                          // return
         nop
+    }
+
+    // @ Description
+    // Toggle for the Dreamland wind speed multiplier to use the value in the Japanese version.
+    scope dreamland_wind_speed_multiplier_: {
+        OS.patch_start(0x81274, 0x80105A74)
+        jal     dreamland_wind_speed_multiplier_
+        lwc1    f6, 0x0AA0(at)              // original line 1 (f6 = U wind speed multiplier)
+        momentum_slide_end_:
+        OS.patch_end()
+
+        li      at, Toggles.entry_japanese_hazards
+        lw      at, 0x0004(at)              // at = 1 if we should use J wind, 0 otherwise
+        beqz    at, _end                    // if toggle not turned on, then use U value
+        li      at, 0x399D4952              // note this is in delay slot
+        mtc1    at, f6                      // f6 = J wind speed multiplier
+
+        _end:
+        jr      ra
+        mul.s   f8, f2, f6                  // original line 2
     }
 
     // @ Description

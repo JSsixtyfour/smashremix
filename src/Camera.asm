@@ -16,21 +16,29 @@ include "OS.asm"
 scope Camera {
 
     // @ Description
-    // This replaces a call to Global.get_random_int. Usually, when 0 is returned, the cinematic entry
-    // does not play. Here, v0 is always set to 0. 
-    scope disable_cinematic_: {
+    // This catches a call to Global.get_random_int and sets the result depending on the cinematic entry toggle value.
+    scope cinematic_entry_: {
         OS.patch_start(0x0008E250, 0x80112A50)
-        j       disable_cinematic_
+        j       cinematic_entry_
         nop
-        _disable_cinematic_return:
+        _cinematic_entry_return:
         OS.patch_end()
 
         jal     Global.get_random_int_      // original line 1
         lli     a0, 0x0003                  // original line 2
-        Toggles.guard(Toggles.entry_disable_cinematic_camera, _disable_cinematic_return)
 
-        lli     v0, OS.FALSE                // v0 = not cinematic camera
-        j       _disable_cinematic_return   // return
+        li      a0, Toggles.entry_cinematic_entry
+        lw      a0, 0x0004(a0)              // a0 = 1 if always, 2 if never, 0 if default
+        beqz    a0, _return                 // if set to default, use v0 returned from get_random_int_
+        addiu   a0, a0, -0x0001             // a0 = 0 if always, 1 if never
+        beqzl   a0, _return                 // if set to always, set v0 to 2
+        lli     v0, 0x0002                  // force cinematic entry
+
+        // otherwise, it's set to never
+        lli     v0, 0x0000                  // force no cinematic entry
+
+        _return:
+        j       _cinematic_entry_return     // return
         nop
 
     }

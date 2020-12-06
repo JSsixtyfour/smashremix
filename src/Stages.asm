@@ -9,6 +9,7 @@ print "included Stages.asm\n"
 include "Color.asm"
 include "FGM.asm"
 include "Global.asm"
+include "Item.asm"
 include "OS.asm"
 include "String.asm"
 
@@ -1157,12 +1158,20 @@ scope Stages {
 
         // update the hazards/movement on/off text
         _hazard_text:
+        li      t0, Toggles.entry_japanese_hazards
+        lw      t1, 0x0004(t0)              // t1 = 1 if J hazards
+
+        li      a0, hazards_onoff           // a0 = pointer to string
+        li      a2, string_on_j             // a2 = string on J
+        bnez    t1, _check_hazards_on_off   // if in J hazard mode, use current a2
+        nop
+        li      a2, string_on               // a2 = string on
+
+        _check_hazards_on_off:
         li      t0, Toggles.entry_hazard_mode
         lw      t1, 0x0004(t0)              // t1 = hazard_mode
 
-        li      a0, hazards_onoff           // a0 = pointer to string
         andi    t0, t1, 0x0001              // t0 = 1 if hazard_mode is 1 or 3, 0 otherwise
-        li      a2, string_on               // a2 = string on
         beqz    t0, _update_hazards_on_off  // if hazards on, use current a2
         nop
         li      a2, string_off              // a2 = string off
@@ -1214,6 +1223,7 @@ scope Stages {
         nop
 
         string_on:;  String.insert("On")
+        string_on_j:;  String.insert("On (J)")
         string_off:;  String.insert("Off")
 
         layout_NORMAL:; String.insert("Def.")
@@ -1672,9 +1682,8 @@ scope Stages {
     // Macro to (maybe) add a stage to the random list.
     macro add_to_list(entry, stage_id) {
         li      a0, {entry}                 // a0 - address of entry
-        lli     a1, {stage_id}              // a1 - stage id to add
         jal     add_stage_to_random_list_   // add stage
-        nop
+        lli     a1, {stage_id}              // a1 - stage id to add
     }
     
     // @ Description
@@ -1760,6 +1769,67 @@ scope Stages {
     OS.patch_start(0x14D690, 0x80131B20)
     li      s2, class_table             // start of stage_file_table
     OS.patch_end()
+
+    // @ Description
+    // This allows us to use background animation in custom stages
+    scope bg_animation_: {
+        // replace an ID check with our own custom check on stage class
+        OS.patch_start(0x922E4, 0x80116AE4)
+        jal     bg_animation_._id_check
+        lui     t7, 0x800A                  // original line 1
+        OS.patch_end()
+
+        // use new table
+        OS.patch_start(0x922FC, 0x80116AFC)
+        beq     t7, at, 0x80116BC0          // original line 2
+        sll     t8, v0, 0x0002              // original line 1 (modified)
+        jal     bg_animation_._pointer_check
+        nop
+        nop
+        OS.patch_end()
+
+        // use new table
+        OS.patch_start(0x9237C, 0x80116B7C)
+        li      a0, table                   // original lines 1/2 (modified)
+        lbu     t2, 0x0001(v1)              // original line 3
+        lui     t5, 0x8013                  // original line 4
+        sll     t3, t2, 0x0002              // t3 = offset to bg animation info array pointer
+        addu    t4, a0, t3                  // original line 5
+        lw      t4, 0x0000(t4)              // t4 = bg animation info array pointer
+        sw      t4, 0x0018(a1)              // original line 6
+        lw      t5, 0x1300(t5)              // original line 8
+        or      t9, t4, r0                  // t9 = bg animation info array pointer
+        nop
+        OS.patch_end()
+
+        _id_check:
+        // Originally, it checked if stage_id < 9.
+        // We will check our custom table for a nonzero value.
+        // v0 = stage_id
+        li      at, table                   // at = table
+        sll     t8, v0, 0x0002              // t8 = offset to bg animation info array pointer
+        addu    at, at, t8                  // at = address of bg animation info array pointer
+        jr      ra
+        lw      at, 0x0000(at)              // at = bg animation info array pointer (or 0 if none)
+
+        _pointer_check:
+        li      t9, table                   // t9 = table
+        addu    t9, t9, t8                  // t9 = address of bg animation info array pointer
+        lw      t9, 0x0000(t9)              // at = bg animation info array pointer (not 0 if here)
+        jr      ra
+        lw      t9, 0x0004(t9)              // t9 = 1st pointer in array
+
+        // holds pointers to the bg animation info arrays for each stage
+        table:
+        constant TABLE_ORIGIN(origin())
+        // the first 8 stages are located starting at 0x8012F840
+        define n(0)
+        while ({n} < 8) {
+            dw 0x8012F840 + ({n} * 0x10)
+            evaluate n({n} + 1)
+        }
+        fill 0x4 * (id.MAX_STAGE_ID - 7)
+    }
 
     // @ Description
     // Sets up custom display
@@ -2084,7 +2154,7 @@ scope Stages {
     dw function.CONGO_JUNGLE                // Onett
     dw function.CLONE                       // Zebes Landing
     dw function.CLONE                       // Frosty Village
-    dw function.PEACHS_CASTLE               // Smashville
+    dw function.CONGO_JUNGLE                // Smashville
     dw OS.NULL                              // Dr. Mario Break the Targets
     dw OS.NULL                              // Ganondorf Break the Targets
     dw OS.NULL                              // Young Link Break the Targets
@@ -2298,13 +2368,13 @@ scope Stages {
     dw 0x00000000
 
     zoom_table:
-    float32 0.4                         // Peach's Castle
+    float32 0.5                         // Peach's Castle
     float32 0.2                         // Sector Z
-    float32 0.5                         // Congo Jungle
-    float32 0.4                         // Planet Zebes
+    float32 0.6                         // Congo Jungle
+    float32 0.5                         // Planet Zebes
     float32 0.3                         // Hyrule Castle
-    float32 0.5                         // Yoshi's Island
-    float32 0.4                         // Dream Land
+    float32 0.6                         // Yoshi's Island
+    float32 0.5                         // Dream Land
     float32 0.4                         // Saffron City
     float32 0.2                         // Mushroom Kingdom
     float32 0.5                         // Dream Land Beta 1
@@ -2363,7 +2433,7 @@ scope Stages {
     float32 0.5                         // N64
     float32 0.5                         // Mute City
     float32 0.5                         // Mad Monster Mansion
-    float32 0.5                         // Mushroom Kingdom BF
+    float32 0.5                         // Mushroom Kingdom DL
     float32 0.5                         // Mushroom Kingdom Omega
     float32 0.5                         // Bowser's Stadium
     float32 0.5                         // Peach's Castle II
@@ -2401,25 +2471,25 @@ scope Stages {
 	float32 0.5                         // Young Link Board the Platforms
 	float32 0.5                         // Falco Board the Platforms
 	float32 0.5                         // Lucas Board the Platforms
-	float32 0.4                         // Hyrule Castle DL
-	float32 0.4                         // Hyrule Castle Omega
-	float32 0.4                         // Congo Jungle DL
-	float32 0.4                         // Congo Jungle Omega
-	float32 0.4                         // Peach's Castle DL
-	float32 0.4                         // Peach's Castle Omega
+	float32 0.5                         // Hyrule Castle DL
+	float32 0.5                         // Hyrule Castle Omega
+	float32 0.5                         // Congo Jungle DL
+	float32 0.5                         // Congo Jungle Omega
+	float32 0.5                         // Peach's Castle DL
+	float32 0.5                         // Peach's Castle Omega
     float32 0.5                         // Wario Board the Platforms
-    float32 0.4                         // Fray's Stage - Night
+    float32 0.5                         // Fray's Stage - Night
 	float32 0.5                         // Goomba Road
 	float32 0.5                         // Lucas Board the Platforms
-	float32 0.4                         // Sector Z Dream Land
-	float32 0.4                         // Saffron City Dream Land
-	float32 0.4                         // Yoshi's Island Dreamland
-	float32 0.4                         // Planet Zebes Dreamland
-	float32 0.4                         // Sector Z Omega
-	float32 0.4                         // Saffron City Omega
-	float32 0.4                         // Yoshi's Island Omega
-	float32 0.4                         // Dream Land Omega
-	float32 0.4                         // Planet Zebes Omega
+	float32 0.5                         // Sector Z Dream Land
+	float32 0.5                         // Saffron City Dream Land
+	float32 0.5                         // Yoshi's Island Dreamland
+	float32 0.5                         // Planet Zebes Dreamland
+	float32 0.5                         // Sector Z Omega
+	float32 0.5                         // Saffron City Omega
+	float32 0.5                         // Yoshi's Island Omega
+	float32 0.5                         // Dream Land Omega
+	float32 0.5                         // Planet Zebes Omega
 	float32 0.5                         // Bowser Break the Targets
 	float32 0.5                         // Bowser Board the Platforms
 	float32 0.5                         // Bowser's Keep
@@ -2630,7 +2700,7 @@ scope Stages {
     dw header.ONETT,                  type.CONGO_JUNGLE
     dw header.ZLANDING,               type.CLONE
     dw header.FROSTY,                 type.CLONE
-    dw header.SMASHVILLE2,            type.PEACHS_CASTLE
+    dw header.SMASHVILLE2,            type.CONGO_JUNGLE
     dw header.BTT_DRM,                type.BTT
     dw header.BTT_GND,                type.BTT
     dw header.BTT_YL,			      type.BTT
@@ -2857,7 +2927,33 @@ scope Stages {
     constant variant_table_origin(origin())
     fill 4 * (id.MAX_STAGE_ID + 1), 0xFF
 
+    // @ Description
+    // Holds custom item spawn rate weights for each stage.
+    // The spawn rates are bytes and in order for each stage.
+    custom_item_spawn_rate_table:
+    constant custom_item_spawn_rate_table_origin(origin())
+    fill Item.NUM_ITEMS * (id.MAX_STAGE_ID + 1)
+    OS.align(4)
+
     variable new_stages(0)
+
+    // @ Description
+    // Updates the custom_item_spawn_rate_table
+    // @ Arguments:
+    // stage_id - stage ID
+    // cloaking_device_rate - rate for Cloaking Device item
+    // super_mushroom_rate - rate for Super Mushroom item
+    // poison_mushroom_rate - rate for Poison Mushroom item
+    macro set_custom_item_spawn_rate(stage_id, cloaking_device_rate, super_mushroom_rate, poison_mushroom_rate) {
+        pushvar origin, base
+
+        origin custom_item_spawn_rate_table_origin + ({stage_id} * Item.NUM_ITEMS)
+        db     {cloaking_device_rate}
+        db     {super_mushroom_rate}
+        db     {poison_mushroom_rate}
+
+        pullvar base, origin
+    }
 
     // @ Description
     // Adds a custom stage
@@ -2875,7 +2971,10 @@ scope Stages {
     // btx_word_3 - third BTT related word in table 0x113604
     // variant_for_stage_id - If this stage is meant to be a variant, then this variable holds the stage_id this stage is a variant of
     // variant_type - stage variant type (see variant_type scope)
-    macro add_stage(name, display_name, bgm_occasional, bgm_rare, tournament_legal, can_toggle, class, btx_word_1, btx_word_2, btx_word_3, variant_for_stage_id, variant_type) {
+    // cloaking_device_rate - weight given to spawning the cloaking device custom item
+    // super_mushroom_rate - weight given to spawning the super mushroom custom item
+    // poison_mushroom_rate - weight given to spawning the poison mushroom custom item
+    macro add_stage(name, display_name, bgm_occasional, bgm_rare, tournament_legal, can_toggle, class, btx_word_1, btx_word_2, btx_word_3, variant_for_stage_id, variant_type, cloaking_device_rate, super_mushroom_rate, poison_mushroom_rate) {
         global variable new_stages(new_stages + 1)
         evaluate new_stage_id(0x28 + new_stages)
         global define STAGE_{new_stage_id}_TITLE({display_name})
@@ -2927,96 +3026,206 @@ scope Stages {
             db     {new_stage_id}
         }
 
+        // update item spawn rate table
+        set_custom_item_spawn_rate({new_stage_id}, {cloaking_device_rate}, {super_mushroom_rate}, {poison_mushroom_rate})
+
         pullvar base, origin
     }
+
+    // @ Description
+    // Helper for adding arrays that define bg sprite behavior.
+    // Used inside stage definition files.
+    // @ Arguments
+    // sprite_id - 0-based index of sprite to use
+    // spawn_multiple - if OS.TRUE, there is a chance it will spawn multiple sprites sometimes
+    // direction - 1 = enter left, exit right; -1 = enter right, exit left; 0 = random
+    // weight - Affects likelihood of this sprite info array being picked at random... chance = weight / sum of all weights
+    macro add_sprite_info_array(sprite_id, spawn_multiple, direction, weight) {
+        dh {sprite_id}
+        dh {spawn_multiple}
+        dw {direction}
+        db {weight}; db 0x0; db 0x0; db 0x0
+    }
+
+    // @ Description
+    // Holds info needed to render custom background animations
+    scope bg_info {
+        scope SMASHVILLE2 {
+            include "/stages/smashville.asm"
+        }
+        scope PCASTLE_DL {
+            include "/stages/pcastle_dl.asm"
+        }
+        scope PCASTLE_O {
+            include "/stages/pcastle_o.asm"
+        }
+        scope CONGOJ_DL {
+            include "/stages/congoj_dl.asm"
+        }
+        scope CONGOJ_O {
+            include "/stages/congoj_o.asm"
+        }
+        scope ZEBES_DL {
+            include "/stages/zebes_dl.asm"
+        }
+        scope ZEBES_O {
+            include "/stages/zebes_o.asm"
+        }
+        scope SECTOR_Z_DL {
+            include "/stages/sector_z_dl.asm"
+        }
+        scope SECTOR_Z_O {
+            include "/stages/sector_z_o.asm"
+        }
+        scope DREAM_LAND_O {
+            include "/stages/dream_land_o.asm"
+        }
+        scope YOSHI_ISLAND_DL {
+            include "/stages/yoshi_island_dl.asm"
+        }
+        scope YOSHI_ISLAND_O {
+            include "/stages/yoshi_island_o.asm"
+        }
+    }
+
+    // @ Description
+    // Adds custom stage background animation to added levels
+    // @ Arguments
+    // stage - name of stage (see id scope)
+    macro add_bg_animation(stage) {
+        evaluate stg_id(id.{stage})
+
+        // update our bg_animation_ table to point to a new bg info struct
+        pushvar origin, base
+        origin bg_animation_.TABLE_ORIGIN + (0x4 * {stg_id})
+        dw bg_info_{stg_id}
+        pullvar base, origin
+
+        // create custom bg info struct
+        bg_info_{stg_id}:
+        db bg_info.{stage}.NUM_SPRITE_INFO_ARRAYS; db 0; db 0; db 0
+        dw bg_info.{stage}.sprite_info_arrays
+        dw bg_info.{stage}.STAGE_FILE_OFFSET
+        dw bg_info.{stage}.sprite_data
+    }
+
+    // Update custom item spawn rates for original stages
+    set_custom_item_spawn_rate(id.PEACHS_CASTLE, 0x05, 0x05, 0x05)
+    set_custom_item_spawn_rate(id.SECTOR_Z, 0x05, 0x05, 0x05)
+    set_custom_item_spawn_rate(id.CONGO_JUNGLE, 0x05, 0x05, 0x05)
+    set_custom_item_spawn_rate(id.PLANET_ZEBES, 0x05, 0x05, 0x05)
+    set_custom_item_spawn_rate(id.HYRULE_CASTLE, 0x05, 0x05, 0x05)
+    set_custom_item_spawn_rate(id.YOSHIS_ISLAND, 0x05, 0x05, 0x05)
+    set_custom_item_spawn_rate(id.DREAM_LAND, 0x05, 0x05, 0x05)
+    set_custom_item_spawn_rate(id.SAFFRON_CITY, 0x05, 0x05, 0x05)
+    set_custom_item_spawn_rate(id.MUSHROOM_KINGDOM, 0x05, 0x05, 0x05)
+    set_custom_item_spawn_rate(id.DREAM_LAND_BETA_1, 0x05, 0x05, 0x05)
+    set_custom_item_spawn_rate(id.DREAM_LAND_BETA_2, 0x05, 0x05, 0x05)
+    set_custom_item_spawn_rate(id.HOW_TO_PLAY, 0x05, 0x05, 0x05)
+    set_custom_item_spawn_rate(id.MINI_YOSHIS_ISLAND, 0x05, 0x05, 0x05)
+    set_custom_item_spawn_rate(id.META_CRYSTAL, 0x05, 0x05, 0x05)
+    set_custom_item_spawn_rate(id.DUEL_ZONE, 0x05, 0x05, 0x05)
+    set_custom_item_spawn_rate(id.FINAL_DESTINATION, 0x05, 0x05, 0x05)
 
     map 0x7E, 0x7F, 1 // temporarily make ~ be Omega
 
     // Add stages here
-    add_stage(deku_tree, "Deku Tree", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(first_destination, "First Destination", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(ganons_tower, "Ganon's Tower", {MIDI.id.GERUDO_VALLEY}, {MIDI.id.GERUDO_VALLEY}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(kalos_pokemon_league, "Kalos Pokemon League", {MIDI.id.ELITE_FOUR}, {MIDI.id.POKEMON_CHAMPION}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(pokemon_stadium_2, "Pokemon Stadium", {MIDI.id.POKEMON_CHAMPION}, {MIDI.id.PIKA_CUP}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(skyloft, "Skyloft", -1, {MIDI.id.GERUDO_VALLEY}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(glacial, "Glacial River", {MIDI.id.CLOCKTOWER}, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(warioware, "WarioWare, Inc.", {MIDI.id.STARRING_WARIO}, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(battlefield, "Battlefield", {MIDI.id.MULTIMAN}, {MIDI.id.CRUEL}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(flat_zone, "Flat Zone", {MIDI.id.FLAT_ZONE_2}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(dr_mario, "Dr. Mario", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(cool_cool_mountain, "Cool Cool Mountain", -1, {MIDI.id.WING_CAP}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(dragon_king, "Dragon King", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(great_bay, "Great Bay", {MIDI.id.ASTRAL_OBSERVATORY}, {MIDI.id.GERUDO_VALLEY}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(frays_stage, "Fray's Stage", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(toh, "Tower of Heaven", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-	add_stage(fod, "Fountain of Dreams", {MIDI.id.POP_STAR}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(muda, "Muda Kingdom", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(mementos, "Mementos", {MIDI.id.BLOOMING_VILLAIN}, {MIDI.id.ARIA_OF_THE_SOUL}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(showdown, "Showdown", {MIDI.id.FIRST_DESTINATION}, {MIDI.id.NORFAIR}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(spiralm, "Spiral Mountain", {MIDI.id.CLICKCLOCKWOODS}, {MIDI.id.MRPATCH}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(n64, "N64", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(mute, "Mute City", {MIDI.id.FIRE_FIELD}, {MIDI.id.MACHRIDER}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(madmm, "Mad Monster Mansion", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(smbbf, "Mushroom Kingdom DL", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, id.MUSHROOM_KINGDOM, variant_type.DL)
-    add_stage(smbo, "Mushroom Kingdom ~", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, id.MUSHROOM_KINGDOM, variant_type.OMEGA)
-    add_stage(bowserb, "Bowser's Stadium", {MIDI.id.BOWSERROAD}, {MIDI.id.BOWSERFINAL}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(peach2, "Peach's Castle II", {MIDI.id.PEACH_CASTLE}, {MIDI.id.METAL_CAP}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(delfino, "Delfino Plaza", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(corneria2, "Corneria", {MIDI.id.STAR_WOLF}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(kitchen, "Kitchen Island", {MIDI.id.STARRING_WARIO}, {MIDI.id.HORROR_MANOR}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(blue, "Big Blue", {MIDI.id.MACHRIDER}, {MIDI.id.MACHRIDER}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(onett, "Onett", {MIDI.id.ALL_I_NEEDED_WAS_YOU}, {MIDI.id.POLLYANNA}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(zlanding, "Zebes Landing", {MIDI.id.NORFAIR}, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(frosty, "Frosty Village", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(smashville2, "Smashville", {MIDI.id.KK_RIDER}, {MIDI.id.SMASHVILLE}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(drm_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x000056A8, 0x00005B10, 0x00005D20, -1, -1)
-    add_stage(gnd_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x00004178, 0x000045F0, 0x00004800, -1, -1)
-    add_stage(yl_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x000035D0, 0x000038A0, 0x00003AB0, -1, -1)
-    add_stage(great_bay_sss, "Great Bay", -1, -1, OS.FALSE, OS.FALSE, class.SSS_PREVIEW, -1, -1, -1, -1, -1)
-    add_stage(ds_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x00006188, 0x00006720, 0x00006930, -1, -1)
-    add_stage(stg1_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x00008B10, 0x00008FE0, 0x000091F0, -1, -1)
-    add_stage(falco_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x00004430, 0x00004930, 0x00004B40, -1, -1)
-    add_stage(wario_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x00002F90, 0x00003300, 0x00003510, -1, -1)
-    add_stage(htemple, "Hyrule Temple", {MIDI.id.TEMPLE_8BIT}, {MIDI.id.GANONDORF_BATTLE}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(lucas_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x000032D8, 0x00003650, 0x00003860, -1, -1)
-    add_stage(gnd_btp, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x00003C70, 0x00003DA8, -1, -1, -1)
-    add_stage(npc, "New Pork City", {MIDI.id.PIGGYGUYS}, {MIDI.id.UNFOUNDED_REVENGE}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-    add_stage(ds_btp, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x00003F10, 0x00003FC0, -1, -1, -1)
-    add_stage(smashketball, "Smashketball", {MIDI.id.KENGJR}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-	add_stage(drm_btp, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x00004E08, 0x00004EC0, -1, -1, -1)
-	add_stage(norfair, "Norfair", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-	add_stage(corneriacity, "Corneria City", {MIDI.id.STAR_WOLF}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-	add_stage(falls, "Congo Falls", {MIDI.id.SNAKEY_CHANTEY}, {MIDI.id.DK_RAP}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-	add_stage(osohe, "Osohe Castle", {MIDI.id.EVEN_DRIER_GUYS}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-	add_stage(yoshi_story_2, "Yoshi's Story", -1, {MIDI.id.YOSHI_GOLF}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-	add_stage(world1, "World 1-1", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-	add_stage(flat_zone_2, "Flat Zone II", {MIDI.id.FLAT_ZONE}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-	add_stage(gerudo, "Gerudo Valley", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-	add_stage(yl_btp, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x000056C0, 0x000057F8, -1, -1, -1)
-	add_stage(falco_btp, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x00004830, 0x00004968, -1, -1, -1)
-	add_stage(poly_btp, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x00004F80, 0x00005030, -1, -1, -1)
-	add_stage(hcastle_dl, "Hyrule Castle DL", {MIDI.id.TEMPLE_8BIT}, {MIDI.id.GODDESSBALLAD}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, id.HYRULE_CASTLE, variant_type.DL)
-	add_stage(hcastle_o, "Hyrule Castle ~", {MIDI.id.TEMPLE_8BIT}, {MIDI.id.GODDESSBALLAD}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, id.HYRULE_CASTLE, variant_type.OMEGA)
-	add_stage(congoj_dl, "Congo Jungle DL", {MIDI.id.KROOLS_ACID_PUNK}, {MIDI.id.SNAKEY_CHANTEY}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, id.CONGO_JUNGLE, variant_type.DL)
-	add_stage(congoj_o, "Congo Jungle ~", {MIDI.id.KROOLS_ACID_PUNK}, {MIDI.id.SNAKEY_CHANTEY}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, id.CONGO_JUNGLE, variant_type.OMEGA)
-	add_stage(pcastle_dl, "Peach's Castle DL", {MIDI.id.PEACH_CASTLE}, {MIDI.id.CASTLEWALL}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, id.PEACHS_CASTLE, variant_type.DL)
-	add_stage(pcastle_o, "Peach's Castle ~", {MIDI.id.PEACH_CASTLE}, {MIDI.id.CASTLEWALL}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, id.PEACHS_CASTLE, variant_type.OMEGA)
-    add_stage(wario_btp, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x00004570, 0x000046A8, -1, -1, -1)
-    add_stage(frays_stage_night, "Fray's Stage - Night", -1, -1, OS.FALSE, OS.FALSE, class.BATTLE, -1, -1, -1, id.FRAYS_STAGE, variant_type.DL)
-	add_stage(goomba_road, "Goomba Road", {MIDI.id.KING_OF_THE_KOOPAS}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
-	add_stage(lucas_btp2, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x00004C50, 0x00004D88, -1, -1, -1)
-	add_stage(sector_z_dl, "Sector Z DL", {MIDI.id.STAR_WOLF}, {MIDI.id.CORNERIA}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, id.SECTOR_Z, variant_type.DL)
-	add_stage(saffron_dl, "Saffron City DL", {MIDI.id.POKEMON_CHAMPION}, {MIDI.id.PIKA_CUP}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, id.SAFFRON_CITY, variant_type.DL)
-	add_stage(yoshi_island_dl, "Yoshi's Island DL", {MIDI.id.OBSTACLE}, {MIDI.id.YOSHI_GOLF}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, id.YOSHIS_ISLAND, variant_type.DL)
-	add_stage(zebes_dl, "Zebes DL", {MIDI.id.NORFAIR}, {MIDI.id.ZEBES_LANDING}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, id.PLANET_ZEBES, variant_type.DL)
-	add_stage(sector_z_o, "Sector Z ~", {MIDI.id.STAR_WOLF}, {MIDI.id.CORNERIA}, OS.TRUE, OS.FALSE, class.BATTLE, -1, -1, -1, id.SECTOR_Z, variant_type.OMEGA)
-	add_stage(saffron_o, "Saffron City ~", {MIDI.id.POKEMON_CHAMPION}, {MIDI.id.PIKA_CUP}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, id.SAFFRON_CITY, variant_type.OMEGA)
-	add_stage(yoshi_island_o, "Yoshi's Island ~", {MIDI.id.OBSTACLE}, {MIDI.id.YOSHI_GOLF}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, id.YOSHIS_ISLAND, variant_type.OMEGA)
-	add_stage(dream_land_o, "Dream Land ~", {MIDI.id.DREAMLANDBETA}, {MIDI.id.POP_STAR}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, id.DREAM_LAND, variant_type.OMEGA)
-	add_stage(zebes_O, "Zebes ~", {MIDI.id.NORFAIR}, {MIDI.id.ZEBES_LANDING}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, id.PLANET_ZEBES, variant_type.OMEGA)
-	add_stage(bowser_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x00004040, 0x000043F0, 0x00004600, -1, -1)
-	add_stage(bowser_btp, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x00003260, 0x00003398, -1, -1, -1)
-	add_stage(bowsers_keep, "Bowser's Keep", {MIDI.id.KING_OF_THE_KOOPAS}, {MIDI.id.BEWARE_THE_FORESTS_MUSHROOMS}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1)
+    add_stage(deku_tree, "Deku Tree", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(first_destination, "First Destination", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(ganons_tower, "Ganon's Tower", {MIDI.id.GERUDO_VALLEY}, {MIDI.id.GERUDO_VALLEY}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(kalos_pokemon_league, "Kalos Pokemon League", {MIDI.id.ELITE_FOUR}, {MIDI.id.POKEMON_CHAMPION}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(pokemon_stadium_2, "Pokemon Stadium", {MIDI.id.POKEMON_CHAMPION}, {MIDI.id.PIKA_CUP}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(skyloft, "Skyloft", -1, {MIDI.id.GERUDO_VALLEY}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(glacial, "Glacial River", {MIDI.id.CLOCKTOWER}, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(warioware, "WarioWare, Inc.", {MIDI.id.STARRING_WARIO}, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(battlefield, "Battlefield", {MIDI.id.MULTIMAN}, {MIDI.id.CRUEL}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(flat_zone, "Flat Zone", {MIDI.id.FLAT_ZONE_2}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(dr_mario, "Dr. Mario", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(cool_cool_mountain, "Cool Cool Mountain", -1, {MIDI.id.WING_CAP}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(dragon_king, "Dragon King", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(great_bay, "Great Bay", {MIDI.id.ASTRAL_OBSERVATORY}, {MIDI.id.GERUDO_VALLEY}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(frays_stage, "Fray's Stage", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(toh, "Tower of Heaven", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+	add_stage(fod, "Fountain of Dreams", {MIDI.id.POP_STAR}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(muda, "Muda Kingdom", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(mementos, "Mementos", {MIDI.id.BLOOMING_VILLAIN}, {MIDI.id.ARIA_OF_THE_SOUL}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(showdown, "Showdown", {MIDI.id.FIRST_DESTINATION}, {MIDI.id.NORFAIR}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(spiralm, "Spiral Mountain", {MIDI.id.CLICKCLOCKWOODS}, {MIDI.id.MRPATCH}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(n64, "N64", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(mute, "Mute City", {MIDI.id.FIRE_FIELD}, {MIDI.id.MACHRIDER}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(madmm, "Mad Monster Mansion", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(smbbf, "Mushroom Kingdom DL", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, id.MUSHROOM_KINGDOM, variant_type.DL, 0x05, 0x05, 0x05)
+    add_stage(smbo, "Mushroom Kingdom ~", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, id.MUSHROOM_KINGDOM, variant_type.OMEGA, 0x05, 0x05, 0x05)
+    add_stage(bowserb, "Bowser's Stadium", {MIDI.id.BOWSERROAD}, {MIDI.id.BOWSERFINAL}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(peach2, "Peach's Castle II", {MIDI.id.PEACH_CASTLE}, {MIDI.id.METAL_CAP}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(delfino, "Delfino Plaza", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(corneria2, "Corneria", {MIDI.id.STAR_WOLF}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(kitchen, "Kitchen Island", {MIDI.id.STARRING_WARIO}, {MIDI.id.HORROR_MANOR}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(blue, "Big Blue", {MIDI.id.MACHRIDER}, {MIDI.id.MACHRIDER}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(onett, "Onett", {MIDI.id.ALL_I_NEEDED_WAS_YOU}, {MIDI.id.POLLYANNA}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(zlanding, "Zebes Landing", {MIDI.id.NORFAIR}, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(frosty, "Frosty Village", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(smashville2, "Smashville", {MIDI.id.KK_RIDER}, {MIDI.id.SMASHVILLE}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_bg_animation(SMASHVILLE2)
+    add_stage(drm_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x000056A8, 0x00005B10, 0x00005D20, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(gnd_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x00004178, 0x000045F0, 0x00004800, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(yl_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x000035D0, 0x000038A0, 0x00003AB0, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(great_bay_sss, "Great Bay", -1, -1, OS.FALSE, OS.FALSE, class.SSS_PREVIEW, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(ds_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x00006188, 0x00006720, 0x00006930, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(stg1_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x00008B10, 0x00008FE0, 0x000091F0, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(falco_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x00004430, 0x00004930, 0x00004B40, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(wario_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x00002F90, 0x00003300, 0x00003510, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(htemple, "Hyrule Temple", {MIDI.id.TEMPLE_8BIT}, {MIDI.id.GANONDORF_BATTLE}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(lucas_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x000032D8, 0x00003650, 0x00003860, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(gnd_btp, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x00003C70, 0x00003DA8, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(npc, "New Pork City", {MIDI.id.PIGGYGUYS}, {MIDI.id.UNFOUNDED_REVENGE}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(ds_btp, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x00003F10, 0x00003FC0, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(smashketball, "Smashketball", {MIDI.id.KENGJR}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+	add_stage(drm_btp, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x00004E08, 0x00004EC0, -1, -1, -1, 0x05, 0x05, 0x05)
+	add_stage(norfair, "Norfair", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+	add_stage(corneriacity, "Corneria City", {MIDI.id.STAR_WOLF}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+	add_stage(falls, "Congo Falls", {MIDI.id.SNAKEY_CHANTEY}, {MIDI.id.DK_RAP}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+	add_stage(osohe, "Osohe Castle", {MIDI.id.EVEN_DRIER_GUYS}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+	add_stage(yoshi_story_2, "Yoshi's Story", -1, {MIDI.id.YOSHI_GOLF}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+	add_stage(world1, "World 1-1", -1, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+	add_stage(flat_zone_2, "Flat Zone II", {MIDI.id.FLAT_ZONE}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+	add_stage(gerudo, "Gerudo Valley", -1, -1, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+	add_stage(yl_btp, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x000056C0, 0x000057F8, -1, -1, -1, 0x05, 0x05, 0x05)
+	add_stage(falco_btp, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x00004830, 0x00004968, -1, -1, -1, 0x05, 0x05, 0x05)
+	add_stage(poly_btp, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x00004F80, 0x00005030, -1, -1, -1, 0x05, 0x05, 0x05)
+	add_stage(hcastle_dl, "Hyrule Castle DL", {MIDI.id.TEMPLE_8BIT}, {MIDI.id.GODDESSBALLAD}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, id.HYRULE_CASTLE, variant_type.DL, 0x05, 0x05, 0x05)
+	add_stage(hcastle_o, "Hyrule Castle ~", {MIDI.id.TEMPLE_8BIT}, {MIDI.id.GODDESSBALLAD}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, id.HYRULE_CASTLE, variant_type.OMEGA, 0x05, 0x05, 0x05)
+	add_stage(congoj_dl, "Congo Jungle DL", {MIDI.id.KROOLS_ACID_PUNK}, {MIDI.id.SNAKEY_CHANTEY}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, id.CONGO_JUNGLE, variant_type.DL, 0x05, 0x05, 0x05)
+	add_bg_animation(CONGOJ_DL)
+    add_stage(congoj_o, "Congo Jungle ~", {MIDI.id.KROOLS_ACID_PUNK}, {MIDI.id.SNAKEY_CHANTEY}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, id.CONGO_JUNGLE, variant_type.OMEGA, 0x05, 0x05, 0x05)
+	add_bg_animation(CONGOJ_O)
+    add_stage(pcastle_dl, "Peach's Castle DL", {MIDI.id.PEACH_CASTLE}, {MIDI.id.CASTLEWALL}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, id.PEACHS_CASTLE, variant_type.DL, 0x05, 0x05, 0x05)
+	add_bg_animation(PCASTLE_DL)
+    add_stage(pcastle_o, "Peach's Castle ~", {MIDI.id.PEACH_CASTLE}, {MIDI.id.CASTLEWALL}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, id.PEACHS_CASTLE, variant_type.OMEGA, 0x05, 0x05, 0x05)
+    add_bg_animation(PCASTLE_O)
+    add_stage(wario_btp, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x00004570, 0x000046A8, -1, -1, -1, 0x05, 0x05, 0x05)
+    add_stage(frays_stage_night, "Fray's Stage - Night", -1, -1, OS.FALSE, OS.FALSE, class.BATTLE, -1, -1, -1, id.FRAYS_STAGE, variant_type.DL, 0x05, 0x05, 0x05)
+	add_stage(goomba_road, "Goomba Road", {MIDI.id.KING_OF_THE_KOOPAS}, -1, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
+	add_stage(lucas_btp2, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x00004C50, 0x00004D88, -1, -1, -1, 0x05, 0x05, 0x05)
+	add_stage(sector_z_dl, "Sector Z DL", {MIDI.id.STAR_WOLF}, {MIDI.id.CORNERIA}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, id.SECTOR_Z, variant_type.DL, 0x05, 0x05, 0x05)
+	add_bg_animation(SECTOR_Z_DL)
+    add_stage(saffron_dl, "Saffron City DL", {MIDI.id.POKEMON_CHAMPION}, {MIDI.id.PIKA_CUP}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, id.SAFFRON_CITY, variant_type.DL, 0x05, 0x05, 0x05)
+	add_stage(yoshi_island_dl, "Yoshi's Island DL", {MIDI.id.OBSTACLE}, {MIDI.id.YOSHI_GOLF}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, id.YOSHIS_ISLAND, variant_type.DL, 0x05, 0x05, 0x05)
+	add_bg_animation(YOSHI_ISLAND_DL)
+    add_stage(zebes_dl, "Zebes DL", {MIDI.id.NORFAIR}, {MIDI.id.ZEBES_LANDING}, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, id.PLANET_ZEBES, variant_type.DL, 0x05, 0x05, 0x05)
+	add_bg_animation(ZEBES_DL)
+    add_stage(sector_z_o, "Sector Z ~", {MIDI.id.STAR_WOLF}, {MIDI.id.CORNERIA}, OS.TRUE, OS.FALSE, class.BATTLE, -1, -1, -1, id.SECTOR_Z, variant_type.OMEGA, 0x05, 0x05, 0x05)
+	add_bg_animation(SECTOR_Z_O)
+    add_stage(saffron_o, "Saffron City ~", {MIDI.id.POKEMON_CHAMPION}, {MIDI.id.PIKA_CUP}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, id.SAFFRON_CITY, variant_type.OMEGA, 0x05, 0x05, 0x05)
+	add_stage(yoshi_island_o, "Yoshi's Island ~", {MIDI.id.OBSTACLE}, {MIDI.id.YOSHI_GOLF}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, id.YOSHIS_ISLAND, variant_type.OMEGA, 0x05, 0x05, 0x05)
+	add_bg_animation(YOSHI_ISLAND_O)
+    add_stage(dream_land_o, "Dream Land ~", {MIDI.id.DREAMLANDBETA}, {MIDI.id.POP_STAR}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, id.DREAM_LAND, variant_type.OMEGA, 0x05, 0x05, 0x05)
+	add_bg_animation(DREAM_LAND_O)
+    add_stage(zebes_O, "Zebes ~", {MIDI.id.NORFAIR}, {MIDI.id.ZEBES_LANDING}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, id.PLANET_ZEBES, variant_type.OMEGA, 0x05, 0x05, 0x05)
+	add_bg_animation(ZEBES_O)
+    add_stage(bowser_btt, "Break the Targets", -1, -1, OS.FALSE, OS.FALSE, class.BTT, 0x00004040, 0x000043F0, 0x00004600, -1, -1, 0x05, 0x05, 0x05)
+	add_stage(bowser_btp, "Board the Platforms", -1, -1, OS.FALSE, OS.FALSE, class.BTP, 0x00003260, 0x00003398, -1, -1, -1, 0x05, 0x05, 0x05)
+	add_stage(bowsers_keep, "Bowser's Keep", {MIDI.id.KING_OF_THE_KOOPAS}, {MIDI.id.BEWARE_THE_FORESTS_MUSHROOMS}, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05)
 
     map 0, 0, 256 // restore string mappings
 

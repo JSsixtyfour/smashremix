@@ -70,17 +70,21 @@ scope FD {
 
         li      t0, Global.vs.elapsed       // t0 = address of time elapsed
         lw      t0, 0x0000(t0)              // t0 = time elapsed
+        sltiu   t9, t0, 0x01C0              // t9 = 1 if time elapsed < length of intro
+        bnezl   t9, _check_previous_bgm     // if paused, time elapsed will not be higher than the length of the intro even though it's over
+        addiu   t9, r0, -0x0001             // t9 = -1, which means the music stopped during a pause
         addiu   t9, r0, 0x01C0              // t9 = length of intro
         bne     t0, t9, _end                // if not the exact end of intro, then skip to end
-        nop
+        lli     t9, BGM.stage.MASTER_HAND_1 // t9 = FD intro music
 
+        _check_previous_bgm:
         lui     t0, 0x800A
         lw      t0, 0xD974(t0)              // t0 = pointer to previous bgm_id
         lw      t0, 0x0000(t0)              // t0 = previous bgm_id
-        lli     t9, BGM.stage.MASTER_HAND_1 // t9 = FD intro music
-        bne     t0, t9, _end                // if we didn't just play the FD intro music, then skip
+        bne     t0, t9, _end                // if previous bgm_id is not the FD intro, skip to end
         nop
 
+        _play_fd:
         addiu   sp, sp,-0x0014              // allocate stack space
         sw      a0, 0x0004(sp)              // ~
         sw      a1, 0x0008(sp)              // ~

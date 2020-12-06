@@ -387,6 +387,14 @@ scope LinkShared {
         sw      t1, 0x0008(sp)              // store t0, t1
         
         lw      t0, 0x0008(s1)              // t0 = character id
+
+        lli     t1, Character.id.KIRBY      // t1 = id.KIRBY
+        beql    t0, t1, pc() + 8            // if Kirby, get held power character_id
+        lw      t0, 0x0ADC(s1)              // t0 = character id of copied power
+        lli     t1, Character.id.JKIRBY     // t1 = id.JKIRBY
+        beql    t0, t1, pc() + 8            // if J Kirby, get held power character_id
+        lw      t0, 0x0ADC(s1)              // t0 = character id of copied power
+
         ori     t1, r0, Character.id.YLINK  // t1 = id.YLINK
         li      a1, boomerang_struct        // a1 = YoungLink.boomerang_struct
         beq     t1, t0, _end                // end if character id = YLINK

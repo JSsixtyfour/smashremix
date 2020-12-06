@@ -61,6 +61,10 @@ scope Settings {
         j       _set_vs_settings_return     // retrun 
         nop
     }
+
+    // @ Description
+    // Applies modifiers based on what
+
 }
 
 } // __SETTINGS__

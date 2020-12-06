@@ -246,6 +246,7 @@ scope Costumes {
         db 0x04                             // E Samus
 		db 0x05                             // Bowser
 		db 0x05                             // Giga Bowser
+        db 0x05                             // Piano
         OS.align(4)
 
         functions:
@@ -297,6 +298,24 @@ scope Costumes {
         _end:
         jr      ra
         nop
+    }
+
+    // @ Description
+    // Provides a way to force high/low poly models.
+    scope force_hi_lo_poly_: {
+        OS.patch_start(0x53850, 0x800D8050)
+        jal     force_hi_lo_poly_
+        nop
+        OS.patch_end()
+
+        li      t9, Toggles.entry_model_display
+        lw      t9, 0x0004(t9)              // t9 = 1 if always high, 2 if always low, 0 if default
+        bnezl   t9, pc() + 8                // if not set to default, use t9 as a0 (1 = high poly, 2 = low poly)
+        or      a0, r0, t9                  // a0 = forced hi/lo
+
+        sb      a0, 0x000F(v0)              // original line 1
+        jr      ra
+        sb      a0, 0x000E(v0)              // original line 2
     }
 
     // @ Description

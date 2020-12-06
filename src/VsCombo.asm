@@ -517,8 +517,8 @@ scope VsCombo {
         sltiu   t4, t3, 0x0002                   // if (p3 = man/cpu) then player_count++
         beqz    t4, {next}                       // not man/cpu so skip
         nop
-        or      a0, r0, t1                       // a0 = player struct index, (p1 = 0, p4 = 3)
-        jal     Character.get_struct_            // v0 = player struct address
+        lli     a0, {port} - 1                   // a0 = player struct index, (p1 = 0, p4 = 3)
+        jal     Character.port_to_struct_        // v0 = player struct address
         nop
         addu    t1, t1, t4                       // player_count++
         li      t4, combo_struct_p{port}         // t4 = combo struct address for right/left port

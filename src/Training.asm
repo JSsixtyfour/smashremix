@@ -161,6 +161,11 @@ scope Training {
         li      t1, struct.port_1.type      // ~
         lw      t1, 0x0000(t1)              // t1 = port 1 type
         sb      t1, 0x0002(t0)              // store type
+        lli     t2, 0x0000                  // t2 = color_id (port_id for HMN, 4 for CPU)
+        bnezl   t1, pc() + 8                // if not human, then use CPU color
+        lli     t2, 0x0004                  // t2 = color_id
+        sb      t2, 0x0008(t0)              // store tag color
+        sb      t2, 0x000A(t0)              // store tag type (1P, 2P, 3P, 4P, CPU) (same as color_id)
         li      t1, struct.port_1.costume   // ~
         lw      t1, 0x0000(t1)              // t1 = port 1 costume
         sb      t1, 0x0006(t0)              // store costume
@@ -174,6 +179,11 @@ scope Training {
         li      t1, struct.port_2.type      // ~
         lw      t1, 0x0000(t1)              // t1 = port 2 type
         sb      t1, 0x0002(t0)              // store type
+        lli     t2, 0x0001                  // t2 = color_id (port_id for HMN, 4 for CPU)
+        bnezl   t1, pc() + 8                // if not human, then use CPU color
+        lli     t2, 0x0004                  // t2 = color_id
+        sb      t2, 0x0008(t0)              // store tag color
+        sb      t2, 0x000A(t0)              // store tag type (1P, 2P, 3P, 4P, CPU) (same as color_id)
         li      t1, struct.port_2.costume   // ~
         lw      t1, 0x0000(t1)              // t1 = port 2 costume
         sb      t1, 0x0006(t0)              // store costume
@@ -187,6 +197,11 @@ scope Training {
         li      t1, struct.port_3.type      // ~
         lw      t1, 0x0000(t1)              // t1 = port 3 type
         sb      t1, 0x0002(t0)              // store type
+        lli     t2, 0x0002                  // t2 = color_id (port_id for HMN, 4 for CPU)
+        bnezl   t1, pc() + 8                // if not human, then use CPU color
+        lli     t2, 0x0004                  // t2 = color_id
+        sb      t2, 0x0008(t0)              // store tag color
+        sb      t2, 0x000A(t0)              // store tag type (1P, 2P, 3P, 4P, CPU) (same as color_id)
         li      t1, struct.port_3.costume   // ~
         lw      t1, 0x0000(t1)              // t1 = port 3 costume
         sb      t1, 0x0006(t0)              // store costume
@@ -200,6 +215,11 @@ scope Training {
         li      t1, struct.port_4.type      // ~
         lw      t1, 0x0000(t1)              // t1 = port 4 type
         sb      t1, 0x0002(t0)              // store type
+        lli     t2, 0x0003                  // t2 = color_id (port_id for HMN, 4 for CPU)
+        bnezl   t1, pc() + 8                // if not human, then use CPU color
+        lli     t2, 0x0004                  // t2 = color_id
+        sb      t2, 0x0008(t0)              // store tag color
+        sb      t2, 0x000A(t0)              // store tag type (1P, 2P, 3P, 4P, CPU) (same as color_id)
         li      t1, struct.port_4.costume   // ~
         lw      t1, 0x0000(t1)              // t1 = port 4 costume
         sb      t1, 0x0006(t0)              // store costume
@@ -351,6 +371,126 @@ scope Training {
         _take_branch:
         j       0x800D7A4C                  // return (take branch)
         nop
+    }
+
+    // @ Description
+    // Obey CP state for all CPU characters loaded
+    scope obey_cp_state_: {
+        OS.patch_start(0x116A14, 0x801901F4)
+        j       obey_cp_state_
+        lui     v1, 0x8019                  // original line 1
+        OS.patch_end()
+
+        addiu   v1, v1, 0x0B58              // original line 2
+        lui     t6, 0x800A                  // original line 3
+        lw      t6, 0x50E8(t6)              // original line 4
+
+        lli     t7, 0x0000                  // t7 = 0 / port_id / loop index
+        lli     t8, Global.vs.P_DIFF        // t8 = size of struct
+
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      ra, 0x0004(sp)              // store registers
+
+        _loop:
+        multu   t7, t8
+        mflo    t9                          // t9 = offset to match player struct
+        addu    t9, t6, t9                  // t9 = match player struct
+        lbu     t0, 0x0022(t9)              // t0 = player type (0 = man, 1 = cpu, 2 = n/a)
+        addiu   t0, t0, -0x0001             // t0 = 0 if CPU
+        bnez    t0, _next                   // skip if not CPU
+        nop
+
+        jal     0x80190220                  // call the original routine
+        nop
+
+        _next:
+        sltiu   at, t7, 0x0003              // at = 1 if still more ports to check
+        bnez    at, _loop                   // if not done, continue looping
+        addiu   t7, t7, 0x0001              // t7++
+
+        lw      ra, 0x0004(sp)              // restore registers
+        addiu   sp, sp, 0x0010              // deallocate stack space
+
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // Disable movement/control of extra characters during pause
+    scope disable_during_pause_: {
+        // 18 lines to replace
+        OS.patch_start(0x11398C, 0x8018D16C)
+        lli     t7, 0x0000                  // t7 = 0 / port_id / loop index
+
+        _loop:
+        lli     t8, Global.vs.P_DIFF        // t8 = size of struct
+        lui     t6, 0x800A
+        lw      t6, 0x50E8(t6)              // t6 = match struct
+        multu   t7, t8
+        mflo    t9                          // t9 = offset to match player struct
+        addu    t9, t6, t9                  // t9 = match player struct
+        lbu     t0, 0x0022(t9)              // t0 = player type (0 = man, 1 = cpu, 2 = n/a)
+        addiu   t0, t0, -0x0002             // t0 = 0 if NA
+        beqz    t0, _next                   // skip if NA
+        nop
+
+        jal     0x800E7F14                  // call the routine that disables movement/control
+        lw      a0, 0x0078(t9)              // a0 = player object
+
+        _next:
+        sltiu   at, t7, 0x0003              // at = 1 if still more ports to check
+        bnez    at, _loop                   // if not done, continue looping
+        addiu   t7, t7, 0x0001              // t7++
+        nop
+        nop
+        OS.patch_end()
+    }
+
+    // @ Description
+    // Enable movement/control of extra characters during unpause
+    scope enable_during_unpause_: {
+        // 19 lines to replace
+        OS.patch_start(0x113A7C, 0x8018D25C)
+        lli     t5, 0x0000                  // t5 = 0 / port_id / loop index
+
+        _loop:
+        lli     t8, Global.vs.P_DIFF        // t8 = size of struct
+        lui     t6, 0x800A
+        lw      t6, 0x50E8(t6)              // t6 = match struct
+        multu   t5, t8
+        mflo    t9                          // t9 = offset to match player struct
+        addu    t9, t6, t9                  // t9 = match player struct
+        lbu     t1, 0x0022(t9)              // t1 = player type (0 = man, 1 = cpu, 2 = n/a)
+        addiu   t1, t1, -0x0002             // t1 = 0 if NA
+        beqz    t1, _next                   // skip if NA
+        addiu   t1, t1, 0x0002              // t1 = 0 if man
+
+        lw      a0, 0x0078(t9)              // a0 = player object
+
+        bnez    t1, _enable                 // if not human, skip updating prior bitmask
+        lw      t0, 0x0018(sp)              // t0 = button mask address
+        lhu     t1, 0x0002(t0)              // t1 = button mask
+        andi    t3, t1, 0x4000              // t3 = 0 if B not pressed
+        beqz    t3, _enable                 // if B not pressed, skip updating prior bitmask
+        lw      v0, 0x0084(a0)              // v0 = player struct
+        lhu     t2, 0x01BC(v0)              // t2 = prior button mask
+        ori     t4, t2, 0x4000              // t4 = prior button mask with B
+        sh      t4, 0x01BC(v0)              // update prior button mask
+
+        _enable:
+        jal     0x800E7F68                  // call the routine that enables movement/control
+        nop
+
+        _next:
+        sltiu   at, t5, 0x0003              // at = 1 if still more ports to check
+        bnez    at, _loop                   // if not done, continue looping
+        addiu   t5, t5, 0x0001              // t5++
+        nop
+        nop
+        nop
+        nop
+        addiu   a1, r0, 0x7800              // original line 23 (sets volume to full)
+        OS.patch_end()
     }
       
     // @ Description
@@ -938,6 +1078,15 @@ scope Training {
         jal     Render.toggle_group_display_
         lli     a1, 0x0001                  // a1 = display off
 
+        // Ensure BGM volume is correct level.
+        // Fixes bug where music is quiet if you do a quick reset while paused.
+        // Do it here so the music doesn't get loud again before restarting.
+        lli     a0, 0x0000                  // a0 = 0 (signifies bgm?)
+        lli     a1, 0x7800                  // a1 = 0x7800 (signifies full volume?)
+        jal     0x80020B38                  // reset volume
+        addiu   sp, sp, -0x0010             // allocate stack space (unsafe routine)
+        addiu   sp, sp, 0x0010              // deallocate stack space
+
         _end:
         lw      ra, 0x0004(sp)              // restore ra
         addiu   sp, sp, 0x0030              // deallocate stack space
@@ -1292,6 +1441,7 @@ scope Training {
     char_0x33:; db "E Samus", 0x00
     char_0x34:; db "Bowser", 0x00
 	char_0x35:; db "Giga Bowser", 0x00
+    char_0x36:; db "Mad Piano", 0x00
     OS.align(4)
 
     string_table_char:
@@ -1338,6 +1488,7 @@ scope Training {
     dw char_0x0D            // METAL MARIO
     dw char_0x1A            // GIANT DK
 	dw char_0x35            // GIGA BOWSER
+    dw char_0x36            // PIANO
     dw char_0x0E            // POLYGON MARIO
     dw char_0x0F            // POLYGON FOX
     dw char_0x10            // POLYGON DK
@@ -1404,18 +1555,19 @@ scope Training {
         constant METAL(0x24)
         constant GDONKEY(METAL + 0x01)
         constant GBOWSER(METAL + 0x02)
-		constant NMARIO(METAL + 0x03)
-        constant NFOX(METAL + 0x04)
-        constant NDONKEY(METAL + 0x05)
-        constant NSAMUS(METAL + 0x06)
-        constant NLUIGI(METAL + 0x07)
-        constant NLINK(METAL + 0x08)
-        constant NYOSHI(METAL + 0x09)
-        constant NCAPTAIN(METAL + 0x0A)
-        constant NKIRBY(METAL + 0x0B)
-        constant NPIKACHU(METAL + 0x0C)
-        constant NJIGGLY(METAL + 0x0D)
-        constant NNESS(METAL + 0x0E)
+        constant PIANO(METAL + 0x03)
+		constant NMARIO(METAL + 0x04)
+        constant NFOX(METAL + 0x05)
+        constant NDONKEY(METAL + 0x06)
+        constant NSAMUS(METAL + 0x07)
+        constant NLUIGI(METAL + 0x08)
+        constant NLINK(METAL + 0x09)
+        constant NYOSHI(METAL + 0x0A)
+        constant NCAPTAIN(METAL + 0x0B)
+        constant NKIRBY(METAL + 0x0C)
+        constant NPIKACHU(METAL + 0x0D)
+        constant NJIGGLY(METAL + 0x0E)
+        constant NNESS(METAL + 0x0F)
     }
 
 
@@ -1463,6 +1615,7 @@ scope Training {
     db Character.id.METAL
     db Character.id.GDONKEY
 	db Character.id.GBOWSER
+    db Character.id.PIANO
     db Character.id.NMARIO
     db Character.id.NFOX
     db Character.id.NDONKEY
@@ -1531,6 +1684,7 @@ scope Training {
     db id.ESAMUS
 	db id.BOWSER
 	db id.GBOWSER
+    db id.PIANO
 
     // @ Description 
     // Spawn Position Strings

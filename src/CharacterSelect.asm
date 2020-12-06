@@ -152,7 +152,7 @@ scope CharacterSelect {
     dw  0x12170                             // 0x05 - LINK
     dw  0xAEE0                              // 0x06 - YOSHI
     dw  0xCA90                              // 0x07 - CAPTAIN
-    dw  0x1FFD0                             // 0x08 - KIRBY
+    dw  0x1FFE0                             // 0x08 - KIRBY
     dw  0x9E30                              // 0x09 - PIKACHU
     dw  0x7FE0                              // 0x0A - JIGGLY
     dw  0xC5C0                              // 0x0B - NESS
@@ -198,6 +198,7 @@ scope CharacterSelect {
     dw  0x0                                 // 0x33 - ESAMUS
 	dw  0x11020 + 0x200                     // 0x34 - BOWSER
 	dw  0xFA40 + 0x200                      // 0x35 - GBOWSER
+    dw  0x4DB0 + 0x200                      // 0x36 - PIANO
 
     // @ Description
     // Holds the ROM offset of an alternate req list, used by get_alternate_req_list_
@@ -291,6 +292,7 @@ scope CharacterSelect {
     add_alt_req_list(Character.id.ESAMUS, req/SAMUS_MODEL)
 	add_alt_req_list(Character.id.BOWSER, req/BOWSER_MODEL)
 	add_alt_req_list(Character.id.GBOWSER, req/GBOWSER_MODEL)
+    add_alt_req_list(Character.id.PIANO, req/PIANO_MODEL)
     OS.align(4)
 
     // @ Description
@@ -344,11 +346,15 @@ scope CharacterSelect {
         addiu   a1, a1, -START_X            // a1 = xpos - X_START
         addiu   v1, v1, -START_Y            // v1 = ypos - Y_START
 
-        addiu   sp, sp,-0x0020              // allocate stack space
+        addiu   sp, sp,-0x0030              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // ~
         sw      t2, 0x000C(sp)              // ~
-        sw      ra, 0x0010(sp)              // save registers
+        sw      ra, 0x0010(sp)              // ~
+        sw      a0, 0x0014(sp)              // ~
+        sw      a1, 0x0018(sp)              // ~
+        sw      a2, 0x001C(sp)              // ~
+        sw      v0, 0x0020(sp)              // save registers
 
         // discard values past given y value
         sltiu   t0, v1, 86                  // if ypos greater than given value
@@ -446,8 +452,12 @@ scope CharacterSelect {
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // ~
         lw      t2, 0x000C(sp)              // ~
-        lw      ra, 0x0010(sp)              // save registers
-        addiu   sp, sp, 0x0020              // deallocate stack space
+        lw      ra, 0x0010(sp)              // ~
+        lw      a0, 0x0014(sp)              // ~
+        lw      a1, 0x0018(sp)              // ~
+        lw      a2, 0x001C(sp)              // restore registers
+//      lw      v0, 0x0020(sp)              // don't restore, just needed the stack space
+        addiu   sp, sp, 0x0030              // deallocate stack space
         jr      ra                          // return (discard the rest of the function)
         addiu   sp, sp, 0x0028              // deallocate stack space (original function)
     }
@@ -1772,6 +1782,220 @@ scope CharacterSelect {
     db 0x00                                 // player 3
     db 0x00                                 // player 4
 
+
+    // @ Description
+    // JORG TODO
+    scope modifier_type {
+        constant NONE(0x00)
+        constant MEGA(0x01)
+        constant MINI(0x02)
+        constant CLOAK(0x03)
+        constant LAST(CLOAK)
+
+        // not yet implemented
+        constant METAL(0x04)
+        constant FAST(0x05)
+        constant SLOW(0x06)
+        constant INVISIBLE(0x07)
+        constant NO_SPECIALS(0x08)
+        constant NO_GRABS(0x09)
+    }
+
+
+
+    // @ Description
+    // Contain contents of dpad modification
+    scope modifiers: {
+        db 0, 0, 0, 0                       // p1 (up variant, right mod, down mod, left mod)
+        db 0, 0, 0, 0                       // p2
+        db 0, 0, 0, 0                       // p3
+        db 0, 0, 0, 0                       // p4
+        constant UP(0)
+        constant RIGHT(1)
+        constant DOWN(2)
+        constant LEFT(3)
+    }
+
+    scope handle_none_: {
+        jr      ra
+        nop
+    }
+
+    // @ Arguments
+    // a0 - player
+    // @ Note
+    // All handler take player (0-3) as the first argument
+
+    scope handle_mega_: {
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      a1, 0x0004(sp)              // ~
+        sw      ra, 0x0008(sp)              // save registers
+
+        li      a1, 0x40000000              // a1 = (float) 2.0
+        jal     Size.scale_size_by_
+        nop
+        
+        lw      a1, 0x0004(sp)              // ~
+        lw      ra, 0x0008(sp)              // restore registers
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        jr      ra
+        nop
+    }
+
+    scope handle_mini_: {
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      a1, 0x0004(sp)              // ~
+        sw      ra, 0x0008(sp)              // save registers
+
+        li      a1, 0x3F000000              // a1 = (float) 0.5
+        jal     Size.scale_size_by_
+        nop
+        
+        lw      a1, 0x0004(sp)              // ~
+        lw      ra, 0x0008(sp)              // restore registers
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        jr      ra
+        nop
+    }
+
+    // TODO: add activate cloak function rather than directly setting this
+    // in fact, all properties should have activate_ deaactivate_ or equivalents
+    // interface time baby
+    scope handle_cloak_: {
+        OS.save_registers()
+        li      t0, 0xFFFFFF30              // t0 = slightly transparent rgba888
+        li      t1, CharEnvColor.override_table
+        sll     t2, a0, 0x0002              // t2 = index from player
+        addu    t1, t1, t2                  // t1 = &overide[player]
+        sw      t0, 0x0000(t1)              // update value to cloaked
+        OS.restore_registers()
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // Resets cloak to default
+    // @ Arguments
+    // a0 - player
+    scope reset_cloak_: {
+        OS.save_registers()
+        li      t1, CharEnvColor.override_table
+        sll     t2, a0, 0x0002              // t2 = index from player
+        addu    t1, t1, t2                  // t1 = &overide[player]
+        sw      r0, 0x0000(t1)
+        OS.restore_registers()
+        jr      ra
+        nop
+    }
+
+    // JORG: reenable later
+    // @ Description
+    // Loads modifiers in for each player on versus screen only (for now)
+    // This is called four times for each player
+    scope load_modifiers_: {
+       OS.patch_start(0x1389EC, 0x8013A76C)
+       // v1 holds player but is immediatelky incremented
+//       j       load_modifiers_
+//       nop
+       _return:
+       OS.patch_end()
+    
+        lbu     t5, 0x0003(a3)          // original line 1
+        addiu   v1, v1, 0x0001          // original line 2
+
+        OS.save_registers()
+        addiu   a0, v1,-0x0001          // a0 - player
+        jal     Size.reset_size_
+        nop
+        jal     reset_cloak_
+        nop
+        OS.restore_registers()
+        j       _return
+        nop
+    }
+
+
+
+    handler_table:
+    dw handle_none_
+    dw handle_mega_
+    dw handle_mini_
+    dw handle_cloak_
+
+    // @ Description
+    // Updates the modifier values AND redraws the dpad when called.
+    // @ Arguments
+    // a0 - value to set
+    // a1 - int panel/port
+    // a2 - direction
+    // @ Note
+    // Don't call this directly to increment. Use increment_modifier_ instead.
+    scope set_modifier_: {
+        addiu   sp, sp,-0x0020              // allocate stack space
+        sw      t0, 0x0004(sp)              // ~
+        sw      t1, 0x0008(sp)              // ~
+        sw      a0, 0x000C(sp)              // ~
+        sw      a1, 0x0010(sp)              // ~
+        sw      a2, 0x0014(sp)              // ~
+        sw      v0, 0x0018(sp)              // ~
+        sw      ra, 0x001C(sp)              // save registers
+
+        li      t0, modifiers               // t0 = modifiers
+        sll     t1, a1, 0x0002              // ~
+        addu    t0, t0, t1                  // t0 = &modifiers[player]
+        addu    t0, t0, a2                  // t0 = &modifiers[player][direction]
+        sb      a0, 0x0000(t0)              // set modifier    
+
+        // JORG: VISUAL CHANGES HERE
+        move    a0, a1                      // a1 - player port
+        jal     Character.port_to_struct_   // v0 = player_struct
+        nop        
+        li      t0, Character.variant_original.table
+        lbu     t1, 0x000B(v0)              // t1 = current character_id
+        sll     t1, t1, 0x0002              // t1 = character_index
+        addu    t0, t0, t1                  // t0 = &variant_original[character_id]
+        lw      a0, 0x0000(t0)              // a0 = variant_original[character_id] = character_parent_id
+        lw      a1, 0x0010(sp)              // a1 - panel index
+        jal     draw_variant_indicator_     // redraw dpad on update
+        lw      a2, 0x0014(sp)              // a2 - direction
+        
+        lw      t0, 0x0004(sp)              // ~
+        lw      t1, 0x0008(sp)              // ~
+        lw      a0, 0x000C(sp)              // ~
+        lw      a1, 0x0010(sp)              // ~
+        lw      a2, 0x0014(sp)              // ~
+        lw      v0, 0x0018(sp)              // ~
+        lw      ra, 0x001C(sp)              // restore registers
+        addiu   sp, sp, 0x0020              // deallocate stack space
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // Returns modifier value requested
+    // @ Arguments
+    // a1 - int panel/port
+    // a2 - direction
+    // @ Return
+    // v0 - modifier return 
+    scope get_modifier_: {
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      t0, 0x0004(sp)              // ~
+        sw      t1, 0x0008(sp)              // save registers
+        
+        li      t0, modifiers               // t0 = modifiers
+        sll     t1, a1, 0x0002              // ~
+        addu    t0, t0, t1                  // t0 = &modifiers[player]
+        addu    t0, t0, a2                  // t0 = &modifiers[player][direction]
+        lbu     v0, 0x0000(t0)              // v0 = return  = modifier
+
+        lw      t0, 0x0004(sp)              // ~
+        lw      t1, 0x0008(sp)              // save registers   
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        jr      ra
+        nop
+    }
+
     // @ Description
     // New table for sound fx (for each character)
     fgm_table:
@@ -1916,9 +2140,10 @@ scope CharacterSelect {
         constant NJIGGLY(0x0000B7F8)
         constant NNESS(0x0000C8B8)
         // special
-        constant METAL(0x00001078)
-        constant GDONKEY(0x000031F8)
-		constant GBOWSER(0x00014EB8)
+        constant METAL(0x00015F78)
+        constant GDONKEY(0x00017038)
+		constant GBOWSER(0x000180F8)
+        constant PIANO(0x000191B8)
         // custom
         constant FALCO(0x0000D978)
         constant GND(0x0000EA38)
@@ -2048,6 +2273,7 @@ scope CharacterSelect {
         constant EPIKA(0x000032F8)
         constant JPUFF(0x00017DD8)
         constant JPIKA(0x000032F8)
+        constant PIANO(0x000190A8)
         constant BLANK(0x0)
     }
 
@@ -2456,12 +2682,12 @@ scope CharacterSelect {
     // @ Description
     // Settings for the different CSS pages for easy access
     css_settings:
-    // # panels;  // room     // X padding  // panel offset
-    db 0x04;      db 0x20;    db 34;        db 69            // VS
-    db 0x01;      db 0x1E;    db 38;        db 69            // 1P
-    db 0x02;      db 0x20;    db 65;        db 132           // TRAINING
-    db 0x01;      db 0x1E;    db 71;        db 69            // BONUS
-    db 0x01;      db 0x1E;    db 71;        db 69            // BONUS
+    // # panels;  // z-index  // X padding  // panel offset
+    db 0x04;      db 0x15;    db 34;        db 69            // VS
+    db 0x01;      db 0x0E;    db 38;        db 69            // 1P
+    db 0x02;      db 0x15;    db 65;        db 132           // TRAINING
+    db 0x01;      db 0x0E;    db 71;        db 69            // BONUS
+    db 0x01;      db 0x0E;    db 71;        db 69            // BONUS
 
     // @ Description
     // Addresses for the different CSS pages' player panel structs for easy access
@@ -2490,7 +2716,7 @@ scope CharacterSelect {
         li      t0, css_settings
         addu    t0, t0, a0                  // t0 = CSS settings
         lbu     s0, 0x0000(t0)              // s0 = number of panels
-        lbu     s1, 0x0001(t0)              // s1 = room
+        lbu     s1, 0x0001(t0)              // s1 = room z-index
         lbu     s2, 0x0002(t0)              // s2 = X padding
         lbu     s3, 0x0003(t0)              // s3 = panel offset
         lli     s4, 0x0000                  // s4 = offset for panel index for storing reference
@@ -2538,6 +2764,16 @@ scope CharacterSelect {
         Render.load_file(File.CHARACTER_PORTRAITS, Render.file_pointer_1) // load character portraits into file_pointer_1
         Render.load_file(File.CSS_IMAGES, Render.file_pointer_2)          // load CSS images into file_pointer_2
 
+        // add a room for our indicators that shows up on top of the panels
+        lli     a0, 0x38                    // a0 = room
+        lli     a1, 0x10                    // a1 = group
+        lw      a2, 0x0010(sp)              // a2 = z_index
+        lui     s1, 0x4120                  // s1 = ulx
+        lui     s2, 0x4120                  // s2 = uly
+        lui     s3, 0x439B                  // s3 = lrx
+        jal     Render.create_room_
+        lui     s4, 0x4366                  // s4 = lry
+
         // Create a control object which runs the variant update code every frame.
         // D-pad textures will be created and references to their objects will be stored in this control object
         Render.register_routine(update_variant_indicators_)
@@ -2554,11 +2790,7 @@ scope CharacterSelect {
         sw      a0, 0x0040(v0)              // save player struct start address
 
         _add_dpad_image:
-        // set display order to 0 to force this to render after tokens
-        li      t0, Render.display_order_value
-        sw      r0, 0x0000(t0)              // set order to 0 to force this to render after tokens
-
-        lw      a0, 0x0010(sp)              // a0 = room
+        lli     a0, 0x38                    // a0 = room
         lli     a1, 0x13                    // a1 = group
         li      a2, Render.file_pointer_2   // a2 = pointer to CSS images file start address
         lw      a2, 0x0000(a2)              // a2 = base file address
@@ -2597,7 +2829,7 @@ scope CharacterSelect {
 
         sw      v0, 0x0028(sp)              // save dpad object reference
 
-        lw      a0, 0x0010(sp)              // a0 = room
+        lli     a0, 0x38                    // a0 = room
         lli     a1, 0x13                    // a1 = group
         lli     s1, 0x0000                  // s1 = ulx
         lli     s2, 0x0000                  // s2 = uly
@@ -2648,10 +2880,6 @@ scope CharacterSelect {
         nop
 
         _end:
-        li      t0, Render.display_order_value
-        lui     t1, Render.DISPLAY_ORDER_DEFAULT
-        sw      t1, 0x0000(t0)              // reset display order
-
         // In Training, if human is not 1p, then we may need to swap some references
         lw      a0, 0x0008(sp)              // a0 = offset in css_player_structs = 8 for training
         addiu   a0, a0, -0x0008             // a0 = 0 if training
@@ -2791,7 +3019,6 @@ scope CharacterSelect {
     scope draw_variant_indicator_: {
         // a0 = character id
         // a1 = panel index
-
         li      t0, TwelveCharBattle.twelve_cb_flag
         lw      t0, 0x0000(t0)              // t0 = 1 if 12cb mode
         beqz    t0, _begin                  // if not 12cb mode, draw variant indicator
@@ -2847,22 +3074,16 @@ scope CharacterSelect {
         sw      t1, 0x0008(sp)              // ~
         sw      t2, 0x000C(sp)              // ~
         sw      at, 0x0010(sp)              // ~
+        sw      a1, 0x0014(sp)              // ~
 
         // Create the variant icons object
-        li      t0, Render.display_order_value
-        sw      r0, 0x0000(t0)              // set display order to 0 to render after tokens
-        
         lli     a0, 0x0000                  // a0 = routine (Render.NOOP)
         li      a1, Render.TEXTURE_RENDER_  // a1 = display list routine
         lbu     a2, 0x000D(t2)              // a2 = room
         lbu     a3, 0x000C(t2)              // a3 = group
         jal     Render.create_display_object_
         nop
-        
-        li      t0, Render.display_order_value
-        lui     t1, Render.DISPLAY_ORDER_DEFAULT
-        sw      t1, 0x0000(t0)              // reset display order
-        
+
         lw      a0, 0x000C(sp)              // t2 = dpad object
         sw      v0, 0x0034(a0)              // save reference to variant icon object
 
@@ -2909,6 +3130,8 @@ scope CharacterSelect {
         lw      ra, 0x0004(sp)              // restore registers
         lw      t1, 0x0008(sp)              // ~
         lw      t2, 0x000C(sp)              // ~
+        lw      at, 0x0010(sp)              // ~
+        lw      a1, 0x0014(sp)              // ~
         addiu   sp, sp, 0x0020              // deallocate stack space
 
         lli     t4, 0x0000                  // t4 = 0 (dpad will be displayed)
@@ -2924,7 +3147,7 @@ scope CharacterSelect {
     // This adds variant icons (stock icons/flags) to the dpad image
     // @ Arguments
     // a0 - dpad object RAM address
-    // a1 - variant ID
+    // a1 - modifier id (or variant_type for UP)
     // a2 - direction (0 = up, 1 = down, 2 = left, 3 = right)
     scope draw_variant_icon_: {
         addiu   sp, sp,-0x0030              // allocate stack space
@@ -2954,6 +3177,7 @@ scope CharacterSelect {
         beql    t1, t2, _draw_icon          // if an E variant, then draw E flag
         addiu   a1, at, 0x3B8               // a1 = E flag footer struct TODO: make offset a constant
 
+
         // if we're here, then we will use the character's stock icon
         lui     t1, 0x3F80                  // t1 = scale for stock icons (1.0)
         sw      t1, 0x0024(sp)              // save scale for stock icons
@@ -2968,6 +3192,21 @@ scope CharacterSelect {
         addu    t1, t2, t1                  // t1 = attribute data address
         lw      t1, 0x0340(t1)              // t1 = pointer to stock icon footer address
         lw      a1, 0x0000(t1)              // a1 = stock icon footer address
+        b       _draw_icon
+        nop
+
+        // jorg: todo see if we need for 
+//        _right_down_left:
+//        move    t1, a1
+//        lli     t2, modifier_type.MEGA      // ~
+//        beql    t1, t2, _draw_icon          // ~
+//        addiu   a1, at, 0x8E8               // offset for giant mushroom image data in CSS_IMAGES
+//        lli     t2, modifier_type.MINI      // ~
+//        beql    t1, t2, _draw_icon          // ~
+//        addiu   a1, at, 0xB48               // offset for mini mushroom image data in CSS_IMAGES
+//        lli     t2, modifier_type.CLOAK     // ~
+//        beql    t1, t2, _draw_icon          // ~
+//        addiu   a1, at, 0xDA8               // offset for cloak image data in CSS_IMAGES
 
         _draw_icon:
         lw      a0, 0x0034(a0)              // a0 = RAM address of object block
@@ -3108,9 +3347,6 @@ scope CharacterSelect {
         bnez    t1, _next                   // skip if flag object defined already
         nop
 
-        li      t1, Render.display_order_value
-        sw      r0, 0x0000(t1)              // set display order to 0 to render after tokens
-
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      s0, 0x0004(sp)              // save registers
         sw      s1, 0x0008(sp)              // ~
@@ -3145,10 +3381,6 @@ scope CharacterSelect {
         addiu   sp, sp, 0x0010              // deallocate stack space
 
         sw      v0, 0x0040(t0)              // save reference to flag object
-
-        li      t0, Render.display_order_value
-        lui     t1, Render.DISPLAY_ORDER_DEFAULT
-        sw      t1, 0x0000(t0)              // reset display order
 
         _next:
         // ensure the direction indicator is correctly positioned
@@ -3292,7 +3524,7 @@ scope CharacterSelect {
     add_to_css(Character.id.JFOX,   FGM.announcer.names.JFOX,           1.50,   0x00010004, series_logo.STARFOX,      name_texture.FOX,            portrait_offsets.JFOX,           12)
     add_to_css(Character.id.JMARIO, FGM.announcer.names.MARIO,          1.50,   0x00010003, series_logo.MARIO_BROS,   name_texture.MARIO,          portrait_offsets.JMARIO,         2)
     add_to_css(Character.id.JLUIGI, FGM.announcer.names.LUIGI,          1.50,   0x00010001, series_logo.MARIO_BROS,   name_texture.LUIGI,          portrait_offsets.JLUIGI,         1)
-    add_to_css(Character.id.JDK,    FGM.announcer.names.DONKEY_KONG,    1.50,   0x00010001, series_logo.DONKEY_KONG,  name_texture.JDK,            portrait_offsets.JDK,            3)
+    add_to_css(Character.id.JDK,    FGM.announcer.names.DONKEY_KONG,    2,      0x00010001, series_logo.DONKEY_KONG,  name_texture.JDK,            portrait_offsets.JDK,            3)
     add_to_css(Character.id.EPIKA,  FGM.announcer.names.PIKACHU,        1.50,   0x00010001, series_logo.POKEMON,      name_texture.PIKACHU,        portrait_offsets.EPIKA,          13)
     add_to_css(Character.id.JPUFF,  FGM.announcer.names.JPUFF,          1.50,   0x00010002, series_logo.POKEMON,      name_texture.JPUFF,          portrait_offsets.JPUFF,          14)
     add_to_css(Character.id.EPUFF,  FGM.announcer.names.JIGGLYPUFF,     1.50,   0x00010002, series_logo.POKEMON,      name_texture.JIGGLYPUFF,     portrait_offsets.EPUFF,          14)
@@ -3300,8 +3532,9 @@ scope CharacterSelect {
     add_to_css(Character.id.JYOSHI, FGM.announcer.names.YOSHI,          1.50,   0x00010002, series_logo.YOSHI,        name_texture.YOSHI,          portrait_offsets.JYOSHI,         10)
     add_to_css(Character.id.JPIKA,  FGM.announcer.names.PIKACHU,        1.50,   0x00010001, series_logo.POKEMON,      name_texture.PIKACHU,        portrait_offsets.JPIKA,          13)
     add_to_css(Character.id.ESAMUS, FGM.announcer.names.ESAMUS,         1.50,   0x00010003, series_logo.METROID,      name_texture.SAMUS,          portrait_offsets.ESAMUS,         5)
-    add_to_css(Character.id.BOWSER, FGM.announcer.names.BOWSER,         1.50,   0x00010002, series_logo.BOWSER,       name_texture.BOWSER,         portrait_offsets.BOWSER,         -1)
-	add_to_css(Character.id.GBOWSER,FGM.announcer.names.GBOWSER,        1.50,   0x00010002, series_logo.BOWSER,       name_texture.GBOWSER,        portrait_offsets.GBOWSER,        19)
+    add_to_css(Character.id.BOWSER, FGM.announcer.names.BOWSER,         2,      0x00010002, series_logo.BOWSER,       name_texture.BOWSER,         portrait_offsets.BOWSER,         -1)
+	add_to_css(Character.id.GBOWSER,FGM.announcer.names.GBOWSER,        2.25,   0x00010002, series_logo.BOWSER,       name_texture.GBOWSER,        portrait_offsets.GBOWSER,        19)
+    add_to_css(Character.id.PIANO,  0x2B7,                              2,      0x00010004, series_logo.MARIO_BROS,   name_texture.PIANO,          portrait_offsets.PIANO,          1)
 }
 
 } // __CHARACTER_SELECT__

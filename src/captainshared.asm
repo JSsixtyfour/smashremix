@@ -91,6 +91,14 @@ scope CaptainShared {
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // store t0, t1
         lw      t0, 0x0008(v1)              // t0 = character id
+
+        lli     t1, Character.id.KIRBY      // t1 = id.KIRBY
+        beql    t0, t1, pc() + 8            // if Kirby, get held power character_id
+        lw      t0, 0x0ADC(v1)              // t0 = character id of copied power
+        lli     t1, Character.id.JKIRBY     // t1 = id.JKIRBY
+        beql    t0, t1, pc() + 8            // if J Kirby, get held power character_id
+        lw      t0, 0x0ADC(v1)              // t0 = character id of copied power
+
         ori     t1, r0, Character.id.GND    // t1 = id.GND
         li      a0, punch_anim_struct       // a0 = punch_anim_struct
         beq     t0, t1, _end                // end if character id = GND
@@ -278,4 +286,26 @@ scope CaptainShared {
 		j		_return
 		addiu	s3, s3, 0x24C0
     }
+
+    // @ Description
+    // Extends a check on ID that occurs when Kirby absorbs or ejects a power.
+    scope kirby_power_change_: {
+        OS.patch_start(0xDC90C, 0x80161ECC)
+        j       kirby_power_change_
+        nop
+        _kirby_power_change_return:
+        OS.patch_end()
+
+        beq     v0, at, j_0x80161EF8        // original line 1, modified to use jump
+        lli     at, Character.id.JFALCON    // at = JFALCON
+        beq     v0, at, j_0x80161EF8        // if JFALCON, take Falcon branch
+        nop
+
+        j       _kirby_power_change_return
+        addiu   at, r0, 0x000A              // original line 2
+
+        j_0x80161EF8:
+        j       0x80161EF8
+        nop
     }
+}

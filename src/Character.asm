@@ -12,7 +12,7 @@ include "OS.asm"
 
 scope Character {
     // number of character slots to add
-    constant ADD_CHARACTERS(25)
+    constant ADD_CHARACTERS(26)
     // start and end offset for the main character struct table
     constant STRUCT_TABLE(0x92610)
     variable STRUCT_TABLE_END(STRUCT_TABLE + 0x6C)
@@ -47,11 +47,10 @@ scope Character {
         read32 {name}_parent_menu_array_ptr, "../roms/original.z64", ({name}_parent_struct + 0x68)
         constant {name}_parent_menu_array({name}_parent_menu_array_ptr - 0x80288A20)
 
-        // Get action array pointer and Rom offset of {parent}
+        // Get action array pointer and ROM offset of {parent}
         read32 {name}_parent_action_array_ptr, "../roms/original.z64", (ACTION_ARRAY_TABLE_ORIGINAL + (id.{parent} * 0x4))
         global evaluate {name}_parent_action_array({name}_parent_action_array_ptr - 0x80084800)
         
-
         // Action parameter array size
         constant {name}_param_array_size({name}_parent_param_array_size + {add_actions})
 
@@ -60,6 +59,9 @@ scope Character {
 
         // Parent character name
         global define {name}_parent({parent})
+        
+        // Number of new action slots
+        constant {name}_NEW_ACTION_SLOTS({add_actions})
         
         // Print message
         print "Added Character: {name} \n"
@@ -164,8 +166,10 @@ scope Character {
         {name}_action_array:
         global evaluate {name}_action_array_origin(origin())
         // copy array from parent character
-        OS.copy_segment({{name}_parent_action_array}, action_array_size.{parent} + ({add_actions} * 0x14))
-        OS.align(16)
+        
+        OS.copy_segment({{name}_parent_action_array}, action_array_size.{parent})
+        fill ({name}_action_array + (action_array_size.{parent} + ({add_actions} * 0x14))) - pc()
+        OS.align(16)   
         
         // DEFINE MENU ARRAY //////////////////////////////////////////////////////////////////////
         {name}_menu_array:
@@ -258,19 +262,25 @@ scope Character {
         
         // Copy parent character for projectile tables
         add_to_table(fireball, id.{name}, id.{parent}, 0x4)
+        add_to_table(kirby_fireball, id.{name}, id.{parent}, 0x4)
 
         // Add parent ID to ID override tables
         add_to_id_table(thrown_hitbox, id.{name}, id.{parent})
         add_to_id_table(f_thrown_action, id.{name}, id.{parent})
         add_to_id_table(b_thrown_action, id.{name}, id.{parent})
         add_to_id_table(falcon_dive_id, id.{name}, id.{parent})
+
+        // update Kirby inhale table
+        origin kirby_inhale_struct.TABLE_ORIGIN + (id.{name} * 0xC)
         if {bool_inhale_copy} == OS.TRUE {
-        	add_to_id_table(inhale_copy, id.{name}, id.{parent})
+            dh      id.{name}
+        	dh      kirby_hat_id.{parent}
         } else {
-        	add_to_id_table(inhale_copy, id.{name}, id.NMARIO)      // NMARIO ID used to disable copy
+            dh      id.KIRBY                 // KIRBY ID used to disable copy
+        	dh      kirby_hat_id.NONE
         }
-        add_to_id_table(inhale_star_damage, id.{name}, id.{parent})
-        add_to_id_table(inhale_star_size, id.{name}, id.{parent})
+        dw      kirby_inhale_struct.star_scale.{parent}
+        dw      kirby_inhale_struct.star_damage.DEFAULT
 
         // update bonus stage tables
         origin BTT_TABLE_ORIGIN + id.{name}
@@ -370,7 +380,7 @@ scope Character {
     if {action} < 0xDC {
         print "\n\nWARNING: Action 0x" ; OS.print_hex({action}) ; print " is a shared action and cannot be modified. edit_action aborted.\n"
     } else if {staling} > 0x1F {
-        print "\n\n WARNING: UNSUPPORTED STALING ID! Max Staling ID = 0x1F. edit_action aborted."
+        print "\n\n WARNING: UNSUPPORTED STALING ID! Max Staling ID = 0x1F. edit_action aborted.\n"
     } else {
         // Define {num} (used to avoid constant declaration issues with read16)
         if !{defined num} {
@@ -406,6 +416,177 @@ scope Character {
         pullvar base, origin
     }
     }
+    
+    // @ Description
+    // adds new action parameters for a character
+    // NOTE: this macro supports use outside of this file, and use with KIRBY
+    macro add_new_action_params(name, action_name, action_copy, animation, command, flags) {
+        if !{defined {name}_new_params} {
+            global evaluate {name}_new_params(0)
+        }
+        if Character.{name}_NEW_ACTION_SLOTS <= {{name}_new_params} {
+            print "\n\nWARNING: NOT ENOUGH ACTION SLOTS! {name} does not have enough action slots to support adding parameters for {action_name}. Please increase the number of new actions for this character.\n"
+        }
+        // Copy from base action if one is given
+        if {action_copy} != -1 {
+            // Define {num} (used to avoid constant declaration issues with read16/read32)
+            if !{defined num} {
+                evaluate num(0)
+            }
+            // Get ROM offset for parent action struct
+            if Character.id.{name} == Character.id.KIRBY {
+                variable PARENT_ACTION_STRUCT({Character.KIRBY_original_action_array} + (({action_copy} - 0xDC) * 0x14))
+            } else {
+                variable PARENT_ACTION_STRUCT({Character.{name}_parent_action_array} + (({action_copy} - 0xDC) * 0x14))
+            }
+            // Get param_offset from {action_copy}
+            global evaluate num({num} + 1)
+            read16 param_read_{num}, "../roms/original.z64", PARENT_ACTION_STRUCT   
+            variable param_offset(param_read_{num} >> 6)
+            
+            // Get ROM offset for parent parameter struct
+            if Character.id.{name} == Character.id.KIRBY {
+                variable PARENT_PARAM_STRUCT(Character.KIRBY_original_param_array + (param_offset * 0xC))
+            } else {
+                variable PARENT_PARAM_STRUCT(Character.{name}_parent_param_array + (param_offset * 0xC))
+            }
+            // Read values from original struct
+            read32 animation_read_{num}, "../roms/original.z64", PARENT_PARAM_STRUCT + 0x0
+            read32 command_read_{num}, "../roms/original.z64", PARENT_PARAM_STRUCT + 0x4
+            read32 flags_read_{num}, "../roms/original.z64", PARENT_PARAM_STRUCT + 0x8
+             // Copy parameters from {action_copy} when not defined
+            if {animation} == -1 {
+                evaluate animation(animation_read_{num})
+            }; if {command} == -1 {
+                evaluate command(command_read_{num})
+            }; if {flags} == -1 {
+                evaluate flags(flags_read_{num})
+            }
+        }
+        
+        // Get original parameter array size.
+        if Character.id.{name} == Character.id.KIRBY {
+                variable array_size(Character.KIRBY_original_param_array_size)
+            } else {
+                variable array_size(Character.{name}_parent_param_array_size)
+        }
+        
+        // Get ID for new parameter struct
+        constant ActionParams.{action_name}(array_size + {{name}_new_params})
+        // Write new parameter struct
+        pushvar origin, base
+        origin {Character.{name}_param_array_origin} + (ActionParams.{action_name} * 0xC)
+        if {animation} != -1 {
+            dw {animation}                  // insert animation
+        } else {; origin origin() + 0x4; }
+        if {command} != -1 {
+            dw {command}                    // insert command offset
+        } else {; origin origin() + 0x4; }
+        if {flags} != -1 {
+            dw {flags}                      // insert flags
+        }
+        pullvar base, origin
+        
+        // Increment {name}_new_params
+        global evaluate {name}_new_params({{name}_new_params} + 1)
+    }
+    
+    // @ Description
+    // adds a new action for a character
+    // NOTE: this macro supports use outside of this file, and use with KIRBY
+    macro add_new_action(name, action_name, action_copy, parameters_id, staling, asm1, asm2, asm3, asm4) {  
+    if !{defined {name}_new_actions} {
+        global evaluate {name}_new_actions(0)
+    }
+    if {staling} > 0x1F {
+        print "\n\n WARNING: UNSUPPORTED STALING ID! Max Staling ID = 0x1F. Error in add_new_action ({action_name}).\n"
+    }
+    if Character.{name}_NEW_ACTION_SLOTS <= {{name}_new_actions} {
+            print "\n\nWARNING: NOT ENOUGH ACTION SLOTS! {name} does not have enough action slots to support adding action {action_name}. Please increase the number of new actions for this character.\n"
+    }
+        // Copy from base action if one is given
+        if {action_copy} != -1 {
+            // Define {num} (used to avoid constant declaration issues with read16/read32)
+            if !{defined num} {
+                evaluate num(0)
+            }
+            // Get ROM offset for parent action struct
+            if Character.id.{name} == Character.id.KIRBY {
+                variable PARENT_ACTION_STRUCT({Character.KIRBY_original_action_array} + (({action_copy} - 0xDC) * 0x14))
+            } else {
+                variable PARENT_ACTION_STRUCT({Character.{name}_parent_action_array} + (({action_copy} - 0xDC) * 0x14))
+            }
+            
+            // Read values from original struct
+            global evaluate num({num} + 1)
+            read16 param_read_{num}, "../roms/original.z64", PARENT_ACTION_STRUCT
+            read16 unknown_read_{num}, "../roms/original.z64", PARENT_ACTION_STRUCT + 0x2
+            read32 asm1_read_{num}, "../roms/original.z64", PARENT_ACTION_STRUCT + 0x4
+            read32 asm2_read_{num}, "../roms/original.z64", PARENT_ACTION_STRUCT + 0x8
+            read32 asm3_read_{num}, "../roms/original.z64", PARENT_ACTION_STRUCT + 0xC
+            read32 asm4_read_{num}, "../roms/original.z64", PARENT_ACTION_STRUCT + 0x10
+            
+            // Copy param_offset from {action_copy}
+            variable param_offset(param_read_{num} >> 6)
+            // Copy staling from {action_copy} if not defined
+            if {staling} == -1 {
+                evaluate staling(param_read_{num} & 0x3F)
+            }
+            // Copy unknown from {action_copy}
+            evaluate unknown(unknown_read_{num})
+            // Copy asm from {action_copy} when not defined
+            if {asm1} == -1 {
+                evaluate asm1(asm1_read_{num})
+            }; if {asm2} == -1 {
+                evaluate asm2(asm2_read_{num})
+            }; if {asm3} == -1 {
+                evaluate asm3(asm3_read_{num})
+            }; if {asm4} == -1 {
+                evaluate asm4(asm4_read_{num})
+            }
+        } else {
+            // Set these values if a base action is not given
+            evaluate unknown(0)
+            variable param_offset(0x3FF)
+        }
+        
+        // Get ID for new action.
+        if Character.id.{name} == Character.id.KIRBY {
+            constant Action.{action_name}((Character.action_array_size.KIRBY / 0x14) + {{name}_new_actions} + 0xDC)
+        } else {
+            constant Action.{action_name}((Character.action_array_size.{Character.{name}_parent} / 0x14) + {{name}_new_actions} + 0xDC)
+        }
+        // Set staling ID to 0 if not defined at this point.
+        if {staling} == -1 {
+            evaluate staling(0)
+        }
+        // Set param_offset if {parameters_id} is defined.
+        if {parameters_id} != -1 {
+            variable param_offset({parameters_id})
+        }
+        // Write new action struct.
+        pushvar origin, base
+        origin {Character.{name}_action_array_origin} + ((Action.{action_name} - 0xDC) * 0x14)
+        dh (param_offset << 6) | {staling}  // insert parameter offset and staling ID
+        dh {unknown}                        // insert unknown value
+        if {asm1} != -1 {
+            dw {asm1}                       // insert subroutine (main)
+        } else {; origin origin() + 0x4; }
+        if {asm2} != -1 {
+            dw {asm2}                       // insert subroutine (interruptibility/other)
+        } else {; origin origin() + 0x4; }
+        if {asm3} != -1 {
+            dw {asm3}                       // insert subroutine (movement/physics)
+        } else {; origin origin() + 0x4; }
+        if {asm4} != -1 {
+            dw {asm4}                       // insert subroutine (collision)
+        }
+        pullvar base, origin
+        
+        // Increment {name}_new_actions
+        global evaluate {name}_new_actions({{name}_new_actions} + 1)
+    }
+    
     
     // @ Description
     // Copies menu actions from a base character to a target character.
@@ -451,6 +632,14 @@ scope Character {
         origin  Character.{table_name}.TABLE_ORIGIN + ({id} * {entry_size})  
     }
     
+    // @ Description
+    // begins a patch in a character id based table, use OS.patch_end() to end
+    // NOTE: this macro supports use outside of this file.
+    macro table_patch_start(table_name, offset, id, entry_size) {
+        pushvar origin, base
+        origin  Character.{table_name}.TABLE_ORIGIN + {offset} + ({id} * {entry_size})
+    }
+
     // @ Description
     // adds default costume ids to a character
     // NOTE: this macro supports use outside of this file.
@@ -687,6 +876,65 @@ scope Character {
         pushvar origin, base
         origin  0x93074
         dw      mario_parameter_array
+        pullvar base, origin
+    }
+    
+    // @ Description
+    // moves Kirby's action array/action parameter array to allow for new copy ability actions to be added
+    // add_actions - number of new actions to add for Kirby
+    macro extend_kirby_arrays(add_actions) {
+        // Get struct pointer and ROM offset
+        read32 KIRBY_struct_ptr, "../roms/original.z64", (STRUCT_TABLE + (id.KIRBY * 0x4))
+        constant KIRBY_struct(KIRBY_struct_ptr - 0x80084800)
+        // Fixes conflict with copy_menu_actions
+        global evaluate KIRBY_struct(KIRBY_struct)
+
+        // Get parameter array pointer, size, and ROM offset
+        read32 KIRBY_original_param_array_ptr, "../roms/original.z64", (KIRBY_struct + 0x64)
+        read32 KIRBY_original_param_array_size, "../roms/original.z64", (KIRBY_struct + 0x6C)
+        constant KIRBY_original_param_array(KIRBY_original_param_array_ptr - 0x80084800)
+
+        // Get action array pointer and ROM offset
+        read32 KIRBY_original_action_array_ptr, "../roms/original.z64", (ACTION_ARRAY_TABLE_ORIGINAL + (id.KIRBY * 0x4))
+        global evaluate KIRBY_original_action_array(KIRBY_original_action_array_ptr - 0x80084800)
+        
+        // New action parameter array size
+        constant KIRBY_param_array_size(KIRBY_original_param_array_size + {add_actions})
+        
+        // Number of new action slots
+        constant KIRBY_NEW_ACTION_SLOTS({add_actions})
+        
+        // Move action parameter array
+        KIRBY_param_array:
+        global evaluate KIRBY_param_array_origin(origin())
+        OS.move_segment(KIRBY_original_param_array, (KIRBY_original_param_array_size * 0xC))
+        // Add space for new actions
+        fill (KIRBY_param_array + (KIRBY_param_array_size * 0xC)) - pc()
+        OS.align(16)
+
+        // Move action array
+        KIRBY_action_array:
+        global evaluate KIRBY_action_array_origin(origin())
+        OS.move_segment({KIRBY_original_action_array}, action_array_size.KIRBY)
+        // Add space for new actions
+        fill (KIRBY_action_array + (action_array_size.KIRBY + ({add_actions} * 0x14))) - pc()
+        OS.align(16)
+        
+        // Write new array pointers and size
+        pushvar origin, base
+        
+        // parameter array
+        origin KIRBY_struct + 0x64
+        dw KIRBY_param_array
+        origin KIRBY_struct + 0x6C
+        dw KIRBY_param_array_size
+        
+        // action array
+        origin  ACTION_ARRAY_TABLE_ORIGIN + (id.KIRBY * 0x4)
+        dw KIRBY_action_array
+        origin  ACTION_ARRAY_TABLE_ORIGIN + (id.NKIRBY * 0x4)
+        dw KIRBY_action_array
+        
         pullvar base, origin
     }
 
@@ -1248,11 +1496,12 @@ scope Character {
         scope get_fireball_struct_: {
             constant UPPER(fireball.table >> 16)
             constant LOWER(fireball.table & 0xFFFF)
-            origin  0xD08F4
-            base    0x80155EB4
+
+            OS.patch_start(0xD08F4, 0x80155EB4)
             sltiu   at, t7, NUM_CHARACTERS  // modified original character check
-            origin  0xD0900
-            base    0x80155EC0
+            OS.patch_end()
+
+            OS.patch_start(0xD0900, 0x80155EC0)
             if LOWER > 0x7FFF {
                 lui     at, (UPPER + 0x1)   // original line 1 (modified)
             } else {
@@ -1260,6 +1509,29 @@ scope Character {
             }
             addu    at, at, t7              // original line 2
             lw      t7, LOWER(at)           // original line 3
+            OS.patch_end()
+        }
+
+        // @ Description
+        // modifies a hard-coded routine which runs when a fireball projectile is created via kirby copy, and
+        // determines which fireball struct id is loaded
+        scope get_kirby_fireball_struct_: {
+            constant UPPER(kirby_fireball.table >> 16)
+            constant LOWER(kirby_fireball.table & 0xFFFF)
+
+            OS.patch_start(0xD1464, 0x80156A24)
+            sltiu   at, t7, NUM_CHARACTERS  // modified original character check
+            OS.patch_end()
+
+            OS.patch_start(0xD1470, 0x80156A30)
+            if LOWER > 0x7FFF {
+                lui     at, (UPPER + 0x1)   // original line 1 (modified)
+            } else {
+                lui     at, UPPER           // original line 1 (modified)
+            }
+            addu    at, at, t7              // original line 2
+            lw      t7, LOWER(at)           // original line 3
+            OS.patch_end()
         }
         
         // @ Description
@@ -1447,153 +1719,32 @@ scope Character {
         }
 
         // @ Description
-        // When Kirby inhales an opponent, the opponent's ID is used for a table which holds IDs
-        // for the copy ability, a size multiplier for the star, and a damage value for the star.
-        // This table is located at the beginning of Kirby's moveset file, so it cannot be extended
-        // to accommodate additional characters through normal means.
-        // Instead, a working ID will be substituted using a new table.
-        scope inhale_copy_fix_: {
-            OS.patch_start(0xDCB38, 0x801620F8)
-            j   inhale_copy_fix_
-            nop
-            _return:
+        // fixes all hard codes to Kirby's inhale struct to use extended table
+        scope get_extended_inhale_struct_: {
+            // inhale
+            OS.patch_start(0xDCABC, 0x8016207C)
+            li      t6, kirby_inhale_struct.table
             OS.patch_end()
 
-            lw      v1, 0x0008(v0)          // original line 1 (load inhaled character id)
-            sh      a0, 0x0B18(v0)          // original line 2
-            addiu   sp, sp,-0x0008          // allocate stack space
-            sw      t0, 0x0004(sp)          // store t0
-            li      t0, inhale_copy.table   // t0 = table
-            sll     v1, v1, 0x2             // v1 = offset (id * 4)
-            addu    t0, t0, v1              // t0 = table + offset
-            lw      v1, 0x0000(t0)          // v1 = new ID
-
-            lw      t0, 0x0004(sp)          // load t0
-            addiu   sp, sp, 0x0008          // deallocate stack space
-            j       _return                 // return
-            nop
-        }
-
-        // @ Description
-        // same as inhale_copy_fix_
-        // determines the damage of the star
-        scope inhale_star_damage_fix_: {
-            OS.patch_start(0xC6FF4, 0x8014C5B4)
-            j   inhale_star_damage_fix_
-            nop
-            _return:
+            // spit star 1
+            OS.patch_start(0xC6F5C, 0x8014C51C)
+            li      t7, kirby_inhale_struct.table
             OS.patch_end()
 
-            lw      t5, 0x0008(s0)          // original line 1 (load inhaled character id)
-            addiu   sp, sp,-0x0008          // allocate stack space
-            sw      t0, 0x0004(sp)          // store t0
-            li      t0, inhale_star_damage.table// t0 = table
-            sll     t5, t5, 0x2             // t5 = offset (id * 4)
-            addu    t0, t0, t5              // t0 = table + offset
-            lw      t5, 0x0000(t0)          // t5 = new ID
-
-            lw      t0, 0x0004(sp)          // load t0
-            addiu   sp, sp, 0x0008          // deallocate stack space
-            multu   t5, a1                  // original line 2
-            j       _return                 // return
-            nop
-        }
-        
-        // @ Description
-        // same as inhale_copy_fix_
-        // this determines the size of the star sprite when spitting or swallowing
-        scope inhale_star_size_fix_1_: {
-            OS.patch_start(0x7F5B8, 0x80103DB8)
-            j   inhale_star_size_fix_1_
-            nop
-            _return:
+            // spit star 2
+            OS.patch_start(0x7F504, 0x80103D04)
+            li      t6, kirby_inhale_struct.table
             OS.patch_end()
 
-            lw      t0, 0x0008(t9)          // original line 1 (load inhaled character id)
-            li      t1, inhale_star_size.table// t1 = table
-            sll     t0, t0, 0x2             // t0 = offset (id * 4)
-            addu    t1, t1, t0              // t1 = table + offset
-            lw      t0, 0x0000(t1)          // t0 = new ID
-            sll     t1, t0, 0x2             // original line 2
-            j       _return                 // return
-            nop
-        }
-        
-        // @ Description
-        // same as inhale_copy_fix_
-        // don't really know what this does but it reads from the size multiplier ¯\_(ツ)_/¯
-        scope inhale_star_size_fix_2_: {
-            OS.patch_start(0x7F3C4, 0x80103BC4)
-            j   inhale_star_size_fix_2_
-            nop
-            _return:
+            // spit star 3
+            OS.patch_start(0x7F344, 0x80103B44)
+            li      t7, kirby_inhale_struct.table
             OS.patch_end()
 
-            lw      t5, 0x0008(a1)          // original line 1 (load inhaled character id)
-            addiu   sp, sp,-0x0008          // allocate stack space
-            sw      t0, 0x0004(sp)          // store t0
-            li      t0, inhale_star_size.table// t0 = table
-            sll     t5, t5, 0x2             // t5 = offset (id * 4)
-            addu    t0, t0, t5              // t0 = table + offset
-            lw      t5, 0x0000(t0)          // t5 = new ID
-
-            lw      t0, 0x0004(sp)          // load t0
-            addiu   sp, sp, 0x0008          // deallocate stack space
-            sll     t6, t5, 0x2             // original line 2
-            j       _return                 // return
-            nop
-        }
-        
-        // @ Description
-        // same as inhale_copy_fix_
-        // this is called when inhaled character is spit out to the right either via copy or spit
-        scope inhale_star_size_fix_3_: {
-            OS.patch_start(0x7F430, 0x80103C30)
-            j   inhale_star_size_fix_3_
-            nop
-            _return:
+            // copy
+            OS.patch_start(0xDC960, 0x80161F20)
+            li      t7, kirby_inhale_struct.table
             OS.patch_end()
-
-            lw      t9, 0x0008(a1)          // original line 1 (load inhaled character id)
-            lui     at, 0x42FA              // original line 2
-            addiu   sp, sp,-0x0008          // allocate stack space
-            sw      t0, 0x0004(sp)          // store t0
-            li      t0, inhale_star_size.table// t0 = table
-            sll     t9, t9, 0x2             // t9 = offset (id * 4)
-            addu    t0, t0, t9              // t0 = table + offset
-            lw      t9, 0x0000(t0)          // t9 = new ID
-
-            lw      t0, 0x0004(sp)          // load t0
-            addiu   sp, sp, 0x0008          // deallocate stack space
-            j       _return                 // return
-            nop
-        }
-
-        // @ Description
-        // same as inhale_copy_fix_
-        // this is called when inhaled character is spit out to the left either via copy or spit
-        scope inhale_star_size_fix_4_: {
-            OS.patch_start(0x7F48C, 0x80103C8C)
-            j   inhale_star_size_fix_4_
-            nop
-            _return:
-            OS.patch_end()
-
-            // t3 = inhaled character id
-
-            lui     at, 0x42FA                 // original line 1
-            mtc1    at, f18                    // original line 2
-            addiu   sp, sp,-0x0008             // allocate stack space
-            sw      t0, 0x0004(sp)             // store t0
-            li      t0, inhale_star_size.table // t0 = table
-            sll     t3, t3, 0x2                // t3 = offset (id * 4)
-            addu    t0, t0, t3                 // t0 = table + offset
-            lw      t3, 0x0000(t0)             // t3 = new ID
-
-            lw      t0, 0x0004(sp)             // load t0
-            addiu   sp, sp, 0x0008             // deallocate stack space
-            j       _return                    // return
-            nop
         }
     }
 
@@ -1754,15 +1905,13 @@ scope Character {
     
     // projectile tables
     move_table(fireball, 0x107070, 0x4)
+    move_table(kirby_fireball, 0x1070E0, 0x4)
 
     // ID override tables
     id_table(thrown_hitbox)
     id_table(f_thrown_action)
     id_table(b_thrown_action)
     id_table(falcon_dive_id)                // TODO: may need to be revisited
-    id_table(inhale_copy)
-    id_table(inhale_star_damage)
-    id_table(inhale_star_size)
     ///////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////// CONSTANTS/SUBROUTINES ////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -1946,7 +2095,7 @@ scope Character {
         db  id.NONE;    db  id.NFOX;     db  id.JFOX;   db  id.NONE        // 0x01 - FOX
         db  id.GDONKEY; db  id.NDONKEY;  db  id.JDK;    db  id.NONE        // 0x02 - DONKEY
         db  id.NONE;    db  id.NSAMUS;   db  id.JSAMUS; db  id.ESAMUS      // 0x03 - SAMUS
-        db  id.NONE;    db  id.NLUIGI;   db  id.JLUIGI; db  id.NONE        // 0x04 - LUIGI
+        db  id.PIANO;   db  id.NLUIGI;   db  id.JLUIGI; db  id.NONE        // 0x04 - LUIGI
         db  id.NONE;    db  id.NLINK;    db  id.JLINK;  db  id.ELINK       // 0x05 - LINK
         db  id.NONE;    db  id.NYOSHI;   db  id.JYOSHI; db  id.NONE        // 0x06 - YOSHI
         db  id.NONE;    db  id.NCAPTAIN; db  id.JFALCON;db  id.NONE        // 0x07 - CAPTAIN
@@ -2004,6 +2153,162 @@ scope Character {
     }
 
     // @ Description
+    // Kirby hat IDs
+    scope kirby_hat_id {
+        constant NONE(0x00)
+        constant SUCK(0x01)
+        constant ROCK(0x02)
+
+        constant MARIO(0x0C)
+        constant FOX(0x07)
+        constant DONKEY(0x04)
+        constant DK(0x04)
+        constant DONKEY_KONG(0x04)
+        constant SAMUS(0x08)
+        constant LUIGI(0x0B)
+        constant LINK(0x0A)
+        constant YOSHI(0x05)
+        constant YOSHI_SWALLOW(0x0E)
+        constant CAPTAIN(0x09)
+        constant CAPTAIN_FALCON(0x09)
+        constant FALCON(0x09)
+        constant KIRBY(NONE)
+        constant PIKACHU(0x06)
+        constant JIGGLY(0x03)
+        constant JIGGLYPUFF(0x03)
+        constant NESS(0x0D)
+        constant BOSS(NONE)
+        constant METAL(NONE)
+        constant NMARIO(NONE)
+        constant NFOX(NONE)
+        constant NDONKEY(NONE)
+        constant NSAMUS(NONE)
+        constant NLUIGI(NONE)
+        constant NLINK(NONE)
+        constant NYOSHI(NONE)
+        constant NCAPTAIN(NONE)
+        constant NKIRBY(NONE)
+        constant NPIKACHU(NONE)
+        constant NJIGGLY(NONE)
+        constant NNESS(NONE)
+        constant GDONKEY(DK)
+    }
+
+    // @ Description
+    // Holds data related to Kirby's inhale moveset for added characters.
+    // Each entry is 0xC.
+    //  - 0x00 = copied power character_id (use Character.id.KIRBY for no copy)
+    //  - 0x02 = copied power hat_id (use 0 for no copy)
+    //  - 0x04 = scale for star
+    //  - 0x08 = damage for star
+    scope kirby_inhale_struct {
+        scope star_scale {
+            constant MARIO(0x3FC00000)
+            constant FOX(0x3FC00000)
+            constant DONKEY(0x40000000)
+            constant DK(0x40000000)
+            constant DONKEY_KONG(0x40000000)
+            constant SAMUS(0x3FCCCCCD)
+            constant LUIGI(0x3FCCCCCD)
+            constant LINK(0x3FC00000)
+            constant YOSHI(0x3FD9999A)
+            constant CAPTAIN(0x3FD9999A)
+            constant CAPTAIN_FALCON(0x3FD9999A)
+            constant FALCON(0x3FD9999A)
+            constant KIRBY(0x3FCCCCCD)
+            constant PIKACHU(0x3FC00000)
+            constant JIGGLY(0x3FCCCCCD)
+            constant JIGGLYPUFF(0x3FCCCCCD)
+            constant NESS(0x3FCCCCCD)
+            constant BOSS(0x3F800000)
+            constant METAL(MARIO)
+            constant NMARIO(MARIO)
+            constant NFOX(FOX)
+            constant NDONKEY(DONKEY)
+            constant NSAMUS(SAMUS)
+            constant NLUIGI(LUIGI)
+            constant NLINK(LINK)
+            constant NYOSHI(YOSHI)
+            constant NCAPTAIN(CAPTAIN)
+            constant NKIRBY(KIRBY)
+            constant NPIKACHU(PIKACHU)
+            constant NJIGGLY(JIGGLY)
+            constant NNESS(NESS)
+            constant GDONKEY(DONKEY)
+        }
+
+        scope star_damage {
+            constant DEFAULT(0x11)
+
+            constant MARIO(DEFAULT)
+            constant FOX(DEFAULT)
+            constant DONKEY(0x1E)
+            constant DK(0x1E)
+            constant DONKEY_KONG(0x1E)
+            constant SAMUS(DEFAULT)
+            constant LUIGI(DEFAULT)
+            constant LINK(DEFAULT)
+            constant YOSHI(0x19)
+            constant CAPTAIN(DEFAULT)
+            constant CAPTAIN_FALCON(DEFAULT)
+            constant FALCON(DEFAULT)
+            constant KIRBY(DEFAULT)
+            constant PIKACHU(DEFAULT)
+            constant JIGGLY(DEFAULT)
+            constant JIGGLYPUFF(DEFAULT)
+            constant NESS(DEFAULT)
+            constant BOSS(DEFAULT)
+            constant METAL(MARIO)
+            constant NMARIO(DEFAULT)
+            constant NFOX(DEFAULT)
+            constant NDONKEY(DONKEY)
+            constant NSAMUS(DEFAULT)
+            constant NLUIGI(DEFAULT)
+            constant NLINK(DEFAULT)
+            constant NYOSHI(DEFAULT)
+            constant NCAPTAIN(DEFAULT)
+            constant NKIRBY(DEFAULT)
+            constant NPIKACHU(DEFAULT)
+            constant NJIGGLY(DEFAULT)
+            constant NNESS(DEFAULT)
+            constant GDONKEY(0x32)
+        }
+
+        OS.align(16)
+        table:
+        constant TABLE_ORIGIN(origin())
+        // char_id         // hat_id                        // star scale              // star damage
+        dh id.MARIO;       dh kirby_hat_id.MARIO;           dw star_scale.MARIO;       dw star_damage.MARIO
+        dh id.FOX;         dh kirby_hat_id.FOX;             dw star_scale.FOX;         dw star_damage.FOX
+        dh id.DK;          dh kirby_hat_id.DK;              dw star_scale.DK;          dw star_damage.DK
+        dh id.SAMUS;       dh kirby_hat_id.SAMUS;           dw star_scale.SAMUS;       dw star_damage.SAMUS
+        dh id.LUIGI;       dh kirby_hat_id.LUIGI;           dw star_scale.LUIGI;       dw star_damage.LUIGI
+        dh id.LINK;        dh kirby_hat_id.LINK;            dw star_scale.LINK;        dw star_damage.LINK
+        dh id.YOSHI;       dh kirby_hat_id.YOSHI;           dw star_scale.YOSHI;       dw star_damage.YOSHI
+        dh id.CAPTAIN;     dh kirby_hat_id.CAPTAIN;         dw star_scale.CAPTAIN;     dw star_damage.CAPTAIN
+        dh id.KIRBY;       dh kirby_hat_id.KIRBY;           dw star_scale.KIRBY;       dw star_damage.KIRBY
+        dh id.PIKACHU;     dh kirby_hat_id.PIKACHU;         dw star_scale.PIKACHU;     dw star_damage.PIKACHU
+        dh id.JIGGLY;      dh kirby_hat_id.JIGGLY;          dw star_scale.JIGGLY;      dw star_damage.JIGGLY
+        dh id.NESS;        dh kirby_hat_id.NESS;            dw star_scale.NESS;        dw star_damage.NESS
+        dh id.KIRBY;       dh kirby_hat_id.BOSS;            dw star_scale.BOSS;        dw star_damage.BOSS
+        dh id.KIRBY;       dh kirby_hat_id.METAL;           dw star_scale.METAL;       dw star_damage.METAL
+        dh id.KIRBY;       dh kirby_hat_id.NMARIO;          dw star_scale.NMARIO;      dw star_damage.NMARIO
+        dh id.KIRBY;       dh kirby_hat_id.NFOX;            dw star_scale.NFOX;        dw star_damage.NFOX
+        dh id.KIRBY;       dh kirby_hat_id.NDONKEY;         dw star_scale.NDONKEY;     dw star_damage.NDONKEY
+        dh id.KIRBY;       dh kirby_hat_id.NSAMUS;          dw star_scale.NSAMUS;      dw star_damage.NSAMUS
+        dh id.KIRBY;       dh kirby_hat_id.NLUIGI;          dw star_scale.NLUIGI;      dw star_damage.NLUIGI
+        dh id.KIRBY;       dh kirby_hat_id.NLINK;           dw star_scale.NLINK;       dw star_damage.NLINK
+        dh id.KIRBY;       dh kirby_hat_id.NYOSHI;          dw star_scale.NYOSHI;      dw star_damage.NYOSHI
+        dh id.KIRBY;       dh kirby_hat_id.NCAPTAIN;        dw star_scale.NCAPTAIN;    dw star_damage.NCAPTAIN
+        dh id.KIRBY;       dh kirby_hat_id.NKIRBY;          dw star_scale.NKIRBY;      dw star_damage.NKIRBY
+        dh id.KIRBY;       dh kirby_hat_id.NPIKACHU;        dw star_scale.NPIKACHU;    dw star_damage.NPIKACHU
+        dh id.KIRBY;       dh kirby_hat_id.NJIGGLY;         dw star_scale.NJIGGLY;     dw star_damage.NJIGGLY
+        dh id.KIRBY;       dh kirby_hat_id.NNESS;           dw star_scale.NNESS;       dw star_damage.NNESS
+        dh id.DONKEY;      dh kirby_hat_id.GDONKEY;         dw star_scale.GDONKEY;     dw star_damage.GDONKEY
+        fill ((2 + ADD_CHARACTERS) * 0xC) // make space for // 0x1B and 0x1C and all added characters
+    }
+
+    // @ Description
     // Adds a 32-bit signed int to the player's percentage
     // the game will crash if the player's % goes below 0
     // @ Arguments
@@ -2021,54 +2326,31 @@ scope Character {
     }
     
     // @ Description
-    // Returns the address of the player struct. Legacy 19XX function, probably not very useful.
-    // @ Arguments 
-    // a0 - player struct index
-    // @ Returns
-    // v0 - address of player struct X
-    // TODO: rewrite this to loop through the linked list instead of using P_STRUCT_LENGTH
-    scope get_struct_: {
-        addiu   sp, sp,-0x0010              // allocate stack space
-        sw      t0, 0x0004(sp)              // ~
-        sw      t1, 0x0008(sp)              // save registers
-
-        li      t0, Global.p_struct_head    // t0 = address of player struct list head
-        lw      t0, 0x0000(t0)              // t0 = address of first player struct
-        lli     t1, Global.P_STRUCT_LENGTH  // t1 = player struct length
-        mult    a0, t1                      // ~
-        mflo    t1                          // t1 = offset = player struct length * player
-        addu    v0, t0, t1                  // v0 = ret = address of player struct
-
-        lw      t0, 0x0004(sp)              // ~
-        lw      t1, 0x0008(sp)              // restore registers
-        addiu   sp, sp, 0x0010              // deallocate stack space
-        jr      ra                          // return
-        nop
-    }
-    
-    // @ Description
     // Returns the address of the player struct for the given port.
     // @ Arguments 
     // a0 - player port (p1 = 0, p4 = 3)
     // @ Returns
     // v0 - address of player X struct, or 0 if no struct found for player X
     scope port_to_struct_: {
+        constant FIRST_PLAYER_PTR(0x800466FC)
+    
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0008(sp)              // store t0
 
-        li      v0, Global.p_struct_head    // v0 = address of player struct list head
-        lw      v0, 0x0000(v0)              // v0 = address of first player struct
+        li      v0, FIRST_PLAYER_PTR        // v0 = address of player object list head
+        lw      v0, 0x0000(v0)              // v0 = address of first player object  
         
         _loop:
         // a0 = port to check for
         // v0 = player struct to compare against
-        beq     v0, r0, _end                // exit loop if v0 does not contain a struct address
+        beqz    v0, _end                    // exit loop if v0 does not contain an object pointer
         nop
-        lbu     t0, 0x000D(v0)              // t2 = first struct port
-        beq     t0, a0, _end                // exit loop if struct port id matches given port id
-        nop
+        lw      t0, 0x0084(v0)              // t0 = address of player struct for given object
+        lbu     t0, 0x000D(t0)              // t0 = first struct port
+        beql    t0, a0, _end                // exit loop if struct port id matches given port id...
+        lw      v0, 0x0084(v0)              // ...and return address of player struct for the current object
         b       _loop
-        lw      v0, 0x0000(v0)              // v0 = next struct
+        lw      v0, 0x0004(v0)              // v0 = next object
         
         _end:
         lw      t0, 0x0008(sp)              // load t0
@@ -2107,6 +2389,9 @@ scope Character {
     OS.copy_segment(ACTION_ARRAY_TABLE_ORIGINAL, (27 * 4))
     fill (ACTION_ARRAY_TABLE + (NUM_CHARACTERS * 0x4)) - pc()
     OS.align(16)
+    
+    // extend kirby's action arrays
+    extend_kirby_arrays(18)
 
     // set up extended high score table
     EXTENDED_HIGH_SCORE_TABLE_BLOCK:; SRAM.block((NUM_CHARACTERS - 12) * 0x20)   // exclude original 12 characters
@@ -2243,62 +2528,64 @@ scope Character {
     // attrib_offset - offset of attributes in file_1
     // add_actions - number of new action slots to add
     // bool_jab_3 - OS.TRUE = inherit jab 3 properties, OS.FALSE = disable jab 3
-    // bool_inhale_copy - OS.TRUE = inherit Kirby inhale copy properties, OS.FALSE = disable Kirby inhale copy
+    // bool_inhale_copy - OS.TRUE = enable Kirby inhale copy, OS.FALSE = disable Kirby inhale copy
     // btt_stage_id - stage_id for btt, or -1 if N/A
     // btp_stage_id - stage_id for btp, or -1 if N/A
     // sound_type - type of sounds to use (see sound_type table)
     // variant_type - type of variant (see variant_type table)
 
     // 0x1D - FALCO
-    define_character(FALCO, FOX, File.FALCO_MAIN, 0x0D0, 0, File.FALCO_CHARACTER, 0x13A, 0x0D2, 0x15A, 0x0A1, 0x013C, 0x474, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_FALCO, Stages.id.BTP_FALCO, sound_type.U, variant_type.NA)
+    define_character(FALCO, FOX, File.FALCO_MAIN, 0x0D0, 0, File.FALCO_CHARACTER, 0x13A, 0x0D2, 0x15A, 0x0A1, 0x013C, 0x474, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_FALCO, Stages.id.BTP_FALCO, sound_type.U, variant_type.NA)
     // 0x1E - GND
-    define_character(GND, CAPTAIN, File.GND_MAIN, 0x0EB, 0, File.GND_CHARACTER, 0x14E, 0, File.GND_ENTRY_KICK, File.GND_PUNCH_GRAPHIC, 0, 0x488, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_GND, Stages.id.BTP_GND, sound_type.U, variant_type.NA)
+    define_character(GND, CAPTAIN, File.GND_MAIN, 0x0EB, 0, File.GND_CHARACTER, 0x14E, 0, File.GND_ENTRY_KICK, File.GND_PUNCH_GRAPHIC, 0, 0x488, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_GND, Stages.id.BTP_GND, sound_type.U, variant_type.NA)
     // 0x1F - YLINK
-    define_character(YLINK, LINK, File.YLINK_MAIN, 0x0E0, 0, File.YLINK_CHARACTER, 0x147, File.YLINK_BOOMERANG_HITBOX, 0x161, 0x145, 0, 0x760, 0, OS.TRUE, OS.FALSE, Stages.id.BTT_YL, Stages.id.BTP_YL, sound_type.U, variant_type.NA)
+    define_character(YLINK, LINK, File.YLINK_MAIN, 0x0E0, 0, File.YLINK_CHARACTER, 0x147, File.YLINK_BOOMERANG_HITBOX, 0x161, 0x145, 0, 0x760, 0, OS.TRUE, OS.TRUE, Stages.id.BTT_YL, Stages.id.BTP_YL, sound_type.U, variant_type.NA)
     // 0x20 - DRM
-    define_character(DRM, MARIO, File.DRM_MAIN, 0x0CA, 0, File.DRM_CHARACTER, 0x12A, File.DRM_PROJECTILE_DATA, 0x164, File.DRM_PROJECTILE_GRAPHIC, 0, 0x454, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_DRM, Stages.id.BTP_DRM, sound_type.U, variant_type.NA)
+    define_character(DRM, MARIO, File.DRM_MAIN, 0x0CA, 0, File.DRM_CHARACTER, 0x12A, File.DRM_PROJECTILE_DATA, 0x164, File.DRM_PROJECTILE_GRAPHIC, 0, 0x454, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_DRM, Stages.id.BTP_DRM, sound_type.U, variant_type.NA)
     // 0x21 - WARIO
-    define_character(WARIO, MARIO, File.WARIO_MAIN, 0x0CA, 0, File.WARIO_CHARACTER, 0x12A, 0x0CC, 0x164, 0x129, 0, 0x51C, 0x0, OS.FALSE, OS.FALSE, Stages.id.BTT_WARIO, Stages.id.BTP_WARIO, sound_type.U, variant_type.NA)
+    define_character(WARIO, MARIO, File.WARIO_MAIN, 0x0CA, 0, File.WARIO_CHARACTER, 0x12A, 0x0CC, 0x164, 0x129, 0, 0x51C, 0x0, OS.FALSE, OS.TRUE, Stages.id.BTT_WARIO, Stages.id.BTP_WARIO, sound_type.U, variant_type.NA)
     // 0x22 - DSAMUS
-    define_character(DSAMUS, SAMUS, File.DSAMUS_MAIN, 0x0D8, 0, File.DSAMUS_CHARACTER, 0x142, 0x15D, File.DSAMUS_SECONDARY, 0, 0, 0x6B4, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_DS, Stages.id.BTP_DS, sound_type.U, variant_type.NA)
+    define_character(DSAMUS, SAMUS, File.DSAMUS_MAIN, 0x0D8, 0, File.DSAMUS_CHARACTER, 0x142, 0x15D, File.DSAMUS_SECONDARY, 0, 0, 0x6B4, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_DS, Stages.id.BTP_DS, sound_type.U, variant_type.NA)
     // 0x23 - ELINK
-    define_character(ELINK, LINK, File.ELINK_MAIN, 0x0E0, 0, 0x144, 0x147, 0x0E2, 0x161, 0x145, 0, 0x708, 0, OS.TRUE, OS.FALSE, Stages.id.BTT_LINK, Stages.id.BTP_LINK, sound_type.U, variant_type.E)
+    define_character(ELINK, LINK, File.ELINK_MAIN, 0x0E0, 0, 0x144, 0x147, 0x0E2, 0x161, 0x145, 0, 0x708, 0, OS.TRUE, OS.TRUE, Stages.id.BTT_LINK, Stages.id.BTP_LINK, sound_type.U, variant_type.E)
     // 0x24 - JSAMUS
-    define_character(JSAMUS, SAMUS, 0x0D9, 0x0D8, 0, 0x140, 0x142, 0x15D, 0x0DA, 0, 0, 0x610, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_SAMUS, Stages.id.BTP_SAMUS, sound_type.J, variant_type.J)
+    define_character(JSAMUS, SAMUS, 0x0D9, 0x0D8, 0, 0x140, 0x142, 0x15D, 0x0DA, 0, 0, 0x610, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_SAMUS, Stages.id.BTP_SAMUS, sound_type.J, variant_type.J)
     // 0x25 - JNESS
-    define_character(JNESS, NESS, File.JNESS_MAIN, 0x0EE, 0, 0x14F, 0x150, 0x160, File.JNESS_PKFIRE, 0x151, 0, 0x5BC, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_NESS, Stages.id.BTP_NESS, sound_type.J, variant_type.J)
+    define_character(JNESS, NESS, File.JNESS_MAIN, 0x0EE, 0, 0x14F, 0x150, 0x160, File.JNESS_PKFIRE, 0x151, 0, 0x5BC, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_NESS, Stages.id.BTP_NESS, sound_type.J, variant_type.J)
     // 0x26 - LUCAS
-    define_character(LUCAS, NESS, File.LUCAS_MAIN, 0x0EE, 0, File.LUCAS_CHARACTER, 0x150, 0x160, File.LUCAS_PKFIRE, 0x151, 0, 0x614, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_LUCAS, Stages.id.BTP_LUCAS2, sound_type.U, variant_type.NA)
+    define_character(LUCAS, NESS, File.LUCAS_MAIN, 0x0EE, 0, File.LUCAS_CHARACTER, 0x150, 0x160, File.LUCAS_PKFIRE, 0x151, 0, 0x614, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_LUCAS, Stages.id.BTP_LUCAS2, sound_type.U, variant_type.NA)
     // 0x27 - JLINK
-    define_character(JLINK, LINK, File.JLINK_MAIN, 0x0E0, 0, File.JLINK_CHARACTER, 0x147, 0x0E2, 0x161, 0x145, 0, 0x708, 0, OS.TRUE, OS.FALSE, Stages.id.BTT_LINK, Stages.id.BTP_LINK, sound_type.J, variant_type.J)
+    define_character(JLINK, LINK, File.JLINK_MAIN, 0x0E0, 0, File.JLINK_CHARACTER, 0x147, 0x0E2, 0x161, 0x145, 0, 0x708, 0, OS.TRUE, OS.TRUE, Stages.id.BTT_LINK, Stages.id.BTP_LINK, sound_type.J, variant_type.J)
     // 0x28 - JFALCON
-    define_character(JFALCON, CAPTAIN, File.JFALCON_MAIN, 0x0EB, 0, 0x14C, 0x14E, 0, 0x15E, 0x14D, 0, 0x488, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_FALCON, Stages.id.BTP_FALCON, sound_type.J, variant_type.J)
+    define_character(JFALCON, CAPTAIN, File.JFALCON_MAIN, 0x0EB, 0, 0x14C, 0x14E, 0, 0x15E, 0x14D, 0, 0x488, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_FALCON, Stages.id.BTP_FALCON, sound_type.J, variant_type.J)
     // 0x29 - JFOX
-    define_character(JFOX, FOX, File.JFOX_MAIN, 0x0D0, 0, 0x139, 0x13A, File.JFOX_PROJECTILE, 0x15A, 0x0A1, 0x013C, 0x46C, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_FOX, Stages.id.BTP_FOX, sound_type.J, variant_type.J)
+    define_character(JFOX, FOX, File.JFOX_MAIN, 0x0D0, 0, 0x139, 0x13A, File.JFOX_PROJECTILE, 0x15A, 0x0A1, 0x013C, 0x46C, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_FOX, Stages.id.BTP_FOX, sound_type.J, variant_type.J)
     // 0x2A - JMARIO
-    define_character(JMARIO, MARIO, File.JMARIO_MAIN, 0x0CA, 0, File.JMARIO_CHARACTER, 0x12A, File.JMARIO_PROJECTILE_HITBOX, 0x164, 0x129, 0, 0x428, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_MARIO, Stages.id.BTP_MARIO, sound_type.J, variant_type.J)
+    define_character(JMARIO, MARIO, File.JMARIO_MAIN, 0x0CA, 0, File.JMARIO_CHARACTER, 0x12A, File.JMARIO_PROJECTILE_HITBOX, 0x164, 0x129, 0, 0x428, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_MARIO, Stages.id.BTP_MARIO, sound_type.J, variant_type.J)
     // 0x2B - JLUIGI
-    define_character(JLUIGI, LUIGI, File.JLUIGI_MAIN, 0x0DC, 0, File.JLUIGI_CHARACTER, 0x12A, File.JLUIGI_PROJECTILE_HITBOX, 0x164, 0x129, 0, 0x580, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_LUIGI, Stages.id.BTP_LUIGI, sound_type.J, variant_type.J)
+    define_character(JLUIGI, LUIGI, File.JLUIGI_MAIN, 0x0DC, 0, File.JLUIGI_CHARACTER, 0x12A, File.JLUIGI_PROJECTILE_HITBOX, 0x164, 0x129, 0, 0x580, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_LUIGI, Stages.id.BTP_LUIGI, sound_type.J, variant_type.J)
     // 0x2C - JDK
-    define_character(JDK, DONKEY, File.JDK_MAIN, 0x0D4, 0, 0x13D, 0x13E, 0, 0x163, 0, 0, 0x4A4, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_DONKEY_KONG, Stages.id.BTP_DONKEY_KONG, sound_type.J, variant_type.J)
+    define_character(JDK, DONKEY, File.JDK_MAIN, 0x0D4, 0, 0x13D, 0x13E, 0, 0x163, 0, 0, 0x4A4, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_DONKEY_KONG, Stages.id.BTP_DONKEY_KONG, sound_type.J, variant_type.J)
     // 0x2D - EPIKA
-    define_character(EPIKA, PIKACHU, File.EPIKA_MAIN, 0x0F2, 0, 0x155, 0x157, 0x0F4, 0x15B, 0x156, 0, 0x41C, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_PIKACHU, Stages.id.BTP_PIKACHU, sound_type.U, variant_type.E)
+    define_character(EPIKA, PIKACHU, File.EPIKA_MAIN, 0x0F2, 0, 0x155, 0x157, 0x0F4, 0x15B, 0x156, 0, 0x41C, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_PIKACHU, Stages.id.BTP_PIKACHU, sound_type.U, variant_type.E)
     // 0x2E - JPUFF
-    define_character(JPUFF, JIGGLYPUFF, File.JPUFF_MAIN, 0x0E8, 0, 0x14A, 0x14B, 0, 0x15F, 0, 0, 0x474, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_JIGGLYPUFF, Stages.id.BTP_JIGGLYPUFF, sound_type.J, variant_type.J)
+    define_character(JPUFF, JIGGLYPUFF, File.JPUFF_MAIN, 0x0E8, 0, 0x14A, 0x14B, 0, 0x15F, 0, 0, 0x474, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_JIGGLYPUFF, Stages.id.BTP_JIGGLYPUFF, sound_type.J, variant_type.J)
     // 0x2F - EPUFF
-    define_character(EPUFF, JIGGLYPUFF, 0x0E9, 0x0E8, 0, 0x14A, 0x14B, 0, 0x15F, 0, 0, 0x474, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_JIGGLYPUFF, Stages.id.BTP_JIGGLYPUFF, sound_type.U, variant_type.E)
+    define_character(EPUFF, JIGGLYPUFF, 0x0E9, 0x0E8, 0, 0x14A, 0x14B, 0, 0x15F, 0, 0, 0x474, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_JIGGLYPUFF, Stages.id.BTP_JIGGLYPUFF, sound_type.U, variant_type.E)
     // 0x30 - JKIRBY
-    define_character(JKIRBY, KIRBY, File.JKIRBY_MAIN, 0x0E4, 0, 0x148, 0x149, 0, 0x15C, 0, 0, 0x808, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_KIRBY, Stages.id.BTP_KIRBY, sound_type.J, variant_type.J)
+    define_character(JKIRBY, KIRBY, File.JKIRBY_MAIN, 0x0E4, 0, 0x148, 0x149, 0, 0x15C, 0, 0, 0x808, 18, OS.TRUE, OS.FALSE, Stages.id.BTT_KIRBY, Stages.id.BTP_KIRBY, sound_type.J, variant_type.J)
     // 0x31 - JYOSHI
-    define_character(JYOSHI, YOSHI, File.JYOSHI_MAIN, 0x0F6, 0, 0x152, 0x154, 0, 0x162, 0x153, 0, 0x47C, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_YOSHI, Stages.id.BTP_YOSHI, sound_type.J, variant_type.J)
+    define_character(JYOSHI, YOSHI, File.JYOSHI_MAIN, 0x0F6, 0, 0x152, 0x154, 0, 0x162, 0x153, 0, 0x47C, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_YOSHI, Stages.id.BTP_YOSHI, sound_type.J, variant_type.J)
     // 0x32 - JPIKA
-    define_character(JPIKA, PIKACHU, File.JPIKA_MAIN, 0x0F2, 0, 0x155, 0x157, File.JPIKA_PROJECTILE, 0x15B, 0x156, 0, 0x41C, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_PIKACHU, Stages.id.BTP_PIKACHU, sound_type.J, variant_type.J)
+    define_character(JPIKA, PIKACHU, File.JPIKA_MAIN, 0x0F2, 0, 0x155, 0x157, File.JPIKA_PROJECTILE, 0x15B, 0x156, 0, 0x41C, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_PIKACHU, Stages.id.BTP_PIKACHU, sound_type.J, variant_type.J)
     // 0x33 - ESAMUS
-    define_character(ESAMUS, SAMUS, File.ESAMUS_MAIN, 0x0D8, 0, 0x140, 0x142, 0x15D, 0x0DA, 0, 0, 0x610, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_SAMUS, Stages.id.BTP_SAMUS, sound_type.U, variant_type.E)
+    define_character(ESAMUS, SAMUS, File.ESAMUS_MAIN, 0x0D8, 0, 0x140, 0x142, 0x15D, 0x0DA, 0, 0, 0x610, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_SAMUS, Stages.id.BTP_SAMUS, sound_type.U, variant_type.E)
     // 0x34 - BOWSER
-    define_character(BOWSER, YOSHI, File.BOWSER_MAIN, 0x0F6, 0, File.BOWSER_CHARACTER, File.BOWSER_SHIELD_POSE, 0, File.BOWSER_CLOWN_COPTER, 0x153, 0, 0x47C, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_BOWSER, Stages.id.BTP_BOWSER, sound_type.U, variant_type.NA)
+    define_character(BOWSER, YOSHI, File.BOWSER_MAIN, 0x0F6, 0, File.BOWSER_CHARACTER, File.BOWSER_SHIELD_POSE, 0, File.BOWSER_CLOWN_COPTER, 0x153, 0, 0x47C, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_BOWSER, Stages.id.BTP_BOWSER, sound_type.U, variant_type.NA)
 	// 0x35 - GBOWSER
-    define_character(GBOWSER, YOSHI, File.GBOWSER_MAIN, 0x0F6, 0, File.GBOWSER_CHARACTER, File.BOWSER_SHIELD_POSE, 0, File.BOWSER_CLOWN_COPTER, 0x153, 0, 0x47C, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_BOWSER, Stages.id.BTP_BOWSER, sound_type.U, variant_type.SPECIAL)
+    define_character(GBOWSER, YOSHI, File.GBOWSER_MAIN, 0x0F6, 0, File.GBOWSER_CHARACTER, File.BOWSER_SHIELD_POSE, 0, File.BOWSER_CLOWN_COPTER, 0x153, 0, 0x47C, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_BOWSER, Stages.id.BTP_BOWSER, sound_type.U, variant_type.SPECIAL)
+    // 0x35 - PIANO
+    define_character(PIANO, MARIO, File.PIANO_MAIN, 0x0CA, 0, File.PIANO_CHARACTER, 0x12A, File.PIANO_PROJECTILE_HITBOX, 0x164, 0x129, 0, 0x42C, 10, OS.FALSE, OS.FALSE, Stages.id.BTT_STG1, Stages.id.BTP_POLY, sound_type.U, variant_type.SPECIAL)
     
     print "========================================================================== \n"
 }

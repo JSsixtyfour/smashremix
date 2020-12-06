@@ -205,9 +205,16 @@ scope PikaShared {
         sw      t1, 0x0004(sp)              // store t2, t1
         sw      t2, 0x0008(sp)              // store t2, t1
         
-        lw      t1, 0x0078(s0)              // load from projectile struct from stack
-        lw      t1, 0x0008(t1)              // load character ID from player struct      
+        lw      a0, 0x0078(s0)              // load from projectile struct from stack
+        lw      t1, 0x0008(a0)              // load character ID from player struct
         
+        lli     t2, Character.id.KIRBY      // t2 = id.KIRBY
+        beql    t1, t2, pc() + 8            // if Kirby, get held power character_id
+        lw      t1, 0x0ADC(a0)              // t1 = character id of copied power
+        lli     t2, Character.id.JKIRBY     // t2 = id.JKIRBY
+        beql    t1, t2, pc() + 8            // if J Kirby, get held power character_id
+        lw      t1, 0x0ADC(a0)              // t1 = character id of copied power
+
         ori     t2, r0, Character.id.JPIKA  // t2 = id.JPIKA
         li      a0, thunder_jolt_anim_struct_jpika     // a0 = thunder_struct_jpika
         beq     t1, t2, _end                // end if character id = JPIKA
@@ -242,6 +249,13 @@ scope PikaShared {
         
         lw      t1, 0x0008(s1)              // load character ID from player struct      
         
+        lli     t2, Character.id.KIRBY      // t2 = id.KIRBY
+        beql    t1, t2, pc() + 8            // if Kirby, get held power character_id
+        lw      t1, 0x0ADC(s1)              // t1 = character id of copied power
+        lli     t2, Character.id.JKIRBY     // t2 = id.JKIRBY
+        beql    t1, t2, pc() + 8            // if J Kirby, get held power character_id
+        lw      t1, 0x0ADC(s1)              // t1 = character id of copied power
+
         ori     t2, r0, Character.id.JPIKA  // t2 = id.JPIKA
         li      a1, thunder_jolt_special_struct_1_jpika     // a0 = thunder_struct_jpika
         beq     t1, t2, _end                // end if character id = JPIKA
@@ -271,8 +285,15 @@ scope PikaShared {
         sw      t1, 0x0004(sp)              // store t2, t1
         sw      t2, 0x0008(sp)              // store t2, t1
         
-        lw      t1, 0x0078(s1)              // load player struct from projectile struct
-        lw      t1, 0x0008(t1)              // load character ID from player struct      
+        lw      a1, 0x0078(s1)              // load player struct from projectile struct
+        lw      t1, 0x0008(a1)              // load character ID from player struct
+
+        lli     t2, Character.id.KIRBY      // t2 = id.KIRBY
+        beql    t1, t2, pc() + 8            // if Kirby, get held power character_id
+        lw      t1, 0x0ADC(a1)              // t1 = character id of copied power
+        lli     t2, Character.id.JKIRBY     // t2 = id.JKIRBY
+        beql    t1, t2, pc() + 8            // if J Kirby, get held power character_id
+        lw      t1, 0x0ADC(a1)              // t1 = character id of copied power
         
         ori     t2, r0, Character.id.JPIKA  // t2 = id.JPIKA
         li      a1, thunder_jolt_special_struct_2_jpika     // a0 = thunder_struct_jpika

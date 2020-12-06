@@ -37,22 +37,63 @@ scope JKirby {
     
         
 
-    // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
-    Character.edit_action_parameters(JKIRBY, Action.Jab2,            -1,                         NEUTRAL2,                     -1)
-    Character.edit_action_parameters(JKIRBY, Action.DSmash,          -1,                         DSMASH,                     -1)
-    Character.edit_action_parameters(JKIRBY, Action.USmash,          -1,                         USMASH,                     -1)
-    Character.edit_action_parameters(JKIRBY, Action.AttackAirU,      -1,                         UAIR,                       -1)
-    Character.edit_action_parameters(JKIRBY, 0xDD,                   -1,                         NEUTRALINF,                 -1)
-    Character.edit_action_parameters(JKIRBY, 0xE4,                   -1,                         FTHROW,                     -1)
-    Character.edit_action_parameters(JKIRBY, 0xE6,                   -1,                         FTHROW_IMPACT,              -1)
-    Character.edit_action_parameters(JKIRBY, 0x10E,                  -1,                         NEUTRAL_SPECIAL_START,       -1)
-    Character.edit_action_parameters(JKIRBY, 0x117,                  -1,                         NEUTRAL_SPECIAL_START,       -1)
-    Character.edit_action_parameters(JKIRBY, 0x109,                  -1,                         DOWN_SPECIAL_FALL,          -1)
-    Character.edit_action_parameters(JKIRBY, 0x10A,                  -1,                         DOWN_SPECIAL_LANDING,       -1)
-    Character.edit_action_parameters(JKIRBY, 0x10B,                  -1,                         DOWN_SPECIAL_FALL_OFF,      -1)
+    // Modify Action Parameters              // Action              // Animation                // Moveset Data             // Flags
+    Character.edit_action_parameters(JKIRBY, Action.Jab2,           -1,                         NEUTRAL2,                   -1)
+    Character.edit_action_parameters(JKIRBY, Action.DSmash,         -1,                         DSMASH,                     -1)
+    Character.edit_action_parameters(JKIRBY, Action.USmash,         -1,                         USMASH,                     -1)
+    Character.edit_action_parameters(JKIRBY, Action.AttackAirU,     -1,                         UAIR,                       -1)
+    Character.edit_action_parameters(JKIRBY, 0xDD,                  -1,                         NEUTRALINF,                 -1)
+    Character.edit_action_parameters(JKIRBY, 0xE4,                  -1,                         FTHROW,                     -1)
+    Character.edit_action_parameters(JKIRBY, 0xE6,                  -1,                         FTHROW_IMPACT,              -1)
+    Character.edit_action_parameters(JKIRBY, 0x10E,                 -1,                         NEUTRAL_SPECIAL_START,      -1)
+    Character.edit_action_parameters(JKIRBY, 0x117,                 -1,                         NEUTRAL_SPECIAL_START,      -1)
+    Character.edit_action_parameters(JKIRBY, 0x109,                 -1,                         DOWN_SPECIAL_FALL,          -1)
+    Character.edit_action_parameters(JKIRBY, 0x10A,                 -1,                         DOWN_SPECIAL_LANDING,       -1)
+    Character.edit_action_parameters(JKIRBY, 0x10B,                 -1,                         DOWN_SPECIAL_FALL_OFF,      -1)
+    
+    // Add Action Parameters                // Action Name      // Base Action  // Animation                // Moveset Data             // Flags
+    Character.add_new_action_params(JKIRBY, GND_NSP_Ground,     0x127,          -1,                         Kirby.GND_NSP_GROUND,       -1)
+    Character.add_new_action_params(JKIRBY, GND_NSP_Air,        0x128,          -1,                         Kirby.GND_NSP_AIR,          -1)
+    Character.add_new_action_params(JKIRBY, DRM_NSP_Ground,     0xE7,           -1,                         Kirby.DRM_NSP_GROUND,       -1)
+    Character.add_new_action_params(JKIRBY, DRM_NSP_Air,        0xE8,           -1,                         Kirby.DRM_NSP_AIR,          -1)
+    Character.add_new_action_params(JKIRBY, DSAMUS_Charge,      0xEE,           -1,                         Kirby.DSAMUS_CHARGE,        -1)
+    Character.add_new_action_params(JKIRBY, YLINK_NSP_Ground,   0x11F,          -1,                         Kirby.YLINK_NSP,            -1)
+    Character.add_new_action_params(JKIRBY, YLINK_NSP_Air,      0x122,          -1,                         Kirby.YLINK_NSP,            -1)
+    Character.add_new_action_params(JKIRBY, LUCAS_NSP_Ground,   0xFE,           File.KIRBY_LUCAS_NSP_G,     -1,                         0x40000000)
+    Character.add_new_action_params(JKIRBY, LUCAS_NSP_Air,      0xFF,           File.KIRBY_LUCAS_NSP_A,     -1,                         0x00000000)
+    Character.add_new_action_params(JKIRBY, WARIO_NSP_Ground,   -1,             File.KIRBY_WARIO_NSP_G,     Kirby.WARIO_NSP_GROUND,     0)
+    Character.add_new_action_params(JKIRBY, WARIO_NSP_Air,      -1,             File.KIRBY_WARIO_NSP_A,     Kirby.WARIO_NSP_AIR,        0)
+    Character.add_new_action_params(JKIRBY, WARIO_NSP_Recoil,   -1,             File.KIRBY_WARIO_NSP_R,     Kirby.WARIO_NSP_RECOIL,     0)
+    Character.add_new_action_params(JKIRBY, FALCO_NSP_Ground,   0xEB,           File.KIRBY_FALCO_NSP_G,     Kirby.FALCO_NSP_GROUND,     0)
+    Character.add_new_action_params(JKIRBY, FALCO_NSP_Air,      0xEC,           File.KIRBY_FALCO_NSP_A,     Kirby.FALCO_NSP_AIR,        0)
+    Character.add_new_action_params(JKIRBY, BOWSER_NSP_Ground,  0x129,          File.KIRBY_BOWSER_NSP,      Kirby.BOWSER_NSP,           0x1D000000)
+    Character.add_new_action_params(JKIRBY, BOWSER_NSP_Air,     0x12C,          File.KIRBY_BOWSER_NSP,      Kirby.BOWSER_NSP,           0x1D000000)
+    Character.add_new_action_params(JKIRBY, PIANO_NSP_Ground,   0xE7,           File.KIRBY_PIANO_NSP_G,     Kirby.PIANO_NSP,            0x1C000000)
+    Character.add_new_action_params(JKIRBY, PIANO_NSP_Air,      0xE8,           File.KIRBY_PIANO_NSP_A,     Kirby.PIANO_NSP,            0x1C000000)
+    
+
+    // Add Actions                   // Action Name     // Base Action  //Parameters                        // Staling ID   // Main ASM             // Interrupt/Other ASM          // Movement/Physics ASM         // Collision ASM
+    Character.add_new_action(JKIRBY, GND_NSP_Ground,    0x127,          ActionParams.GND_NSP_Ground,        -1,             -1,                     -1,                             -1,                             -1)
+    Character.add_new_action(JKIRBY, GND_NSP_Air,       0x128,          ActionParams.GND_NSP_Air,           -1,             -1,                     -1,                             -1,                             -1)
+    Character.add_new_action(JKIRBY, DRM_NSP_Ground,    0xE7,           ActionParams.DRM_NSP_Ground,        -1,             -1,                     -1,                             -1,                             -1)
+    Character.add_new_action(JKIRBY, DRM_NSP_Air,       0xE8,           ActionParams.DRM_NSP_Air,           -1,             -1,                     -1,                             -1,                             -1)
+    Character.add_new_action(JKIRBY, DSAMUS_Charge,     0xEE,           ActionParams.DSAMUS_Charge,         -1,             -1,                     -1,                             -1,                             -1)
+    Character.add_new_action(JKIRBY, YLINK_NSP_Ground,  0x11F,          ActionParams.YLINK_NSP_Ground,      -1,             -1,                     -1,                             -1,                             -1)
+    Character.add_new_action(JKIRBY, YLINK_NSP_Air,     0x122,          ActionParams.YLINK_NSP_Air,         -1,             -1,                     -1,                             -1,                             -1)
+    Character.add_new_action(JKIRBY, LUCAS_NSP_Ground,  0xFE,           ActionParams.LUCAS_NSP_Ground,      -1,             -1,                     -1,                             0x800D8CCC,                     -1)
+    Character.add_new_action(JKIRBY, LUCAS_NSP_Air,     0xFF,           ActionParams.LUCAS_NSP_Air,         -1,             -1,                     LucasNSP.air_move_,             -1,                             -1)
+    Character.add_new_action(JKIRBY, WARIO_NSP_Ground,  -1,             ActionParams.WARIO_NSP_Ground,      0x12,           0x800D94C4,             WarioNSP.ground_move_,          WarioNSP.ground_physics_,       WarioNSP.ground_collision_)
+    Character.add_new_action(JKIRBY, WARIO_NSP_Air,     -1,             ActionParams.WARIO_NSP_Air,         0x12,           0x800D94E8,             WarioNSP.air_move_,             WarioNSP.air_physics_,          WarioNSP.air_collision_)
+    Character.add_new_action(JKIRBY, WARIO_NSP_Recoil,  -1,             ActionParams.WARIO_NSP_Recoil,      0x12,           0x800D94E8,             WarioNSP.recoil_move_,          WarioNSP.recoil_physics_,       0x800DE99C)
+    Character.add_new_action(JKIRBY, FALCO_NSP_Ground,  0xEB,           ActionParams.FALCO_NSP_Ground,      -1,             0x800D94C4,             Phantasm.ground_subroutine_,    -1,                             -1)
+    Character.add_new_action(JKIRBY, FALCO_NSP_Air,     0xEC,           ActionParams.FALCO_NSP_Air,         -1,             0x8015C750,             Phantasm.air_subroutine_,       Phantasm.air_physics_,          Phantasm.air_collision_)
+    Character.add_new_action(JKIRBY, BOWSER_NSP_Ground, 0x129,          ActionParams.BOWSER_NSP_Ground,     -1,             BowserNSP.main_,        -1,                             0x800D8BB4,                     0x800DDF44)
+    Character.add_new_action(JKIRBY, BOWSER_NSP_Air,    0x12C,          ActionParams.BOWSER_NSP_Air,        -1,             BowserNSP.main_,        -1,                             0x800D91EC,                     BowserNSP.air_collision_)
+    Character.add_new_action(JKIRBY, PIANO_NSP_Ground,  0xE7,           ActionParams.PIANO_NSP_Ground,      -1,             -1,                     -1,                             -1,                             -1)
+    Character.add_new_action(JKIRBY, PIANO_NSP_Air,     0xE8,           ActionParams.PIANO_NSP_Air,         -1,             -1,                     -1,                             0x800D91EC,                     -1)
     
     // Set crowd chant FGM.
-    // Character.table_patch_start(crowd_chant_fgm, Character.id.JKirby, 0x2)
+    // Character.table_patch_start(crowd_chant_fgm, Character.id.JJKIRBY,0x2)
     // dh  0x0315
     // OS.patch_end()
     

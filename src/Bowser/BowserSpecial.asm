@@ -32,21 +32,32 @@ scope BowserNSP {
 		_ammo_store:
         sw      t6, 0x0B30(v0)      // I store ammo here, could potentially be unsafe, but seems to be used by other no conflicting things
     
-        lui     t6, 0x8016
-        addiu   t6, t6, 0xE57C
+        // lui     t6, 0x8016
+        // addiu   t6, t6, 0xE57C
         
-        sw      t6, 0x0A0C(v0)
+        // sw      t6, 0x0A0C(v0)
         sw      a0, 0x0028(sp)
         sw      r0, 0x0010(sp)
+        
+        // kirby id check to select proper action
+        lw		a2, 0x0008(v0)		        // load character id
+        ori		a1, r0, Character.id.KIRBY	// load Kirby ID for check
+		beq 	a1, a2, _kirby_action	    // branch for Kirby Action
+        lli     a1, Kirby.Action.BOWSER_NSP_Ground           // Kirby Fire Breath Action ID
+        ori		a1, r0, Character.id.JKIRBY	// load Kirby ID for check
+        beq 	a1, a2, _kirby_action	    // branch for Kirby Action
+        lli     a1, Kirby.Action.BOWSER_NSP_Ground              // Kirby Fire Breath Action ID
         addiu   a1, r0, 0x00E4
+        _kirby_action:
         addiu   a2, r0, 0x0000
         lui     a3, 0x3F80
         jal     0x800E6F24
         sw      v0, 0x0024(sp)
-        lui     a1, 0x8016
-        addiu   a1, a1, 0xE83C
-        jal     0x8015E310
-        lw      a0, 0x0024(sp)
+        addiu   a1, r0, r0
+        //lui     a1, 0x8016
+        //addiu   a1, a1, 0xE83C
+        //jal     0x8015E310
+        //lw      a0, 0x0024(sp)
         jal     0x800E0830
         lw      a0, 0x0028(sp)
         lw      ra, 0x001C(sp)
@@ -81,21 +92,30 @@ scope BowserNSP {
 		_ammo_store:
         sw      t6, 0x0B30(v0)      // I store ammo here, could potentially be unsafe, but seems to be used by other no conflicting things
     
-        lui     t6, 0x8016
-        addiu   t6, t6, 0xE588
+        //lui     t6, 0x8016
+        //addiu   t6, t6, 0xE588
         
-        sw      t6, 0x0A0C(v0)
+        //sw      t6, 0x0A0C(v0)
         sw      a0, 0x0028(sp)
         sw      r0, 0x0010(sp)
+        ori		a1, r0, Character.id.KIRBY	// load Kirby ID for check
+		lw		a2, 0x0008(v0)		        // load character id
+		beq 	a1, a2, _kirby_action	    // branch for Kirby Action
+        lli     a1, Kirby.Action.BOWSER_NSP_Air              // Kirby Fire Breath Action ID
+        ori		a1, r0, Character.id.KIRBY	// load Kirby ID for check
+        ori		a1, r0, Character.id.JKIRBY	// load Kirby ID for check
+        beq 	a1, a2, _kirby_action	    // branch for Kirby Action
+        lli     a1, Kirby.Action.BOWSER_NSP_Air              // Kirby Fire Breath Action ID
         addiu   a1, r0, 0x00E7
+        _kirby_action:
         addiu   a2, r0, 0x0000
         lui     a3, 0x3F80
         jal     0x800E6F24
         sw      v0, 0x0024(sp)
         lui     a1, 0x8016
         addiu   a1, a1, 0xE880
-        jal     0x8015E310
-        lw      a0, 0x0024(sp)
+        //jal     0x8015E310
+        //lw      a0, 0x0024(sp)
         jal     0x800E0830
         lw      a0, 0x0028(sp)
         lw      ra, 0x001C(sp)
@@ -195,26 +215,46 @@ scope BowserNSP {
         addiu   t3, r0, 0x0001
         addiu   a1, r0, 0x000B
         
+        OS.copy_segment(0xC1F80, 0x20)
+
         // hard code the x/y/z position of the smoke to align it with Bowser's mouth
         lw		t9, 0x0008(s0)
 		ori		t0, r0, Character.id.GBOWSER	// load Giga Bowser ID for check
 		beq		t9, t0, _gbowser_smoke
-		lui     t9, 0x42A2                          // smoke x position = 81
+        ori		t0, r0, Character.id.KIRBY	    // load KIRBY ID for check
+		beq		t9, t0, _kirby_smoke
+        ori		t0, r0, Character.id.JKIRBY	    // load JKIRBY ID for check
+		beq		t9, t0, _kirby_smoke
+		nop
+        
+        
+        lui     t9, 0x42A2                          // smoke x position = 81
         sw      t9, 0x0000(a3)                      // x location of smoke saved
         lui     t9, 0x4398                          // smoke y position = 304
         sw      t9, 0x0004(a3)                      // y location of smoke saved
         lui     t9, 0x4382                          // smoke z position = 260
         j		_generate_graphic
 		sw      t9, 0x0008(a3)                      // z location of smoke saved		
-		_gbowser_smoke:
+		
+        _gbowser_smoke:
 		lui     t9, 0xC1f0                          // smoke x position = -30
         sw      t9, 0x0000(a3)                      // x location of smoke saved
         lui     t9, 0x43d4                          // smoke y position = 424
         sw      t9, 0x0004(a3)                      // y location of smoke saved
         lui     t9, 0x4382                          // smoke z position = 260
+        j		_generate_graphic
         sw      t9, 0x0008(a3)                      // z location of smoke saved
+        
+        _kirby_smoke:
+		lui     t9, 0xC396                          // smoke x position = -300
+        sw      t9, 0x0000(a3)                      // x location of smoke saved
+        lui     t9, 0xC2C3                          // smoke y position = -97.5
+        sw      t9, 0x0004(a3)                      // y location of smoke saved
+        lui     t9, 0x0000                          // smoke z position = 0
+        sw      t9, 0x0008(a3)                      // z location of smoke saved
+        lli     a2, 0x0010                          // hard code joint
+        
         _generate_graphic:
-        OS.copy_segment(0xC1F80, 0x20)
         jal     0x800EABDC                          // generic 2D Graphic Effect Generation, creates smoke effect here. This is taken if ammo check fails
         sw      t2, 0x0014(sp)
         jal     0x800269C0                          // "Play FGM" plays smoke sound, takes this route if ammo check fails                       
@@ -277,7 +317,7 @@ scope BowserNSP {
         
         OS.copy_segment(0xC2050, 0x74)
         
-        lw      a2, 0x033C(t6)                      // similarly to flames this loaded a joint equivalent to the hand, located at 80147685
+        //lw      a2, 0x033C(t6)                      // similarly to flames this loaded a joint equivalent to the hand, located at 80147685
         sw      v0, 0x0010(sp)
         lw      t7, 0x0044(s0)
         sw      r0, 0x001C(sp)
@@ -347,10 +387,22 @@ scope BowserNSP {
         lw      t7, 0x0B24(s0)
         lw      t1, 0x09C8(a0)
         
-        // I don't really understand how the below works at all, but I messed with it enough to get flames to be in the right spot
+        // The below is how the x and y position of flames are set relative to the joint I have set
+        // there's a character ID check for kirbys to give them a new location for the flame relative to their joint
+        
+        lw		t4, 0x0008(s0)
+        lui     a1, 0x4000
+        ori		t5, r0, Character.id.KIRBY
+		beq		t4, t5, _kirby_set_location_y
+        mtc1    a1, f4
+        ori		t5, r0, Character.id.JKIRBY
+		beq		t4, t5, _kirby_set_location_y
+        mtc1    a1, f4
         
         lui     at, 0x3F80                          // Can be used to increase y location of flames
         mtc1    at, f4
+        
+        _kirby_set_location_y:
         lwc1    f6, 0x0000(t1)                      
         //lui       a1, 0xc4bb                          //
         //mtc1  a1, f8
@@ -359,16 +411,38 @@ scope BowserNSP {
         lwc1    f16, 0x0034(sp)                     //
         
         div.s   f0, f4, f6
-        lwc1    f4, 0x0038(sp)                  // original means of setting x location of flames
+        lw		t4, 0x0008(s0)
+		
+        lui     a1, 0xc1a0
+        ori		t5, r0, Character.id.KIRBY
+		beq		t4, t5, _kirby_set_location_x
+        mtc1    a1, f4
+        ori		t5, r0, Character.id.JKIRBY
+		beq		t4, t5, _kirby_set_location_x
+        mtc1    a1, f4
+        
+        // lwc1    f4, 0x0038(sp)                  // original means of setting x location of flames
         lui     a1, 0x42f0
+        
+        _kirby_set_location_x:
         mtc1    a1, f4
         or      a1, a2, r0
         
         
         OS.copy_segment(0xC1D88, 0x20)
-    
-        lw      t2, 0x09C8(a0)                      // loads a location within the player struct which can be used to determine where the hand object is normally
+        
+        lw		t4, 0x0008(s0)
+		ori		t5, r0, Character.id.KIRBY
+		beq		t4, t5, _kirby_id_2
+        addiu   t3, r0, 0x000D                      // this number determines relevant object/joint. Originally this loaded a number from the address in t2 that corresponded to the hand object
+        ori		t5, r0, Character.id.JKIRBY
+		beq		t4, t5, _kirby_id_2
+        addiu   t3, r0, 0x000D
+        // lw      t2, 0x09C8(a0)                      // loads a location within the player struct which can be used to determine where the hand object is normally
+        
+        
         addiu   t3, r0, 0x0007                      // this number determines relevant object/joint. Originally this loaded a number from the address in t2 that corresponded to the hand object
+        _kirby_id_2:
         sll     t4, t3, 0x2
         addu    t5, a0, t4                          // address related to individual object parts
         lw      a0, 0x08E8(t5)                      // loads location of relevant object part to be used in subsequent generic subroutine
@@ -596,53 +670,7 @@ scope BowserNSP {
 		dw 0x00000000
         dw 0x3E060A92
         dw 0x3E860A92
-    }
-    
-    // @ Description
-    // Subroutine which handles collision for Bowser's grounded neutral special.
-    // This allows the ground move to continue as was previously functioning when transitions to air. This is currently unused due to some issues and crashing.
-    scope ground_collision_: {
-        addiu   sp, sp, 0xFFE8
-        sw      ra, 0x0014(sp)
-        li      a1, ground_to_air_
-        jal     0x800DE6E4
-        nop
-        lw      ra, 0x0014(sp)
-        addiu   sp, sp, 0x0018
-        jr      ra
-        nop
-    }
-
-    // @ Description
-    // Subroutine which handles ground to air transition Bowser's grounded neutral special.
-    // This actually does the work when transitioning from the ground to the air. This is currently unused due to issues with crashing and bad functionality.
-    scope ground_to_air_: {
-        OS.copy_segment(0xC2208, 0x1C)
-        addiu   a1, r0, 0x00E7
-        OS.copy_segment(0xC2228, 0x20)
-        li      t8, main_
-        sw      t8, 0x09D8(t9)              // in the original code for fireflower this was the address of the main code, but it causes a loop and then crash in this action and seems to have no consequence when removed
-        lw      ra, 0x001C(sp)
-        addiu   sp, sp, 0x0028
-        jr      ra
-        nop
-    }
-    
-    // @ Description
-    // Subroutine which handles collision for Bowser's grounded neutral special.
-    // This allows the move to continue as was previously functioning. Heavily based on 80147750
-    scope air_collision_original_: {
-        addiu   sp, sp, 0xFFE8
-        sw      ra, 0x0014(sp)
-        li      a1, air_to_ground_
-        jal     0x800DE6E4
-        nop
-        lw      ra, 0x0014(sp)
-        addiu   sp, sp, 0x0018
-        jr      ra
-        nop
-    }
-    
+    }   
     
     // Version of air_collision_ which allows a landing cancel to be performed.
     scope air_collision_: {
@@ -763,7 +791,16 @@ scope BowserNSP {
     // Original version of air_to_ground_.
     scope air_to_ground_: {
         OS.copy_segment(0xC21B4, 0x1C)
-        addiu   a1, r0, 0x00E4
+        lw      a2, 0x0008(s1)
+        ori		t7, r0, Character.id.KIRBY  // t7 = id.KIRBY
+        beq     t7, a2, _kirby_action
+        lli     a1, Kirby.Action.BOWSER_NSP_Ground              // Kirby Fire Breath Action ID              // Kirby and J Kirby Grounded Flame Breath Action ID
+        ori		t7, r0, Character.id.JKIRBY  // t7 = id.JKIRBY
+        beq     t7, a2, _kirby_action
+       lli     a1, Kirby.Action.BOWSER_NSP_Ground              // Kirby Fire Breath Action ID              // Kirby and J Kirby Grounded Flame Breath Action ID
+        
+        addiu   a1, r0, 0x00E4              // Bowser and Giga Bowser's Grounded Flame Breath Action ID
+        _kirby_action:
         OS.copy_segment(0xC21D4, 0x18)
         li      t8, main_
         //      sw      t8, 0x09D8(t9)      // in the original code for fireflower this was the address of the main code, but it causes a loop and then crash in this action and seems to have no consequence when removed

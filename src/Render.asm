@@ -134,11 +134,12 @@ scope Render {
     file_pointer_4:; dw 0x00000000
 
     // @ Description
-    // Holds the display order value so that we can control this without making it be an argument,
+    // Hold the display order values so that we can control this without making it be an argument,
     // since 99% of the time we want it to stay 0x80000000.
     // We will lui this value.
     constant DISPLAY_ORDER_DEFAULT(0x8000)
-    display_order_value:; dh DISPLAY_ORDER_DEFAULT; dh 0x0
+    display_order_room:; dh DISPLAY_ORDER_DEFAULT; dh 0x0
+    display_order_group:; dh DISPLAY_ORDER_DEFAULT; dh 0x0
 
     // @ Description
     // Contains offsets to characters in the font file arranged in ASCII order.
@@ -838,8 +839,9 @@ scope Render {
         addiu   a0, r0, 0x0401              // a0 = Global Object ID (custom)
         addu    a2, r0, a3                  // a2 = group - linked list to append
         addiu   sp, sp, -0x0030             // allocate stack space for CREATE_OBJECT_
+        li      a3, display_order_group
         jal     CREATE_OBJECT_              // create the object
-        lui     a3, 0x8000
+        lw      a3, 0x0000(a3)              // a3 = display order (usually just 0x80000000)
         addiu   sp, sp, 0x0030              // deallocate stack space
         sw      v0, 0x0024(sp)              // save v0
 
@@ -849,7 +851,7 @@ scope Render {
         addiu   a0, r0, 0xFFFF              // a0 = -1
         sw      a0, 0x0010(sp)              // 0x0010(sp) = -1 (not sure why)
         addu    a0, r0, v0                  // a0 = RAM address of object block
-        li      a3, display_order_value
+        li      a3, display_order_room
         jal     DISPLAY_INIT_               // initialize display object
         lw      a3, 0x0000(a3)              // a3 = display order (usually just 0x80000000)
         addiu   sp, sp, 0x0030              // deallocate stack space
@@ -1771,6 +1773,11 @@ scope Render {
         beq     t0, t1, _vs_game_mode       // if (screen_id = VS Game Mode), jump to _vs_game_mode
         nop
 
+        // VS Options Item Switch
+        lli     t1, 0x000B                  // t1 = VS Options Item Switch screen_id
+        beq     t0, t1, _item_switch        // if (screen_id = VS Options Item Switch), jump to _item_switch
+        nop
+
         // Title
         // screen_id = 0x1 AND first file loaded = 0xA7
         lli     t1, 0x0001                  // t1 = Title screen (shared with other screens - at least 1p mode battle)
@@ -1814,6 +1821,9 @@ scope Render {
         jal     TwelveCharBattle.game_setup_ // Setup 12cb functionality
         nop
 
+        jal     Item.clear_active_custom_items_
+        nop
+
         b       _end
         nop
 
@@ -1830,6 +1840,8 @@ scope Render {
         _normal_css:
         jal     CharacterSelect.setup_
         addu    a0, r0, t0                  // a0 = screen_id
+        jal     Item.clear_active_custom_items_
+        nop
 
         b       _end
         nop
@@ -1844,12 +1856,16 @@ scope Render {
         _vs_results:
         jal     VsStats.setup_
         nop
+        jal     Item.clear_active_custom_items_
+        nop
 
         b       _end
         nop
 
         _training:
         jal     Training.setup_
+        nop
+        jal     Item.clear_active_custom_items_
         nop
 
         b       _end
@@ -1871,6 +1887,13 @@ scope Render {
 
         _vs_game_mode:
         jal     TwelveCharBattle.vs_game_mode_setup_
+        nop
+
+        b       _end
+        nop
+
+        _item_switch:
+        jal     Item.item_switch_setup_
         nop
 
         b       _end

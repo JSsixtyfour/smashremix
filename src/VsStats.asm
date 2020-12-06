@@ -189,7 +189,7 @@ scope VsStats {
     // t6 - ignore port - don't do anything when this port is not active
     scope draw_line_: {
         li      t0, stats_struct_p1         // t0 = stats_struct_p1 address
-        blez    t6, _begin                  // if no ignore port (-1) then don't test for active port
+        bltz    t6, _begin                  // if no ignore port (-1) then don't test for active port
         lli     t8, STATS_STRUCT_SIZE
         multu   t6, t8                      // otherwise, figure out the offset
         mflo    t6                          // t6 = offset to player struct for the ignore port

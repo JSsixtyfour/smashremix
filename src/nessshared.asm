@@ -4,10 +4,11 @@
 
 scope NessShared {
 
-// loads a different pointer when JNess pkfire.
-    scope get_pkfire1_pointer_: {
+    // @ Description
+    // loads a different pointer for Ness clones/Kirby when spawning pkfire graphic.
+    scope get_pkfire_pointer_: {
         OS.patch_start(0xE56D0, 0x8016AC90)
-        j       get_pkfire1_pointer_
+        j       get_pkfire_pointer_
         nop
         _return:
         OS.patch_end()
@@ -20,7 +21,15 @@ scope NessShared {
         lw      t2, 0x0000(t2)              // see above
         sw      s1, 0x0078(t2)              // save player struct into projectile struct for pkfire2
         li      a1, pkfire1_struct          // save new struct new address into a1
-        lw      t1, 0x0008(s1)              // load current character ID into t2
+        lw      t1, 0x0008(s1)              // load current character ID into t1
+
+        lli     t2, Character.id.KIRBY      // t2 = id.KIRBY
+        beql    t1, t2, pc() + 8            // if Kirby, get held power character_id
+        lw      t1, 0x0ADC(s1)              // t1 = character id of copied power
+        lli     t2, Character.id.JKIRBY     // t2 = id.JKIRBY
+        beql    t1, t2, pc() + 8            // if J Kirby, get held power character_id
+        lw      t1, 0x0ADC(s1)              // t1 = character id of copied power
+
         ori     t2, r0, Character.id.JNESS  // t1 = id.JNESS
         beq     t1, t2, _end                // end if character id = JNESS
         nop
@@ -39,13 +48,14 @@ scope NessShared {
         lui     a3, 0x8000                  // original line 3
     }
     
+    // @ Description
+    // Loads a different pointer when for Ness clones/Kirby when pkfire collides.
     // This subroutine eventually leads to a generic "spawn object" or spawn function of some kind that is in the least by
     // Link for bombs, the spawning of items and Peach's Castle (probably for bumper).
     // this spawn object routine uses a struct, this code puts in an alternate one for JNess
-    // loads a different pointer when JNess pkfire2.
-    scope get_pkfire2_pointer_: {
+    scope get_pkfire_collision_pointer_: {
         OS.patch_start(0x100288, 0x80185848)
-        j       get_pkfire2_pointer_
+        j       get_pkfire_collision_pointer_
         nop
         _return:
         OS.patch_end()
@@ -54,29 +64,33 @@ scope NessShared {
         sw      t6, 0x0010(sp)              // original line 2
 
         addiu   sp, sp,-0x0010              // allocate stack space
-        sw      t1, 0x0004(sp)              // store t2, t1
-        sw      t2, 0x0008(sp)              // store t2, t1
+        sw      t1, 0x0004(sp)              // store registers
+        sw      t2, 0x0008(sp)              // ~
+        sw      t3, 0x000C(sp)              // ~
 
-        lw      t1, 0x0078(v0)              // load player struct from projectile struct that we placed in pkfire1
-        lw      t2, 0x0008(t1)              // load current character ID into t2
-        ori     t1, r0, Character.id.NESS   // t1 = id.NESS_file_1_ptr
+        lw      t3, 0x0078(v0)              // load player struct from projectile struct that we placed in pkfire1
+        lw      t1, 0x0008(t3)              // load current character ID into t1
+
+        lli     t2, Character.id.KIRBY      // t2 = id.KIRBY
+        beql    t1, t2, pc() + 8            // if Kirby, get held power character_id
+        lw      t1, 0x0ADC(t3)              // t1 = character id of copied power
+        lli     t2, Character.id.JKIRBY     // t2 = id.JKIRBY
+        beql    t1, t2, pc() + 8            // if J Kirby, get held power character_id
+        lw      t1, 0x0ADC(t3)              // t1 = character id of copied power
+
+        ori     t2, r0, Character.id.NESS   // t2 = id.NESS
         beq     t1, t2, _end                // end if character id = NESS
         nop
-        ori     t1, r0, Character.id.KIRBY  // t1 = id.KIRBY_file_1_ptr
-        beq     t1, t2, _end                // end if character id = KIRBY
-        nop
-        ori     t1, r0, Character.id.JKIRBY  // t1 = id.KIRBY_file_1_ptr
-        beq     t1, t2, _end                // end if character id = KIRBY
-        nop
         li      a1, pkfire2_struct          // JNess File Pointer placed in correct location
-        ori     t1, r0, Character.id.JNESS  // t1 = id.KIRBY_file_1_ptr
+        ori     t2, r0, Character.id.JNESS  // t2 = id.JNESS
         beq     t1, t2, _end                // end if character id = JNESS
         nop
         li      a1, pkfire2_struct_lucas    // Lucas File Pointer placed in correct location
         
         _end:
         lw      t1, 0x0004(sp)              // ~
-        lw      t2, 0x0008(sp)              // load t0, t1
+        lw      t2, 0x0008(sp)              // ~
+        lw      t3, 0x000C(sp)              // restore registers
         addiu   sp, sp, 0x0010              // deallocate stack space
 
         j       _return                     // return
@@ -197,16 +211,30 @@ scope NessShared {
     // Changes the speed of JNess Projectile to match that of the Japanese Version
     // The speed is in floating point
     scope pkfire_ground_speed_1_: {
+        // Ness (and clones)
         OS.patch_start(0xCE49C, 0x80153A5C)
-        j       pkfire_ground_speed_1_
+        jal     pkfire_ground_speed_1_
         nop
-        _return:
         OS.patch_end()
+        // Kirby (and clones)
+        OS.patch_start(0xD0688, 0x80155C48)
+        jal     pkfire_ground_speed_1_
+        nop
+        OS.patch_end()
+
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // store t0, t1
         lui     at, 0x42B4                  // JNess PK Fire Speed
         lw      t0, 0x0008(v0)              // t0 = character id
+
+        lli     t1, Character.id.KIRBY      // t1 = id.KIRBY
+        beql    t0, t1, pc() + 8            // if Kirby, get held power character_id
+        lw      t0, 0x0ADC(v0)              // t0 = character id of copied power
+        lli     t1, Character.id.JKIRBY     // t1 = id.JKIRBY
+        beql    t0, t1, pc() + 8            // if J Kirby, get held power character_id
+        lw      t0, 0x0ADC(v0)              // t0 = character id of copied power
+
         ori     t1, r0, Character.id.JNESS  // t1 = id.JNESS
         beq     t0, t1, _end                // end if character id = JNESS
         nop
@@ -221,24 +249,38 @@ scope NessShared {
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // load t0, t1
         addiu   sp, sp, 0x0010              // deallocate stack space
-        j       _return                     // return
+        jr      ra                          // return
         nop
     }
     
     // Changes the speed of JNess Projectile to match that of the Japanese Version
     // The speed is in floating point
     scope pkfire_ground_speed_2_: {
+        // Ness (and clones)
         OS.patch_start(0xCE4C8, 0x80153A88)
-        j       pkfire_ground_speed_2_
+        jal     pkfire_ground_speed_2_
         nop
-        _return:
         OS.patch_end()
+        // Kirby (and clones)
+        OS.patch_start(0xD06B4, 0x80155C74)
+        jal     pkfire_ground_speed_2_
+        nop
+        OS.patch_end()
+
         begin:
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // store t0, t1
         lui     at, 0x42B4                  // JNess PK Fire Speed
         lw      t0, 0x0008(s1)              // t0 = character id
+
+        lli     t1, Character.id.KIRBY      // t1 = id.KIRBY
+        beql    t0, t1, pc() + 8            // if Kirby, get held power character_id
+        lw      t0, 0x0ADC(s1)              // t0 = character id of copied power
+        lli     t1, Character.id.JKIRBY     // t1 = id.JKIRBY
+        beql    t0, t1, pc() + 8            // if J Kirby, get held power character_id
+        lw      t0, 0x0ADC(s1)              // t0 = character id of copied power
+
         ori     t1, r0, Character.id.JNESS  // t1 = id.JNESS
         beq     t0, t1, _end                // end if character id = JNESS
         nop
@@ -253,23 +295,37 @@ scope NessShared {
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // load t0, t1
         addiu   sp, sp, 0x0010              // deallocate stack space
-        j       _return                     // return
+        jr      ra                          // return
         nop
     }
     
     // Changes the speed of JNess Projectile to match that of the Japanese Version
     // The speed is in floating point
     scope pkfire_air_speed_1_: {
+        // Ness (and clones)
         OS.patch_start(0xCE43C, 0x801539FC)
-        j       pkfire_air_speed_1_
+        jal     pkfire_air_speed_1_
         nop
-        _return:
         OS.patch_end()
+        // Kirby (and clones)
+        OS.patch_start(0xD0628, 0x80155BE8)
+        jal     pkfire_air_speed_1_
+        nop
+        OS.patch_end()
+
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // store t0, t1
         lui     at, 0x42F0                  // JNess PK Fire Speed
         lw      t0, 0x0008(v0)              // t0 = character id
+
+        lli     t1, Character.id.KIRBY      // t1 = id.KIRBY
+        beql    t0, t1, pc() + 8            // if Kirby, get held power character_id
+        lw      t0, 0x0ADC(v0)              // t0 = character id of copied power
+        lli     t1, Character.id.JKIRBY     // t1 = id.JKIRBY
+        beql    t0, t1, pc() + 8            // if J Kirby, get held power character_id
+        lw      t0, 0x0ADC(v0)              // t0 = character id of copied power
+
         ori     t1, r0, Character.id.JNESS  // t1 = id.JNESS
         beq     t0, t1, _end                // end if character id = JNESS
         nop
@@ -284,23 +340,37 @@ scope NessShared {
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // load t0, t1
         addiu   sp, sp, 0x0010              // deallocate stack space
-        j       _return                     // return
+        jr      ra                          // return
         nop
     }
     
     // Changes the speed of JNess Projectile to match that of the Japanese Version
     // The speed is in floating point
     scope pkfire_air_speed_2_: {
+        // Ness (and clones)
         OS.patch_start(0xCE468, 0x80153A28)
-        j       pkfire_air_speed_2_
+        jal     pkfire_air_speed_2_
         nop
-        _return:
         OS.patch_end()
+        // Kirby (and clones)
+        OS.patch_start(0xD0654, 0x80155C14)
+        jal     pkfire_air_speed_2_
+        nop
+        OS.patch_end()
+
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // store t0, t1
         lui     at, 0x42F0                  // JNess PK Fire Speed
         lw      t0, 0x0008(s1)              // t0 = character id
+
+        lli     t1, Character.id.KIRBY      // t1 = id.KIRBY
+        beql    t0, t1, pc() + 8            // if Kirby, get held power character_id
+        lw      t0, 0x0ADC(s1)              // t0 = character id of copied power
+        lli     t1, Character.id.JKIRBY     // t1 = id.JKIRBY
+        beql    t0, t1, pc() + 8            // if J Kirby, get held power character_id
+        lw      t0, 0x0ADC(s1)              // t0 = character id of copied power
+
         ori     t1, r0, Character.id.JNESS  // t1 = id.JNESS
         beq     t0, t1, _end                // end if character id = JNESS
         nop
@@ -315,7 +385,7 @@ scope NessShared {
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // load t0, t1
         addiu   sp, sp, 0x0010              // deallocate stack space
-        j       _return                     // return
+        jr      ra                          // return
         nop
     }
 

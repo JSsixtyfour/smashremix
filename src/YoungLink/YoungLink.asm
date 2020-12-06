@@ -143,6 +143,14 @@ scope YoungLink {
         sw      t1, 0x0008(sp)              // store t0, t1
         
         lw      t0, 0x0008(a1)              // t0 = character id
+        
+        lli     t1, Character.id.KIRBY      // t1 = id.KIRBY
+        beql    t0, t1, pc() + 8            // if Kirby, get held power character_id
+        lw      t0, 0x0ADC(s1)              // t0 = character id of copied power
+        lli     t1, Character.id.JKIRBY     // t1 = id.JKIRBY
+        beql    t0, t1, pc() + 8            // if J Kirby, get held power character_id
+        lw      t0, 0x0ADC(s1)              // t0 = character id of copied power
+        
         ori     t1, r0, Character.id.YLINK  // t1 = id.YLINK
         lui     a3, 0x428C                  // a3 = float: 65
         beq     t1, t0, _slow_end           // end if character id = YLINK
@@ -162,6 +170,14 @@ scope YoungLink {
         sw      t1, 0x0008(sp)              // store t0, t1
         
         lw      t0, 0x0008(a1)              // t0 = character id
+        
+        lli     t1, Character.id.KIRBY      // t1 = id.KIRBY
+        beql    t0, t1, pc() + 8            // if Kirby, get held power character_id
+        lw      t0, 0x0ADC(s1)              // t0 = character id of copied power
+        lli     t1, Character.id.JKIRBY     // t1 = id.JKIRBY
+        beql    t0, t1, pc() + 8            // if J Kirby, get held power character_id
+        lw      t0, 0x0ADC(s1)              // t0 = character id of copied power
+        
         ori     t1, r0, Character.id.YLINK  // t1 = id.YLINK
         lui     a3, 0x42C6                  // a3 = float: 99
         beq     t1, t0, _fast_end           // end if character id = YLINK

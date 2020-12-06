@@ -278,16 +278,20 @@ scope GFX {
 
         // The following lines are from 0x800EB0A4, the original chargeshot ground effect GFX assembly:
         gfx_assembly_{n}:
+        // clear out current_gfx_id since no gfx instructions will load
+        li      at, current_gfx_id                       // at = current_gfx_id address
+        sw      r0, 0x0000(at)                           // clear the value
+
         lw      t0, 0x0054(sp)                           // original line 1
         or      a0, s0, r0                               // original line 2
         lw      t1, 0x014C(t0)                           // original line 3
-        bnez    t1, j_0x800EB0F8_{n}                     // original line 4, modified to use jump
+        bnez    t1, no_plat_{n}                          // original line 4, modified for our label
         nop                                              // original line 5
         lw      v0, 0x00EC(t0)                           // original line 6 - v0 = platform ID of character
         addiu   at, r0, 0xFFFF                           // original line 7
-        beq     v0, at, j_0x800EB0F8_{n}                 // original line 8, modified to use jump
+        beq     v0, at, no_plat_{n}                      // original line 8, modified for our label
         addiu   at, r0, 0xFFFE                           // original line 9
-        beq     v0, at, j_0x800EB0F8_{n}                 // original line 10, modified to use jump
+        beq     v0, at, no_plat_{n}                      // original line 10, modified for our label
         nop                                              // original line 11
         lwc1    f12, 0x00F8(t0)                          // original line 12 - related to angle of platform
         lwc1    f14, 0x00FC(t0)                          // original line 13 - related to angle of platform
@@ -296,14 +300,15 @@ scope GFX {
         mfc1    a2, f0                                   // original line 16
         or      a0, s0, r0                               // original line 17
         jal     0x800FFD58                               // original line 18
-        addiu   a1, r0, {color_offset}                   // original line 19
-        or      v1, v0, r0                               // original line 21
+        addiu   a1, r0, {color_offset}                   // original line 19, modified to use custom color
         j       0x800EB388                               // original line 20
-        nop
+        or      v1, v0, r0                               // original line 21
 
-        j_0x800EB0F8_{n}:
-        j       0x800EB0F8                               // jump instead of branch to avoid out of bounds
-        nop
+        no_plat_{n}:
+        jal     0x800FFDE8                               // original line 22
+        addiu   a1, r0, {color_offset}                   // original line 23, modified to use custom color
+        j       0x800EB388                               // original line 24
+        or      v1, v0, r0                               // original line 25
 
         // instructions not necessary, but leave in label and variable so write_gfx() doesn't fail
         gfx_instructions_{n}:

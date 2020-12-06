@@ -192,6 +192,11 @@ scope Phantasm {
         ori     t1, r0, SLOW_FALL           // t1 = SLOW_FALL
         bne     t0, t1, _end                 // skip if t0 != SLOW_FALL
         nop
+        lw      t0, 0x0008(a2)              // t0 = current character ID
+        lli     t1, Character.id.KIRBY      // t1 = id.KIRBY
+        beq     t0, t1, _end                // if Kirby, skip
+        lli     t1, Character.id.JKIRBY     // t1 = id.JKIRBY
+        beq     t0, t1, _end                // if J Kirby, skip
         lui     t0, 0x3FCD                  // ~
         mtc1    t0, f0                      // f0 = float:1.6
         lwc1    f2, 0x004C(a2)              // f2 = y velocity
@@ -267,6 +272,12 @@ scope Phantasm {
         OS.patch_end()
         OS.patch_start(0xD6724, 0x8015BCE4)
         jal     set_variables_              // air neutral special
+        OS.patch_end()
+        OS.patch_start(0xD1840, 0x80156E00)
+        jal     set_variables_              // kirby ground neutral special
+        OS.patch_end()
+        OS.patch_start(0xD1884, 0x80156E44)
+        jal     set_variables_              // kirby air neutral special
         OS.patch_end()
         
         addiu   sp, sp,-0x0008              // allocate stack space

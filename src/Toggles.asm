@@ -692,16 +692,28 @@ scope Toggles {
     dw model_skeleton
 
     // @ Description
-    // Japanese Sounds strings
-    jsounds_default:; db "DEFAULT", 0x00
-    jsounds_always:; db "ALWAYS", 0x00
-    jsounds_never:; db "NEVER", 0x00
+    // Model Display strings
+    model_poly_default:; db "DEFAULT", 0x00
+    model_poly_high:; db "HIGH POLY", 0x00
+    model_poly_low:; db "LOW POLY", 0x00
     OS.align(4)
 
-    string_table_jsounds:
-    dw jsounds_default
-    dw jsounds_always
-    dw jsounds_never
+    string_table_poly:
+    dw model_poly_default
+    dw model_poly_high
+    dw model_poly_low
+
+    // @ Description
+    // Default/Always/Never frequency strings (used multiple times)
+    frequency_default:; db "DEFAULT", 0x00
+    frequency_always:; db "ALWAYS", 0x00
+    frequency_never:; db "NEVER", 0x00
+    OS.align(4)
+
+    string_table_frequency:
+    dw frequency_default
+    dw frequency_always
+    dw frequency_never
 
     // @ Description
     // Menu Music strings
@@ -804,10 +816,11 @@ scope Toggles {
     // @ Description 
     // Miscellaneous Toggles
     head_remix_settings:
-    entry_practice_overlay:;            entry_bool("Color Overlays", OS.FALSE, OS.FALSE, OS.FALSE, entry_disable_cinematic_camera)
-    entry_disable_cinematic_camera:;    entry_bool("Disable Cinematic Camera", OS.FALSE, OS.FALSE, OS.FALSE, entry_flash_on_z_cancel)
+    entry_practice_overlay:;            entry_bool("Color Overlays", OS.FALSE, OS.FALSE, OS.FALSE, entry_cinematic_entry)
+    entry_cinematic_entry:;             entry("Cinematic Entry", Menu.type.U8, 0, 0, 0, 0, 2, OS.NULL, string_table_frequency, OS.NULL, entry_flash_on_z_cancel)
     entry_flash_on_z_cancel:;           entry_bool("Flash On Z-Cancel", OS.FALSE, OS.FALSE, OS.FALSE, entry_fps)
-    entry_fps:;                         entry("FPS Display *BETA", Menu.type.U8, OS.FALSE, OS.FALSE, OS.FALSE, 0, 2, OS.NULL, string_table_fps, OS.NULL, entry_special_model)
+    entry_fps:;                         entry("FPS Display *BETA", Menu.type.U8, OS.FALSE, OS.FALSE, OS.FALSE, 0, 2, OS.NULL, string_table_fps, OS.NULL, entry_model_display)
+    entry_model_display:;               entry("Model Display", Menu.type.U8, 0, 0, 0, 0, 2, OS.NULL, string_table_poly, OS.NULL, entry_special_model)
     entry_special_model:;               entry("Special Model Display", Menu.type.U8, OS.FALSE, OS.FALSE, OS.FALSE, 0, 3, OS.NULL, string_table_model, OS.NULL, entry_hold_to_pause)
     entry_hold_to_pause:;               entry_bool("Hold To Pause", OS.FALSE, OS.TRUE, OS.FALSE, entry_improved_combo_meter)
     entry_improved_combo_meter:;        entry_bool("Improved Combo Meter", OS.TRUE, OS.FALSE, OS.TRUE, entry_tech_chase_combo_meter)
@@ -821,7 +834,7 @@ scope Toggles {
     entry_widescreen:;                  entry_bool("Widescreen", OS.FALSE, OS.FALSE, OS.FALSE, entry_japanese_hitlag)
     entry_japanese_hitlag:;             entry_bool("Japanese Hitlag", OS.FALSE, OS.FALSE, OS.TRUE, entry_japanese_di)
     entry_japanese_di:;                 entry_bool("Japanese DI", OS.FALSE, OS.FALSE, OS.TRUE, entry_japanese_sounds)
-    entry_japanese_sounds:;             entry("Japanese Sounds", Menu.type.U8, 0, 0, 0, 0, 2, OS.NULL, string_table_jsounds, OS.NULL, entry_momentum_slide)
+    entry_japanese_sounds:;             entry("Japanese Sounds", Menu.type.U8, 0, 0, 0, 0, 2, OS.NULL, string_table_frequency, OS.NULL, entry_momentum_slide)
     entry_momentum_slide:;              entry_bool("Momentum Slide", OS.FALSE, OS.FALSE, OS.TRUE, entry_japanese_shieldstun)
     entry_japanese_shieldstun:;         entry_bool("Japanese Shield Stun", OS.FALSE, OS.FALSE, OS.TRUE, entry_variant_random)
 	entry_variant_random:;              entry_bool("Random Select With Variants", OS.FALSE, OS.FALSE, OS.FALSE, entry_disable_pause_hud)
@@ -885,7 +898,8 @@ scope Toggles {
     // Stage Toggles
     head_stage_settings:
     entry_sss_layout:;                          entry("Stage Select Layout", Menu.type.U8, sss.NORMAL, sss.TOURNAMENT, sss.NORMAL, 0, 1, OS.NULL, string_table_sss_layout, OS.NULL, entry_hazard_mode)
-    entry_hazard_mode:;                         entry("Hazard Mode", Menu.type.U8, hazard_mode.NORMAL, hazard_mode.NORMAL, hazard_mode.NORMAL, 0, 3, OS.NULL, string_table_hazard_mode, OS.NULL, entry_random_stage_title)
+    entry_hazard_mode:;                         entry("Hazard Mode", Menu.type.U8, hazard_mode.NORMAL, hazard_mode.NORMAL, hazard_mode.NORMAL, 0, 3, OS.NULL, string_table_hazard_mode, OS.NULL, entry_japanese_hazards)
+    entry_japanese_hazards:;                    entry_bool("Japanese Whispy", OS.FALSE, OS.FALSE, OS.TRUE, entry_random_stage_title)
     entry_random_stage_title:;                  Menu.entry_title("Random Stage Toggles:", OS.NULL, entry_random_stage_congo_jungle)
     entry_random_stage_congo_jungle:;           entry_bool("Congo Jungle", OS.TRUE, OS.FALSE, OS.TRUE, entry_random_stage_dream_land)
     entry_random_stage_dream_land:;             entry_bool("Dream Land", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_stage_dream_land_beta_1)
@@ -938,9 +952,9 @@ scope Toggles {
 
     // @ Description
     // SRAM blocks for toggle saving.
-    block_misc:; SRAM.block(23 * 4)
+    block_misc:; SRAM.block(24 * 4)
     block_music:; SRAM.block((19 + {toggled_custom_MIDIs}) * 4)
-    block_stages:; SRAM.block((18 + {toggled_custom_stages}) * 4)
+    block_stages:; SRAM.block((19 + {toggled_custom_stages}) * 4)
 
     profile_defaults_CE:; write_defaults_for(CE)
     profile_defaults_TE:; write_defaults_for(TE)

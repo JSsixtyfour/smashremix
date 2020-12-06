@@ -487,6 +487,181 @@ scope JigglypuffKirbyShared {
         nop                                 // replacing what at would normally be
     }
     
+    // character ID check add for when Kirby Clones CPUs inhale an opponent.
+    scope kirby_cpu_inhale: {
+        OS.patch_start(0xB165C, 0x80136C1C)
+        j       kirby_cpu_inhale                      
+        lw      v0, 0x0ADC(a0)
+        _return:
+        OS.patch_end()
+        
+        beq     v1, at, _end
+        addiu   at, r0, Character.id.JKIRBY     // JKIRBY ID
+        beq     v1, at, _end
+        nop
+        or      v0, v1, r0                  // original line 2   
+        
+        _end:
+        j       0x80136C2C                  // modified line 1
+        nop 
+        j       _return
+        nop
+    }
+    
+    // character ID check add for when Kirby Clones CPUs inhale an opponent.
+    scope kirby_cpu_inhale_2: {
+        OS.patch_start(0xB3948, 0x80138F08)
+        j       kirby_cpu_inhale_2                      
+        lw      v0, 0x0ADC(a2)
+        _return:
+        OS.patch_end()
+        
+        beq     v1, at, _end
+        addiu   at, r0, Character.id.JKIRBY     // JKIRBY ID
+        beq     v1, at, _end
+        nop
+        or      v0, v1, r0                  // original line 2   
+        
+        _end:
+        j       0x80138F18                  // modified line 1
+        nop 
+        j       _return
+        nop
+    }
+    
+    // character ID check add for when Kirby Clones CPUs inhale an opponent.
+    scope kirby_cpu_inhale_3: {
+        OS.patch_start(0xB1B30, 0x801370F0)
+        j       kirby_cpu_inhale_3                      
+        nop
+        _return:
+        OS.patch_end()
+        
+        beq     at, a0, _kirby
+        nop
+        addiu   at, r0, Character.id.JKIRBY     // JKIRBY ID 
+        beq     at, a0, _kirby
+        nop      
+        
+        _end:
+        j       0x80137160                  // modified line 1
+        addiu   at, r0, 0x000B              // original line 2
+        
+        _kirby:
+        j       _return
+        nop
+    }
+    
+    // character ID check add for when Kirby Clones CPUs inhale an opponent.
+    scope kirby_cpu_inhale_4: {
+        OS.patch_start(0x5DBE8, 0x800E23E8)
+        j       kirby_cpu_inhale_4                      
+        nop
+        _return:
+        OS.patch_end()
+        
+        beq     t0, at, _kirby
+        nop
+        addiu   at, r0, Character.id.JKIRBY     // JKIRBY ID 
+        beq     at, a0, _kirby
+        nop      
+        
+        _end:
+        j       0x800E23FC                  // modified line 1
+        lw      v0, 0x09E8(s1)              // original line 2
+        
+        _kirby:
+        j       _return
+        nop
+    }
+
+    // @ Description
+    // Extends a check on ID that occurs when fully charged.
+    scope fully_charged_check_: {
+        OS.patch_start(0x66424, 0x800EAC24)
+        jal     fully_charged_check_
+        nop
+        OS.patch_end()
+
+        beq     v0, at, j_0x800EAC84        // original line 1, modified to use jump
+        lli     at, Character.id.JKIRBY     // at = JKIRBY
+        beq     v0, at, j_0x800EAC84        // if JKIRBY, take Kirby branch
+        nop
+
+        jr      ra
+        addiu   a3, sp, 0x003C              // original line 2
+
+        j_0x800EAC84:
+        j       0x800EAC84
+        addiu   a3, sp, 0x003C              // original line 2
+    }
+
+    // @ Description
+    // Extends a check on ID that occurs when a Kirby clone steals another Kirby clone's copied power.
+    scope kirby_power_steal_check_: {
+        OS.patch_start(0xDCB3C, 0x801620FC)
+        jal     kirby_power_steal_check_
+        sh      a0, 0x0B18(v0)              // original line 1
+        OS.patch_end()
+
+        beq     v1, at, j_0x80162110        // original line 2, modified to use jump
+        lli     at, Character.id.JKIRBY     // at = JKIRBY
+        beq     v1, at, j_0x80162110        // if JKIRBY, take Kirby branch
+        nop
+
+        jr      ra
+        nop
+
+        j_0x80162110:
+        j       0x80162110
+        nop
+    }
+
+    // @ Description
+    // Extends a check on ID that occurs when a Kirby clone's copied power is stolen by another Kirby clone.
+    scope kirby_power_stolen_check_: {
+        OS.patch_start(0xC6A4C, 0x8014C00C)
+        jal     kirby_power_stolen_check_
+        addiu   at, r0, 0x0008              // original line 1 (at = Character.id.KIRBY)
+        OS.patch_end()
+
+        beq     v0, at, j_0x8014C020        // original line 2, modified to use jump
+        lli     at, Character.id.JKIRBY     // at = JKIRBY
+        beq     v0, at, j_0x8014C020        // if JKIRBY, take Kirby branch
+        nop
+
+        jr      ra
+        nop
+
+        j_0x8014C020:
+        j       0x8014C020
+        nop
+    }
+
+    // @ Description
+    // Extends a check on ID that occurs when Kirby absorbs or ejects a power.
+    scope kirby_power_change_: {
+        OS.patch_start(0xDC914, 0x80161ED4)
+        j       kirby_power_change_
+        nop
+        _kirby_power_change_return:
+        OS.patch_end()
+
+        beq     v0, at, j_0x80161F04        // original line 1, modified to use jump
+        lli     at, Character.id.JPUFF      // at = JPUFF
+        beq     v0, at, j_0x80161F04        // if JPUFF, take Jigglypuff branch
+        lli     at, Character.id.EPUFF      // at = EPUFF
+        beq     v0, at, j_0x80161F04        // if EPUFF, take Jigglypuff branch
+        nop
+
+        j       _kirby_power_change_return
+        nop
+
+        j_0x80161F04:
+        j       0x80161F04
+        sw      r0, 0x0AF0(a0)              // original line 2
+    }
+    
     OS.align(16)
     upspecial_struct_jkirby:
     dw 0x03000000

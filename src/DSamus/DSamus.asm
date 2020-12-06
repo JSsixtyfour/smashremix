@@ -33,7 +33,7 @@ scope DSamus {
     insert LANDING_NAIR, "moveset/LANDING_NAIR.bin"
     insert VICTORY1, "moveset/VICTORY1.bin"
     insert SELECT, "moveset/SELECT.bin"
-    insert CHARGE, "moveset/CHARGE.bin"; Moveset.GO_TO(CHARGELOOP)            // loops
+    insert CHARGE, "moveset/CHARGE.bin"
     insert CHARGELOOP, "moveset/CHARGELOOP.bin"; Moveset.GO_TO(CHARGELOOP)    // loops
     insert CLAP, "moveset/CLAP.bin"
     insert TAUNT, "moveset/TAUNT.bin"
@@ -90,8 +90,11 @@ scope DSamus {
     Character.table_patch_start(menu_zoom, Character.id.DSAMUS, 0x4)
     float32 1.05
     OS.patch_end()
-       
-           
+
+    // Set Kirby hat_id
+    Character.table_patch_start(kirby_inhale_struct, 0x2, Character.id.DSAMUS, 0xC)
+    dh 0x13
+    OS.patch_end()
         
     // Prevents Dark Samus from losing a jump after using air down special
     scope bomb_loss_prevention: {
@@ -117,7 +120,7 @@ scope DSamus {
         lw      ra, 0x0024(sp)              // original code
         j       _return                     // return
         nop
-        }
+    }
         
     // Prevents Dark Samus from losing a jump after using ground down special
     scope ground_bomb_loss_prevention: {
@@ -211,8 +214,8 @@ scope DSamus {
     
     constant TYPE(0x2)                  // electric type damage used in Dark Samus down special in contrast to Samus (Fire type 0x1)
         
-     // Loads an the ball graphic used by Samus at then end of her grab
-     scope throw_ball_graphic: {
+    // Loads an the ball graphic used by Samus at then end of her grab
+    scope throw_ball_graphic: {
         OS.patch_start(0xC4654, 0x80149C14)
         jal       throw_ball_graphic
         andi    t8, t7, 0xFFFB              // original line 
@@ -232,16 +235,9 @@ scope DSamus {
         _darksamusballgraphic:
         jr      ra                          // return
         nop
-        }   
-     
-     // temporary dark samus charge shot patch
-        OS.patch_start(0x6643C, 0x800EAC3C)
-        nop
-        OS.patch_end()
-    
+    }   
     
     // Set default costumes
     Character.set_default_costumes(Character.id.DSAMUS, 0, 1, 2, 4, 5, 1, 3)
-    
-    
+
 }

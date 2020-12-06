@@ -47,13 +47,22 @@ scope JFox {
         
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
-        sw      t1, 0x0008(sp)              // store t0, t1
-		lw		t0, 0x0074(sp)				// load player struct
-		lw		t0, 0x0008(t0)				// load player id
-		ori     t1, r0, Character.id.JFOX  	// t1 = id.FOX
+        sw      t1, 0x0008(sp)              // store registers
+
+		lw		a3, 0x0084(a0)				// load player struct
+		lw		t0, 0x0008(a3)				// load player id
+
+		lli     t1, Character.id.KIRBY      // t1 = id.KIRBY
+        beql    t0, t1, pc() + 8            // if Kirby, get held power character_id
+        lw      t0, 0x0ADC(a3)              // t0 = character id of copied power
+        lli     t1, Character.id.JKIRBY     // t1 = id.JKIRBY
+        beql    t0, t1, pc() + 8            // if J Kirby, get held power character_id
+        lw      t0, 0x0ADC(a3)              // t0 = character id of copied power
+
+        ori     t1, r0, Character.id.JFOX  	// t1 = id.JFOX
 		bne		t1, t0, _end
 		nop
-        li      a1, laser_special_struct  		// a1 = laser_special_struct
+        li      a1, laser_special_struct  	// a1 = laser_special_struct
                 
         _end:
         lw      t0, 0x0004(sp)              // ~

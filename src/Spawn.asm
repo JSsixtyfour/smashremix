@@ -52,6 +52,7 @@ scope Spawn {
         sw      r0, 0x0000(a1)              // update x
         li      t0, 0x451DE000              // t0 = (float) 2526, from dream land
         sw      t0, 0x0004(a1)              // update y
+        sw      r0, 0x0008(a1)              // update z
         lw      at, 0x0004(sp)              // ~
         lw      t0, 0x0008(sp)              // restore registers
         addiu   sp, sp, 0x0010              // deallocate stack space

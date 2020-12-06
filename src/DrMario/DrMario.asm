@@ -70,6 +70,11 @@ scope DrMario {
     dh  0x02EB
     OS.patch_end()
     
+    // Set Kirby hat_id
+    Character.table_patch_start(kirby_inhale_struct, 0x2, Character.id.DRM, 0xC)
+    dh 0x10
+    OS.patch_end()
+
     // Set default costumes
     Character.set_default_costumes(Character.id.DRM, 0, 1, 2, 4, 1, 3, 4)
 }

@@ -111,6 +111,11 @@ scope Falco {
     dh  0x02C8
     OS.patch_end()
     
+    // Set Kirby hat_id
+    Character.table_patch_start(kirby_inhale_struct, 0x2, Character.id.FALCO, 0xC)
+    dh 0x12
+    OS.patch_end()
+
     // Set default costumes
     Character.set_default_costumes(Character.id.FALCO, 0, 1, 4, 5, 1, 2, 3)
     

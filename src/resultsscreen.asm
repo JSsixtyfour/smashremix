@@ -78,6 +78,21 @@ scope ResultsScreen {
         jr      ra                          // return
         nop
     }
+
+    // @ Description
+    // Stores the port index in the player structs on the VS results screen.
+    // This is useful in CharEnvColor.asm and Size.asm, at least.
+    scope fix_port_index_: {
+        OS.patch_start(0x152B68, 0x801339C8)
+        jal     fix_port_index_
+        sb      t3, 0x03B(sp)               // original line 1
+        OS.patch_end()
+
+        sb      a1, 0x0039(sp)              // set port index
+
+        jr      ra
+        sb      t4, 0x03C(sp)               // original line 2
+    }
     
     // @ Description
     // Patch which gets the FGM id for the winning character from an extended table.
@@ -553,4 +568,5 @@ scope ResultsScreen {
     add_to_results_screen(Character.id.ESAMUS,   FGM.announcer.names.ESAMUS,                 METROID,     Character.id.SAMUS,   175,     E SAMUS,      35,     0.75,      0x0D)
 	add_to_results_screen(Character.id.BOWSER,   FGM.announcer.names.BOWSER,                 BOWSER,      Character.id.YOSHI,   180,     BOWSER,       30,     0.85,      0x7D)
 	add_to_results_screen(Character.id.GBOWSER,  FGM.announcer.names.GBOWSER,                BOWSER,      Character.id.YOSHI,   180,     GIGA BOWSER,  20,     0.55,      0x7D)
+    add_to_results_screen(Character.id.PIANO,    0x2B7,                                      MARIO_BROS,  Character.id.KIRBY,   185,     MAD PIANO,    20,     0.65,      -1)
 }

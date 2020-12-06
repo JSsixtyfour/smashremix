@@ -965,6 +965,7 @@ scope SinglePlayer {
         constant LUCAS(0x00003D88)
         constant BOWSER(0x000055E8)
         constant GBOWSER(0x00005828)
+        constant PIANO(0x00005A08)
         // TODO: update J names
         constant JSAMUS(0x00004268)
         constant JNESS(0x00004688)
@@ -1116,6 +1117,7 @@ scope SinglePlayer {
         constant LUCAS(0x00000032)
         constant BOWSER(0x0000003C)
         constant GBOWSER(0x00000014 + BOWSER)
+        constant PIANO(0x00000046)
         // TODO: make sure these are good
         constant JSAMUS(0x00000032)
         constant JNESS(0x00000032)
@@ -1665,6 +1667,7 @@ scope SinglePlayer {
     add_to_single_player(Character.id.LUCAS,   name_texture.LUCAS,   name_delay.LUCAS)
     add_to_single_player(Character.id.BOWSER,  name_texture.BOWSER,  name_delay.BOWSER)
     add_to_single_player(Character.id.GBOWSER, name_texture.GBOWSER, name_delay.GBOWSER)
+    add_to_single_player(Character.id.PIANO,   name_texture.PIANO,   name_delay.PIANO)
 
     // J CHARS           character id          name texture          name delay
     add_to_single_player(Character.id.JSAMUS,  name_texture.JSAMUS,  name_delay.JSAMUS)

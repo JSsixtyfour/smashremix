@@ -70,4 +70,11 @@ scope Moveset {
         dw 0x88000000                       // command
         dw {address}                        // pointer
     }
+    
+    // @ Description
+    // adds a RANDOM SFX moveset command
+    macro RANDOM_SFX(chance_fgm, type, array_size, address) {
+        db 0xD6 ; db {chance_fgm} ; db {type} ; db {array_size} // command
+        dw {address}                        // pointer
+    }
 }

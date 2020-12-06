@@ -30,23 +30,23 @@ scope Shield {
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // ~
         sw      t2, 0x000C(sp)              // ~
-        sw      a0, 0x0010(sp)              // ~
-        sw      ra, 0x0014(sp)              // ~
-        sw      v0, 0x0018(sp)              // save registers
+        sw      t3, 0x0010(sp)              // save registers
 
-        lw      t1, 0x0084(a0)              // t1 = ?
+        lw      t1, 0x0084(a0)              // t1 = shield object special struct
+        lw      t0, 0x0004(t1)              // t0 = player object
+        lw      t0, 0x0084(t0)              // t0 = player struct
         lw      t1, 0x0018(t1)              // t1 = port shielding
-        move    a0, t1                      // a0 - player
-        jal     Character.get_struct_       // a0 - player (p1 = 0, p4 = 3)
-        nop
-        move    t0, v0                      // t0 = player pointer
 
         _teams_check:
+        li      t2, Global.match_info
+        lw      t2, 0x0000(t2)              // t2 = match info struct
+        addiu   t3, t2, 0x0002              // t3 = address of teams byte, if vs
         li      t2, Global.vs.teams         // t2 = pointer to teams byte
-        lb      t2, 0x0000(t2)              // t2 = teams
+        bne     t2, t3, _cpu                // if not vs, skip
+        lbu     t2, 0x0000(t2)              // t2 = teams
         beqz    t2, _cpu                    // if (!teams), skip
         nop
-        lb      t1, 0x000C(t0)              // t1 = team
+        lbu     t1, 0x000C(t0)              // t1 = team
 
         // team 0 = red, team 1 = blue, team 2 green
         // green is in not in table[2], it's in table[3]
@@ -61,7 +61,7 @@ scope Shield {
         nop
 
         _cpu:
-        lb      t0, 0x0023(t0)              // t6 = type (player = 0, cpu = 1)
+        lbu     t0, 0x0023(t0)              // t6 = type (player = 0, cpu = 1)
         bne     t0, r0, _return             // branch to human/cpu
         ori     t8, r0, 0x00C0              // cpu shield = 0x000000C0
 
@@ -75,9 +75,7 @@ scope Shield {
         _return:
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // ~
-        lw      a0, 0x0010(sp)              // ~
-        lw      ra, 0x0014(sp)              // ~
-        lw      v0, 0x0018(sp)              // restore registers
+        lw      t3, 0x0010(sp)              // ~
         addiu   sp, sp, 0x0020              // deallocate stack space
         j       _color_fix_return           // return
         nop
