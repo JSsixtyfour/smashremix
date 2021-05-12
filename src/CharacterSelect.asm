@@ -176,8 +176,8 @@ scope CharacterSelect {
     dw  0x7AE0 + 0x200                      // 0x1D - FALCO
     dw  0x1A6D8 + 0x200                     // 0x1E - GND
     dw  0x105D0 + 0x200                     // 0x1F - YLINK
-    dw  0x7720 + 0x200                      // 0x20 - DRM
-    dw  0xCA50 + 0x200                      // 0x21 - WARIO
+    dw  0xAED0 + 0x200                      // 0x20 - DRM
+    dw  0xC440 + 0x200                      // 0x21 - WARIO
     dw  0xE708 + 0x200                      // 0x22 - DARK SAMUS
     dw  0x0                                 // 0x23 - ELINK
     dw  0x0                                 // 0x24 - JSAMUS
@@ -199,6 +199,8 @@ scope CharacterSelect {
 	dw  0x11020 + 0x200                     // 0x34 - BOWSER
 	dw  0xFA40 + 0x200                      // 0x35 - GBOWSER
     dw  0x4DB0 + 0x200                      // 0x36 - PIANO
+	dw  0x76A0 + 0x200                      // 0x37 - WOLF
+    dw  0x110F0 + 0x200                     // 0x38 - CONKER
 
     // @ Description
     // Holds the ROM offset of an alternate req list, used by get_alternate_req_list_
@@ -293,6 +295,8 @@ scope CharacterSelect {
 	add_alt_req_list(Character.id.BOWSER, req/BOWSER_MODEL)
 	add_alt_req_list(Character.id.GBOWSER, req/GBOWSER_MODEL)
     add_alt_req_list(Character.id.PIANO, req/PIANO_MODEL)
+	add_alt_req_list(Character.id.WOLF, req/WOLF_MODEL)
+    add_alt_req_list(Character.id.CONKER, req/CONKER_MODEL)
     OS.align(4)
 
     // @ Description
@@ -1411,16 +1415,27 @@ scope CharacterSelect {
         addiu   sp, sp, -0x0008             // allocate stack space
         sw      ra, 0x0004(sp)              // ~
 
+        // Not the cleanest place to put this, but meh
+        li      s0, CharacterSelectDebugMenu.debug_control_object
+        sw      r0, 0x0000(s0)              // clear out control object reference before it is used
+
         // for (char_id i = METAL; i < last character; i++)
         lli     s0, Character.id.METAL
         
         _loop:
+        sltiu   a0, s0, Character.id.NMARIO // a0 = 1 if a vanilla character
+        bnez    a0, _load                   // if char_id < NMARIO, do load
+        sltiu   a0, s0, Character.id.GDONKEY// a0 = 1 if a polygon character
+        bnezl   a0, _loop                   // if char_id is a polygon, skip
+        addiu   s0, s0, 0x0001              // increment index
         lli     a0, Character.id.PLACEHOLDER// a0 = PLACEHOLDER
         beql    a0, s0, _loop               // if char_id = PLACEHOLDER, skip
         addiu   s0, s0, 0x0001              // increment index
         lli     a0, Character.id.NONE       // a0 = NONE
         beql    a0, s0, _loop               // if char_id = NONE, skip
         addiu   s0, s0, 0x0001              // increment index
+
+        _load:
         jal     load_character_model_       // load character function
         or      a0, s0, r0                  // a0 = index
         // end on x character (Character.NUM_CHARACTERS - 1 should work usually)
@@ -1455,6 +1470,30 @@ scope CharacterSelect {
 
         jr      ra                          // return
         nop
+    }
+
+    // @ Description
+    // Dynamically loads character files for unloaded characters
+    scope dynamically_load_character_: {
+        OS.patch_start(0x537E4, 0x800D7FE4)
+        jal     dynamically_load_character_
+        lw      t5, 0x0000(t4)              // original line 1
+        OS.patch_end()
+
+        // t5 = address of main character file, or 0 if not loaded yet
+        bnez    t5, _end                    // if loaded, end normally
+        nop
+
+        OS.save_registers()
+        jal     load_character_model_
+        lw      a0, 0x0008(v0)              // a0 = char_id
+        OS.restore_registers()
+
+        lw      t5, 0x0000(t4)              // t5 = address of main character file, now loaded
+
+        _end:
+        jr      ra
+        addu    s4, t5, t6                  // original line 2 (address of attribute data)
     }
 
     // @ Description
@@ -2153,6 +2192,8 @@ scope CharacterSelect {
         constant WARIO(0x00012D38)
         constant LUCAS(0x00013DF8)
         constant BOWSER(0x00014EB8)
+		constant WOLF(0x0001A278)
+        constant CONKER(0x0001B338)
         // j
         constant JMARIO(0x00001078)
         constant JFOX(0x00002138)
@@ -2189,6 +2230,8 @@ scope CharacterSelect {
         constant SMASH(0x000045D8)
         constant DR_MARIO(0x00004C38)
 		constant BOWSER(0x00005298)
+        constant CONKER(0x000058F8)
+        constant WARIO(0x00005F58)
     }
 
     series_logo_offset_table:
@@ -2274,6 +2317,8 @@ scope CharacterSelect {
         constant JPUFF(0x00017DD8)
         constant JPIKA(0x000032F8)
         constant PIANO(0x000190A8)
+		constant WOLF(0x00019588)
+        constant CONKER(0x00019A68)
         constant BLANK(0x0)
     }
 
@@ -2349,8 +2394,8 @@ scope CharacterSelect {
         define slot_18(WARIO)
         define slot_19(LUCAS)
         define slot_20(BOWSER)
-        define slot_21(NONE)
-        define slot_22(NONE)
+        define slot_21(WOLF)
+        define slot_22(CONKER)
         define slot_23(NONE)
         define slot_24(NONE)
     }
@@ -2761,6 +2806,7 @@ scope CharacterSelect {
         sw      s4, 0x001C(sp)              // ~
         sw      s5, 0x0020(sp)              // save registers
 
+        Render.load_font()                                                // load font for strings
         Render.load_file(File.CHARACTER_PORTRAITS, Render.file_pointer_1) // load character portraits into file_pointer_1
         Render.load_file(File.CSS_IMAGES, Render.file_pointer_2)          // load CSS images into file_pointer_2
 
@@ -2822,7 +2868,7 @@ scope CharacterSelect {
         sw      t1, 0x0084(v0)              // save reference to css player struct
         addiu   t0, t1, -0x00BC             // t0 = normalized css player struct reference
         addu    t0, t0, s5                  // ~ (now we can reference 0x50 and higher offsets the same)
-        sw      t0, 0x0038(v0)              // save normalized css player struct reference
+        sw      t0, 0x0048(v0)              // save normalized css player struct reference
         lw      t1, 0x0058(t0)              // t1 = initial player selected flag
         sw      t1, 0x003C(v0)              // store player selected status
         sw      r0, 0x0040(v0)              // 0 out reference to regional flag
@@ -2897,12 +2943,15 @@ scope CharacterSelect {
         sw      t3, 0x0084(t2)              // ~
         addiu   t3, t3, -0x0004             // t3 = normalized css player struct
         addiu   t4, t4, -0x0004             // t4 = normalized css player struct
-        sw      t4, 0x0038(t1)              // swap normalized css player struct pointers
-        sw      t3, 0x0038(t2)              // ~
+        sw      t4, 0x0048(t1)              // swap normalized css player struct pointers
+        sw      t3, 0x0048(t2)              // ~
 
         _portraits:
         jal     draw_portraits_
         lli     a0, OS.FALSE                // a0 = 12cb mode flag
+
+        jal     CharacterSelectDebugMenu.init_debug_menu_
+        lw      a0, 0x0008(sp)              // a0 = offset in css_player_structs
 
         lw      ra, 0x0004(sp)              // restore registers
         addiu   sp, sp, 0x0030              // deallocate stack space
@@ -3086,6 +3135,8 @@ scope CharacterSelect {
 
         lw      a0, 0x000C(sp)              // t2 = dpad object
         sw      v0, 0x0034(a0)              // save reference to variant icon object
+        lw      at, 0x0038(a0)              // at = -1 if display on, 0 if not
+        sw      at, 0x0038(v0)              // set initial display flag based on dpad object
 
         // Now, check each entry and add the variant icon as needed
         lw      at, 0x0010(sp)              // at = character variant array
@@ -3172,15 +3223,18 @@ scope CharacterSelect {
         lw      at, 0x0000(at)              // ~
         lli     t2, Character.variant_type.J
         beql    t1, t2, _draw_icon          // if a J variant, then draw J flag
-        addiu   a1, at, 0x558               // a1 = J flag footer struct TODO: make offset a constant
+        addiu   a1, at, 0x0558              // a1 = J flag footer struct TODO: make offset a constant
         lli     t2, Character.variant_type.E
         beql    t1, t2, _draw_icon          // if an E variant, then draw E flag
-        addiu   a1, at, 0x3B8               // a1 = E flag footer struct TODO: make offset a constant
-
+        addiu   a1, at, 0x03B8              // a1 = E flag footer struct TODO: make offset a constant
 
         // if we're here, then we will use the character's stock icon
-        lui     t1, 0x3F80                  // t1 = scale for stock icons (1.0)
-        sw      t1, 0x0024(sp)              // save scale for stock icons
+        lui     t2, 0x3F80                  // t2 = scale for stock icons (1.0)
+        sw      t2, 0x0024(sp)              // save scale for stock icons
+
+        lli     t2, Character.variant_type.POLYGON
+        beql    t1, t2, _draw_icon          // if a polygon, then draw polygon icon from our file instead
+        addiu   a1, at, 0x13A8              // a1 = polygon icon footer struct TODO: make offset a constant
 
         li      t1, 0x80116E10              // t1 = main character struct table
         sll     t2, a1, 0x0002              // t2 = a1 * 4 (offset in struct table)
@@ -3188,6 +3242,7 @@ scope CharacterSelect {
         lw      t1, 0x0000(t1)              // t1 = character struct
         lw      t2, 0x0028(t1)              // t2 = main character file address pointer
         lw      t2, 0x0000(t2)              // t2 = main character file address
+        beqz    t2, _end
         lw      t1, 0x0060(t1)              // t1 = offset to attribute data
         addu    t1, t2, t1                  // t1 = attribute data address
         lw      t1, 0x0340(t1)              // t1 = pointer to stock icon footer address
@@ -3275,9 +3330,15 @@ scope CharacterSelect {
         nop
         lw      t1, 0x0084(t0)              // t1 = pointer to css player struct
         lw      t2, 0x0034(t0)              // t2 = pointer to variant icons object
-        lw      t3, 0x0038(t0)              // t3 = normalized pointer to css player struct (for 0x50 and higher offsets)
-        lw      t4, 0x003C(t0)              // t4 = previous selected flag value
+        lw      t3, 0x0048(t0)              // t3 = normalized pointer to css player struct (for 0x50 and higher offsets)
 
+        lw      t4, 0x0048(t3)              // t4 = char_id
+        lli     t5, Character.id.NONE
+        lli     t6, 0x0001                  // t6 = 1 (hide dpad)
+        beql    t4, t5, pc() + 8            // if no character selected, hide the dpad
+        sw      t6, 0x007C(t0)              // this hides the dpad
+
+        lw      t4, 0x003C(t0)              // t4 = previous selected flag value
         lw      t5, 0x0058(t3)              // t5 = current selected flag value
         beq     t4, t5, _flag_check         // if the selected status has changed this frame,
         sw      t5, 0x003C(t0)              // then we'll need to handle
@@ -3321,12 +3382,21 @@ scope CharacterSelect {
         b       _next
         nop
 
-        _flag_check:
         // here, check if flag should be drawn
+        _flag_check:
+        // this little block makes sure the display is correct when a controller is unplugged
+        lw      a0, 0x0034(t0)              // a0 = variant icons object
+        beqz    a0, _check_selected         // skip if no variant icons object
+        lli     a1, 0x0001                  // a1 = 1 (display off)
+        lw      t5, 0x0048(t1)              // t5 = character index
+        lli     t4, Character.id.NONE
+        beql    t5, t4, _next               // if no character selected, skip and turn off variant icons
+        sw      a1, 0x007C(a0)              // turn off display of variant icons object
+
+        _check_selected:
         lw      t4, 0x003C(t0)              // t4 = selected flag value
         beqz    t4, _next                   // skip if not selected
-        lw      a0, 0x0034(t0)              // a0 = variant icons object
-        lli     a1, 0x0001                  // a1 = 1 (display off)
+        nop
         bnezl   a0, pc() + 8                // if there is a variant icons object, turn its display of
         sw      a1, 0x007C(a0)              // turn off display of variant icons object
         lw      a0, 0x0048(t1)              // a0 = character index
@@ -3385,7 +3455,7 @@ scope CharacterSelect {
         _next:
         // ensure the direction indicator is correctly positioned
         lw      t0, 0x0000(s1)              // t0 = dpad image object address
-        lw      t4, 0x0038(t0)              // t4 = normalized css player struct
+        lw      t4, 0x0048(t0)              // t4 = normalized css player struct
         lw      t2, 0x0080(t4)              // t2 = player port index
         li      t1, variant_offset          // t1 = address of variant_offset array
         addu    t1, t1, t2                  // t1 = address of variant_offset for port
@@ -3465,6 +3535,133 @@ scope CharacterSelect {
     }
 
     // @ Description
+    // This checks if an area was pressed.
+    // Heavily based on BACK press check at 0x80138218 (ROM 0x136498).
+    // @ Parameters
+    // a0 - cursor object
+    // a1 - image ulx (float)
+    // a2 - image width (int)
+    // a3 - image uly (float)
+    // 0x0010(sp) - image height (int)
+    // @ Returns
+    // v0 - 1 if pressed, 0 if not
+    scope check_press_: {
+        // copy BACK button press routine
+        lw      v0, 0x0074(a0)              // v0 = cursor object image struct
+        lui     at, 0x4040                  // at = 3 (y spacer)
+        mtc1    at, f6                      // f6 = 3 (y spacer)
+        lwc1    f4, 0x005C(v0)              // f4 = cursor uly
+        mtc1    a3, f8                      // f4 = image uly
+        add.s   f0, f4, f6                  // f0 = cursor y, adjusted
+        lw      at, 0x0010(sp)              // at = image height
+        c.lt.s  f0, f8                      // if (cursor uly < image uly), then return no press
+        nop
+        bc1t    _fail_y                     // return no press
+        nop
+        mtc1    at, f10                     // f10 = image height
+        cvt.s.w f10, f10                    // f10 = image height, float
+        add.s   f10, f10, f8                // f10 = image lry
+        or      v1, r0, r0                  // v1 = 0 (ok so far)
+        c.lt.s  f10, f0                     // if (cursor uly > image lry), then return no press
+        nop
+        bc1f    _pass_y                     // y check passed, proceed to x check
+        nop
+        _fail_y:
+        beq     r0, r0, _end                // not over button, so exit
+        or      v0, r0, r0                  // v0 = 0 (OS.FALSE)
+
+        _pass_y:
+        lui     at, 0x41A0                  // at = 20 (x spacer)
+        lwc1    f16, 0x0058(v0)             // f16 = cursor ulx
+        mtc1    at, f18                     // f18 = 20 (x spacer)
+        mtc1    a1, f4                      // f4 = image ulx
+        add.s   f0, f16, f18                // f10 = cursor ulx, adjusted
+        or      at, r0, a2                  // at = image width
+        or      v0, r0, r0                  // v0 = 0 (OS.FALSE)
+        c.le.s  f4, f0                      // if (cursor ulx < image ulx), then return no press
+        nop
+        bc1f    _end                        // not over button, so exit
+        nop
+        mtc1    at, f6                      // f6 = image width
+        cvt.s.w f6, f6                      // f6 = image width, float
+        add.s   f6, f6, f4                  // f10 = image lrx
+        nop
+        c.le.s  f0, f6                      // if (cursor urx > image urx), then return no press
+        nop
+        bc1f    _end                        // not over button, so exit
+        nop
+        addiu   v0, r0, 0x0001              // over button!
+
+        _end:
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // This checks if an image was pressed.
+    // @ Parameters
+    // a0 - cursor object
+    // a1 - image object
+    // @ Returns
+    // v0 - 1 if image pressed, 0 if not
+    scope check_image_press_: {
+        beqzl   a1, _end                    // if image object is empty, return
+        lli     v0, 0x0000                  // ...and set v0 to 0
+
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+        sw      a1, 0x0008(sp)              // ~
+
+        jal     check_image_footer_press_   // v0 = (bool) image pressed
+        lw      a1, 0x0074(a1)              // a1 = image object image struct
+
+        lw      ra, 0x0004(sp)              // restore registers
+        lw      a1, 0x0008(sp)              // ~
+        addiu   sp, sp, 0x0010              // deallocate stack space
+
+        _end:
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // This checks if an image was pressed.
+    // @ Parameters
+    // a0 - cursor object
+    // a1 - image footer struct
+    // @ Returns
+    // v0 - 1 if image pressed, 0 if not
+    scope check_image_footer_press_: {
+        beqzl   a1, _end                    // if image object is empty, return
+        lli     v0, 0x0000                  // ...and set v0 to 0
+
+        addiu   sp, sp,-0x0030              // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+        sw      a1, 0x0020(sp)              // ~
+        sw      a2, 0x0024(sp)              // ~
+        sw      a3, 0x0028(sp)              // ~
+        sw      t4, 0x002C(sp)              // ~
+
+        lhu     a2, 0x0014(a1)              // a2 = image width
+        lw      a3, 0x005C(a1)              // a3 = image uly
+        lhu     t4, 0x0016(a1)              // t4 = image height
+        lw      a1, 0x0058(a1)              // a1 = image ulx
+        jal     check_press_                // v0 = (bool) image pressed
+        sw      t4, 0x0010(sp)              // 0x0010(sp) = image height
+
+        lw      ra, 0x0004(sp)              // restore registers
+        lw      a1, 0x0020(sp)              // ~
+        lw      a2, 0x0024(sp)              // ~
+        lw      a3, 0x0028(sp)              // ~
+        lw      t4, 0x002C(sp)              // ~
+        addiu   sp, sp, 0x0030              // deallocate stack space
+
+        _end:
+        jr      ra
+        nop
+    }
+
+    // @ Description
     // Adds a character to the character select screen.
     // @ Arguments
     // character - character id to add a portrait for
@@ -3513,7 +3710,7 @@ scope CharacterSelect {
     add_to_css(Character.id.GND,    FGM.announcer.names.GANONDORF,      1.50,   0x00010002, series_logo.ZELDA,        name_texture.GND,            portrait_offsets.GND,            -1)
     add_to_css(Character.id.YLINK,  FGM.announcer.names.YOUNG_LINK,     1.50,   0x00010002, series_logo.ZELDA,        name_texture.YLINK,          portrait_offsets.YLINK,          -1)
     add_to_css(Character.id.DRM,    FGM.announcer.names.DR_MARIO,       1.50,   0x00010001, series_logo.DR_MARIO,     name_texture.DRM,            portrait_offsets.DRM,            -1)
-    add_to_css(Character.id.WARIO,  FGM.announcer.names.WARIO,          1.50,   0x00010004, series_logo.MARIO_BROS,   name_texture.WARIO,          portrait_offsets.WARIO,          -1)
+    add_to_css(Character.id.WARIO,  FGM.announcer.names.WARIO,          1.50,   0x00010004, series_logo.WARIO,        name_texture.WARIO,          portrait_offsets.WARIO,          -1)
     add_to_css(Character.id.DSAMUS, FGM.announcer.names.DSAMUS,         1.50,   0x00010004, series_logo.METROID,      name_texture.DSAMUS,         portrait_offsets.DSAMUS,         -1)
     add_to_css(Character.id.ELINK,  FGM.announcer.names.ELINK,          1.50,   0x00010001, series_logo.ZELDA,        name_texture.LINK,           portrait_offsets.ELINK,          4)
     add_to_css(Character.id.JSAMUS, FGM.announcer.names.SAMUS,          1.50,   0x00010003, series_logo.METROID,      name_texture.SAMUS,          portrait_offsets.JSAMUS,         5)
@@ -3533,8 +3730,10 @@ scope CharacterSelect {
     add_to_css(Character.id.JPIKA,  FGM.announcer.names.PIKACHU,        1.50,   0x00010001, series_logo.POKEMON,      name_texture.PIKACHU,        portrait_offsets.JPIKA,          13)
     add_to_css(Character.id.ESAMUS, FGM.announcer.names.ESAMUS,         1.50,   0x00010003, series_logo.METROID,      name_texture.SAMUS,          portrait_offsets.ESAMUS,         5)
     add_to_css(Character.id.BOWSER, FGM.announcer.names.BOWSER,         2,      0x00010002, series_logo.BOWSER,       name_texture.BOWSER,         portrait_offsets.BOWSER,         -1)
-	add_to_css(Character.id.GBOWSER,FGM.announcer.names.GBOWSER,        2.25,   0x00010002, series_logo.BOWSER,       name_texture.GBOWSER,        portrait_offsets.GBOWSER,        19)
-    add_to_css(Character.id.PIANO,  0x2B7,                              2,      0x00010004, series_logo.MARIO_BROS,   name_texture.PIANO,          portrait_offsets.PIANO,          1)
+    add_to_css(Character.id.GBOWSER,FGM.announcer.names.GBOWSER,        2.25,   0x00010002, series_logo.BOWSER,       name_texture.GBOWSER,        portrait_offsets.GBOWSER,        19)
+    add_to_css(Character.id.PIANO,  FGM.announcer.names.PIANO,          2,      0x00010004, series_logo.MARIO_BROS,   name_texture.PIANO,          portrait_offsets.PIANO,          1)
+    add_to_css(Character.id.WOLF,   FGM.announcer.names.WOLF,           1.50,   0x00010004, series_logo.STARFOX,      name_texture.WOLF,           portrait_offsets.WOLF,           -1)
+    add_to_css(Character.id.CONKER, FGM.announcer.names.CONKER,        	1.50,   0x00010004, series_logo.CONKER,       name_texture.CONKER,         portrait_offsets.CONKER,        	-1)
 }
 
 } // __CHARACTER_SELECT__

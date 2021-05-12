@@ -244,7 +244,7 @@ scope Spawn {
         li      t1, Global.vs.stage         // t1 = address of stageId
 
         _load_spawn:
-        lb      t1, 0x0000(t1)              // t1 = stageID
+        lbu     t1, 0x0000(t1)              // t1 = stageID
         sll     t1, t1, 0x0005              // t0 = stage offset
         add     t0, t0, t1                  // t0 = table + stage offset
         sll     t1, a0, 0x0003              // t1 = player offset
@@ -783,13 +783,13 @@ scope Spawn {
     float32 -3339,  1400
     float32  0885,  1995
     float32 -2042,  1212
-    float32 -0320,  1411
+    float32 -0320,  1200
     
     // 47 - Kitchen
-    float32 -2047,  1171
-    float32  2346,  1563
-    float32 -0398,  1554
-    float32  0912,  0815
+    float32 -1200,  2250
+    float32  1200,  2250
+    float32 -0600,  2250
+    float32  0600,  2250
     
     // 48 - Big Blue
     float32 -1711,  0402
@@ -1108,6 +1108,60 @@ scope Spawn {
     float32  1470,  0550
     float32 -2430,  1380
     float32  2430,  1380
+    
+    // 7D - Rith Essa
+    float32 -3353,  1190
+    float32  3722,  1190
+    float32 -1723,  0066
+    float32  2113,  0043
+    
+    // 7E - Venom
+    float32 -1719,  1827
+    float32  1719,  1827
+    float32 -1719,  0283
+    float32  1719,  0283
+    
+    // 7F - Wolf Break the Targets
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // 80 - Wolf Board the Platforms
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // 81 - Conker Break the Targets
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // 82 - Conker Board the Platforms
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // 83 - Windy
+    float32 -2510,  2170
+    float32  1480,  0720
+    float32 -1380,  2170
+    float32  0000,  0720
+    
+    // 84 - dataDyne
+    float32 -0800, -0150
+    float32  0800, -0150
+    float32 -1700,  0660
+    float32  1700,  0660
+    
+    // 85 - Planet Clancer
+    float32 -1500,  0905
+    float32  1500,  0905
+    float32 -0750,  0005
+    float32  0750,  0005
 
     neutral_table:
     // 00 - Peach's Castle
@@ -1538,13 +1592,13 @@ scope Spawn {
     float32 -3339,  1400
     float32  0885,  1995
     float32 -2042,  1212
-    float32 -0320,  1411
+    float32 -0320,  1200
     
     // 47 - Kitchen
-    float32 -2047,  1171
-    float32  2346,  1563
-    float32 -1995,  0232
-    float32  2316, -0634
+    float32 -1200,  2250
+    float32  1200,  2250
+    float32 -0600,  2250
+    float32  0600,  2250
     
     // 48 - Big Blue
     float32 -1711,  0402
@@ -1863,6 +1917,60 @@ scope Spawn {
     float32  1470,  0550
     float32 -2430,  1380
     float32  2430,  1380
+    
+    // 7D - Rith Essa
+    float32 -3353,  1190
+    float32  3722,  1190
+    float32 -1723,  0066
+    float32  2113,  0043
+    
+    // 7E - Venom
+    float32 -1719,  1827
+    float32  1719,  1827
+    float32 -1719,  0283
+    float32  1719,  0283
+    
+    // 7F - Wolf Break the Targets
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // 80 - Wolf Board the Platforms
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // 81 - Conker Break the Targets
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // 82 - Conker Board the Platforms
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // 83 - Windy
+    float32 -2510,  2170
+    float32  1480,  0720
+    float32 -1380,  2170
+    float32  0000,  0720
+    
+    // 84 - dataDyne
+    float32 -0800, -0150
+    float32  0800, -0150
+    float32 -1700,  0660
+    float32  1700,  0660
+    
+    // 85 - Planet Clancer
+    float32 -1500,  0905
+    float32  1500,  0905
+    float32 -0750,  0005
+    float32  0750,  0005
 }
 
 } // __SPAWN__

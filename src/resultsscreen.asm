@@ -1,6 +1,5 @@
-// ResultsScreen.asm (Fray)
+// ResultsScreen.asm
 // thanks to tehzz for providing documentation
-// this file is most likely temporary
 
 include "OS.asm"
 include "Global.asm"
@@ -91,7 +90,7 @@ scope ResultsScreen {
         sb      a1, 0x0039(sp)              // set port index
 
         jr      ra
-        sb      t4, 0x03C(sp)               // original line 2
+        sb      t4, 0x003C(sp)              // original line 2
     }
     
     // @ Description
@@ -305,6 +304,8 @@ scope ResultsScreen {
         constant SMASH(0x5E10)
         constant DR_MARIO(0x6420)
         constant BOWSER(0x8340)
+        constant CONKER(0x8D70)
+        constant WARIO(0x9040)
     }
 
     // @ Description
@@ -323,6 +324,8 @@ scope ResultsScreen {
         constant SMASH(POKEMON)
         constant DR_MARIO(MARIO_BROS)
         constant BOWSER(0x8448)
+        constant CONKER(0x8E78)
+        constant WARIO(0x9148)
     }
 
     // @ Description
@@ -341,6 +344,8 @@ scope ResultsScreen {
         constant SMASH(POKEMON)
         constant DR_MARIO(0x64A4)
         constant BOWSER(0x84A0)
+        constant CONKER(0x8ED0)
+        constant WARIO(MARIO_BROS)
     }
 
     // @ Description
@@ -543,16 +548,16 @@ scope ResultsScreen {
     add_to_results_screen(Character.id.NNESS,    FGM.announcer.names.POLYGON_NESS,           SMASH,       Character.id.MARIO,   185,     POLY NESS,    20,     0.75,      0x0B)
     add_to_results_screen(Character.id.GDONKEY,  FGM.announcer.names.GDK,                    DONKEY_KONG, Character.id.DK,      185,     GIANT DK,     20,     0.8,       0x0E)
 
-    add_to_results_screen(Character.id.FALCO,    FGM.announcer.names.FALCO,                  STARFOX,     Character.id.FOX,     170,     FALCO,        30,     1,         0x45)
-    add_to_results_screen(Character.id.GND,      FGM.announcer.names.GANONDORF,              ZELDA,       Character.id.CAPTAIN, 185,     GANONDORF,    20,     0.6,       0x43)
-    add_to_results_screen(Character.id.YLINK,    FGM.announcer.names.YOUNG_LINK,             ZELDA,       Character.id.LINK,    185,     YOUNG LINK,   20,     0.65,      0x44)
-    add_to_results_screen(Character.id.DRM,      FGM.announcer.names.DR_MARIO,               DR_MARIO,    Character.id.MARIO,   185,     DR. MARIO,    20,     0.75,      0x46)
-    add_to_results_screen(Character.id.DSAMUS,   FGM.announcer.names.DSAMUS,                 METROID,     Character.id.SAMUS,   185,     DARK SAMUS,   20,     0.6,       0x52)
-    add_to_results_screen(Character.id.WARIO,    FGM.announcer.names.WARIO,                  MARIO_BROS,  Character.id.MARIO,   175,     WARIO,        25,     1,         0x5C)
+    add_to_results_screen(Character.id.FALCO,    FGM.announcer.names.FALCO,                  STARFOX,     Character.id.FOX,     170,     FALCO,        30,     1,         {MIDI.id.FALCO_VICTORY})
+    add_to_results_screen(Character.id.GND,      FGM.announcer.names.GANONDORF,              ZELDA,       Character.id.CAPTAIN, 185,     GANONDORF,    20,     0.6,       {MIDI.id.GANON_VICTORY})
+    add_to_results_screen(Character.id.YLINK,    FGM.announcer.names.YOUNG_LINK,             ZELDA,       Character.id.LINK,    185,     YOUNG LINK,   20,     0.65,      {MIDI.id.YOUNGLINK_VICTORY})
+    add_to_results_screen(Character.id.DRM,      FGM.announcer.names.DR_MARIO,               DR_MARIO,    Character.id.MARIO,   185,     DR. MARIO,    20,     0.75,      {MIDI.id.DRMARIO_VICTORY})
+    add_to_results_screen(Character.id.DSAMUS,   FGM.announcer.names.DSAMUS,                 METROID,     Character.id.SAMUS,   185,     DARK SAMUS,   20,     0.6,       {MIDI.id.DSAMUS_VICTORY})
+    add_to_results_screen(Character.id.WARIO,    FGM.announcer.names.WARIO,                  WARIO,       Character.id.MARIO,   175,     WARIO,        25,     1,         {MIDI.id.WARIO_VICTORY})
     add_to_results_screen(Character.id.ELINK,    FGM.announcer.names.ELINK,                  ZELDA,       Character.id.LINK,    170,     E LINK,       40,     1,         0x15)
     add_to_results_screen(Character.id.JSAMUS,   FGM.announcer.names.SAMUS,                  METROID,     Character.id.SAMUS,   185,     J SAMUS,      35,     0.8,       0x0D)
     add_to_results_screen(Character.id.JNESS,    FGM.announcer.names.NESS,                   EARTHBOUND,  Character.id.NESS,    180,     J NESS,       40,     1,         0x11)
-    add_to_results_screen(Character.id.LUCAS,    FGM.announcer.names.LUCAS,                  EARTHBOUND,  Character.id.NESS,    170,     LUCAS,        20,     1,         0x63)
+    add_to_results_screen(Character.id.LUCAS,    FGM.announcer.names.LUCAS,                  EARTHBOUND,  Character.id.NESS,    170,     LUCAS,        20,     1,         {MIDI.id.LUCAS_VICTORY})
     add_to_results_screen(Character.id.JLINK,    FGM.announcer.names.LINK,                   ZELDA,       Character.id.LINK,    170,     J LINK,       50,     1,         0x15)
     add_to_results_screen(Character.id.JFALCON,  FGM.announcer.names.FALCON,                 FZERO,       Character.id.CAPTAIN, 185,     J C. FALCON,  30,     0.65,      0x13)
     add_to_results_screen(Character.id.JFOX,     FGM.announcer.names.JFOX,                   STARFOX,     Character.id.FOX,     170,     J FOX,        50,     1,         0x10)
@@ -566,7 +571,9 @@ scope ResultsScreen {
     add_to_results_screen(Character.id.JYOSHI,   FGM.announcer.names.YOSHI,                  YOSHI,       Character.id.YOSHI,   195,     J YOSHI,      30,     1,         0x12)
     add_to_results_screen(Character.id.JPIKA,    FGM.announcer.names.PIKACHU,                POKEMON,     Character.id.PIKACHU, 195,     J PIKACHU,    35,     0.75,      0x14)
     add_to_results_screen(Character.id.ESAMUS,   FGM.announcer.names.ESAMUS,                 METROID,     Character.id.SAMUS,   175,     E SAMUS,      35,     0.75,      0x0D)
-	add_to_results_screen(Character.id.BOWSER,   FGM.announcer.names.BOWSER,                 BOWSER,      Character.id.YOSHI,   180,     BOWSER,       30,     0.85,      0x7D)
-	add_to_results_screen(Character.id.GBOWSER,  FGM.announcer.names.GBOWSER,                BOWSER,      Character.id.YOSHI,   180,     GIGA BOWSER,  20,     0.55,      0x7D)
-    add_to_results_screen(Character.id.PIANO,    0x2B7,                                      MARIO_BROS,  Character.id.KIRBY,   185,     MAD PIANO,    20,     0.65,      -1)
+    add_to_results_screen(Character.id.BOWSER,   FGM.announcer.names.BOWSER,                 BOWSER,      Character.id.YOSHI,   180,     BOWSER,       30,     0.85,      {MIDI.id.BOWSER_VICTORY})
+    add_to_results_screen(Character.id.GBOWSER,  FGM.announcer.names.GBOWSER,                BOWSER,      Character.id.YOSHI,   180,     GIGA BOWSER,  20,     0.55,      {MIDI.id.BOWSER_VICTORY})
+    add_to_results_screen(Character.id.PIANO,    FGM.announcer.names.PIANO,                  MARIO_BROS,  Character.id.KIRBY,   185,     MAD PIANO,    20,     0.65,      -1)
+    add_to_results_screen(Character.id.WOLF,     FGM.announcer.names.WOLF,                   STARFOX,     Character.id.FOX,     170,     WOLF,         30,     1,         {MIDI.id.WOLF_VICTORY})
+    add_to_results_screen(Character.id.CONKER,   FGM.announcer.names.CONKER,                 CONKER,      Character.id.FOX,     180,     CONKER,       25,     0.85,      {MIDI.id.CONKER_VICTORY})
 }

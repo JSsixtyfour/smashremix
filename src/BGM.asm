@@ -56,10 +56,15 @@ scope BGM {
 
         li      t0, Global.current_screen   // ~
         lb      t0, 0x0000(t0)              // t0 = current_screen
+        lli     v0, 0x0034                  // v0 = 1P_SCREEN
+        beq     t0, v0, _alternate          // if 1p, allow alternate music to play
+        lli     v0, 0x0035                  // v0 = BONUS_SCREEN
+        beq     t0, v0, _alternate          // if Bonus, allow alternate music to play
         lli     v0, 0x0016                  // v0 = FIGHT_SCREEN
         bne     t0, v0, _end                // if not fight screen, end
         nop
-
+        
+        _alternate:
         // check if starting to play hammer/star music
         // if so, skip getting alternate music
         lli     v0, special.HAMMER          // v0 = hammer bgm_id
@@ -126,8 +131,9 @@ scope BGM {
         ori     a0, r0, 0x0000              // otherwise we'll use the Occasional song
 
         _get_bgm_id:
-        li      t0, Global.vs.stage         // t0 = address of stage_id
-        lb      v0, 0x0000(t0)              // v0 = stage_id
+        li      t0, Global.match_info       // t0 = pointer to match info
+        lw      t0, 0x0000(t0)              // load address of match info
+        lbu     v0, 0x0001(t0)              // v0 = stage_id
         li      t0, Stages.alternate_music_table   // t0 = address of alternate music table
         sll     v0, v0, 0x0002              // v0 = offset to stage's alt music
         addu    t0, t0, v0                  // t0 = address of alt music options for stage (0x0 = Occasional, 0x2 = Rare)
@@ -208,7 +214,7 @@ scope BGM {
     random_table:
     fill 4 * MIDI.midi_count                // allows for space for all songs, which is actually more than we need
 
-    // @ Descirption
+    // @ Description
     // number of stages in random_table.
     random_count:
     dh 0

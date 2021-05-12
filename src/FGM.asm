@@ -97,6 +97,7 @@ scope FGM {
     // FGM types
     constant FGM_TYPE_VOICE(0x00)
     constant FGM_TYPE_CHANT(0x01)
+    constant FGM_TYPE_SLEEP(0x02)
 
     OS.align(16)
     default_sound_parameters_moved:
@@ -161,10 +162,18 @@ scope FGM {
         }
         if {fgm_type} == FGM_TYPE_VOICE {
             global variable new_fgm_microcode_size(new_fgm_microcode_size + 0x11)
-        } else {
+        } else if {fgm_type} == FGM_TYPE_CHANT {
             global variable new_fgm_microcode_size(new_fgm_microcode_size + 0x13)
+        } else {
+            global variable new_fgm_microcode_size(new_fgm_microcode_size + 0x1D)
         }
-        global variable new_sfx_fgm_size(new_sfx_fgm_size + 0xD)
+        if {fgm_type} == FGM_TYPE_VOICE {
+            global variable new_sfx_fgm_size(new_sfx_fgm_size + 0xD)
+        } else if {fgm_type} == FGM_TYPE_CHANT {
+            global variable new_sfx_fgm_size(new_sfx_fgm_size + 0xD)
+        } else {
+            global variable new_sfx_fgm_size(new_sfx_fgm_size + 0xA)
+        }
         
         global define SOUND_LOOP_PARAMS_{num}(0x00000000)
 
@@ -489,7 +498,7 @@ scope FGM {
                 dh  {fgm_length} // length
                 db  0xD0
                 // size = 0x11
-            } else {
+            } else if {fgm_type} == FGM_TYPE_CHANT {
                 dh  0xDE04
                 db  0xD1
                 dh  {sfx_fgm_index}
@@ -501,6 +510,21 @@ scope FGM {
                 dh  {fgm_length} // length
                 db  0xD0
                 // size = 0x13
+            } else {
+                dh  0xDE00
+                db  0xD1 ; dh  {sfx_fgm_index}
+                dh  0xD2FF
+                dh  0xDC0A
+                dh  0xD3C8
+                dh  0xD2A4
+                dh  0xD5FF
+                db  0x77 ; dh {fgm_length}
+                dh  0xD5FF
+                db  0x77 ; dh {fgm_length}
+                dh  0xD5FF
+                db  0x77 ; dh {fgm_length}
+                db  0xD0
+                // size = 0x1D
             }
         }
 
@@ -598,7 +622,7 @@ scope FGM {
                 // dw      0x08324608
                 // dw      0x3C3C083C
                 // dw      0x32700000
-            } else {
+            } else if {fgm_type} == FGM_TYPE_CHANT {
                 db      0x60                                        // always starts with 60
                 dh      {sound_id}                                  // add the pointer to the sfx id we added
                 db      {sample_rate}                               // set sample rate (0x20 = 16000 Hz, 0x60 = 32000 Hz)
@@ -606,6 +630,13 @@ scope FGM {
                 dw      0x5A0B747F
                 db      0x70
                 // size = 0xD
+            } else {
+                db      0x60                                        // always starts with 60
+                dh      {sound_id}                                  // add the pointer to the sfx id we added
+                db      {sample_rate}                               // set sample rate (0x20 = 16000 Hz, 0x60 = 32000 Hz)
+                dw      0xFB500A2C
+                dh      0x6470
+                // size = 0xA
             }
         }
 
@@ -743,7 +774,7 @@ scope FGM {
     add_sound(Falco/sounds/6D, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound(Falco/sounds/6E, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound(Falco/sounds/6F, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
-    add_sound(Falco/sounds/70, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Falco/sounds/70, SAMPLE_RATE_16000, FGM_TYPE_SLEEP, 0, 0x120)
     add_sound(Falco/sounds/71, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound(Falco/sounds/72, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound(Falco/sounds/ANNOUNCER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 40, -1)
@@ -764,11 +795,11 @@ scope FGM {
     add_sound(YoungLink/sounds/ANNOUNCER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 40, -1)
     add_sound(DrMario/sounds/ANNOUNCER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 40, -1)
     add_sound(YoungLink/sounds/YLTAUNTDRINK, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0, -1)
-    add_sound(YoungLink/sounds/YLSLEEP, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(YoungLink/sounds/YLSLEEP, SAMPLE_RATE_32000, FGM_TYPE_SLEEP, 0, 0x120)
     add_sound(Ganondorf/sounds/GNDSTUN, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound(Ganondorf/sounds/GND_CROWD, SAMPLE_RATE_16000, FGM_TYPE_CHANT, 0, 0x10C)
     add_sound(DrMario/sounds/DRM_CROWD, SAMPLE_RATE_16000, FGM_TYPE_CHANT, 0, 0x160)
-    add_sound(DSamus/sounds/ANNOUNCER, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 40, -1)
+    add_sound(DSamus/sounds/ANNOUNCER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 40, -1)
     add_sound(Wario/sounds/ATTACK_1, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound(Wario/sounds/ATTACK_2, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound(Wario/sounds/ATTACK_3, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
@@ -784,7 +815,7 @@ scope FGM {
     add_sound(Wario/sounds/LAUGH, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound(Wario/sounds/BIG_GRUNT, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound(Wario/sounds/YEAH, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
-    add_sound(Wario/sounds/SLEEP, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Wario/sounds/SLEEP, SAMPLE_RATE_16000, FGM_TYPE_SLEEP, 0, 0x120)
     add_sound(Wario/sounds/SELECT, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound(Wario/sounds/VICTORY_1, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound(Wario/sounds/VICTORY_2, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
@@ -837,8 +868,8 @@ scope FGM {
     add_sound(JPuff/sounds/121_TAUNT, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound(JPuff/sounds/122_ROLLMAYBE, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound(JPuff/sounds/123_STAR_KO, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
-    add_sound(JPuff/sounds/124_SLEEP, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
-    add_sound(JPuff/sounds/125_SLEEP, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(JPuff/sounds/124_SLEEP, SAMPLE_RATE_16000, FGM_TYPE_SLEEP, 0, 0x120)
+    add_sound(JPuff/sounds/125_SLEEP, SAMPLE_RATE_16000, FGM_TYPE_SLEEP, 0, 0x120)
     add_sound(JPuff/sounds/126_HEAVY_LIFT, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound(JPuff/sounds/127_STAR_KO, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound(Lucas/sounds/ATTACKLUCAS, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
@@ -854,7 +885,7 @@ scope FGM {
     add_sound(Lucas/sounds/PKFIRELUCAS, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound(Lucas/sounds/PKTHUNDERLUCAS, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound(Lucas/sounds/PKTHUNDER2LUCAS, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
-    add_sound(Lucas/sounds/SLEEPLUCAS, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Lucas/sounds/SLEEPLUCAS, SAMPLE_RATE_16000, FGM_TYPE_SLEEP, 0, 0x120)
     add_sound(Lucas/sounds/STARKOLUCAS, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound(Lucas/sounds/TEETERLUCAS, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound(Lucas/sounds/UPSMASHLUCAS, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
@@ -890,7 +921,7 @@ scope FGM {
     add_sound(Bowser/sounds/BOWSER_CHEER, SAMPLE_RATE_16000, FGM_TYPE_CHANT, 0, -1)
     add_sound(Bowser/sounds/BOWSER_STUNNED, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound(Bowser/sounds/BOWSER_DAMAGED, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
-    add_sound(Bowser/sounds/BOWSER_SLEEP, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Bowser/sounds/BOWSER_SLEEP, SAMPLE_RATE_16000, FGM_TYPE_SLEEP, 0, 0x120)
     add_sound(Bowser/sounds/BOWSER_STAR_KO, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound(Bowser/sounds/BOWSER_FOOTSTEP, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound(Bowser/sounds/BOWSER_SMASH1, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
@@ -925,7 +956,69 @@ scope FGM {
     add_sound(Piano/sounds/PIANO_DAMAGE_MID_1, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound(Piano/sounds/PIANO_DAMAGE_MID_2, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound(Piano/sounds/PIANO_DAMAGE_MID_3, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
-    
+    add_sound(Conker/sounds/CONKER_CHAINSAW_DSMASH, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound_advanced(Conker Chainsaw, Conker/sounds/CONKER_CHAINSAW_JAB, Conker/sounds/CONKER_CHAINSAW_microcode, 0x13, Conker/sounds/CONKER_CHAINSAW_sfx_microcode, 0xD, OS.FALSE, 0, 0, 0, OS.FALSE)
+    add_sound(Conker/sounds/CONKER_DAMAGE, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Conker/sounds/CONKER_DAMAGE_HEAVY, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Conker/sounds/CONKER_JUMP, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Conker/sounds/CONKER_PAN, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Conker/sounds/CONKER_KO, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Conker/sounds/CONKER_LIFT, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Conker/sounds/CONKER_SLEEP, SAMPLE_RATE_16000, FGM_TYPE_SLEEP, 0, 0x120)
+    add_sound(Conker/sounds/CONKER_SMASH1, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Conker/sounds/CONKER_SMASH2, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Conker/sounds/CONKER_SMASH3, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Conker/sounds/CONKER_STARKO, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Conker/sounds/CONKER_STUN, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Conker/sounds/CONKER_TECH, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Conker/sounds/CONKER_TEETER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_fgm(ConkerPanQuiet, Conker/sounds/CONKER_PAN_QUIET_microcode, 0x11, 0x28A, -1, -1, -1) //note: the sfx_id here and the length in the microcode are hard coded based on CONKER_PAN
+    add_sound(Conker/sounds/CONKER_NSP1, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Conker/sounds/CONKER_NSP2, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Conker/sounds/CONKER_CHAINSAW_BEGIN, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Conker/sounds/CONKER_CHAINSAW_END, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Wolf/sounds/WOLF_STUNNED, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Wolf/sounds/WOLF_DAMAGED, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Wolf/sounds/WOLF_JUMP1, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Wolf/sounds/WOLF_LIFT, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Wolf/sounds/WOLF_SLEEP, SAMPLE_RATE_16000, FGM_TYPE_SLEEP, 0, 0x120)
+    add_sound(Wolf/sounds/WOLF_SMASH1, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Wolf/sounds/WOLF_SMASH2, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Wolf/sounds/WOLF_SMASH3, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Wolf/sounds/WOLF_KO, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Wolf/sounds/WOLF_STARKO, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Wolf/sounds/WOLF_SHIELD_BREAK, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Wolf/sounds/WOLF_TECH, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Wolf/sounds/WOLF_ANNOUNCER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 40, -1)
+    add_sound(Wolf/sounds/WOLF_TEETER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Wolf/sounds/WOLF_USMASH, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Wolf/sounds/WOLF_TAUNT, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(1p/sounds/TEAM, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(1p/sounds/GIANT, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    reserve_fgm()
+    add_sound(Conker/sounds/CONKER_TAUNT, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Wolf/sounds/WOLF_CHEER, SAMPLE_RATE_16000, FGM_TYPE_CHANT, 0, -1)
+    add_sound(Conker/sounds/CONKER_ANNOUNCER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 40, -1)
+    add_sound(Falco/sounds/STARFOX, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 40, -1)
+    add_sound(Piano/sounds/ANNOUNCER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 40, -1)
+
     // This is always last
     write_sounds()
 
@@ -1015,6 +1108,9 @@ scope FGM {
             constant LUCAS(840)
 			constant BOWSER(882)
 			constant GBOWSER(883)
+            constant WOLF(938)
+            constant CONKER(964)
+            constant PIANO(966)
         }
 
         scope css {

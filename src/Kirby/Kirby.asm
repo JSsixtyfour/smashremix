@@ -19,6 +19,12 @@ scope Kirby {
     insert FALCO_NSP_AIR,"moveset/FALCO_NSP_AIR.bin"
     insert BOWSER_NSP,"moveset/BOWSER_NSP.bin"
     insert PIANO_NSP,"moveset/PIANO_NSP.bin"
+    insert WOLF_NSP_GROUND,"moveset/WOLF_NSP_GROUND.bin"
+    insert WOLF_NSP_AIR,"moveset/WOLF_NSP_AIR.bin"
+    insert CONKER_NSP_BEGIN,"moveset/CONKER_NSP2_BEGIN.bin"
+    insert CONKER_NSP_WAIT,"moveset/CONKER_NSP2_WAIT.bin"
+    insert CONKER_NSP_WAIT_LOOP,"moveset/CONKER_NSP2_WAIT_LOOP.bin"; Moveset.GO_TO(CONKER_NSP_WAIT_LOOP) // loops
+    insert CONKER_NSP_END,"moveset/CONKER_NSP2_END.bin"
 
     // Add Action Parameters                // Action Name      // Base Action  // Animation                // Moveset Data             // Flags
     Character.add_new_action_params(KIRBY,  GND_NSP_Ground,     0x127,          -1,                         GND_NSP_GROUND,             -1)
@@ -39,6 +45,14 @@ scope Kirby {
     Character.add_new_action_params(KIRBY,  BOWSER_NSP_Air,     0x12C,          File.KIRBY_BOWSER_NSP,      BOWSER_NSP,                 0x1D000000)
     Character.add_new_action_params(KIRBY,  PIANO_NSP_Ground,   0xE7,           File.KIRBY_PIANO_NSP_G,     PIANO_NSP,                  0x1C000000)
     Character.add_new_action_params(KIRBY,  PIANO_NSP_Air,      0xE8,           File.KIRBY_PIANO_NSP_A,     PIANO_NSP,                  0x1C000000)
+    Character.add_new_action_params(KIRBY,  WOLF_NSP_Ground,    0xE7,           File.KIRBY_WOLF_NSP_G,      WOLF_NSP_GROUND,            -1)
+    Character.add_new_action_params(KIRBY,  WOLF_NSP_Air,       0xE8,           File.KIRBY_WOLF_NSP_A,      WOLF_NSP_AIR,               -1)
+    Character.add_new_action_params(KIRBY,  CONKER_NSP_Ground_Begin, -1,      File.KIRBY_CONKER_NSPG_BEGIN, CONKER_NSP_BEGIN,          0)
+    Character.add_new_action_params(KIRBY,  CONKER_NSP_Ground_Wait,  -1,      File.KIRBY_CONKER_NSPG_WAIT,  CONKER_NSP_WAIT,           0)
+    Character.add_new_action_params(KIRBY,  CONKER_NSP_Ground_End,   -1,      File.KIRBY_CONKER_NSPG_END,   CONKER_NSP_END,            0)
+    Character.add_new_action_params(KIRBY,  CONKER_NSP_Air_Begin,    -1,      File.KIRBY_CONKER_NSPA_BEGIN, CONKER_NSP_BEGIN,          0)
+    Character.add_new_action_params(KIRBY,  CONKER_NSP_Air_Wait,     -1,      File.KIRBY_CONKER_NSPA_WAIT,  CONKER_NSP_WAIT,           0)
+    Character.add_new_action_params(KIRBY,  CONKER_NSP_Air_End,      -1,      File.KIRBY_CONKER_NSPA_END,   CONKER_NSP_END,            0)
 
 
     // Add Actions                  // Action Name      // Base Action  //Parameters                        // Staling ID   // Main ASM             // Interrupt/Other ASM          // Movement/Physics ASM         // Collision ASM
@@ -60,7 +74,14 @@ scope Kirby {
     Character.add_new_action(KIRBY, BOWSER_NSP_Air,     0x12C,          ActionParams.BOWSER_NSP_Air,        -1,             BowserNSP.main_,        -1,                             0x800D91EC,                     BowserNSP.air_collision_)
     Character.add_new_action(KIRBY, PIANO_NSP_Ground,   0xE7,           ActionParams.PIANO_NSP_Ground,      -1,             -1,                     -1,                             -1,                             -1)
     Character.add_new_action(KIRBY, PIANO_NSP_Air,      0xE8,           ActionParams.PIANO_NSP_Air,         -1,             -1,                     -1,                             0x800D91EC,                     -1)
-    
+    Character.add_new_action(KIRBY, WOLF_NSP_Ground,    0xEB,           ActionParams.WOLF_NSP_Ground,       -1,             WolfNSP.main,           -1,                             -1,                             -1)
+    Character.add_new_action(KIRBY, WOLF_NSP_Air,       0xEC,           ActionParams.WOLF_NSP_Air,          -1,             WolfNSP.main,           -1,                             -1,                             WolfNSP.air_collision_)
+    Character.add_new_action(KIRBY, CONKER_NSP_Ground_Begin,    -1,     ActionParams.CONKER_NSP_Ground_Begin, 0x12,         ConkerNSP.ground_begin_main_, 0,                         0x800D8BB4,                         ConkerNSP.ground_collision_)
+    Character.add_new_action(KIRBY, CONKER_NSP_Ground_Wait,     -1,     ActionParams.CONKER_NSP_Ground_Wait,  0x12,         ConkerNSP.ground_wait_main_,  0,                         0x800D8BB4,                         ConkerNSP.ground_collision_)
+    Character.add_new_action(KIRBY, CONKER_NSP_Ground_End,      -1,     ActionParams.CONKER_NSP_Ground_End,   0x12,         ConkerNSP.end_main_,          0,                         0x800D8BB4,                         ConkerNSP.ground_collision_)
+    Character.add_new_action(KIRBY, CONKER_NSP_Air_Begin,       -1,     ActionParams.CONKER_NSP_Air_Begin,    0x12,         ConkerNSP.air_begin_main_,    0,                         0x800D90E0,                         ConkerNSP.air_collision_)
+    Character.add_new_action(KIRBY, CONKER_NSP_Air_Wait,        -1,     ActionParams.CONKER_NSP_Air_Wait,     0x12,         ConkerNSP.air_wait_main_,     0,                         0x800D90E0,                         ConkerNSP.air_collision_)
+    Character.add_new_action(KIRBY, CONKER_NSP_Air_End,         -1,     ActionParams.CONKER_NSP_Air_End,      0x12,         ConkerNSP.end_main_,          0,                         0x800D90E0,                         ConkerNSP.air_collision_end_)
 
     Character.table_patch_start(kirby_ground_nsp, Character.id.WARIO, 0x4)
     dw      WarioNSP.ground_initial_
@@ -75,6 +96,13 @@ scope Kirby {
     
     Character.table_patch_start(kirby_air_nsp, Character.id.BOWSER, 0x4)
     dw      BowserNSP.air_initial_
+    OS.patch_end()
+    
+    Character.table_patch_start(kirby_ground_nsp, Character.id.CONKER, 0x4)
+    dw      ConkerNSP.ground_begin_initial_
+    OS.patch_end()
+    Character.table_patch_start(kirby_air_nsp, Character.id.CONKER, 0x4)
+    dw      ConkerNSP.air_begin_initial_
     OS.patch_end()
     
     //TODO: maybe move this asm to the shared file?
@@ -125,6 +153,8 @@ scope Kirby {
         beq     t7, t8, _falco_actions      // branch if copied power = FALCO
         lli     t8, Character.id.PIANO      // t8 = id.PIANO
         beq     t7, t8, _piano_actions      // branch if copied power = PIANO
+        lli     t8, Character.id.WOLF       // t8 = id.WOLF
+        beq     t7, t8, _wolf_actions       // branch if copied power = WOLF
         nop
         // add additional clone checks here
         // if we reach this point then Kirby isn't using a cloned power
@@ -193,6 +223,22 @@ scope Kirby {
         // if we reach this point then Kirby is not initializing a cloned action
         b       _end
         nop
+        
+        _wolf_actions:
+        // this block contains action swaps for Wolf's power
+        clone_action(0xEB, Action.WOLF_NSP_Ground)
+        clone_action(0xEC, Action.WOLF_NSP_Air)
+        // if we reach this point then Kirby is not initializing a cloned action
+        b       _end
+        nop
+        
+//      _conker_actions:
+//      // this block contains action swaps for Conker's power
+//      clone_action(0xEB, Action.CONKER_NSP_Ground)
+//      clone_action(0xEC, Action.CONKER_NSP_Air)
+//      // if we reach this point then Kirby is not initializing a cloned action
+//      b       _end
+//      nop
 
         _end:
         j       _return

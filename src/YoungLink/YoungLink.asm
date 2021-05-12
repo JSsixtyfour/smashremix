@@ -35,6 +35,7 @@ scope YoungLink {
     insert USP_AIR, "moveset/UP_SPECIAL_AIR.bin"
     insert VICTORY_POSE_2,"moveset/VICTORY_POSE_2.bin"
     insert POSE_1P, "moveset/POSE_1P.bin"
+    insert VICTORY_POSE_1,"moveset/VICTORY_POSE_1.bin"
     
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(YLINK, Action.JumpF,            -1,                        JUMP,                       -1)
@@ -70,8 +71,10 @@ scope YoungLink {
     Character.edit_action_parameters(YLINK, 0xE4,                   -1,                         USP_AIR,                    -1)
     
     // Modify Menu Action Parameters             // Action          // Animation                // Moveset Data             // Flags
+    Character.edit_menu_action_parameters(YLINK, 0x1,               File.YL_VICTORY,            VICTORY_POSE_1,             -1)
     Character.edit_menu_action_parameters(YLINK, 0x2,               -1,                         VICTORY_POSE_2,             -1)
-    Character.edit_menu_action_parameters(YLINK, 0xD,               -1,                         POSE_1P,                  -1)
+    Character.edit_menu_action_parameters(YLINK, 0xD,               -1,                         POSE_1P,                    -1)
+    Character.edit_menu_action_parameters(YLINK, 0xE,               File.YLINK_1P_CPU_POSE,     0x80000000,                 -1)
     
     // @ Description
     // Subroutine for Young Link's up special, allows a direction change with the command 58000002

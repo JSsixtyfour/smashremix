@@ -21,7 +21,7 @@ scope Ganondorf {
     insert FTILT_M_HI,"moveset/FORWARD_TILT_MID_HIGH.bin"
     insert FTILT,"moveset/FORWARD_TILT.bin"
     insert FTILT_M_LO,"moveset/FORWARD_TILT_MID_LOW.bin"
-    insert FTILT_LO,"moveset/FORWARD_TILT_MID_LOW.bin"
+    insert FTILT_LO,"moveset/FORWARD_TILT_LOW.bin"
     insert UTILT,"moveset/UP_TILT.bin"
     insert DTILT,"moveset/DOWN_TILT.bin"
     insert FSMASH,"moveset/FORWARD_SMASH.bin"
@@ -104,6 +104,7 @@ scope Ganondorf {
     Character.edit_menu_action_parameters(GND,   0x2,               File.GND_SELECT,            VICTORY_POSE_2,             -1)
     Character.edit_menu_action_parameters(GND,   0x3,               File.GND_VICTORY1,          VICTORY_POSE_3,             -1)
     Character.edit_menu_action_parameters(GND,   0x4,               -1,                         VICTORY_POSE_3,             -1)
+    Character.edit_menu_action_parameters(GND,   0xE,               File.GND_1P_CPU,            ONEP,                       -1)
     Character.edit_menu_action_parameters(GND,   0xD,               File.GND_POSE_1P,           ONEP,                       -1)
     
     // Set menu zoom size.

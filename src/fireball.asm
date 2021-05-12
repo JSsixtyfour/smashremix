@@ -78,7 +78,6 @@ scope Fireball: {
     // Updates the Fireball to use new GFX/SFX on hit when different damage types are used.
     scope hit_effect_: {
         // v1 = projectile struct
-        // t7 = damage
         pushvar origin, base
         origin  0xE310C
         base    0x801686CC
@@ -111,12 +110,12 @@ scope Fireball: {
         lw      t6, 0x0088(sp)              // ~
         lw      a0, 0x0074(t6)              // ~
         addiu   a0, a0, 0x001C              // modified original logic
-        lw      t7, 0x003C(sp)              // t7 = damage
         li      a1, NORMAL_HIT_GFX_INST_ID_ADDRESS
         lli     a2, DR_MARIO_EFFECT_GFX_INST_ID
         sb      a2, 0x0000(a1)              // temporarilty update the GFX_INSTRUCTIONS_ID for "normal hit" gfx
         or      a1, r0, r0                  // a1 = 0
-        or      a2, t7, r0                  // a2 = damage           
+        lw      a2, 0x000C(sp)              // a2 = projectile struct
+        lw      a2, 0x0234(a2)              // a2 = damage
         jal     0x800FDC04                  // create "normal hit" gfx
         or      a3, r0, r0                  // a3 = 0
         li      a1, NORMAL_HIT_GFX_INST_ID_ADDRESS
@@ -138,9 +137,9 @@ scope Fireball: {
         lw      t6, 0x0088(sp)              // ~
         lw      a0, 0x0074(t6)              // ~
         addiu   a0, a0, 0x001C              // modified original logic
-        lw      t7, 0x003C(sp)              // t7 = damage
         or      a1, r0, r0                  // a1 = 0
-        or      a2, t7, r0                  // a2 = damage           
+        lw      a2, 0x000C(sp)              // a2 = projectile struct
+        lw      a2, 0x0234(a2)              // a2 = damage
         jal     0x800FDC04                  // create "normal hit" gfx
         or      a3, r0, r0                  // a3 = 0
         li      ra, _hit_effect_branch      // load return address (branch)

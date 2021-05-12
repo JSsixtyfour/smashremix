@@ -322,6 +322,7 @@ scope GBowser {
     Character.edit_menu_action_parameters(GBOWSER,    0x3,               File.BOWSER_LAUGH,          VICTORY1,                      -1)
     Character.edit_menu_action_parameters(GBOWSER,    0x5,               File.BOWSER_CLAP,           CLAP,                          -1)
     Character.edit_menu_action_parameters(GBOWSER,    0xD,               File.BOWSER_1P,             -1,                            -1)
+    Character.edit_menu_action_parameters(GBOWSER,    0xE,               File.GBOWSER_1P_CPU,        -1,                            -1)
     Character.edit_menu_action_parameters(GBOWSER,    0x9,               File.BOWSER_CONTINUE_FALL,  -1,                            -1)
     Character.edit_menu_action_parameters(GBOWSER,    0xA,               File.BOWSER_CONTINUE_UP,    -1,                            -1)
     

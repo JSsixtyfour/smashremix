@@ -283,12 +283,12 @@ scope TwelveCharBattle {
             define slot_15(LUCAS)
             define slot_16(BOWSER)
             // row 3
-            define slot_17(NONE)
-            define slot_18(NONE)
+            define slot_17(WOLF)
+            define slot_18(CONKER)
             define slot_19(NONE)
             define slot_20(NONE)
-            define slot_21(NONE)
-            define slot_22(NONE)
+            define slot_21(WOLF)
+            define slot_22(CONKER)
             define slot_23(NONE)
             define slot_24(NONE)
         }
@@ -1875,103 +1875,6 @@ scope TwelveCharBattle {
     }
 
     // @ Description
-    // This checks if an area was pressed.
-    // Heavily based on BACK press check at 0x80138218 (ROM 0x136498).
-    // @ Parameters
-    // a0 - cursor object
-    // a1 - image ulx (float)
-    // a2 - image width (int)
-    // a3 - image uly (float)
-    // 0x0010(sp) - image height (int)
-    // @ Returns
-    // v0 - 1 if RESET pressed, 0 if not
-    scope check_press_: {
-        // copy BACK button press routine
-        lw      v0, 0x0074(a0)              // v0 = cursor object image struct
-        lui     at, 0x4040                  // at = 3 (y spacer)
-        mtc1    at, f6                      // f6 = 3 (y spacer)
-        lwc1    f4, 0x005C(v0)              // f4 = cursor uly
-        mtc1    a3, f8                      // f4 = image uly
-        add.s   f0, f4, f6                  // f0 = cursor y, adjusted
-        lw      at, 0x0010(sp)              // at = image height
-        c.lt.s  f0, f8                      // if (cursor uly < image uly), then return no press
-        nop
-        bc1t    _fail_y                     // return no press
-        nop
-        mtc1    at, f10                     // f10 = image height
-        cvt.s.w f10, f10                    // f10 = image height, float
-        add.s   f10, f10, f8                // f10 = image lry
-        or      v1, r0, r0                  // v1 = 0 (ok so far)
-        c.lt.s  f10, f0                     // if (cursor uly > image lry), then return no press
-        nop
-        bc1f    _pass_y                     // y check passed, proceed to x check
-        nop
-        _fail_y:
-        beq     r0, r0, _end                // not over button, so exit
-        or      v0, r0, r0                  // v0 = 0 (OS.FALSE)
-
-        _pass_y:
-        lui     at, 0x41A0                  // at = 20 (x spacer)
-        lwc1    f16, 0x0058(v0)             // f16 = cursor ulx
-        mtc1    at, f18                     // f18 = 20 (x spacer)
-        mtc1    a1, f4                      // f4 = image ulx
-        add.s   f0, f16, f18                // f10 = cursor ulx, adjusted
-        or      at, r0, a2                  // at = image width
-        or      v0, r0, r0                  // v0 = 0 (OS.FALSE)
-        c.le.s  f4, f0                      // if (cursor ulx < image ulx), then return no press
-        nop
-        bc1f    _end                        // not over button, so exit
-        nop
-        mtc1    at, f6                      // f6 = image width
-        cvt.s.w f6, f6                      // f6 = image width, float
-        add.s   f6, f6, f4                  // f10 = image lrx
-        nop
-        c.le.s  f0, f6                      // if (cursor urx > image urx), then return no press
-        nop
-        bc1f    _end                        // not over button, so exit
-        nop
-        addiu   v0, r0, 0x0001              // over button!
-
-        _end:
-        jr      ra
-        nop
-    }
-
-    // @ Description
-    // This checks if an image was pressed.
-    // @ Parameters
-    // a0 - cursor object
-    // a1 - image object
-    // @ Returns
-    // v0 - 1 if image pressed, 0 if not
-    scope check_image_press_: {
-        addiu   sp, sp,-0x0030              // allocate stack space
-        sw      ra, 0x0004(sp)              // save registers
-        sw      a1, 0x0020(sp)              // ~
-        sw      a2, 0x0024(sp)              // ~
-        sw      a3, 0x0028(sp)              // ~
-        sw      t4, 0x002C(sp)              // ~
-
-        lw      a1, 0x0074(a1)              // a1 = image object image struct
-        lhu     a2, 0x0014(a1)              // a2 = image width
-        lw      a3, 0x005C(a1)              // a3 = image uly
-        lhu     t4, 0x0016(a1)              // t4 = image height
-        lw      a1, 0x0058(a1)              // a1 = image ulx
-        jal     check_press_                // v0 = (bool) image pressed
-        sw      t4, 0x0010(sp)              // 0x0010(sp) = image height
-
-        lw      ra, 0x0004(sp)              // restore registers
-        lw      a1, 0x0020(sp)              // ~
-        lw      a2, 0x0024(sp)              // ~
-        lw      a3, 0x0028(sp)              // ~
-        lw      t4, 0x002C(sp)              // ~
-        addiu   sp, sp, 0x0030              // deallocate stack space
-
-        jr      ra
-        nop
-    }
-
-    // @ Description
     // Resets the 12cb config when RESET is pressed.
     scope handle_reset_: {
         addiu   sp, sp,-0x0010              // allocate stack space
@@ -2096,16 +1999,21 @@ scope TwelveCharBattle {
         beql    t0, t2, _add_indicator      // if a E variant, then draw E flag
         addiu   a1, t1, 0x3B8               // a1 = E flag footer struct TODO: make offset a constant
 
-        // if we're here, then we will use the character's stock icon
-        lui     t1, 0x3F80                  // t1 = scale for stock icons (1.0)
-        sw      t1, 0x0014(sp)              // save scale for stock icons
+        lui     t2, 0x3F80                  // t2 = scale for stock icons (1.0)
+        sw      t2, 0x0014(sp)              // save scale for stock icons
 
+        lli     t2, Character.variant_type.POLYGON
+        beql    t0, t2, _add_indicator      // if a polygon, then draw polygon icon from our file instead
+        addiu   a1, t1, 0x13A8              // a1 = polygon icon footer struct TODO: make offset a constant
+
+        // if we're here, then we will use the character's stock icon
         li      t1, 0x80116E10              // t1 = main character struct table
         sll     t2, at, 0x0002              // t2 = a1 * 4 (offset in struct table)
         addu    t1, t1, t2                  // t1 = pointer to character struct
         lw      t1, 0x0000(t1)              // t1 = character struct
         lw      t2, 0x0028(t1)              // t2 = main character file address pointer
         lw      t2, 0x0000(t2)              // t2 = main character file address
+        beqz    t2, _end
         lw      t1, 0x0060(t1)              // t1 = offset to attribute data
         addu    t1, t2, t1                  // t1 = attribute data address
         lw      t1, 0x0340(t1)              // t1 = pointer to stock icon footer address
@@ -2465,7 +2373,7 @@ scope TwelveCharBattle {
 
         // Check RESET button
         li      a1, reset_button_pointer
-        jal     check_image_press_          // v0 = 1 if reset pressed, 0 if not
+        jal     CharacterSelect.check_image_press_ // v0 = 1 if reset pressed, 0 if not
         lw      a1, 0x0000(a1)              // a1 = reset button object
 
         beqz    v0, _end                    // if not pressed, skip
@@ -2482,7 +2390,7 @@ scope TwelveCharBattle {
         lli     a2, 55                      // a2 = image width
         lui     a3, 0x432C                  // a3 = image uly
         lli     t4, 14                      // t4 = image height
-        jal     check_press_                // v0 = (bool) image pressed
+        jal     CharacterSelect.check_press_ // v0 = (bool) image pressed
         sw      t4, 0x0010(sp)              // 0x0010(sp) = image height
 
         beqz    v0, _check_character_set_p2 // if not pressed, skip
@@ -2500,7 +2408,7 @@ scope TwelveCharBattle {
         lli     a2, 55                      // a2 = image width
         lui     a3, 0x432C                  // a3 = image uly
         lli     t4, 14                      // t4 = image height
-        jal     check_press_                // v0 = (bool) image pressed
+        jal     CharacterSelect.check_press_ // v0 = (bool) image pressed
         sw      t4, 0x0010(sp)              // 0x0010(sp) = image height
 
         beqz    v0, _end                    // if not pressed, skip
@@ -2698,12 +2606,20 @@ scope TwelveCharBattle {
         sw      v0, 0x001C(sp)              // ~
         sw      v1, 0x0020(sp)              // ~
         
+        // Even firster, check to see if in Remix 1p
+        li      t0, SinglePlayerModes.singleplayer_mode_flag       // ~
+        lw      t0, 0x0000(t0)              // t0 = 4 if Remix 1p mode
+        addiu   t1, r0, 0x0004              // Remix 1p ID
+        beq     t0, t1, _remix_1p           // if Remix 1p, skip
+        nop
+        
         // First check if we're in character selection for an active 12CB.
         li      t0, Global.current_screen   // ~
         lb      t0, 0x0000(t0)              // t0 = current screen
         lli     t1, 0x10                    // t1 = vs css screen id
         bne     t0, t1, _end                // if screen id != vs css, skip
         nop
+        
         li      t0, twelve_cb_flag          // ~
         lw      t0, 0x0000(t0)              // t0 = 1 if 12cb mode
         beqz    t0, _end                    // if not 12cb mode, skip
@@ -2712,8 +2628,42 @@ scope TwelveCharBattle {
         lw      t0, 0x0000(t0)              // t0 = battle status
         beqz    t0, _end                    // if not started, skip
         nop
+        beq     r0, r0, _12cb
+        nop
+        
+        _remix_1p:
+        // check if on title card screen
+        li      t0, Global.current_screen   // ~
+        lb      t0, 0x0000(t0)              // t0 = current screen
+        lli     t1, 0x0E                    // t1 = 1p Title Card screen id
+        bne     t0, t1, _end                // if screen id != 1p title screen, skip
+        nop
+        // check to see if on team stage of 1p
+        lui     t0, 0x8013
+        lw      t0, 0x5C28(t0)              // load from current progress of 1p ID
+        addiu   t1, r0, 0x0001              // team stage id
+        bne     t0, t1, _end
+        nop
+        // check to see if is the cpu character
+        lh      t1, 0x000E(s1)              // t1 = 0202 if a cpu
+        addiu   t0, r0, 0x0202
+        bne     t1, t0, _end                    // if not a cpu go to end
+        nop
+        
+        // If we reach this point, the character is the cpu on the Remix 1p Title Card, so we should override the action paramters.
+        li      t0, team_array        // t0 = remix_team_array_array
+        lw      t1, 0x0008(s1)              // t1 = character_id
+        sll     t2, t1, 0x2                 // ~
+        subu    t2, t2, t1                  // ~
+        sll     t2, t2, 0x2                 // t2 = offset (character_id * 0xC)
+        
+        addu    t3, t0, t2                  // t3 = new parameters pointer (defeated_array + offset)
+        
+        beq     r0, r0, _end
+        nop
         
         // Now check if the character is defeated.
+        _12cb:
         lbu     a0, 0x000D(s1)              // a0 = port_id
         jal     get_stocks_remaining_for_char_ // v0 = remaining_stocks
         lw      a1, 0x0008(s1)              // a1 = character_id
@@ -2877,6 +2827,145 @@ scope TwelveCharBattle {
     add_defeat_parameters(File.BOWSER_DOWN_STAND_U,     defeated_moveset_yoshi,     0)          // 0x34 - BOWSER
     add_defeat_parameters(File.BOWSER_DOWN_STAND_U,     defeated_moveset_yoshi,     0)          // 0x35 - GBOWSER
     add_defeat_parameters(File.PIANO_DOWN_STND_U,       defeated_moveset_mario,     0)          // 0x36 - PIANO
+	add_defeat_parameters(0x2B1,                        defeated_moveset_fox_link,  0)          // 0x37 - WOLF
+    add_defeat_parameters(File.CONKER_DOWNSTANDU,       defeated_moveset_fox_link,  0)          // 0x38 - CONKER
+    
+    // REMIX 1p
+    
+    // @ Description
+    // Adds parameter overrides for CPU Characters on Team Stage of Remix 1p.
+    // @ Arguments
+    // anim - animation id
+    // moveset - pointer to moveset commands
+    // flags - animation flags
+    macro add_team_parameters(anim, moveset, flags) {
+        dw {anim}
+        dw {moveset}
+        dw {flags}
+    }
+
+    // @ Description
+    // Block of moveset commands for defeated characters.
+    // Generic defeated moveset commands.
+    team_moveset:
+    dw 0xD0000000                           // FSM = 0.0
+    dw 0x00000000                           // End
+    // Moveset commands for defeated Mario.
+    team_moveset_mario:
+    dw 0xAC000001                           // Set Texture Form
+    dw 0xD0000000                           // FSM = 0.0
+    dw 0x00000000                           // End
+    // Moveset commands for defeated Fox/Link.
+    team_moveset_fox_link:
+    dw 0xAC000001                           // Set Texture Form
+    dw 0xAC100001                           // Set Texture Form
+    dw 0xD0000000                           // FSM = 0.0
+    dw 0x00000000                           // End
+    // Moveset commands for defeated DK.
+    team_moveset_donkey:
+    dw 0xA0600001                           // Set Model Form
+    dw 0xD0000000                           // FSM = 0.0
+    dw 0x00000000                           // End
+    // Moveset commands for defeated Luigi.
+    team_moveset_luigi:
+    dw 0xAC000002                           // Set Texture Form
+    dw 0xD0000000                           // FSM = 0.0
+    dw 0x00000000                           // End
+    // Moveset commands for defeated Yoshi.
+    team_moveset_yoshi:
+    dw 0xAC000008                           // Set Texture Form
+    dw 0xAC100008                           // Set Texture Form
+    dw 0xD0000000                           // FSM = 0.0
+    dw 0x00000000                           // End
+    // Moveset commands for defeated Captain Falcon.
+    team_moveset_captain:
+    dw 0xAC000006                           // Set Texture Form
+    dw 0xD0000000                           // FSM = 0.0
+    dw 0x00000000                           // End
+    // Moveset commands for defeated Kirby.
+    team_moveset_kirby:
+    dw 0xAC000007                           // Set Texture Form
+    dw 0xD0000000                           // FSM = 0.0
+    dw 0x00000000                           // End
+    // Moveset commands for defeated Pikachu.
+    team_moveset_pikachu:
+    dw 0xAC000006                           // Set Texture Form
+    dw 0xAC100005                           // Set Texture Form
+    dw 0xD0000000                           // FSM = 0.0
+    dw 0x00000000                           // End
+    // Moveset commands for defeated Jigglypuff.
+    team_moveset_jiggly:
+    dw 0xAC000006                           // Set Texture Form
+    dw 0xAC100006                           // Set Texture Form
+    dw 0xD0000000                           // FSM = 0.0
+    dw 0x00000000                           // End
+    // Moveset commands for defeated Ness.
+    team_moveset_ness:
+    dw 0xAC000004                           // Set Texture Form
+    dw 0xD0000000                           // FSM = 0.0
+    dw 0x00000000                           // End
+    
+    // @ Description
+    // Array of menu action parameter overrides for defeated characters. Uses DownStandU animation.
+    // Arguments          Animation file ID             Moveset data                Flags     
+    team_array:
+    add_team_parameters(0x222,                        team_moveset_mario,     0)          // 0x00 - MARIO
+    add_team_parameters(0x2B1,                        team_moveset_fox_link,  0)          // 0x01 - FOX
+    add_team_parameters(0x34F,                        team_moveset_donkey,    0)          // 0x02 - DONKEY
+    add_team_parameters(0x3E8,                        team_moveset,           0)          // 0x03 - SAMUS
+    add_team_parameters(0x222,                        team_moveset_luigi,     0)          // 0x04 - LUIGI
+    add_team_parameters(0x48A,                        team_moveset_fox_link,  0)          // 0x05 - LINK
+    add_team_parameters(0x745,                        team_moveset_yoshi,     0)          // 0x06 - YOSHI
+    add_team_parameters(0x617,                        team_moveset_captain,   0)          // 0x07 - CAPTAIN
+    add_team_parameters(0x51D,                        team_moveset_kirby,     0)          // 0x08 - KIRBY
+    add_team_parameters(0x80E,                        team_moveset_pikachu,   0)          // 0x09 - PIKACHU
+    add_team_parameters(0x51D,                        team_moveset_jiggly,    0)          // 0x0A - JIGGLY
+    add_team_parameters(0x6AF,                        team_moveset_ness,      0)          // 0x0B - NESS
+    add_team_parameters(0,                            0x80000000,                 0)          // 0x0C - BOSS
+    add_team_parameters(0x222,                        team_moveset,           0)          // 0x0D - METAL
+    add_team_parameters(0x222,                        team_moveset,           0)          // 0x0E - NMARIO
+    add_team_parameters(0x2B1,                        team_moveset,           0)          // 0x0F - NFOX
+    add_team_parameters(0x34F,                        team_moveset,           0)          // 0x10 - NDONKEY
+    add_team_parameters(0x3E8,                        team_moveset,           0)          // 0x11 - NSAMUS
+    add_team_parameters(0x222,                        team_moveset,           0)          // 0x12 - NLUIGI
+    add_team_parameters(0x48A,                        team_moveset,           0)          // 0x13 - NLINK
+    add_team_parameters(0x745,                        team_moveset,           0)          // 0x14 - NYOSHI
+    add_team_parameters(0x617,                        team_moveset,           0)          // 0x15 - NCAPTAIN
+    add_team_parameters(0x51D,                        team_moveset,           0)          // 0x16 - NKIRBY
+    add_team_parameters(0x80E,                        team_moveset,           0)          // 0x17 - NPIKACHU
+    add_team_parameters(0x51D,                        team_moveset,           0)          // 0x18 - NJIGGLY
+    add_team_parameters(0x1BA,                        team_moveset,           0)          // 0x19 - NNESS
+    add_team_parameters(0x34F,                        team_moveset_donkey,    0)          // 0x1A - GDONKEY
+    add_team_parameters(0,                            0x80000000,                 0)          // 0x1B - PLACEHOLDER
+    add_team_parameters(0,                            0x80000000,                 0)          // 0x1C - PLACEHOLDER
+    add_team_parameters(0x17A,                        team_moveset_fox_link,  0)          // 0x1D - FALCO
+    add_team_parameters(File.GND_TEAM_POSE,           0x80000000,             0)          // 0x1E - GND
+    add_team_parameters(File.YLINK_TEAM_POSE,         0x80000000,             0)          // 0x1F - YLINK
+    add_team_parameters(File.DRM_TEAM_POSE,           0x80000000,             0)          // 0x20 - DRM
+    add_team_parameters(File.WARIO_TEAM_POSE,         0x80000000,             0)          // 0x21 - WARIO
+    add_team_parameters(File.DSAMUS_TEAM_POSE,        team_moveset,           0)          // 0x22 - DARK SAMUS
+    add_team_parameters(0x19F,                        team_moveset_fox_link,  0)          // 0x23 - ELINK
+    add_team_parameters(0x192,                        team_moveset,           0)          // 0x24 - JSAMUS
+    add_team_parameters(0x1BA,                        team_moveset_ness,      0)          // 0x25 - JNESS
+    add_team_parameters(File.LUCAS_TEAM_POSE,         0x80000000,             0)          // 0x26 - LUCAS
+    add_team_parameters(0x19F,                        team_moveset_fox_link,  0)          // 0x27 - JLINK
+    add_team_parameters(0x617,                        team_moveset_captain,   0)          // 0x28 - JFALCON
+    add_team_parameters(0x2B1,                        team_moveset_fox_link,  0)          // 0x29 - JFOX
+    add_team_parameters(0x171,                        team_moveset_mario,     0)          // 0x2A - JMARIO
+    add_team_parameters(0x171,                        team_moveset_luigi,     0)          // 0x2B - JLUIGI
+    add_team_parameters(0x34F,                        team_moveset_donkey,    0)          // 0x2C - JDK
+    add_team_parameters(0x80E,                        team_moveset_pikachu,   0)          // 0x2D - EPIKA
+    add_team_parameters(0x51D,                        team_moveset_jiggly,    0)          // 0x2E - JPUFF
+    add_team_parameters(0x51D,                        team_moveset_jiggly,    0)          // 0x2F - EPUFF
+    add_team_parameters(0x51D,                        team_moveset_kirby,     0)          // 0x30 - JKIRBY
+    add_team_parameters(0x745,                        team_moveset_yoshi,     0)          // 0x31 - JYOSHI
+    add_team_parameters(0x80E,                        team_moveset_pikachu,   0)          // 0x32 - JPIKA
+    add_team_parameters(0x192,                        team_moveset,           0)          // 0x33 - ESAMUS
+    add_team_parameters(File.BOWSER_TEAM_POSE,        0x80000000,             0)          // 0x34 - BOWSER
+    add_team_parameters(0x1C9,                        team_moveset_yoshi,     0)          // 0x35 - GBOWSER
+    add_team_parameters(0x171,                        team_moveset_mario,     0)          // 0x36 - PIANO
+    add_team_parameters(File.WOLF_TEAM_POSE,          0x80000000,  0)                     // 0x37 - WOLF
+    add_team_parameters(File.CONKER_TEAM_POSE,        0x80000000,             0)          // 0x38 - CONKER
 
     // @ Description
     // This prevents picking up the token of a character with stocks remaining after a match.
@@ -4307,18 +4396,26 @@ scope TwelveCharBattle {
 
         _register_routines:
         Render.register_routine(check_p3_and_p4_back_)
+        li      t0, CharacterSelect.render_control_object
+        sw      v0, 0x0000(t0)              // store this as the render control object (useful for debug menu)
 
         Render.register_routine(update_variant_indicators_)
         sw      r0, 0x0030(v0)              // clear p1 flag object pointer
         sw      r0, 0x0034(v0)              // clear p2 flag object pointer
         sw      r0, 0x0038(v0)              // clear p1 previous variant_type
         sw      r0, 0x003C(v0)              // clear p2 previous variant_type
+        li      t0, CharacterSelect.render_control_object
+        lw      t0, 0x0000(t0)              // t0 = render control object
+        sw      v0, 0x0030(t0)              // save variant indicators object
 
         Render.register_routine(update_stock_icon_and_count_indicators_)
         sw      r0, 0x0030(v0)              // clear p1 stocks remaining object pointer
         sw      r0, 0x0034(v0)              // clear p2 stocks remaining object pointer
         sw      r0, 0x0038(v0)              // clear p1 previous portrait_id
         sw      r0, 0x003C(v0)              // clear p2 previous portrait_id
+        li      t0, CharacterSelect.render_control_object
+        lw      t0, 0x0000(t0)              // t0 = render control object
+        sw      v0, 0x0034(t0)              // save stock icon and count indicators object
         li      t0, previous_portrait_id_pointer
         addiu   v0, v0, 0x0038              // v0 = address of portrait_ids
         sw      v0, 0x0000(t0)              // save reference to previous portrait_ids
@@ -4328,6 +4425,12 @@ scope TwelveCharBattle {
         sw      r0, 0x0034(v0)              // clear p2 object pointer
         sw      r0, 0x0040(v0)              // clear p1 timer
         sw      r0, 0x0044(v0)              // clear p2 timer
+        li      t0, CharacterSelect.render_control_object
+        lw      t0, 0x0000(t0)              // t0 = render control object
+        sw      v0, 0x0038(t0)              // save custom portrait indicators object
+
+        jal     CharacterSelectDebugMenu.init_debug_menu_
+        lli     a0, 0x0000                  // a0 = offset in CharacterSelect.css_player_structs
 
         lw      ra, 0x0004(sp)              // restore registers
         addiu   sp, sp, 0x0030              // deallocate stack space

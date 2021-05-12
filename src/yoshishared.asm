@@ -137,6 +137,72 @@ scope YoshiShared {
         j       _return
         nop
     }
+	
+	// Hardcoding for Yoshi Clones to execute the Yoshi Egg Shield Roll
+    scope yoshi_shield_fix_6: {
+        OS.patch_start(0xC38B8, 0x80148E78)
+        j       yoshi_shield_fix_6                     
+        nop 
+        _return:
+        OS.patch_end()
+        
+        beq     t7, at, _yoshi_shield_6            
+        addiu   at, r0, Character.id.JYOSHI             // j yoshi ID
+        beq     t7, at, _yoshi_shield_6           
+        nop
+        
+        _regular_shield_6:            
+        j       0x80148EA4                
+        nop
+        
+        _yoshi_shield_6:
+        j       _return
+        nop
+    }
+	
+	// Hardcoding for Yoshi Clones to execute the Yoshi Egg Shield Roll
+    scope yoshi_shield_fix_7: {
+        OS.patch_start(0xC3C6C, 0x8014922C)
+        j       yoshi_shield_fix_7                     
+        swc1	f0, 0x0060(v0)							// original line 2 
+        _return:
+        OS.patch_end()
+        
+        beq     v1, at, _yoshi_shield_7            
+		addiu   at, r0, Character.id.JYOSHI             // j yoshi ID
+        beq     v1, at, _yoshi_shield_7           
+        nop
+        
+        _regular_shield_7:            
+        j       _return                
+        nop
+        
+        _yoshi_shield_7:
+        j       0x80149240
+        nop
+    }
+    
+    // Hardcoding for Yoshi Clones to properly end invincibility when doing a parry
+    scope yoshi_shield_fix_8: {
+        OS.patch_start(0xC3538, 0x80148AF8)
+        j       yoshi_shield_fix_8                     
+        nop                                             // original line 2
+        _return:
+        OS.patch_end()
+        
+        beq     t8, at, _yoshi_shield_8            
+		addiu   at, r0, Character.id.JYOSHI             // j yoshi ID
+        beq     t8, at, _yoshi_shield_8           
+        nop
+        
+        _regular_shield_8:            
+        j       0x80148B08                
+        nop
+        
+        _yoshi_shield_8:
+        j       _return
+        nop
+    }
     
     // Hardcoding for Yoshi Clones to execute Yoshi's grab
     scope yoshi_grab_fix_1: {

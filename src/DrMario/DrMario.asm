@@ -65,6 +65,10 @@ scope DrMario {
     Character.edit_action_parameters(DRM,   0xE4,                   -1,                         DSP_AIR,                    -1) 
     Character.edit_action_parameters(DRM,   Action.ThrowB,          File.DRM_BTHROW,            BTHROW,                     0x50000000)
     
+    // Modify Menu Action Parameters                // Action           // Animation                // Moveset Data             // Flags
+    
+    Character.edit_menu_action_parameters(DRM,      0xE,                File.DRM_1P_CPU_POSE,       0x80000000,                 -1)
+    
     // Set crowd chant FGM.
     Character.table_patch_start(crowd_chant_fgm, Character.id.DRM, 0x2)
     dh  0x02EB
@@ -77,4 +81,58 @@ scope DrMario {
 
     // Set default costumes
     Character.set_default_costumes(Character.id.DRM, 0, 1, 2, 4, 1, 3, 4)
+    
+    // Hardcoding for when Mario Clones use Pipes, ensures they face the correct way when entering
+    // TEMP LOCATION
+    scope pipe_turn_enter: {
+        OS.patch_start(0xBCC40, 0x80142200)
+        j       pipe_turn_enter             
+        nop                                 // original line 2
+        _return:
+        OS.patch_end()
+        
+        beq     v0, r0, _mario_turn         // modified original line 1, correct turn
+        addiu   at, r0, Character.id.JMARIO // J Mario ID
+        beq     v0, at, _mario_turn         // correct turn
+        addiu   at, r0, Character.id.JLUIGI // J Luigi ID
+        beq     v0, at, _mario_turn         // correct turn
+        addiu   at, r0, Character.id.WARIO  // Wario ID
+        beq     v0, at, _mario_turn         // correct turn
+        addiu   at, r0, Character.id.DRM    // Dr. Mario ID
+        beq     v0, at, _mario_turn         // correct turn
+        nop
+        j       _return                     // return
+        addiu   at, r0, 0x000D              // reinserting in the interest of caution
+        
+        _mario_turn:
+        j       0x80142228                  // modified original line 1, routine having Mario properly turn during Pipe animation
+        addiu   at, r0, 0x000D              // reinserting in the interest of caution
+    }
+    
+    // Hardcoding for when Mario Clones use Pipes, ensures they face the correct way when exiting
+    // TEMP LOCATION
+    scope pipe_turn_exit: {
+        OS.patch_start(0xBD19C, 0x8014275C)
+        j       pipe_turn_exit          
+        sw      t5, 0x0B3C(s0)              // original line 2
+        _return:
+        OS.patch_end()
+        
+        beq     v0, r0, _mario_turn         // modified original line 1, correct turn
+        addiu   at, r0, Character.id.JMARIO // J Mario ID
+        beq     v0, at, _mario_turn         // correct turn
+        addiu   at, r0, Character.id.JLUIGI // J Luigi ID
+        beq     v0, at, _mario_turn         // correct turn
+        addiu   at, r0, Character.id.WARIO  // Wario ID
+        beq     v0, at, _mario_turn         // correct turn
+        addiu   at, r0, Character.id.DRM    // Dr. Mario ID
+        beq     v0, at, _mario_turn         // correct turn
+        nop
+        j       _return                     // return
+        nop
+        
+        _mario_turn:
+        j       0x801427AC                  // modified original line 1, routine having Mario properly turn during Pipe animation
+        nop
+    }
 }

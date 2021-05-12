@@ -425,9 +425,20 @@ scope Hazards {
         lw      t0, 0x0004(t0)              // t0 = hazard_mode (hazards disabled when t0 = 1 or 3)
         andi    t0, t0, 0x0001              // t0 = 1 if hazard_mode is 1 or 3, 0 otherwise
         beqz    t0, _original               // if hazards enabled, do original
-        nop
+        nop                                 // otherwise skip to the end of the function
 
-        j       0x80108CBC                  // otherwise skip to the end of the function
+        // We need to disable the cloud platforms' clipping, which is centered on the stage when hazards are off, creating a hidden platform
+        lui     t0, 0x8013
+        lw      t0, 0x1304(t0)              // t0 = pointer to clipping struct references?
+        lli     a0, 0x0004                  // a0 = 4, which seems to disable the clipping
+        lw      v0, 0x0004(t0)              // v0 = first cloud's clipping struct
+        sw      a0, 0x0084(v0)              // disable clipping
+        lw      v0, 0x0008(t0)              // v0 = second cloud's clipping struct
+        sw      a0, 0x0084(v0)              // disable clipping
+        lw      v0, 0x000C(t0)              // v0 = third cloud's clipping struct
+        sw      a0, 0x0084(v0)              // disable clipping
+
+        j       0x80108CBC                  // skip to the end of the function
         nop
 
         _original:

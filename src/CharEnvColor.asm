@@ -20,6 +20,21 @@ scope CharEnvColor {
     moveset_table:
     dw 0, 0, 0, 0                           // env color override values for p1 through p4
 
+    // @ Description
+    // These state values are used to force a character into a predefined env color state through the match.
+    // See state scope below.
+    state_table:
+    dw 0, 0, 0, 0                           // state for p1 through p4
+
+    // @ Description
+    // State constants
+    scope state {
+    	constant NORMAL(0)
+    	constant CLOAKED(1)
+    	constant NONE(2)
+    	constant DARK(3)
+    }
+
     OS.align(16) // align so console is happy
 
     macro create_custom_display_list(render_mode) {
@@ -63,10 +78,9 @@ scope CharEnvColor {
         _return_battle:
         OS.patch_end()
         // Menus
-        // TODO: console crash on menu due to the custom display lists I think... so disabling this feature on the menu
         OS.patch_start(0x107B28, 0x80390548)
-        //j       override_env_color_._menu
-        //sw      t7, 0x0000(a1)              // original line 1
+        j       override_env_color_._menu
+        sw      t7, 0x0000(a1)              // original line 1
         _return_menu:
         OS.patch_end()
 
@@ -78,9 +92,8 @@ scope CharEnvColor {
         addiu   a2, a2, 0x1388              // original line 2
 
         _menu:
-        // TODO: console crash on menu due to the custom display lists I think... so disabling this feature on the menu
-        //li      t1, _return_menu
-        //addiu   a2, a2, 0x29E0              // original line 2
+        li      t1, _return_menu
+        addiu   a2, a2, 0x29E0              // original line 2
 
         _start:
         lli     t6, 0x0000                  // t6 = offset to custom display list: 0 = default display list command
@@ -102,6 +115,10 @@ scope CharEnvColor {
         
         _override:
         or      a2, t9, r0                  // a2 = override value address
+
+        andi    t2, t2, 0x00FF              // t2 = alpha value
+        lli     t9, 0x00FF                  // t9 = fully opaque
+        bnel    t2, t9, _fix_parts          // if not fully opaque, use custom display list
         lli     t6, 0x0020                  // t6 = offset to custom display list: 0x20 = override display list command
 
         _fix_parts:
@@ -127,7 +144,7 @@ scope CharEnvColor {
         // Falcon's high poly model has some places where it turns off alpha compare and has its own render mode.
         // When it resets the render mode, it's not right for alpha, so we use a custom display list to set the render mode.
 
-        lbu     t2, 0x000F(s8)              // t2 = 1 if high poly, 2 if low poly
+        lbu     t2, 0x000E(s8)              // t2 = 1 if high poly, 2 if low poly
         sltiu   t2, t2, 0x0002              // t2 = 1 if high poly, 0 if low poly
         beqz    t2, _return                 // skip if lo poly
         nop
@@ -185,9 +202,9 @@ scope CharEnvColor {
         sw      t3, 0x0004(t9)              // save original part display list start to custom display list
         sw      t3, 0x0024(t9)              // save original part display list start to custom display list for override
         lui     t0, 0xDF00                  // t0 = DF000000 (end display list)
-        sw      t0, 0x0368(t3)              // split original display list into 2 by putting end display list here
-        sw      r0, 0x036C(t3)              // ~
-        addiu   t0, t3, 0x0370              // t0 = start of 2nd half of the original display list
+        sw      t0, 0x0398(t3)              // split original display list into 2 by putting end display list here
+        sw      r0, 0x039C(t3)              // ~
+        addiu   t0, t3, 0x03A0              // t0 = start of 2nd half of the original display list
         sw      t0, 0x0014(t9)              // save original part display list part 2 start to custom display list
         sw      t0, 0x0034(t9)              // save original part display list part 2 start to custom display list for override
 
@@ -205,7 +222,7 @@ scope CharEnvColor {
         // When it resets the render mode, it's not right for alpha, so we use a custom display list to set the render mode.
         // TODO: DK still has a pretty noticeable ring of opaqueness
 
-        lbu     t2, 0x000F(s8)              // t2 = 1 if high poly, 2 if low poly
+        lbu     t2, 0x000E(s8)              // t2 = 1 if high poly, 2 if low poly
         sltiu   t0, t2, 0x0002              // t0 = 1 if high poly, 0 if low poly
         lbu     t2, 0x0981(s8)              // t2 = kirby_hat_id
 
@@ -352,6 +369,50 @@ scope CharEnvColor {
         sb      t8, 0x002B(v0)              // update player indicator alpha
         jr      ra
         lwc1    f6, 0x0034(sp)              // original line 2
+    }
+
+    // @ Description
+    // Populates our override table when initializing the character based on state.
+    scope initialize_override_table_: {
+        OS.patch_start(0x534BC, 0x800D7CBC)
+        jal     initialize_override_table_
+        swc1    f0, 0x0048(t3)              // original line 2
+        OS.patch_end()
+
+        // v1 = player struct
+        li      t4, override_table          // t4 = override_table
+        lbu     t9, 0x000D(v1)              // t9 = port
+        sll     t9, t9, 0x0002              // t9 = index = port * 4
+        addu    t4, t4, t9                  // t4 = &override[index]
+        lw      t9, 0x0020(t4)              // t9 = state
+        beqzl   t9, _return                 // if in NORMAL state, clear override
+        lli     t9, 0x0000                  // t9 = 0 (no override)
+
+        li      t3, Global.current_screen
+        lbu     t3, 0x0000(t3)              // t3 = current screen
+        lli     t9, 0x0077                  // t9 = the screen_id assigned to the bonus 3 and multiman mode screens in SinglePlayerModes.asm
+        beq     t3, t9, _override           // if on the bonus 3 and multiman mode screens, keep override value
+        lw      t9, 0x0020(t4)              // t9 = state
+        sltiu   t3, t3, 0x003C              // t3 = 1 if not 0x3C (how to play screen id) or 0x3D (demo vs battle screen id)
+        beqzl   t3, _return                 // if on how to play or demo vs battle screen, clear override
+        lli     t9, 0x0000                  // t9 = 0 (no override)
+
+        _override:
+        lli     t3, state.NONE              // t3 = NONE
+        beql    t9, t3, _return             // if in NONE state, use NONE override value
+        addiu   t9, r0, -0x00FF             // t9 = 0xFFFFFF00
+
+        lli     t3, state.DARK              // t3 = DARK
+        beql    t9, t3, _return             // if in DARK state, use DARK override value
+        addiu   t9, r0, 0x00FF              // t9 = 0x000000FF
+
+        // if we're here, the value is Cloaked, and I don't know how to do that yet!
+        addiu   t9, r0, -0x00F0
+
+        _return:
+        sw      t9, 0x0000(t4)              // initialize size multiplier
+        jr      ra
+        addiu   t4, v1, 0x00F8              // original line 1
     }
 }
 

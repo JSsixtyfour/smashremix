@@ -800,11 +800,12 @@ scope Command {
     
     // @ Description
     // Enables using the given FGM instead of the one specified by the hitbox command when the hitbox makes contact
+    // Also supports playing the given FGM simultaneously with the one specified by the hitbox command
     // CCXYZZZZ
     // CC   = command byte
     // X    = (boolean) if not 0, then hitbox id is ignored and the fgm_id is used for all hitboxes
     // Y    = hitbox id (0-3 = hitbox 1-4)
-    // ZZZZ = fgm_id
+    // ZZZZ = fgm_id, enable highest bit to play both sounds instead of override
     scope set_hitbox_fgm_: {
         constant COMMAND_LENGTH(0x4)
         li      t0, apply_fgm_.hitbox_fgm_table
@@ -845,6 +846,7 @@ scope Command {
             // s0 = hit player struct
             // a3 = attacking player struct
             // t7 = hitbox struct
+            addiu   sp, sp,-0x0038          // allocate stack space
             li      t0, hitbox_fgm_table    // t0 = hitbox_fgm_table
             lbu     t1, 0x000D(a3)          // t1 = player port
             sll     t1, t1, 0x2             // ~
@@ -863,19 +865,35 @@ scope Command {
             sll     t1, t1, 0x1             // ~
             addu    t0, t0, t1              // t0 = px_hitbox_fgm + (hitbox id * 2)
             lh      t1, 0x0000(t0)          // t1 = hitbox fgm_id
+            sw      t1, 0x0028(sp)          // 0x0028(sp) = fgm_id
             addiu   t0, r0, -0x0001         // t0 = -1
             beq     t1, t0, _original       // skip if hitbox fgm_id = -1 (don't override)
-            nop                             // otherwise, use fgm_id:
+            andi    t0, t1, 0x8000          // t0 = 0 if play both flag = FALSE, else t0 = 0x8000
+            bnez    t0, _play_both          // play fgm_id alongside original if flag is enabled
+            nop
+            
+            _override:
             jal     0x800C8654              // original line 1
             addu    a0, r0, t1              // a0 = new fgm_id
             j       _apply_fgm_return       // return
-            nop
+            addiu   sp, sp, 0x0038          // deallocate stack space
+            
+            _play_both:
+            sw      a1, 0x002C(sp)          // 0x002C(sp)
+            jal     0x800C8654              // original line 1
+            lhu     a0, 0x8D00(a0)          // original line 2
+            lw      a1, 0x002C(sp)          // restore a1
+            lw      a0, 0x0028(sp)          // a0 = fgm_id (with flag)
+            jal     0x800C8654              // play an additional sound
+            andi    a0, a0, 0x7FFF          // a0 = new fgm_id
+            j       _apply_fgm_return       // return
+            addiu   sp, sp, 0x0038          // deallocate stack space
 
             _original:
             jal     0x800C8654              // original line 1
             lhu     a0, 0x8D00(a0)          // original line 2
             j       _apply_fgm_return       // return
-            nop
+            addiu   sp, sp, 0x0038          // deallocate stack space
 
             hitbox_fgm_table:
             dw p1_hitbox_fgm
@@ -988,8 +1006,8 @@ scope Command {
     dw      armour_                         // 0xD1 SET ARMOUR
     dw      hitbox_direction_               // 0xD2 OVERRIDE HITBOX DIRECTION
     dw      translation_multiplier_         // 0xD3 TOPJOINT TRANSLATION MULTIPLIER
-    dw      OS.NULL                         // 0xD4
-    dw      OS.NULL                         // 0xD5
+    dw      OS.NULL                         // 0xD4 SET Y VELOCITY (SKIPPED)
+    dw      OS.NULL                         // 0xD5 FAST FALL (SKIPPED)
     dw      skip_size_8_                    // 0xD6 RANDOM SFX (SKIPPED)
     dw      set_kinetic_                    // 0xD7 SET KINETIC STATE
     dw      set_hitbox_fgm_                 // 0xD8 SET HITBOX FGM

@@ -64,15 +64,15 @@ scope SamusShared {
         lw      t1, 0x0ADC(t6)              // t1 = character id of copied power
 
         ori     t2, r0, Character.id.DSAMUS // t2 = id.DSAMUS
-        li      a1, charge_anim_struct      // a1 = file table
+        li      a1, charge_anim_struct      // a1 = projectile struct
         beq     t1, t2, _end                // end if character id = DSAMUS
         nop
         ori     t2, r0, Character.id.JSAMUS // t2 = id.JSAMUS
-        li      a1, charge_anim_struct_jsamus      // a1 = file table
+        li      a1, charge_anim_struct_jsamus      // a1 = projectile struct
         beq     t1, t2, _end                // end if character id = JSAMUS
         nop
         ori     t2, r0, Character.id.ESAMUS // t2 = id.ESAMUS
-        li      a1, charge_anim_struct_esamus      // a1 = file table
+        li      a1, charge_anim_struct_esamus      // a1 = projectile struct
         beq     t1, t2, _end                // end if character id = ESAMUS
         nop
         li      a1, 0x80189030              // original line (load charge animation struct)
@@ -163,6 +163,57 @@ scope SamusShared {
         j       0x80161EE4
         nop
     }
+    
+    // Loads an the ball graphic used by Samus at then end of her grab
+    scope throw_ball_graphic: {
+        OS.patch_start(0xC4654, 0x80149C14)
+        jal       throw_ball_graphic
+        andi      t8, t7, 0xFFFB              // original line 
+        _return:
+        OS.patch_end()
+        
+        addiu   at, r0, Character.id.DSAMUS
+        beq     v0, at, _samusballgraphic
+        nop
+        addiu   at, r0, Character.id.JSAMUS
+        beq     v0, at, _samusballgraphic
+        nop
+        addiu   at, r0, Character.id.ESAMUS
+        beq     v0, at, _samusballgraphic
+        nop
+        addiu   at, r0, 0x0003              // original line
+        j       _return                     // return
+        nop
+        
+        _samusballgraphic:
+        jr      ra                          // return
+        nop
+    }   
+    
+    // Loads an the ball graphic used by Samus at then end of her grab
+    scope throw_ball_graphic_2: {
+        OS.patch_start(0xC4D1C, 0x8014A2DC)
+        j       throw_ball_graphic_2
+        sw      r0, 0x0180(s0)              // original line 2
+        _return:
+        OS.patch_end()
+        
+        beq     v0, at, _samusballgraphic
+        addiu   at, r0, Character.id.DSAMUS
+        beq     v0, at, _samusballgraphic
+        addiu   at, r0, Character.id.JSAMUS
+        beq     v0, at, _samusballgraphic
+        addiu   at, r0, Character.id.ESAMUS
+        beq     v0, at, _samusballgraphic
+        nop
+        j       _return                     // return
+        nop
+        
+        _samusballgraphic:
+        j      0x8014A2F0                          // return
+        nop
+    }   
+     
      
     // Dark Samus
     

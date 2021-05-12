@@ -172,6 +172,10 @@ scope collide_mushroom_: {
     li      t0, player_shrooms
     addu    t0, t0, t1                  // t0 = address of shroom routine object pointer
     sw      t0, 0x0024(sp)              // remember address of shroom routine object pointer
+    li      t0, Size.state_table
+    addu    t0, t0, t1                  // t0 = address of player's match size state
+    lw      t0, 0x0000(t0)              // t0 = player's match size state
+    sw      t0, 0x002C(sp)              // remember player's match size state
 
 
     // register routine that handles the countdown
@@ -187,6 +191,8 @@ scope collide_mushroom_: {
     sw      r0, 0x0050(v0)              // save transition index
     sw      r0, 0x0054(v0)              // save size state
     sw      t1, 0x0058(v0)              // save address of shroom routine object pointer
+    lw      t0, 0x002C(sp)              // t0 = player's match size state
+    sw      t0, 0x005C(v0)              // save player's match size state
 
     OS.restore_registers()
 
@@ -214,6 +220,7 @@ scope handle_active_mushroom_: {
     // 0x0050(a0) = transition frame index
     // 0x0054(a0) = state
     // 0x0058(a0) = address of shroom routine object pointer
+    // 0x005C(a0) = player's match size state
 
     lw      t3, 0x0040(a0)              // t3 = player struct
 
@@ -223,7 +230,7 @@ scope handle_active_mushroom_: {
 
     lw      t5, 0x0058(a0)              // t5 = address of previous shroom routine object pointer
     lw      t6, 0x0000(t5)              // t6 = previous shroom routine object
-    beqz    t6, _update_timer           // if not currently shroomed, then set shroom routine object and skip ahead
+    beqz    t6, _check_match_size       // if not currently shroomed, then set shroom routine object and skip ahead
     sw      a0, 0x0000(t5)              // set shroom routine object
 
     lw      t7, 0x0044(a0)              // t7 = this item ID
@@ -265,10 +272,56 @@ scope handle_active_mushroom_: {
     lw      t0, 0x004C(a0)              // t0 = timer value
     lw      t1, 0x0054(a0)              // t1 = state
     lli     t4, STATE_MAINTAIN
-    beq     t1, t4, _flash              // if the state was updated to MAINTAIN, then this object is good, so continue
+    beq     t1, t4, _check_match_size   // if the state was updated to MAINTAIN, then this object is good, so continue
     nop                                 // if it wasn't, then we can stop processing
     jr      ra
     nop
+
+    _check_match_size:
+    // state | get    | have
+    // ----- | ------ | ------
+    // tiny  | poison | none   => sound/flash/revert
+    // tiny  | poison | super  => sound/flash/shrink to tiny
+    // tiny  | super  | none   => sound/flash/grow from tiny
+    // tiny  | super  | super  => sound/flash/maintain
+    // giant | super  | none   => sound/flash/revert
+    // giant | super  | poison => sound/flash/grow to giant
+    // giant | poison | none   => sound/flash/shrink from giant
+    // giant | poison | poison => sound/flash/maintain
+
+    // here, check match size state to see if we need to adjust the transitions
+    lw      t7, 0x0044(a0)              // t7 = this item ID
+    lw      t5, 0x005C(a0)              // t5 = player's match size state
+    beqz    t5, _flash                  // if match size is normal, skip extra logic
+    lli     t6, Size.state.GIANT        // t6 = GIANT match state
+    beq     t5, t6, _giant              // if match size is giant, go to giant logic
+    nop                                 // otherwise use tiny logic
+
+    // Tiny
+    // if STATE_TRANSITION_1 && poison, then revert
+    // if STATE_TRANSITION_1 && super, then transition 1 should be grow_poison
+    lli     t6, STATE_TRANSITION_1      // t6 = STATE_TRANSITION_1
+    lli     at, 0x002F                  // at = Poison Mushroom ID
+    bne     at, t7, _flash              // if Super, skip
+    lw      t5, 0x0054(a0)              // t5 = state
+
+    beql    t5, t6, _flash              // if we just got our first shroom and it's poison, don't apply it by spoofing the timer
+    lli     t0, REVERT                  // t0 = REVERT
+
+    b       _flash
+    nop
+
+    _giant:
+    // Tiny
+    // if STATE_TRANSITION_1 && super, then revert
+    // if STATE_TRANSITION_1 && poison, then transition 1 should be shrink_super
+    lli     t6, STATE_TRANSITION_1      // t6 = STATE_TRANSITION_1
+    lli     at, 0x002F                  // at = Poison Mushroom ID
+    beq     at, t7, _flash              // if Poison, skip
+    lw      t5, 0x0054(a0)              // t5 = state
+
+    beql    t5, t6, _flash              // if we just got our first shroom and it's super, don't apply it by spoofing the timer
+    lli     t0, REVERT                  // t0 = REVERT
 
     _flash:
     addiu   sp, sp, -0x0020             // allocate stack space
@@ -315,6 +368,7 @@ scope handle_active_mushroom_: {
 
     lw      t2, 0x0048(a0)              // t2 = address of size multiplier
     lw      t7, 0x0054(a0)              // t7 = state
+    lw      t8, 0x005C(a0)              // t8 = player's match size state
 
     lw      t4, 0x0044(a0)              // t4 = item ID
     lli     at, 0x002F                  // at = Poison Mushroom ID
@@ -322,6 +376,25 @@ scope handle_active_mushroom_: {
     lw      t4, 0x0050(a0)              // t4 = frame index
 
     // super mushroom set up
+    beqz    t8, _super_setup_normal     // if match size is normal, use normal logic
+    nop                                 // otherwise, set up for tiny
+
+    // _super_setup_tiny:
+    lli     at, STATE_TRANSITION_1      // at = STATE_TRANSITION_1
+    beq     t7, at, _grow_poison        // first transition is grow
+    lli     at, STATE_TRANSITION_2      // at = STATE_TRANSITION_2
+    beql    t7, at, _shrink_poison      // second transition is shrink
+    addiu   t0, t0, -(MAINTAIN_DURATION + GROW_DURATION) // t0 = frame of shrink transition
+
+    lli     at, GROW_DURATION + MAINTAIN_DURATION
+    beql    t0, at, pc() + 8            // if we've reached the start of transition 2, increment state
+    lli     t7, STATE_TRANSITION_2      // t7 = STATE_TRANSITION_2
+
+    lui     t1, 0x3F80                  // t1 = normal size
+    b       _set_size_multipler
+    sw      t7, 0x0054(a0)              // save state
+
+    _super_setup_normal:
     lli     at, STATE_TRANSITION_1      // at = STATE_TRANSITION_1
     beq     t7, at, _grow               // first transition is grow
     lli     at, STATE_TRANSITION_2      // at = STATE_TRANSITION_2
@@ -338,6 +411,25 @@ scope handle_active_mushroom_: {
 
     _poison:
     // poison mushroom set up
+    beqz    t8, _poison_setup_normal    // if match size is normal, use normal logic
+    nop                                 // otherwise, set up for giant
+
+    // _poison_setup_giant:
+    lli     at, STATE_TRANSITION_1      // at = STATE_TRANSITION_1
+    beq     t7, at, _shrink             // first transition is shrink
+    lli     at, STATE_TRANSITION_2      // at = STATE_TRANSITION_2
+    beql    t7, at, _grow               // second transition is grow
+    addiu   t0, t0, -(MAINTAIN_DURATION + SHRINK_DURATION) // t0 = frame of grow transition
+
+    lli     at, SHRINK_DURATION + MAINTAIN_DURATION
+    beql    t0, at, pc() + 8            // if we've reached the start of transition 2, increment state
+    lli     t7, STATE_TRANSITION_2      // t7 = STATE_TRANSITION_2
+
+    lui     t1, 0x3F80                  // t1 = normal size
+    b       _set_size_multipler
+    sw      t7, 0x0054(a0)              // save state
+
+    _poison_setup_normal:
     lli     at, STATE_TRANSITION_1      // at = STATE_TRANSITION_1
     beq     t7, at, _shrink_poison      // first transition is shrink
     lli     at, STATE_TRANSITION_2      // at = STATE_TRANSITION_2
@@ -428,7 +520,16 @@ scope handle_active_mushroom_: {
 
     _revert:
     lw      t2, 0x0048(a0)              // t2 = address of size multiplier
+    lw      t3, 0x005C(a0)              // t3 = player's match size state
+    beqzl   t3, _clear_size_multiplier  // if player's match size state is normal, use 1
     lui     t1, 0x3F80                  // t1 = (float) 1.0
+    lli     t4, Size.state.GIANT        // t4 = GIANT
+    beql    t3, t4, _clear_size_multiplier // if in GIANT state, use giant size multiplier
+    lui     t1, 0x4010                  // t9 = 2.25 (float)
+    // otherwise, we're in TINY state so use tiny size multiplier
+    lui     t1, 0x3F00                  // t9 = 0.5 (float)
+
+    _clear_size_multiplier:
     sw      t1, 0x0000(t2)              // clear size multiplier
 
     lw      t5, 0x0058(a0)              // t5 = address of current shroom routine object pointer
@@ -449,12 +550,6 @@ scope handle_active_mushroom_: {
 // @ Description
 // Clears the effects of active mushrooms.
 scope clear_active_mushrooms_: {
-    li      t0, Size.multiplier_table
-    lui     t1, 0x3F80                  // t1 = (float) 1.0
-    sw      t1, 0x0000(t0)              // restore normal size p1
-    sw      t1, 0x0004(t0)              // restore normal size p1
-    sw      t1, 0x0008(t0)              // restore normal size p3
-    sw      t1, 0x000C(t0)              // restore normal size p4
     li      t0, player_shrooms
     sw      r0, 0x0000(t0)              // clear shroom routine object pointer p1
     sw      r0, 0x0004(t0)              // clear shroom routine object pointer p1

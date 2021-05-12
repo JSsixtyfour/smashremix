@@ -22,6 +22,7 @@ scope Lucas {
     insert PKFIREGROUND, "moveset/PKFIREGROUND.bin"
     insert PKFIREAIR, "moveset/PKFIREAIR.bin"
     insert JUMP1, "moveset/JUMP1.bin"
+    insert JUMP2, "moveset/JUMP2.bin"
     insert JAB1, "moveset/JAB1.bin"
     insert JAB2, "moveset/JAB2.bin"
     insert JAB3, "moveset/JAB3.bin"
@@ -85,7 +86,10 @@ scope Lucas {
     Character.edit_action_parameters(LUCAS, Action.ShieldBreak,      -1,                        SHIELD_BREAK,               -1)
     Character.edit_action_parameters(LUCAS, Action.Sleep,            -1,                        ASLEEP,                     -1)
     Character.edit_action_parameters(LUCAS, Action.Teeter,           -1,                        TEETER,                     -1)
+    Character.edit_action_parameters(LUCAS, Action.JumpAerialF,        -1,             JUMP2,                      -1)  
+    Character.edit_action_parameters(LUCAS, Action.JumpAerialB,        -1,                             JUMP2,                      -1)  
     
+
     Character.edit_action_parameters(LUCAS, 0xE2,                   File.LUCAS_PKFIREGROUNDANI, PKFIREGROUND,               0x40000000)
     Character.edit_action_parameters(LUCAS, 0xE3,                   File.LUCAS_PKFIREAIRANI,    PKFIREAIR,                  -1)
     Character.edit_action_parameters(LUCAS, 0xED,                   File.LUCAS_MAGNETSTARTGR,   DOWN_SPECIAL_INITIATE,      -1)
@@ -119,6 +123,7 @@ scope Lucas {
     // Modify Menu Action Parameters             // Action          // Animation                // Moveset Data             // Flags
     Character.edit_menu_action_parameters(LUCAS, 0x2,               File.LUCAS_SELECTED,        SELECTED,                           -1)
 	Character.edit_menu_action_parameters(LUCAS, 0xD,               File.LUCAS_1P,        		ONEP,                               -1)
+    Character.edit_menu_action_parameters(LUCAS, 0xE,               File.LUCAS_1P_CPU_POSE,     0x80000000,                         -1)
 	Character.edit_menu_action_parameters(LUCAS, 0x1,               File.LUCAS_NEEDLE_ANIM,     NEEDLE,                             0x10000000)
 	Character.edit_menu_action_parameters(LUCAS, 0x3,               File.LUCAS_PKVICTORY,       PKVICTORY,                          -1)
     

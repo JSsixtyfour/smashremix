@@ -85,6 +85,7 @@ scope DSamus {
     Character.edit_menu_action_parameters(DSAMUS,   0x3,               File.DSAMUS_VICTORY1,       VICTORY1,                    -1)
     Character.edit_menu_action_parameters(DSAMUS,   0x4,               File.DSAMUS_SELECT,         SELECT,                      -1)
     Character.edit_menu_action_parameters(DSAMUS,   0x5,               -1,                         CLAP,                        -1)
+    Character.edit_menu_action_parameters(DSAMUS,   0xE,               File.DSAMUS_1P_CPU_POSE,    0x80000000,                  -1)
     
     // Set menu zoom size.
     Character.table_patch_start(menu_zoom, Character.id.DSAMUS, 0x4)
@@ -214,28 +215,7 @@ scope DSamus {
     
     constant TYPE(0x2)                  // electric type damage used in Dark Samus down special in contrast to Samus (Fire type 0x1)
         
-    // Loads an the ball graphic used by Samus at then end of her grab
-    scope throw_ball_graphic: {
-        OS.patch_start(0xC4654, 0x80149C14)
-        jal       throw_ball_graphic
-        andi    t8, t7, 0xFFFB              // original line 
-        _return:
-        OS.patch_end()
-        
-        addiu   at, r0, 0x0022
-        beq     v0, at, _darksamusballgraphic
-        nop
-        addiu   at, r0, 0x0024
-        beq     v0, at, _darksamusballgraphic
-        nop
-        addiu   at, r0, 0x0003              // original line
-        j       _return                     // return
-        nop
-        
-        _darksamusballgraphic:
-        jr      ra                          // return
-        nop
-    }   
+    
     
     // Set default costumes
     Character.set_default_costumes(Character.id.DSAMUS, 0, 1, 2, 4, 5, 1, 3)

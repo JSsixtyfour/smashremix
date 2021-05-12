@@ -10,20 +10,24 @@ include "Toggles.asm"
 include "OS.asm"
 
 scope Skeleton {
+    // @ Description
+    // Holds value of Skeleton mode switch per port
+    enable_for_port:
+    dw 0, 0, 0, 0                           // turn off by default for p1 - p4
 
-    macro apply_skeleton_mode(register) {
+    macro apply_skeleton_mode(register, player_struct) {
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // ~
         sw      ra, 0x000C(sp)              // store registers
 
-        li      t0, Toggles.entry_special_model
-        lw      t0, 0x0004(t0)              // t0 = 3 if skeleton_mode
-        lli     t1, 0x0003                  // t1 = 3
-        bne     t0, t1, _end                // if not skeleton mode, skip
-        nop
-        
-        lui     {register}, 0x0800          // ~
+        lbu     t1, 0x000D({player_struct}) // t1 = port
+        sll     t1, t1, 0x0002              // t1 = offset in enable_for_port
+        li      t0, enable_for_port         // t0 = enable_for_port
+        addu    t0, t0, t1                  // t0 = address of enable value
+        lw      t0, 0x0000(t0)              // t0 = 1 if skeleton mode enabled, 0 if disabled
+        bnezl   t0, _end                    // if enabled, update register value
+        lui     {register}, 0x0800          // {register} = 0x0800 (show skeleton)
         
         _end:
         lw      t0, 0x0004(sp)              // ~
@@ -46,7 +50,7 @@ scope Skeleton {
         lw      v1, 0x0A88(a1)              // original line 1
         lw      a3, 0x09C8(a1)              // original line 2
 
-        apply_skeleton_mode(v1)
+        apply_skeleton_mode(v1, a1)
     }
 
     // @ Description
@@ -60,7 +64,7 @@ scope Skeleton {
         lw      t7, 0x0A88(t4)              // original line 1
         sll     t3, v1, 0x3                 // original line 2
         
-        apply_skeleton_mode(t7)
+        apply_skeleton_mode(t7, t4)
     }
 }
 }

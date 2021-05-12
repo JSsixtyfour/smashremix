@@ -167,7 +167,7 @@ scope NessShared {
         addiu   at, r0, Character.id.NESS   // Ness Character ID
         beq     v0, at, special_jump        // jump to special jump
         nop
-        addiu   at, r0, Character.id.LUCAS  // Ness Character ID
+        addiu   at, r0, Character.id.LUCAS  // Lucas Character ID
         beq     v0, at, special_jump        // jump to special jump
         nop
         j       _return                     // return
@@ -867,6 +867,23 @@ scope NessShared {
         lw      t9, 0x0AE0(a0)              // original line 2
         j       _return                     // return
         nop
+    }
+    
+    // establishes a pointer to the character struct that can be used for a character id check during
+    // special_struct3.
+    scope get_pkthunder_playerstruct3_: {
+        OS.patch_start(0xCE724, 0x80153CE4)
+        j       get_pkthunder_playerstruct3_
+        lw      t7, 0x0034(sp)              // original line 1
+        _return:
+        OS.patch_end()
+        
+        lw      t6, 0x0000(v1)              // load projectile struct
+        lw      t6, 0x0000(t6)              // load projectile struct
+        sw      t7, 0x01B4(t6)              // save player struct to unused space in projectile code
+        
+        j       _return                     // return
+        sw      v0, 0x0B24(t7)              // original line 2
     }
     
     // @ Description

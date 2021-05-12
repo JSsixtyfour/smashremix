@@ -229,4 +229,44 @@ scope DKShared {
         nop
     }
 
+    // character ID check add for when Donkey Kong Clones CPUs are functioning
+    scope cpu_fix_1: {
+        OS.patch_start(0xB1670, 0x80136C30)
+        j       cpu_fix_1
+        nop
+        _return:
+        OS.patch_end()
+        
+        beq     v0, at, _cpu_1              // modified original line 1
+        addiu   at, r0, Character.id.JDK    // JDK ID
+        beq     v0, at, _cpu_1
+        nop
+        j       _return                     // return
+        addiu   at, r0, 0x0003              // original line 2
+        
+        _cpu_1:
+        j       0x80136C48
+        addiu   at, r0, 0x0003              // original line 2
+    }
+    
+    // character ID check add for when Donkey Kong Clones CPUs are functioning
+    scope cpu_fix_2: {
+        OS.patch_start(0xB39B8, 0x80138F78)
+        j       cpu_fix_2
+        nop
+        _return:
+        OS.patch_end()
+        
+        beq     v1, at, _cpu_2              // modified original line 1
+        addiu   at, r0, Character.id.JDK    // JDK ID
+        beq     v1, at, _cpu_2
+        nop
+        j       _return                     // return
+        addiu   at, r0, 0x0010              // original line 2
+        
+        _cpu_2:
+        j       0x80138F90
+        addiu   at, r0, 0x0010              // original line 2
+    }
+    
 }

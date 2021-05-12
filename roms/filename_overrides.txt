@@ -35,12 +35,12 @@
 0864 Wario Up Tilt
 0865 Wario F-Air
 0866 Wario D-Air
-0867 Falco's forward smash (400000000)
-0868 Falco's taunt
-0869 Falco's up tilt
-086A Donkey Kong's Aerial Tennis Swing
-086B Donkey Kong's Ground Tennis Swing
-086C Donkey Kong's Up Air
+0867 Falco's Forward Smash (400000000)
+0868 Falco's Taunt
+0869 Falco's Up Tilt
+086A Donkey Kong's Aerial Tennis Swing - REPLACE
+086B Donkey Kong's Ground Tennis Swing - REPLACE
+086C Donkey Kong's Up Air - REPLACE
 086D Wario F-Smash
 086E Wario U-Smash
 086F Dr. Mario's Projectile Hitbox
@@ -70,7 +70,7 @@
 0887 Glacial River Stage file
 0888 Glacial River BG
 0889 Warioware Header
-088A Warioware Stage 43DC
+088A Warioware Stage
 088B Warioware BG
 088C Flat Zone Header
 088D Flat Zone Stage File
@@ -727,6 +727,271 @@
 0B18 Piano Pose 1P
 0B19 Piano Continue Fall
 0B1A Piano Continue Up
+0B1B Wolf Run
+0B1C Wolf Run Brake
+0B1D Wolf Turn Run
+0B1E Wolf Crouch
+0B1F Wolf Crouch Idle
+0B20 Wolf Crouch End
+0B21 Wolf Jump Forward
+0B22 Wolf Jump Back
+0B23 Wolf Jump Aerial Forward
+0B24 Wolf Jump Aerial Backward
+0B25 Wolf Jump Squat
+0B26 Wolf Falling
+0B27 Wolf Falling Aerial
+0B28 Wolf Jab 1
+0B29 Wolf Jab 2
+0B2A Wolf Jab 3
+0B2B Wolf Dash Attack
+0B2C Wolf Up Tilt
+0B2D Wolf Forward Tilt High
+0B2E Wolf Forward Tilt Mid
+0B2F Wolf Forward Tilt Low
+0B30 Wolf Down Tilt
+0B31 Wolf Up Smash
+0B32 Wolf Forward Smash
+0B33 Wolf Down Smash
+0B34 Wolf Neutral Air
+0B35 Wolf Forward Air
+0B36 Wolf Up Air
+0B37 Wolf Back Air
+0B38 Wolf Down Air
+0B39 Young Link Victory
+0B3A Wolf CSS
+0B3B Wolf Victory 1
+0B3C Wolf Grab
+0B3D Wolf Forward Throw
+0B3E Wolf Down Attack Down
+0B3F Wolf Down Attack Up
+0B40 Wolf Down Forward Down
+0B41 Wolf Fall Special
+0B42 Wolf Neutral Special Ground
+0B43 Wolf Neutral Special Air
+0B44 Wolf Up Special Ground 1
+0B45 Wolf Appear Left
+0B46 Wolf Victory 2
+0B47 Wolf Weapon
+0B48 Wolf Back Air Landing
+0B49 Wolf Forward Air Landing
+0B4A Wolf DownStandD
+0B4B Wolf DownStandU
+0B4C Wolf DownForwardU
+0B4D Wolf Tech
+0B4E Wolf TechF
+0B4F Wolf TechB
+0B50 Wolf Down Special End Ground
+0B51 Wolf Down Special End Air
+0B52 Wolf DownBackD
+0B53 Wolf DownBackU
+0B54 Wolf DownBounceD
+0B55 Wolf DownBounceU
+0B56 Wolf Shield On
+0B57 Wolf Shield Off
+0B58 Wolf Main
+0B59 Wolf Character
+0B5A Wolf Projectile Hitbox
+0B5B Wolf Projectile Graphic
+0B5C Wolf Idle
+0B5D Wolf Turn
+0B5E Wolf Walk 1
+0B5F Wolf Walk 2
+0B60 Wolf Walk 3
+0B61 Wolf Dash
+0B62 Wolf Item Swing Neutral
+0B63 Wolf Item Swing Tilt
+0B64 Wolf Item Swing Smash
+0B65 Wolf Capture Pull
+0B66 Wolf Item Pick Up
+0B67 Wolf Item Drop
+0B68 Wolf Item Throw Forward
+0B69 Wolf Item Throw Upward
+0B6A Wolf Item Throw Downward
+0B6B Wolf Item Throw Air Forward
+0B6C Wolf Item Throw Air Upward
+0B6D Wolf Item Throw Air Downward
+0B6E Wolf Shield Drop
+0B6F Wolf Item Throw Dash
+0B70 Wolf Item Swing Dash
+0B71 Wolf Item Shoot Ground
+0B72 Wolf Item Shoot Air
+0B73 Wolf Up Special Ground 2
+0B74 Wolf Up Special Air 2
+0B75 Wolf Taunt
+0B76 Wolf Reflector
+0B77 Wolfen
+0B78 Rith Essa Header
+0B79 Rith Essa Stage
+0B7A Rith Essa Background
+0C19 Wolf 1p Mode Human
+0C1A Wolf 1p Mode CPU
+0C1B Remix 1p Kirby Stage File
+0C1C Kirby Wolf Copy Neutral Special Ground
+0C1D Kirby Wolf Copy Neutral Special Air
+0C1E Conker's Main File
+0C1F Conker's Model File
+0C20 Conker's Nut Projectile Hitboxes
+0C21 Conker's Nut Projectile Graphics
+0C22 Conker Selected
+0C23 Conker Idle
+0C24 Conker Crouch
+0C25 Conker Crouch Idle
+0C26 Conker Crouch End
+0C27 Conker Fall
+0C28 Conker Up Tilt
+0C29 Conker Dash
+0C2A Conker Run
+0C2B Conker Run Brake
+0C2C Conker Run Turn
+0C2D Conker Up Special Start Air
+0C2E Conker Up Special Loop Air
+0C2F Conker Special Fall
+0C30 Conker Forward Air
+0C31 Conker Weapons
+0C32 Conker Down Special Ground
+0C33 Conker Ray Gun Ground
+0C34 Conker's Grenade Projectile Hitboxes
+0C35 Conker's Grenade Projectile Graphics
+0C36 Conker Down Special Air
+0C37 Conker Down Special Ground Fail
+0C38 Conker Down Special Air Fail
+0C39 Conker Roll Forward
+0C3A Conker Roll Backward
+0C3B Conker Jab 1
+0C3C Conker Jab 2
+0C3D Conker Jab Loop Start
+0C3E Conker Jab Loop
+0C3F Conker Jab Loop End
+0C40 Conker Item Neutral
+0C41 Conker Item Tilt
+0C42 Conker Down Air
+0C43 Conker Jump Forward
+0C44 Conker Jump Backward
+0C45 Conker Jump Aerial Forward
+0C46 Conker Dash Attack
+0C47 Conker Down Smash
+0C48 Conker Neutral Air
+0C49 Conker Up Air
+0C4A Conker Forward Smash
+0C4B Conker Forward Tilt High
+0C4C Conker Forward Tilt Mid
+0C4D Conker Forward Tilt Low
+0C4E Conker Up Smash
+0C4F Conker Down Tilt
+0C50 Conker Back Air
+0C51 Conker DownStandU
+0C52 Conker Tech Forward
+0C53 Conker Tech Back
+0C54 Conker DownBounceU
+0C55 Conker CapturePulled
+0C56 Conker Damage Fly High
+0C57 Conker Damage Fly Mid
+0C58 Conker Damage Fly Low
+0C59 Conker Catch
+0C5A Conker Catch Pull
+0C5B Conker Forward Throw
+0C5C Conker Back Throw
+0C5D Conker Walk 1
+0C5E Conker Walk 2
+0C5F Conker Walk 3
+0C60 Conker NSP Begin Ground
+0C61 Conker NSP Wait Ground
+0C62 Conker NSP End Ground
+0C63 Conker NSP Begin Air
+0C64 Conker NSP Wait Air
+0C65 Conker NSP End Air
+0C66 Conker Cliff Catch
+0C67 Conker Cliff Wait
+0C68 Conker Cliff Quick
+0C69 Conker Cliff Climb Quick 1
+0C6A Conker Cliff Climb Quick 2
+0C6B Conker Cliff Slow
+0C6C Conker Cliff Climb Slow 1
+0C6D Conker Cliff Climb Slow 2
+0C6E Conker Cliff Attack Quick 1
+0C6F Conker Cliff Attack Quick 2
+0C70 Conker Cliff Attack Slow 1
+0C71 Conker Cliff Attack Slow 2
+0C72 Conker Cliff Escape Quick 1
+0C73 Conker Cliff Escape Quick 2
+0C74 Conker Cliff Escape Slow 1
+0C75 Conker Cliff Escape Slow 2
+0C76 Conker Jumpsquat
+0C77 Conker Item Throw F Air
+0C78 Conker Item Throw U Air
+0C79 Conker Item Throw D Air
+0C7A Conker 1p Pose
+0C7B Conker Taunt
+0C7C Conker Fall Aerial
+0C7D Conker Jump Air B
+0C7E Conker Clap
+0C7F Conker Down Attack Down
+0C80 Conker Victory 1
+0C81 Conker Victory 2
+0C82 Conker Turn
+0C83 Conker Shield Pose
+0C84 Conker Puppet Fall
+0C85 Conker Puppet Up
+0C86 Conker Shield On
+0C87 Conker Shield Off
+0C88 Greg's Hand
+0C89 Conker Entry
+0C8A Conker Shield Drop
+0C8B Bowser 1p CPU Pose
+0C8C Ganondorf 1p CPU Pose
+0C8D Venom Stage Header
+0C8E Venom Stage
+0C8F Venom Stage BG
+0C90 Wolf Appear Right
+0C91 Wolf Enter Pipe
+0C92 Wolf Exit Pipe
+0C93 Conker Forward Air Landing
+0C94 Conker Back Air Landing
+0C95 Wolf Target Test Header
+0C96 Wolf Target Test Stage
+0C97 Ganondorf Team Pose
+0C98 Doctor Mario Team Pose
+0C99 Wolf Board the Platforms Header
+0C9A Wolf Board the Platforms Stage
+0C9B Wolf Shield Pose
+0C9C Conker Target Test Header
+0C9D Conker Target Test Stage
+0C9E Wario 1p CPU Pose
+0C9F Wario Team Pose
+0CA0 Mad Piano 1p CPU Pose
+0CA1 Conker 1p CPU Pose
+0CA2 Conker Team Pose
+0CA3 Wolf Team Pose
+0CA4 Falco 1p CPU Pose
+0CA5 Bowser Team Pose
+0CA8 Dark Samus 1p CPU Pose
+0CA9 Dark Samus Team Pose
+0CAA Lucas 1p CPU Pose
+0CAB Lucas Team Pose
+0CAC Young Link 1p CPU Pose
+0CAD Young Link Team Pose
+0CAE Conker Board the Platforms Header
+0CAF Conker Board the Platforms Stage
+0CB0 Dr. Mario 1p CPU Pose
+0CB1 Conker Item Swing Dash
+0CB2 Giga Bowser 1p CPU Pose
+0CB3 Conker Item Swing Smash
+0CB4 Windy Stage Header
+0CB5 Windy Stage
+0CB6 Windy Stage BG
+0CB7 dataDyne Stage Header
+0CB8 dataDyne Stage
+0CB9 dataDyne Stage BG
+0CBA Planet Clancer Stage Header
+0CBB Planet Clancer Stage
+0CBC Planet Clancer Stage BG
+0CBD Kirby Conker Copy Neutral Special Ground Start
+0CBE Kirby Conker Copy Neutral Special Ground Wait
+0CBF Kirby Conker Copy Neutral Special Ground End
+0CC0 Kirby Conker Copy Neutral Special Air Start
+0CC1 Kirby Conker Copy Neutral Special Air Wait
+0CC2 Kirby Conker Copy Neutral Special Air End
+0CC3 Conker Stun
 
 0611 CAPTAIN DeadU
 0611 CAPTAIN ScreenKO

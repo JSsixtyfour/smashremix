@@ -38,12 +38,6 @@ scope Cheats {
     OS.patch_start(0x000216FC, 0x80020AFC)
     // nop
     OS.patch_end()
-
-    // @ Description
-    // This allows multiple players to be the same color by bypassing the check.
-    OS.patch_start(0x001361C8, 0x80137F48)
-    b       0x80137F60
-    OS.patch_end()
 }
 
 } // __CHEATS__

@@ -6,7 +6,7 @@
 scope KirbyHats {
     // @ Description
     // Number of new "hats" added
-    variable new_hats(10)
+    variable new_hats(13)
     
     // @ Description
     // Used in add_hat to adjust offset
@@ -107,9 +107,68 @@ scope KirbyHats {
 
         // First check the special part index
         lli     t8, 0x0006                  // t8 = 6, the special part index for hats (not sure why this is different than when inhaling)
-        bne     a1, t8, _end                // if not the special part index for hats, exit
+        beq     a1, t8, _swap               // if the special part index for hats proceed to swap code
+        lli     t8, 0x0011                  // t8 = 11, the special part index for guns
+        bne     a1, t8, _end                // if not the special part index for hats or guns, exit
+        nop
+        
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      t0, 0x0004(sp)              // store registers
+        sw      t2, 0x0008(sp)              // ~
+        sw      t6, 0x000C(sp)              // ~
+        lb      t2, 0x0980(t0)              // load hat ID into t2
+        addiu   t6, r0, 0x0019              // put Conker Hat ID into t6
+        bne     t2, t6, _wolf
+        addiu   t6, r0, 0x001A              // put Wolf Hat ID into t6
+        
+        // conker
+        lw      t2, 0x0008(t0)              // Load Character ID
+        addiu   t6, r0, Character.id.JKIRBY
+        beq     t6, t2, _jkirby_conker
+        nop
+        li      t2, 0x80131078              // Kirby's File pointer to model file 
+        beq     r0, r0, _load_address_conker
+        nop
+        
+        _jkirby_conker:
+        li      t2, Character.JKIRBY_file_4_ptr // J Kirby's File pointer to model file
+        
+        _load_address_conker:
+        lw      t2, 0x0000(t2)              // load address of model file for kirby
+        li      t6, 0x1D860                 // offset of special part struct for Conker's Catapult [UPDATE IF GUN MODEL CHANGED]
+        beq     r0, r0, _gun_end            // jump to end of fox gun swapping
+        addu    v1, t2, t6                  // add offset to file address
+        
+        _wolf:
+        bne     t2, t6, _gun_end            // jump to end of fox gun swapping
+        nop
+        
+        lw      t2, 0x0008(t0)              // Load Character ID
+        addiu   t6, r0, Character.id.JKIRBY
+        beq     t6, t2, _jkirby_wolf
+        nop
+        li      t2, 0x80131078              // Kirby's File pointer to model file 
+        beq     r0, r0, _load_address_wolf
+        nop
+        
+        _jkirby_wolf:
+        li      t2, Character.JKIRBY_file_4_ptr // J Kirby's File pointer to model file
+        
+        _load_address_wolf:
+        lw      t2, 0x0000(t2)              // load address of model file for kirby
+        li      t6, 0x1D830                 // offset of special part struct for Wolf's Gun [UPDATE IF GUN MODEL CHANGED]
+        addu    v1, t2, t6                  // add offset to file address
+        
+        _gun_end:
+        lw      t0, 0x0004(sp)              // restore registers
+        lw      t2, 0x0008(sp)              // ~
+        lw      t6, 0x000C(sp)              // ~
+        addiu   sp, sp, 0x0010              // deallocate stack space
+
+        jr      ra
         nop
 
+        _swap:
         addiu   sp, sp,-0x0030              // allocate stack space
         sw      t0, 0x0004(sp)              // store registers
         sw      ra, 0x0008(sp)              // ~
@@ -157,6 +216,64 @@ scope KirbyHats {
         addiu   sp, sp, 0x0030              // deallocate stack space
 
         j       0x800E8D38                  // return to routine after s0 is set
+        nop
+    }
+
+    // @ Description
+    // This seems to be related to costume loading and initializing things to use the right special images/tracks.
+    scope use_extended_special_parts_costume_init_: {
+        OS.patch_start(0x64AFC, 0x800E92FC)
+        jal     use_extended_special_parts_costume_init_
+        lbu     t7, 0x000E(s5)              // original line 1
+        OS.patch_end()
+
+        or      a0, s1, r0                  // original line 2
+
+        // First check the special part index
+        lli     t8, 0x0002                  // t8 = 2, the special part index for hats
+        bne     s2, t8, _end                // if not the special part index for hats, exit
+        nop
+
+        addiu   sp, sp,-0x0030              // allocate stack space
+        sw      t4, 0x0004(sp)              // store registers
+        sw      ra, 0x0008(sp)              // ~
+        sw      v1, 0x000C(sp)              // ~
+        sw      t7, 0x0010(sp)              // ~
+        sw      s2, 0x0014(sp)              // ~
+        sw      s0, 0x0018(sp)              // ~
+
+        or      v0, v1, r0                  // v0 = special part table
+        or      v1, t4, r0                  // v1 = hat_id
+        or      s2, s5, r0                  // s2 = player struct
+
+        li      t0, _custom
+        jal     use_extended_special_parts_
+        nop
+
+        lw      t4, 0x0004(sp)              // restore registers
+        lw      ra, 0x0008(sp)              // ~
+        lw      v1, 0x000C(sp)              // ~
+        lw      t7, 0x0010(sp)              // ~
+        lw      s2, 0x0014(sp)              // ~
+        lw      s0, 0x0018(sp)              // ~
+        addiu   sp, sp, 0x0030              // deallocate stack space
+
+        _end:
+        jr      ra
+        nop
+
+        _custom:
+        or      v0, s0, r0                  // v0 = special part array
+        lw      a1, 0x0004(v0)              // a1 = special images
+        lw      a2, 0x0008(v0)              // a2 = special tracks 1
+        lw      a3, 0x000C(v0)              // a3 = special tracks 2
+
+        lw      ra, 0x0008(sp)              // restore registers
+        lw      s2, 0x0014(sp)              // ~
+        lw      s0, 0x0018(sp)              // ~
+        addiu   sp, sp, 0x0030              // deallocate stack space
+
+        j       0x800E9334                  // return to routine after v0 is set
         nop
     }
 
@@ -275,4 +392,8 @@ scope KirbyHats {
     add_hat(Character.kirby_hat_id.MARIO, 0xE540, -1, -1, 0xF560, -1, -1)
     // Mad Piano hat_id: 0x18
     add_hat(Character.kirby_hat_id.YOSHI_SWALLOW, 0x10EC0, -1, -1, 0x11B20, -1, -1)
+    // Conker hat_id: 0x19
+    add_hat(Character.kirby_hat_id.FOX, 0x13600, -1, -1, 0x14640, -1, -1)
+    // Wolf hat_id: 0x1A
+    add_hat(Character.kirby_hat_id.FOX, 0x16010, -1, -1, 0x16E20, -1, -1)
 }

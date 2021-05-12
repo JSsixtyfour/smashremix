@@ -224,9 +224,8 @@ scope Japan {
     // It is coded to be more generic, so may apply to other sounds that we don't know about
     scope japanese_sfx_link_bomb_collide_: {
         OS.patch_start(0x000E8F88, 0x8016E548)
-        j       japanese_sfx_link_bomb_collide_
+        jal     japanese_sfx_link_bomb_collide_
         lw      t1, 0x003C(v1)                 // original line 2
-        _japanese_sfx_link_bomb_collide_return:
         OS.patch_end()
 
         // check if a hit sound
@@ -285,8 +284,46 @@ scope Japan {
         addu    t2, t2, at                     // then use J sound
 
         _return:
-        j       _japanese_sfx_link_bomb_collide_return
+        jr      ra
         sh      t2, 0x156(s0)                  // original line 1
+    }
+
+    // @ Description
+    // This changes the sound effects for when Link's boomerang hits a Link bomb for J characters or all characters if J sound toggle is ALWAYS
+    // It is coded to be more generic, so may apply to other sounds that we don't know about
+    scope japanese_sfx_link_boomerang_collide_: {
+        OS.patch_start(0xE045C, 0x80165A1C)
+        jal     japanese_sfx_link_boomerang_collide_
+        lbu     t2, 0x002E(v1)                 // original line 2
+        OS.patch_end()
+
+        addiu   sp, sp,-0x0030              // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+        sw      t9, 0x0008(sp)              // ~
+        sw      t2, 0x000C(sp)              // ~
+        sw      at, 0x0010(sp)              // ~
+        lh      t4, 0x0156(s0)              // save this since we don't want to update it
+        sw      t4, 0x0014(sp)              // ~
+
+        lw      t4, 0x0008(a0)              // t4 = player object address (maybe)
+        bnezl   t4, pc() + 8                // if t4 is not zero
+        lw      t4, 0x0084(t4)              // ...then load player struct (maybe)
+        sw      t4, 0x0020(sp)              // save player struct address to where japanese_sfx_link_bomb_collide_ expects it
+
+        jal     japanese_sfx_link_bomb_collide_
+        or      t2, r0, t3                  // t2 = t3 (fgm_id)
+        or      t3, r0, t2                  // t3 = updated fgm_id
+        lw      t4, 0x0014(sp)              // ~
+        sh      t4, 0x0156(s0)              // restore this since we don't want to update it
+
+        lw      ra, 0x0004(sp)              // restore registers
+        lw      t9, 0x0008(sp)              // ~
+        lw      t2, 0x000C(sp)              // ~
+        lw      at, 0x0010(sp)              // ~
+        addiu   sp, sp, 0x0030              // deallocate stack space
+
+        jr      ra
+        sh      t3, 0x146(s0)                  // original line 1
     }
 
     // @ Description

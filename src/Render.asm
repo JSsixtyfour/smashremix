@@ -1717,9 +1717,12 @@ scope Render {
         lbu     t0, 0x0000(t0)              // t0 = current screen
 		
 		// 1P
-        li      t1, multi_man.multiman_css_flag       // t1 = multiman flag
-        lw      t1, 0x0000(t1)              // t1 = 1 if multiman
+        li      t1, SinglePlayerModes.singleplayer_mode_flag       // t1 = Single Player Mode flag address
+        lw      t1, 0x0000(t1)              // t1 = 1 if bonus 3
         beqz    t1, _vs_check               // if not multiman, skip
+        nop
+		addiu	t2, r0, 0x0004				// Remix 1p Flag
+		beq     t2, t1, _vs_check               // if Remix 1p, skip
         nop
 		
 		
@@ -1760,6 +1763,11 @@ scope Render {
         // Options
         lli     t1, 0x0039                  // t1 = options screen_id
         beq     t0, t1, _options            // if (screen_id = options), jump to _options
+        nop
+
+        // Bonus
+        lli     t1, 0x0035                  // t1 = bonus 1/2 screen_id
+        beq     t0, t1, _bonus              // if (screen_id = bonus), jump to _bonus
         nop
 
         _low_screens:
@@ -1803,7 +1811,7 @@ scope Render {
         nop
 		
 		_multiman:
-		jal     multi_man.setup_             // Setup the KO counter
+		jal     SinglePlayerModes.setup_             // Setup the KO counter
         nop
 
         b       _end
@@ -1874,6 +1882,14 @@ scope Render {
         _options:
         jal     Toggles.setup_
         nop
+
+        b       _end
+        nop
+
+        _bonus:
+        lui     v0, 0x800A
+        jal     CharacterSelectDebugMenu.clear_debug_menu_settings_for_1p_
+        lbu     v0, 0x4AE3(v0)                // v0 = port of human player
 
         b       _end
         nop

@@ -247,6 +247,8 @@ scope Costumes {
 		db 0x05                             // Bowser
 		db 0x05                             // Giga Bowser
         db 0x05                             // Piano
+		db 0x05                             // Wolf
+        db 0x05                             // Conker
         OS.align(4)
 
         functions:
@@ -286,11 +288,14 @@ scope Costumes {
         beqz    t9, _end                    // if not teams, go forth normally
         // (use delay slot below)
 
-        // otherwise we'll only check C buttons if character is selected
+        // otherwise we'll only check C buttons if character is selected and not holding a CPU token
         lw      t0, 0x0088(t8)              // t0 = 1 if character selected
-        bnez    t0, _end                    // if character is selected, allow c button checks
+        beqz    t0, _j_0x80138650           // if character is not selected, skip c button checks
+        lw      t0, 0x0080(t8)              // t0 = -1 if not holding a token
+        bltz    t0, _end                    // if not holding a token, continue normally
         nop
 
+        _j_0x80138650:
         // if here, then we should skip c button checks
         j       0x80138650
         nop
@@ -326,6 +331,34 @@ scope Costumes {
     // a2 - shade_id
     constant update_(0x800E9248)
     
+    // @ Description
+    // Prevents illegal sound from playing when selecting the same costume
+    scope prevent_illegal_sound_: {
+        // Training - C buttons
+        OS.patch_start(0x144C04, 0x80135624)
+        // jal 0x80133350                       // original line - returns v0 as 1 if player and costume match
+        lli     v0, 0x0000                      // force result to be 0 instead of checking
+        OS.patch_end()
+
+        // Training - C buttons
+        OS.patch_start(0x141194, 0x80131BB4)
+        // jal 0x80133350                       // original line - returns v0 as 1 if player and costume match
+        lli     v0, 0x0000                      // force result to be 0 instead of checking
+        OS.patch_end()
+
+        // VS - C buttons
+        OS.patch_start(0x12FF50, 0x80131CD0)
+        // jal 0x80134674                       // original line - returns v0 as 1 if player and costume match
+        lli     v0, 0x0000                      // force result to be 0 instead of checking
+        OS.patch_end()
+    }
+
+    // @ Description
+    // This allows multiple players to be the same color by bypassing the check.
+    OS.patch_start(0x001361C8, 0x80137F48)
+    b       0x80137F60
+    OS.patch_end()
+
     // @ Description
     // Revises attribute location within main file to adjust for Polygon Characters and Metal Mario's new costumes
     

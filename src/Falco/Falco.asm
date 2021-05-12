@@ -100,6 +100,7 @@ scope Falco {
     Character.edit_menu_action_parameters(FALCO, 0x4,               File.FALCO_SELECT,          VICTORY_POSE_2,             -1)
     Character.edit_menu_action_parameters(FALCO, 0x5,               File.FALCO_CLAP,            CLAP,                       -1)
     Character.edit_menu_action_parameters(FALCO, 0xD,               File.FALCO_POSE_1P,         POSE_1P,                    -1)
+    Character.edit_menu_action_parameters(FALCO, 0xE,               File.FALCO_1P_CPU_POSE,         POSE_1P,                    -1)
     
     // Set menu zoom size.
     Character.table_patch_start(menu_zoom, Character.id.FALCO, 0x4)

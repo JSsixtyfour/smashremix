@@ -41,9 +41,15 @@ scope AI {
         nop
 
         _guard:
+        addiu   v1, r0, 0x0004
+        li      at, SinglePlayerModes.singleplayer_mode_flag       // at = Mode Flag Address
+        lw      at, 0x0000(at)              // at = 4 if Remix 1p
+		beq     at, v1, _remix_1p           // if Remix 1p, automatic advanced ai
+        nop
         Toggles.guard(Toggles.entry_improved_ai, _original)
 
         // if here, improved AI is on, so we skip the up b check
+        _remix_1p:
         jr      ra
         nop
 
@@ -65,7 +71,7 @@ scope AI {
     // @ Description
     // Functions that execute different tech options
     // @ Arguments
-    // a0 - adress of player struct
+    // a0 - address of player struct
     // a1 - enum direction (forward = 0x49, backward), if applicable
     constant tech_roll_(0x80144700)
     constant tech_roll_og_(0x80144760)
@@ -112,8 +118,14 @@ scope AI {
         addiu   sp, sp,-0x0018              // allocate stack space
         sw      ra, 0x0014(sp)              // save ra
 
+        addiu   t1, r0, 0x0004
+        li      t0, SinglePlayerModes.singleplayer_mode_flag       // t0 = multiman flag
+        lw      t0, 0x0000(t0)              // t0 = 4 if Remix 1p
+		beq     t0, t1, _remix_1p           // if Remix 1p, automatic advanced ai
+        nop
         Toggles.guard(Toggles.entry_improved_ai, j_random_teching__orginal_)
 
+        _remix_1p:
         li      t0, Global.current_screen   // t0 = address of current screen
         lbu     t0, 0x0000(t0)              // t0 = current screen
         lli     t1, 0x003C                  // t1 = how to play screen id
@@ -216,9 +228,36 @@ scope AI {
         _original:
         lw      t6, 0x0160(v1)              // original line 1
         slti    at, t6, 0x000B              // original line 2
+        
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      t0, 0x0004(sp)              // ~
+        sw      t1, 0x0008(sp)              // save registers
+        
+        addiu   t1, r0, 0x0004
+        li      t0, SinglePlayerModes.singleplayer_mode_flag       // at = multiman flag
+        lw      t0, 0x0000(t0)              // at = 4 if Remix 1p
+		beq     t0, t1, _remix_1p           // if Remix 1p, automatic advanced ai
+        nop 
+        
+        lw      t0, 0x0004(sp)              // ~
+        lw      t1, 0x0008(sp)              // save registers
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        
+        j       _normal
+        nop
+        
+        _remix_1p:
+        lw      t0, 0x0004(sp)              // ~
+        lw      t1, 0x0008(sp)              // save registers
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        j       _skip_toggle
+        nop
+        
 
+        _normal:
         Toggles.guard(Toggles.entry_improved_ai, OS.NULL)
 
+        _skip_toggle:
         addiu   sp, sp,-0x0020              // allocate stack space
         sw      ra, 0x001C(sp)              // ~
         sw      v0, 0x0010(sp)              // ~

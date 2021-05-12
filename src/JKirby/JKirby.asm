@@ -70,6 +70,14 @@ scope JKirby {
     Character.add_new_action_params(JKIRBY, BOWSER_NSP_Air,     0x12C,          File.KIRBY_BOWSER_NSP,      Kirby.BOWSER_NSP,           0x1D000000)
     Character.add_new_action_params(JKIRBY, PIANO_NSP_Ground,   0xE7,           File.KIRBY_PIANO_NSP_G,     Kirby.PIANO_NSP,            0x1C000000)
     Character.add_new_action_params(JKIRBY, PIANO_NSP_Air,      0xE8,           File.KIRBY_PIANO_NSP_A,     Kirby.PIANO_NSP,            0x1C000000)
+    Character.add_new_action_params(JKIRBY, WOLF_NSP_Ground,    0xE7,           File.KIRBY_WOLF_NSP_G,      Kirby.WOLF_NSP_GROUND,      -1)
+    Character.add_new_action_params(JKIRBY, WOLF_NSP_Air,       0xE8,           File.KIRBY_WOLF_NSP_A,      Kirby.WOLF_NSP_AIR,         -1)
+    Character.add_new_action_params(JKIRBY, CONKER_NSP_Ground_Begin, -1,        File.KIRBY_CONKER_NSPG_BEGIN, Kirby.CONKER_NSP_BEGIN,    0)
+    Character.add_new_action_params(JKIRBY, CONKER_NSP_Ground_Wait,  -1,        File.KIRBY_CONKER_NSPG_WAIT,  Kirby.CONKER_NSP_WAIT,     0)
+    Character.add_new_action_params(JKIRBY, CONKER_NSP_Ground_End,   -1,        File.KIRBY_CONKER_NSPG_END,   Kirby.CONKER_NSP_END,      0)
+    Character.add_new_action_params(JKIRBY, CONKER_NSP_Air_Begin,    -1,        File.KIRBY_CONKER_NSPA_BEGIN, Kirby.CONKER_NSP_BEGIN,    0)
+    Character.add_new_action_params(JKIRBY, CONKER_NSP_Air_Wait,     -1,        File.KIRBY_CONKER_NSPA_WAIT,  Kirby.CONKER_NSP_WAIT,     0)
+    Character.add_new_action_params(JKIRBY, CONKER_NSP_Air_End,      -1,        File.KIRBY_CONKER_NSPA_END,   Kirby.CONKER_NSP_END,      0)
     
 
     // Add Actions                   // Action Name     // Base Action  //Parameters                        // Staling ID   // Main ASM             // Interrupt/Other ASM          // Movement/Physics ASM         // Collision ASM
@@ -91,10 +99,14 @@ scope JKirby {
     Character.add_new_action(JKIRBY, BOWSER_NSP_Air,    0x12C,          ActionParams.BOWSER_NSP_Air,        -1,             BowserNSP.main_,        -1,                             0x800D91EC,                     BowserNSP.air_collision_)
     Character.add_new_action(JKIRBY, PIANO_NSP_Ground,  0xE7,           ActionParams.PIANO_NSP_Ground,      -1,             -1,                     -1,                             -1,                             -1)
     Character.add_new_action(JKIRBY, PIANO_NSP_Air,     0xE8,           ActionParams.PIANO_NSP_Air,         -1,             -1,                     -1,                             0x800D91EC,                     -1)
+    Character.add_new_action(JKIRBY, WOLF_NSP_Ground,   0xEB,           ActionParams.WOLF_NSP_Ground,       -1,             WolfNSP.main,           -1,                             -1,                             -1)
+    Character.add_new_action(JKIRBY, WOLF_NSP_Air,      0xEC,           ActionParams.WOLF_NSP_Air,          -1,             WolfNSP.main,           -1,                             -1,                             WolfNSP.air_collision_)
+    Character.add_new_action(JKIRBY, CONKER_NSP_Ground_Begin, -1,       ActionParams.CONKER_NSP_Ground_Begin, 0x12,         ConkerNSP.ground_begin_main_, 0,                        0x800D8BB4,                     ConkerNSP.ground_collision_)
+    Character.add_new_action(JKIRBY, CONKER_NSP_Ground_Wait,  -1,       ActionParams.CONKER_NSP_Ground_Wait,  0x12,         ConkerNSP.ground_wait_main_,  0,                        0x800D8BB4,                     ConkerNSP.ground_collision_)
+    Character.add_new_action(JKIRBY, CONKER_NSP_Ground_End,   -1,       ActionParams.CONKER_NSP_Ground_End,   0x12,         ConkerNSP.end_main_,          0,                        0x800D8BB4,                     ConkerNSP.ground_collision_)
+    Character.add_new_action(JKIRBY, CONKER_NSP_Air_Begin,    -1,       ActionParams.CONKER_NSP_Air_Begin,    0x12,         ConkerNSP.air_begin_main_,    0,                        0x800D90E0,                     ConkerNSP.air_collision_)
+    Character.add_new_action(JKIRBY, CONKER_NSP_Air_Wait,     -1,       ActionParams.CONKER_NSP_Air_Wait,     0x12,         ConkerNSP.air_wait_main_,     0,                        0x800D90E0,                     ConkerNSP.air_collision_)
+    Character.add_new_action(JKIRBY, CONKER_NSP_Air_End,      -1,       ActionParams.CONKER_NSP_Air_End,      0x12,         ConkerNSP.end_main_,          0,                        0x800D90E0,                     ConkerNSP.air_collision_end_)
     
-    // Set crowd chant FGM.
-    // Character.table_patch_start(crowd_chant_fgm, Character.id.JJKIRBY,0x2)
-    // dh  0x0315
-    // OS.patch_end()
     
 }

@@ -681,15 +681,15 @@ scope Toggles {
     // Special Model Display strings
     model_off:; db "OFF", 0x00
     model_hitbox:; db "HITBOX", 0x00
-    model_skeleton:; db "SKELETON", 0x00
+    model_hitbox_plus:; db "HITBOX+", 0x00
     model_ecb:; db "ECB", 0x00
     OS.align(4)
 
     string_table_model:
     dw model_off
     dw model_hitbox
+    dw model_hitbox_plus
     dw model_ecb
-    dw model_skeleton
 
     // @ Description
     // Model Display strings
@@ -816,20 +816,21 @@ scope Toggles {
     // @ Description 
     // Miscellaneous Toggles
     head_remix_settings:
+    entry_skip_results_screen:;         entry_bool("Skip Results Screen", OS.FALSE, OS.FALSE, OS.FALSE, entry_practice_overlay)
     entry_practice_overlay:;            entry_bool("Color Overlays", OS.FALSE, OS.FALSE, OS.FALSE, entry_cinematic_entry)
     entry_cinematic_entry:;             entry("Cinematic Entry", Menu.type.U8, 0, 0, 0, 0, 2, OS.NULL, string_table_frequency, OS.NULL, entry_flash_on_z_cancel)
     entry_flash_on_z_cancel:;           entry_bool("Flash On Z-Cancel", OS.FALSE, OS.FALSE, OS.FALSE, entry_fps)
     entry_fps:;                         entry("FPS Display *BETA", Menu.type.U8, OS.FALSE, OS.FALSE, OS.FALSE, 0, 2, OS.NULL, string_table_fps, OS.NULL, entry_model_display)
     entry_model_display:;               entry("Model Display", Menu.type.U8, 0, 0, 0, 0, 2, OS.NULL, string_table_poly, OS.NULL, entry_special_model)
-    entry_special_model:;               entry("Special Model Display", Menu.type.U8, OS.FALSE, OS.FALSE, OS.FALSE, 0, 3, OS.NULL, string_table_model, OS.NULL, entry_hold_to_pause)
+    entry_special_model:;               entry("Special Model Display", Menu.type.U8, OS.FALSE, OS.FALSE, OS.FALSE, 0, 3, OS.NULL, string_table_model, OS.NULL, entry_advanced_hurtbox)
+    entry_advanced_hurtbox:;            entry_bool("Advanced Hurtbox Display", OS.FALSE, OS.FALSE, OS.FALSE, entry_hold_to_pause)
     entry_hold_to_pause:;               entry_bool("Hold To Pause", OS.FALSE, OS.TRUE, OS.FALSE, entry_improved_combo_meter)
     entry_improved_combo_meter:;        entry_bool("Improved Combo Meter", OS.TRUE, OS.FALSE, OS.TRUE, entry_tech_chase_combo_meter)
     entry_tech_chase_combo_meter:;      entry_bool("Tech Chase Combo Meter", OS.TRUE, OS.FALSE, OS.TRUE, entry_vs_mode_combo_meter)
     entry_vs_mode_combo_meter:;         entry_bool("VS Mode Combo Meter", OS.TRUE, OS.FALSE, OS.TRUE, entry_1v1_combo_meter_swap)
     entry_1v1_combo_meter_swap:;        entry_bool("1v1 Combo Meter Swap", OS.FALSE, OS.FALSE, OS.FALSE, entry_improved_ai)
     entry_improved_ai:;                 entry_bool("Improved AI", OS.TRUE, OS.FALSE, OS.TRUE, entry_neutral_spawns)
-    entry_neutral_spawns:;              entry_bool("Neutral Spawns", OS.TRUE, OS.TRUE, OS.TRUE, entry_skip_results_screen)
-    entry_skip_results_screen:;         entry_bool("Skip Results Screen", OS.FALSE, OS.FALSE, OS.FALSE, entry_salty_runback)
+    entry_neutral_spawns:;              entry_bool("Neutral Spawns", OS.TRUE, OS.TRUE, OS.TRUE, entry_salty_runback)
     entry_salty_runback:;               entry_bool("Salty Runback", OS.TRUE, OS.FALSE, OS.TRUE, entry_widescreen)
     entry_widescreen:;                  entry_bool("Widescreen", OS.FALSE, OS.FALSE, OS.FALSE, entry_japanese_hitlag)
     entry_japanese_hitlag:;             entry_bool("Japanese Hitlag", OS.FALSE, OS.FALSE, OS.TRUE, entry_japanese_di)
@@ -952,7 +953,7 @@ scope Toggles {
 
     // @ Description
     // SRAM blocks for toggle saving.
-    block_misc:; SRAM.block(24 * 4)
+    block_misc:; SRAM.block(25 * 4)
     block_music:; SRAM.block((19 + {toggled_custom_MIDIs}) * 4)
     block_stages:; SRAM.block((19 + {toggled_custom_stages}) * 4)
 

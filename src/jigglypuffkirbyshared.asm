@@ -491,7 +491,7 @@ scope JigglypuffKirbyShared {
     scope kirby_cpu_inhale: {
         OS.patch_start(0xB165C, 0x80136C1C)
         j       kirby_cpu_inhale                      
-        lw      v0, 0x0ADC(a0)
+        nop
         _return:
         OS.patch_end()
         
@@ -499,34 +499,32 @@ scope JigglypuffKirbyShared {
         addiu   at, r0, Character.id.JKIRBY     // JKIRBY ID
         beq     v1, at, _end
         nop
+        j       0x80136C2C                  // modified line 1
         or      v0, v1, r0                  // original line 2   
         
         _end:
-        j       0x80136C2C                  // modified line 1
-        nop 
         j       _return
-        nop
+        or      v0, v1, r0                  // original line 2  
     }
     
     // character ID check add for when Kirby Clones CPUs inhale an opponent.
     scope kirby_cpu_inhale_2: {
         OS.patch_start(0xB3948, 0x80138F08)
         j       kirby_cpu_inhale_2                      
-        lw      v0, 0x0ADC(a2)
+        nop
         _return:
         OS.patch_end()
         
-        beq     v1, at, _end
+        beq     v0, at, _end
         addiu   at, r0, Character.id.JKIRBY     // JKIRBY ID
-        beq     v1, at, _end
-        nop
-        or      v0, v1, r0                  // original line 2   
+        beq     v0, at, _end
+        nop   
+        j       0x80138F18                  // modified line 1
+        or      v1, v0, r0                  // original line 2
         
         _end:
-        j       0x80138F18                  // modified line 1
-        nop 
         j       _return
-        nop
+        or      v1, v0, r0                  // original line 2
     }
     
     // character ID check add for when Kirby Clones CPUs inhale an opponent.

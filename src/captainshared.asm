@@ -28,6 +28,25 @@ scope CaptainShared {
     dw  Character.JFALCON_file_8_ptr
     OS.copy_segment(0xA9AF4, 0x20)
     
+    // THIS WILL NEED UPDATED ON REIMPORT
+    slash_anim_struct_WOLF:
+    dw  0x020F0000
+    dw  Character.WOLF_file_9_ptr
+    OS.copy_segment(0xA9AF4, 0x10)
+    dw  0x000008F0                  // customized because this animation was added to an existing file, these are offsets
+    dw  0x00000A90                  // customized because this animation was added to an existing file, these are offsets
+    dw  0x00000000                  // beginning of graphic within file, normally 0, but unique since added to another file 
+    dw  0x00000ABC                  // customized because this animation was added to an existing file, these are offsets
+    
+    //slash_anim_struct_WOLF:
+    dw  0x020F0000
+    dw  Character.WOLF_file_9_ptr
+    OS.copy_segment(0xA9AF4, 0x10)
+    dw  0x00000040 
+    dw  0x000001E0 
+    dw  0x00000000 
+    dw  0x0000020C
+    
     entry_anim_struct_JFALCON:
     dw  0x060A0000
     dw  Character.JFALCON_file_7_ptr
@@ -38,6 +57,13 @@ scope CaptainShared {
     dw  Character.BOWSER_file_7_ptr
     OS.copy_segment(0xA9EAC, 0x10)
 	dw	0x00001E80					// Clown car alters this, relates to model hierarchy I believe
+	OS.copy_segment(0xA9EC0, 0x0C)
+    
+    entry_anim_struct_CONKER:
+    dw  0x060A0000
+    dw  Character.CONKER_file_8_ptr
+    OS.copy_segment(0xA9EAC, 0x10)
+	dw	0x00000F60					// Greg's Hand alters this, relates to model hierarchy I believe
 	OS.copy_segment(0xA9EC0, 0x0C)
     
     // @ Description
@@ -103,6 +129,12 @@ scope CaptainShared {
         li      a0, punch_anim_struct       // a0 = punch_anim_struct
         beq     t0, t1, _end                // end if character id = GND
         nop
+        
+        ori     t1, r0, Character.id.WOLF   // t1 = id.WOLF
+        li      a0, slash_anim_struct_WOLF  // a0 = slash_anim_struct
+        beq     t0, t1, _end                // end if character id = WOLF
+        nop
+        
         ori     t1, r0, Character.id.JFALCON    // t1 = id.JFALCON
         li      a0, punch_anim_struct_JFALCON       // a0 = punch_anim_struct
         beq     t0, t1, _end                // end if character id = JFALCON
@@ -147,6 +179,11 @@ scope CaptainShared {
 		ori     t1, r0, Character.id.BOWSER   // t1 = id.BOWSER
         li      a0, entry_anim_struct_BOWSER       // a0 = entry_anim_struct_BOWSER
         beq     t0, t1, _end                // end if character id = BOWSER, this is used for Clown Copter
+        nop
+        
+        ori     t1, r0, Character.id.CONKER        // t1 = id.CONKER
+        li      a0, entry_anim_struct_CONKER       // a0 = entry_anim_struct_CONKER
+        beq     t0, t1, _end                       // end if character id = CONKER, this is used for Clown Copter
         nop
 		
         li      a0, 0x8012E6A4              // original line 1/3 (load entry animation struct?)
@@ -197,6 +234,12 @@ scope CaptainShared {
         li      s2, Character.BOWSER_file_7_ptr // a0 = Character.BOWSER _file_7_ptr
         beq     t0, t1, _end                // end if character id = BOWSER, this is used for Clown Copter  
         nop
+        
+        ori     t1, r0, Character.id.CONKER    // t1 = id.BOWSER  
+        li      s2, Character.CONKER_file_8_ptr // a0 = Character.CONKER _file_8_ptr
+        beq     t0, t1, _end                // end if character id = CONKER, this is used for Greg's Hand
+        nop
+        
         li      s2, 0x8013103C              // original line 1/2 (load falcon file 7 ptr)
         
         _end:
@@ -235,6 +278,9 @@ scope CaptainShared {
         ori     at, r0, Character.id.JFALCON
         beq     a1, at, _end                // end if character id = JFALCON
         lw      v1, 0x0928(a0)              // v1 = falcon hand bone struct
+        ori     at, r0, Character.id.WOLF
+        beq     a1, at, _end                // end if character id = WOLF
+        lw      v1, 0x0928(a0)              // v1 = wolf hand bone struct
         
         lw      v1, 0x0960(a0)              // v1 = other bone struct (used for kirby presumably)
         
@@ -255,6 +301,10 @@ scope CaptainShared {
         lw		s5, 0x0008(s0)
 		beq		t7, s5, _bowser				// load correct T7 value for BOWSER
 		lui		t7, 0x0000					// original line 1
+        
+        ori     t7, r0, Character.id.CONKER    // t1 = id.CONKER
+        beq		t7, s5, _conker				// load correct T7 value for CONKER
+		lui		t7, 0x0000					// original line 1
 		
         j       _return                     // return
         addiu	t7, t7, 0x6200				// original line 2
@@ -262,6 +312,10 @@ scope CaptainShared {
 		_bowser:
 		j		_return
 		addiu	t7, t7, 0x248C				// animation related change
+        
+        _conker:
+		j		_return
+		addiu	t7, t7, 0x188C				// animation related change
     }
 	
 	// @ Description
@@ -269,13 +323,16 @@ scope CaptainShared {
     scope clown_car_animation2: {
         OS.patch_start(0x7EDF4, 0x801035F4)
         j       clown_car_animation2
-        ori     s1, r0, Character.id.BOWSER    // t1 = id.BOWSER  
+        ori     s1, r0, Character.id.BOWSER    // s1 = id.BOWSER  
         _return:
         OS.patch_end()
         
-        lw		s0, 0x0008(s0)
+        lw		s0, 0x0008(s0)              // load player id
 		beq		s0, s1, _bowser				// load correct values for BOWSER
-		nop					
+		ori     s1, r0, Character.id.CONKER    // s1 = id.CONKER 		
+
+		beq		s0, s1, _conker				// load correct values for CONKER
+		nop	
 		
         addiu	s4, s4, 0x6598				// original line 1
 		j       _return                     // return
@@ -285,8 +342,14 @@ scope CaptainShared {
 		addiu	s4, s4, 0x2530
 		j		_return
 		addiu	s3, s3, 0x24C0
+        
+        _conker:
+		addiu	s4, s4, 0x1930
+		j		_return
+		addiu	s3, s3, 0x18C0
     }
-
+    
+    
     // @ Description
     // Extends a check on ID that occurs when Kirby absorbs or ejects a power.
     scope kirby_power_change_: {

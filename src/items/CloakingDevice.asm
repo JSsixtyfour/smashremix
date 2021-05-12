@@ -159,6 +159,22 @@ scope handle_active_cloaking_device_: {
     addiu   t1, t1, 0x0058
 
     _set_env_color:
+    sll     t1, t1, 0x0018              // shift left...
+    srl     t1, t1, 0x0018              // then shift right so we get 0x000000XX
+
+    lw      t5, 0x0020(t2)              // t5 = env color state
+    addiu   t6, r0, -0x0100             // t6 = 0xFFFFFF00
+    beqzl   t5, _update_override        // if Normal, we'll want 0xFFFFFFXX
+    or      t1, t1, t6                  // t1 = 0xFFFFFFXX
+    lli     t6, CharEnvColor.state.CLOAKED
+    beql    t5, t6, _update_override    // if Cloaked, we'll want 0xFFFFFFXX
+    or      t1, t1, t6                  // t1 = 0xFFFFFFXX
+
+    // if here, state is DARK or NONE, so we are good unless it's all 0
+    beqzl   t1, _update_override        // if 0, we will add 1 so we don't make opaque instead (by disabling override)
+    addiu   t1, t1, 0x0001              // t1++
+
+    _update_override:
     sw      t1, 0x0000(t2)              // set env color for character
 
     jr      ra
@@ -166,7 +182,25 @@ scope handle_active_cloaking_device_: {
 
     _decloak:
     lw      t1, 0x0048(a0)              // t1 = address of env color override value
+
+    addiu   t2, r0, -0x00FF             // t2 = 0xFFFFFF01 (None)
+    addiu   t3, r0, 0x00FF              // t3 = 0x000000FF (Dark)
+    addiu   t4, r0, -0x00F0             // t4 = 0xFFFFFF10 (Cloaked)
+
+    lw      t5, 0x0020(t1)              // t5 = env color state
+    beqzl   t5, _update_cloaked_flag    // if Normal, clear override
     sw      r0, 0x0000(t1)              // clear env color override
+    lli     t6, CharEnvColor.state.NONE
+    beql    t5, t6, _update_cloaked_flag // if None, set override accordingly
+    sw      t2, 0x0000(t1)              // set env color override
+    lli     t6, CharEnvColor.state.DARK
+    beql    t5, t6, _update_cloaked_flag // if Dark, set override accordingly
+    sw      t3, 0x0000(t1)              // set env color override
+
+    // if here, cloaked - not sure how to handle just yet!
+    sw      t4, 0x0000(t1)              // set env color override p1
+
+    _update_cloaked_flag:
     sb      r0, 0x0000(t8)              // update cloaked flag to FALSE
 
     // stop this routine from running any longer
@@ -241,11 +275,68 @@ scope clear_active_cloaking_devices_: {
     sw      r0, 0x0000(t8)              // clear cloaked flags
 
     li      t0, CharEnvColor.override_table
-    sw      r0, 0x0000(t0)              // clear env color override p1
-    sw      r0, 0x0004(t0)              // clear env color override p2
-    sw      r0, 0x0008(t0)              // clear env color override p3
-    sw      r0, 0x000C(t0)              // clear env color override p4
+    li      t1, CharEnvColor.state_table
 
+    addiu   t2, r0, -0x00FF             // t2 = 0xFFFFFF01 (None)
+    addiu   t3, r0, 0x00FF              // t3 = 0x000000FF (Dark)
+    addiu   t4, r0, -0x00F0             // t4 = 0xFFFFFF10 (Cloaked)
+
+    lw      t5, 0x0000(t1)              // t2 = p1 state
+    beqzl   t5, _p2                     // if Normal, clear override
+    sw      r0, 0x0000(t0)              // clear env color override p1
+    lli     t6, CharEnvColor.state.NONE
+    beql    t5, t6, _p2                 // if None, set override accordingly
+    sw      t2, 0x0000(t0)              // set env color override p1
+    lli     t6, CharEnvColor.state.DARK
+    beql    t5, t6, _p2                 // if Dark, set override accordingly
+    sw      t3, 0x0000(t0)              // set env color override p1
+
+    // if here, cloaked - not sure how to handle just yet!
+    sw      t4, 0x0000(t0)              // set env color override p1
+
+    _p2:
+    lw      t5, 0x0004(t1)              // t2 = p2 state
+    beqzl   t5, _p3                     // if Normal, clear override
+    sw      r0, 0x0004(t0)              // clear env color override p2
+    lli     t6, CharEnvColor.state.NONE
+    beql    t5, t6, _p3                 // if None, set override accordingly
+    sw      t2, 0x0004(t0)              // set env color override p2
+    lli     t6, CharEnvColor.state.DARK
+    beql    t5, t6, _p3                 // if Dark, set override accordingly
+    sw      t3, 0x0004(t0)              // set env color override p2
+
+    // if here, cloaked - not sure how to handle just yet!
+    sw      t4, 0x0004(t0)              // set env color override p1
+
+    _p3:
+    lw      t5, 0x0008(t1)              // t2 = p3 state
+    beqzl   t5, _p4                     // if Normal, clear override
+    sw      r0, 0x0008(t0)              // clear env color override p3
+    lli     t6, CharEnvColor.state.NONE
+    beql    t5, t6, _p4                 // if None, set override accordingly
+    sw      t2, 0x0008(t0)              // set env color override p3
+    lli     t6, CharEnvColor.state.DARK
+    beql    t5, t6, _p4                 // if Dark, set override accordingly
+    sw      t3, 0x0008(t0)              // set env color override p3
+
+    // if here, cloaked - not sure how to handle just yet!
+    sw      t4, 0x0008(t0)              // set env color override p1
+
+    _p4:
+    lw      t5, 0x000C(t1)              // t2 = p4 state
+    beqzl   t5, _end                    // if Normal, clear override
+    sw      r0, 0x000C(t0)              // clear env color override p4
+    lli     t6, CharEnvColor.state.NONE
+    beql    t5, t6, _end                // if None, set override accordingly
+    sw      t2, 0x000C(t0)              // set env color override p4
+    lli     t6, CharEnvColor.state.DARK
+    beql    t5, t6, _end                // if Dark, set override accordingly
+    sw      t3, 0x000C(t0)              // set env color override p4
+
+    // if here, cloaked - not sure how to handle just yet!
+    sw      t4, 0x000C(t0)              // set env color override p1
+
+    _end:
     jr      ra
     nop
 }

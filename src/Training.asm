@@ -779,9 +779,9 @@ scope Training {
         beqz    v0, _check_frame_advance    // if (!dd_pressed), skip
         nop
         li      t1, Toggles.entry_special_model
-        lw      t0, 0x0004(t1)              // t0 = 0 for off, 1 for hitbox_mode, 2 for ecb
-        addiu   t0, t0, 0x0001              // t0 = 1, 2, or 3
-        lli     t2, 0x0004                  // t2 = 3
+        lw      t0, 0x0004(t1)              // t0 = 0 for off, 1 for hitbox_mode, 2 for hitbox+model, 3 for ecb
+        addiu   t0, t0, 0x0001              // t0 = 1, 2, 3, or 4
+        lli     t2, 0x0004                  // t2 = 4
         beql    t0, t2, _update_model_display
         addu    t0, r0, r0                  // turn off special model display
         
@@ -1442,6 +1442,8 @@ scope Training {
     char_0x34:; db "Bowser", 0x00
 	char_0x35:; db "Giga Bowser", 0x00
     char_0x36:; db "Mad Piano", 0x00
+	char_0x37:; db "Wolf", 0x00
+    char_0x38:; db "Conker", 0x00
     OS.align(4)
 
     string_table_char:
@@ -1466,6 +1468,8 @@ scope Training {
     dw char_0x22            // DARK SAMUS
     dw char_0x26            // LUCAS
 	dw char_0x34            // BOWSER
+	dw char_0x37            // WOLF
+    dw char_0x38            // CONKER
 
     dw char_0x2A            // J MARIO
     dw char_0x29            // J FOX
@@ -1529,30 +1533,33 @@ scope Training {
         constant DSAMUS(0x11)
         constant LUCAS(0x12)
 		constant BOWSER(0x13)
+		constant WOLF(0x14)
+        constant CONKER(0x15)
 
         // j characters
-        constant JMARIO(0x14)
-        constant JFOX(0x15)
-        constant JDK(0x16)
-        constant JSAMUS(0x17)
-        constant JLUIGI(0x18)
-        constant JLINK(0x19)
-        constant JYOSHI(0x1A)
-        constant JFALCON(0x1B)
-        constant JKIRBY(0x1C)
-        constant JPIKA(0x1D)
-        constant JPUFF(0x1E)
-        constant JNESS(0x1F)
+        constant JMARIO(0x16)
+        constant JFOX(0x17)
+        constant JDK(0x18)
+        constant JSAMUS(0x19)
+        constant JLUIGI(0x1A)
+        constant JLINK(0x1B)
+        constant JYOSHI(0x1C)
+        constant JFALCON(0x1D)
+        constant JKIRBY(0x1E)
+        constant JPIKA(0x1F)
+        constant JPUFF(0x20)
+        constant JNESS(0x21)
 
         // e characters
-        constant ESAMUS(0x20)
-        constant ELINK(0x21)
-        constant EPIKA(0x22)
-        constant EPUFF(0x23)
+        constant ESAMUS(0x22)
+        constant ELINK(0x23)
+        constant EPIKA(0x24)
+        constant EPUFF(0x25)
+		
 
         // Increment METAL after adding more characters above
 
-        constant METAL(0x24)
+        constant METAL(0x26)
         constant GDONKEY(METAL + 0x01)
         constant GBOWSER(METAL + 0x02)
         constant PIANO(METAL + 0x03)
@@ -1593,6 +1600,8 @@ scope Training {
     db Character.id.DSAMUS
     db Character.id.LUCAS
 	db Character.id.BOWSER
+	db Character.id.WOLF
+    db Character.id.CONKER
 
     db Character.id.JMARIO
     db Character.id.JFOX
@@ -1685,6 +1694,8 @@ scope Training {
 	db id.BOWSER
 	db id.GBOWSER
     db id.PIANO
+	db id.WOLF
+    db id.CONKER
 
     // @ Description 
     // Spawn Position Strings

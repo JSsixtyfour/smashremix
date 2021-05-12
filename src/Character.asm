@@ -12,7 +12,7 @@ include "OS.asm"
 
 scope Character {
     // number of character slots to add
-    constant ADD_CHARACTERS(26)
+    constant ADD_CHARACTERS(28)
     // start and end offset for the main character struct table
     constant STRUCT_TABLE(0x92610)
     variable STRUCT_TABLE_END(STRUCT_TABLE + 0x6C)
@@ -29,7 +29,7 @@ scope Character {
 
     // @ Description
     // adds a new character
-    macro define_character(name, parent, file_1, file_2, file_3, file_4, file_5, file_6, file_7, file_8, file_9, attrib_offset, add_actions, bool_jab_3, bool_inhale_copy, btt_stage_id, btp_stage_id, sound_type, variant_type) {
+    macro define_character(name, parent, file_1, file_2, file_3, file_4, file_5, file_6, file_7, file_8, file_9, attrib_offset, add_actions, bool_jab_3, bool_inhale_copy, btt_stage_id, btp_stage_id, remix_btt_stage_id, remix_btp_stage_id, sound_type, variant_type) {
     if id.{parent} > 0xB {
         print "CHARACTER: {name} NOT CREATED. UNSUPPORTED PARENT. \n"
     } else {
@@ -274,10 +274,10 @@ scope Character {
         origin kirby_inhale_struct.TABLE_ORIGIN + (id.{name} * 0xC)
         if {bool_inhale_copy} == OS.TRUE {
             dh      id.{name}
-        	dh      kirby_hat_id.{parent}
+            dh      kirby_hat_id.{parent}
         } else {
             dh      id.KIRBY                 // KIRBY ID used to disable copy
-        	dh      kirby_hat_id.NONE
+            dh      kirby_hat_id.NONE
         }
         dw      kirby_inhale_struct.star_scale.{parent}
         dw      kirby_inhale_struct.star_damage.DEFAULT
@@ -287,6 +287,12 @@ scope Character {
         db      {btt_stage_id}
         origin BTP_TABLE_ORIGIN + id.{name}
         db      {btp_stage_id}
+        
+        // update remix bonus stage tables
+        origin REMIX_BTT_TABLE_ORIGIN + id.{name}
+        db      {remix_btt_stage_id}
+        origin REMIX_BTP_TABLE_ORIGIN + id.{name}
+        db      {remix_btp_stage_id}
 
         // update sound type table
         table_patch_start(sound_type, id.{name}, 0x1)
@@ -379,8 +385,8 @@ scope Character {
     macro edit_action(name, action, staling, asm1, asm2, asm3, asm4) {
     if {action} < 0xDC {
         print "\n\nWARNING: Action 0x" ; OS.print_hex({action}) ; print " is a shared action and cannot be modified. edit_action aborted.\n"
-    } else if {staling} > 0x1F {
-        print "\n\n WARNING: UNSUPPORTED STALING ID! Max Staling ID = 0x1F. edit_action aborted.\n"
+    } else if {staling} > 0x3F {
+        print "\n\n WARNING: UNSUPPORTED STALING ID! Max Staling ID = 0x3F. edit_action aborted.\n"
     } else {
         // Define {num} (used to avoid constant declaration issues with read16)
         if !{defined num} {
@@ -498,8 +504,8 @@ scope Character {
     if !{defined {name}_new_actions} {
         global evaluate {name}_new_actions(0)
     }
-    if {staling} > 0x1F {
-        print "\n\n WARNING: UNSUPPORTED STALING ID! Max Staling ID = 0x1F. Error in add_new_action ({action_name}).\n"
+    if {staling} > 0x3F {
+        print "\n\n WARNING: UNSUPPORTED STALING ID! Max Staling ID = 0x3F. Error in add_new_action ({action_name}).\n"
     }
     if Character.{name}_NEW_ACTION_SLOTS <= {{name}_new_actions} {
             print "\n\nWARNING: NOT ENOUGH ACTION SLOTS! {name} does not have enough action slots to support adding action {action_name}. Please increase the number of new actions for this character.\n"
@@ -971,6 +977,15 @@ scope Character {
             li      a1, SEGMENT_SIZE_TABLE
             li      a3, SEGMENT_SIZE_TABLE_END
             lw      t2, 0x0038(sp)
+        }
+        
+        // @ Description
+        // modifies a hard-coded routine which runs on character load and assigns pointers in each character's file table
+        // s1 - loop iteration count
+        scope assign_file_pointers_: {
+            origin  0x53040
+            base    0x800D7840
+            lli     s1, NUM_CHARACTERS
         }
 
         // @ Description
@@ -1583,7 +1598,11 @@ scope Character {
             lwc1    f10, 0x7630(at)         // original line 4
             OS.patch_end()
             // results screen
-            OS.patch_start(0x152A8C, 0x801338EC)
+            OS.patch_start(0x00152A8C, 0x801338EC)
+            li      t7, menu_zoom.table     // original line 1/2
+            OS.patch_end()
+            // game over screen
+            OS.patch_start(0x00178AFC, 0x8013209C)
             li      t7, menu_zoom.table     // original line 1/2
             OS.patch_end()
         }
@@ -1745,6 +1764,17 @@ scope Character {
             OS.patch_start(0xDC960, 0x80161F20)
             li      t7, kirby_inhale_struct.table
             OS.patch_end()
+            
+            // initialize character
+            OS.patch_start(0x53660, 0x800D7E60)
+            jal     get_extended_inhale_struct_._initialize
+            addiu   a1, r0, 0x0006          // original line 1
+            OS.patch_end()
+
+            _initialize:
+            li      t9, kirby_inhale_struct.table
+            jr      ra
+            nop
         }
     }
 
@@ -2391,11 +2421,15 @@ scope Character {
     OS.align(16)
     
     // extend kirby's action arrays
-    extend_kirby_arrays(18)
+    extend_kirby_arrays(26)
 
     // set up extended high score table
     EXTENDED_HIGH_SCORE_TABLE_BLOCK:; SRAM.block((NUM_CHARACTERS - 12) * 0x20)   // exclude original 12 characters
     constant EXTENDED_HIGH_SCORE_TABLE(EXTENDED_HIGH_SCORE_TABLE_BLOCK + 0x000C)
+    OS.align(16)
+    // set up high score table for Remix 1p
+    REMIX_1P_HIGH_SCORE_TABLE_BLOCK:; SRAM.block((NUM_CHARACTERS) * 0x20)   // include all characters
+    constant REMIX_1P_HIGH_SCORE_TABLE(REMIX_1P_HIGH_SCORE_TABLE_BLOCK + 0x000C)
 
     // set up custom character bonus stages
     OS.align(16)
@@ -2467,21 +2501,92 @@ scope Character {
     // we'll fill with 0xFF to purposely ignore ones we don't explicitly set
     fill ADD_CHARACTERS, 0xFF
     OS.align(16)
-	
-	// set up a high score table for multi-man mode
+    
+    // set up alternate bonus stages for Remix 1P
+    OS.align(16)
+    REMIX_BTT_TABLE:
+    constant REMIX_BTT_TABLE_ORIGIN(origin())
+    db Stages.id.BTT_DONKEY_KONG         // MARIO
+    db Stages.id.BTT_DS                  // FOX
+    db Stages.id.BTT_SAMUS               // DONKEY KONG
+    db Stages.id.BTT_LUIGI               // SAMUS
+    db Stages.id.BTT_BOWSER              // LUIGI
+    db Stages.id.BTT_YOSHI               // LINK
+    db Stages.id.BTT_LINK                // YOSHI
+    db Stages.id.BTT_FALCO               // CAPTAIN FALCON
+    db Stages.id.BTT_WARIO               // KIRBY
+    db Stages.id.BTT_SAMUS               // PIKACHU
+    db Stages.id.BTT_FOX                 // JIGGLYPUFF
+    db Stages.id.BTT_YL                  // NESS
+    db 0xFF                              // MASTERHAND
+    db Stages.id.BTT_MARIO               // METAL MARIO
+    db Stages.id.BTT_STG1            // NMARIO
+    db Stages.id.BTT_STG1            // NFOX
+    db Stages.id.BTT_STG1            // NDONKEY
+    db Stages.id.BTT_STG1            // NSAMUS
+    db Stages.id.BTT_STG1            // NLUIGI
+    db Stages.id.BTT_STG1            // NLINK
+    db Stages.id.BTT_STG1            // NYOSHI
+    db Stages.id.BTT_STG1            // NCAPTAIN
+    db Stages.id.BTT_STG1            // NKIRBY
+    db Stages.id.BTT_STG1            // NPIKACHU
+    db Stages.id.BTT_STG1            // NJIGGLY
+    db Stages.id.BTT_STG1            // NNESS
+    db Stages.id.BTT_SAMUS               // GDONKEY
+    db 0xFF                              // PLACEHOLDER
+    db 0xFF                              // PLACEHOLDER
+    // we'll fill with 0xFF to purposely ignore ones we don't explicitly set
+    fill ADD_CHARACTERS, 0xFF
+    OS.align(16)
+    REMIX_BTP_TABLE:
+    constant REMIX_BTP_TABLE_ORIGIN(origin())
+    db Stages.id.BTP_BOWSER              // MARIO
+    db Stages.id.BTP_FALCON              // FOX
+    db Stages.id.BTP_LINK                // DONKEY KONG
+    db Stages.id.BTP_LUIGI               // SAMUS
+    db Stages.id.BTP_LUCAS2               // LUIGI
+    db Stages.id.BTP_YOSHI               // LINK
+    db Stages.id.BTP_KIRBY               // YOSHI
+    db Stages.id.BTP_DS                  // CAPTAIN FALCON
+    db Stages.id.BTP_PIKACHU             // KIRBY
+    db Stages.id.BTP_NESS                // PIKACHU
+    db Stages.id.BTP_WARIO               // JIGGLYPUFF
+    db Stages.id.BTP_PIKACHU             // NESS
+    db 0xFF                              // MASTERHAND
+    db Stages.id.BTP_BOWSER              // METAL MARIO
+    db Stages.id.BTP_POLY                // NMARIO
+    db Stages.id.BTP_POLY                // NFOX
+    db Stages.id.BTP_POLY                // NDONKEY
+    db Stages.id.BTP_POLY                // NSAMUS
+    db Stages.id.BTP_POLY                // NLUIGI
+    db Stages.id.BTP_POLY                // NLINK
+    db Stages.id.BTP_POLY                // NYOSHI
+    db Stages.id.BTP_POLY                // NCAPTAIN
+    db Stages.id.BTP_POLY                // NKIRBY
+    db Stages.id.BTP_POLY                // NPIKACHU
+    db Stages.id.BTP_POLY                // NJIGGLY
+    db Stages.id.BTP_POLY                // NNESS
+    db Stages.id.BTP_LINK                // GDONKEY
+    db 0xFF                              // PLACEHOLDER
+    db 0xFF                              // PLACEHOLDER
+    // we'll fill with 0xFF to purposely ignore ones we don't explicitly set
+    fill ADD_CHARACTERS, 0xFF
+    OS.align(16)
+    
+    // set up a high score table for multi-man mode
     MULTIMAN_HIGH_SCORE_TABLE_BLOCK:; SRAM.block((NUM_CHARACTERS) * 0x0004)   //
     constant MULTIMAN_HIGH_SCORE_TABLE(MULTIMAN_HIGH_SCORE_TABLE_BLOCK + 0x000C)
-	OS.align(16)
-	
-	// set up a high score table for multi-man mode
+    OS.align(16)
+    
+    // set up a high score table for multi-man mode
     CRUEL_HIGH_SCORE_TABLE_BLOCK:; SRAM.block((NUM_CHARACTERS) * 0x0004)   //
     constant CRUEL_HIGH_SCORE_TABLE(CRUEL_HIGH_SCORE_TABLE_BLOCK + 0x000C)
-	OS.align(16)
-	
-	// set up a high score table for Bonus 3
+    OS.align(16)
+    
+    // set up a high score table for Bonus 3
     BONUS3_HIGH_SCORE_TABLE_BLOCK:; SRAM.block((NUM_CHARACTERS) * 0x0004)   //
     constant BONUS3_HIGH_SCORE_TABLE(BONUS3_HIGH_SCORE_TABLE_BLOCK + 0x000C)
-	OS.align(16)
+    OS.align(16)
 
     // Fix menu actions for MM, GDK and Polygons by copying them from the base character
     copy_menu_actions(MARIO, METAL, 1, 13)
@@ -2531,61 +2636,67 @@ scope Character {
     // bool_inhale_copy - OS.TRUE = enable Kirby inhale copy, OS.FALSE = disable Kirby inhale copy
     // btt_stage_id - stage_id for btt, or -1 if N/A
     // btp_stage_id - stage_id for btp, or -1 if N/A
+    // remix_btt_stage_id - stage_id for btt, or -1 if N/A
+    // remix_btp_stage_id - stage_id for btp, or -1 if N/A
     // sound_type - type of sounds to use (see sound_type table)
     // variant_type - type of variant (see variant_type table)
 
     // 0x1D - FALCO
-    define_character(FALCO, FOX, File.FALCO_MAIN, 0x0D0, 0, File.FALCO_CHARACTER, 0x13A, 0x0D2, 0x15A, 0x0A1, 0x013C, 0x474, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_FALCO, Stages.id.BTP_FALCO, sound_type.U, variant_type.NA)
+    define_character(FALCO, FOX, File.FALCO_MAIN, 0x0D0, 0, File.FALCO_CHARACTER, 0x13A, 0x0D2, 0x15A, 0x0A1, 0x013C, 0x474, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_FALCO, Stages.id.BTP_FALCO, Stages.id.BTT_FALCON, Stages.id.BTP_GND, sound_type.U, variant_type.NA)
     // 0x1E - GND
-    define_character(GND, CAPTAIN, File.GND_MAIN, 0x0EB, 0, File.GND_CHARACTER, 0x14E, 0, File.GND_ENTRY_KICK, File.GND_PUNCH_GRAPHIC, 0, 0x488, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_GND, Stages.id.BTP_GND, sound_type.U, variant_type.NA)
+    define_character(GND, CAPTAIN, File.GND_MAIN, 0x0EB, 0, File.GND_CHARACTER, 0x14E, 0, File.GND_ENTRY_KICK, File.GND_PUNCH_GRAPHIC, 0, 0x488, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_GND, Stages.id.BTP_GND, Stages.id.BTT_FALCON, Stages.id.BTP_YOSHI, sound_type.U, variant_type.NA)
     // 0x1F - YLINK
-    define_character(YLINK, LINK, File.YLINK_MAIN, 0x0E0, 0, File.YLINK_CHARACTER, 0x147, File.YLINK_BOOMERANG_HITBOX, 0x161, 0x145, 0, 0x760, 0, OS.TRUE, OS.TRUE, Stages.id.BTT_YL, Stages.id.BTP_YL, sound_type.U, variant_type.NA)
+    define_character(YLINK, LINK, File.YLINK_MAIN, 0x0E0, 0, File.YLINK_CHARACTER, 0x147, File.YLINK_BOOMERANG_HITBOX, 0x161, 0x145, 0, 0x760, 0, OS.TRUE, OS.TRUE, Stages.id.BTT_YL, Stages.id.BTP_YL, Stages.id.BTT_DRM, Stages.id.BTP_DRM, sound_type.U, variant_type.NA)
     // 0x20 - DRM
-    define_character(DRM, MARIO, File.DRM_MAIN, 0x0CA, 0, File.DRM_CHARACTER, 0x12A, File.DRM_PROJECTILE_DATA, 0x164, File.DRM_PROJECTILE_GRAPHIC, 0, 0x454, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_DRM, Stages.id.BTP_DRM, sound_type.U, variant_type.NA)
+    define_character(DRM, MARIO, File.DRM_MAIN, 0x0CA, 0, File.DRM_CHARACTER, 0x12A, File.DRM_PROJECTILE_DATA, 0x164, File.DRM_PROJECTILE_GRAPHIC, 0, 0x454, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_DRM, Stages.id.BTP_DRM, Stages.id.BTT_YL, Stages.id.BTP_YL, sound_type.U, variant_type.NA)
     // 0x21 - WARIO
-    define_character(WARIO, MARIO, File.WARIO_MAIN, 0x0CA, 0, File.WARIO_CHARACTER, 0x12A, 0x0CC, 0x164, 0x129, 0, 0x51C, 0x0, OS.FALSE, OS.TRUE, Stages.id.BTT_WARIO, Stages.id.BTP_WARIO, sound_type.U, variant_type.NA)
+    define_character(WARIO, MARIO, File.WARIO_MAIN, 0x0CA, 0, File.WARIO_CHARACTER, 0x12A, 0x0CC, 0x164, 0x129, 0, 0x51C, 0x0, OS.FALSE, OS.TRUE, Stages.id.BTT_WARIO, Stages.id.BTP_WARIO, Stages.id.BTT_JIGGLYPUFF, Stages.id.BTP_JIGGLYPUFF,sound_type.U, variant_type.NA)
     // 0x22 - DSAMUS
-    define_character(DSAMUS, SAMUS, File.DSAMUS_MAIN, 0x0D8, 0, File.DSAMUS_CHARACTER, 0x142, 0x15D, File.DSAMUS_SECONDARY, 0, 0, 0x6B4, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_DS, Stages.id.BTP_DS, sound_type.U, variant_type.NA)
+    define_character(DSAMUS, SAMUS, File.DSAMUS_MAIN, 0x0D8, 0, File.DSAMUS_CHARACTER, 0x142, 0x15D, File.DSAMUS_SECONDARY, 0, 0, 0x6B4, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_DS, Stages.id.BTP_DS, Stages.id.BTT_LUCAS, Stages.id.BTP_LUCAS2, sound_type.U, variant_type.NA)
     // 0x23 - ELINK
-    define_character(ELINK, LINK, File.ELINK_MAIN, 0x0E0, 0, 0x144, 0x147, 0x0E2, 0x161, 0x145, 0, 0x708, 0, OS.TRUE, OS.TRUE, Stages.id.BTT_LINK, Stages.id.BTP_LINK, sound_type.U, variant_type.E)
+    define_character(ELINK, LINK, File.ELINK_MAIN, 0x0E0, 0, 0x144, 0x147, 0x0E2, 0x161, 0x145, 0, 0x708, 0, OS.TRUE, OS.TRUE, Stages.id.BTT_LINK, Stages.id.BTP_LINK, Stages.id.BTT_YL, Stages.id.BTP_YL, sound_type.U, variant_type.E)
     // 0x24 - JSAMUS
-    define_character(JSAMUS, SAMUS, 0x0D9, 0x0D8, 0, 0x140, 0x142, 0x15D, 0x0DA, 0, 0, 0x610, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_SAMUS, Stages.id.BTP_SAMUS, sound_type.J, variant_type.J)
+    define_character(JSAMUS, SAMUS, 0x0D9, 0x0D8, 0, 0x140, 0x142, 0x15D, 0x0DA, 0, 0, 0x610, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_SAMUS, Stages.id.BTP_SAMUS, Stages.id.BTT_DS, Stages.id.BTP_DS,sound_type.J, variant_type.J)
     // 0x25 - JNESS
-    define_character(JNESS, NESS, File.JNESS_MAIN, 0x0EE, 0, 0x14F, 0x150, 0x160, File.JNESS_PKFIRE, 0x151, 0, 0x5BC, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_NESS, Stages.id.BTP_NESS, sound_type.J, variant_type.J)
+    define_character(JNESS, NESS, File.JNESS_MAIN, 0x0EE, 0, 0x14F, 0x150, 0x160, File.JNESS_PKFIRE, 0x151, 0, 0x5BC, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_NESS, Stages.id.BTP_NESS, Stages.id.BTT_LUCAS, Stages.id.BTP_LUCAS2, sound_type.J, variant_type.J)
     // 0x26 - LUCAS
-    define_character(LUCAS, NESS, File.LUCAS_MAIN, 0x0EE, 0, File.LUCAS_CHARACTER, 0x150, 0x160, File.LUCAS_PKFIRE, 0x151, 0, 0x614, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_LUCAS, Stages.id.BTP_LUCAS2, sound_type.U, variant_type.NA)
+    define_character(LUCAS, NESS, File.LUCAS_MAIN, 0x0EE, 0, File.LUCAS_CHARACTER, 0x150, 0x160, File.LUCAS_PKFIRE, 0x151, 0, 0x614, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_LUCAS, Stages.id.BTP_LUCAS2, Stages.id.BTT_WARIO, Stages.id.BTP_DS, sound_type.U, variant_type.NA)
     // 0x27 - JLINK
-    define_character(JLINK, LINK, File.JLINK_MAIN, 0x0E0, 0, File.JLINK_CHARACTER, 0x147, 0x0E2, 0x161, 0x145, 0, 0x708, 0, OS.TRUE, OS.TRUE, Stages.id.BTT_LINK, Stages.id.BTP_LINK, sound_type.J, variant_type.J)
+    define_character(JLINK, LINK, File.JLINK_MAIN, 0x0E0, 0, File.JLINK_CHARACTER, 0x147, 0x0E2, 0x161, 0x145, 0, 0x708, 0, OS.TRUE, OS.TRUE, Stages.id.BTT_LINK, Stages.id.BTP_LINK, Stages.id.BTT_YL, Stages.id.BTP_YL, sound_type.J, variant_type.J)
     // 0x28 - JFALCON
-    define_character(JFALCON, CAPTAIN, File.JFALCON_MAIN, 0x0EB, 0, 0x14C, 0x14E, 0, 0x15E, 0x14D, 0, 0x488, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_FALCON, Stages.id.BTP_FALCON, sound_type.J, variant_type.J)
+    define_character(JFALCON, CAPTAIN, File.JFALCON_MAIN, 0x0EB, 0, 0x14C, 0x14E, 0, 0x15E, 0x14D, 0, 0x488, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_FALCON, Stages.id.BTP_FALCON, Stages.id.BTT_GND, Stages.id.BTP_GND, sound_type.J, variant_type.J)
     // 0x29 - JFOX
-    define_character(JFOX, FOX, File.JFOX_MAIN, 0x0D0, 0, 0x139, 0x13A, File.JFOX_PROJECTILE, 0x15A, 0x0A1, 0x013C, 0x46C, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_FOX, Stages.id.BTP_FOX, sound_type.J, variant_type.J)
+    define_character(JFOX, FOX, File.JFOX_MAIN, 0x0D0, 0, 0x139, 0x13A, File.JFOX_PROJECTILE, 0x15A, 0x0A1, 0x013C, 0x46C, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_FOX, Stages.id.BTP_FOX, Stages.id.BTT_FALCO, Stages.id.BTP_FALCO, sound_type.J, variant_type.J)
     // 0x2A - JMARIO
-    define_character(JMARIO, MARIO, File.JMARIO_MAIN, 0x0CA, 0, File.JMARIO_CHARACTER, 0x12A, File.JMARIO_PROJECTILE_HITBOX, 0x164, 0x129, 0, 0x428, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_MARIO, Stages.id.BTP_MARIO, sound_type.J, variant_type.J)
+    define_character(JMARIO, MARIO, File.JMARIO_MAIN, 0x0CA, 0, File.JMARIO_CHARACTER, 0x12A, File.JMARIO_PROJECTILE_HITBOX, 0x164, 0x129, 0, 0x428, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_MARIO, Stages.id.BTP_MARIO, Stages.id.BTT_DRM, Stages.id.BTP_DRM, sound_type.J, variant_type.J)
     // 0x2B - JLUIGI
-    define_character(JLUIGI, LUIGI, File.JLUIGI_MAIN, 0x0DC, 0, File.JLUIGI_CHARACTER, 0x12A, File.JLUIGI_PROJECTILE_HITBOX, 0x164, 0x129, 0, 0x580, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_LUIGI, Stages.id.BTP_LUIGI, sound_type.J, variant_type.J)
+    define_character(JLUIGI, LUIGI, File.JLUIGI_MAIN, 0x0DC, 0, File.JLUIGI_CHARACTER, 0x12A, File.JLUIGI_PROJECTILE_HITBOX, 0x164, 0x129, 0, 0x580, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_LUIGI, Stages.id.BTP_LUIGI, Stages.id.BTT_MARIO, Stages.id.BTP_MARIO, sound_type.J, variant_type.J)
     // 0x2C - JDK
-    define_character(JDK, DONKEY, File.JDK_MAIN, 0x0D4, 0, 0x13D, 0x13E, 0, 0x163, 0, 0, 0x4A4, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_DONKEY_KONG, Stages.id.BTP_DONKEY_KONG, sound_type.J, variant_type.J)
+    define_character(JDK, DONKEY, File.JDK_MAIN, 0x0D4, 0, 0x13D, 0x13E, 0, 0x163, 0, 0, 0x4A4, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_DONKEY_KONG, Stages.id.BTP_DONKEY_KONG, Stages.id.BTT_BOWSER, Stages.id.BTP_BOWSER, sound_type.J, variant_type.J)
     // 0x2D - EPIKA
-    define_character(EPIKA, PIKACHU, File.EPIKA_MAIN, 0x0F2, 0, 0x155, 0x157, 0x0F4, 0x15B, 0x156, 0, 0x41C, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_PIKACHU, Stages.id.BTP_PIKACHU, sound_type.U, variant_type.E)
+    define_character(EPIKA, PIKACHU, File.EPIKA_MAIN, 0x0F2, 0, 0x155, 0x157, 0x0F4, 0x15B, 0x156, 0, 0x41C, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_PIKACHU, Stages.id.BTP_PIKACHU, Stages.id.BTT_JIGGLYPUFF, Stages.id.BTP_JIGGLYPUFF, sound_type.U, variant_type.E)
     // 0x2E - JPUFF
-    define_character(JPUFF, JIGGLYPUFF, File.JPUFF_MAIN, 0x0E8, 0, 0x14A, 0x14B, 0, 0x15F, 0, 0, 0x474, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_JIGGLYPUFF, Stages.id.BTP_JIGGLYPUFF, sound_type.J, variant_type.J)
+    define_character(JPUFF, JIGGLYPUFF, File.JPUFF_MAIN, 0x0E8, 0, 0x14A, 0x14B, 0, 0x15F, 0, 0, 0x474, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_JIGGLYPUFF, Stages.id.BTP_JIGGLYPUFF, Stages.id.BTT_FALCO, Stages.id.BTP_MARIO, sound_type.J, variant_type.J)
     // 0x2F - EPUFF
-    define_character(EPUFF, JIGGLYPUFF, 0x0E9, 0x0E8, 0, 0x14A, 0x14B, 0, 0x15F, 0, 0, 0x474, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_JIGGLYPUFF, Stages.id.BTP_JIGGLYPUFF, sound_type.U, variant_type.E)
+    define_character(EPUFF, JIGGLYPUFF, 0x0E9, 0x0E8, 0, 0x14A, 0x14B, 0, 0x15F, 0, 0, 0x474, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_JIGGLYPUFF, Stages.id.BTP_JIGGLYPUFF, Stages.id.BTT_FALCO, Stages.id.BTP_MARIO, sound_type.U, variant_type.E)
     // 0x30 - JKIRBY
-    define_character(JKIRBY, KIRBY, File.JKIRBY_MAIN, 0x0E4, 0, 0x148, 0x149, 0, 0x15C, 0, 0, 0x808, 18, OS.TRUE, OS.FALSE, Stages.id.BTT_KIRBY, Stages.id.BTP_KIRBY, sound_type.J, variant_type.J)
+    define_character(JKIRBY, KIRBY, File.JKIRBY_MAIN, 0x0E4, 0, 0x148, 0x149, 0, 0x15C, 0, 0, 0x808, 26, OS.TRUE, OS.FALSE, Stages.id.BTT_KIRBY, Stages.id.BTP_KIRBY, Stages.id.BTT_FOX, Stages.id.BTP_FOX, sound_type.J, variant_type.J)
     // 0x31 - JYOSHI
-    define_character(JYOSHI, YOSHI, File.JYOSHI_MAIN, 0x0F6, 0, 0x152, 0x154, 0, 0x162, 0x153, 0, 0x47C, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_YOSHI, Stages.id.BTP_YOSHI, sound_type.J, variant_type.J)
+    define_character(JYOSHI, YOSHI, File.JYOSHI_MAIN, 0x0F6, 0, 0x152, 0x154, 0, 0x162, 0x153, 0, 0x47C, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_YOSHI, Stages.id.BTP_YOSHI, Stages.id.BTT_FALCON, Stages.id.BTP_GND, sound_type.J, variant_type.J)
     // 0x32 - JPIKA
-    define_character(JPIKA, PIKACHU, File.JPIKA_MAIN, 0x0F2, 0, 0x155, 0x157, File.JPIKA_PROJECTILE, 0x15B, 0x156, 0, 0x41C, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_PIKACHU, Stages.id.BTP_PIKACHU, sound_type.J, variant_type.J)
+    define_character(JPIKA, PIKACHU, File.JPIKA_MAIN, 0x0F2, 0, 0x155, 0x157, File.JPIKA_PROJECTILE, 0x15B, 0x156, 0, 0x41C, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_PIKACHU, Stages.id.BTP_PIKACHU, Stages.id.BTT_JIGGLYPUFF, Stages.id.BTP_JIGGLYPUFF, sound_type.J, variant_type.J)
     // 0x33 - ESAMUS
-    define_character(ESAMUS, SAMUS, File.ESAMUS_MAIN, 0x0D8, 0, 0x140, 0x142, 0x15D, 0x0DA, 0, 0, 0x610, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_SAMUS, Stages.id.BTP_SAMUS, sound_type.U, variant_type.E)
+    define_character(ESAMUS, SAMUS, File.ESAMUS_MAIN, 0x0D8, 0, 0x140, 0x142, 0x15D, 0x0DA, 0, 0, 0x610, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_SAMUS, Stages.id.BTP_SAMUS, Stages.id.BTT_LINK, Stages.id.BTP_MARIO, sound_type.U, variant_type.E)
     // 0x34 - BOWSER
-    define_character(BOWSER, YOSHI, File.BOWSER_MAIN, 0x0F6, 0, File.BOWSER_CHARACTER, File.BOWSER_SHIELD_POSE, 0, File.BOWSER_CLOWN_COPTER, 0x153, 0, 0x47C, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_BOWSER, Stages.id.BTP_BOWSER, sound_type.U, variant_type.NA)
-	// 0x35 - GBOWSER
-    define_character(GBOWSER, YOSHI, File.GBOWSER_MAIN, 0x0F6, 0, File.GBOWSER_CHARACTER, File.BOWSER_SHIELD_POSE, 0, File.BOWSER_CLOWN_COPTER, 0x153, 0, 0x47C, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_BOWSER, Stages.id.BTP_BOWSER, sound_type.U, variant_type.SPECIAL)
-    // 0x35 - PIANO
-    define_character(PIANO, MARIO, File.PIANO_MAIN, 0x0CA, 0, File.PIANO_CHARACTER, 0x12A, File.PIANO_PROJECTILE_HITBOX, 0x164, 0x129, 0, 0x42C, 10, OS.FALSE, OS.FALSE, Stages.id.BTT_STG1, Stages.id.BTP_POLY, sound_type.U, variant_type.SPECIAL)
+    define_character(BOWSER, YOSHI, File.BOWSER_MAIN, 0x0F6, 0, File.BOWSER_CHARACTER, File.BOWSER_SHIELD_POSE, 0, File.BOWSER_CLOWN_COPTER, 0x153, 0, 0x47C, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_BOWSER, Stages.id.BTP_BOWSER, Stages.id.BTT_DONKEY_KONG, Stages.id.BTP_DONKEY_KONG, sound_type.U, variant_type.NA)
+    // 0x35 - GBOWSER
+    define_character(GBOWSER, YOSHI, File.GBOWSER_MAIN, 0x0F6, 0, File.GBOWSER_CHARACTER, File.BOWSER_SHIELD_POSE, 0, File.BOWSER_CLOWN_COPTER, 0x153, 0, 0x47C, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_BOWSER, Stages.id.BTP_BOWSER, Stages.id.BTT_DONKEY_KONG, Stages.id.BTP_DONKEY_KONG, sound_type.U, variant_type.SPECIAL)
+    // 0x36 - PIANO
+    define_character(PIANO, MARIO, File.PIANO_MAIN, 0x0CA, 0, File.PIANO_CHARACTER, 0x12A, File.PIANO_PROJECTILE_HITBOX, 0x164, 0x129, 0, 0x42C, 10, OS.FALSE, OS.FALSE, Stages.id.BTT_STG1, Stages.id.BTP_POLY, Stages.id.BTT_STG1, Stages.id.BTP_POLY, sound_type.U, variant_type.SPECIAL)
+    // 0x37 - WOLF
+    define_character(WOLF, FOX, File.WOLF_MAIN, 0x0D0, 0, File.WOLF_CHARACTER, File.WOLF_SHIELD_POSE,  File.WOLF_PROJECTILE_HITBOX, File.WOLF_REFLECTOR, File.WOLFEN, File.WOLF_PROJECTILE_GRAPHIC, 0x4C4, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_WOLF, Stages.id.BTP_WOLF, Stages.id.BTT_FALCO, Stages.id.BTP_FALCO, sound_type.U, variant_type.NA)
+    // 0x38 - CONKER
+    define_character(CONKER, FOX, File.CONKER_MAIN, 0x0D0, 0, File.CONKER_CHARACTER, File.CONKER_SHIELD_POSE, File.CONKER_NUT_PROJECTILE_HITBOX, File.CONKER_GRENADE_PROJECTILE_HITBOX, File.GREGS_HAND, File.CONKER_NUT_PROJECTILE_GRAPHIC, 0x5DC, 6, OS.TRUE, OS.FALSE, Stages.id.BTT_CONKER, Stages.id.BTP_CONKER, Stages.id.BTT_FALCO, Stages.id.BTP_FALCO, sound_type.U, variant_type.NA)
     
     print "========================================================================== \n"
 }

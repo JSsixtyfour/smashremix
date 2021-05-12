@@ -180,6 +180,44 @@ scope Camera {
         constant focal_y(0xD4)
         constant focal_z(0xD8)
     }
+    
+    // @ Description
+    // This pushes back the camera when playing on Venom.
+    scope camera_adjust_: {
+        OS.patch_start(0x62A70, 0x800E7270)
+        j       camera_adjust_
+        nop
+        _return:
+        OS.patch_end()
+        
+        li      t8, Global.current_screen   // ~
+        lbu     t8, 0x0000(t8)              // t8 = current screen
+        addiu   at, r0, 0x0016              // Vs screen ID
+        beq     at, t8, _stage_check        // stage check if in vs
+        addiu   at, r0, 0x0036              // Training screen ID
+        beq     at, t8, _stage_check        // stage check if in vs
+        addiu   at, r0, 0x0034              // 1p screen ID
+        bne     at, t8, _standard           // if not in any of the battle screens, skip to standard
+        nop
+        
+        _stage_check:
+        li      t8, Global.match_info       // ~
+        lw      t8, 0x0000(t8)              // t8 = match_info
+        lbu     t8, 0x0001(t8)              // t8 = stage id
+        addiu   at, r0, Stages.id.VENOM     // insert venom stage ID
+        
+        bne     t8, at, _standard           // branch if not on Venom
+        lui     at, 0x3FE0                  // load Venom Camera Distance
+        
+        j       _return                     // return
+        mtc1    at, f4                      // original line 2
+        
+        _standard:
+        lui     at, 0x3F80                  // load camera distance, original line 1
+        j       _return                     // return
+        mtc1    at, f4                      // original line 2
+
+    }
 }
 
 } // __CAMERA__

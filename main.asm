@@ -61,13 +61,17 @@ include "src/FPS.asm"
 include "src/SinglePlayer.asm"
 include "src/Skeleton.asm"
 include "src/Surface.asm"
-include "src/Multiman.asm"
+include "src/SinglePlayerModes.asm"
+include "src/SinglePlayerMenus.asm"
 include "src/TwelveCharBattle.asm"
 include "src/Size.asm"
 include "src/CharEnvColor.asm"
+include "src/SwordTrail.asm"
+include "src/Knockback.asm"
 // CHARACTER
 include "src/Character.asm"
 include "src/CharacterSelect.asm"
+include "src/CharacterSelectDebugMenu.asm"
 include "src/Costumes.asm"
 include "src/Fireball.asm"
 include "src/ResultsScreen.asm"
@@ -134,6 +138,12 @@ include "src/GBowser/GBowser.asm"
 // PIANO
 include "src/Piano/PianoSpecial.asm"
 include "src/Piano/Piano.asm"
+// WOLF
+include "src/Wolf/WolfSpecial.asm"
+include "src/Wolf/Wolf.asm"
+// CONKER
+include "src/Conker/ConkerSpecial.asm"
+include "src/Conker/Conker.asm"
 
 // KIRBY
 include "src/Kirby/Kirby.asm"

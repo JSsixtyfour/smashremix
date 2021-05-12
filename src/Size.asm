@@ -17,6 +17,20 @@ scope Size {
     float32 1, 1, 1, 1                      // clone of body size multiplier for p1 through p4, only useful for Kirby
 
     // @ Description
+    // These state values are used to force a character into a predefined size through the match.
+    // See state scope below.
+    state_table:
+    dw 0, 0, 0, 0                           // state for p1 through p4
+
+    // @ Description
+    // State constants
+    scope state {
+    	constant NORMAL(0)
+    	constant GIANT(1)
+    	constant TINY(2)
+    }
+
+    // @ Description
     // Additional multipliers for attributes that make sense to change when size changes.
     // The formula will be:
     //  x = 1 + m * (s - 1)
@@ -260,6 +274,7 @@ scope Size {
     // @ Description
     // Populates our base multiplier table when initializing the character.
     // This enables us to update it for the big Kirby glitch.
+    // This is also a good spot to set the multiplier table values.
     scope initialize_base_multiplier_table_: {
         OS.patch_start(0x534B4, 0x800D7CB4)
         jal     initialize_base_multiplier_table_
@@ -273,6 +288,26 @@ scope Size {
         addu    t4, t4, t9                  // t4 = &base_multiplier_table[index]
         swc1    f0, 0x0000(t4)              // update our cloned body size multiplier
 
+        addiu   t4, t4, 0x0010              // t4 = &state_table[index]
+        lw      t9, 0x0000(t4)              // t9 = state
+        addiu   t4, t4, -0x0020             // t4 = &multiplier_table[index]
+        beqzl   t9, _return                 // if in NORMAL state, use 1 as size multiplier
+        lui     t9, 0x3F80                  // t9 = 1 (float)
+
+        li      a2, Global.current_screen
+        lbu     a2, 0x0000(a2)              // a2 = current screen
+        sltiu   a2, a2, 0x003C              // a2 = 1 if not 0x3C (how to play screen id) or 0x3D (demo vs battle screen id)
+        beqzl   a2, _return                 // if on how to play or demo vs battle screen, use 1 as size multiplier
+        lui     t9, 0x3F80                  // t9 = 1 (float)
+
+        lli     a2, state.GIANT             // a2 = GIANT
+        beql    t9, a2, _return             // if in GIANT state, use giant size multiplier
+        lui     t9, 0x4010                  // t9 = 2.25 (float)
+        // otherwise, we're in TINY state so use tiny size multiplier
+        lui     t9, 0x3F00                  // t9 = 0.5 (float)
+
+        _return:
+        sw      t9, 0x0000(t4)              // initialize size multiplier
         jr      ra
         addiu   a2, v1, 0x00F0              // original line 2
     }

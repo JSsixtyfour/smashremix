@@ -296,6 +296,7 @@ scope Piano {
     Character.edit_menu_action_parameters(PIANO,    0x9,                File.PIANO_CONTINUE_FALL,   0x80000000,                 -1)
     Character.edit_menu_action_parameters(PIANO,    0xA,                File.PIANO_CONTINUE_UP,     0x80000000,                 -1)
     Character.edit_menu_action_parameters(PIANO,    0xD,                File.PIANO_POSE_1P,         0x80000000,                 -1)
+    Character.edit_menu_action_parameters(PIANO,    0xE,                File.PIANO_1P_CPU_POSE,     0x80000000,                 -1)
     
     // Add Action Parameters                // Action Name      // Base Action  // Animation                // Moveset Data             // Flags
     Character.add_new_action_params(PIANO,  DSP_Ground_Begin,   -1,             File.PIANO_DSP_BEGIN_G,     DSP_BEGIN,                  -1)

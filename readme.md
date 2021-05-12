@@ -40,6 +40,20 @@ Computer controlled players have recieved a variety of improvements.
 - Japanese versions of the original cast are available via d-pad left.
 - European versions of some of the original cast are available via d-pad right.
 
+### Character Select Debug Menu
+A menu for modifying certain character attributes is available on each panel.
+
+#### Size
+- Allows playing as the giant or tiny version of the character.
+#### Visibility 
+- Allows playing as completely invisible (None), slightly visible (Cloaked), or as a silhouette (Dark).
+#### Skeleton 
+- Setting to enabled is perfect for Halloween. 
+#### Knockback 
+- Setting to random will create a moveset for the character with randomized knockback.
+- The knockback angle is generated for each move at the start of the match and will persist until the end of the match.
+- Resetting training mode or performing a salty runback will not generate a new set of knockback angles.
+
 ### Expanded Stage Select Screen
 - The stage select screen is now expanded to multiple pages.
 - All original stages are playable as well as dozens of new stages.
@@ -138,10 +152,17 @@ Computer controlled players have recieved a variety of improvements.
 ### Special Model Display
 Use the toggle or cycle using D-Pad down in Training Mode.
 - Hitbox: Displays hitboxes and hurtboxes instead of normal characters/items/projectiles.
+- Hitbox+: Displays transparent hitboxes and hurtboxes alongside normal characters/items/projectiles.
 - ECB: View character and item collision diamonds.
-- Skeleton: Perfect for Halloween.
 
 #### Toggle Name: _Special Model Display_
+
+### Advanced Hurtbox Display
+When Special Model Display is Hitbox or Hitbox+, these changes are applied:
+- Transparent hitboxes
+- Cyan grab-immune hurtboxes
+- Gray hurtboxes during active armor
+#### Toggle Name: _Advanced Hurtbox Display_
 
 ### Color Overlays
 - Fills in the character model with a solid color during certain player states.
@@ -255,9 +276,19 @@ Use the toggle or cycle using D-Pad down in Training Mode.
 
 #### Toggle Name: _Japanese Whispy_
 
-## Single Player
+## Single Player Modes
+
 ### Bonus 3 (Race to the Finish)
 - Record best times for completing the RTTF stage using all characters just like for Bonus 1 and Bonus 2.
+
+### Remix 1p Mode
+- A new take on the standard 1p Mode
+    - Fight randomly selected Remix characters at one of their three randomly selected stages
+    - Increased difficulty with Very Easy mode being the equivalent of standard 1p Mode's Normal Difficulty
+    - Challenge Fox and Falco in a doubles battle
+    - Characters have Alternate Bonus Stages for Bonuses 1 & 2
+    - Fight a Kirby Team with brand new powers
+    - Face new boss characters
 
 ### Multiman Mode
 - Fight a neverending polygon team and track KOs as highscores.
@@ -272,11 +303,13 @@ Use the toggle or cycle using D-Pad down in Training Mode.
 #### Remix Settings
 Toggle                     | Community          | Tournament        | Japanese
 ---------------------------|--------------------|-------------------|-------------------
+Skip Results Screen        | Off                | Off               | Off
 Color Overlays             | Off                | Off               | Off
 Cinematic Camera           | Default            | Default           | Default
 Flash On Z-Cancel          | Off                | Off               | Off
 FPS Display *BETA          | Off                | Off               | Off
 Special Model Display      | Off                | Off               | Off
+Advanced Hurtbox Display   | Off                | Off               | Off
 Hold To Pause              | On                 | On                | On
 Improved Combo Meter       | On                 | Off               | On
 Tech Chase Combo Meter     | On                 | Off               | On
@@ -284,7 +317,6 @@ VS Mode Combo Meter        | On                 | Off               | On
 1V1 Combo Meter Swap       | Off                | Off               | Off
 Improved AI                | On                 | Off               | On
 Neutral Spawns             | On                 | On                | On
-Skip Results Screen        | Off                | Off               | Off
 Stereo Sound               | On                 | On                | On
 Salty Runback              | On                 | Off               | On
 Widescreen                 | Off                | Off               | Off
