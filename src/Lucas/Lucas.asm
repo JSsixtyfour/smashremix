@@ -137,8 +137,8 @@ scope Lucas {
     dw 0x8013DD68                           // skips entry script
     OS.patch_end()
     
-    // Remove overlay ending script.
-    Character.table_patch_start(overlay_end, Character.id.LUCAS, 0x4)
+    // Remove gfx routine ending script.
+    Character.table_patch_start(gfx_routine_end, Character.id.LUCAS, 0x4)
     dw  0x800E9A60                          // skips overlay ending script
     OS.patch_end()
 
@@ -149,6 +149,68 @@ scope Lucas {
 	
     // Set default costumes
     Character.set_default_costumes(Character.id.LUCAS, 0, 1, 2, 4, 0, 2, 5)
+
+    // @ Description
+    // Lucas's extra actions
+    scope Action {
+        constant Jab3(0x0DC)
+        constant Appear1(0x0DD)
+        constant Appear2(0x0DE)
+        //constant Appear1(0x0DF)
+        //constant Appear2(0x0E0)
+        //constant AppearEnd(0x0E1)
+        constant PKFire(0x0E2)
+        constant PKFireAir(0x0E3)
+        constant PKThunderStart1(0x0E4)
+        constant PKThunderStart2(0x0E5)
+        constant PKThunderEnd(0x0E6)
+        constant PKTA(0x0E7)
+        constant PKThunderStartAir(0x0E8)
+        constant PKThunderAir(0x0E9)
+        constant PKThunderEndAir(0x0EA)
+        constant ClashingPKTA(0x0EB)
+        constant PKTAAir(0x0EC)
+        constant PsiMagnetStart(0x0ED)
+        constant PsiMagnet(0x0EE)
+        constant Healing(0x0EF)
+        constant PsiMagnetEnd(0x0F0)
+        constant PsiMagnetStartAir(0x0F1)
+        constant PsiMagnetAir(0x0F2)
+        constant HealingAir(0x0F3)
+        constant PsiMagnetEndAir(0x0F4)
+
+        action_string_table:
+        dw Action.COMMON.string_jab3
+        dw Action.COMMON.string_appear1
+        dw Action.COMMON.string_appear2
+        dw 0 //dw string_0x0DF
+        dw 0 //dw string_0x0E0
+        dw 0 //dw string_0x0E1
+        dw Action.NESS.string_0x0E2
+        dw Action.NESS.string_0x0E3
+        dw Action.NESS.string_0x0E4
+        dw Action.NESS.string_0x0E5
+        dw Action.NESS.string_0x0E6
+        dw Action.NESS.string_0x0E7
+        dw Action.NESS.string_0x0E8
+        dw Action.NESS.string_0x0E9
+        dw Action.NESS.string_0x0EA
+        dw Action.NESS.string_0x0EB
+        dw Action.NESS.string_0x0EC
+        dw Action.NESS.string_0x0ED
+        dw Action.NESS.string_0x0EE
+        dw Action.NESS.string_0x0EF
+        dw Action.NESS.string_0x0F0
+        dw Action.NESS.string_0x0F1
+        dw Action.NESS.string_0x0F2
+        dw Action.NESS.string_0x0F3
+        dw Action.NESS.string_0x0F4
+    }
+
+    // Set action strings
+    Character.table_patch_start(action_string, Character.id.LUCAS, 0x4)
+    dw  Action.action_string_table
+    OS.patch_end()
     
     // Forces Lucas' pk fire to stay horizontal when in the air
     // @ Description

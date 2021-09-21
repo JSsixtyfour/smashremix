@@ -139,7 +139,7 @@ scope Boot {
         nop
     }
 
-    string_version:; String.insert("Smash Remix v0.9.7")
+    string_version:; String.insert("Smash Remix v1.0.1")
 
     // @ Descritpion
     // Nintendo 64 logo cannot be skipped.
@@ -160,7 +160,7 @@ scope Boot {
         OS.patch_start(0x00001038, 0x80000438)
         jal     Global.dma_copy_        // original line 1
         addiu   a2, r0, 0x0100          // original line 2
-        lui     a0, 0x0200              // load rom address (0x02000000)
+        lui     a0, 0x01C0              // load rom address (0x01C00000)
         lui     a1, 0x8040              // load ram address (0x80400000)
         jal     Global.dma_copy_        // add custom functions
         lui     a2, 0x0040              // load length of 0x400000

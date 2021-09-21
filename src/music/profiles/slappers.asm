@@ -1,0 +1,30 @@
+// Playlist created by: The_Smashfather
+// The_Smashfather's Personal favorite tracks
+// Always call add_music_profile first to create the profile
+add_music_profile(slappers, "Slappers Only")
+
+// Then call add_to_music_profile for every track you want toggled on for this profile
+add_to_music_profile(slappers, FINAL_DESTINATION)
+add_to_music_profile(slappers, GANONDORF_BATTLE)
+add_to_music_profile(slappers, CORNERIA)
+add_to_music_profile(slappers, GODDESSBALLAD)
+add_to_music_profile(slappers, TOWEROFHEAVEN)
+add_to_music_profile(slappers, MUTE_CITY)
+add_to_music_profile(slappers, BIG_BLUE)
+add_to_music_profile(slappers, FROSTY_VILLAGE)
+add_to_music_profile(slappers, BOWSERFINAL)
+add_to_music_profile(slappers, MACHRIDER)
+add_to_music_profile(slappers, STAR_WOLF)
+add_to_music_profile(slappers, POKEMON_CHAMPION)
+add_to_music_profile(slappers, KENGJR)
+add_to_music_profile(slappers, FIRE_FIELD)
+add_to_music_profile(slappers, MULTIMAN)
+add_to_music_profile(slappers, GANGPLANK)
+add_to_music_profile(slappers, DKR_BOSS)
+add_to_music_profile(slappers, CRESCENT_ISLAND)
+add_to_music_profile(slappers, TARGET_TEST)
+add_to_music_profile(slappers, CRADLE)
+add_to_music_profile(slappers, GB_MEDLEY)
+add_to_music_profile(slappers, SS_AQUA)
+add_to_music_profile(slappers, SLIDER)
+add_to_music_profile(slappers, STARRING_WARIO)

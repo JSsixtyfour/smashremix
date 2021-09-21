@@ -109,8 +109,8 @@ scope handle_active_cloaking_device_: {
     sw      t0, 0x004C(a0)              // update timer value
 
     lhu     t2, 0x0026(t3)              // t2 = action
-    lli     at, Action.Revive1          // at = Action.Revive1
-    beq     t2, at, _decloak            // if player died and is reviving, then decloak
+    sltiu   at, t2, 0x0004              // at = 1 if player just died
+    bnez    at, _decloak               // if player died, then decloak
     // delay slot below runs always, intentionally
 
     lw      t2, 0x0048(a0)              // t2 = address of env color override value

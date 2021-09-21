@@ -146,7 +146,7 @@ scope Bowser {
     Character.edit_action_parameters(BOWSER,    Action.DamageFlyRoll,   File.BOWSER_DAMAGE_FLY_ROLL, -1,                        -1)
     Character.edit_action_parameters(BOWSER,    Action.DeadU,           File.BOWSER_TUMBLE,          -1,                        -1)
     Character.edit_action_parameters(BOWSER,    Action.ScreenKO,        File.BOWSER_TUMBLE,          -1,                        -1)
-    Character.edit_action_parameters(BOWSER,    Action.Tumble2,         File.BOWSER_TUMBLE,          -1,                        -1)
+    Character.edit_action_parameters(BOWSER,    Action.WallBounce,      File.BOWSER_TUMBLE,          -1,                        -1)
     Character.edit_action_parameters(BOWSER,    Action.Tumble,          File.BOWSER_TUMBLE,          -1,                        -1)
     Character.edit_action_parameters(BOWSER,    Action.Tornado,         File.BOWSER_TUMBLE,          -1,                        -1)
     Character.edit_action_parameters(BOWSER,    Action.ShieldBreak,     File.BOWSER_DAMAGE_FLY_TOP,  -1,                        -1)
@@ -389,6 +389,59 @@ scope Bowser {
     OS.patch_end()
     Character.table_patch_start(jab_3, Character.id.BOWSER, 0x4)
     dw Character.jab_3.ENABLED              // jab 3 = ENABLED
+    OS.patch_end()
+
+    // @ Description
+    // Bowser's extra actions
+    scope Action {
+        constant Appear1(0x0DC)
+        constant Appear2(0x0DD)
+        constant WhirlingFortress(0x0DE)
+        constant WhirlingFortressAir(0x0DF)
+        constant BowserBomb(0x0E0)
+        constant BowserBombLanding(0x0E1)
+        constant BowserBombAir(0x0E2)
+        //constant x(0x0E3)
+        constant FireBreath(0x0E4)
+        constant BowserForwardThrow1(0x0E5)
+        constant BowserForwardThrow2(0x0E6)
+        constant FireBreathAir(0x0E7)
+        constant BowserForwardThrow3(0x0E8)
+        constant Jab3(0x0E9)
+
+        // strings!
+        string_0x0DE:; String.insert("WhirlingFortress")
+        string_0x0DF:; String.insert("WhirlingFortressAir")
+        string_0x0E0:; String.insert("BowserBomb")
+        string_0x0E1:; String.insert("BowserBombLanding")
+        string_0x0E2:; String.insert("BowserBombAir")
+        //string_0x0E2:; String.insert("x")
+        string_0x0E4:; String.insert("FireBreath")
+        string_0x0E5:; String.insert("BowserForwardThrow1")
+        string_0x0E6:; String.insert("BowserForwardThrow2")
+        string_0x0E7:; String.insert("FireBreathAir")
+        string_0x0E8:; String.insert("BowserForwardThrow3")
+
+        action_string_table:
+        dw Action.COMMON.string_appear1
+        dw Action.COMMON.string_appear2
+        dw string_0x0DE
+        dw string_0x0DF
+        dw string_0x0E0
+        dw string_0x0E1
+        dw string_0x0E2
+        dw 0 //dw string_0x0E3
+        dw string_0x0E4
+        dw string_0x0E5
+        dw string_0x0E6
+        dw string_0x0E7
+        dw string_0x0E8
+        dw Action.COMMON.string_jab3
+    }
+
+    // Set action strings
+    Character.table_patch_start(action_string, Character.id.BOWSER, 0x4)
+    dw  Action.action_string_table
     OS.patch_end()
 
     // @ Description

@@ -16,4 +16,9 @@ scope JMario {
     Character.table_patch_start(crowd_chant_fgm, Character.id.JMARIO, 0x2)
     dh  0x0314
     OS.patch_end()
+
+    // Set action strings
+    Character.table_patch_start(action_string, Character.id.JMARIO, 0x4)
+    dw  Action.MARIO.action_string_table
+    OS.patch_end()
 }

@@ -28,6 +28,11 @@ scope JPika {
     Character.table_patch_start(crowd_chant_fgm, Character.id.JPIKA, 0x2)
     dh  0x031B
     OS.patch_end()
+
+    // Set action strings
+    Character.table_patch_start(action_string, Character.id.JPIKA, 0x4)
+    dw  Action.PIKACHU.action_string_table
+    OS.patch_end()
     
     // Changes the duration of Thunder Jolt to match that of the Japanese Version
     scope thunderjolt_duration: {

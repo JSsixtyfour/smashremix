@@ -7,6 +7,8 @@ constant MAX_VALUE(3)
 constant DEFAULT_VALUE(0)
 // bitmask: [vs] [1p] [training] [bonus1] [bonus2]
 constant APPLIES_TO(0b11111)
+// bitmask: [human] [cpu]
+constant APPLIES_TO_HUMAN_CPU(0b11)
 constant VALUE_ARRAY_POINTER(CharEnvColor.state_table)
 constant ONCHANGE_HANDLER(onchange_handler)
 

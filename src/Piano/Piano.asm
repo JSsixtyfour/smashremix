@@ -128,7 +128,7 @@ scope Piano {
     Character.edit_action_parameters(PIANO, Action.DamageFlyLow,        File.PIANO_DMG_FLY,         DMG_3,                      -1)
     Character.edit_action_parameters(PIANO, Action.DamageFlyTop,        File.PIANO_DMG_FLY_TOP,     DMG_3,                      -1)
     Character.edit_action_parameters(PIANO, Action.DamageFlyRoll,       File.PIANO_DMG_FLY_ROLL,    DMG_3,                      -1)
-    Character.edit_action_parameters(PIANO, Action.Tumble2,             File.PIANO_TUMBLE,          DMG_3,                      -1)
+    Character.edit_action_parameters(PIANO, Action.WallBounce,          File.PIANO_TUMBLE,          DMG_3,                      -1)
     Character.edit_action_parameters(PIANO, Action.Tumble,              File.PIANO_TUMBLE,          0x80000000,                 -1)
     Character.edit_action_parameters(PIANO, Action.FallSpecial,         File.PIANO_FALL_SPECIAL,    -1,                         -1)
     Character.edit_action_parameters(PIANO, Action.LandingSpecial,      File.PIANO_LANDING,         HARD_LANDING,               -1)
@@ -392,6 +392,77 @@ scope Piano {
     dw  0x43750000
     dw  0x43750000
     dw  0x43750000
+    OS.patch_end()
+
+    // @ Description
+    // Mad Piano's extra actions
+    scope Action {
+        //constant Jab3(0x0DC)
+        constant Appear1(0x0DD)
+        constant Appear2(0x0DE)
+        constant Book(0x0DF)
+        constant BookAir(0x0E0)
+        constant SuperJumpChomp(0x0E1)
+        constant SuperJumpChompAir(0x0E2)
+        //constant MarioTornado(0x0E3)
+        //constant MarioTornadoAir(0x0E4)
+        constant EatStart(0x0E5)
+        constant EatLoop(0x0E6)
+        constant Eat(0x0E7)
+        constant EatEnd(0x0E8)
+        constant EatStartAir(0x0E9)
+        constant EatLoopAir(0x0EA)
+        constant EatAir(0x0EB)
+        constant EatEndAir(0x0EC)
+        constant EatThrow(0x0ED)
+        constant EatThrowAir(0x0EE)
+
+        // strings!
+        //string_0x0DC:; String.insert("Jab3")
+        //string_0x0DD:; String.insert("Appear1")
+        //string_0x0DE:; String.insert("Appear2")
+        string_0x0DF:; String.insert("Book")
+        string_0x0E0:; String.insert("BookAir")
+        string_0x0E1:; String.insert("SuperJumpChomp")
+        string_0x0E2:; String.insert("SuperJumpChompAir")
+        //string_0x0E3:; String.insert("MarioTornado")
+        //string_0x0E4:; String.insert("MarioTornadoAir")
+        string_0x0E5:; String.insert("EatStart")
+        string_0x0E6:; String.insert("EatLoop")
+        string_0x0E7:; String.insert("Eat")
+        string_0x0E8:; String.insert("EatEnd")
+        string_0x0E9:; String.insert("EatStartAir")
+        string_0x0EA:; String.insert("EatLoopAir")
+        string_0x0EB:; String.insert("EatAir")
+        string_0x0EC:; String.insert("EatEndAir")
+        string_0x0ED:; String.insert("EatThrow")
+        string_0x0EE:; String.insert("EatThrowAir")
+
+        action_string_table:
+        dw 0 //dw Action.COMMON.string_jab3
+        dw Action.COMMON.string_appear1
+        dw Action.COMMON.string_appear2
+        dw string_0x0DF
+        dw string_0x0E0
+        dw string_0x0E1
+        dw string_0x0E2
+        dw 0 //dw string_0x0E3
+        dw 0 //dw string_0x0E4
+        dw string_0x0E5
+        dw string_0x0E6
+        dw string_0x0E7
+        dw string_0x0E8
+        dw string_0x0E9
+        dw string_0x0EA
+        dw string_0x0EB
+        dw string_0x0EC
+        dw string_0x0ED
+        dw string_0x0EE
+    }
+
+    // Set action strings
+    Character.table_patch_start(action_string, Character.id.PIANO, 0x4)
+    dw  Action.action_string_table
     OS.patch_end()
     
     // @ Description

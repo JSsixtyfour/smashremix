@@ -140,6 +140,11 @@ scope Toggles {
     dw 0x00000000
 
     // @ Description
+    // Flag used to reset menu music when exiting custom menu
+    reset_menu_music:
+    dw OS.FALSE
+
+    // @ Description
     // Helper routine to set the settings button's visibility based on the selected button index
     scope set_settings_button_display_: {
         lui     t0, 0x8013               // t1 = index
@@ -213,6 +218,10 @@ scope Toggles {
     scope mode_select_screen_change_: {
         OS.patch_start(0x11D668, 0x801326D8)
         // v0 = index of selected button
+        li      t5, SinglePlayerModes.singleplayer_mode_flag    // load single player mode flag address
+        sw      r0, 0x0000(t5)              // clear this flag out so nothing carries over to VS
+        li      t5, SinglePlayerModes.singleplayer_mode_flag    // load 1p menu page flag address
+        sw      r0, 0x0000(t5)              // clear this flag out always start on first page when coming from mode select
         beqzl   v0, _change
         addiu   t5, r0, 0x0008              // 1P Game Mode menu
         lli     at, 0x0001
@@ -326,6 +335,9 @@ scope Toggles {
         bnez    t9, _end                    // skip if not custom
         nop
 
+        li      t0, reset_menu_music
+        sw      r0, 0x0000(t0)              // initialize flag for resetting menu music
+
         Render.load_font()
         Render.load_file(0x4E, Render.file_pointer_1)                 // load option images
         Render.load_file(File.REMIX_MENU_BG, Render.file_pointer_2)   // load remix menu bg
@@ -339,6 +351,9 @@ scope Toggles {
         Render.draw_string_pointer(3, 12, page_title_pointer, Render.update_live_string_, 0x43900000, 0x41A80000, 0xF2C70DFF, 0x3FB00000, Render.alignment.RIGHT)
         Render.draw_texture_at_offset(3, 12, Render.file_pointer_3, Render.file_c5_offsets.R, Render.NOOP, 0x43830000, 0x42180000, 0x848484FF, 0x303030FF, 0x3F700000)
         Render.draw_texture_at_offset(3, 12, 0x801338B0, 0xDD90, Render.NOOP, 0x438C0000, 0x42240000, 0xFFAE00FF, 0x00000000, 0x3F2F0000)
+        Render.draw_texture_at_offset(3, 12, 0x801338B0, 0xDE30, Render.NOOP, 0x43700000, 0x42240000, 0xFFAE00FF, 0x00000000, 0x3F2F0000)
+        Render.draw_string(3, 12, slash, Render.NOOP, 0x43800000, 0x42180000, 0xFFFFFFFF, 0x3F600000, Render.alignment.LEFT)
+        Render.draw_texture_at_offset(3, 12, Render.file_pointer_3, Render.file_c5_offsets.Z, Render.NOOP, 0x43780000, 0x42180000, 0x848484FF, 0x303030FF, 0x3F480000)
 
         Render.draw_texture_at_offset(3, 13, Render.file_pointer_2, 0x20718, Render.NOOP, 0x41200000, 0x41200000, 0xFFFFFFFF, 0x00000000, 0x3F800000)
         Render.draw_string(3, 13, current_profile, Render.NOOP, 0x432D0000, 0x434D0000, 0xFFFFFFFF, Render.FONTSIZE_DEFAULT, Render.alignment.RIGHT)
@@ -346,7 +361,16 @@ scope Toggles {
 
         Render.draw_string(3, 14, toggles_note_line_1, Render.NOOP, 0x43200000, 0x432E0000, 0xFFFFFFFF, Render.FONTSIZE_DEFAULT, Render.alignment.CENTER)
         Render.draw_string(3, 14, toggles_note_line_2, Render.NOOP, 0x43200000, 0x433C0000, 0xFFFFFFFF, Render.FONTSIZE_DEFAULT, Render.alignment.CENTER)
-        Render.draw_texture_at_offset(3, 14, Render.file_pointer_3, Render.file_c5_offsets.A, Render.NOOP, 0x42B20000, 0x432E0000, 0x50A8FFFF, 0x0010FFFF, 0x3F800000)
+        Render.draw_texture_at_offset(3, 14, Render.file_pointer_3, Render.file_c5_offsets.A, Render.NOOP, 0x42B40000, 0x432E0000, 0x50A8FFFF, 0x0010FFFF, 0x3F800000)
+
+        Render.draw_texture_at_offset(3, 15, Render.file_pointer_3, Render.file_c5_offsets.A, Render.NOOP, 0x433F0000, 0x42180000, 0x50A8FFFF, 0x0010FFFF, 0x3F700000)
+        Render.draw_string(3, 15, preview_track, Render.NOOP, 0x434A0000, 0x42180000, 0xC0C0C0FF, 0x3F600000, Render.alignment.LEFT)
+
+        Render.draw_texture_at_offset(3, 16, Render.file_pointer_3, Render.file_c5_offsets.A, Render.NOOP, 0x431A0000, 0x42180000, 0x50A8FFFF, 0x0010FFFF, 0x3F700000)
+        Render.draw_string(3, 16, toggle_all, Render.NOOP, 0x43250000, 0x42180000, 0xC0C0C0FF, 0x3F600000, Render.alignment.LEFT)
+
+        Render.draw_texture_at_offset(3, 17, Render.file_pointer_3, Render.file_c5_offsets.A, Render.NOOP, 0x43100000, 0x42180000, 0x50A8FFFF, 0x0010FFFF, 0x3F700000)
+        Render.draw_string(3, 17, load_profile, Render.NOOP, 0x431B0000, 0x42180000, 0xC0C0C0FF, 0x3F600000, Render.alignment.LEFT)
 
         li      a0, info                    // a0 - info
         sw      r0, 0x0008(a0)              // clear cursor object reference on page load
@@ -444,6 +468,12 @@ scope Toggles {
         sw      t0, 0x000C(t1)              // restore cursor
         jal     set_info_1_                 // bring up super menu
         nop
+        li      t0, reset_menu_music
+        lw      t0, 0x0000(t0)              // t0 = reset menu music flag
+        beqz    t0, _end                    // if we don't need to reset the menu music, skip
+        nop
+        jal     play_menu_music_            // reset menu music
+        lli     v0, 0x0000                  // forces a reset
 
         b       _end                        // end menu execution
         nop
@@ -456,6 +486,42 @@ scope Toggles {
         nop
 
         _end:
+        li      a0, info                    // a0 = address of info
+        jal     Menu.get_selected_entry_    // v0 = selected entry
+        nop
+
+        lli     t3, 0x0001                  // t3 = display off
+        lli     t4, 0x0001                  // t4 = display off
+        lli     t5, 0x0001                  // t5 = display off
+        lw      t1, 0x0010(v0)              // t1 = a_function routine
+        li      t2, play_menu_music_        // t2 = play_menu_music_
+        beql    t1, t2, pc() + 8            // if on the menu music entry, display Play legend
+        lli     t3, 0x0000                  // t3 = display on
+        li      t2, preview_bgm_            // t2 = preview_bgm_
+        beql    t1, t2, pc() + 8            // if on a track entry, display Play legend
+        lli     t3, 0x0000                  // t3 = display on
+        li      t2, toggle_all_             // t2 = toggle_all_
+        beql    t1, t2, pc() + 8            // if on a toggle all entry, display Toggle legend
+        lli     t4, 0x0000                  // t4 = display on
+        li      t2, load_sub_profile_       // t2 = load_sub_profile_
+        beql    t1, t2, pc() + 8            // if on a load profile entry, display Load legend
+        lli     t5, 0x0000                  // t4 = display on
+
+        // ensure play legend is hidden/shown accordingly
+        lli     a0, 15                      // a0 = group
+        jal     Render.toggle_group_display_
+        or      a1, t3, r0                  // a1 = display
+
+        // ensure toggle all legend is hidden/shown accordingly
+        lli     a0, 16                      // a0 = group
+        jal     Render.toggle_group_display_
+        or      a1, t4, r0                  // a1 = display
+
+        // ensure toggle all legend is hidden/shown accordingly
+        lli     a0, 17                      // a0 = group
+        jal     Render.toggle_group_display_
+        or      a1, t5, r0                  // a1 = display
+
         OS.restore_registers()
         jr      ra
         nop
@@ -574,7 +640,7 @@ scope Toggles {
         sw      t1, 0x001C(t0)              // update info->last displayed
         li      t0, page_title_pointer      // t0 = page_title pointer
         if {hide_bg_image} == OS.TRUE {
-            addiu   t1, v0, 0x0024          // t1 = select entry's title
+            addiu   t1, v0, 0x0028          // t1 = selected entry's title
             sw      t1, 0x0000(t0)          // set the page title
         } else {
             sw      r0, 0x0000(t0)          // clear the page title
@@ -609,29 +675,55 @@ scope Toggles {
 
     // @ Description
     // Wrapper for Menu.entry_bool()
-    macro entry_bool(title, default_ce, default_te, default_jp, next) {
+    macro entry_bool(title, default_ce, default_te, default_ne, default_jp, next) {
         global variable num_toggles(num_toggles + 1)
         evaluate n(num_toggles)
         global define TOGGLE_{n}_DEFAULT_CE({default_ce})
         global define TOGGLE_{n}_DEFAULT_TE({default_te})
+        global define TOGGLE_{n}_DEFAULT_NE({default_ne})
         global define TOGGLE_{n}_DEFAULT_JP({default_jp})
         Menu.entry_bool({title}, {default_ce}, {next})
     }
 
     // @ Description
-    // Wrapper for Menu.entry()
-    macro entry(title, type, default_ce, default_te, default_jp, min, max, a_function, string_table, copy_address, next) {
+    // Wrapper for Menu.entry_bool()
+    macro entry_bool_with_a(title, default_ce, default_te, default_ne, default_jp, a_function, extra, next) {
         global variable num_toggles(num_toggles + 1)
         evaluate n(num_toggles)
         global define TOGGLE_{n}_DEFAULT_CE({default_ce})
         global define TOGGLE_{n}_DEFAULT_TE({default_te})
+        global define TOGGLE_{n}_DEFAULT_NE({default_ne})
         global define TOGGLE_{n}_DEFAULT_JP({default_jp})
-        Menu.entry({title}, {type}, {default_ce}, {min}, {max}, {a_function}, {string_table}, {copy_address}, {next})
+        Menu.entry({title}, Menu.type.BOOL, {default_ce}, 0, 1, {a_function}, {extra}, Menu.bool_string_table, OS.NULL, {next})
+    }
+
+    // @ Description
+    // Wrapper for Menu.entry()
+    macro entry(title, type, default_ce, default_te, default_ne, default_jp, min, max, a_function, string_table, copy_address, next) {
+        global variable num_toggles(num_toggles + 1)
+        evaluate n(num_toggles)
+        global define TOGGLE_{n}_DEFAULT_CE({default_ce})
+        global define TOGGLE_{n}_DEFAULT_TE({default_te})
+        global define TOGGLE_{n}_DEFAULT_NE({default_ne})
+        global define TOGGLE_{n}_DEFAULT_JP({default_jp})
+        Menu.entry({title}, {type}, {default_ce}, {min}, {max}, {a_function}, OS.NULL, {string_table}, {copy_address}, {next})
+    }
+
+    // @ Description
+    // Wrapper for Menu.entry()
+    macro entry(title, type, default_ce, default_te, default_ne, default_jp, min, max, a_function, extra, string_table, copy_address, next) {
+        global variable num_toggles(num_toggles + 1)
+        evaluate n(num_toggles)
+        global define TOGGLE_{n}_DEFAULT_CE({default_ce})
+        global define TOGGLE_{n}_DEFAULT_TE({default_te})
+        global define TOGGLE_{n}_DEFAULT_NE({default_ne})
+        global define TOGGLE_{n}_DEFAULT_JP({default_jp})
+        Menu.entry({title}, {type}, {default_ce}, {min}, {max}, {a_function}, {extra}, {string_table}, {copy_address}, {next})
     }
 
     // @ Description
     // Write defaults for the passed in profile
-    // profile - CE or TE
+    // profile - CE, TE, NE or JP
     macro write_defaults_for(profile) {
         evaluate n(1)
         while {n} <= num_toggles {
@@ -643,100 +735,104 @@ scope Toggles {
     scope profile {
         constant CE(0)
         constant TE(1)
-        constant JP(2)
-        constant CUSTOM(3)
+        constant NE(2)
+        constant JP(3)
+        constant CUSTOM(4)
     }
 
     // @ Description
     // Profile strings
     profile_ce:; db "Community", 0x00
     profile_te:; db "Tournament", 0x00
+    profile_ne:; db "Netplay", 0x00
     profile_jp:; db "Japanese", 0x00
     profile_custom:; db "Custom", 0x00
+    profile_semicomp:; db "Semi-Competitive", 0x00
     current_profile:; db "Current Profile: ", 0x00
     toggles_note_line_1:; db "Press     to load selected profile,", 0x00
     toggles_note_line_2:; db "which will affect all settings.", 0x00
+    preview_track:; db ": Play", 0x00
+    toggle_all:; db ": All On/Off", 0x00
+    load_profile:; db ": Load Profile", 0x00
     settings:; db "SETTINGS", 0x00
+    slash:; db "/", 0x00
+    off:; db "OFF", 0x00
+    normal:; db "NORMAL", 0x00
+    default:; db "DEFAULT", 0x00
     OS.align(4)
 
     string_table_profile:
     dw profile_ce
     dw profile_te
+    dw profile_ne
     dw profile_jp
     dw profile_custom
 
     // @ Description
     // FPS strings
-    fps_off:; db "OFF", 0x00
-    fps_normal:; db "NORMAL", 0x00
     fps_overclocked:; db "OVERCLOCKED", 0x00
     OS.align(4)
 
     string_table_fps:
-    dw fps_off
-    dw fps_normal
+    dw off
+    dw normal
     dw fps_overclocked
 
     // @ Description
     // Special Model Display strings
-    model_off:; db "OFF", 0x00
     model_hitbox:; db "HITBOX", 0x00
     model_hitbox_plus:; db "HITBOX+", 0x00
     model_ecb:; db "ECB", 0x00
     OS.align(4)
 
     string_table_model:
-    dw model_off
+    dw off
     dw model_hitbox
     dw model_hitbox_plus
     dw model_ecb
 
     // @ Description
     // Model Display strings
-    model_poly_default:; db "DEFAULT", 0x00
     model_poly_high:; db "HIGH POLY", 0x00
     model_poly_low:; db "LOW POLY", 0x00
     OS.align(4)
 
     string_table_poly:
-    dw model_poly_default
+    dw default
     dw model_poly_high
     dw model_poly_low
 
     // @ Description
     // Default/Always/Never frequency strings (used multiple times)
-    frequency_default:; db "DEFAULT", 0x00
     frequency_always:; db "ALWAYS", 0x00
     frequency_never:; db "NEVER", 0x00
     OS.align(4)
 
     string_table_frequency:
-    dw frequency_default
+    dw default
     dw frequency_always
     dw frequency_never
 
     // @ Description
     // Menu Music strings
-    menu_music_default:; db "DEFAULT", 0x00
     menu_music_64:; db "64", 0x00
     menu_music_melee:; db "MELEE", 0x00
     menu_music_brawl:; db "BRAWL", 0x00
     OS.align(4)
 
     string_table_menu_music:
-    dw menu_music_default
+    dw default
     dw menu_music_64
     dw menu_music_melee
     dw menu_music_brawl
 
     // @ Description
     // SSS Layout strings
-    sss_layout_normal:; db "NORMAL", 0x00
     sss_layout_tournament:; db "TOURNAMENT", 0x00
     OS.align(4)
 
     string_table_sss_layout:
-    dw sss_layout_normal
+    dw normal
     dw sss_layout_tournament
 
     scope sss {
@@ -746,14 +842,13 @@ scope Toggles {
 
     // @ Description
     // Hazard Mode strings
-    hazard_mode_normal:; db "NORMAL", 0x00
     hazard_mode_hazards_off:; db "HAZARDS OFF", 0x00
     hazard_mode_movement_off:; db "MOVEMENT OFF", 0x00
     hazard_mode_all_off:; db "ALL OFF", 0x00
     OS.align(4)
 
     string_table_hazard_mode:
-    dw hazard_mode_normal
+    dw normal
     dw hazard_mode_hazards_off
     dw hazard_mode_movement_off
     dw hazard_mode_all_off
@@ -787,8 +882,10 @@ scope Toggles {
         beql    t1, t0, _play               // if BRAWL, then use BRAWL BGM
         addiu   a1, r0, BGM.menu.MAIN_BRAWL
 
-        b       _finish                     // if DEFAULT, then let's let the current track keep playing
-        nop
+        // v0 is the entry if we got here by pressing A button on the menu music entry
+        // if v0 is 0, then we got here by calling it manually in order to reset the menu music
+        bnez    v0, _finish                 // if DEFAULT, then let's let the current track keep playing
+        lli     a1, BGM.menu.MAIN           // otherwise, restart the normal menu music
 
         _play:
         lli     a0, 0x0000
@@ -806,9 +903,104 @@ scope Toggles {
     }
 
     // @ Description
+    // Allows A button to preview selected random music entry
+    scope preview_bgm_: {
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      a0, 0x0004(sp)              // ~
+        sw      a1, 0x0008(sp)              // ~
+        sw      ra, 0x000C(sp)              // save registers
+
+        li      t0, reset_menu_music
+        lli     t1, OS.TRUE                 // t1 = TRUE
+        sw      t1, 0x0000(t0)              // set flag for resetting menu music
+
+        // v0 = menu item
+        // 0x0024(v0) = bgm_id
+
+        lli     a0, 0x0000
+        jal     BGM.play_
+        lw      a1, 0x0024(v0)              // a0 = bgm_id
+
+        lw      a0, 0x0004(sp)              // restore registers
+        lw      a1, 0x0008(sp)              // ~
+        lw      ra, 0x000C(sp)              // ~
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // Allows A button to toggle on/off all subsequent toggles.
+    // Used for random stage/music toggles.
+    scope toggle_all_: {
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+
+        // v0 = menu item
+        lw      t0, 0x001C(v0)              // t0 = next entry
+        lw      t1, 0x0004(t0)              // t1 = value
+        xori    t1, t1, 0x0001              // t1 = opposite of first value
+
+        _loop:
+        sw      t1, 0x0004(t0)              // update value
+        lw      t0, 0x001C(t0)              // t0 = next entry
+        bnez    t0, _loop                   // if there is a next entry, keep looping
+        nop                                 // otherwise we're done!
+
+        li      a0, info
+        jal     Menu.redraw_                // redraw menu to update the toggle values
+        lw      a1, 0x0018(a0)              // a1 = 1st displayed entry
+
+        lw      ra, 0x0004(sp)              // restore registers
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // Allows A button to load a profile for random stage/music toggles.
+    scope load_sub_profile_: {
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+
+        // v0 = menu item
+        lw      t0, 0x001C(v0)              // t0 = next entry (title)
+        lw      t0, 0x001C(t0)              // t0 = next entry (first toggle)
+        lw      t1, 0x0004(v0)              // t1 = profile to load
+        li      t2, info                    // t2 = address of info
+        lw      t2, 0x0000(t2)              // t2 = address of head
+        li      t3, head_music_settings     // t3 = head_music_settings
+        li      t4, music_profiles
+        beq     t2, t3, _begin              // if in music settings, use music table
+        nop                                 // otherwise, use stage table
+        li      t4, stage_profiles
+
+        _begin:
+        sll     t1, t1, 0x0002              // t1 = offset to profile defaults
+        addu    t2, t4, t1                  // t2 = address of profile defaults pointer
+        lw      t2, 0x0000(t2)              // t2 = profile defaults address
+
+        _loop:
+        lw      t1, 0x0000(t2)              // t1 = default value
+        sw      t1, 0x0004(t0)              // update value
+        lw      t0, 0x001C(t0)              // t0 = next entry
+        bnez    t0, _loop                   // if there is a next entry, keep looping
+        addiu   t2, t2, 0x0004              // t2 = next default value address
+
+        li      a0, info
+        jal     Menu.redraw_                // redraw menu to update the toggle values
+        lw      a1, 0x0018(a0)              // a1 = 1st displayed entry
+
+        lw      ra, 0x0004(sp)              // restore registers
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        jr      ra
+        nop
+    }
+
+    // @ Description
     // Contains list of submenus.
     head_super_menu:
-    Menu.entry("Load Profile:", Menu.type.U8, OS.FALSE, 0, 2, load_profile_, string_table_profile, OS.NULL, entry_remix_settings)
+    Menu.entry("Load Profile:", Menu.type.U8, OS.FALSE, 0, 3, load_profile_, OS.NULL, string_table_profile, OS.NULL, entry_remix_settings)
     entry_remix_settings:; Menu.entry_title("Remix Settings", set_info_2_, entry_music_settings)
     entry_music_settings:; Menu.entry_title("Music Settings", set_info_3_, entry_stage_settings)
     entry_stage_settings:; Menu.entry_title("Stage Settings", set_info_4_, OS.NULL)
@@ -816,54 +1008,61 @@ scope Toggles {
     // @ Description 
     // Miscellaneous Toggles
     head_remix_settings:
-    entry_skip_results_screen:;         entry_bool("Skip Results Screen", OS.FALSE, OS.FALSE, OS.FALSE, entry_practice_overlay)
-    entry_practice_overlay:;            entry_bool("Color Overlays", OS.FALSE, OS.FALSE, OS.FALSE, entry_cinematic_entry)
-    entry_cinematic_entry:;             entry("Cinematic Entry", Menu.type.U8, 0, 0, 0, 0, 2, OS.NULL, string_table_frequency, OS.NULL, entry_flash_on_z_cancel)
-    entry_flash_on_z_cancel:;           entry_bool("Flash On Z-Cancel", OS.FALSE, OS.FALSE, OS.FALSE, entry_fps)
-    entry_fps:;                         entry("FPS Display *BETA", Menu.type.U8, OS.FALSE, OS.FALSE, OS.FALSE, 0, 2, OS.NULL, string_table_fps, OS.NULL, entry_model_display)
-    entry_model_display:;               entry("Model Display", Menu.type.U8, 0, 0, 0, 0, 2, OS.NULL, string_table_poly, OS.NULL, entry_special_model)
-    entry_special_model:;               entry("Special Model Display", Menu.type.U8, OS.FALSE, OS.FALSE, OS.FALSE, 0, 3, OS.NULL, string_table_model, OS.NULL, entry_advanced_hurtbox)
-    entry_advanced_hurtbox:;            entry_bool("Advanced Hurtbox Display", OS.FALSE, OS.FALSE, OS.FALSE, entry_hold_to_pause)
-    entry_hold_to_pause:;               entry_bool("Hold To Pause", OS.FALSE, OS.TRUE, OS.FALSE, entry_improved_combo_meter)
-    entry_improved_combo_meter:;        entry_bool("Improved Combo Meter", OS.TRUE, OS.FALSE, OS.TRUE, entry_tech_chase_combo_meter)
-    entry_tech_chase_combo_meter:;      entry_bool("Tech Chase Combo Meter", OS.TRUE, OS.FALSE, OS.TRUE, entry_vs_mode_combo_meter)
-    entry_vs_mode_combo_meter:;         entry_bool("VS Mode Combo Meter", OS.TRUE, OS.FALSE, OS.TRUE, entry_1v1_combo_meter_swap)
-    entry_1v1_combo_meter_swap:;        entry_bool("1v1 Combo Meter Swap", OS.FALSE, OS.FALSE, OS.FALSE, entry_improved_ai)
-    entry_improved_ai:;                 entry_bool("Improved AI", OS.TRUE, OS.FALSE, OS.TRUE, entry_neutral_spawns)
-    entry_neutral_spawns:;              entry_bool("Neutral Spawns", OS.TRUE, OS.TRUE, OS.TRUE, entry_salty_runback)
-    entry_salty_runback:;               entry_bool("Salty Runback", OS.TRUE, OS.FALSE, OS.TRUE, entry_widescreen)
-    entry_widescreen:;                  entry_bool("Widescreen", OS.FALSE, OS.FALSE, OS.FALSE, entry_japanese_hitlag)
-    entry_japanese_hitlag:;             entry_bool("Japanese Hitlag", OS.FALSE, OS.FALSE, OS.TRUE, entry_japanese_di)
-    entry_japanese_di:;                 entry_bool("Japanese DI", OS.FALSE, OS.FALSE, OS.TRUE, entry_japanese_sounds)
-    entry_japanese_sounds:;             entry("Japanese Sounds", Menu.type.U8, 0, 0, 0, 0, 2, OS.NULL, string_table_frequency, OS.NULL, entry_momentum_slide)
-    entry_momentum_slide:;              entry_bool("Momentum Slide", OS.FALSE, OS.FALSE, OS.TRUE, entry_japanese_shieldstun)
-    entry_japanese_shieldstun:;         entry_bool("Japanese Shield Stun", OS.FALSE, OS.FALSE, OS.TRUE, entry_variant_random)
-	entry_variant_random:;              entry_bool("Random Select With Variants", OS.FALSE, OS.FALSE, OS.FALSE, entry_disable_pause_hud)
-    entry_disable_pause_hud:;           entry_bool("Disable VS Pause HUD", OS.FALSE, OS.FALSE, OS.FALSE, entry_disable_aa)
-    entry_disable_aa:;                  entry_bool("Disable Anti-Aliasing", OS.FALSE, OS.FALSE, OS.FALSE, OS.NULL)
+    entry_skip_results_screen:;         entry_bool("Skip Results Screen", OS.FALSE, OS.FALSE, OS.TRUE, OS.FALSE, entry_hold_to_pause)
+    entry_hold_to_pause:;               entry_bool("Hold To Pause", OS.FALSE, OS.TRUE, OS.TRUE, OS.FALSE, entry_css_panel_menu)
+    entry_css_panel_menu:;              entry_bool("CSS Panel Menu", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_practice_overlay)
+    entry_practice_overlay:;            entry_bool("Color Overlays", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_cinematic_entry)
+    entry_cinematic_entry:;             entry("Cinematic Entry", Menu.type.U8, 0, 0, 0, 0, 0, 2, OS.NULL, string_table_frequency, OS.NULL, entry_flash_on_z_cancel)
+    entry_flash_on_z_cancel:;           entry_bool("Flash On Z-Cancel", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_fps)
+    entry_fps:;                         entry("FPS Display *BETA", Menu.type.U8, OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, 0, 2, OS.NULL, string_table_fps, OS.NULL, entry_model_display)
+    entry_model_display:;               entry("Model Display", Menu.type.U8, 0, 0, 1, 0, 0, 2, OS.NULL, string_table_poly, OS.NULL, entry_special_model)
+    entry_special_model:;               entry("Special Model Display", Menu.type.U8, OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, 0, 3, OS.NULL, string_table_model, OS.NULL, entry_advanced_hurtbox)
+    entry_advanced_hurtbox:;            entry_bool("Advanced Hurtbox Display", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_hold_to_exit_training)
+    entry_hold_to_exit_training:;       entry_bool("Hold To Exit Training", OS.FALSE, OS.TRUE, OS.FALSE, OS.FALSE, entry_improved_combo_meter)
+    entry_improved_combo_meter:;        entry_bool("Improved Combo Meter", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_tech_chase_combo_meter)
+    entry_tech_chase_combo_meter:;      entry_bool("Tech Chase Combo Meter", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_vs_mode_combo_meter)
+    entry_vs_mode_combo_meter:;         entry_bool("VS Mode Combo Meter", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_1v1_combo_meter_swap)
+    entry_1v1_combo_meter_swap:;        entry_bool("1v1 Combo Meter Swap", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_improved_ai)
+    entry_improved_ai:;                 entry_bool("Improved AI", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_neutral_spawns)
+    entry_neutral_spawns:;              entry_bool("Neutral Spawns", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, entry_salty_runback)
+    entry_salty_runback:;               entry_bool("Salty Runback", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_widescreen)
+    entry_widescreen:;                  entry_bool("Widescreen", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_japanese_hitlag)
+    entry_japanese_hitlag:;             entry_bool("Japanese Hitlag", OS.FALSE, OS.FALSE, OS.FALSE, OS.TRUE, entry_japanese_di)
+    entry_japanese_di:;                 entry_bool("Japanese DI", OS.FALSE, OS.FALSE, OS.FALSE, OS.TRUE, entry_japanese_sounds)
+    entry_japanese_sounds:;             entry("Japanese Sounds", Menu.type.U8, 0, 0, 0, 1, 0, 2, OS.NULL, string_table_frequency, OS.NULL, entry_momentum_slide)
+    entry_momentum_slide:;              entry_bool("Momentum Slide", OS.FALSE, OS.FALSE, OS.FALSE, OS.TRUE, entry_japanese_shieldstun)
+    entry_japanese_shieldstun:;         entry_bool("Japanese Shield Stun", OS.FALSE, OS.FALSE, OS.FALSE, OS.TRUE, entry_variant_random)
+	entry_variant_random:;              entry_bool("Random Select With Variants", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_disable_pause_hud)
+    entry_disable_pause_hud:;           entry_bool("Disable VS Pause HUD", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_disable_aa)
+    entry_disable_aa:;                  entry_bool("Disable Anti-Aliasing", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, OS.NULL)
 
     // @ Description
     // Random Music Toggles
     head_music_settings:
-    entry_play_music:;                      entry_bool("Play Music", OS.TRUE, OS.TRUE, OS.TRUE, entry_menu_music)
-    entry_menu_music:;                      entry("Menu Music", Menu.type.U8, 0, 0, 0, 0, 3, play_menu_music_, string_table_menu_music, OS.NULL, entry_random_music)
-    entry_random_music:;                    entry_bool("Random Music", OS.FALSE, OS.FALSE, OS.FALSE, entry_random_music_bonus)
-    entry_random_music_bonus:;              entry_bool("Bonus", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_congo_jungle)
-    entry_random_music_congo_jungle:;       entry_bool("Congo Jungle", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_credits)
-    entry_random_music_credits:;            entry_bool("Credits", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_data)
-    entry_random_music_data:;               entry_bool("Data", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_dream_land)
-    entry_random_music_dream_land:;         entry_bool("Dream Land", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_duel_zone)
-    entry_random_music_duel_zone:;          entry_bool("Duel Zone", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_final_destination)
-    entry_random_music_final_destination:;  entry_bool("Final Destination", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_how_to_play)
-    entry_random_music_how_to_play:;        entry_bool("How To Play", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_hyrule_castle)
-    entry_random_music_hyrule_castle:;      entry_bool("Hyrule Castle", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_meta_crystal)
-    entry_random_music_meta_crystal:;       entry_bool("Meta Crystal", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_mushroom_kingdom)
-    entry_random_music_mushroom_kingdom:;   entry_bool("Mushroom Kingdom", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_peachs_castle)
-    entry_random_music_peachs_castle:;      entry_bool("Peach's Castle", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_planet_zebes)
-    entry_random_music_planet_zebes:;       entry_bool("Planet Zebes", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_saffron_city)
-    entry_random_music_saffron_city:;       entry_bool("Saffron City", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_sector_z)
-    entry_random_music_sector_z:;           entry_bool("Sector Z", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_yoshis_island)
-    entry_random_music_yoshis_island:;      entry_bool("Yoshi's Island", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music_first_custom)
+    entry_play_music:;                      entry_bool("Play Music", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music)
+    entry_random_music:;                    entry_bool("Random Music", OS.FALSE, OS.FALSE, OS.TRUE, OS.FALSE, entry_menu_music)
+    entry_menu_music:;                      entry("Menu Music", Menu.type.U8, 0, 0, 1, 0, 0, 3, play_menu_music_, string_table_menu_music, OS.NULL, entry_show_music_title)
+    entry_show_music_title:;                entry_bool("Music Title at Match Start", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_load_profile_music)
+    evaluate LOAD_PROFILE_MUSIC_ENTRY_ORIGIN(origin())
+    entry_load_profile_music:;              entry("Load Profile:", Menu.type.U8, 0, 0, 0, 0, 0, 0, load_sub_profile_, num_toggles, string_table_music_profile, OS.NULL, entry_random_music_title)
+    entry_random_music_title:;              Menu.entry_title("Random Music Toggles:", toggle_all_, entry_random_music_bonus)
+    evaluate first_music_toggle(num_toggles)
+    entry_random_music_bonus:;              entry_bool_with_a("Bonus", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, preview_bgm_, BGM.menu.BONUS, entry_random_music_congo_jungle)
+    entry_random_music_congo_jungle:;       entry_bool_with_a("Congo Jungle", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, preview_bgm_, BGM.stage.CONGO_JUNGLE, entry_random_music_credits)
+    entry_random_music_credits:;            entry_bool_with_a("Credits", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, preview_bgm_, BGM.menu.CREDITS, entry_random_music_data)
+    entry_random_music_data:;               entry_bool_with_a("Data", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, preview_bgm_, BGM.menu.DATA, entry_random_music_dream_land)
+    entry_random_music_dream_land:;         entry_bool_with_a("Dream Land", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, preview_bgm_, BGM.stage.DREAM_LAND, entry_random_music_duel_zone)
+    entry_random_music_duel_zone:;          entry_bool_with_a("Duel Zone", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, preview_bgm_, BGM.stage.DUEL_ZONE, entry_random_music_final_destination)
+    entry_random_music_final_destination:;  entry_bool_with_a("Final Destination", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, preview_bgm_, BGM.stage.FINAL_DESTINATION, entry_random_music_how_to_play)
+    entry_random_music_how_to_play:;        entry_bool_with_a("How To Play", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, preview_bgm_, BGM.stage.HOW_TO_PLAY, entry_random_music_hyrule_castle)
+    entry_random_music_hyrule_castle:;      entry_bool_with_a("Hyrule Castle", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, preview_bgm_, BGM.stage.HYRULE_CASTLE, entry_random_music_meta_crystal)
+    entry_random_music_meta_crystal:;       entry_bool_with_a("Meta Crystal", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, preview_bgm_, BGM.stage.META_CRYSTAL, entry_random_music_mushroom_kingdom)
+    entry_random_music_mushroom_kingdom:;   entry_bool_with_a("Mushroom Kingdom", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, preview_bgm_, BGM.stage.MUSHROOM_KINGDOM, entry_random_music_peachs_castle)
+    entry_random_music_peachs_castle:;      entry_bool_with_a("Peach's Castle", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, preview_bgm_, BGM.stage.PEACHS_CASTLE, entry_random_music_planet_zebes)
+    entry_random_music_planet_zebes:;       entry_bool_with_a("Planet Zebes", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, preview_bgm_, BGM.stage.PLANET_ZEBES, entry_random_music_saffron_city)
+    entry_random_music_saffron_city:;       entry_bool_with_a("Saffron City", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, preview_bgm_, BGM.stage.SAFFRON_CITY, entry_random_music_sector_z)
+    entry_random_music_sector_z:;           entry_bool_with_a("Sector Z", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, preview_bgm_, BGM.stage.SECTOR_Z, entry_random_music_yoshis_island)
+    entry_random_music_yoshis_island:;      entry_bool_with_a("Yoshi's Island", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, preview_bgm_, BGM.stage.YOSHIS_ISLAND, entry_random_music_first_custom)
 
     entry_random_music_first_custom:
     // Add custom MIDIs
@@ -890,34 +1089,39 @@ scope Toggles {
                 evaluate m({n}+1)
                 evaluate next(entry_random_music_{m})
             }
-            entry_bool("{MIDI.MIDI_{n}_NAME}", OS.TRUE, OS.TRUE, OS.TRUE, {next})
+            evaluate music_toggle_{MIDI.MIDI_{n}_FILE_NAME}(num_toggles - {first_music_toggle})
+            entry_bool_with_a({MIDI.MIDI_{n}_NAME}, OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, preview_bgm_, {n}, {next})
         }
         evaluate n({n}+1)
     }
+    evaluate last_music_toggle(num_toggles)
 
     // @ Description
     // Stage Toggles
     head_stage_settings:
-    entry_sss_layout:;                          entry("Stage Select Layout", Menu.type.U8, sss.NORMAL, sss.TOURNAMENT, sss.NORMAL, 0, 1, OS.NULL, string_table_sss_layout, OS.NULL, entry_hazard_mode)
-    entry_hazard_mode:;                         entry("Hazard Mode", Menu.type.U8, hazard_mode.NORMAL, hazard_mode.NORMAL, hazard_mode.NORMAL, 0, 3, OS.NULL, string_table_hazard_mode, OS.NULL, entry_japanese_hazards)
-    entry_japanese_hazards:;                    entry_bool("Japanese Whispy", OS.FALSE, OS.FALSE, OS.TRUE, entry_random_stage_title)
-    entry_random_stage_title:;                  Menu.entry_title("Random Stage Toggles:", OS.NULL, entry_random_stage_congo_jungle)
-    entry_random_stage_congo_jungle:;           entry_bool("Congo Jungle", OS.TRUE, OS.FALSE, OS.TRUE, entry_random_stage_dream_land)
-    entry_random_stage_dream_land:;             entry_bool("Dream Land", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_stage_dream_land_beta_1)
-    entry_random_stage_dream_land_beta_1:;      entry_bool("Dream Land Beta 1", OS.FALSE, OS.FALSE, OS.FALSE, entry_random_stage_dream_land_beta_2)
-    entry_random_stage_dream_land_beta_2:;      entry_bool("Dream Land Beta 2", OS.FALSE, OS.FALSE, OS.FALSE, entry_random_stage_duel_zone)
-    entry_random_stage_duel_zone:;              entry_bool("Duel Zone", OS.TRUE, OS.FALSE, OS.TRUE, entry_random_stage_final_destination)
-    entry_random_stage_final_destination:;      entry_bool("Final Destination", OS.TRUE, OS.FALSE, OS.TRUE, entry_random_stage_how_to_play)
-    entry_random_stage_how_to_play:;            entry_bool("How to Play", OS.FALSE, OS.FALSE, OS.FALSE, entry_random_stage_hyrule_castle)
-    entry_random_stage_hyrule_castle:;          entry_bool("Hyrule Castle", OS.TRUE, OS.FALSE, OS.TRUE, entry_random_stage_meta_crystal)
-    entry_random_stage_meta_crystal:;           entry_bool("Meta Crystal", OS.TRUE, OS.FALSE, OS.TRUE, entry_random_stage_mushroom_kingdom)
-    entry_random_stage_mushroom_kingdom:;       entry_bool("Mushroom Kingdom", OS.TRUE, OS.FALSE, OS.TRUE, entry_random_stage_peachs_castle)
-    entry_random_stage_peachs_castle:;          entry_bool("Peach's Castle", OS.TRUE, OS.FALSE, OS.TRUE, entry_random_stage_planet_zebes)
-    entry_random_stage_planet_zebes:;           entry_bool("Planet Zebes", OS.TRUE, OS.FALSE, OS.TRUE, entry_random_stage_saffron_city)
-    entry_random_stage_saffron_city:;           entry_bool("Saffron City", OS.TRUE, OS.FALSE, OS.TRUE, entry_random_stage_sector_z)
-    entry_random_stage_sector_z:;               entry_bool("Sector Z", OS.TRUE, OS.FALSE, OS.TRUE, entry_random_stage_yoshis_island)
-    entry_random_stage_yoshis_island:;          entry_bool("Yoshi's Island", OS.TRUE, OS.FALSE, OS.TRUE, entry_random_stage_mini_yoshis_island)
-    entry_random_stage_mini_yoshis_island:;     entry_bool("Mini Yoshi's Island", OS.TRUE, OS.TRUE, OS.TRUE, entry_random_stage_first_custom)
+    entry_sss_layout:;                          entry("Stage Select Layout", Menu.type.U8, sss.NORMAL, sss.TOURNAMENT, sss.NORMAL, sss.NORMAL, 0, 1, OS.NULL, string_table_sss_layout, OS.NULL, entry_hazard_mode)
+    entry_hazard_mode:;                         entry("Hazard Mode", Menu.type.U8, hazard_mode.NORMAL, hazard_mode.NORMAL, hazard_mode.NORMAL, hazard_mode.NORMAL, 0, 3, OS.NULL, string_table_hazard_mode, OS.NULL, entry_japanese_hazards)
+    entry_japanese_hazards:;                    entry_bool("Japanese Whispy", OS.FALSE, OS.FALSE, OS.FALSE, OS.TRUE, entry_load_profile_stage)
+    evaluate LOAD_PROFILE_STAGE_ENTRY_ORIGIN(origin())
+    entry_load_profile_stage:;                  entry("Load Profile:", Menu.type.U8, 0, 1, 2, 0, 0, 2, load_sub_profile_, num_toggles, string_table_stage_profile, OS.NULL, entry_random_stage_title)
+    entry_random_stage_title:;                  Menu.entry_title("Random Stage Toggles:", toggle_all_, entry_random_stage_congo_jungle)
+    evaluate first_stage_toggle(num_toggles)
+    entry_random_stage_congo_jungle:;           entry_bool("Congo Jungle", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_random_stage_dream_land)
+    entry_random_stage_dream_land:;             entry_bool("Dream Land", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, entry_random_stage_dream_land_beta_1)
+    entry_random_stage_dream_land_beta_1:;      entry_bool("Dream Land Beta 1", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_random_stage_dream_land_beta_2)
+    entry_random_stage_dream_land_beta_2:;      entry_bool("Dream Land Beta 2", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_random_stage_duel_zone)
+    entry_random_stage_duel_zone:;              entry_bool("Duel Zone", OS.TRUE, OS.FALSE, OS.FALSE, OS.TRUE, entry_random_stage_final_destination)
+    entry_random_stage_final_destination:;      entry_bool("Final Destination", OS.TRUE, OS.FALSE, OS.FALSE, OS.TRUE, entry_random_stage_how_to_play)
+    entry_random_stage_how_to_play:;            entry_bool("How to Play", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_random_stage_hyrule_castle)
+    entry_random_stage_hyrule_castle:;          entry_bool("Hyrule Castle", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_random_stage_meta_crystal)
+    entry_random_stage_meta_crystal:;           entry_bool("Meta Crystal", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_random_stage_mushroom_kingdom)
+    entry_random_stage_mushroom_kingdom:;       entry_bool("Mushroom Kingdom", OS.TRUE, OS.FALSE, OS.FALSE, OS.TRUE, entry_random_stage_peachs_castle)
+    entry_random_stage_peachs_castle:;          entry_bool("Peach's Castle", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_random_stage_planet_zebes)
+    entry_random_stage_planet_zebes:;           entry_bool("Planet Zebes", OS.TRUE, OS.FALSE, OS.FALSE, OS.TRUE, entry_random_stage_saffron_city)
+    entry_random_stage_saffron_city:;           entry_bool("Saffron City", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_random_stage_sector_z)
+    entry_random_stage_sector_z:;               entry_bool("Sector Z", OS.TRUE, OS.FALSE, OS.FALSE, OS.TRUE, entry_random_stage_yoshis_island)
+    entry_random_stage_yoshis_island:;          entry_bool("Yoshi's Island", OS.TRUE, OS.FALSE, OS.FALSE, OS.TRUE, entry_random_stage_mini_yoshis_island)
+    entry_random_stage_mini_yoshis_island:;     entry_bool("Mini Yoshi's Island", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_random_stage_first_custom)
 
     entry_random_stage_first_custom:
     // Add custom stages
@@ -945,21 +1149,215 @@ scope Toggles {
                 evaluate m({n}+1)
                 evaluate next(entry_random_stage_{m})
             }
-            entry_bool({Stages.STAGE_{n}_TITLE}, OS.TRUE, {Stages.STAGE_{n}_LEGAL}, OS.TRUE, {next})
+            evaluate stage_toggle_{Stages.STAGE_{n}_NAME}(num_toggles - {first_stage_toggle})
+            entry_bool({Stages.STAGE_{n}_TITLE}, OS.TRUE, {Stages.STAGE_{n}_TE}, {Stages.STAGE_{n}_NE}, OS.TRUE, {next})
         }
         evaluate n({n}+1)
     }
     map 0, 0, 256 // restore string mappings
+    evaluate last_stage_toggle(num_toggles)
 
     // @ Description
     // SRAM blocks for toggle saving.
-    block_misc:; SRAM.block(25 * 4)
-    block_music:; SRAM.block((19 + {toggled_custom_MIDIs}) * 4)
-    block_stages:; SRAM.block((19 + {toggled_custom_stages}) * 4)
+    block_misc:; SRAM.block(27 * 4)
+    block_music:; SRAM.block((21 + {toggled_custom_MIDIs}) * 4)
+    block_stages:; SRAM.block((20 + {toggled_custom_stages}) * 4)
 
     profile_defaults_CE:; write_defaults_for(CE)
     profile_defaults_TE:; write_defaults_for(TE)
+    profile_defaults_NE:; write_defaults_for(NE)
     profile_defaults_JP:; write_defaults_for(JP)
+
+    profiles:
+    dw profile_defaults_CE
+    dw profile_defaults_TE
+    dw profile_defaults_NE
+    dw profile_defaults_JP
+
+    variable num_music_profiles(0)
+    variable num_stage_profiles(0)
+
+    // @ Description
+    // Adds a music profile
+    // @ Arguments
+    // profile - ID of profile
+    // display_text - text to display in the Settings menu
+    macro add_music_profile(profile, display_text) {
+        evaluate n(num_music_profiles)
+        global variable num_music_profiles(num_music_profiles + 1)
+        global define music_profile_{profile}({n})
+
+        music_profile_defaults_{n}:
+        evaluate o(origin())
+        global define MUSIC_PROFILE_DEFAULTS_{n}_ORIGIN({o})
+        evaluate i({first_music_toggle})
+        while {i} < {last_music_toggle} {
+            dw OS.FALSE                       // don't include by default
+            evaluate i({i} + 1)
+        }
+
+        music_profile_defaults_{n}_string:; String.insert({display_text})
+
+        // now update the max value for the entry
+        pushvar origin, base
+
+        origin {LOAD_PROFILE_MUSIC_ENTRY_ORIGIN} + 0x000C // max value of load profile entry
+        dw ({n} + 1) // since we always include community
+
+        pullvar base, origin
+    }
+
+    // @ Description
+    // Constants for the vanilla music toggles
+    evaluate music_toggle_BONUS(0)
+    evaluate music_toggle_CONGO_JUNGLE(1)
+    evaluate music_toggle_CREDITS(2)
+    evaluate music_toggle_DATA(3)
+    evaluate music_toggle_DREAM_LAND(4)
+    evaluate music_toggle_DUEL_ZONE(5)
+    evaluate music_toggle_FINAL_DESTINATION(6)
+    evaluate music_toggle_HOW_TO_PLAY(7)
+    evaluate music_toggle_HYRULE_CASTLE(8)
+    evaluate music_toggle_META_CRYSTAL(9)
+    evaluate music_toggle_MUSHROOM_KINGDOM(10)
+    evaluate music_toggle_PEACHS_CASTLE(11)
+    evaluate music_toggle_PLANET_ZEBES(12)
+    evaluate music_toggle_SAFFRON_CITY(13)
+    evaluate music_toggle_SECTOR_Z(14)
+    evaluate music_toggle_YOSHIS_ISLAND(15)
+
+    // @ Description
+    // Adds a track to a music profile
+    // @ Arguments
+    // profile - ID of profile
+    // track - ID of track
+    macro add_to_music_profile(profile, track) {
+        pushvar origin, base
+
+        define n({music_toggle_{track}})
+
+        origin {MUSIC_PROFILE_DEFAULTS_{music_profile_{profile}}_ORIGIN} + ({n} * 4)
+        dw OS.TRUE
+
+        pullvar base, origin
+    }
+
+    // @ Description
+    // Adds a stage profile
+    // @ Arguments
+    // profile - ID of profile
+    // display_text - text to display in the Settings menu
+    macro add_stage_profile(profile, display_text) {
+        evaluate n(num_stage_profiles)
+        global variable num_stage_profiles(num_stage_profiles + 1)
+        global define stage_profile_{profile}({n})
+
+        stage_profile_defaults_{n}:
+        evaluate o(origin())
+        global define STAGE_PROFILE_DEFAULTS_{n}_ORIGIN({o})
+        evaluate i({first_stage_toggle})
+        while {i} < {last_stage_toggle} {
+            dw OS.FALSE                       // don't include by default
+            evaluate i({i} + 1)
+        }
+
+        stage_profile_defaults_{n}_string:; String.insert({display_text})
+
+        // now update the max value for the entry
+        pushvar origin, base
+
+        origin {LOAD_PROFILE_STAGE_ENTRY_ORIGIN} + 0x000C // max value of load profile entry
+        dw ({n} + 3) // since we always include community, tournament and netplay
+
+        pullvar base, origin
+    }
+
+    // @ Description
+    // Constants for the vanilla stage toggles
+    evaluate stage_toggle_congo_jungle(0)
+    evaluate stage_toggle_dream_land(1)
+    evaluate stage_toggle_dream_land_beta_1(2)
+    evaluate stage_toggle_dream_land_beta_2(3)
+    evaluate stage_toggle_duel_zone(4)
+    evaluate stage_toggle_final_destination(5)
+    evaluate stage_toggle_how_to_play(6)
+    evaluate stage_toggle_hyrule_castle(7)
+    evaluate stage_toggle_meta_crystal(8)
+    evaluate stage_toggle_mushroom_kingdom(9)
+    evaluate stage_toggle_peachs_castle(10)
+    evaluate stage_toggle_planet_zebes(11)
+    evaluate stage_toggle_saffron_city(12)
+    evaluate stage_toggle_sector_z(13)
+    evaluate stage_toggle_yoshis_island(14)
+    evaluate stage_toggle_mini_yoshis_island(15)
+
+    // @ Description
+    // Adds a track to a stage profile
+    // @ Arguments
+    // profile - ID of profile
+    // stage - ID of track
+    macro add_to_stage_profile(profile, stage) {
+        pushvar origin, base
+
+        define n({stage_toggle_{stage}})
+
+        origin {STAGE_PROFILE_DEFAULTS_{stage_profile_{profile}}_ORIGIN} + ({n} * 4)
+        dw OS.TRUE
+
+        pullvar base, origin
+    }
+
+    // Include music profiles here
+    include "/music/profiles/vanilla.asm"
+    include "/music/profiles/classics.asm"
+    include "/music/profiles/intobattle.asm"
+    include "/music/profiles/positivevibes.asm"
+    include "/music/profiles/slappers.asm"
+    include "/music/profiles/staff.asm"
+
+    // Include stage profiles here
+    include "/stages/profiles/competitive.asm"
+    include "/stages/profiles/vanilla.asm"
+    include "/stages/profiles/dreamlandonly.asm"
+    include "/stages/profiles/no_omega.asm"
+    include "/stages/profiles/no_variant.asm"
+    include "/stages/profiles/staff.asm"
+
+    music_profiles:
+    dw profile_defaults_CE + ({first_music_toggle} * 4)
+    evaluate n(0)
+    while {n} < num_music_profiles {
+        dw music_profile_defaults_{n}
+        evaluate n({n} + 1)
+    }
+
+    string_table_music_profile:
+    dw profile_ce
+    evaluate n(0)
+    while {n} < num_music_profiles {
+        dw music_profile_defaults_{n}_string
+        evaluate n({n} + 1)
+    }
+
+    stage_profiles:
+    dw profile_defaults_CE + ({first_stage_toggle} * 4)
+    dw profile_defaults_TE + ({first_stage_toggle} * 4)
+    dw profile_defaults_NE + ({first_stage_toggle} * 4)
+    evaluate n(0)
+    while {n} < num_stage_profiles {
+        dw stage_profile_defaults_{n}
+        evaluate n({n} + 1)
+    }
+
+    string_table_stage_profile:
+    dw profile_ce
+    dw profile_te
+    dw profile_semicomp
+    evaluate n(0)
+    while {n} < num_stage_profiles {
+        dw stage_profile_defaults_{n}_string
+        evaluate n({n} + 1)
+    }
 
     // @ Description
     // This function will load toggle settings based on the selected profile
@@ -974,17 +1372,10 @@ scope Toggles {
 
         li      t0, head_super_menu            // t0 = address of menu entry
         lw      t0, 0x0004(t0)                 // t0 = selected profile
-        lli     t1, profile.CE                 // t1 = profile.CE
-        li      t2, profile_defaults_CE        // t2 = address of CE defaults
-        beq     t0, t1, _load                  // if (selected profile is CE), skip to _load
-        nop                                    // otherwise apply CE defaults:
-        lli     t1, profile.TE                 // t1 = profile.TE
-        li      t2, profile_defaults_TE        // t2 = address of TE defaults
-        beq     t0, t1, _load                  // if (selected profile is TE), skip to _load
-        nop                                    // otherwise apply TE defaults:
-        li      t2, profile_defaults_JP        // t2 = address of JP defaults
-
-        _load:
+        li      t1, profiles
+        sll     t2, t0, 0x0002                 // t2 = offset to profile defaults
+        addu    t1, t1, t2                     // t1 = address of profile defaults
+        lw      t2, 0x0000(t1)                 // t2 = address of profile defaults
         li      t0, head_remix_settings        // t0 = first remix setting entry address
 
         _begin:
@@ -1047,10 +1438,11 @@ scope Toggles {
 
         lli     v0, profile.CE                 // v0 = CE
 
-        li      t2, profile_defaults_CE        // t2 = address of CE defaults
-
         _load:
-        addu    t5, r0, t2                     // t5 = defaults table
+        sll     t5, v0, 0x0002                 // t5 = offset to profile defaults pointer
+        li      t2, profiles
+        addu    t2, t2, t5                     // t2 = address of defaults pointer
+        lw      t2, 0x0000(t2)                 // t2 = defaults
         li      t0, head_remix_settings        // t0 = first remix setting entry address
 
         _begin:
@@ -1092,20 +1484,11 @@ scope Toggles {
         _next_profile:
         beqz    t0, _end                       // if (entry = null), then we have the correct profile in v0
         nop
-        lli     v0, profile.TE                 // v0 = TE
-        li      t1, profile_defaults_CE        // t1 = address of CE defaults
-        li      t3, profile_defaults_TE        // t3 = address of TE defaults
-        beql    t5, t1, _load                  // if (just confirmed not CE) then check if TE next
-        or      t2, r0, t3                     // ~
+        sltiu   t5, v0, profile.CUSTOM - 1     // t5 = 1 if we haven't reached the end of profiles
+        bnez    t5, _load                      // if more profiles to check, load the next one
+        addiu   v0, v0, 0x0001                 // v0 = next profile index
 
-        lli     v0, profile.JP                 // v0 = JP
-        li      t1, profile_defaults_TE        // t1 = address of TE defaults
-        li      t3, profile_defaults_JP        // t3 = address of JP defaults
-        beql    t5, t1, _load                  // if (just confirmed not TE) then check if JP next
-        or      t2, r0, t3                     // ~
-
-        // if we made it here, it's not CE or TE
-        lli     v0, profile.CUSTOM             // v0 = CUSTOM
+        // if we made it here, it's not one of our profiles, and v0 = CUSTOM
 
         _end:
         lw      ra, 0x0004(sp)                 // ~

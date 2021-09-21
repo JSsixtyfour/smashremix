@@ -270,6 +270,98 @@ scope Wolf {
     Character.table_patch_start(kirby_inhale_struct, 0x02, Character.id.WOLF, 0xC)
     dh 0x1A
     OS.patch_end()
+
+    // @ Description
+    // Wolf's extra actions
+    scope Action {
+        constant Jab3(0x0DC)
+        //constant JabLoop(0x0DD)
+        //constant JabLoopEnd(0x0DE)
+        constant Appear1(0x0DF)
+        constant Appear2(0x0E0)
+        constant Blaster(0x0E1)
+        constant BlasterAir(0x0E2)
+        constant WolfFlashStartAir(0x0E3)
+        constant WolfFlashStart(0x0E4)
+        //constant ReadyingFireFox(0x0E5)
+        constant WolfFlash(0x0E6)
+        //constant FireFox(0x0E7)
+        constant WolfFlashAir(0x0E8)
+        //constant FireFoxEnd(0x0E9)
+        //constant FireFoxEndAir(0x0EA)
+        //constant LandingFireFoxAir(0x0EB)
+        constant ReflectorStart(0x0EC)
+        constant Reflecting(0x0ED)
+        constant ReflectorEnd(0x0EE)
+        constant ReflectorLoop(0x0EF)
+        constant ReflectorSwitchDirection(0x0F0)
+        constant ReflectorStartAir(0x0F1)
+        // constant ?(0x0F2)
+        constant ReflectorEndAir(0x0F3)
+        constant ReflectorAir(0x0F4)
+        constant ReflectorSwitchDirectionAir(0x0F5)
+
+        // strings!
+        //string_0x0DC:; String.insert("Jab3")
+        //string_0x0DD:; String.insert("JabLoop")
+        //string_0x0DE:; String.insert("JabLoopEnd")
+        //string_0x0DF:; String.insert("Appear1")
+        //string_0x0E0:; String.insert("Appear2")
+        string_0x0E1:; String.insert("Blaster")
+        string_0x0E2:; String.insert("BlasterAir")
+        string_0x0E3:; String.insert("WolfFlashStartAir")
+        string_0x0E4:; String.insert("WolfFlashStart")
+        //string_0x0E5:; String.insert("ReadyingFireFox")
+        string_0x0E6:; String.insert("WolfFlash")
+        //string_0x0E7:; String.insert("FireFox")
+        string_0x0E8:; String.insert("WolfFlashAir")
+        //string_0x0E9:; String.insert("FireFoxEnd")
+        //string_0x0EA:; String.insert("FireFoxEndAir")
+        //string_0x0EB:; String.insert("LandingFireFoxAir")
+        //string_0x0EC:; String.insert("ReflectorStart")
+        //string_0x0ED:; String.insert("Reflecting")
+        //string_0x0EE:; String.insert("ReflectorEnd")
+        //string_0x0EF:; String.insert("ReflectorLoop")
+        //string_0x0F0:; String.insert("ReflectorSwitchDirection")
+        //string_0x0F1:; String.insert("ReflectorStartAir")
+        //string_0x0F2:; String.insert("ReflectingAir")
+        //string_0x0F3:; String.insert("ReflectorEndAir")
+        //string_0x0F4:; String.insert("ReflectorAir")
+        //string_0x0F5:; String.insert("ReflectorSwitchDirectionAir")
+
+        action_string_table:
+        dw Action.COMMON.string_jab3
+        dw 0 //dw Action.COMMON.string_jabloop
+        dw 0 //dw Action.COMMON.string_jabloopend
+        dw Action.COMMON.string_appear1
+        dw Action.COMMON.string_appear2
+        dw string_0x0E1
+        dw string_0x0E2
+        dw string_0x0E3
+        dw string_0x0E4
+        dw 0 //dw Action.FOX.string_0x0E5
+        dw string_0x0E6
+        dw 0 //dw Action.FOX.string_0x0E7
+        dw string_0x0E8
+        dw 0 //dw Action.FOX.string_0x0E9
+        dw 0 //dw Action.FOX.string_0x0EA
+        dw 0 //dw Action.FOX.string_0x0EB
+        dw Action.FOX.string_0x0EC
+        dw Action.FOX.string_0x0ED
+        dw Action.FOX.string_0x0EE
+        dw Action.FOX.string_0x0EF
+        dw Action.FOX.string_0x0F0
+        dw Action.FOX.string_0x0F1
+        dw Action.FOX.string_0x0F2
+        dw Action.FOX.string_0x0F3
+        dw Action.FOX.string_0x0F4
+        dw Action.FOX.string_0x0F5
+    }
+
+    // Set action strings
+    Character.table_patch_start(action_string, Character.id.WOLF, 0x4)
+    dw  Action.action_string_table
+    OS.patch_end()
 	 
 	// @ Description
     // This adds a check to the reflection routine that looks to see if wolf is reflecting, if so it doubles speed

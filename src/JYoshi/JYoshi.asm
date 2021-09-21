@@ -20,6 +20,11 @@ scope JYoshi {
     Character.table_patch_start(crowd_chant_fgm, Character.id.JYOSHI, 0x2)
     dh  0x0318
     OS.patch_end()
+
+    // Set action strings
+    Character.table_patch_start(action_string, Character.id.JYOSHI, 0x4)
+    dw  Action.YOSHI.action_string_table
+    OS.patch_end()
     
    // This alters the amount of Yoshi's armor during double jump. It's a simple floating point number written
    // to a specific location. In Japan it was 42DC0000(110) and internationally it was 430C0000(140)

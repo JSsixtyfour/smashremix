@@ -7,7 +7,6 @@ scope Phantasm {
     constant Y_SPEED_INITIAL(0x4248)        // current setting - float:50.0
     constant LANDING_FSM(0x3EB3)            // current setting - float:0.35
     constant B_PRESSED(0x40)                // bitmask for b press
-    constant PHANTASM_BLUE(0x00F0FFE0)      // rgba8888 colour for phantasm
     
     // @ Description
     // Subroutine which sets up the movement for the grounded version of phantasm.
@@ -41,12 +40,6 @@ scope Phantasm {
         nop
         lui     t1, X_SPEED                 // t1 = X_SPEED
         sw		t1, 0x0060(a2)	            // ground x velocity = X_SPEED
-        li      t1, PHANTASM_BLUE           // ~
-        sw      t1, 0x0A68(a2)              // store colour
-        lw      t1, 0x0A88(a2)              // t1 = overlay settings
-        lui     t2, 0x8000                  // t2 = bitmask
-        or      t1, t1, t2                  // ~
-        sw      t1, 0x0A88(a2)              // enable colour overlay bit
         
         _shorten:
         andi    t1, t3, B_PRESSED           // t1 = 0x40 if (B_PRESSED); else t1 = 0
@@ -143,12 +136,6 @@ scope Phantasm {
         cvt.s.w f2, f2                      // f2 = DIRECTION
         mul.s   f0, f0, f2                  // f0 = X_SPEED * DIRECTION
         swc1    f0, 0x0048(a2)              // x velocity = X_SPEED * DIRECTION
-        li      t1, PHANTASM_BLUE           // ~
-        sw      t1, 0x0A68(a2)              // store colour
-        lw      t1, 0x0A88(a2)              // t1 = overlay settings
-        lui     t2, 0x8000                  // t2 = bitmask
-        or      t1, t1, t2                  // ~
-        sw      t1, 0x0A88(a2)              // enable colour overlay bit
         
         _shorten:
         andi    t1, t3, B_PRESSED           // t1 = 0x40 if (B_PRESSED); else t1 = 0

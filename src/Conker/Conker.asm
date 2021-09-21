@@ -296,4 +296,114 @@ scope Conker {
     
     // Set default costumes
     Character.set_default_costumes(Character.id.CONKER, 0, 1, 4, 5, 2, 0, 3)
+
+    // @ Description
+    // Conker's extra actions
+    scope Action {
+        constant JabLoopStart(0x0DC)
+        constant JabLoop(0x0DD)
+        constant JabLoopEnd(0x0DE)
+        constant Appear1(0x0DF)
+        constant Appear2(0x0E0)
+        //constant Laser(0x0E1)
+        //constant LaserAir(0x0E2)
+        constant HelicopteryTailThing(0x0E3)
+        constant HelicopteryTailThingAir(0x0E4)
+        //constant ReadyingFireFox(0x0E5)
+        constant HelicopteryTailThingDescent(0x0E6)
+        //constant FireFox(0x0E7)
+        //constant FireFoxAir(0x0E8)
+        //constant FireFoxEnd(0x0E9)
+        //constant FireFoxEndAir(0x0EA)
+        //constant LandingFireFoxAir(0x0EB)
+        constant GrenadeToss(0x0EC)
+        //constant Reflecting(0x0ED)
+        //constant Shine1(0x0EE)
+        constant GrenadeTossFail(0x0EF)
+        //constant ShineSwitchDirection(0x0F0)
+        constant GrenadeTossAir(0x0F1)
+        // constant ?(0x0F2)
+        //constant ShineEndAir(0x0F3)
+        //constant ShineAir(0x0F4)
+        constant GrenadeTossFailAir(0x0F5)
+        constant CatapultStart(0x0F6)
+        constant CatapultCharge(0x0F7)
+        constant CatapultShoot(0x0F8)
+        constant CatapultStartAir(0x0F9)
+        constant CatapultChargeAir(0x0FA)
+        constant CatapultShootAir(0x0FB)
+
+        // strings!
+        //string_0x0DC:; String.insert("JabLoopStart")
+        //string_0x0DD:; String.insert("JabLoop")
+        //string_0x0DE:; String.insert("JabLoopEnd")
+        //string_0x0DF:; String.insert("Appear1")
+        //string_0x0E0:; String.insert("Appear2")
+        //string_0x0E1:; String.insert("Laser")
+        //string_0x0E2:; String.insert("LaserAir")
+        string_0x0E3:; String.insert("HelicopteryTailThing")
+        string_0x0E4:; String.insert("HelicopteryTailThingAir")
+        //string_0x0E5:; String.insert("ReadyingFireFox")
+        string_0x0E6:; String.insert("HelicopteryTailThingDescent")
+        //string_0x0E7:; String.insert("FireFox")
+        //string_0x0E8:; String.insert("FireFoxAir")
+        //string_0x0E9:; String.insert("FireFoxEnd")
+        //string_0x0EA:; String.insert("FireFoxEndAir")
+        //string_0x0EB:; String.insert("LandingFireFoxAir")
+        string_0x0EC:; String.insert("GrenadeToss")
+        //string_0x0ED:; String.insert("Reflecting")
+        //string_0x0EE:; String.insert("Shine1")
+        string_0x0EF:; String.insert("GrenadeTossFail")
+        //string_0x0F0:; String.insert("ShineSwitchDirection")
+        string_0x0F1:; String.insert("GrenadeTossAir")
+        // string_0x0F2:; String.insert("?")
+        //string_0x0F3:; String.insert("ShineEndAir")
+        //string_0x0F4:; String.insert("ShineAir")
+        string_0x0F5:; String.insert("GrenadeTossFailAir")
+        string_0x0F6:; String.insert("CatapultStart")
+        string_0x0F7:; String.insert("CatapultCharge")
+        string_0x0F8:; String.insert("CatapultShoot")
+        string_0x0F9:; String.insert("CatapultStartAir")
+        string_0x0FA:; String.insert("CatapultChargeAir")
+        string_0x0FB:; String.insert("CatapultShootAir")
+
+        action_string_table:
+        dw Action.COMMON.string_jabloopstart
+        dw Action.COMMON.string_jabloop
+        dw Action.COMMON.string_jabloopend
+        dw Action.COMMON.string_appear1
+        dw Action.COMMON.string_appear2
+        dw 0 //dw string_0x0E1
+        dw 0 //dw string_0x0E2
+        dw string_0x0E3
+        dw string_0x0E4
+        dw 0 //dw string_0x0E5
+        dw string_0x0E6
+        dw 0 //dw string_0x0E7
+        dw 0 //dw string_0x0E8
+        dw 0 //dw string_0x0E9
+        dw 0 //dw string_0x0EA
+        dw 0 //dw string_0x0EB
+        dw string_0x0EC
+        dw 0 //dw string_0x0ED
+        dw 0 //dw string_0x0EE
+        dw string_0x0EF
+        dw 0 //dw string_0x0F0
+        dw string_0x0F1
+        dw 0 //dw string_0x0F2
+        dw 0 //dw string_0x0F3
+        dw 0 //dw string_0x0F4
+        dw string_0x0F5
+        dw string_0x0F6
+        dw string_0x0F7
+        dw string_0x0F8
+        dw string_0x0F9
+        dw string_0x0FA
+        dw string_0x0FB
+    }
+
+    // Set action strings
+    Character.table_patch_start(action_string, Character.id.CONKER, 0x4)
+    dw  Action.action_string_table
+    OS.patch_end()
 }

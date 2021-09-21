@@ -492,6 +492,52 @@ scope Training {
         addiu   a1, r0, 0x7800              // original line 23 (sets volume to full)
         OS.patch_end()
     }
+
+    // @ Description
+    // Prevents exiting Training Mode unless A is held.
+    scope hold_to_exit_: {
+        constant NUM_FRAMES(30)
+
+        OS.patch_start(0x114078, 0x8018D858)
+        jal     hold_to_exit_
+        or      v0, r0, r0                  // original line 1
+        OS.patch_end()
+
+        // t6 = port
+        // t7 = offset to controller input
+
+        li      t9, Toggles.entry_hold_to_exit_training
+        lw      t9, 0x0004(t9)              // t9 = 1 if hold to exit training mode is enabled, else 0
+        beqzl   t9, _return                 // if hold to exit disabled, return normally
+        andi    t9, t8, 0x8000              // original line 2
+
+        lui     t8, 0x8004                  // t8 = controller input for the human port from previous frame
+        addu    t8, t8, t7                  // ~
+        lhu     t8, 0x5228(t8)              // ~
+
+        li      t7, held_frames
+        lli     t9, OS.FALSE                // t9 = OS.FALSE = don't exit
+
+        beqzl   t8, _end                    // if not held, reset count
+        lli     t6, 0x0000                  // t6 = 0
+
+        lw      t6, 0x0000(t7)              // t6 = current held count
+        addiu   t6, t6, 0x0001              // t6++
+        sltiu   t9, t6, NUM_FRAMES          // t9 = 0 if we should exit, 1 otherwise
+        xori    t9, t9, 0x0001              // t9 = 1 if we should exit, 0 otherwise
+        bnezl   t9, _end                    // if we should exit, reset count
+        lli     t6, 0x0000                  // t6 = 0
+
+        _end:
+        sw      t6, 0x0000(t7)              // update held count
+
+        _return:
+        jr      ra
+        nop
+
+        held_frames:
+        dw 0
+    }
       
     // @ Description
     // This hook runs when training is loaded from stage select, but not when reset is used
@@ -514,6 +560,9 @@ scope Training {
         
         li      t0, player_shield_status    // t0 = player_shield_status
         sw      r0, 0x0000(t0)              // reset player_shield_status value
+
+        li      t0, action_control_object
+        sw      r0, 0x0000(t0)              // clear action & frame control object pointer
 
         _initialize_spawns:
         li      t0, struct.port_1.spawn_id  // t0 = port 1 spawn id address
@@ -553,6 +602,9 @@ scope Training {
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // store t0, t1
+
+        li      t0, action_control_object
+        sw      r0, 0x0000(t0)              // clear action & frame control object pointer
         
         li      t0, reset_counter           // t0 = reset_counter
         lw      t1, 0x0000(t0)              // t1 = reset_counter value
@@ -628,6 +680,9 @@ scope Training {
     allow_reset:
     dw  0
     
+    skip_advance:
+    dw  0
+
     // @ Description
     // This hook replaces a branch which determines whether the in-game advance frame
     // function should be called while in training mode.
@@ -646,6 +701,8 @@ scope Training {
         lui     a0, 0x8013                  // original line 2
         OS.save_registers()
         move    t6, v0                      // t6 = bool skip_advance
+        li      t0, skip_advance
+        sw      v0, 0x0000(t0)              // save skip_advance value for later use
         _check_dl:
         // check if reset is allowed
         li      t0, allow_reset             // ~
@@ -915,6 +972,24 @@ scope Training {
     }
     
     // @ Description
+    // This hook runs after the call to run object routines while in training mode.
+    // This allows for our hooks to always run even if in freeze mode,
+    // and always after those routines if they are run.
+    scope run_after_object_routines_: {
+        OS.patch_start(0x114270, 0x8018DA50)
+        j   run_after_object_routines_
+        nop
+        OS.patch_end()
+
+        // Update action & frame strings
+        jal     update_actions_
+        nop
+
+        j       0x8018DA60                    // original line 1, modified to jump
+        nop                                   // original line 2
+    }
+
+    // @ Description
     // This function will reset the player's % to 0
     // @ Arguments
     // a0 - address of the player struct
@@ -1017,6 +1092,104 @@ scope Training {
     }
 
     // @ Description
+    // Create action & frame strings for the given port
+    // @ Arguments
+    // a0 - port (0-3)
+    // a1 - action & frame control object
+    // a2 - room
+    scope create_action_strings_: {
+        addiu   sp, sp,-0x0030              // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+        sw      a1, 0x0008(sp)              // ~
+        sw      a2, 0x000C(sp)              // ~
+
+        li      t0, Render.display_order_room
+        lui     t1, 0x4000                  // t1 = 0x40000000 (render after 0x80000000)
+        sw      t1, 0x0000(t0)              // update display order within rooms for our draw_texture calls
+
+        lli     t0, 26                      // t0 = # of pixels between action string blocks
+        multu   a0, t0                      // t0 = # of pixels to offset for port
+        mflo    t0                          // ~
+        sw      t0, 0x0010(sp)              // save # of pixels to offset for port
+
+        sll     a0, a0, 0x0002              // a0 = offset for port
+        sw      a0, 0x0014(sp)              // save offset
+
+        addu    t2, a1, a0                  // t2 =  & frame routine object, offset for port
+        lw      t2, 0x0060(t2)              // t2 = current frame string object
+        beqz    t2, _create_frame_string    // if no object, skip destroying
+        nop                                 // otherwise we do have to destroy it
+        lw      t3, 0x007C(t2)              // t3 = current display state
+        sw      t3, 0x0018(sp)              // save display state
+        jal     Render.DESTROY_OBJECT_
+        or      a0, t2, r0                  // a0 = object
+
+        lw      a1, 0x0008(sp)              // a1 = action & frame control object
+        lw      t0, 0x0010(sp)              // t0 = # of pixels to offset for port
+        lw      a0, 0x0014(sp)              // a0 = offset for port
+
+        _create_frame_string:
+        addiu   a2, a1, 0x040               // a2 = number, not offset for port
+        addu    a2, a2, a0                  // a2 = number, offset for port
+        lli     t1, 66                      // t1 = y position, unadjusted for port
+        addu    t1, t1, t0                  // t1 = y position, adjusted for port
+        mtc1    t1, f0                      // f0 = y position
+        cvt.s.w f0, f0                      // f0 = y position, floating point
+        mfc1    s2, f0                      // s2 = y position
+        lw      a0, 0x000C(sp)              // a0 = room
+        Render.draw_number(0xFF, 0x17, 0xFFFFFFFF, Render.NOOP, 0x41A00000, 0xFFFFFFFF, 0xFFFFFFFF, 0x3F400000, Render.alignment.LEFT, OS.FALSE)
+        lw      t0, 0x0008(sp)              // t0 = action & frame control object
+        lw      t1, 0x0014(sp)              // t1 = offset for port
+        addu    t0, t0, t1                  // t0 = action & frame control object offset by port
+        addiu   t0, t0, 0x0060              // t0 = address of reference to frame string object
+        sw      v0, 0x0000(t0)              // save reference to frame string object
+        sw      t0, 0x0054(v0)              // save object pointer reference
+        lw      t3, 0x0018(sp)              // t3 = display state
+        sw      t3, 0x007C(v0)              // update display state
+
+        lw      a0, 0x0014(sp)              // a0 = offset for port
+        lw      t0, 0x0008(sp)              // t0 = action & frame control object
+        addu    t0, t0, a0                  // t0 = action & frame control object, offset for port
+        lw      t0, 0x0050(t0)              // t0 = current action string object
+        beqz    t0, _create_action_string   // if no object, skip destroying
+        nop                                 // otherwise we do have to destroy it
+        lw      t3, 0x007C(t0)              // t3 = current display state
+        sw      t3, 0x0018(sp)              // save display state
+        jal     Render.DESTROY_OBJECT_
+        or      a0, t0, r0                  // a0 = object
+
+        _create_action_string:
+        li      a2, p1_action_pointer       // a2 = action pointer, unadjusted for port
+        lw      t0, 0x0014(sp)              // t0 = offset for port
+        addu    a2, a2, t0                  // a2 = action pointer, adjusted for port
+        lw      t0, 0x0010(sp)              // t0 = # of pixels to offset for port
+        lli     t1, 55                      // t1 = y position, unadjusted for port
+        addu    t1, t1, t0                  // t1 = y position, adjusted for port
+        mtc1    t1, f0                      // f0 = y position
+        cvt.s.w f0, f0                      // f0 = y position, floating point
+        mfc1    s2, f0                      // s2 = y position
+        lw      a0, 0x000C(sp)              // a0 = room
+        Render.draw_string_pointer(0xFF, 0x17, 0xFFFFFFFF, Render.NOOP, 0x41A00000, 0xFFFFFFFF, 0xFFFFFFFF, 0x3F400000, Render.alignment.LEFT, OS.FALSE)
+        lw      t0, 0x0008(sp)              // t0 = action & frame control object
+        lw      t1, 0x0014(sp)              // t1 = offset for port
+        addu    t0, t0, t1                  // t0 = action & frame control object offset by port
+        addiu   t0, t0, 0x0050              // t0 = address of reference to action string object
+        sw      v0, 0x0000(t0)              // save reference to action string object
+        sw      t0, 0x0054(v0)              // save object pointer reference
+        lw      t3, 0x0018(sp)              // t3 = display state
+        sw      t3, 0x007C(v0)              // update display state
+
+        li      t0, Render.display_order_room
+        lui     t1, Render.DISPLAY_ORDER_DEFAULT
+        sw      t1, 0x0000(t0)              // reset display order with default
+
+        lw      ra, 0x0004(sp)              // restore registers
+        addiu   sp, sp, 0x0030              // deallocate stack space
+        jr      ra
+        nop
+    }
+
+    // @ Description
     // Sets up the custom objects for the custom menu
     scope setup_: {
         addiu   sp, sp,-0x0030              // allocate stack space
@@ -1051,6 +1224,11 @@ scope Training {
         Render.draw_string(0x17, 0x15, dpad_frame, Render.NOOP, 0x43320000, 0x434A0000, 0xFFFFFFFF, 0x3F800000, Render.alignment.LEFT, OS.FALSE)
         Render.draw_string(0x17, 0x15, dpad_model, Render.NOOP, 0x43320000, 0x43590000, 0xFFFFFFFF, 0x3F800000, Render.alignment.LEFT, OS.FALSE)
 
+        // Action legend
+        Render.draw_texture_at_offset(0x17, 0x15, Render.file_pointer_1, Render.file_c5_offsets.L, Render.NOOP, 0x41A00000, 0x41800000, 0x848484FF, 0x303030FF, 0x3F600000)
+        Render.draw_string(0x17, 0x15, action_legend_1, Render.NOOP, 0x41A00000, 0x41DA0000, 0xFFFFFFFF, 0x3F600000, Render.alignment.LEFT, OS.FALSE)
+        Render.draw_string(0x17, 0x15, action_legend_2, Render.NOOP, 0x41A00000, 0x421A0000, 0xFFFFFFFF, 0x3F600000, Render.alignment.LEFT, OS.FALSE)
+
         // Transparent background and frame
         Render.draw_rectangle(0x16, 0x16, 66, 45, 189, 154, 0x0064FF64, OS.TRUE)
         jal     draw_modal_frame_
@@ -1062,6 +1240,82 @@ scope Training {
         sw      v0, 0x0000(t0)              // save reference to bgm name object
         sw      t0, 0x0054(v0)              // store address of reference to bgm name object
 
+        // Action & Frame strings
+        // Create a room to use for these strings that shows up behind the pause menu
+        Render.create_room(0x39, 0x1C, 0x20)
+
+        // The update_frame_counts_ routine should run after character actions change,
+        // so we will use REGISTER_OBJECT_ROUTINE to do that.
+        // To ensure it runs after character damage action changes, set group to 0xD.
+        Render.register_routine(Render.NOOP, 0xD, 0x8000)
+        sw      r0, 0x0030(v0)              // clear previous actionID for p1
+        sw      r0, 0x0034(v0)              // clear previous actionID for p2
+        sw      r0, 0x0038(v0)              // clear previous actionID for p3
+        sw      r0, 0x003C(v0)              // clear previous actionID for p4
+        sw      r0, 0x0040(v0)              // clear frame count for p1
+        sw      r0, 0x0044(v0)              // clear frame count for p2
+        sw      r0, 0x0048(v0)              // clear frame count for p3
+        sw      r0, 0x004C(v0)              // clear frame count for p4
+        sw      r0, 0x0050(v0)              // clear action string object for p1
+        sw      r0, 0x0054(v0)              // clear action string object for p2
+        sw      r0, 0x0058(v0)              // clear action string object for p3
+        sw      r0, 0x005C(v0)              // clear action string object for p4
+        sw      r0, 0x0060(v0)              // clear frame string object for p1
+        sw      r0, 0x0064(v0)              // clear frame string object for p2
+        sw      r0, 0x0068(v0)              // clear frame string object for p3
+        sw      r0, 0x006C(v0)              // clear frame string object for p4
+        sw      v0, 0x0010(sp)              // save object reference
+        li      t0, action_control_object
+        sw      v0, 0x0000(t0)              // t0 = action & frame control object
+
+        or      a0, v0, r0                  // a0 = object
+        li      a1, update_frame_counts_    // a1 = routine
+        lli     a2, 0x0001                  // a2 = ?
+        lli     a3, 0x0000                  // a3 = last group to run
+        jal     Render.REGISTER_OBJECT_ROUTINE_
+        addiu   sp, sp, -0x0030             // create stack space
+        addiu   sp, sp, 0x0030              // restore stack
+
+        li      t0, struct.port_1.type
+        lw      t0, 0x0000(t0)              // t0 = port 1 type
+        lli     t1, 0x0002                  // t1 = 2 (type N/A)
+        beq     t0, t1, _check_port_2       // if not a CPU or HMN, skip port
+        lli     a0, 0x0000
+        lw      a1, 0x0010(sp)              // a1 = object reference
+        jal     create_action_strings_
+        lli     a2, 0x0017                  // a2 = room when pause menus are down
+
+        _check_port_2:
+        li      t0, struct.port_2.type
+        lw      t0, 0x0000(t0)              // t0 = port 2 type
+        lli     t1, 0x0002                  // t1 = 2 (type N/A)
+        beq     t0, t1, _check_port_3       // if not a CPU or HMN, skip port
+        lli     a0, 0x0001
+        lw      a1, 0x0010(sp)              // a1 = object reference
+        jal     create_action_strings_
+        lli     a2, 0x0017                  // a2 = room when pause menus are down
+
+        _check_port_3:
+        li      t0, struct.port_3.type
+        lw      t0, 0x0000(t0)              // t0 = port 3 type
+        lli     t1, 0x0002                  // t1 = 2 (type N/A)
+        beq     t0, t1, _check_port_4       // if not a CPU or HMN, skip port
+        lli     a0, 0x0002
+        lw      a1, 0x0010(sp)              // a1 = object reference
+        jal     create_action_strings_
+        lli     a2, 0x0017                  // a2 = room when pause menus are down
+
+        _check_port_4:
+        li      t0, struct.port_4.type
+        lw      t0, 0x0000(t0)              // t0 = port 4 type
+        lli     t1, 0x0002                  // t1 = 2 (type N/A)
+        beq     t0, t1, _draw_menu          // if not a CPU or HMN, skip port
+        lli     a0, 0x0003
+        lw      a1, 0x0010(sp)              // a1 = object reference
+        jal     create_action_strings_
+        lli     a2, 0x0017                  // a2 = room when pause menus are down
+
+        _draw_menu:
         li      a0, info                    // a0 - address of Menu.info()
         jal     Menu.draw_                  // draw menu
         nop
@@ -1077,6 +1331,12 @@ scope Training {
         lli     a0, 0x0016                  // a0 = custom menu group
         jal     Render.toggle_group_display_
         lli     a1, 0x0001                  // a1 = display off
+
+        li      t0, run_.show_action
+        lw      a1, 0x0000(t0)              // a1 = show action flag
+        xori    a1, a1, 0x0001              // a1 = initial display state
+        jal     Render.toggle_group_display_
+        lli     a0, 0x0017                  // a0 = action & frame group
 
         // Ensure BGM volume is correct level.
         // Fixes bug where music is quiet if you do a quick reset while paused.
@@ -1121,6 +1381,12 @@ scope Training {
         nop
 
         _custom_up:
+        li      t0, skip_advance
+        lw      t0, 0x0000(t0)              // t0 = 0 if we should check for menu updates
+        bnez    t0, _check_b                // if not on a frame where we should check menu updates, skip
+        nop
+
+        _update_menu:
         // update menu
         li      a0, info                    // a0 - address of Menu.info()
         jal     Menu.update_                // check for updates
@@ -1146,9 +1412,41 @@ scope Training {
         addu    t2, t2, t1                  // t2 = address of tail_table + offset
         lw      a1, 0x0000(t2)              // a1 = address of tail
         lw      t1, 0x001C(t0)              // t1 = current entry.next
-        beq     t1, a1, _check_b            // if they are the same, then continue
-        nop                                 // otherwise, update and redraw the menu
+        bne     t1, a1, _redraw             // if they are not the same, then update and redraw the menu
+        lw      t0, 0x0004(t1)              // t0 = character entry_id
 
+        li      t4, entry_id_to_char_id     // t4 = entry_id_to_char_id table address
+        addu    t4, t4, t0                  // t4 = address of char_id
+        lbu     t4, 0x0000(t4)              // t4 = char_id
+
+        li      t5, Costumes.select_.num_costumes
+        add     t5, t5, t4                  // t5 = num_costumes + offset
+        lb      t5, 0x0000(t5)              // t5 = number of original costumes char has (0-based)
+        li      t2, Costumes.extra_costumes_table
+        sll     at, t4, 0x0002              // at = offset in extra_costumes_table
+        addu    t2, t2, at                  // t2 = extra_costumes_table + offset
+        lw      t2, 0x0000(t2)              // t2 = extra costumes table, or 0
+        lli     t3, 0x0000                  // t2 = costumes to skip
+        beqz    t2, _update_max_costume     // if no extra costumes parts table exists, skip getting number of extra costumes
+        or      t4, t5, r0                  // t4 = max costume ID
+        lbu     t3, 0x0003(t2)              // t3 = costumes to skip
+        lbu     t2, 0x0000(t2)              // t2 = number of extra costumes
+        addu    t4, t2, t3                  // t4 = number of extra costumes + costumes to skip
+        addu    t4, t5, t4                  // t4 = original max costume ID + number of extra costumes + costumes to skip
+
+        _update_max_costume:
+        lw      t0, 0x001C(t1)              // t0 = next entry, which is costume
+        lw      t1, 0x0004(t0)              // t1 = current costume ID
+        sw      t4, 0x000C(t0)              // save new max
+        sltu    at, t1, t4                  // at = 0 if current costume ID >= max ID
+        bnez    at, _check_b                // if current costume ID < max ID, then don't redraw
+        nop                                 // otherwise, we'll update the values and redraw
+        sw      t4, 0x0004(t0)              // change current value to the new max ID in the menu object
+        lw      at, 0x0018(t0)              // at = address of struct.port_x.costume
+        b       _redraw                     // redraw if here
+        sw      t4, 0x0000(at)              // change current value to the new max ID in the port_x struct
+
+        _redraw:
         jal     Menu.destroy_rendered_objects_
         lw      a0, 0x0018(a0)              // a0 = address of first entry currently displayed
 
@@ -1168,7 +1466,7 @@ scope Training {
         lli     a2, Joypad.PRESSED          // a2 - type
         jal     Joypad.check_buttons_all_   // v0 - bool b_pressed
         nop
-        beqz    v0, _end                    // if (!b_pressed), end
+        beqz    v0, _check_l                // if (!b_pressed), jump to L check
         nop
         li      t0, toggle_menu             // t0 = toggle_menu
         lli     t1, SSB_UP                  // ~
@@ -1182,7 +1480,7 @@ scope Training {
         jal     Render.toggle_group_display_
         lli     a1, 0x0000                  // a1 = display on
 
-        b       _end                        // end execution
+        b       _check_l                    // jump to L check
         nop
 
         _ssb_up:
@@ -1196,7 +1494,7 @@ scope Training {
         lli     a2, Joypad.PRESSED          // a2 - type
         jal     Joypad.check_buttons_all_   // v0 - bool z_pressed
         nop
-        beqz    v0, _end                    // if (!z_pressed), end
+        beqz    v0, _check_l                // if (!z_pressed), jump to L check
         nop
         lli     a0, 0x0116                  // a0 - fgm_id
         jal     FGM.play_                   // play training menu start sound
@@ -1214,6 +1512,20 @@ scope Training {
         jal     Render.toggle_group_display_
         lli     a1, 0x0001                  // a1 = display off
 
+        _check_l:
+        lli     a0, Joypad.L                // a0 - button_mask
+        lli     a1, 000069                  // a1 - whatever you like!
+        jal     Joypad.check_buttons_all_   // v0 - bool z_pressed
+        lli     a2, Joypad.PRESSED          // a2 - type
+        beqz    v0, _end                    // if (!z_pressed), skip
+        nop
+        li      t0, show_action             // t0 = show action flag address
+        lw      a1, 0x0000(t0)              // a1 = show action flag (will use for display flag below)
+        xori    t2, a1, 0x0001              // t2 = flip flag
+        sw      t2, 0x0000(t0)              // update flag
+        jal     Render.toggle_group_display_
+        lli     a0, 0x0017                  // a0 = action & frame group
+
         _end:
         OS.restore_registers()
         jr      ra
@@ -1225,8 +1537,192 @@ scope Training {
         lli     a1, 0x0001                  // a1 = display off
         b       _end
         nop
+
+        show_action:
+        dw OS.FALSE
     }
     
+    // @ Description
+    // Control object for action and frame strings
+    action_control_object:
+    dw 0
+
+    // @ Description
+    // Runs every frame advance in order to frame count
+    // @ Arguments
+    // a0 - action & frame control object
+    scope update_frame_counts_: {
+        // 0x0030(a0) - previous actionID for p1
+        // 0x0034(a0) - previous actionID for p2
+        // 0x0038(a0) - previous actionID for p3
+        // 0x003C(a0) - previous actionID for p4
+        // 0x0040(a0) - frame count for p1
+        // 0x0044(a0) - frame count for p2
+        // 0x0048(a0) - frame count for p3
+        // 0x004C(a0) - frame count for p4
+        // 0x0050(a0) - action string object for p1
+        // 0x0054(a0) - action string object for p2
+        // 0x0058(a0) - action string object for p3
+        // 0x005C(a0) - action string object for p4
+        // 0x0060(a0) - frame string object for p1
+        // 0x0064(a0) - frame string object for p2
+        // 0x0068(a0) - frame string object for p3
+        // 0x006C(a0) - frame string object for p4
+        
+        li      t0, Global.p_struct_head
+        lw      t0, 0x0000(t0)              // t0 = 1st player struct
+
+        _loop:
+        lw      t1, 0x0004(t0)              // t1 = player object
+        beqz    t1, _next                   // if no player object, skip
+        lbu     t1, 0x000D(t0)              // t1 = port
+        sll     t1, t1, 0x0002              // t1 = offset for port
+        addu    t2, a0, t1                  // t2 = address of control object offset by port
+        lw      t3, 0x0030(t2)              // t3 = previous actionID
+        lw      t4, 0x0024(t0)              // t4 = current actionID
+        sw      t4, 0x0030(t2)              // update previous actionID
+        lw      t5, 0x0040(t2)              // t5 = frame count
+        lw      t6, 0x0040(t0)              // t6 = hit lag frames remaining
+        beqzl   t6, pc() + 8                // if not in hit lag, increment frame count
+        addiu   t5, t5, 0x0001              // t5++
+        bnel    t3, t4, pc() + 8            // if action changed, reset frame count
+        lli     t5, 0x0001                  // t5 = 1
+        sw      t5, 0x0040(t2)              // update frame count
+
+        _next:
+        lw      t0, 0x0000(t0)              // t0 = next player struct
+        bnez    t0, _loop                   // go to next player if there is one
+        nop
+
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // Runs every frame (even in frame advance mode) in order to update action & frame strings
+    scope update_actions_: {
+        li      a0, action_control_object
+        lw      a0, 0x0000(a0)              // a0 = action & frame control object
+
+        // 0x0030(a0) - previous actionID for p1
+        // 0x0034(a0) - previous actionID for p2
+        // 0x0038(a0) - previous actionID for p3
+        // 0x003C(a0) - previous actionID for p4
+        // 0x0040(a0) - frame count for p1
+        // 0x0044(a0) - frame count for p2
+        // 0x0048(a0) - frame count for p3
+        // 0x004C(a0) - frame count for p4
+        // 0x0050(a0) - action string object for p1
+        // 0x0054(a0) - action string object for p2
+        // 0x0058(a0) - action string object for p3
+        // 0x005C(a0) - action string object for p4
+        // 0x0060(a0) - frame string object for p1
+        // 0x0064(a0) - frame string object for p2
+        // 0x0068(a0) - frame string object for p3
+        // 0x006C(a0) - frame string object for p4
+
+        OS.save_registers()
+        // 0x0010(sp) = action & frame control object
+
+        lli     t8, 0x0039                  // t8 = room for strings when menu is up
+
+        li      t0, toggle_menu             // t0 = address of toggle_menu
+        lbu     t0, 0x0000(t0)              // t0 = toggle_menu
+        lli     t1, BOTH_DOWN               // t1 = both menus are down
+        beql    t0, t1, pc() + 8            // if both menus are down, then use a different room
+        lli     t8, 0x0017                  // t8 = room for strings when menu is down
+        sw      t8, 0x0040(sp)              // save room
+
+        li      t0, Global.p_struct_head
+        lw      t0, 0x0000(t0)              // t0 = 1st player struct
+
+        _loop:
+        lw      t1, 0x0004(t0)              // t1 = player object
+        beqz    t1, _next                   // if no player object, skip
+        lbu     t1, 0x000D(t0)              // t1 = port
+        sll     t1, t1, 0x0002              // t1 = offset for port
+        addu    t2, a0, t1                  // t2 = address of control object offset by port
+        lw      t4, 0x0024(t0)              // t4 = current actionID
+
+        // First,update the string pointers
+        li      t6, p1_action_pointer       // t6 = first action pointer
+        addu    t6, t6, t1                  // t6 = action pointer for port
+        sltiu   at, t4, 0x00DC              // at = 0 if not a shared action
+        beqzl   at, _unique                 // if not a shared action, skip to unique
+        lw      t5, 0x0008(t0)              // t5 = char_id
+
+        li      t7, Action.shared_action_string_table
+        sll     t4, t4, 0x0002              // t4 = offset to string pointer
+        addu    t7, t7, t4                  // t7 = address of string pointer
+        b       _update
+        lw      t7, 0x0000(t7)              // t7 = string pointer
+
+        _unique:
+        li      t7, Character.action_string.table
+        sll     t5, t5, 0x0002              // t5 = offset to character action string table
+        addu    t7, t7, t5                  // t7 = address of action string table pointer
+        lw      t7, 0x0000(t7)              // t7 = action string table pointer
+        beqz    t7, _update                 // if no action string table, show no string
+        addiu   t4, t4, -0x00DC             // t4 = index in action string table
+        sll     t4, t4, 0x0002              // t4 = offset to string pointer
+        addu    t7, t7, t4                  // t7 = address of string pointer
+        lw      t7, 0x0000(t7)              // t7 = string pointer
+
+        _update:
+        sw      t7, 0x0000(t6)              // update action string pointer
+
+        // Here, check if the action strings should be displayed
+        li      t7, run_.show_action
+        lw      t7, 0x0000(t7)              // t7 = show action flag
+        beqz    t7, _next                   // skip of actions are not displayed
+        nop
+
+        // Strings should be displayed, so check if the strings exist
+        lw      t6, 0x0050(t2)              // t6 = action string object
+        beqz    t6, _create_strings         // if strings don't exist, create them
+        nop
+        //   Check the room and if it is not correct, recreate the strings
+        lbu     t7, 0x000D(t6)              // t7 = current room
+        lw      t8, 0x0040(sp)              // t8 = correct room
+        bne     t7, t8, _create_strings     // if not in the correct room, recreate in the correct room
+        nop
+        sw      t0, 0x0020(sp)              // save player struct
+        sw      t2, 0x0028(sp)              // save t2
+
+        // Since we didn't register the events on the objects, we need to run update_live_string_ now
+        jal     Render.update_live_string_
+        or      a0, t6, r0                  // a0 = action string object
+
+        lw      t2, 0x0028(sp)              // t2 = address of control object offset by port
+        jal     Render.update_live_string_
+        lw      a0, 0x0060(t2)              // a0 = frame count string object
+
+        lw      t0, 0x0020(sp)              // restore player struct
+
+        b       _next
+        nop
+
+        _create_strings:
+        sw      t0, 0x0020(sp)              // save player struct
+
+        srl     a0, t1, 0x0002              // a0 = port
+        lw      a1, 0x0010(sp)              // a1 = object reference
+        jal     create_action_strings_
+        lw      a2, 0x0040(sp)              // a2 = room
+
+        lw      t0, 0x0020(sp)              // restore player struct
+
+        _next:
+        lw      t0, 0x0000(t0)              // t0 = next player struct
+        bnez    t0, _loop                   // go to next player if there is one
+        lw      a0, 0x0010(sp)              // a0 = action & frame control object
+
+        OS.restore_registers()
+
+        jr      ra
+        nop
+    }
+
     // @ Description
     // This hook allows us to play custom music instead of the standard training mode music
     scope play_custom_music_: {
@@ -1356,18 +1852,69 @@ scope Training {
     }
 
     // @ Description
+    // Hooks to avoid crashes due to Pokemon opponent targeting when no other ports loaded
+    scope fix_pokemon_crashes_: {
+        // hitmonlee
+        OS.patch_start(0xFD2A0, 0x80182860)
+        sw      ra, 0x001C(sp)              // original line 3
+        jal     fix_pokemon_crashes_._hitmonlee
+        nop
+        OS.patch_end()
+
+        // starmie
+        OS.patch_start(0xFCB38, 0x801820F8)
+        jal     fix_pokemon_crashes_._starmie
+        lw      s2, 0x0084(a0)              // original line 1 - s2 = item special struct
+        OS.patch_end()
+
+        // blastoise
+        OS.patch_start(0xFB614, 0x80180BD4)
+        jal     fix_pokemon_crashes_._blastoise
+        lw      s2, 0x0084(a0)              // original line 1 - s2 = item special struct
+        OS.patch_end()
+
+        _hitmonlee:
+        // a0 - item object
+        // a1 - opponent player object, or 0... if 0, we'll need to replace with the throwing player's object
+
+        bnez    a1, _end_hitmonlee          // if there is an opponent, return normally
+        lw      t6, 0x0084(a0)              // t6 = item struct
+        lw      a1, 0x0008(t6)              // a1 = throwing player's object
+
+        _end_hitmonlee:
+        sw      a1, 0x0054(sp)              // original line 1
+        jr      ra
+        lw      t6, 0x0054(sp)              // original line 2
+
+        _starmie:
+        // 0x006C(sp) is garbage when there is no other player, so we set it to the throwing player's object
+
+        lw      s4, 0x0008(s2)              // s4 = throwing player's object
+        sw      s4, 0x006C(sp)              // save in stack
+
+        jr      ra
+        lw      s4, 0x0074(a0)              // original line 2
+
+        _blastoise:
+        // 0x0074(sp) is garbage when there is no other player, so we set it to the throwing player's object
+
+        lw      s4, 0x0008(s2)              // s4 = throwing player's object
+        sw      s4, 0x0074(sp)              // save in stack
+
+        jr      ra
+        lw      s4, 0x0074(a0)              // original line 2
+    }
+
+    // @ Description
     // Strings used to explain advance_frame_ shortcuts
     dpad_pause:; db "Toggle Pause", 0x00
     dpad_frame:; db "Frame Advance", 0x00
     dpad_model:; db "Model Display", 0x00
     dpad_reset:; db "Quick Reset", 0x00
-    OS.align(4)
     
     // @ Description
     // String used for reset counter which appears while the training menu is up
     reset_string:; db "Reset Count:", 0x00
-    OS.align(4)
-    
     
     // @ Description
     // Message/visual indicator to press Z for custom menu
@@ -1378,6 +1925,12 @@ scope Training {
     type_1:; db "Human", 0x00
     type_2:; db "CPU", 0x00
     type_3:; db "Disabled", 0x00
+
+    // @ Description
+    // String used for L button legend
+    action_legend_1:; db "Show", 0x00
+    action_legend_2:; db "Action", 0x00
+
     OS.align(4)
 
     string_table_type:
@@ -1444,6 +1997,8 @@ scope Training {
     char_0x36:; db "Mad Piano", 0x00
 	char_0x37:; db "Wolf", 0x00
     char_0x38:; db "Conker", 0x00
+    char_0x39:; db "Mewtwo", 0x00
+    char_0x3A:; db "Marth", 0x00
     OS.align(4)
 
     string_table_char:
@@ -1470,6 +2025,8 @@ scope Training {
 	dw char_0x34            // BOWSER
 	dw char_0x37            // WOLF
     dw char_0x38            // CONKER
+    dw char_0x39            // MEWTWO
+    dw char_0x3A            // MARTH
 
     dw char_0x2A            // J MARIO
     dw char_0x29            // J FOX
@@ -1535,46 +2092,45 @@ scope Training {
 		constant BOWSER(0x13)
 		constant WOLF(0x14)
         constant CONKER(0x15)
+        constant MTWO(0x16)
+        constant MARTH(0x17)
 
+        // Increment JMARIO after adding more characters above
         // j characters
-        constant JMARIO(0x16)
-        constant JFOX(0x17)
-        constant JDK(0x18)
-        constant JSAMUS(0x19)
-        constant JLUIGI(0x1A)
-        constant JLINK(0x1B)
-        constant JYOSHI(0x1C)
-        constant JFALCON(0x1D)
-        constant JKIRBY(0x1E)
-        constant JPIKA(0x1F)
-        constant JPUFF(0x20)
-        constant JNESS(0x21)
-
+        constant JMARIO(0x18)
+        constant JFOX(JMARIO + 0x01)
+        constant JDK(JMARIO + 0x02)
+        constant JSAMUS(JMARIO + 0x03)
+        constant JLUIGI(JMARIO + 0x04)
+        constant JLINK(JMARIO + 0x05)
+        constant JYOSHI(JMARIO + 0x06)
+        constant JFALCON(JMARIO + 0x07)
+        constant JKIRBY(JMARIO + 0x08)
+        constant JPIKA(JMARIO + 0x09)
+        constant JPUFF(JMARIO + 0x0A)
+        constant JNESS(JMARIO + 0x0B)
         // e characters
-        constant ESAMUS(0x22)
-        constant ELINK(0x23)
-        constant EPIKA(0x24)
-        constant EPUFF(0x25)
-		
-
-        // Increment METAL after adding more characters above
-
-        constant METAL(0x26)
-        constant GDONKEY(METAL + 0x01)
-        constant GBOWSER(METAL + 0x02)
-        constant PIANO(METAL + 0x03)
-		constant NMARIO(METAL + 0x04)
-        constant NFOX(METAL + 0x05)
-        constant NDONKEY(METAL + 0x06)
-        constant NSAMUS(METAL + 0x07)
-        constant NLUIGI(METAL + 0x08)
-        constant NLINK(METAL + 0x09)
-        constant NYOSHI(METAL + 0x0A)
-        constant NCAPTAIN(METAL + 0x0B)
-        constant NKIRBY(METAL + 0x0C)
-        constant NPIKACHU(METAL + 0x0D)
-        constant NJIGGLY(METAL + 0x0E)
-        constant NNESS(METAL + 0x0F)
+        constant ESAMUS(JMARIO + 0x0C)
+        constant ELINK(JMARIO + 0x0D)
+        constant EPIKA(JMARIO + 0x0E)
+        constant EPUFF(JMARIO + 0x0F)
+        // bosses and polygons
+        constant METAL(JMARIO + 0x10)
+        constant GDONKEY(JMARIO + 0x11)
+        constant GBOWSER(JMARIO + 0x12)
+        constant PIANO(JMARIO + 0x13)
+		constant NMARIO(JMARIO + 0x14)
+        constant NFOX(JMARIO + 0x15)
+        constant NDONKEY(JMARIO + 0x16)
+        constant NSAMUS(JMARIO + 0x17)
+        constant NLUIGI(JMARIO + 0x18)
+        constant NLINK(JMARIO + 0x19)
+        constant NYOSHI(JMARIO + 0x1A)
+        constant NCAPTAIN(JMARIO + 0x1B)
+        constant NKIRBY(JMARIO + 0x1C)
+        constant NPIKACHU(JMARIO + 0x1D)
+        constant NJIGGLY(JMARIO + 0x1E)
+        constant NNESS(JMARIO + 0x1F)
     }
 
 
@@ -1602,6 +2158,8 @@ scope Training {
 	db Character.id.BOWSER
 	db Character.id.WOLF
     db Character.id.CONKER
+    db Character.id.MTWO
+    db Character.id.MARTH
 
     db Character.id.JMARIO
     db Character.id.JFOX
@@ -1696,6 +2254,8 @@ scope Training {
     db id.PIANO
 	db id.WOLF
     db id.CONKER
+    db id.MTWO
+    db id.MARTH
 
     // @ Description 
     // Spawn Position Strings
@@ -1790,12 +2350,12 @@ scope Training {
         define percent_func(Training.percent_func_{player}_)
 
 
-        Menu.entry("Character:", Menu.type.U8, 0, 0, char_id_to_entry_id - entry_id_to_char_id - 1, OS.NULL, string_table_char, {character}, entry_costume_p{player})
-        entry_costume_p{player}:; Menu.entry("Costume:", Menu.type.U8, 0, 0, 5, OS.NULL, OS.NULL, {costume}, entry_type_p{player})
-        entry_type_p{player}:; Menu.entry("Type:", Menu.type.U8, 2, 0, 2, OS.NULL, string_table_type, {type}, entry_spawn_p{player})
-        entry_spawn_p{player}:; Menu.entry("Spawn:", Menu.type.U8, 0, 0, 4, OS.NULL, string_table_spawn, {spawn_id}, entry_set_custom_spawn_p{player})
+        Menu.entry("Character:", Menu.type.U8, 0, 0, char_id_to_entry_id - entry_id_to_char_id - 1, OS.NULL, OS.NULL, string_table_char, {character}, entry_costume_p{player})
+        entry_costume_p{player}:; Menu.entry("Costume:", Menu.type.U8, 0, 0, 5, OS.NULL, OS.NULL, OS.NULL, {costume}, entry_type_p{player})
+        entry_type_p{player}:; Menu.entry("Type:", Menu.type.U8, 2, 0, 2, OS.NULL, OS.NULL, string_table_type, {type}, entry_spawn_p{player})
+        entry_spawn_p{player}:; Menu.entry("Spawn:", Menu.type.U8, 0, 0, 4, OS.NULL, OS.NULL, string_table_spawn, {spawn_id}, entry_set_custom_spawn_p{player})
         entry_set_custom_spawn_p{player}:; Menu.entry_title("Set Custom Spawn", {spawn_func}, entry_percent_p{player})
-        entry_percent_p{player}:; Menu.entry("Percent:", Menu.type.U16, 0, 0, 999, OS.NULL, OS.NULL, {percent}, entry_set_percent_p{player})
+        entry_percent_p{player}:; Menu.entry("Percent:", Menu.type.U16, 0, 0, 999, OS.NULL, OS.NULL, OS.NULL, {percent}, entry_set_percent_p{player})
         entry_set_percent_p{player}:; Menu.entry_title("Set Percent", {percent_func}, entry_percent_toggle_p{player})
         entry_percent_toggle_p{player}:; Menu.entry_bool("Reset Sets Percent:", OS.TRUE, entry_shield_break_mode)
     }
@@ -1878,35 +2438,35 @@ scope Training {
 
     head:
     entry_port_x:
-    Menu.entry("Port:", Menu.type.U8, 1, 1, 4, OS.NULL, OS.NULL, OS.NULL, tail_p1)
+    Menu.entry("Port:", Menu.type.U8, 1, 1, 4, OS.NULL, OS.NULL, OS.NULL, OS.NULL, tail_p1)
 
     string_training_mode:; String.insert("Training Mode")
 
     string_table_music:
     dw       string_training_mode
-    dw       Toggles.entry_random_music_bonus + 0x24
-    dw       Toggles.entry_random_music_congo_jungle + 0x24
-    dw       Toggles.entry_random_music_credits + 0x24
-    dw       Toggles.entry_random_music_data + 0x24
-    dw       Toggles.entry_random_music_dream_land + 0x24
-    dw       Toggles.entry_random_music_duel_zone + 0x24
-    dw       Toggles.entry_random_music_final_destination + 0x24
-    dw       Toggles.entry_random_music_how_to_play + 0x24
-    dw       Toggles.entry_random_music_hyrule_castle + 0x24
-    dw       Toggles.entry_random_music_meta_crystal + 0x24
-    dw       Toggles.entry_random_music_mushroom_kingdom + 0x24
-    dw       Toggles.entry_random_music_peachs_castle + 0x24
-    dw       Toggles.entry_random_music_planet_zebes + 0x24
-    dw       Toggles.entry_random_music_saffron_city + 0x24
-    dw       Toggles.entry_random_music_sector_z + 0x24
-    dw       Toggles.entry_random_music_yoshis_island + 0x24
+    dw       Toggles.entry_random_music_bonus + 0x28
+    dw       Toggles.entry_random_music_congo_jungle + 0x28
+    dw       Toggles.entry_random_music_credits + 0x28
+    dw       Toggles.entry_random_music_data + 0x28
+    dw       Toggles.entry_random_music_dream_land + 0x28
+    dw       Toggles.entry_random_music_duel_zone + 0x28
+    dw       Toggles.entry_random_music_final_destination + 0x28
+    dw       Toggles.entry_random_music_how_to_play + 0x28
+    dw       Toggles.entry_random_music_hyrule_castle + 0x28
+    dw       Toggles.entry_random_music_meta_crystal + 0x28
+    dw       Toggles.entry_random_music_mushroom_kingdom + 0x28
+    dw       Toggles.entry_random_music_peachs_castle + 0x28
+    dw       Toggles.entry_random_music_planet_zebes + 0x28
+    dw       Toggles.entry_random_music_saffron_city + 0x28
+    dw       Toggles.entry_random_music_sector_z + 0x28
+    dw       Toggles.entry_random_music_yoshis_island + 0x28
     evaluate total(17)
     evaluate n(0x2F)
     while {n} < MIDI.midi_count {
         evaluate can_toggle({MIDI.MIDI_{n}_TOGGLE})
         if ({can_toggle} == OS.TRUE) {
             evaluate total({total}+1)
-            dw       Toggles.entry_random_music_{n} + 0x24
+            dw       Toggles.entry_random_music_{n} + 0x28
         }
         evaluate n({n}+1)
     }
@@ -1940,7 +2500,7 @@ scope Training {
     OS.align(4)
 
     entry_shield_break_mode:; Menu.entry_bool("Shield Break Mode:", OS.FALSE, entry_music)
-    entry_music:; Menu.entry("Music:", Menu.type.U8, 0, 0, {total} - 1, OS.NULL, OS.NULL, OS.NULL, OS.NULL)
+    entry_music:; Menu.entry("Music:", Menu.type.U8, 0, 0, {total} - 1, OS.NULL, OS.NULL, OS.NULL, OS.NULL, OS.NULL)
 
     // @ Description
     // Holds the initial value of the special model display toggle
@@ -1956,6 +2516,13 @@ scope Training {
     // Pointer to the address of the BGM string
     bgm_pointer:
     dw      0x00000000
+
+    // @ Description
+    // Pointers to the addresses of the Action strings
+    p1_action_pointer:; dw 0x00000000
+    p2_action_pointer:; dw 0x00000000
+    p3_action_pointer:; dw 0x00000000
+    p4_action_pointer:; dw 0x00000000
 }
 
 } // __TRAINING__

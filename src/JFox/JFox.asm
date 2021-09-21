@@ -34,7 +34,11 @@ scope JFox {
      Character.table_patch_start(crowd_chant_fgm, Character.id.JFOX, 0x2)
      dh  0x031A
      OS.patch_end()
-	 
+
+    // Set action strings
+    Character.table_patch_start(action_string, Character.id.JFOX, 0x4)
+    dw  Action.FOX.action_string_table
+    OS.patch_end()
 	 
     // @ Description
     // loads a different special struct when JFox uses his up special.

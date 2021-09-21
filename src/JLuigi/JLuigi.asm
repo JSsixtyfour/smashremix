@@ -24,4 +24,9 @@ scope JLuigi {
     Character.table_patch_start(crowd_chant_fgm, Character.id.JLUIGI, 0x2)
     dh  0x031C
     OS.patch_end()
+
+    // Set action strings
+    Character.table_patch_start(action_string, Character.id.JLUIGI, 0x4)
+    dw  Action.LUIGI.action_string_table
+    OS.patch_end()
 }

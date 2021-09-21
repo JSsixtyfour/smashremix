@@ -115,6 +115,24 @@ scope Command {
             sw      r0, 0x0000(t0)          // reset env color override
         }
         
+        scope _reset_training_action_frame_count: {
+            li      t0, Global.current_screen
+            lbu     t0, 0x0000(t0)          // t0 = screen_id
+            ori     t1, r0, 0x0036          // t1 = training mode screen id
+            bne     t0, t1, _end            // skip if screen_id != training mode
+            nop
+            li      t0, Training.action_control_object
+            lw      t0, 0x0000(t0)          // t0 = action control object
+            beqz    t0, _end                // skip if no control object (first frame)
+            lw      t3, 0x0084(a0)          // t3 = player struct
+            lbu     t1, 0x000D(t3)          // t1 = port
+            sll     t1, t1, 0x0002          // t1 = offset
+            addu    t0, t0, t1              // t0 = action control object, offset for port
+            sw      r0, 0x0030(t0)          // clear previous action, which will trigger a frame count reset
+
+            _end:
+        }
+
         OS.restore_registers()              // full register load
         j   _change_action_return           // return
         nop
@@ -404,6 +422,21 @@ scope Command {
         sb      t0, 0x0148(s2)              // set jump value to 1
         sw      t0, 0x014C(s2)              // set kinetic state to 1(aerial)
         _end:
+        jr      ra                          // return
+        nop
+    }
+    
+    // @ Description
+    // reverses the character's facing direction
+    // CC000000
+    scope switch_direction_: {
+        constant COMMAND_LENGTH(0x4)
+        lw      t0, 0x0044(s2)              // t0 = DIRECTION
+        addiu   t1, r0,-0x0002              // t1 = bitmask (FFFFFFFE)
+        // direction is stored as a signed 32 bit int, represented by either 1 or -1
+        // so flipping all but the bottom bit will reverse the direction
+        xor     t0, t0, t1                  // t1 = DIRECTION ^ FFFFFFFE
+        sw      t0, 0x0044(s2)              // store updated direction
         jr      ra                          // return
         nop
     }
@@ -943,6 +976,23 @@ scope Command {
     }
     
     // @ Description
+    // jumps command execution to a relative offset in the parent moveset file
+    // CC00XXXX
+    // XXXX = offset
+    scope jump_to_moveset_file_: {
+        constant COMMAND_LENGTH(0x0)
+        lw      t0, 0x09C4(s2)              // t0 = character struct
+        lw      t0, 0x002C(t0)              // t0 = character file 2(moveset) pointer
+        lw      t0, 0x0000(t0)              // t0 = moveset file address
+        lhu     t1, 0x0002(v0)              // t1 = offset
+        addu    v0, t0, t1                  // command address = moveset file address + offset
+        sw      v0, 0x0008(sp)              // store next command in stack
+        _end:
+        jr      ra                          // return
+        ori     t8, r0, COMMAND_LENGTH      // set command length
+    }
+    
+    // @ Description
     // Blank command with size 0x8
     // TODO: find something better than this
     scope skip_size_8_: {
@@ -962,8 +1012,8 @@ scope Command {
     dw      set_kinetic_                    // 0xD7 SET KINETIC STATE
     dw      set_hitbox_fgm_                 // 0xD8 SET HITBOX FGM
     dw      set_env_color_                  // 0xD9 SET ENV COLOR
-    dw      OS.NULL                         // 0xDA
-    dw      OS.NULL                         // 0xDB
+    dw      switch_direction_               // 0xDA SWITCH DIRECTION
+    dw      jump_to_moveset_file_           // 0xDB GO TO MOVESET FILE
     dw      OS.NULL                         // 0xDC
     dw      OS.NULL                         // 0xDD
     dw      OS.NULL                         // 0xDE
@@ -1012,8 +1062,8 @@ scope Command {
     dw      set_kinetic_                    // 0xD7 SET KINETIC STATE
     dw      set_hitbox_fgm_                 // 0xD8 SET HITBOX FGM
     dw      skip_size_8_                    // 0xD9 SET ENV COLOR (SKIPPED)
-    dw      OS.NULL                         // 0xDA
-    dw      OS.NULL                         // 0xDB
+    dw      OS.NULL                         // 0xDA SWITCH DIRECTION (SKIPPED)
+    dw      jump_to_moveset_file_           // 0xDB GO TO MOVESET FILE
     dw      OS.NULL                         // 0xDC
     dw      OS.NULL                         // 0xDD
     dw      OS.NULL                         // 0xDE

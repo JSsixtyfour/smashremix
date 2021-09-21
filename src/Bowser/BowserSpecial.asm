@@ -820,7 +820,7 @@ scope BowserUSP {
 	constant MAX_X_SPEED(0x4220)
 	constant G_X_ACCELERATION(0x3D23)
     constant X_ACCELERATION(0x3D00)
-    constant GRAVITY(0x3F80)
+    constant GRAVITY(0x3F90)
     
     // @ Description
     // Initial Subroutine for Bowser's aerial up special.
@@ -829,7 +829,14 @@ scope BowserUSP {
         addiu   sp, sp, 0xFFE0              // ~
         sw      ra, 0x001C(sp)              // ~
         sw      a0, 0x0020(sp)              // original lines 1-3
+             
         lw      a0, 0x0084(a0)              // a0 = player struct
+        sw      r0, 0x0B18(a0)      
+        sw      r0, 0x0B1C(a0)
+        sw      r0, 0x0B20(a0)
+        sw      r0, 0x0B24(a0)      
+        sw      r0, 0x0B28(a0)      
+        sw      r0, 0x0B2C(a0) 
         lw      t7, 0x014C(a0)              // t7 = kinetic state
         lw      a0, 0x0020(sp)              // a0 = player object struct
         sw      r0, 0x0010(sp)              // store r0 (some kind of parameter for change action)

@@ -77,4 +77,31 @@ scope Moveset {
         db 0xD6 ; db {chance_fgm} ; db {type} ; db {array_size} // command
         dw {address}                        // pointer
     }
+    
+    // @ Description
+    // adds a GO_TO_FILE command
+    macro GO_TO_FILE(offset) {
+        dh 0xDB00 ; dh {offset}
+    }
+    
+    // @ Description
+    // Shared moveset files
+    scope shared {
+        insert BEAMSWORD_JAB,"moveset/BEAMSWORD_JAB.bin"
+        insert BEAMSWORD_TILT,"moveset/BEAMSWORD_TILT.bin"
+        insert BEAMSWORD_SMASH,"moveset/BEAMSWORD_SMASH.bin"
+        insert BEAMSWORD_DASH,"moveset/BEAMSWORD_DASH.bin"
+        insert BAT_JAB,"moveset/BAT_JAB.bin"
+        insert BAT_TILT,"moveset/BAT_TILT.bin"
+        insert BAT_SMASH,"moveset/BAT_SMASH.bin"
+        insert BAT_DASH,"moveset/BAT_DASH.bin"
+        insert FAN_JAB,"moveset/FAN_JAB.bin"
+        insert FAN_TILT,"moveset/FAN_TILT.bin"
+        insert FAN_SMASH,"moveset/FAN_SMASH.bin"
+        insert FAN_DASH,"moveset/FAN_DASH.bin"
+        insert STARROD_JAB,"moveset/STARROD_JAB.bin"
+        insert STARROD_TILT,"moveset/STARROD_TILT.bin"
+        insert STARROD_SMASH,"moveset/STARROD_SMASH.bin"
+        insert STARROD_DASH,"moveset/STARROD_DASH.bin"
+    }
 }

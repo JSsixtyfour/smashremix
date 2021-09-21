@@ -358,7 +358,6 @@ scope WolfUSP {
     constant Y_SPEED(0x42f0)                // current setting - float:40.0
 	constant LANDING_FSM(0x3E80)            // current setting - float:0.25
 	constant Y_INPUT(0x3f4c)				// current setting - float:0.5
-	constant FLASH_PINK(0xff80dfE0)      	// rgba8888 colour for flash
     constant B_PRESSED(0x40)                // bitmask for b press
 	
     
@@ -699,14 +698,7 @@ scope WolfUSP {
         ori     t1, r0, BEGIN_MOVE          // t1 = BEGIN_MOVE
         bne     t0, t1, _check_move         // skip if temp variable 3 != BEGIN_MOVE
         nop
-        // initialize x/y velocity and color
-		li      t1, FLASH_PINK           // ~
-        sw      t1, 0x0A68(s0)              // store colour
-        lw      t1, 0x0A88(s0)              // t1 = overlay settings
-        lui     t0, 0x8000                  // t2 = bitmask
-        or      t1, t1, t0                  // ~
-        sw      t1, 0x0A88(s0)              // enable colour overlay bit
-		
+        // initialize x/y velocity	
         lui     t0, X_SPEED                 // ~
         mtc1    t0, f4                      // f4 = X_SPEED
         lwc1    f0, 0x0044(s0)              // ~

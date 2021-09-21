@@ -31,7 +31,7 @@ scope OS {
     OS.print_hex(value >> 4)
     }
     value = value & 15
-    putchar(value < 10 ? '0' + value : 'a' + value - 10)
+    putchar(value < 10 ? '0' + value : 'A' + value - 10)
     }
     
     macro copy_segment(offset, length) {

@@ -96,6 +96,11 @@ scope DSamus {
     Character.table_patch_start(kirby_inhale_struct, 0x2, Character.id.DSAMUS, 0xC)
     dh 0x13
     OS.patch_end()
+
+    // Set action strings
+    Character.table_patch_start(action_string, Character.id.DSAMUS, 0x4)
+    dw  Action.SAMUS.action_string_table
+    OS.patch_end()
         
     // Prevents Dark Samus from losing a jump after using air down special
     scope bomb_loss_prevention: {

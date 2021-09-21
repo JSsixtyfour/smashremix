@@ -146,7 +146,6 @@ scope Wario {
     Character.edit_action_parameters(WARIO, Action.AttackAirD,      File.WARIO_DAIR,            DAIR,                       0)
     Character.edit_action_parameters(WARIO, Action.LandingAirX,     File.WARIO_LANDING,         -1,                         -1)
     Character.edit_action_parameters(WARIO, Action.LandingAirU,     File.WARIO_LANDING_U,       LANDING_AIR_U,              -1)
-    Character.edit_action_parameters(WARIO, 0xDC,                   File.WARIO_NSP_RECOIL,      NSP_RECOIL,                 -1)
     Character.edit_action_parameters(WARIO, 0xDD,                   File.WARIO_ENTRY_R,         ENTRY,                      0x40000000)
     Character.edit_action_parameters(WARIO, 0xDE,                   File.WARIO_ENTRY_L,         ENTRY,                      0x40000000)
     Character.edit_action_parameters(WARIO, 0xDF,                   File.WARIO_NSP_GROUND,      NSP_GROUND,                 -1)
@@ -157,13 +156,20 @@ scope Wario {
     Character.edit_action_parameters(WARIO, 0xE4,                   File.WARIO_DSP_AIR,         DSP_AIR,                    0)
     
     // Modify Actions            // Action          // Staling ID   // Main ASM                 // Interrupt/Other ASM          // Movement/Physics ASM         // Collision ASM
-    Character.edit_action(WARIO, 0xDC,              0x12,           0x800D94E8,                 WarioNSP.recoil_move_,          WarioNSP.recoil_physics_,       0x800DE99C)
     Character.edit_action(WARIO, 0xDF,              -1,             0x800D94C4,                 WarioNSP.ground_move_,          WarioNSP.ground_physics_,       WarioNSP.ground_collision_)
     Character.edit_action(WARIO, 0xE0,              -1,             0x800D94E8,                 WarioNSP.air_move_,             WarioNSP.air_physics_,          WarioNSP.air_collision_)
     Character.edit_action(WARIO, 0xE1,              -1,             WarioUSP.main_,             WarioUSP.change_direction_,     WarioUSP.physics_,              WarioUSP.collision_)
     Character.edit_action(WARIO, 0xE2,              0x1E,           0x800D94C4,                 0,                              0x800D8BB4,                     0x800DDEE8)
     Character.edit_action(WARIO, 0xE3,              -1,             0x800D94E8,                 WarioDSP.ground_move_,          WarioDSP.physics_,              WarioDSP.collision_)
     Character.edit_action(WARIO, 0xE4,              -1,             0x800D94E8,                 WarioDSP.air_move_,             WarioDSP.physics_,              WarioDSP.collision_)
+    
+    // Add Action Parameters                // Action Name      // Base Action  // Animation                // Moveset Data             // Flags
+    Character.add_new_action_params(WARIO,  NSP_Recoil_Ground,  -1,             File.WARIO_NSP_RECOIL_G,    NSP_RECOIL,                 0)
+    Character.add_new_action_params(WARIO,  NSP_Recoil_Air,     -1,             File.WARIO_NSP_RECOIL_A,    NSP_RECOIL,                 0)
+    
+    // Add Actions                  // Action Name      // Base Action  //Parameters                        // Staling ID   // Main ASM                 // Interrupt/Other ASM          // Movement/Physics ASM         // Collision ASM
+    Character.add_new_action(WARIO, NSP_Recoil_Ground,  -1,             ActionParams.NSP_Recoil_Ground,     0x12,           0x800D94C4,                 0,                              0x800D8BB4,                     WarioNSP.recoil_ground_collision_)
+    Character.add_new_action(WARIO, NSP_Recoil_Air,     -1,             ActionParams.NSP_Recoil_Air,        0x12,           0x800D94E8,                 WarioNSP.recoil_move_,          WarioNSP.recoil_physics_,       WarioNSP.recoil_air_collision_)
     
     // Modify Menu Action Parameters                // Action           // Animation                // Moveset Data             // Flags
     Character.edit_menu_action_parameters(WARIO,    0x0,                File.WARIO_IDLE,            IDLE,                       -1)
@@ -225,6 +231,51 @@ scope Wario {
     // Set Kirby hat_id
     Character.table_patch_start(kirby_inhale_struct, 0x2, Character.id.WARIO, 0xC)
     dh 0xF
+    OS.patch_end()
+
+    // @ Description
+    // Wario's extra actions
+    scope Action {
+        //constant Jab3(0x0DC)
+        constant Appear1(0x0DD)
+        constant Appear2(0x0DE)
+        constant BodySlam(0x0DF)
+        constant BodySlamAir(0x0E0)
+        constant Corkscrew(0x0E1)
+        constant GroundPoundLanding(0x0E2)
+        constant GroundPound(0x0E3)
+        constant GroundPoundAir(0x0E4)
+
+        // strings!
+        //string_0x0DC:; String.insert("Jab3")
+        //string_0x0DD:; String.insert("Appear1")
+        //string_0x0DE:; String.insert("Appear2")
+        string_0x0DF:; String.insert("BodySlam")
+        string_0x0E0:; String.insert("BodySlamAir")
+        string_0x0E1:; String.insert("Corkscrew")
+        string_0x0E2:; String.insert("GroundPoundLanding")
+        string_0x0E3:; String.insert("GroundPound")
+        string_0x0E4:; String.insert("GroundPoundAir")
+        string_0x0E5:; String.insert("BodySlamRecoil")
+        string_0x0E6:; String.insert("BodySlamRecoilAir")
+
+        action_string_table:
+        dw 0 //dw Action.COMMON.string_jab3
+        dw Action.COMMON.string_appear1
+        dw Action.COMMON.string_appear2
+        dw string_0x0DF
+        dw string_0x0E0
+        dw string_0x0E1
+        dw string_0x0E2
+        dw string_0x0E3
+        dw string_0x0E4
+        dw string_0x0E5
+        dw string_0x0E6
+    }
+
+    // Set action strings
+    Character.table_patch_start(action_string, Character.id.WARIO, 0x4)
+    dw  Action.action_string_table
     OS.patch_end()
 
     // @ Description

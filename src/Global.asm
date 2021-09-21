@@ -121,6 +121,15 @@ scope Global {
     constant flash_(0x800E9814)
 
     // @ Description
+    // Engages the rumble pak
+    // @ Arguments
+    // a0 - port
+    // a1 - rumble_id (0x0 - 0xA)
+    // a2 - duration
+    // NOTE: rumble_ids 0x2, 0x3 and 0x7 get their rumble disabled on action change regardless of duration
+    constant rumble_(0x80115530)
+
+    // @ Description
     // player struct list head
     constant p_struct_head(0x80130D84)
     constant P_STRUCT_LENGTH(0x0B50)

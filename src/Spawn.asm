@@ -708,10 +708,10 @@ scope Spawn {
     float32  0000,  0005
     
     // 3A - Muda
-    float32 -0873,  1547
-    float32  2143,  3279
-    float32  0217,  2551
-    float32  0140,  3757
+    float32 -1250, -0450
+    float32  1869,  1500
+    float32  0210,  0675
+    float32  0000,  1825
     
     // 3B - Mementos
     float32 -1996,  0335
@@ -774,10 +774,10 @@ scope Spawn {
     float32  1898,  0097
     
     // 45 - Delfino
-    float32 -2500,  0900
-    float32  2500,  0900
-    float32 -1240,  0900
-    float32  1240,  0900
+    float32 -0800,  0047
+    float32  0800,  0047
+    float32 -1600,  0047
+    float32  1600,  0047
     
     // 46 - Corneria
     float32 -3339,  1400
@@ -1162,6 +1162,109 @@ scope Spawn {
     float32  1500,  0905
     float32 -0750,  0005
     float32  0750,  0005
+    
+    // 86 - Jungle Japes
+    float32 -2650,  0090
+    float32  2650,  0090
+    float32 -1035, -0240
+    float32  1035, -0240
+    
+    // 87 - Marth Break the Targets
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // 88 - Gameboy Land
+    float32 -1250, -0450
+    float32  1869,  1500
+    float32  0210,  0675
+    float32  0000,  1825
+    
+    // 89 - Mewtwo Break the Targets
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // 8A - Marth Board the Platforms
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // 8B - Allstar Rest Area
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // 8C - Mewtwo Board the Platforms
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // 8D - Castle Siege
+    float32 -1100,  1580
+    float32  1390,  1955
+    float32 -1500,  0650
+    float32  1000,  0940
+    
+    // 8E - Yoshi's Island II
+    float32 -1605,  0140
+    float32  1605,  0140
+    float32 -0600,  0100
+    float32  0600,  0100
+    
+    // 8F - Final Destination DL
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32  0000,  1545
+    float32  0000,  0005
+    
+    // 90 - Final Destination Tent
+    float32 -1800,  0005
+    float32  1800,  0005
+    float32 -0900,  0005
+    float32  0900,  0005
+    
+    // 91 - Cool Cool Mountain Remix
+    float32 -1400,  0930
+    float32  1400,  0930
+    float32 -1900,  2000
+    float32  1900,  2000
+    
+    // 92 - Duel Zone DL
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32  0000,  1545
+    float32  0000,  0005
+    
+    // 93 - Cool Cool Mountain DL
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32  0000,  1545
+    float32  0000,  0005
+    
+    // 94 - Meta Crystal DL
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32  0000,  1545
+    float32  0000,  0005
+    
+    // 95 - Dream Greens
+    float32 -1231,  0909
+    float32  1231,  0909
+    float32 -3215,  0005
+    float32  3215,  0005
+    
+    // 96 - Peach's Castle Beta
+    float32 -0159,  0540
+    float32  0471,  0540
+    float32  0159,  0540
+    float32 -0471,  0540
+    
 
     neutral_table:
     // 00 - Peach's Castle
@@ -1517,10 +1620,10 @@ scope Spawn {
     float32  1400,  0005
     
     // 3A - Muda
-    float32 -0873,  1547
-    float32  2143,  3279
-    float32  0217,  2551
-    float32  0140,  3757
+    float32 -1250, -0450
+    float32  1869,  1500
+    float32  0210,  0675
+    float32  0000,  1825
     
     // 3B - Mementos
     float32 -1996,  0335
@@ -1583,10 +1686,10 @@ scope Spawn {
     float32  1898,  0097
     
     // 45 - Delfino
-    float32 -2500,  0900
-    float32  2500,  0900
-    float32 -1240,  0900
-    float32  1240,  0900
+    float32 -0800,  0047
+    float32  0800,  0047
+    float32 -1600,  0047
+    float32  1600,  0047
     
     // 46 - Corneria
     float32 -3339,  1400
@@ -1971,6 +2074,108 @@ scope Spawn {
     float32  1500,  0905
     float32 -0750,  0005
     float32  0750,  0005
+    
+    // 86 - Jungle Japes
+    float32 -2650,  0090
+    float32  2650,  0090
+    float32 -1035, -0240
+    float32  1035, -0240
+    
+    // 87 - Marth Break the Targets
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // 88 - Gameboy Land
+    float32 -1250, -0450
+    float32  1869,  1500
+    float32  0210,  0675
+    float32  0000,  1825
+    
+    // 89 - Mewtwo Break the Targets
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // 8A - Marth Board the Platforms
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // 8B - Allstar Rest Area
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // 8C - Mewtwo Board the Platforms
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // 8D - Castle Siege
+    float32 -1100,  1580
+    float32  1390,  1955
+    float32 -1500,  0650
+    float32  1000,  0940
+    
+    // 8E - Yoshi's Island II
+    float32 -1605,  0140
+    float32  1605,  0140
+    float32 -0600,  0100
+    float32  0600,  0100
+    
+    // 8F - Final Destination DL
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32 -1400,  0005
+    float32  1400,  0005
+    
+    // 90 - Final Destination Tent
+    float32 -1800,  0005
+    float32  1800,  0005
+    float32 -0900,  0005
+    float32  0900,  0005
+    
+    // 91 - Cool Cool Mountain Remix
+    float32 -1400,  0930
+    float32  1400,  0930
+    float32 -1900,  2000
+    float32  1900,  2000
+    
+    // 92 - Duel Zone DL
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32 -1400,  0005
+    float32  1400,  0005
+    
+    // 93 - Cool Cool Mountain DL
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32 -1400,  0005
+    float32  1400,  0005
+    
+    // 94 - Meta Crystal DL
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32 -1400,  0005
+    float32  1400,  0005
+    
+    // 95 - Dream Greens
+    float32 -1231,  0909
+    float32  1231,  0909
+    float32 -3215,  0005
+    float32  3215,  0005
+    
+    // 96 - Peach's Castle Beta
+    float32 -0159,  0540
+    float32  0471,  0540
+    float32  0159,  0540
+    float32 -0471,  0540
 }
 
 } // __SPAWN__

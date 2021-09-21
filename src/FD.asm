@@ -65,9 +65,14 @@ scope FD {
         li      t0, Global.vs.stage         // t0 = address of stage_id
         lbu     t0, 0x0000(t0)              // t0 = stage_id
         lli     t9, Stages.id.FINAL_DESTINATION
-        bne     t0, t9, _end                // if not FD, then skip to end
+        beq     t0, t9, _final_destination  // if FD, branch to final destination music routines
+        lli     t9, Stages.id.FINAL_DESTINATION_TENT
+        beq     t0, t9, _final_destination  // if FD, branch to final destination music routines
+        lli     t9, Stages.id.FINAL_DESTINATION_DL
+        bne     t0, t9, _end                // if not FDDL, then skip to end
         nop
 
+        _final_destination:
         li      t0, Global.vs.elapsed       // t0 = address of time elapsed
         lw      t0, 0x0000(t0)              // t0 = time elapsed
         sltiu   t9, t0, 0x01C0              // t9 = 1 if time elapsed < length of intro
@@ -78,9 +83,8 @@ scope FD {
         lli     t9, BGM.stage.MASTER_HAND_1 // t9 = FD intro music
 
         _check_previous_bgm:
-        lui     t0, 0x800A
-        lw      t0, 0xD974(t0)              // t0 = pointer to previous bgm_id
-        lw      t0, 0x0000(t0)              // t0 = previous bgm_id
+        lui     t1, 0x8013
+        lw      t0, 0x13A0(t1)              // t0 = previous bgm_id
         bne     t0, t9, _end                // if previous bgm_id is not the FD intro, skip to end
         nop
 
@@ -92,6 +96,8 @@ scope FD {
         sw      t8, 0x0010(sp)              // save registers
 
         lli     a1, BGM.stage.FINAL_DESTINATION
+        sw      a1, 0x139C(t1)              // save this as the current bgm_id
+        sw      a1, 0x13A0(t1)              // save this as the music to play after star/hammer
         jal     BGM.play_                   // play FD battle music
         addu    a0, r0, r0
 

@@ -1,12 +1,14 @@
 // Action.asm
 
-// This file contains constants for known action IDs (currently SHARED ACTIONS ONLY)
+// This file contains constants for known action IDs
 scope Action {
     constant DeadD(0x000)
     constant DeadS(0x001)
     constant DeadU(0x002)
     constant ScreenKO(0x003)
+    // constant ?(0x004)
     constant Entry(0x005)
+    // constant ?(0x006)
     constant Revive1(0x007)
     constant Revive2(0x008)
     constant ReviveWait(0x009)
@@ -14,6 +16,7 @@ scope Action {
     constant Walk1(0x00B)
     constant Walk2(0x00C)
     constant Walk3(0x00D)
+    // constant WalkEnd(0x00E)
     constant Dash(0x00F)
     constant Run(0x010)
     constant RunBrake(0x011)
@@ -55,7 +58,7 @@ scope Action {
     constant DamageFlyLow(0x035)
     constant DamageFlyTop(0x036)
     constant DamageFlyRoll(0x037)
-    constant Tumble2(0x038)
+    constant WallBounce(0x038)
     constant Tumble(0x039)
     constant FallSpecial(0x03A)
     constant LandingSpecial(0x03B)
@@ -81,6 +84,8 @@ scope Action {
     constant DownAttackD(0x04F)
     constant DownAttackU(0x050)
     constant Tech(0x051)
+    constant Clang(0x052)
+    constant ClangRecoil(0x053)
     constant CliffCatch(0x054)
     constant CliffWait(0x055)
     constant CliffQuick(0x056)
@@ -177,12 +182,15 @@ scope Action {
     constant EggLayPulled(0x0B1)
     constant EggLay(0x0B2)
     constant FalconDivePulled(0x0B3)
+    // constant ?(0x0B4)
     constant ThrownDKPulled(0x0B5)
     constant ThrownMarioBros(0x0B6)
+    constant ThrownFoxFStart(0x0B7)
     constant ThrownDK(0x0B8)
     constant Thrown1(0x0B9)
     constant Thrown2(0x0BA)
     constant Thrown3(0x0BB)
+    constant ThrownFoxB(0x0BC)
     constant Taunt(0x0BD)
     constant Jab1(0x0BE)
     constant Jab2(0x0BF)
@@ -192,7 +200,9 @@ scope Action {
     constant FTilt(0x0C3)
     constant FTiltMidLow(0x0C4)
     constant FTiltLow(0x0C5)
+    // constant UtiltF(0x0C6) [forward angled up tilt, you can assign an animation and moveset data to that action and it actually works and takes the input]
     constant UTilt(0x0C7)
+    // constant ?(0x0C8)
     constant DTilt(0x0C9)
     constant FSmashHigh(0x0CA)
     constant FSmashMidHigh(0x0CB)
@@ -212,4 +222,1547 @@ scope Action {
     constant LandingAirU(0x0D9)
     constant LandingAirD(0x0DA)
     constant LandingAirX(0x0DB)
+
+    // strings!
+    string_0x000:; String.insert("DeadD")
+    string_0x001:; String.insert("DeadS")
+    string_0x002:; String.insert("DeadU")
+    string_0x003:; String.insert("ScreenKO")
+    // string_0x004:; String.insert("?")
+    string_0x005:; String.insert("Entry")
+    // string_0x006:; String.insert("?")
+    string_0x007:; String.insert("Revive1")
+    string_0x008:; String.insert("Revive2")
+    string_0x009:; String.insert("ReviveWait")
+    string_0x00A:; String.insert("Idle")
+    string_0x00B:; String.insert("Walk1")
+    string_0x00C:; String.insert("Walk2")
+    string_0x00D:; String.insert("Walk3")
+    // string_0x00E:; String.insert("WalkEnd")
+    string_0x00F:; String.insert("Dash")
+    string_0x010:; String.insert("Run")
+    string_0x011:; String.insert("RunBrake")
+    string_0x012:; String.insert("Turn")
+    string_0x013:; String.insert("TurnRun")
+    string_0x014:; String.insert("JumpSquat")
+    string_0x015:; String.insert("ShieldJumpSquat")
+    string_0x016:; String.insert("JumpF")
+    string_0x017:; String.insert("JumpB")
+    string_0x018:; String.insert("JumpAerialF")
+    string_0x019:; String.insert("JumpAerialB")
+    string_0x01A:; String.insert("Fall")
+    string_0x01B:; String.insert("FallAerial")
+    string_0x01C:; String.insert("Crouch")
+    string_0x01D:; String.insert("CrouchIdle")
+    string_0x01E:; String.insert("CrouchEnd")
+    string_0x01F:; String.insert("LandingLight")
+    string_0x020:; String.insert("LandingHeavy")
+    string_0x021:; String.insert("Pass")
+    string_0x022:; String.insert("ShieldDrop")
+    string_0x023:; String.insert("Teeter")
+    string_0x024:; String.insert("TeeterStart")
+    string_0x025:; String.insert("DamageHigh1")
+    string_0x026:; String.insert("DamageHigh2")
+    string_0x027:; String.insert("DamageHigh3")
+    string_0x028:; String.insert("DamageMid1")
+    string_0x029:; String.insert("DamageMid2")
+    string_0x02A:; String.insert("DamageMid3")
+    string_0x02B:; String.insert("DamageLow1")
+    string_0x02C:; String.insert("DamageLow2")
+    string_0x02D:; String.insert("DamageLow3")
+    string_0x02E:; String.insert("DamageAir1")
+    string_0x02F:; String.insert("DamageAir2")
+    string_0x030:; String.insert("DamageAir3")
+    string_0x031:; String.insert("DamageElec1")
+    string_0x032:; String.insert("DamageElec2")
+    string_0x033:; String.insert("DamageFlyHigh")
+    string_0x034:; String.insert("DamageFlyMid")
+    string_0x035:; String.insert("DamageFlyLow")
+    string_0x036:; String.insert("DamageFlyTop")
+    string_0x037:; String.insert("DamageFlyRoll")
+    string_0x038:; String.insert("WallBounce")
+    string_0x039:; String.insert("Tumble")
+    string_0x03A:; String.insert("FallSpecial")
+    string_0x03B:; String.insert("LandingSpecial")
+    string_0x03C:; String.insert("Tornado")
+    string_0x03D:; String.insert("Barrel")
+    string_0x03E:; String.insert("EnterPipe")
+    string_0x03F:; String.insert("Pipe")
+    string_0x040:; String.insert("ExitPipe")
+    string_0x041:; String.insert("ExitPipeWalk")
+    string_0x042:; String.insert("CeilingBonk")
+    string_0x043:; String.insert("DownBounceD")
+    string_0x044:; String.insert("DownBounceU")
+    string_0x045:; String.insert("DownWaitD")
+    string_0x046:; String.insert("DownWaitU")
+    string_0x047:; String.insert("DownStandD")
+    string_0x048:; String.insert("DownStandU")
+    string_0x049:; String.insert("TechF")
+    string_0x04A:; String.insert("TechB")
+    string_0x04B:; String.insert("DownForwardD")
+    string_0x04C:; String.insert("DownForwardU")
+    string_0x04D:; String.insert("DownBackD")
+    string_0x04E:; String.insert("DownBackU")
+    string_0x04F:; String.insert("DownAttackD")
+    string_0x050:; String.insert("DownAttackU")
+    string_0x051:; String.insert("Tech")
+    string_0x052:; String.insert("Clang")
+    string_0x053:; String.insert("ClangRecoil")
+    string_0x054:; String.insert("CliffCatch")
+    string_0x055:; String.insert("CliffWait")
+    string_0x056:; String.insert("CliffQuick")
+    string_0x057:; String.insert("CliffClimbQuick1")
+    string_0x058:; String.insert("CliffClimbQuick2")
+    string_0x059:; String.insert("CliffSlow")
+    string_0x05A:; String.insert("CliffClimbSlow1")
+    string_0x05B:; String.insert("CliffClimbSlow2")
+    string_0x05C:; String.insert("CliffAttackQuick1")
+    string_0x05D:; String.insert("CliffAttackQuick2")
+    string_0x05E:; String.insert("CliffAttackSlow1")
+    string_0x05F:; String.insert("CliffAttackSlow2")
+    string_0x060:; String.insert("CliffEscapeQuick1")
+    string_0x061:; String.insert("CliffEscapeQuick2")
+    string_0x062:; String.insert("CliffEscapeSlow1")
+    string_0x063:; String.insert("CliffEscapeSlow2")
+    string_0x064:; String.insert("LightItemPickup")
+    string_0x065:; String.insert("HeavyItemPickup")
+    string_0x066:; String.insert("HeavyItemHold")
+    string_0x067:; String.insert("HeavyItemTurn")
+    string_0x068:; String.insert("ItemDrop")
+    string_0x069:; String.insert("ItemThrowDash")
+    string_0x06A:; String.insert("ItemThrowF")
+    string_0x06B:; String.insert("ItemThrowB")
+    string_0x06C:; String.insert("ItemThrowU")
+    string_0x06D:; String.insert("ItemThrowD")
+    string_0x06E:; String.insert("ItemThrowSmashF")
+    string_0x06F:; String.insert("ItemThrowSmashB")
+    string_0x070:; String.insert("ItemThrowSmashU")
+    string_0x071:; String.insert("ItemThrowSmashD")
+    string_0x072:; String.insert("ItemThrowAirF")
+    string_0x073:; String.insert("ItemThrowAirB")
+    string_0x074:; String.insert("ItemThrowAirU")
+    string_0x075:; String.insert("ItemThrowAirD")
+    string_0x076:; String.insert("ItemThrowAirSmashF")
+    string_0x077:; String.insert("ItemThrowAirSmashB")
+    string_0x078:; String.insert("ItemThrowAirSmashU")
+    string_0x079:; String.insert("ItemThrowAirSmashD")
+    string_0x07A:; String.insert("HeavyItemThrowF")
+    string_0x07B:; String.insert("HeavyItemThrowB")
+    string_0x07C:; String.insert("HeavyItemThrowSmashF")
+    string_0x07D:; String.insert("HeavyItemThrowSmashB")
+    string_0x07E:; String.insert("BeamSwordNeutral")
+    string_0x07F:; String.insert("BeamSwordTilt")
+    string_0x080:; String.insert("BeamSwordSmash")
+    string_0x081:; String.insert("BeamSwordDash")
+    string_0x082:; String.insert("BatNeutral")
+    string_0x083:; String.insert("BatTilt")
+    string_0x084:; String.insert("BatSmash")
+    string_0x085:; String.insert("BatDash")
+    string_0x086:; String.insert("FanNeutral")
+    string_0x087:; String.insert("FanTilt")
+    string_0x088:; String.insert("FanSmash")
+    string_0x089:; String.insert("FanDash")
+    string_0x08A:; String.insert("StarRodNeutral")
+    string_0x08B:; String.insert("StarRodTilt")
+    string_0x08C:; String.insert("StarRodSmash")
+    string_0x08D:; String.insert("StarRodDash")
+    string_0x08E:; String.insert("RayGunShoot")
+    string_0x08F:; String.insert("RayGunShootAir")
+    string_0x090:; String.insert("FireFlowerShoot")
+    string_0x091:; String.insert("FireFlowerShootAir")
+    string_0x092:; String.insert("HammerIdle")
+    string_0x093:; String.insert("HammerWalk")
+    string_0x094:; String.insert("HammerTurn")
+    string_0x095:; String.insert("HammerJumpSquat")
+    string_0x096:; String.insert("HammerAir")
+    string_0x097:; String.insert("HammerLanding")
+    string_0x098:; String.insert("ShieldOn")
+    string_0x099:; String.insert("Shield")
+    string_0x09A:; String.insert("ShieldOff")
+    string_0x09B:; String.insert("ShieldStun")
+    string_0x09C:; String.insert("RollF")
+    string_0x09D:; String.insert("RollB")
+    string_0x09E:; String.insert("ShieldBreak")
+    string_0x09F:; String.insert("ShieldBreakFall")
+    string_0x0A0:; String.insert("StunLandD")
+    string_0x0A1:; String.insert("StunLandU")
+    string_0x0A2:; String.insert("StunStartD")
+    string_0x0A3:; String.insert("StunStartU")
+    string_0x0A4:; String.insert("Stun")
+    string_0x0A5:; String.insert("Sleep")
+    string_0x0A6:; String.insert("Grab")
+    string_0x0A7:; String.insert("GrabPull")
+    string_0x0A8:; String.insert("GrabWait")
+    string_0x0A9:; String.insert("ThrowF")
+    string_0x0AA:; String.insert("ThrowB")
+    string_0x0AB:; String.insert("CapturePulled")
+    string_0x0AC:; String.insert("CaptureWait")
+    string_0x0AD:; String.insert("InhalePulled")
+    string_0x0AE:; String.insert("InhaleWait")
+    string_0x0AF:; String.insert("InhaleSpat")
+    string_0x0B0:; String.insert("InhaleCopied")
+    string_0x0B1:; String.insert("EggLayPulled")
+    string_0x0B2:; String.insert("EggLay")
+    string_0x0B3:; String.insert("FalconDivePulled")
+    // string_0x0B4:; String.insert("?")
+    string_0x0B5:; String.insert("ThrownDKPulled")
+    string_0x0B6:; String.insert("ThrownMarioBros")
+    string_0x0B7:; String.insert("ThrownFoxFStart")
+    string_0x0B8:; String.insert("ThrownDK")
+    string_0x0B9:; String.insert("Thrown1")
+    string_0x0BA:; String.insert("Thrown2")
+    string_0x0BB:; String.insert("Thrown3")
+    string_0x0BC:; String.insert("ThrownFoxB")
+    string_0x0BD:; String.insert("Taunt")
+    string_0x0BE:; String.insert("Jab1")
+    string_0x0BF:; String.insert("Jab2")
+    string_0x0C0:; String.insert("DashAttack")
+    string_0x0C1:; String.insert("FTiltHigh")
+    string_0x0C2:; String.insert("FTiltMidHigh")
+    string_0x0C3:; String.insert("FTilt")
+    string_0x0C4:; String.insert("FTiltMidLow")
+    string_0x0C5:; String.insert("FTiltLow")
+    // string_0x0C6:; String.insert("?")
+    string_0x0C7:; String.insert("UTilt")
+    // string_0x0C8:; String.insert("?")
+    string_0x0C9:; String.insert("DTilt")
+    string_0x0CA:; String.insert("FSmashHigh")
+    string_0x0CB:; String.insert("FSmashMidHigh")
+    string_0x0CC:; String.insert("FSmash")
+    string_0x0CD:; String.insert("FSmashMidLow")
+    string_0x0CE:; String.insert("FSmashLow")
+    string_0x0CF:; String.insert("USmash")
+    string_0x0D0:; String.insert("DSmash")
+    string_0x0D1:; String.insert("AttackAirN")
+    string_0x0D2:; String.insert("AttackAirF")
+    string_0x0D3:; String.insert("AttackAirB")
+    string_0x0D4:; String.insert("AttackAirU")
+    string_0x0D5:; String.insert("AttackAirD")
+    string_0x0D6:; String.insert("LandingAirN")
+    string_0x0D7:; String.insert("LandingAirF")
+    string_0x0D8:; String.insert("LandingAirB")
+    string_0x0D9:; String.insert("LandingAirU")
+    string_0x0DA:; String.insert("LandingAirD")
+    string_0x0DB:; String.insert("LandingAirX")
+
+    // @ Description
+    // This table holds pointers to all the shared action strings
+    shared_action_string_table:
+    dw string_0x000
+    dw string_0x001
+    dw string_0x002
+    dw string_0x003
+    dw 0 // string_0x004
+    dw string_0x005
+    dw 0 // string_0x006
+    dw string_0x007
+    dw string_0x008
+    dw string_0x009
+    dw string_0x00A
+    dw string_0x00B
+    dw string_0x00C
+    dw string_0x00D
+    dw 0 // string_0x00E
+    dw string_0x00F
+    dw string_0x010
+    dw string_0x011
+    dw string_0x012
+    dw string_0x013
+    dw string_0x014
+    dw string_0x015
+    dw string_0x016
+    dw string_0x017
+    dw string_0x018
+    dw string_0x019
+    dw string_0x01A
+    dw string_0x01B
+    dw string_0x01C
+    dw string_0x01D
+    dw string_0x01E
+    dw string_0x01F
+    dw string_0x020
+    dw string_0x021
+    dw string_0x022
+    dw string_0x023
+    dw string_0x024
+    dw string_0x025
+    dw string_0x026
+    dw string_0x027
+    dw string_0x028
+    dw string_0x029
+    dw string_0x02A
+    dw string_0x02B
+    dw string_0x02C
+    dw string_0x02D
+    dw string_0x02E
+    dw string_0x02F
+    dw string_0x030
+    dw string_0x031
+    dw string_0x032
+    dw string_0x033
+    dw string_0x034
+    dw string_0x035
+    dw string_0x036
+    dw string_0x037
+    dw string_0x038
+    dw string_0x039
+    dw string_0x03A
+    dw string_0x03B
+    dw string_0x03C
+    dw string_0x03D
+    dw string_0x03E
+    dw string_0x03F
+    dw string_0x040
+    dw string_0x041
+    dw string_0x042
+    dw string_0x043
+    dw string_0x044
+    dw string_0x045
+    dw string_0x046
+    dw string_0x047
+    dw string_0x048
+    dw string_0x049
+    dw string_0x04A
+    dw string_0x04B
+    dw string_0x04C
+    dw string_0x04D
+    dw string_0x04E
+    dw string_0x04F
+    dw string_0x050
+    dw string_0x051
+    dw string_0x052
+    dw string_0x053
+    dw string_0x054
+    dw string_0x055
+    dw string_0x056
+    dw string_0x057
+    dw string_0x058
+    dw string_0x059
+    dw string_0x05A
+    dw string_0x05B
+    dw string_0x05C
+    dw string_0x05D
+    dw string_0x05E
+    dw string_0x05F
+    dw string_0x060
+    dw string_0x061
+    dw string_0x062
+    dw string_0x063
+    dw string_0x064
+    dw string_0x065
+    dw string_0x066
+    dw string_0x067
+    dw string_0x068
+    dw string_0x069
+    dw string_0x06A
+    dw string_0x06B
+    dw string_0x06C
+    dw string_0x06D
+    dw string_0x06E
+    dw string_0x06F
+    dw string_0x070
+    dw string_0x071
+    dw string_0x072
+    dw string_0x073
+    dw string_0x074
+    dw string_0x075
+    dw string_0x076
+    dw string_0x077
+    dw string_0x078
+    dw string_0x079
+    dw string_0x07A
+    dw string_0x07B
+    dw string_0x07C
+    dw string_0x07D
+    dw string_0x07E
+    dw string_0x07F
+    dw string_0x080
+    dw string_0x081
+    dw string_0x082
+    dw string_0x083
+    dw string_0x084
+    dw string_0x085
+    dw string_0x086
+    dw string_0x087
+    dw string_0x088
+    dw string_0x089
+    dw string_0x08A
+    dw string_0x08B
+    dw string_0x08C
+    dw string_0x08D
+    dw string_0x08E
+    dw string_0x08F
+    dw string_0x090
+    dw string_0x091
+    dw string_0x092
+    dw string_0x093
+    dw string_0x094
+    dw string_0x095
+    dw string_0x096
+    dw string_0x097
+    dw string_0x098
+    dw string_0x099
+    dw string_0x09A
+    dw string_0x09B
+    dw string_0x09C
+    dw string_0x09D
+    dw string_0x09E
+    dw string_0x09F
+    dw string_0x0A0
+    dw string_0x0A1
+    dw string_0x0A2
+    dw string_0x0A3
+    dw string_0x0A4
+    dw string_0x0A5
+    dw string_0x0A6
+    dw string_0x0A7
+    dw string_0x0A8
+    dw string_0x0A9
+    dw string_0x0AA
+    dw string_0x0AB
+    dw string_0x0AC
+    dw string_0x0AD
+    dw string_0x0AE
+    dw string_0x0AF
+    dw string_0x0B0
+    dw string_0x0B1
+    dw string_0x0B2
+    dw string_0x0B3
+    dw 0 // string_0x0B4
+    dw string_0x0B5
+    dw string_0x0B6
+    dw string_0x0B7
+    dw string_0x0B8
+    dw string_0x0B9
+    dw string_0x0BA
+    dw string_0x0BB
+    dw string_0x0BC
+    dw string_0x0BD
+    dw string_0x0BE
+    dw string_0x0BF
+    dw string_0x0C0
+    dw string_0x0C1
+    dw string_0x0C2
+    dw string_0x0C3
+    dw string_0x0C4
+    dw string_0x0C5
+    dw 0 // string_0x0C6
+    dw string_0x0C7
+    dw 0 // string_0x0C8
+    dw string_0x0C9
+    dw string_0x0CA
+    dw string_0x0CB
+    dw string_0x0CC
+    dw string_0x0CD
+    dw string_0x0CE
+    dw string_0x0CF
+    dw string_0x0D0
+    dw string_0x0D1
+    dw string_0x0D2
+    dw string_0x0D3
+    dw string_0x0D4
+    dw string_0x0D5
+    dw string_0x0D6
+    dw string_0x0D7
+    dw string_0x0D8
+    dw string_0x0D9
+    dw string_0x0DA
+    dw string_0x0DB
+
+    // @ Description
+    // Common strings for use in extra action tables below
+    scope COMMON {
+    	string_jab3:; String.insert("Jab3")
+    	string_jabloopstart:; String.insert("JabLoopStart")
+    	string_jabloop:; String.insert("JabLoop")
+    	string_jabloopend:; String.insert("JabLoopEnd")
+        string_appear1:; String.insert("Appear1")
+        string_appear2:; String.insert("Appear2")
+    }
+
+    // @ Description
+    // Mario's extra actions
+    scope MARIO {
+        constant Jab3(0x0DC)
+        constant Appear1(0x0DD)
+        constant Appear2(0x0DE)
+        constant Fireball(0x0DF)
+        constant FireballAir(0x0E0)
+        constant SuperJumpPunch(0x0E1)
+        constant SuperJumpPunchAir(0x0E2)
+        constant MarioTornado(0x0E3)
+        constant MarioTornadoAir(0x0E4)
+
+        // strings!
+        //string_0x0DC:; String.insert("Jab3")
+        //string_0x0DD:; String.insert("Appear1")
+        //string_0x0DE:; String.insert("Appear2")
+        string_0x0DF:; String.insert("Fireball")
+        string_0x0E0:; String.insert("FireballAir")
+        string_0x0E1:; String.insert("SuperJumpPunch")
+        string_0x0E2:; String.insert("SuperJumpPunchAir")
+        string_0x0E3:; String.insert("MarioTornado")
+        string_0x0E4:; String.insert("MarioTornadoAir")
+
+        action_string_table:
+        dw COMMON.string_jab3
+        dw COMMON.string_appear1
+        dw COMMON.string_appear2
+        dw string_0x0DF
+        dw string_0x0E0
+        dw string_0x0E1
+        dw string_0x0E2
+        dw string_0x0E3
+        dw string_0x0E4
+    }
+
+    // @ Description
+    // Fox's extra actions
+    scope FOX {
+        constant JabLoopStart(0x0DC)
+        constant JabLoop(0x0DD)
+        constant JabLoopEnd(0x0DE)
+        constant Appear1(0x0DF)
+        constant Appear2(0x0E0)
+        constant Laser(0x0E1)
+        constant LaserAir(0x0E2)
+        constant FireFoxStart(0x0E3)
+        constant FireFoxStartAir(0x0E4)
+        constant ReadyingFireFox(0x0E5)
+        constant ReadyingFireFoxAir(0x0E6)
+        constant FireFox(0x0E7)
+        constant FireFoxAir(0x0E8)
+        constant FireFoxEnd(0x0E9)
+        constant FireFoxEndAir(0x0EA)
+        constant LandingFireFoxAir(0x0EB)
+        constant ReflectorStart(0x0EC)
+        constant Reflecting(0x0ED)
+        constant ReflectorEnd(0x0EE)
+        constant ReflectorLoop(0x0EF)
+        constant ReflectorTurn(0x0F0)
+        constant ReflectorStartAir(0x0F1)
+        constant ReflectingAir(0x0F2)
+        constant ReflectorEndAir(0x0F3)
+        constant ReflectorAir(0x0F4)
+        constant ReflectorTurnAir(0x0F5)
+
+        // strings!
+        //string_0x0DC:; String.insert("JabLoopStart")
+        //string_0x0DD:; String.insert("JabLoop")
+        //string_0x0DE:; String.insert("JabLoopEnd")
+        //string_0x0DF:; String.insert("Appear1")
+        //string_0x0E0:; String.insert("Appear2")
+        string_0x0E1:; String.insert("Laser")
+        string_0x0E2:; String.insert("LaserAir")
+        string_0x0E3:; String.insert("FireFoxStart")
+        string_0x0E4:; String.insert("FireFoxStartAir")
+        string_0x0E5:; String.insert("ReadyingFireFox")
+        string_0x0E6:; String.insert("ReadyingFireFoxAir")
+        string_0x0E7:; String.insert("FireFox")
+        string_0x0E8:; String.insert("FireFoxAir")
+        string_0x0E9:; String.insert("FireFoxEnd")
+        string_0x0EA:; String.insert("FireFoxEndAir")
+        string_0x0EB:; String.insert("FireFoxBounce")
+        string_0x0EC:; String.insert("ReflectorStart")
+        string_0x0ED:; String.insert("Reflecting")
+        string_0x0EE:; String.insert("ReflectorEnd")
+        string_0x0EF:; String.insert("ReflectorLoop")
+        string_0x0F0:; String.insert("ReflectorTurn")
+        string_0x0F1:; String.insert("ReflectorStartAir")
+        string_0x0F2:; String.insert("ReflectingAir")
+        string_0x0F3:; String.insert("ReflectorEndAir")
+        string_0x0F4:; String.insert("ReflectorAir")
+        string_0x0F5:; String.insert("ReflectorTurnAir")
+
+        action_string_table:
+        dw COMMON.string_jabloopstart
+        dw COMMON.string_jabloop
+        dw COMMON.string_jabloopend
+        dw COMMON.string_appear1
+        dw COMMON.string_appear2
+        dw string_0x0E1
+        dw string_0x0E2
+        dw string_0x0E3
+        dw string_0x0E4
+        dw string_0x0E5
+        dw string_0x0E6
+        dw string_0x0E7
+        dw string_0x0E8
+        dw string_0x0E9
+        dw string_0x0EA
+        dw string_0x0EB
+        dw string_0x0EC
+        dw string_0x0ED
+        dw string_0x0EE
+        dw string_0x0EF
+        dw string_0x0F0
+        dw string_0x0F1
+        dw 0 //dw string_0x0F2
+        dw string_0x0F3
+        dw string_0x0F4
+        dw string_0x0F5
+    }
+
+    // @ Description
+    // DK's extra actions
+    scope DK {
+        constant Appear1(0x0DC)
+        constant Appear2(0x0DD)
+        constant GiantPunchLoopStart(0x0DE)
+        constant GiantPunchLoopStartAir(0x0DF)
+        constant GiantPunchLoop(0x0E0)
+        constant GiantPunchLoopAir(0x0E1)
+        constant GiantPunch(0x0E2)
+        constant GiantPunchAir(0x0E3)
+        constant GiantPunchFullyCharged(0x0E4)
+        constant GiantPunchFullyChargedAir(0x0E5)
+        constant SpinningKong(0x0E6)
+        constant SpinningKongAir(0x0E7)
+        constant HandSlapStart(0x0E8)
+        constant HandSlapLoop(0x0E9)
+        constant HandSlapEnd(0x0EA)
+        constant Cargo(0x0EB)
+        constant CargoVerySlowWalk(0x0EC)
+        constant CargoSlowWalk(0x0ED)
+        constant CargoWalk(0x0EE)
+        constant CargoTurn(0x0EF)
+        constant CargoJumpsquat(0x0F0)
+        constant CargoJump(0x0F1)
+        constant CargoLanding(0x0F2)
+        //constant ?(0x0F3)
+        constant CargoThrow(0x0F4)
+        constant CargoThrowAir(0x0F5)
+        constant HeavyItemThrowF(0x0F6)
+        constant HeavyItemThrowB(0x0F7)
+        constant HeavyItemThrowSmashF(0x0F8)
+        constant HeavyItemThrowSmashB(0x0F9)
+
+        // strings!
+        string_0x0DC:; String.insert("Appear1")
+        string_0x0DD:; String.insert("Appear2")
+        string_0x0DE:; String.insert("GiantPunchLoopStart")
+        string_0x0DF:; String.insert("GiantPunchLoopStartAir")
+        string_0x0E0:; String.insert("GiantPunchLoop")
+        string_0x0E1:; String.insert("GiantPunchLoopAir")
+        string_0x0E2:; String.insert("GiantPunch")
+        string_0x0E3:; String.insert("GiantPunchAir")
+        string_0x0E4:; String.insert("GiantPunchFullyCharged")
+        string_0x0E5:; String.insert("GiantPunchFullyChargedAir")
+        string_0x0E6:; String.insert("SpinningKong")
+        string_0x0E7:; String.insert("SpinningKongAir")
+        string_0x0E8:; String.insert("HandSlapStart")
+        string_0x0E9:; String.insert("HandSlapLoop")
+        string_0x0EA:; String.insert("HandSlapEnd")
+        string_0x0EB:; String.insert("Cargo")
+        string_0x0EC:; String.insert("CargoVerySlowWalk")
+        string_0x0ED:; String.insert("CargoSlowWalk")
+        string_0x0EE:; String.insert("CargoWalk")
+        string_0x0EF:; String.insert("CargoTurn")
+        string_0x0F0:; String.insert("CargoJumpsquat")
+        string_0x0F1:; String.insert("CargoJump")
+        string_0x0F2:; String.insert("CargoLanding")
+        //string_0x0F3:; String.insert("?")
+        string_0x0F4:; String.insert("CargoThrow")
+        string_0x0F5:; String.insert("CargoThrowAir")
+        string_0x0F6:; String.insert("HeavyItemThrowF")
+        string_0x0F7:; String.insert("HeavyItemThrowB")
+        string_0x0F8:; String.insert("HeavyItemThrowSmashF")
+        string_0x0F9:; String.insert("HeavyItemThrowSmashB")
+
+        action_string_table:
+        dw string_0x0DC
+        dw string_0x0DD
+        dw string_0x0DE
+        dw string_0x0DF
+        dw string_0x0E0
+        dw string_0x0E1
+        dw string_0x0E2
+        dw string_0x0E3
+        dw string_0x0E4
+        dw string_0x0E5
+        dw string_0x0E6
+        dw string_0x0E7
+        dw string_0x0E8
+        dw string_0x0E9
+        dw string_0x0EA
+        dw string_0x0EB
+        dw string_0x0EC
+        dw string_0x0ED
+        dw string_0x0EE
+        dw string_0x0EF
+        dw string_0x0F0
+        dw string_0x0F1
+        dw string_0x0F2
+        dw 0 // dw string_0x0F3
+        dw string_0x0F4
+        dw string_0x0F5
+        dw string_0x0F6
+        dw string_0x0F7
+        dw string_0x0F8
+        dw string_0x0F9
+    }
+
+    // @ Description
+    // Samus's extra actions
+    scope SAMUS {
+        constant Appear1(0x0DC)
+        constant Appear2(0x0DD)
+        constant ChargeShotStart(0x0DE)
+        constant ChargeShotCharging(0x0DF)
+        constant ChargeShotShooting(0x0E0)
+        constant ChargeShotStartAir(0x0E1)
+        constant ChargeShotShootingAir(0x0E2)
+        constant ScrewAttack(0x0E3)
+        constant ScrewAttackAir(0x0E4)
+        constant Bomb(0x0E5)
+        constant BombAir(0x0E6)
+
+        // strings!
+        string_0x0DC:; String.insert("Appear1")
+        string_0x0DD:; String.insert("Appear2")
+        string_0x0DE:; String.insert("ChargeShotStart")
+        string_0x0DF:; String.insert("ChargeShotCharging")
+        string_0x0E0:; String.insert("ChargeShotShooting")
+        string_0x0E1:; String.insert("ChargeShotStartAir")
+        string_0x0E2:; String.insert("ChargeShotShootingAir")
+        string_0x0E3:; String.insert("ScrewAttack")
+        string_0x0E4:; String.insert("ScrewAttackAir")
+        string_0x0E5:; String.insert("Bomb")
+        string_0x0E6:; String.insert("BombAir")
+
+        action_string_table:
+        dw string_0x0DC
+        dw string_0x0DD
+        dw string_0x0DE
+        dw string_0x0DF
+        dw string_0x0E0
+        dw string_0x0E1
+        dw string_0x0E2
+        dw string_0x0E3
+        dw string_0x0E4
+        dw string_0x0E5
+        dw string_0x0E6
+    }
+
+    // @ Description
+    // Luigi's extra actions
+    scope LUIGI {
+        constant Jab3(0x0DC)
+        constant Appear1(0x0DD)
+        constant Appear2(0x0DE)
+        constant Fireball(0x0DF)
+        constant FireballAir(0x0E0)
+        constant SuperJumpPunch(0x0E1)
+        constant SuperJumpPunchAir(0x0E2)
+        constant LuigiCyclone(0x0E3)
+        constant LuigiCycloneAir(0x0E4)
+
+        // strings!
+        //string_0x0DC:; String.insert("Jab3")
+        //string_0x0DD:; String.insert("Appear1")
+        //string_0x0DE:; String.insert("Appear2")
+        //string_0x0DF:; String.insert("Fireball")
+        //string_0x0E0:; String.insert("FireballAir")
+        //string_0x0E1:; String.insert("SuperJumpPunch")
+        //string_0x0E2:; String.insert("SuperJumpPunchAir")
+        string_0x0E3:; String.insert("LuigiCyclone")
+        string_0x0E4:; String.insert("LuigiCycloneAir")
+
+        action_string_table:
+        dw COMMON.string_jab3
+        dw COMMON.string_appear1
+        dw COMMON.string_appear2
+        dw MARIO.string_0x0DF
+        dw MARIO.string_0x0E0
+        dw MARIO.string_0x0E1
+        dw MARIO.string_0x0E2
+        dw string_0x0E3
+        dw string_0x0E4
+    }
+
+    // @ Description
+    // Link's extra actions
+    scope LINK {
+        constant Jab3(0x0DC)
+        constant JabLoopStart(0x0DD)
+        constant JabLoop(0x0DE)
+        constant JabLoopEnd(0x0DF)
+        constant Appear1(0x0E0)
+        constant Appear2(0x0E1)
+        constant SpinAttack(0x0E2)
+        constant SpinAttackEnd(0x0E3)
+        constant SpinAttackAir(0x0E4)
+        constant Boomerang(0x0E5)
+        constant BoomerangCatch(0x0E6)
+        constant BoomerangMiss(0x0E7)
+        constant BoomerangAir(0x0E8)
+        constant BoomerangCatchAir(0x0E9)
+        constant BoomerangMissAir(0x0EA)
+        constant Bomb(0x0EB)
+        constant BombAir(0x0EC)
+
+        // strings!
+        string_0x0DC:; String.insert("Jab3")
+        string_0x0DD:; String.insert("JabLoopStart")
+        string_0x0DE:; String.insert("JabLoop")
+        string_0x0DF:; String.insert("JabLoopEnd")
+        string_0x0E0:; String.insert("Appear1")
+        string_0x0E1:; String.insert("Appear2")
+        string_0x0E2:; String.insert("SpinAttack")
+        string_0x0E3:; String.insert("SpinAttackEnd")
+        string_0x0E4:; String.insert("SpinAttackAir")
+        string_0x0E5:; String.insert("Boomerang")
+        string_0x0E6:; String.insert("BoomerangCatch")
+        string_0x0E7:; String.insert("BoomerangMiss")
+        string_0x0E8:; String.insert("BoomerangAir")
+        string_0x0E9:; String.insert("BoomerangCatchAir")
+        string_0x0EA:; String.insert("BoomerangMissAir")
+        string_0x0EB:; String.insert("Bomb")
+        string_0x0EC:; String.insert("BombAir")
+
+        action_string_table:
+        dw string_0x0DC
+        dw string_0x0DD
+        dw string_0x0DE
+        dw string_0x0DF
+        dw string_0x0E0
+        dw string_0x0E1
+        dw string_0x0E2
+        dw string_0x0E3
+        dw string_0x0E4
+        dw string_0x0E5
+        dw string_0x0E6
+        dw string_0x0E7
+        dw string_0x0E8
+        dw string_0x0E9
+        dw string_0x0EA
+        dw string_0x0EB
+        dw string_0x0EC
+    }
+
+    // @ Description
+    // Yoshi's extra actions
+    scope YOSHI {
+        constant Appear1(0x0DC)
+        constant Appear2(0x0DD)
+        constant EggThrow(0x0DE)
+        constant EggThrowAir(0x0DF)
+        constant GroundPoundStart(0x0E0)
+        constant GroundPoundLanding(0x0E1)
+        constant GrounPoundAir(0x0E2)
+        constant GroundPoundDrop(0x0E3)
+        constant EggLayUseMiss(0x0E4)
+        constant EggLayGrabOut(0x0E5)
+        constant EggLayGrabIn(0x0E6)
+        constant EggLayUseMissAir(0x0E7)
+        constant EggLayGrabOutAir(0x0E8)
+        constant EggLayGrabInAir(0x0E9)
+
+        // strings!
+        string_0x0DC:; String.insert("Appear1")
+        string_0x0DD:; String.insert("Appear2")
+        string_0x0DE:; String.insert("EggThrow")
+        string_0x0DF:; String.insert("EggThrowAir")
+        string_0x0E0:; String.insert("GroundPoundStart")
+        string_0x0E1:; String.insert("GroundPoundLanding")
+        string_0x0E2:; String.insert("GrounPoundAir")
+        string_0x0E3:; String.insert("GroundPoundDrop")
+        string_0x0E4:; String.insert("EggLayUseMiss")
+        string_0x0E5:; String.insert("EggLayGrabOut")
+        string_0x0E6:; String.insert("EggLayGrabIn")
+        string_0x0E7:; String.insert("EggLayUseMissAir")
+        string_0x0E8:; String.insert("EggLayGrabOutAir")
+        string_0x0E9:; String.insert("EggLayGrabInAir")
+
+        action_string_table:
+        dw string_0x0DC
+        dw string_0x0DD
+        dw string_0x0DE
+        dw string_0x0DF
+        dw string_0x0E0
+        dw string_0x0E1
+        dw string_0x0E2
+        dw string_0x0E3
+        dw string_0x0E4
+        dw string_0x0E5
+        dw string_0x0E6
+        dw string_0x0E7
+        dw string_0x0E8
+        dw string_0x0E9
+    }
+
+    // @ Description
+    // Captain's extra actions
+    scope CAPTAIN {
+        constant Jab3(0x0DC)
+        constant JabLoopStart(0x0DD)
+        constant JabLoop(0x0DE)
+        constant JabLoopEnd(0x0DF)
+        constant Appear(0x0E0)
+        constant AppearAir(0x0E1)
+        constant BlueFalcon1(0x0E2)
+        constant BlueFalcon2(0x0E3)
+        constant FalconPunch(0x0E4)
+        constant FalconPunchAir(0x0E5)
+        constant FalconKick(0x0E6)
+        constant FalconKickFromGroundAir(0x0E7)
+        constant LandingFalconKick(0x0E8)
+        constant FalconKickEnd(0x0E9)
+        constant CollisionFalconKick(0x0EA)
+        constant FalconDive(0x0EB)
+        constant FalconDiveCatch(0x0EC)
+        constant FalconDiveEnd1(0x0ED)
+        constant FalconDiveEnd2(0x0EE)
+
+        // strings!
+        string_0x0DC:; String.insert("Jab3")
+        string_0x0DD:; String.insert("JabLoopStart")
+        string_0x0DE:; String.insert("JabLoop")
+        string_0x0DF:; String.insert("JabLoopEnd")
+        string_0x0E0:; String.insert("Appear")
+        string_0x0E1:; String.insert("AppearAir")
+        string_0x0E2:; String.insert("BlueFalcon1")
+        string_0x0E3:; String.insert("BlueFalcon2")
+        string_0x0E4:; String.insert("FalconPunch")
+        string_0x0E5:; String.insert("FalconPunchAir")
+        string_0x0E6:; String.insert("FalconKick")
+        string_0x0E7:; String.insert("FalconKickFromGroundAir")
+        string_0x0E8:; String.insert("LandingFalconKick")
+        string_0x0E9:; String.insert("FalconKickEnd")
+        string_0x0EA:; String.insert("CollisionFalconKick")
+        string_0x0EB:; String.insert("FalconDive")
+        string_0x0EC:; String.insert("FalconDiveCatch")
+        string_0x0ED:; String.insert("FalconDiveEnd1")
+        string_0x0EE:; String.insert("FalconDiveEnd2")
+
+        action_string_table:
+        dw string_0x0DC
+        dw string_0x0DD
+        dw string_0x0DE
+        dw string_0x0DF
+        dw string_0x0E0
+        dw string_0x0E1
+        dw string_0x0E2
+        dw string_0x0E3
+        dw string_0x0E4
+        dw string_0x0E5
+        dw string_0x0E6
+        dw string_0x0E7
+        dw string_0x0E8
+        dw string_0x0E9
+        dw string_0x0EA
+        dw string_0x0EB
+        dw string_0x0EC
+        dw string_0x0ED
+        dw string_0x0EE
+    }
+
+    // @ Description
+    // Kirby's extra actions
+    scope KIRBY {
+        constant JabLoopStart(0x0DC)
+        constant JabLoop(0x0DD)
+        constant JabLoopEnd(0x0DE)
+        constant Jump2(0x0DF)
+        constant Jump3(0x0E0)
+        constant Jump4(0x0E1)
+        constant Jump5(0x0E2)
+        constant Jump6(0x0E3)
+        constant ForwardThrow(0x0E4)
+        constant ForwardThrowFall(0x0E5)
+        constant ForwardThrowRecoil(0x0E6)
+        constant MarioFireball(0x0E7)
+        constant MarioFireballAir(0x0E8)
+        constant LuigiFireball(0x0E9)
+        constant LuigiFireballAir(0x0EA)
+        constant Laser(0x0EB)
+        constant LaserAir(0x0EC)
+        constant ChargeShotStart(0x0ED)
+        constant Charging(0x0EE)
+        constant ShootingChargeShot(0x0EF)
+        constant ChargeShotAir(0x0F0)
+        constant ShootingChargeShotAir(0x0F1)
+        constant ChargePunchStart(0x0F2)
+        constant ChargePunchStartAir(0x0F3)
+        constant ChargePunch(0x0F4)
+        constant ChargePunchAir(0x0F5)
+        constant Punch(0x0F6)
+        constant PunchAir(0x0F7)
+        constant FullyChargedPunch(0x0F8)
+        constant FullyChargedPunchAir(0x0F9)
+        constant Staring1(0x0FA)
+        constant Staring2(0x0FB)
+        constant Lightning(0x0FC)
+        constant LightningAir(0x0FD)
+        constant PKFire(0x0FE)
+        constant PKFireAir(0x0FF)
+        constant FinalCutter(0x100)
+        constant FinalCutterLand(0x101)
+        constant FinalCutterAir(0x102)
+        constant FinalCutterFall(0x103)
+        constant StoneStart(0x104)
+        // constant ?(0x105)
+        constant Stone(0x106)
+        constant StoneEnd(0x107)
+        constant StoneStartAir(0x108)
+        constant StoneFall(0x109)
+        constant StoneLanding(0x10A)
+        constant StoneFall2(0x10B)
+        constant StoneEndAir(0x10C)
+        constant InhaleStart(0x10D)
+        constant Inhale(0x10E)
+        constant InhaleEnd(0x10F)
+        constant InhalePull(0x110)
+        constant InhaleSwallow(0x111)
+        constant InhaleSpit(0x112)
+        constant InhaleIdle(0x113)
+        constant InhaleTurn(0x114)
+        constant InhaleCopy(0x115)
+        constant InhaleStartAir(0x116)
+        constant InhaleAir(0x117)
+        constant InhaleEndAir(0x118)
+        constant InhalePullAir(0x119)
+        constant InhaleSwallowAir(0x11A)
+        constant InhaleSpitAir(0x11B)
+        constant InhaleFall(0x11C)
+        constant InhaleTurnAir(0x11D)
+        constant InhaleCopyAir(0x11E)
+        constant Boomerang(0x11F)
+        constant BoomerangCatch(0x120)
+        constant BoomerangMissCatch(0x121)
+        constant BoomerangAir(0x122)
+        constant BoomerangCatchAir(0x123)
+        constant BoomerangMissCatchAir(0x124)
+        constant Pound(0x125)
+        constant PoundAir(0x126)
+        constant FalconPunch(0x127)
+        constant FalconPunchAir(0x128)
+        constant EggThrow(0x129)
+        constant SucceedingEggThrow(0x12A)
+        constant EggThrowEnd(0x12B)
+        constant EggThrowAir(0x12C)
+        constant SucceedingEggThrowAir(0x12D)
+        constant EggThrowEndAir(0x12E)
+        constant WarlockPunch(0x12F)
+        constant WarlockPunchAir(0x130)
+        constant Capsule(0x131)
+        constant CapsuleAir(0x132)
+        constant DSCharging(0x133)
+        constant YLBoomerang(0x134)
+        constant YLBoomerangAir(0x135)
+        constant LucasPKFire(0x136)
+        constant LucasPKFireAir(0x137)
+        constant BodySlam(0x138)
+        constant BodySlamAir(0x139)
+        constant BodySlamRecoil(0x13A)
+        constant BodySlamRecoilAir(0x13B)
+        constant Phantasm(0x13C)
+        constant PhantasmAir(0x13D)
+        constant FlameBreath(0x13E)
+        constant FlameBreathAir(0x13F)
+        constant Book(0x140)
+        constant BookAir(0x141)
+        constant Blaster(0x142)
+        constant BlasterAir(0x143)
+        constant CatapultStart(0x144)
+        constant CatapultCharge(0x145)
+        constant CatapultShoot(0x146)
+        constant CatapultStartAir(0x147)
+        constant CatapultChargeAir(0x148)
+        constant CatapultShootAir(0x149)
+        constant ShadowBallStart(0x14A)
+        constant ShadowBallCharge(0x14B)
+        constant ShadowBallShoot(0x14C)
+        constant ShadowBallStartAir(0x14D)
+        constant ShadowBallChargeAir(0x14E)
+        constant ShadowBallShootAir(0x14F)
+        constant DancingBlade1(0x150)
+        constant DancingBlade2High(0x151)
+        constant DancingBlade2Mid(0x152)
+        constant DancingBlade2Low(0x153)
+        constant DancingBlade3High(0x154)
+        constant DancingBlade3Mid(0x155)
+        constant DancingBlade3Low(0x156)
+        constant DancingBlade1Air(0x157)
+        constant DancingBlade2HighAir(0x158)
+        constant DancingBlade2MidAir(0x159)
+        constant DancingBlade2LowAir(0x15A)
+        constant DancingBlade3HighAir(0x15B)
+        constant DancingBlade3MidAir(0x15C)
+        constant DancingBlade3LowAir(0x15D)
+
+        // strings!
+        string_0x0DC:; String.insert("JabLoopStart")
+        string_0x0DD:; String.insert("JabLoop")
+        string_0x0DE:; String.insert("JabLoopEnd")
+        string_0x0DF:; String.insert("Jump2")
+        string_0x0E0:; String.insert("Jump3")
+        string_0x0E1:; String.insert("Jump4")
+        string_0x0E2:; String.insert("Jump5")
+        string_0x0E3:; String.insert("Jump6")
+        string_0x0E4:; String.insert("ForwardThrow")
+        string_0x0E5:; String.insert("ForwardThrowFall")
+        string_0x0E6:; String.insert("ForwardThrowRecoil")
+        string_0x0E7:; String.insert("MarioFireball")
+        string_0x0E8:; String.insert("MarioFireballAir")
+        string_0x0E9:; String.insert("LuigiFireball")
+        string_0x0EA:; String.insert("LuigiFireballAir")
+        string_0x0EB:; String.insert("Laser")
+        string_0x0EC:; String.insert("LaserAir")
+        string_0x0ED:; String.insert("ChargeShotStart")
+        string_0x0EE:; String.insert("Charging")
+        string_0x0EF:; String.insert("ShootingChargeShot")
+        string_0x0F0:; String.insert("ChargeShotAir")
+        string_0x0F1:; String.insert("ShootingChargeShotAir")
+        string_0x0F2:; String.insert("ChargePunchStart")
+        string_0x0F3:; String.insert("ChargePunchStartAir")
+        string_0x0F4:; String.insert("ChargePunch")
+        string_0x0F5:; String.insert("ChargePunchAir")
+        string_0x0F6:; String.insert("Punch")
+        string_0x0F7:; String.insert("PunchAir")
+        string_0x0F8:; String.insert("FullyChargedPunch")
+        string_0x0F9:; String.insert("FullyChargedPunchAir")
+        string_0x0FA:; String.insert("Staring1")
+        string_0x0FB:; String.insert("Staring2")
+        string_0x0FC:; String.insert("Lightning")
+        string_0x0FD:; String.insert("LightningAir")
+        string_0x0FE:; String.insert("PKFire")
+        string_0x0FF:; String.insert("PKFireAir")
+        string_0x100:; String.insert("FinalCutter")
+        string_0x101:; String.insert("FinalCutterLand")
+        string_0x102:; String.insert("FinalCutterAir")
+        string_0x103:; String.insert("FinalCutterFall")
+        string_0x104:; String.insert("StoneStart")
+        // string_0x105:; String.insert("?")
+        string_0x106:; String.insert("Stone")
+        string_0x107:; String.insert("StoneEnd")
+        string_0x108:; String.insert("StoneStartAir")
+        string_0x109:; String.insert("StoneFall")
+        string_0x10A:; String.insert("StoneLanding")
+        string_0x10B:; String.insert("StoneFall2")
+        string_0x10C:; String.insert("StoneEndAir")
+        string_0x10D:; String.insert("InhaleStart")
+        string_0x10E:; String.insert("Inhale")
+        string_0x10F:; String.insert("InhaleEnd")
+        string_0x110:; String.insert("InhalePull")
+        string_0x111:; String.insert("InhaleSwallow")
+        string_0x112:; String.insert("InhaleSpit")
+        string_0x113:; String.insert("InhaleIdle")
+        string_0x114:; String.insert("InhaleTurn")
+        string_0x115:; String.insert("InhaleCopy")
+        string_0x116:; String.insert("InhaleStartAir")
+        string_0x117:; String.insert("InhaleAir")
+        string_0x118:; String.insert("InhaleEndAir")
+        string_0x119:; String.insert("InhalePullAir")
+        string_0x11A:; String.insert("InhaleSwallowAir")
+        string_0x11B:; String.insert("InhaleSpitAir")
+        string_0x11C:; String.insert("InhaleFall")
+        string_0x11D:; String.insert("InhaleTurnAir")
+        string_0x11E:; String.insert("InhaleCopyAir")
+        string_0x11F:; String.insert("Boomerang")
+        string_0x120:; String.insert("BoomerangCatch")
+        string_0x121:; String.insert("BoomerangMissCatch")
+        string_0x122:; String.insert("BoomerangAir")
+        string_0x123:; String.insert("BoomerangCatchAir")
+        string_0x124:; String.insert("BoomerangMissCatchAir")
+        string_0x125:; String.insert("Pound")
+        string_0x126:; String.insert("PoundAir")
+        string_0x127:; String.insert("FalconPunch")
+        string_0x128:; String.insert("FalconPunchAir")
+        string_0x129:; String.insert("EggThrow")
+        string_0x12A:; String.insert("SucceedingEggThrow")
+        string_0x12B:; String.insert("EggThrowEnd")
+        string_0x12C:; String.insert("EggThrowAir")
+        string_0x12D:; String.insert("SucceedingEggThrowAir")
+        string_0x12E:; String.insert("EggThrowEndAir")
+        string_0x12F:; String.insert("WarlockPunch")
+        string_0x130:; String.insert("WarlockPunchAir")
+        string_0x131:; String.insert("Capsule")
+        string_0x132:; String.insert("CapsuleAir")
+        string_0x133:; String.insert("DSCharging")
+        string_0x134:; String.insert("YLBoomerang")
+        string_0x135:; String.insert("YLBoomerangAir")
+        string_0x136:; String.insert("LucasPKFire")
+        string_0x137:; String.insert("LucasPKFireAir")
+        string_0x138:; String.insert("BodySlam")
+        string_0x139:; String.insert("BodySlamAir")
+        string_0x13A:; String.insert("BodySlamRecoil")
+        string_0x13B:; String.insert("BodySlamRecoilAir")
+        string_0x13C:; String.insert("Phantasm")
+        string_0x13D:; String.insert("PhantasmAir")
+        string_0x13E:; String.insert("FlameBreath")
+        string_0x13F:; String.insert("FlameBreathAir")
+        string_0x140:; String.insert("Book")
+        string_0x141:; String.insert("BookAir")
+        string_0x142:; String.insert("Blaster")
+        string_0x143:; String.insert("BlasterAir")
+        string_0x144:; String.insert("CatapultStart")
+        string_0x145:; String.insert("CatapultCharge")
+        string_0x146:; String.insert("CatapultShoot")
+        string_0x147:; String.insert("CatapultStartAir")
+        string_0x148:; String.insert("CatapultChargeAir")
+        string_0x149:; String.insert("CatapultShootAir")
+        string_0x14A:; String.insert("ShadowBallStart")
+        string_0x14B:; String.insert("ShadowBallCharge")
+        string_0x14C:; String.insert("ShadowBallShoot")
+        string_0x14D:; String.insert("ShadowBallStartAir")
+        string_0x14E:; String.insert("ShadowBallChargeAir")
+        string_0x14F:; String.insert("ShadowBallShootAir")
+        string_0x150:; String.insert("DancingBlade1")
+        string_0x151:; String.insert("DancingBlade2High")
+        string_0x152:; String.insert("DancingBlade2Mid")
+        string_0x153:; String.insert("DancingBlade2Low")
+        string_0x154:; String.insert("DancingBlade3High")
+        string_0x155:; String.insert("DancingBlade3Mid")
+        string_0x156:; String.insert("DancingBlade3Low")
+        string_0x157:; String.insert("DancingBlade1Air")
+        string_0x158:; String.insert("DancingBlade2HighAir")
+        string_0x159:; String.insert("DancingBlade2MidAir")
+        string_0x15A:; String.insert("DancingBlade2LowAir")
+        string_0x15B:; String.insert("DancingBlade3HighAir")
+        string_0x15C:; String.insert("DancingBlade3MidAir")
+        string_0x15D:; String.insert("DancingBlade3LowAir")
+
+        action_string_table:
+        dw string_0x0DC
+        dw string_0x0DD
+        dw string_0x0DE
+        dw string_0x0DF
+        dw string_0x0E0
+        dw string_0x0E1
+        dw string_0x0E2
+        dw string_0x0E3
+        dw string_0x0E4
+        dw string_0x0E5
+        dw string_0x0E6
+        dw string_0x0E7
+        dw string_0x0E8
+        dw string_0x0E9
+        dw string_0x0EA
+        dw string_0x0EB
+        dw string_0x0EC
+        dw string_0x0ED
+        dw string_0x0EE
+        dw string_0x0EF
+        dw string_0x0F0
+        dw string_0x0F1
+        dw string_0x0F2
+        dw string_0x0F3
+        dw string_0x0F4
+        dw string_0x0F5
+        dw string_0x0F6
+        dw string_0x0F7
+        dw string_0x0F8
+        dw string_0x0F9
+        dw string_0x0FA
+        dw string_0x0FB
+        dw string_0x0FC
+        dw string_0x0FD
+        dw string_0x0FE
+        dw string_0x0FF
+        dw string_0x100
+        dw string_0x101
+        dw string_0x102
+        dw string_0x103
+        dw string_0x104
+        dw 0 // dw string_0x105
+        dw string_0x106
+        dw string_0x107
+        dw string_0x108
+        dw string_0x109
+        dw string_0x10A
+        dw string_0x10B
+        dw string_0x10C
+        dw string_0x10D
+        dw string_0x10E
+        dw string_0x10F
+        dw string_0x110
+        dw string_0x111
+        dw string_0x112
+        dw string_0x113
+        dw string_0x114
+        dw string_0x115
+        dw string_0x116
+        dw string_0x117
+        dw string_0x118
+        dw string_0x119
+        dw string_0x11A
+        dw 0 // dw string_0x11B
+        dw string_0x11C
+        dw string_0x11D
+        dw string_0x11E
+        dw string_0x11F
+        dw string_0x120
+        dw string_0x121
+        dw string_0x122
+        dw string_0x123
+        dw string_0x124
+        dw string_0x125
+        dw string_0x126
+        dw string_0x127
+        dw string_0x128
+        dw string_0x129
+        dw string_0x12A
+        dw string_0x12B
+        dw string_0x12C
+        dw string_0x12D
+        dw string_0x12E
+        dw string_0x12F
+        dw string_0x130
+        dw string_0x131
+        dw string_0x132
+        dw string_0x133
+        dw string_0x134
+        dw string_0x135
+        dw string_0x136
+        dw string_0x137
+        dw string_0x138
+        dw string_0x139
+        dw string_0x13A
+        dw string_0x13B
+        dw string_0x13C
+        dw string_0x13D
+        dw string_0x13E
+        dw string_0x13F
+        dw string_0x140
+        dw string_0x141
+        dw string_0x142
+        dw string_0x143
+        dw string_0x144
+        dw string_0x145
+        dw string_0x146
+        dw string_0x147
+        dw string_0x148
+        dw string_0x149
+        dw string_0x14A
+        dw string_0x14B
+        dw string_0x14C
+        dw string_0x14D
+        dw string_0x14E
+        dw string_0x14F
+        dw string_0x150
+        dw string_0x151
+        dw string_0x152
+        dw string_0x153
+        dw string_0x154
+        dw string_0x155
+        dw string_0x156
+        dw string_0x157
+        dw string_0x158
+        dw string_0x159
+        dw string_0x15A
+        dw string_0x15B
+        dw string_0x15C
+        dw string_0x15D
+    }
+
+    // @ Description
+    // Pikachu's extra actions
+    scope PIKACHU {
+        constant Appear1(0x0DC)
+        constant Appear2(0x0DD)
+        constant ThunderJolt(0x0DE)
+        constant ThunderJoltAir(0x0DF)
+        constant ThunderStart(0x0E0)
+        constant Thunder(0x0E1)
+        constant ThunderHit(0x0E2)
+        constant ThunderEnd(0x0E3)
+        constant ThunderStartAir(0x0E4)
+        constant ThunderAir(0x0E5)
+        constant ThunderHitAir(0x0E6)
+        constant ThunderEndAir(0x0E7)
+        constant QuickAttackStart(0x0E8)
+        constant QuickAttack(0x0E9)
+        constant QuickAttackEnd(0x0EA)
+        constant QuickAttackStartAir(0x0EB)
+        constant QuickAttackAir(0x0EC)
+        constant QuickAttackEndAir(0x0ED)
+
+        // strings!
+        string_0x0DC:; String.insert("Appear1")
+        string_0x0DD:; String.insert("Appear2")
+        string_0x0DE:; String.insert("ThunderJolt")
+        string_0x0DF:; String.insert("ThunderJoltAir")
+        string_0x0E0:; String.insert("ThunderStart")
+        string_0x0E1:; String.insert("Thunder")
+        string_0x0E2:; String.insert("ThunderHit")
+        string_0x0E3:; String.insert("ThunderEnd")
+        string_0x0E4:; String.insert("ThunderStartAir")
+        string_0x0E5:; String.insert("ThunderAir")
+        string_0x0E6:; String.insert("ThunderHitAir")
+        string_0x0E7:; String.insert("ThunderEndAir")
+        string_0x0E8:; String.insert("QuickAttackStart")
+        string_0x0E9:; String.insert("QuickAttack")
+        string_0x0EA:; String.insert("QuickAttackEnd")
+        string_0x0EB:; String.insert("QuickAttackStartAir")
+        string_0x0EC:; String.insert("QuickAttackAir")
+        string_0x0ED:; String.insert("QuickAttackEndAir")
+
+        action_string_table:
+        dw string_0x0DC
+        dw string_0x0DD
+        dw string_0x0DE
+        dw string_0x0DF
+        dw string_0x0E0
+        dw string_0x0E1
+        dw string_0x0E2
+        dw string_0x0E3
+        dw string_0x0E4
+        dw string_0x0E5
+        dw string_0x0E6
+        dw string_0x0E7
+        dw string_0x0E8
+        dw string_0x0E9
+        dw string_0x0EA
+        dw string_0x0EB
+        dw string_0x0EC
+        dw string_0x0ED
+    }
+
+    // @ Description
+    // Jiggly's extra actions
+    scope JIGGLY {
+        constant JabLoopStart(0x0DC)   // unused
+        constant JabLoop(0x0DD)        // unused
+        constant JabLoopEnd(0x0DE)     // unused
+        constant Jump2(0x0DF)
+        constant Jump3(0x0E0)
+        constant Jump4(0x0E1)
+        constant Jump5(0x0E2)
+        constant Jump6(0x0E3)
+        constant Appear1(0x0E4)
+        constant Appear2(0x0E5)
+        constant Pound(0x0E6)
+        constant PoundAir(0x0E7)
+        constant Sing(0x0E8)
+        constant SingAir(0x0E9)
+        constant Rest(0x0EA)
+        constant RestAir(0x0EB)
+        //constant ?(0x0EC)
+        //constant ?(0x0ED)
+
+        // strings!
+        //string_0x0DC:; String.insert("JabLoopStart")
+        //string_0x0DD:; String.insert("JabLoop")
+        //string_0x0DE:; String.insert("JabLoopEnd")
+        string_0x0DF:; String.insert("Jump2")
+        string_0x0E0:; String.insert("Jump3")
+        string_0x0E1:; String.insert("Jump4")
+        string_0x0E2:; String.insert("Jump5")
+        string_0x0E3:; String.insert("Jump6")
+        string_0x0E4:; String.insert("Appear1")
+        string_0x0E5:; String.insert("Appear2")
+        string_0x0E6:; String.insert("Pound")
+        string_0x0E7:; String.insert("PoundAir")
+        string_0x0E8:; String.insert("Sing")
+        string_0x0E9:; String.insert("SingAir")
+        string_0x0EA:; String.insert("Rest")
+        string_0x0EB:; String.insert("RestAir")
+        //string_0x0EC:; String.insert("?")
+        //string_0x0ED:; String.insert("?")
+
+        action_string_table:
+        dw 0 //dw string_0x0DC
+        dw 0 //dw string_0x0DD
+        dw 0 //dw string_0x0DE
+        dw string_0x0DF
+        dw string_0x0E0
+        dw string_0x0E1
+        dw string_0x0E2
+        dw string_0x0E3
+        dw string_0x0E4
+        dw string_0x0E5
+        dw string_0x0E6
+        dw string_0x0E7
+        dw string_0x0E8
+        dw string_0x0E9
+        dw string_0x0EA
+        dw string_0x0EB
+        dw 0 //dw string_0x0EC
+        dw 0 //dw string_0x0ED
+    }
+
+    // @ Description
+    // Ness's extra actions
+    scope NESS {
+        constant Jab3(0x0DC)
+        constant AppearStart1(0x0DD)
+        constant AppearStart2(0x0DE)
+        constant Appear1(0x0DF)
+        constant Appear2(0x0E0)
+        constant AppearEnd(0x0E1)
+        constant PKFire(0x0E2)
+        constant PKFireAir(0x0E3)
+        constant PKThunderStart1(0x0E4)
+        constant PKThunderStart2(0x0E5)
+        constant PKThunderEnd(0x0E6)
+        constant PKTA(0x0E7)
+        constant PKThunderStartAir(0x0E8)
+        constant PKThunderAir(0x0E9)
+        constant PKThunderEndAir(0x0EA)
+        constant ClashingPKTA(0x0EB)
+        constant PKTAAir(0x0EC)
+        constant PsiMagnetStart(0x0ED)
+        constant PsiMagnet(0x0EE)
+        constant Healing(0x0EF)
+        constant PsiMagnetEnd(0x0F0)
+        constant PsiMagnetStartAir(0x0F1)
+        constant PsiMagnetAir(0x0F2)
+        constant HealingAir(0x0F3)
+        constant PsiMagnetEndAir(0x0F4)
+
+        // strings!
+        string_0x0DC:; String.insert("Jab3")
+        string_0x0DD:; String.insert("AppearStart1")
+        string_0x0DE:; String.insert("AppearStart2")
+        string_0x0DF:; String.insert("Appear1")
+        string_0x0E0:; String.insert("Appear2")
+        string_0x0E1:; String.insert("AppearEnd")
+        string_0x0E2:; String.insert("PKFire")
+        string_0x0E3:; String.insert("PKFireAir")
+        string_0x0E4:; String.insert("PKThunderStart1")
+        string_0x0E5:; String.insert("PKThunderStart2")
+        string_0x0E6:; String.insert("PKThunderEnd")
+        string_0x0E7:; String.insert("PKTA")
+        string_0x0E8:; String.insert("PKThunderStartAir")
+        string_0x0E9:; String.insert("PKThunderAir")
+        string_0x0EA:; String.insert("PKThunderEndAir")
+        string_0x0EB:; String.insert("ClashingPKTA")
+        string_0x0EC:; String.insert("PKTAAir")
+        string_0x0ED:; String.insert("PsiMagnetStart")
+        string_0x0EE:; String.insert("PsiMagnet")
+        string_0x0EF:; String.insert("Healing")
+        string_0x0F0:; String.insert("PsiMagnetEnd")
+        string_0x0F1:; String.insert("PsiMagnetStartAir")
+        string_0x0F2:; String.insert("PsiMagnetAir")
+        string_0x0F3:; String.insert("HealingAir")
+        string_0x0F4:; String.insert("PsiMagnetEndAir")
+
+        action_string_table:
+        dw string_0x0DC
+        dw string_0x0DD
+        dw string_0x0DE
+        dw string_0x0DF
+        dw string_0x0E0
+        dw string_0x0E1
+        dw string_0x0E2
+        dw string_0x0E3
+        dw string_0x0E4
+        dw string_0x0E5
+        dw string_0x0E6
+        dw string_0x0E7
+        dw string_0x0E8
+        dw string_0x0E9
+        dw string_0x0EA
+        dw string_0x0EB
+        dw string_0x0EC
+        dw string_0x0ED
+        dw string_0x0EE
+        dw string_0x0EF
+        dw string_0x0F0
+        dw string_0x0F1
+        dw string_0x0F2
+        dw string_0x0F3
+        dw string_0x0F4
+    }
 }

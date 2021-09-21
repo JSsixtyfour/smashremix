@@ -119,6 +119,98 @@ scope Falco {
 
     // Set default costumes
     Character.set_default_costumes(Character.id.FALCO, 0, 1, 4, 5, 1, 2, 3)
+
+    // @ Description
+    // Falco's extra actions
+    scope Action {
+        constant JabLoopStart(0x0DC)
+        constant JabLoop(0x0DD)
+        constant JabLoopEnd(0x0DE)
+        constant Appear1(0x0DF)
+        constant Appear2(0x0E0)
+        constant Phantasm(0x0E1)
+        constant PhantasmAir(0x0E2)
+        constant FireBirdStart(0x0E3)
+        constant FireBirdStartAir(0x0E4)
+        constant ReadyingFireBird(0x0E5)
+        constant ReadyingFireBirdAir(0x0E6)
+        constant FireBird(0x0E7)
+        constant FireBirdAir(0x0E8)
+        constant FireBirdEnd(0x0E9)
+        constant FireBirdEndAir(0x0EA)
+        constant FireBirdBounce(0x0EB)
+        constant ReflectorStart(0x0EC)
+        constant Reflecting(0x0ED)
+        constant ReflectorEnd(0x0EE)
+        constant ReflectorLoop(0x0EF)
+        constant ReflectorSwitchDirection(0x0F0)
+        constant ReflectorStartAir(0x0F1)
+        // constant ?(0x0F2)
+        constant ReflectorEndAir(0x0F3)
+        constant ReflectorAir(0x0F4)
+        constant ReflectorSwitchDirectionAir(0x0F5)
+
+        // strings!
+        //string_0x0DC:; String.insert("JabLoopStart")
+        //string_0x0DD:; String.insert("JabLoop")
+        //string_0x0DE:; String.insert("JabLoopEnd")
+        //string_0x0DF:; String.insert("Appear1")
+        //string_0x0E0:; String.insert("Appear2")
+        string_0x0E1:; String.insert("Phantasm")
+        string_0x0E2:; String.insert("PhantasmAir")
+        string_0x0E3:; String.insert("FireBirdStart")
+        string_0x0E4:; String.insert("FireBirdStartAir")
+        string_0x0E5:; String.insert("ReadyingFireBird")
+        string_0x0E6:; String.insert("ReadyingFireBirdAir")
+        string_0x0E7:; String.insert("FireBird")
+        string_0x0E8:; String.insert("FireBirdAir")
+        string_0x0E9:; String.insert("FireBirdEnd")
+        string_0x0EA:; String.insert("FireBirdEndAir")
+        string_0x0EB:; String.insert("FireBirdBounce")
+        //string_0x0EC:; String.insert("ReflectorStart")
+        //string_0x0ED:; String.insert("Reflecting")
+        //string_0x0EE:; String.insert("ReflectorEnd")
+        //string_0x0EF:; String.insert("ReflectorLoop")
+        //string_0x0F0:; String.insert("ReflectorSwitchDirection")
+        //string_0x0F1:; String.insert("ReflectorStartAir")
+        //string_0x0F2:; String.insert("ReflectingAir")
+        //string_0x0F3:; String.insert("ReflectorEndAir")
+        //string_0x0F4:; String.insert("ReflectorAir")
+        //string_0x0F5:; String.insert("ReflectorSwitchDirectionAir")
+
+        action_string_table:
+        dw Action.COMMON.string_jabloopstart
+        dw Action.COMMON.string_jabloop
+        dw Action.COMMON.string_jabloopend
+        dw Action.COMMON.string_appear1
+        dw Action.COMMON.string_appear2
+        dw string_0x0E1
+        dw string_0x0E2
+        dw string_0x0E3
+        dw string_0x0E4
+        dw string_0x0E5
+        dw string_0x0E6
+        dw string_0x0E7
+        dw string_0x0E8
+        dw string_0x0E9
+        dw string_0x0EA
+        dw string_0x0EB
+        dw Action.FOX.string_0x0EC
+        dw Action.FOX.string_0x0ED
+        dw Action.FOX.string_0x0EE
+        dw Action.FOX.string_0x0EF
+        dw Action.FOX.string_0x0F0
+        dw Action.FOX.string_0x0F1
+        dw Action.FOX.string_0x0F2
+        dw Action.FOX.string_0x0F3
+        dw Action.FOX.string_0x0F4
+        dw Action.FOX.string_0x0F5
+    }
+
+    // Set action strings
+    Character.table_patch_start(action_string, Character.id.FALCO, 0x4)
+    dw  Action.action_string_table
+    OS.patch_end()
     
     // @ Description
     // Replaces a small subroutine which usually sets the up special delay for Fox, extends to

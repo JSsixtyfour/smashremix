@@ -16,6 +16,7 @@ scope Shield {
     // @ Description
     // This function overwrites the logic to generate a shield color. This is a controversial "fix"
     // and will soon be replaced by selectable shield colors.
+    // 2021/05/23 - "soon" has finally come
     scope color_fix_: {
         OS.patch_start(0x0007C8E8, 0x801010E8)
         j       color_fix_
@@ -36,6 +37,20 @@ scope Shield {
         lw      t0, 0x0004(t1)              // t0 = player object
         lw      t0, 0x0084(t0)              // t0 = player struct
         lw      t1, 0x0018(t1)              // t1 = port shielding
+        sll     t2, t1, 0x0002              // t2 = port * 4
+        li      t3, state_table             // ~
+        addu    t2, t2, t3                  // t2 = state_table + (port * 4)
+        lw      t2, 0x0000(t2)              // t2 = shield state
+        beqz    t2, _teams_check            // branch if shield state is default(0)
+        nop
+        
+        _custom:
+        // t2 is shield state
+        sll     t2, t2, 0x2                 // t2 = shield state * 4
+        li      t8, table_custom            // ~
+        addu    t8, t8, t2                  // t8 = table_custom + (shield state * 4)
+        b       _return                     // branch to end
+        lw      t8, 0x0000(t8)              // t8 = shield color
 
         _teams_check:
         li      t2, Global.match_info
@@ -67,10 +82,9 @@ scope Shield {
 
         _human_or_team:
         sll     t1, t1, 0x0002              // ~
-        li      t8, table                   // ~
+        li      t8, table_default           // ~
         add     t8, t8, t1                  // ~
-        lw      t8, 0x0000(t8)              // t8 = table[player_or_team]
-        ori     t8, t8, 0x00C0              // set alpha channel
+        lw      t8, 0x0000(t8)              // t8 = table_default[player_or_team]
 
         _return:
         lw      t0, 0x0004(sp)              // ~
@@ -78,15 +92,38 @@ scope Shield {
         lw      t3, 0x0010(sp)              // ~
         addiu   sp, sp, 0x0020              // deallocate stack space
         j       _color_fix_return           // return
-        nop
+        ori     t8, t8, 0x00C0              // set alpha channel
 
-        table:
+        table_default:
         dw (0xFFFFFF00 & Color.high.RED)    // p1
         dw (0xFFFFFF00 & Color.high.BLUE)   // p2
         dw (0xFFFFFF00 & Color.high.YELLOW) // p3
         dw (0xFFFFFF00 & Color.high.GREEN)  // p4
+        
+        table_custom:
+        dw 0                                // Default
+        dw 0xFF000000                       // Red
+        dw 0xFF800000                       // Orange
+        dw 0xFFFF0000                       // Yellow
+        dw 0x80FF0000                       // Lime (Chartreuse)
+        dw 0x00FF0000                       // Green
+        dw 0x00FF8000                       // Turquoise (Spring Green)
+        dw 0x00FFFF00                       // Cyan
+        dw 0x0080FF00                       // Azure
+        dw 0x0000FF00                       // Blue
+        dw 0x8000FF00                       // Purple (Violet)
+        dw 0xFF00FF00                       // Magenta
+        dw 0xFF008000                       // Pink (Rose)
+        dw 0xA8402000                       // Brown
+        dw 0x00000000                       // Black
+        dw 0xA0A0A000                       // White
     }
 
+    state_table:
+    dw  0   // P1
+    dw  0   // P2
+    dw  0   // P3
+    dw  0   // P4
 }
 
 } // __SHIELD__

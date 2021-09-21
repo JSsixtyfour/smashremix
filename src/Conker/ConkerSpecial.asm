@@ -955,7 +955,7 @@ scope ConkerNSP {
     dw 0x00000000                           // unknown
     dw NUT_ID                               // projectile id
     dw Character.CONKER_file_6_ptr          // address of conker's file 6 pointer
-    dw 0x00000000                           // 00000000
+    dw 0x00000000                           // offset to hitbox
     dw 0x12470000                           // This determines z axis rotation? (samus is 1246)
     dw nut_main_                            // This is the main subroutine for the projectile, handles duration and other things. (default 0x80168540) (samus 0x80168F98)
     dw 0x80175914                           // This function runs when the projectile collides with clipping. (0x801685F0 - Mario) (0x80169108 - Samus)

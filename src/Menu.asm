@@ -54,7 +54,7 @@ scope Menu {
 
     // @ Description
     // Struct for menu entries
-    macro entry(title, type, default, min, max, a_function, string_table, copy_address, next) {
+    macro entry(title, type, default, min, max, a_function, extra, string_table, copy_address, next) {
         define address(pc())
         dw {type}                           // 0x0000 - type (int, bool, etc.)
         dw {default}                        // 0x0004 - current value
@@ -65,7 +65,8 @@ scope Menu {
         dw {copy_address}                   // 0x0018 - if (!null), copies curr_value to address
         dw {next}                           // 0x001C - if !(null), address of next entry
         dw 0x00000000                       // 0x0020 - will store reference to string object of label
-        db {title}                          // 0x0024 - title
+        dw {extra}                          // 0x0024 - extra space useful for a_function
+        db {title}                          // 0x0028 - title
         db 0x00
         OS.align(4)
 
@@ -100,11 +101,15 @@ scope Menu {
     OS.align(4)
 
     macro entry_bool(title, default, next) {
-        Menu.entry({title}, Menu.type.BOOL, {default}, 0, 1, OS.NULL, Menu.bool_string_table, OS.NULL, {next})
+        Menu.entry({title}, Menu.type.BOOL, {default}, 0, 1, OS.NULL, OS.NULL, Menu.bool_string_table, OS.NULL, {next})
     }
 
     macro entry_title(title, a_function, next) {
-        Menu.entry({title}, Menu.type.TITLE, 0, 0, 0, {a_function}, OS.NULL, OS.NULL, {next})
+        Menu.entry({title}, Menu.type.TITLE, 0, 0, 0, {a_function}, OS.NULL, OS.NULL, OS.NULL, {next})
+    }
+
+    macro entry_title_with_extra(title, a_function, extra, next) {
+        Menu.entry({title}, Menu.type.TITLE, 0, 0, 0, {a_function}, {extra}, OS.NULL, OS.NULL, {next})
     }
 
     // @ Description
@@ -119,9 +124,11 @@ scope Menu {
 
         // v0 = selected entry
         lw      t0, 0x0020(v0)              // t0 = label object
-        beqz    t0, _end
+        beqz    t0, _end                    // if not defined, skip
         nop
         lw      t0, 0x0030(t0)              // t0 = value object
+        beqz    t0, _end                    // if not defined, skip
+        nop
         lw      t1, 0x004C(t0)              // t1 = string_type
         srl     t1, t1, 0x0001              // t1 = 1 if number, 0 if not
         bnez    t1, _end                    // if a number, skip
@@ -184,7 +191,7 @@ scope Menu {
 
         lw      a0, 0x0010(sp)              // a0 = room
         lw      a1, 0x0014(sp)              // a1 = group
-        addiu   a2, s0, 0x0024              // a2 - address of string (title = entry + 0x0024)
+        addiu   a2, s0, 0x0028              // a2 - address of string (title = entry + 0x0028)
         lli     a3, 0x0000                  // a3 = routine (Render.NOOP)
         lw      s3, 0x002C(sp)              // s3 = color
         or      s4, r0, t4                  // s4 = scale
@@ -667,10 +674,12 @@ scope Menu {
         nop
         lw      t0, 0x0004(v0)              // t0 = entry.current_value
         lw      t1, 0x000C(v0)              // t1 = entry.max_value
-        sltu    at, t0, t1                  // if (entry.current_value < entry.max_value)
-        beqz    at, _copy                   // then, skip
-        nop                                 // else, continue
-        addiu   t0, t0, 0x0001              // ~
+        sltu    at, t0, t1                  // at = 1 if entry.current_value < entry.max_value
+        bnez    at, _update_right_save      // if (entry.current_value < entry.max_value)...
+        addiu   t0, t0, 0x0001              // ...then update to next value
+        // otherwise, set to min
+        lw      t0, 0x0008(v0)              // t1 = entry.min_value
+        _update_right_save:
         sw      t0, 0x0004(v0)              // entry.current_value++
         jal     update_pointer_
         nop
@@ -699,10 +708,12 @@ scope Menu {
         nop
         lw      t0, 0x0004(v0)              // t0 = entry.current_value
         lw      t1, 0x0008(v0)              // t1 = entry.min_value
-        sltu    at, t1, t0                  // if (entry.min_value < entry.curr_value)
-        beqz    at, _copy                   // then, skip
-        nop                                 // else, continue
-        addiu   t0, t0,-0x0001              // ~
+        sltu    at, t1, t0                  // at = 1 if entry.min_value < entry.curr_value
+        bnez    at, _update_left_save       // if (entry.min_value < entry.curr_value)...
+        addiu   t0, t0, -0x0001             // ...then update to previous value
+        // otherwise, set to max
+        lw      t0, 0x000C(v0)              // t1 = entry.max_value
+        _update_left_save:
         sw      t0, 0x0004(v0)              // entry.current_value--
         jal     update_pointer_
         nop
@@ -733,7 +744,7 @@ scope Menu {
         nop
         lw      t0, 0x000C(a0)              // t0 - selection
         div     t0, a2                      // ~
-        mfhi    a2                          // a0 (row) = t1 % 19
+        mfhi    a2                          // a2 (row) = t0 % max_per_page
         sw      a2, 0x000C(a0)              // store selection
         lw      t0, 0x0000(a0)              // t0 - head
         _update_r_continued:
@@ -754,7 +765,65 @@ scope Menu {
         nop
 
         _z:
-        // TODO: implement left pagination?
+        li      a0, Joypad.Z                // a0 - z button
+        li      a2, Joypad.PRESSED          // a2 - type
+        jal     Joypad.check_buttons_all_   // v0 = z button pressed
+        nop
+        beqz    v0, _a                      // if not pressed, check a
+        nop
+        _update_z:
+        lli     a0, FGM.menu.SCROLL         // a0 - fgm_id
+        jal     FGM.play_                   // play menu sound
+        nop
+        lw      a0, 0x0014(sp)              // a0 - address of info()
+        jal     get_num_entries_            // v0 = num_entries
+        nop
+        sh      v0, 0x0036(a0)              // temporarily save number of entries in free space
+        lhu     a2, 0x0032(a0)              // a2 = max_per_page
+        divu    v0, a2                      // t1 = number of pages, 0 based
+        mflo    t1                          // ~
+        beqz    t1, _a                      // if only one page, skip
+        lw      t0, 0x000C(a0)              // t0 - selection
+        div     t0, a2                      // ~
+        mfhi    at                          // at (row) = t0 % max_per_page
+        sw      at, 0x001C(a0)              // temporarily store row
+        subu    t0, t0, a2                  // t0 - selection on previous page
+        bltz    t0, _get_first_entry        // if there is not a previous page, then get last page
+        nop                                 // otherwise, we have to get the previous page
+        div     t0, a2                      // t1 = page
+        mflo    t1                          // ~
+        _get_first_entry:
+        lli     at, 0x0000                  // at = loop index
+        lli     v0, 0x0000                  // v0 = row
+        lw      t0, 0x0000(a0)              // t0 = very first menu entry
+        _z_loop:
+        beq     at, t1, _found_first_entry  // this will trip if we are going to the first page
+        nop
+        lw      t0, 0x001C(t0)              // t0 = next entry
+        addiu   v0, v0, 0x0001              // v0++
+        bne     v0, a2, _z_loop             // loop until we get the next page's first entry
+        nop
+        addiu   at, at, 0x0001              // at++ (page)
+        bnel    at, t1, _z_loop             // if not on the target page, continue looping
+        lli     v0, 0x0000                  // reset v0 to first row
+        _found_first_entry:
+        multu   t1, a2
+        mflo    t1                          // t1 = selection of first row
+        lw      at, 0x001C(a0)              // at = current row
+        addu    t1, t1, at                  // t1 = selection
+        sw      t1, 0x000C(a0)              // update selection
+
+        lw      a1, 0x0018(a0)              // a1 = first entry
+        sw      t0, 0x0018(a0)              // update first entry
+        sw      t0, 0x001C(a0)              // update last entry
+        lw      t0, 0x000C(a0)              // t0 = row
+        lh      v0, 0x0036(a0)              // v0 = num_entries
+        addiu   v0, v0, -0x0001             // v0 = num_entries, 0 based
+        sltu    at, v0, t0                  // if selection is not higher than the total number
+        beqz    at, _redraw                 // then we're done
+        nop
+        b       _redraw
+        sw      v0, 0x000C(a0)              // otherwise set the total number as the selection
 
         _a:
         lli     a0, Joypad.A | Joypad.START // a0 - button_mask

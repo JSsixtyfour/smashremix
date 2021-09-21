@@ -20,6 +20,9 @@ scope ESamus {
     Character.table_patch_start(crowd_chant_fgm, Character.id.ESAMUS, 0x2)
     dh  0x0265
     OS.patch_end()
-    
-    
+
+    // Set action strings
+    Character.table_patch_start(action_string, Character.id.ESAMUS, 0x4)
+    dw  Action.SAMUS.action_string_table
+    OS.patch_end()
 }

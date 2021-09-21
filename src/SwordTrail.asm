@@ -90,7 +90,14 @@ scope SwordTrail {
     // start_pos - float32 position for the base of the sword trail
     // end_pos - float32 position for the end of the sword trail
     
+    add_sword_trail(marth_default_trail, Character.id.MARTH, 0xE, 0x00FFFF00, 0xFFFFFF00, 70, 370)
     add_sword_trail(conker_katana_trail, Character.id.CONKER, 0xD, 0x00FFFF00, 0xFFFFFF00, 150, 800)
+    add_sword_trail(marth_nsp_red_trail, Character.id.MARTH, 0xE, 0xFF000000, 0xFFFFFF00, 70, 370)
+    add_sword_trail(marth_nsp_blue_trail, Character.id.MARTH, 0xE, 0x0050FF00, 0xFFFFFF00, 70, 370)
+    add_sword_trail(marth_nsp_green_trail, Character.id.MARTH, 0xE, 0x00FF0000, 0xFFFFFF00, 70, 370)
+    add_sword_trail(kirby_marth_red_trail, -1, 0xD, 0xFF000000, 0xFFFFFF00, 50, 300)
+    add_sword_trail(kirby_marth_blue_trail, -1, 0xD, 0x0050FF00, 0xFFFFFF00, 50, 300)
+    add_sword_trail(kirby_marth_green_trail, -1, 0xD, 0x00FF0000, 0xFFFFFF00, 50, 300)
     
     // write sword trails to ROM
     write_sword_trails()
@@ -126,12 +133,19 @@ scope SwordTrail {
         sll     a1, a1, 0x2                 // ~
         addu    at, at, a1                  // ~
         lw      at, 0x0000(at)              // at = sword_trail_struct
+        
+        
         // check if the current character id matches the character id in the struct
         lhu     a1, struct.character(at)    // a1 = character
+        lli     t8, 0xFFFF                  // t8 = -1
+        beq     a1, t8, _continue           // continue if no character is specified
         lw      t8, 0x0008(s0)              // t8 = current character id
         bnel    a1, t8, _original           // branch if character id does not match
         addiu   at, r0, 0x0001              // original line 2
+        
+        
         // load the bone struct for model_part, this is what the sword trail will attach to
+        _continue:
         addiu   t8, s0, 0x08F8              // t8 = bone structs base + 0x10 (start at model part 0)
         lhu     a1, struct.model_part(at)   // a1 = model_part
         sll     a1, a1, 0x2                 // ~

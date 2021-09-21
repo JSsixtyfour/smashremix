@@ -196,7 +196,7 @@
 0905 Wario Grab Pull
 0906 Wario Forward Throw
 0907 Wario Back Throw
-0908 Wario Neutral Special Recoil
+0908 Wario Neutral Special Recoil Air
 0909 Wario Ground Down Special
 090A Wario Air Down Special
 090B Wario Down Special Landing
@@ -277,9 +277,9 @@
 0956 Wario Victory 3
 0957 Wario Entry R
 0958 Wario Entry L
-0959 Stage 1 Target Header
-095A Stage 1 Target Stage
-095B Stage 1 Target BG
+0959 Polygon Target Header
+095A Polygon Target Stage
+095B REPLACE WITH STAGE BG IMAGE
 095C Wario Pose 1P
 095D Ganondorf Pose 1P
 095E Splash Screen Image Bottom
@@ -469,8 +469,8 @@
 0A16 Bowser Victory Dance
 0A17 Falco Platform Header
 0A18 Falco Platform Stage
-0A19 Poly Platform Header
-0A1A Poly Platform Stage
+0A19 Polygon Platform Header
+0A1A Polygon Platform Stage
 0A1B Hyrule Castle DL Header
 0A1C Hyrule Castle DL Stage
 0A1D Hyrule Castle Omega Header
@@ -588,14 +588,14 @@
 0A8D Kirby Custom Hats
 0A8E Kirby Wario Neutral Special Ground
 0A8F Kirby Wario Neutral Special Air
-0A90 Kirby Wario Neutral Special Recoil
+0A90 Kirby Wario Neutral Special Recoil Air
 0A91 Kirby Falco Neutral Special Ground
 0A92 Kirby Falco Neutral Special Air
 0A93 Kirby Lucas Neutral Special Ground
 0A94 Kirby Lucas Neutral Special Air
 0A95 Kirby Bowser Neutral Special
 0A96 Custom Items
-0A97 EMPTY - REPLACE
+0A97 Marth Team Pose
 0A98 Piano Main
 0A99 Piano Character
 0A9A Piano Shield Pose
@@ -823,6 +823,164 @@
 0B78 Rith Essa Header
 0B79 Rith Essa Stage
 0B7A Rith Essa Background
+0B7B Mewtwo Main
+0B7C Mewtwo Character
+0B7D Mewtwo Shield Pose
+0B7E Mewtwo Idle
+0B7F Mewtwo Walk1
+0B80 Mewtwo Walk2
+0B81 Mewtwo Walk3
+0B82 Mewtwo Walk End
+0B83 Mewtwo Dash
+0B84 Mewtwo Run
+0B85 Mewtwo RunBrake
+0B86 Mewtwo Turn
+0B87 Mewtwo TurnRun
+0B88 Mewtwo JumpF
+0B89 Mewtwo JumpB
+0B8A Mewtwo JumpAerialF
+0B8B Mewtwo JumpAerialB
+0B8C Mewtwo Fall
+0B8D Mewtwo FallAerial
+0B8E Mewtwo Crouch
+0B8F Mewtwo CrouchIdle
+0B90 Mewtwo CrouchEnd
+0B91 Mewtwo Landing
+0B92 Mewtwo PlatDrop
+0B93 Mewtwo Teeter
+0B94 Mewtwo Teeterstart
+0B95 Mewtwo DamageHigh1
+0B96 Mewtwo DamageHigh2
+0B97 Mewtwo DamageHigh3
+0B98 Mewtwo DamageMid1
+0B99 Mewtwo DamageMid2
+0B9A Mewtwo DamageMid3
+0B9B Mewtwo DamageLow1
+0B9C Mewtwo DamageLow2
+0B9D Mewtwo DamageLow3
+0B9E Mewtwo DamageAir1
+0B9F Mewtwo DamageAir2
+0BA0 Mewtwo DamageAir3
+0BA1 Mewtwo DamageElec
+0BA2 Mewtwo DamageFlyHigh
+0BA3 Mewtwo DamageFlyMid
+0BA4 Mewtwo DamageFlyLow
+0BA5 Mewtwo DamageFlyTop
+0BA6 Mewtwo DamageFlyRoll
+0BA7 Mewtwo Tumble
+0BA8 Mewtwo FallSpecial
+0BA9 Mewtwo EnterPipe
+0BAA Mewtwo ExitPipe
+0BAB Mewtwo ExitPipeWalk
+0BAC Mewtwo CeilingBonk
+0BAD Mewtwo DownBounceD
+0BAE Mewtwo DownBounceU
+0BAF Mewtwo DownStandD
+0BB0 Mewtwo DownStandU
+0BB1 Mewtwo TechF
+0BB2 Mewtwo TechB
+0BB3 Mewtwo DownForwardD
+0BB4 Mewtwo DownForwardU
+0BB5 Mewtwo DownBackD
+0BB6 Mewtwo DownBackU
+0BB7 Mewtwo DownAttackD
+0BB8 Mewtwo DownAttackU
+0BB9 Mewtwo Tech
+0BBA Mewtwo Unknown_053
+0BBB Mewtwo CliffCatch
+0BBC Mewtwo CliffWait
+0BBD Mewtwo CliffQuick
+0BBE Mewtwo CliffClimbQuick1
+0BBF Mewtwo CliffClimbQuick2
+0BC0 Mewtwo CliffSlow
+0BC1 Mewtwo CliffClimbSlow1
+0BC2 Mewtwo CliffClimbSlow2
+0BC3 Mewtwo CliffAttackQuick1
+0BC4 Mewtwo CliffAttackQuick2
+0BC5 Mewtwo CliffAttackSlow1
+0BC6 Mewtwo CliffAttackSlow2
+0BC7 Mewtwo CliffEscapeQuick1
+0BC8 Mewtwo CliffEscapeQuick2
+0BC9 Mewtwo CliffEscapeSlow1
+0BCA Mewtwo CliffEscapeSlow2
+0BCB Mewtwo LightItemPickup
+0BCC Mewtwo HeavyItemPickup
+0BCD Mewtwo ItemDrop
+0BCE Mewtwo ItemThrowDash
+0BCF Mewtwo ItemThrowF
+0BD0 Mewtwo ItemThrowU
+0BD1 Mewtwo ItemThrowD
+0BD2 Mewtwo ItemThrowAirF
+0BD3 Mewtwo ItemThrowAirU
+0BD4 Mewtwo ItemThrowAirD
+0BD5 Mewtwo HeavyItemThrow
+0BD6 Mewtwo ItemNeutral
+0BD7 Mewtwo ItemTilt
+0BD8 Mewtwo ItemSmash
+0BD9 Mewtwo ItemDash
+0BDA Mewtwo ItemShoot
+0BDB Mewtwo ItemShootAir
+0BDC Mewtwo HammerIdle
+0BDD Mewtwo HammerMove
+0BDE Mewtwo ShieldOn
+0BDF Mewtwo ShieldOff
+0BE0 Mewtwo RollF
+0BE1 Mewtwo RollB
+0BE2 Mewtwo Stun
+0BE3 Mewtwo Catch
+0BE4 Mewtwo CatchPull
+0BE5 Mewtwo ThrowF
+0BE6 Mewtwo ThrowB
+0BE7 Mewtwo CapturePulled
+0BE8 Mewtwo ThrownDKPulled
+0BE9 Mewtwo ThrownMarioBros
+0BEA Mewtwo ThrownDK
+0BEB Mewtwo Thrown1
+0BEC Mewtwo Thrown2
+0BED Mewtwo Taunt
+0BEE Mewtwo Jab1
+0BEF Mewtwo Jab2Begin
+0BF0 Mewtwo DashAttack
+0BF1 Mewtwo FTiltHigh
+0BF2 Mewtwo FTilt
+0BF3 Mewtwo FTiltLow
+0BF4 Mewtwo UTilt
+0BF5 Mewtwo DTilt
+0BF6 Mewtwo FSmashHigh
+0BF7 Mewtwo FSmash
+0BF8 Mewtwo FSmashLow
+0BF9 Mewtwo USmash
+0BFA Mewtwo DSmash
+0BFB Mewtwo AttackAirN
+0BFC Mewtwo AttackAirF
+0BFD Mewtwo AttackAirB
+0BFE Mewtwo AttackAirU
+0BFF Mewtwo AttackAirD
+0C00 Mewtwo LandingAirF
+0C01 Mewtwo LandingAirN
+0C02 Mewtwo EntryR
+0C03 Mewtwo EntryL
+0C04 Mewtwo Victory 1
+0C05 Mewtwo Victory 2
+0C06 Mewtwo Victory 3
+0C07 Mewtwo Clap
+0C08 Mewtwo Continue Fall
+0C09 Mewtwo Continue Up
+0C0A Mewtwo 1P Pose
+0C0B Mewtwo Up Special Begin Ground
+0C0C Mewtwo Up Special End Ground
+0C0D Mewtwo Up Special Begin Air
+0C0E Mewtwo Up Special End Air
+0C0F Mewtwo Down Special Ground
+0C10 Mewtwo Down Special Air
+0C11 Mewtwo Neutral Special Begin Ground
+0C12 Mewtwo Neutral Special Charge Ground
+0C13 Mewtwo Neutral Special Shoot Ground
+0C14 Mewtwo Neutral Special Begin Air
+0C15 Mewtwo Neutral Special Charge Air
+0C16 Mewtwo Neutral Special Shoot Air
+0C17 Mewtwo Jab2Loop
+0C18 Mewtwo Jab2End
 0C19 Wolf 1p Mode Human
 0C1A Wolf 1p Mode CPU
 0C1B Remix 1p Kirby Stage File
@@ -964,6 +1122,8 @@
 0CA3 Wolf Team Pose
 0CA4 Falco 1p CPU Pose
 0CA5 Bowser Team Pose
+0CA6 Mewtwo 1p CPU Pose
+0CA7 Mewtwo Team Pose
 0CA8 Dark Samus 1p CPU Pose
 0CA9 Dark Samus Team Pose
 0CAA Lucas 1p CPU Pose
@@ -992,6 +1152,234 @@
 0CC1 Kirby Conker Copy Neutral Special Air Wait
 0CC2 Kirby Conker Copy Neutral Special Air End
 0CC3 Conker Stun
+0CC4 Jungle Japes Header
+0CC5 Jungle Japes Stage
+0CC6 Mewtwo Shadowball Projectile Hitbox
+0CC7 Mewtwo Shadowball Projectile Graphics
+0CC8 Klaptrap
+0CC9 Wario Neutral Special Recoil Ground
+0CCA Marth Main
+0CCB Marth Character
+0CCC Marth Shield Pose
+0CCD Marth Tumble
+0CCE Marth Idle
+0CCF Marth DownBounceD
+0CD0 Marth DownStandD
+0CD1 Marth Walk1
+0CD2 Marth Walk2
+0CD3 Marth Walk3
+0CD4 Marth WalkEnd
+0CD5 Marth Dash
+0CD6 Marth Run
+0CD7 Marth RunBrake
+0CD8 Marth Turn
+0CD9 Marth TurnRun
+0CDA Marth Landing
+0CDB Marth JumpF
+0CDC Marth JumpB
+0CDD Marth JumpAerialF
+0CDE Marth JumpAerialB
+0CDF Marth Fall
+0CE0 Marth FallAerial
+0CE1 Marth Crouch
+0CE2 Marth CrouchIdle
+0CE3 Marth CrouchEnd
+0CE4 Marth Pass
+0CE5 Marth Teeter
+0CE6 Marth TeeterStart
+0CE7 Marth DamageHigh1
+0CE8 Marth DamageHigh2
+0CE9 Marth DamageHigh3
+0CEA Marth DamageMid1
+0CEB Marth DamageMid2
+0CEC Marth DamageMid3
+0CED Marth DamageLow1
+0CEE Marth DamageLow2
+0CEF Marth DamageLow3
+0CF0 Marth DamageAir1
+0CF1 Marth DamageAir2
+0CF2 Marth DamageAir3
+0CF3 Marth DamageElec
+0CF4 Marth DamageFlyHigh
+0CF5 Marth DamageFlyMid
+0CF6 Marth DamageFlyLow
+0CF7 Marth DamageFlyTop
+0CF8 Marth DamageFlyRoll
+0CF9 Marth FallSpecial
+0CFA Marth EnterPipe
+0CFB Marth ExitPipe
+0CFC Marth ExitPipeWalk
+0CFD Marth CeilingBonk
+0CFE Marth DownBounceU
+0CFF Marth DownStandU
+0D00 Marth TechF
+0D01 Marth TechB
+0D02 Marth DownForwardD
+0D03 Marth DownForwardU
+0D04 Marth DownBackD
+0D05 Marth DownBackU
+0D06 Marth DownAttackD
+0D07 Marth DownAttackU
+0D08 Marth Tech
+0D09 Marth Unknown053
+0D0A Marth CliffCatch
+0D0B Marth CliffWait
+0D0C Marth CliffQuick
+0D0D Marth CliffClimbQuick1
+0D0E Marth CliffClimbQuick2
+0D0F Marth CliffSlow
+0D10 Marth CliffClimbSlow1
+0D11 Marth CliffClimbSlow2
+0D12 Marth CliffAttackQuick1
+0D13 Marth CliffAttackQuick2
+0D14 Marth CliffAttackSlow1
+0D15 Marth CliffAttackSlow2
+0D16 Marth CliffEscapeQuick1
+0D17 Marth CliffEscapeQuick2
+0D18 Marth CliffEscapeSlow1
+0D19 Marth CliffEscapeSlow2
+0D1A Marth LightItemPickup
+0D1B Marth HeavyItemPickup
+0D1C Marth ItemDrop
+0D1D Marth ItemThrowDash
+0D1E Marth ItemThrowF
+0D1F Marth ItemThrowU
+0D20 Marth ItemThrowD
+0D21 Marth ItemThrowAirF
+0D22 Marth ItemThrowAirU
+0D23 Marth ItemThrowAirD
+0D24 Marth HeavyItemThrowF
+0D25 Marth ItemNeutral
+0D26 Marth ItemTilt
+0D27 Marth ItemSmash
+0D28 Marth ItemDashAttack
+0D29 Marth ItemShoot
+0D2A Marth ItemShootAir
+0D2B Marth HammerIdle
+0D2C Marth HammerMove
+0D2D Marth ShieldOn
+0D2E Marth ShieldOff
+0D2F Marth RollF
+0D30 Marth RollB
+0D31 Marth Stun
+0D32 Marth Grab
+0D33 Marth GrabPull
+0D34 Marth ThrowF
+0D35 Marth ThrowB
+0D36 Marth CapturePulled
+0D37 Marth ThrownDKPulled
+0D38 Marth ThrownMarioBros
+0D39 Marth ThrownDK
+0D3A Marth Thrown1
+0D3B Marth Thrown2
+0D3C Marth Taunt
+0D3D Marth Jab1
+0D3E Marth Jab2
+0D3F Marth DashAttack
+0D40 Marth FTilt
+0D41 Marth UTilt
+0D42 Marth DTilt
+0D43 Marth FSmash
+0D44 Marth USmash
+0D45 Marth DSmash
+0D46 Marth AttackAirN
+0D47 Marth AttackAirF
+0D48 Marth AttackAirB
+0D49 Marth AttackAirU
+0D4A Marth AttackAirD
+0D4B Marth LandingAirF
+0D4C Marth LandingAirB
+0D4D Marth Entry
+0D4E Marth Menu Idle
+0D4F Marth Up Special Air
+0D50 Marth Up Special Ground
+0D51 Marth Neutral Special Ground 1
+0D52 Marth Neutral Special Ground 2 High
+0D53 Marth Neutral Special Ground 2 Mid
+0D54 Marth Neutral Special Ground 2 Low
+0D55 Marth Neutral Special Ground 3 High
+0D56 Marth Neutral Special Ground 3 Mid
+0D57 Marth Neutral Special Ground 3 Low
+0D58 Marth Neutral Special Air 1
+0D59 Marth Neutral Special Air 2 High
+0D5A Marth Neutral Special Air 2 Mid
+0D5B Marth Neutral Special Air 2 Low
+0D5C Marth Neutral Special Air 3 High
+0D5D Marth Neutral Special Air 3 Mid
+0D5E Marth Neutral Special Air 3 Low
+0D5F Marth Victory 1
+0D60 Marth Victory 2
+0D61 Marth Victory 3
+0D62 Marth Clap
+0D63 Marth GameOver
+0D64 Marth Continue
+0D65 Marth 1P Pose
+0D66 Kirby Mewtwo Neutral Special Begin Ground
+0D67 Kirby Mewtwo Neutral Special Charge Ground
+0D68 Kirby Mewtwo Neutral Special Shoot Ground
+0D69 Kirby Mewtwo Neutral Special Begin Air
+0D6A Kirby Mewtwo Neutral Special Charge Air
+0D6B Kirby Mewtwo Neutral Special Shoot Air
+0D6C Mewtwo Usmash Graphics
+0D6D Kirby Marth Sword
+0D6E Marth Break the Targets Header
+0D6F Marth Break the Targets Stage
+0D70 Marth Counter Ground
+0D71 Marth Counter Attack Ground
+0D72 Marth Counter Air
+0D73 Marth Counter Attack Air
+0D74 Gameboy Land Header
+0D75 Gameboy Land Stage
+0D76 Mewtwo Break the Targets Header
+0D77 Mewtwo Break the Targest Stage
+0D78 Marth Board the Platforms Header
+0D79 Marth Board the Platforms Stage
+0D7A Rest Area Header
+0D7B Rest Area Stage
+0D7C Rest Area BG
+0D7D Mewtwo Board the Platforms Header
+0D7E Mewtwo Board the Platforms Stage
+0D7F Castle Siege Header
+0D80 Castle Siege Stage
+0D81 Castle Siege BG
+0D82 Yoshi's Island II Header
+0D83 Yoshi's Island II Stage
+0D84 Yoshi's Island II BG
+0D85 Final Destination DL Header
+0D86 Final Destination DL Stage
+0D87 Tent Final Destination Header
+0D88 Tent Final Destination
+0D89 Cool Cool Mountain Remix Header
+0D8A Cool Cool Mountain Remix Stage
+0D8B Stock Icons
+0D8C Duel Zone DL Header
+0D8D Duel Zone DL Stage
+0D8E Cool Cool Mountain DL Header
+0D8F Cool Cool Mountain DL Stage
+0D90 Meta Crystal DL Header
+0D91 Meta Crystal DL Stage
+0D92 Dream Greens Header
+0D93 Dream Greens Stage
+0D94 Dream Greens Images
+0D95 Peach's Castle Beta Header
+0D96 Peach's Castle Beta Stage
+0D97 Kirby Wario Neutral Special Recoil Ground
+0D98 Kirby Marth Neutral Special Ground 1
+0D99 Kirby Marth Neutral Special Ground 2 High
+0D9A Kirby Marth Neutral Special Ground 2 Mid
+0D9B Kirby Marth Neutral Special Ground 2 Low
+0D9C Kirby Marth Neutral Special Ground 3 High
+0D9D Kirby Marth Neutral Special Ground 3 Mid
+0D9E Kirby Marth Neutral Special Ground 3 Low
+0D9F Kirby Marth Neutral Special Air 1
+0DA0 Kirby Marth Neutral Special Air 2 High
+0DA1 Kirby Marth Neutral Special Air 2 Mid
+0DA2 Kirby Marth Neutral Special Air 2 Low
+0DA3 Kirby Marth Neutral Special Air 3 High
+0DA4 Kirby Marth Neutral Special Air 3 Mid
+0DA5 Kirby Marth Neutral Special Air 3 Low
+0DA6 Marth 1p CPU Pose
+0DA7 Marth Entry Special Effects
 
 0611 CAPTAIN DeadU
 0611 CAPTAIN ScreenKO

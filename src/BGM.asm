@@ -25,8 +25,31 @@ scope BGM {
     constant stop_(0x80020A74)
 
     // @ Description
-    // This function replaces a1 with alternate ids defined for the stage, sometimes.
-    // a1 holds BGM_ID.
+    // This hook runs right after the stage file is loaded.
+    // This contains the default stage bgm_id, so this hook let's us override with alt/random music.
+    scope apply_alt_or_random_music_: {
+        OS.patch_start(0x77B14, 0x800FC314)
+        jal     apply_alt_or_random_music_
+        sw      t9, 0x0000(a1)              // original line 1
+        OS.patch_end()
+
+        sw      ra, 0x0014(sp)              // save ra in free stack space
+
+        // t9 is never touched in the following routines, so not saving to stack
+
+        jal     alternate_music_
+        nop
+
+        jal     random_music_
+        nop
+
+        lw      ra, 0x0014(sp)              // restore ra
+        jr      ra                          // return
+        lw      v1, 0x0040(t9)              // original line 2
+    }
+
+    // @ Description
+    // This function replaces the stage's default bgm_id with alternate ids defined for the stage, sometimes.
     // The alternate BGM_ID could be replaced by a random one if that toggle is on.
     // There can be up to 3 songs defined for a stage:
     // - Main: plays most of the time
@@ -39,52 +62,16 @@ scope BGM {
         constant CHANCE_OCCASIONAL(20)
         constant CHANCE_RARE(13)
 
-        OS.patch_start(0x000216E8, 0x80020AE8)
-        j       alternate_music_
-        nop
-        _alternate_music_return:
-        OS.patch_end()
-
-        lw      t1, 0xD974(t1)              // original line 1
-        sll     t2, a0, 0x0002              // original line 2
-
         addiu   sp, sp,-0x0018              // allocate stack space
         sw      a0, 0x0004(sp)              // ~
         sw      t0, 0x0008(sp)              // ~
         sw      v0, 0x000C(sp)              // ~
-        sw      ra, 0x0010(sp)              // save registers
+        sw      ra, 0x0010(sp)              // ~
+        sw      a1, 0x0014(sp)              // save registers
 
-        li      t0, Global.current_screen   // ~
-        lb      t0, 0x0000(t0)              // t0 = current_screen
-        lli     v0, 0x0034                  // v0 = 1P_SCREEN
-        beq     t0, v0, _alternate          // if 1p, allow alternate music to play
-        lli     v0, 0x0035                  // v0 = BONUS_SCREEN
-        beq     t0, v0, _alternate          // if Bonus, allow alternate music to play
-        lli     v0, 0x0016                  // v0 = FIGHT_SCREEN
-        bne     t0, v0, _end                // if not fight screen, end
-        nop
-        
-        _alternate:
-        // check if starting to play hammer/star music
-        // if so, skip getting alternate music
-        lli     v0, special.HAMMER          // v0 = hammer bgm_id
-        beq     v0, a1, _end                // skip if playing the hammer music
-        nop
-        lli     v0, special.INVINCIBLE      // v0 = invincible (star) bgm_id
-        beq     v0, a1, _end                // skip if playing the invincible (star) music
-        nop
-
-        // check if just finished playing hammer/star music
-        // if so, restore original bgm_id
-        li      a0, current_bgm_id          // a0 = address of current_bgm_id
-        addu    t0, t1, t2                  // t0 = address of previous bgm_id
-        lw      t0, 0x0000(t0)              // t0 = previous bgm_id
-        lli     v0, special.HAMMER          // v0 = hammer bgm_id
-        beql    v0, t0, _end                // if just finished playing the hammer music,
-        lh      a1, 0x0000(a0)              // then skip and load saved bgm_id
-        lli     v0, special.INVINCIBLE      // v0 = invincible/star bgm_id
-        beql    v0, t0, _end                // if just finished playing the invincible/star music,
-        lh      a1, 0x0000(a0)              // then skip and load saved bgm_id
+        lui     a0, 0x8013
+        lw      a0, 0x1300(a0)              // a0 = stage file
+        lw      a1, 0x007C(a0)              // a1 = default stage bgm_id
 
         // check for held buttons to force alternate music: CU - Default, CL - Occasional, CR - Rare
         addu    t0, r0, a1                  // t0 = bgm_id
@@ -140,22 +127,23 @@ scope BGM {
         addu    t0, t0, a0                  // t0 = address of bgm_id to use
         lh      v0, 0x0000(t0)              // v0 = bgm_id to use, maybe
         addiu   t0, r0, 0xFFFF              // t0 = -1 - means there is no alt BGM_ID for this stage
-        beq     v0, t0, _save               // if (there is no alt BGM_ID) for this stage, skip to end
-        nop
+        bnel    v0, t0, _save               // if (there is alt BGM_ID) for this stage, use it
         addu    a1, r0, v0                  // a1 = bgm_id to use
 
         _save:
         // remember bgm_id
-        li      a0, current_bgm_id          // a0 = address of current_bgm_id
-        sh      a1, 0x0000(a0)              // store bgm_id as current_bgm_id
+        lui     a0, 0x8013
+        lw      a0, 0x1300(a0)              // a0 = stage file
+        sw      a1, 0x007C(a0)              // store bgm_id
 
         _end:
         lw      a0, 0x0004(sp)              // ~
         lw      t0, 0x0008(sp)              // ~
         lw      v0, 0x000C(sp)              // ~
-        lw      ra, 0x0010(sp)              // restore registers
+        lw      ra, 0x0010(sp)              // ~
+        lw      a1, 0x0014(sp)              // restore registers
         addiu   sp, sp, 0x0018              // deallocate stack space
-        j       _alternate_music_return     // return
+        jr      ra                          // return
         nop
     }
 
@@ -177,16 +165,16 @@ scope BGM {
         lw      t0, 0x0004(a0)              // t0 = curr_value
         lli     v0, OS.FALSE                // v0 = false
         li      v1, random_count            // ~
-        lh      v1, 0x0000(v1)              // v1 = random_count
+        lw      v1, 0x0000(v1)              // v1 = random_count
         beqz    t0, _end                    // end, return false and count
         nop
 
         // if the song should be added, it is added here. count is also incremented here
         li      t0, random_count            // t0 = address of random_count
-        lh      v1, 0x0000(t0)              // v1 = random_count
+        lw      v1, 0x0000(t0)              // v1 = random_count
         sll     t1, v1, 0x0002              // t1 = offset = random_count * 4
         addiu   v1, v1, 0x0001              // v1 = random_count++
-        sh      v1, 0x0000(t0)              // update random_count
+        sw      v1, 0x0000(t0)              // update random_count
         li      t0, random_table            // t0 = address of random_table
         addu    t0, t0, t1                  // t0 = random_table + offset
         sw      a1, 0x0000(t0)              // add song
@@ -217,12 +205,7 @@ scope BGM {
     // @ Description
     // number of stages in random_table.
     random_count:
-    dh 0
-
-    // @ Description
-    // the bgm_id used at the start of the current match
-    current_bgm_id:
-    dh 0
+    dw 0
 
     // @ Descirption
     // This function is an implementation of a play music tooggle
@@ -257,56 +240,22 @@ scope BGM {
     }
 
     // @ Description
-    // a1 holds BGM_id. This function replaces a1 with a random id from the table
+    // This function replaces the stage's default bgm_id with a random id from the table.
     scope random_music_: {
-        OS.patch_start(0x000216F0, 0x80020AF0)
-        j       random_music_
-        nop
-        _random_music_return:
-        OS.patch_end()
+        Toggles.guard(Toggles.entry_random_music, 0x00000000)
 
-        or      v0, a1, r0                  // original line 1
-        addu    t3, t1, t2                  // original line 2
-        Toggles.guard(Toggles.entry_random_music, _random_music_return)
-
-        addiu   sp, sp,-0x0018              // allocate stack space
-        sw      a0, 0x0004(sp)              // ~
+        addiu   sp, sp,-0x0020              // allocate stack space
+        sw      a0, 0x0004(sp)              // save registers
         sw      t0, 0x0008(sp)              // ~
         sw      v0, 0x000C(sp)              // ~
-        sw      ra, 0x0010(sp)              // save registers
-
-        li      t0, Global.current_screen   // ~
-        lb      t0, 0x0000(t0)              // t0 = current_screen
-        lli     v0, 0x0016                  // v0 = FIGHT_SCREEN
-        bne     t0, v0, _end                // if not fight screen, end
-        nop
-
-        // check if starting to play hammer/star music
-        // if so, skip getting random music
-        lli     v0, special.HAMMER          // v0 = hammer bgm_id
-        beq     v0, a1, _end                // skip if playing the hammer music
-        nop
-        lli     v0, special.INVINCIBLE      // v0 = invincible (star) bgm_id
-        beq     v0, a1, _end                // skip if playing the invincible (star) music
-        nop
-
-        // check if just finished playing hammer/star music
-        // if so, skip getting random music (alternate music routine already took care of restoring a1)
-        lw      t0, 0x0000(t3)              // t0 = previous bgm_id
-        lli     v0, special.HAMMER          // v0 = hammer bgm_id
-        beq     v0, t0, _end                // if just finished playing the hammer music, then skip
-        nop                                 // ~
-        lli     v0, special.INVINCIBLE      // v0 = invincible/star bgm_id
-        beql    v0, t0, _end                // if just finished playing the invincible/star music, then skip
-        nop                                 // ~
+        sw      ra, 0x0010(sp)              // ~
+        sw      a1, 0x0014(sp)              // ~
 
         // reset count each time so we don't grow the list too large
         li      v1, random_count            // v1 = random_count address
-        sh      r0, 0x0000(v1)              // set random_count to 0
+        sw      r0, 0x0000(v1)              // set random_count to 0
 
         // this block builds the list of stages available in the random list (using macro above)
-        sw      a1, 0x0014(sp)              // save a1 (default bgm_id)
-
         add_to_list(Toggles.entry_random_music_peachs_castle, stage.PEACHS_CASTLE)
         add_to_list(Toggles.entry_random_music_sector_z, stage.SECTOR_Z)
         add_to_list(Toggles.entry_random_music_congo_jungle, stage.CONGO_JUNGLE)
@@ -334,7 +283,6 @@ scope BGM {
             evaluate n({n}+1)
         }
 
-        lw      a1, 0x0014(sp)              // restore a1 (default bgm_id)
         beqz    v1, _end                    // if there were no valid entries in the random table, then use default bgm_id
         nop
 
@@ -348,16 +296,16 @@ scope BGM {
         lw      a1, 0x0000(t0)              // a1 = bgm_id
 
         // remember bgm_id
-        li      a0, current_bgm_id          // a0 = address of current_bgm_id
-        sh      a1, 0x0000(a0)              // store bgm_id as current_bgm_id
+        sw      a1, 0x007C(t9)              // store bgm_id as default stage bgm_id
 
         _end:
         lw      a0, 0x0004(sp)              // ~
         lw      t0, 0x0008(sp)              // ~
         lw      v0, 0x000C(sp)              // ~
-        lw      ra, 0x0010(sp)              // restore registers 
-        addiu   sp, sp, 0x0018              // deallocate stack space
-        j       _random_music_return        // return
+        lw      ra, 0x0010(sp)              // ~
+        lw      a1, 0x0014(sp)              // restore registers
+        addiu   sp, sp, 0x0020              // deallocate stack space
+        jr      ra                          // return
         nop
     }
 
@@ -548,6 +496,270 @@ scope BGM {
 
     }
 
+    // @ Description
+    // Sets up music title stuff
+    scope setup_: {
+        li      t0, show_music_title_.music_title_rectangle_object
+        sw      r0, 0x0000(t0)              // clear music title rectangle object pointer
+
+        li      t0, show_music_title_.music_title_object
+        sw      r0, 0x0000(t0)              // clear music title object pointer
+
+        li      t0, show_music_title_.music_game_title_object
+        sw      r0, 0x0000(t0)              // clear music game title object pointer
+
+        // Need to load font for music title
+        li      t0, Toggles.entry_show_music_title
+        lw      t0, 0x0004(t0)              // t0 = 0 if showing titles is toggled off
+        beqz    t0, _end                    // skip loading font if showing titles is toggled off
+        nop
+
+        addiu   sp, sp,-0x0020              // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+
+        Render.load_font()
+
+        lw      ra, 0x0004(sp)              // restore registers
+        addiu   sp, sp, 0x0020              // deallocate stack space
+
+        _end:
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // Shows the title of the current track on VS start
+    scope show_music_title_: {
+        // 8011268C is where GO lights are created
+        OS.patch_start(0x8E00C, 0x8011280C)
+        j       show_music_title_
+        nop
+        OS.patch_end()
+        // 801120D4 is where GO! text is created
+        OS.patch_start(0x8D900, 0x80112100)
+        j       show_music_title_._destroy
+        nop
+        _destroy_return:
+        OS.patch_end()
+
+        li      t0, Toggles.entry_show_music_title
+        lw      t0, 0x0004(t0)              // t0 = 0 if showing titles is toggled off
+        beqz    t0, _end                    // skip if showing titles is toggled off
+        nop
+        li      t0, Toggles.entry_play_music
+        lw      t0, 0x0004(t0)              // t0 = 0 if music is toggled off
+        beqz    t0, _end                    // skip if music is toggled off
+        nop
+
+        addiu   sp, sp,-0x0030              // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+        sw      s1, 0x0008(sp)              // ~
+        sw      s2, 0x000C(sp)              // ~
+        sw      s3, 0x0010(sp)              // ~
+        sw      s4, 0x0014(sp)              // ~
+        sw      s5, 0x0018(sp)              // ~
+        sw      s6, 0x001C(sp)              // ~
+
+        // Draw transparent rectangle
+        Render.draw_rectangle(0x17, 0xB, 1, 156, 320, 28, 0x34343494, OS.TRUE)
+
+        li      t0, music_title_rectangle_object
+        sw      v0, 0x0000(t0)              // save music title rectangle object pointer
+
+        // Use space in the rectangle object to create our string.
+        // We're going to use 0x48 as the start, and we're clear until 0x7C I think
+        lli     t1, 0x8020                  // t1 = musical note + space
+        sh      t1, 0x0048(v0)              // store string start
+        addiu   t2, v0, 0x004A              // t2 = start of music title string
+        addiu   a2, v0, 0x0048              // a2 = start of music title string with music note
+
+        // Get BGM ID
+        lui     t0, 0x8013
+        lw      t0, 0x1300(t0)
+        lw      t0, 0x007C(t0)              // t0 = bgm_id
+
+        // Get title
+        li      t1, string_table
+        sll     t0, t0, 0x0003              // t0 = offset to title pointer array
+        addu    t0, t1, t0                  // t0 = address of title pointer array
+        sw      t0, 0x0020(sp)              // save address of title pointer array
+        lw      t0, 0x0004(t0)              // a2 = track title pointer
+
+        _loop:
+        lbu     t1, 0x0000(t0)              // t1 = character
+        beqz    t1, _exit_loop              // if string is done, exit loop
+        sb      t1, 0x0000(t2)              // copy character to our string buffer
+        addiu   t0, t0, 0x0001              // t0++
+        b       _loop                       // continue looping
+        addiu   t2, t2, 0x0001              // t2 ++
+
+        _exit_loop:
+        lli     t1, 0x0020                  // t1 = space
+        sb      t1, 0x0000(t2)              // store space
+        addiu   t2, t2, 0x0001              // t2 ++
+        lli     t1, 0x0080                  // t1 = musical note
+        sb      t1, 0x0000(t2)              // store musical note
+        addiu   t2, t2, 0x0001              // t2 ++
+        lli     t1, 0x0000                  // t1 = null to terminate string
+        sb      t1, 0x0000(t2)              // store null to terminate string
+
+        // Display title
+        lli     a0, 0x0017                  // a0 = room
+        lli     a1, 0x000B                  // a1 = group
+        lli     a3, 0x0000                  // a3 = routine (Render.NOOP)
+        lui     s1, 0x4320                  // s1 = ulx
+        lui     s2, 0x431E                  // s2 = uly
+        addiu   s3, r0, -0x0001             // s3 = color (WHITE)
+        lui     s4, 0x3F80                  // s4 = scale
+        lli     s5, Render.alignment.CENTER // s5 = align center
+        lli     s6, Render.string_type.TEXT // s6 = type
+        jal     Render.draw_string_
+        lli     t8, 0x0001                  // t8 = blur on
+
+        li      t0, music_title_object
+        sw      v0, 0x0000(t0)              // save music title object pointer
+
+        // Display game title
+        lw      a2, 0x0020(sp)              // a2 = address of title pointer array
+        lw      a2, 0x0000(a2)              // a2 = game title pointer
+
+        lli     a0, 0x0017                  // a0 = room
+        lli     a1, 0x000B                  // a1 = group
+        lli     a3, 0x0000                  // a3 = routine (Render.NOOP)
+        lui     s1, 0x4320                  // s1 = ulx
+        lui     s2, 0x432C                  // s2 = uly
+        addiu   s3, r0, -0x0001             // s3 = color (WHITE)
+        lui     s4, 0x3F40                  // s4 = scale
+        lli     s5, Render.alignment.CENTER // s5 = align center
+        lli     s6, Render.string_type.TEXT // s6 = type
+        jal     Render.draw_string_
+        lli     t8, 0x0001                  // t8 = blur on
+
+        li      t0, music_game_title_object
+        sw      v0, 0x0000(t0)              // save music game title object pointer
+
+        _restore_stack:
+        lw      ra, 0x0004(sp)              // ~
+        lw      s1, 0x0008(sp)              // ~
+        lw      s2, 0x000C(sp)              // ~
+        lw      s3, 0x0010(sp)              // ~
+        lw      s4, 0x0010(sp)              // ~
+        lw      s5, 0x0010(sp)              // ~
+        lw      s6, 0x0010(sp)              // restore registers
+        addiu   sp, sp, 0x0030              // deallocate stack space
+
+        _end:
+        jr      ra                          // original line 1
+        addiu   sp, sp, 0x0030              // original line 2
+
+        _destroy:
+        li      t0, Toggles.entry_show_music_title
+        lw      t0, 0x0004(t0)              // t0 = 0 if showing titles is toggled off
+        beqz    t0, _end_destroy            // skip if showing titles is toggled off
+        nop
+        li      t0, Toggles.entry_play_music
+        lw      t0, 0x0004(t0)              // t0 = 0 if music is toggled off
+        beqz    t0, _end_destroy            // skip if music is toggled off
+        nop
+
+        li      t0, music_game_title_object
+        lw      a0, 0x0000(t0)              // a0 = music game title object pointer
+        beqz    a0, _end_destroy            // if not defined, skip destroying
+        nop
+        jal     Render.DESTROY_OBJECT_
+        sw      r0, 0x0000(t0)              // clear pointer
+
+        li      t0, music_title_object
+        lw      a0, 0x0000(t0)              // a0 = music title object pointer
+        beqz    a0, _end_destroy            // if not defined, skip destroying
+        nop
+        jal     Render.DESTROY_OBJECT_
+        sw      r0, 0x0000(t0)              // clear pointer
+
+        li      t0, music_title_rectangle_object
+        lw      a0, 0x0000(t0)              // a0 = music title rectangle object pointer
+        beqz    a0, _end_destroy            // if not defined, skip destroying
+        nop
+        jal     Render.DESTROY_OBJECT_
+        sw      r0, 0x0000(t0)              // clear pointer
+
+        _end_destroy:
+        addiu   a0, r0, 0x03F8              // original line 1
+        j       _destroy_return
+        or      a1, r0, r0                  // original line 2
+
+        music_title_rectangle_object:
+        dw      0x0
+
+        music_title_object:
+        dw      0x0
+
+        music_game_title_object:
+        dw      0x0
+    }
+
+    // @ Description
+    // Pointers to BGM titles and game of origin in order of BGM ID
+    string_table:
+    // game                                        // track
+    dw MIDI.game_{MIDI.GAME_kirbysuperstar}_title, Toggles.entry_random_music_dream_land + 0x28
+    dw MIDI.game_{MIDI.GAME_metroid}_title,        Toggles.entry_random_music_planet_zebes + 0x28
+    dw MIDI.game_{MIDI.GAME_smb}_title,            Toggles.entry_random_music_mushroom_kingdom + 0x28
+    dw 0x0,                                        0x0                                                    // MK fast
+    dw MIDI.game_{MIDI.GAME_starfox64}_title,      Toggles.entry_random_music_sector_z + 0x28
+    dw MIDI.game_{MIDI.GAME_dkc}_title,            Toggles.entry_random_music_congo_jungle + 0x28
+    dw MIDI.game_{MIDI.GAME_smb}_title,            Toggles.entry_random_music_peachs_castle + 0x28
+    dw MIDI.game_{MIDI.GAME_pokemonred}_title,     Toggles.entry_random_music_saffron_city + 0x28
+    dw MIDI.game_{MIDI.GAME_yoshis_story}_title,   Toggles.entry_random_music_yoshis_island + 0x28
+    dw MIDI.game_{MIDI.GAME_zelda}_title,          Toggles.entry_random_music_hyrule_castle + 0x28
+    dw 0x0,                                        0x0                                                    // Character Select
+    dw 0x0,                                        0x0                                                    // beta fanfair
+    dw 0x0,                                        0x0                                                    // Mario/ Luigi victory
+    dw 0x0,                                        0x0                                                    // Samus victory
+    dw 0x0,                                        0x0                                                    // DK victory
+    dw 0x0,                                        0x0                                                    // Kirby victory
+    dw 0x0,                                        0x0                                                    // Fox victory
+    dw 0x0,                                        0x0                                                    // Ness victory
+    dw 0x0,                                        0x0                                                    // Yoshi victory
+    dw 0x0,                                        0x0                                                    // Falcon victory
+    dw 0x0,                                        0x0                                                    // Pikachu/Jigglypuff victory
+    dw 0x0,                                        0x0                                                    // Link victory
+    dw 0x0,                                        0x0                                                    // Results
+    dw 0x0,                                        0x0                                                    // Master Hand 1
+    dw MIDI.game_{MIDI.GAME_ssb}_title,            Toggles.entry_random_music_final_destination + 0x28    // Master Hand 2 (intro) - putting the title to avoid crash on FD
+    dw MIDI.game_{MIDI.GAME_ssb}_title,            Toggles.entry_random_music_final_destination + 0x28
+    dw MIDI.game_{MIDI.GAME_ssb}_title,            Toggles.entry_random_music_bonus + 0x28
+    dw 0x0,                                        0x0                                                    // Stage Clear
+    dw 0x0,                                        0x0                                                    // Stage Clear Bonus
+    dw 0x0,                                        0x0                                                    // Stage Clear Master Hand/Boss
+    dw 0x0,                                        0x0                                                    // Stage Fail
+    dw 0x0,                                        0x0                                                    // Continue
+    dw 0x0,                                        0x0                                                    // Game Over
+    dw 0x0,                                        0x0                                                    // Intro
+    dw MIDI.game_{MIDI.GAME_ssb}_title,            Toggles.entry_random_music_how_to_play + 0x28
+    dw 0x0,                                        0x0                                                    // Singleplayer
+    dw MIDI.game_{MIDI.GAME_ssb}_title,            Toggles.entry_random_music_duel_zone + 0x28
+    dw MIDI.game_{MIDI.GAME_ssb}_title,            Toggles.entry_random_music_meta_crystal + 0x28
+    dw 0x0,                                        0x0                                                    // Game Complete
+    dw MIDI.game_{MIDI.GAME_ssb}_title,            Toggles.entry_random_music_credits + 0x28
+    dw 0x0,                                        0x0                                                    // Secret
+    dw 0x0,                                        0x0                                                    // Hidden Character
+    dw MIDI.game_{MIDI.GAME_ssb}_title,            Training.string_training_mode
+    dw MIDI.game_{MIDI.GAME_ssb}_title,            Toggles.entry_random_music_data + 0x28
+    dw 0x0,                                        0x0                                                    // Main
+    dw 0x0,                                        0x0                                                    // Hammer
+    dw 0x0,                                        0x0                                                    // Invincible
+    evaluate n(0x2F)
+    while {n} < MIDI.midi_count {
+        evaluate can_toggle({MIDI.MIDI_{n}_TOGGLE})
+        if ({can_toggle} == OS.TRUE) {
+            dw MIDI.game_{MIDI.GAME_{MIDI.MIDI_{n}_GAME}}_title, Toggles.entry_random_music_{n} + 0x28
+        } else {
+            dw 0x0, 0x0
+        }
+        evaluate n({n}+1)
+    }
+
     scope stage {
         constant DREAM_LAND(0)
         constant PLANET_ZEBES(1)
@@ -581,7 +793,7 @@ scope BGM {
         constant FOX(16)
         constant NESS(17)
         constant YOSHI(18)
-        constant FALCO(19)
+        constant FALCON(19)
         constant PIKACHU(20)
         constant JIGGLYPUFF(20)
         constant LINK(21)
@@ -606,8 +818,8 @@ scope BGM {
         constant HIDDEN_CHARACTER(41)
         constant DATA(43)
         constant MAIN(44)
-        constant MAIN_MELEE(71) // TODO: update when we have
-        constant MAIN_BRAWL(108) // TODO: update when we have
+        constant MAIN_MELEE(71)
+        constant MAIN_BRAWL(108)
     }
 
     scope special {

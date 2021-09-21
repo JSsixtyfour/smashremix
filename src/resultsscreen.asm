@@ -306,6 +306,7 @@ scope ResultsScreen {
         constant BOWSER(0x8340)
         constant CONKER(0x8D70)
         constant WARIO(0x9040)
+        constant FIRE_EMBLEM(0x97F8)
     }
 
     // @ Description
@@ -326,6 +327,7 @@ scope ResultsScreen {
         constant BOWSER(0x8448)
         constant CONKER(0x8E78)
         constant WARIO(0x9148)
+        constant FIRE_EMBLEM(0x9900)
     }
 
     // @ Description
@@ -346,6 +348,7 @@ scope ResultsScreen {
         constant BOWSER(0x84A0)
         constant CONKER(0x8ED0)
         constant WARIO(MARIO_BROS)
+        constant FIRE_EMBLEM(0x9958)
     }
 
     // @ Description
@@ -576,4 +579,6 @@ scope ResultsScreen {
     add_to_results_screen(Character.id.PIANO,    FGM.announcer.names.PIANO,                  MARIO_BROS,  Character.id.KIRBY,   185,     MAD PIANO,    20,     0.65,      -1)
     add_to_results_screen(Character.id.WOLF,     FGM.announcer.names.WOLF,                   STARFOX,     Character.id.FOX,     170,     WOLF,         30,     1,         {MIDI.id.WOLF_VICTORY})
     add_to_results_screen(Character.id.CONKER,   FGM.announcer.names.CONKER,                 CONKER,      Character.id.FOX,     180,     CONKER,       25,     0.85,      {MIDI.id.CONKER_VICTORY})
+    add_to_results_screen(Character.id.MTWO,     FGM.announcer.names.MEWTWO,                 POKEMON,     Character.id.SAMUS,   185,     MEWTWO,       20,     0.8,       {MIDI.id.MEWTWO_VICTORY})
+    add_to_results_screen(Character.id.MARTH,    FGM.announcer.names.MARTH,                  FIRE_EMBLEM, Character.id.CAPTAIN, 185,     MARTH,        20,     1,         {MIDI.id.MARTH_VICTORY})
 }

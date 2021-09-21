@@ -1,0 +1,20 @@
+// Always call add_stage_profile first to create the profile
+add_stage_profile(dreamlandonly, "Dream Land Only")
+
+// Then call add_to_stage_profile for every stage you want toggled on for this profile
+add_to_stage_profile(dreamlandonly, dream_land)
+add_to_stage_profile(dreamlandonly, deku_tree)
+add_to_stage_profile(dreamlandonly, smbbf)
+add_to_stage_profile(dreamlandonly, zlanding)
+add_to_stage_profile(dreamlandonly, hcastle_dl)
+add_to_stage_profile(dreamlandonly, congoj_dl)
+add_to_stage_profile(dreamlandonly, pcastle_dl)
+add_to_stage_profile(dreamlandonly, frays_stage_night)
+add_to_stage_profile(dreamlandonly, frays_stage)
+add_to_stage_profile(dreamlandonly, sector_z_dl)
+add_to_stage_profile(dreamlandonly, saffron_dl)
+add_to_stage_profile(dreamlandonly, yoshi_island_dl)
+add_to_stage_profile(dreamlandonly, zebes_dl)
+add_to_stage_profile(dreamlandonly, final_destination_dl)
+add_to_stage_profile(dreamlandonly, duel_zone_dl)
+add_to_stage_profile(dreamlandonly, meta_crystal_dl)

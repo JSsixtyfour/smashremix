@@ -5,11 +5,11 @@
 // @ Description
 // Subroutines for Neutral Special    
 scope WarioNSP {
-    constant X_SPEED(0x4270)                // current setting - float:60.0
+    constant X_SPEED(0x4280)                // current setting - float:64.0
     constant Y_SPEED(0x41F0)                // current setting - float:30.0
     constant JUMP_SPEED(0x4288)             // current setting - float:68.0
-    constant RECOIL_X_SPEED(0xC230)         // current setting - float:-44.0
-    constant RECOIL_Y_SPEED(0x4230)         // current setting - float:44.0
+    constant RECOIL_X_SPEED(0xC220)         // current setting - float:-40.0
+    constant RECOIL_Y_SPEED(0x4220)         // current setting - float:40.0
     constant GRAVITY(0x4030)                // current setting - float:2.75
     constant MAX_FALL_SPEED(0x4240)         // current setting - float:48.0
     constant AIR_FRICTION(0x4000)           // current setting - float:2.0
@@ -18,7 +18,8 @@ scope WarioNSP {
     constant BEGIN(0x1)
     constant MOVE(0x2)
     
-    constant WALL_COLLISION(0x0021)         // bitmask for wall collision
+    constant WALL_COLLISION_L(0x0001)       // bitmask for wall collision
+    constant WALL_COLLISION_R(0x0020)       // bitmask for wall collision
     
     // @ Description
     // Subroutine which runs when Wario initiates a grounded neutral special.
@@ -169,9 +170,13 @@ scope WarioNSP {
         bnel    a1, a2, _recoil_check       // skip if a1 != MOVE
         sb      r0, 0x0000(t0)              // reset px special_jim_flag on branch
         
-        _wall_collision:
         lhu     a1, 0x00CC(a0)              // a1 = collision flags
-        andi    a1, a1, WALL_COLLISION      // a1 = collision flags & WALL_COLLISION
+        lw      t1, 0x0044(a0)              // t0 = direction
+        bgez    t1, _wall_collision         // branch if direction = right
+        andi    a1, a1, WALL_COLLISION_L    // a1 = collision flags & WALL_COLLISION_L
+        andi    a1, a1, WALL_COLLISION_R    // a1 = collision flags & WALL_COLLISION_R
+        
+        _wall_collision:
         beql    a1, r0, _recoil_check       // skip if !WALL_COLLISION
         sb      r0, 0x0000(t0)              // reset px special_jim_flag on branch
         lbu     a1, 0x0000(t0)              // a2 = px special_jim_flag
@@ -401,9 +406,13 @@ scope WarioNSP {
         bnel    a1, a2, _recoil_check       // skip if a1 != MOVE
         sb      r0, 0x0000(t0)              // reset px special_jim_flag on branch
         
-        _wall_collision:
         lhu     a1, 0x00CC(a0)              // a1 = collision flags
-        andi    a1, a1, WALL_COLLISION      // a1 = collision flags & WALL_COLLISION
+        lw      t1, 0x0044(a0)              // t0 = direction
+        bgezl   t1, _wall_collision         // branch if direction = right
+        andi    a1, a1, WALL_COLLISION_L    // a1 = collision flags & WALL_COLLISION_L
+        andi    a1, a1, WALL_COLLISION_R    // a1 = collision flags & WALL_COLLISION_R
+        
+        _wall_collision:
         beql    a1, r0, _recoil_check       // skip if !WALL_COLLISION
         sb      r0, 0x0000(t0)              // reset px special_jim_flag on branch
         ori     a1, r0, OS.TRUE             // ~
@@ -617,12 +626,12 @@ scope WarioNSP {
         lw      a2, 0x0008(a2)              // a2 = current character ID
         lli     a1, Character.id.KIRBY      // a1 = id.KIRBY
         beql    a1, a2, pc() + 24           // if Kirby, load alternate action ID
-        lli     a1, Kirby.Action.WARIO_NSP_Recoil
+        lli     a1, Kirby.Action.WARIO_NSP_Recoil_Air
         lli     a1, Character.id.JKIRBY     // a1 = id.JKIRBY
         beql    a1, a2, pc() + 12           // if J Kirby, load alternate action ID
-        lli     a1, Kirby.Action.WARIO_NSP_Recoil
+        lli     a1, Kirby.Action.WARIO_NSP_Recoil_Air
         
-        ori     a1, r0, 0x00DC              // a1 = 0xDC
+        ori     a1, r0, Wario.Action.NSP_Recoil_Air
         or      a2, r0, r0                  // a2 = 0(begin action frame)
         sw      t7, 0x0010(sp)              // store t7 (some kind of parameter for change action)
         jal     0x800E6F24                  // change action
@@ -630,6 +639,94 @@ scope WarioNSP {
         lw      ra, 0x001C(sp)              // ~
         addiu   sp, sp, 0x0020              // ~
         jr      ra                          // original return logic
+        nop
+    }
+    
+    // @ Description
+    // Collision subroutine for NSP_Recoil_Ground.
+    scope recoil_ground_collision_: {
+        addiu   sp, sp,-0x0018              // allocate stack space
+        sw      ra, 0x0014(sp)              // store ra
+        li      a1, recoil_air_transition_  // a1(transition subroutine) = air_begin_transition_
+        jal     0x800DDE84                  // common ground collision subroutine (transition on no floor, no slide-off)
+        nop 
+        lw      ra, 0x0014(sp)              // load ra
+        addiu   sp, sp, 0x0018              // deallocate stack space
+        jr      ra                          // return
+        nop
+    }
+    
+    // @ Description
+    // Collision subroutine for NSP_Recoil_Air.
+    scope recoil_air_collision_: {
+        addiu   sp, sp,-0x0018              // allocate stack space
+        sw      ra, 0x0014(sp)              // store ra
+        li      a1, recoil_ground_transition_ // a1(transition subroutine) = recoil_ground_transition_
+        jal     0x800DE80C                  // common air collision subroutine (transition on landing, allow ledge grab)
+        nop 
+        lw      ra, 0x0014(sp)              // load ra
+        addiu   sp, sp, 0x0018              // deallocate stack space
+        jr      ra                          // return
+        nop
+    }
+    
+    // @ Description
+    // Subroutine which transitions to NSP_Recoil_Ground.
+    scope recoil_ground_transition_: {
+        addiu   sp, sp,-0x0050              // allocate stack space
+        sw      ra, 0x001C(sp)              // store ra
+        sw      a0, 0x0038(sp)              // 0x0038(sp) = player object
+        lw      a0, 0x0084(a0)              // a0 = player struct
+        jal     0x800DEE98                  // set grounded state
+        sw      a0, 0x0034(sp)              // 0x0034(sp) = player struct
+        lw      a0, 0x0038(sp)              // a0 = player object
+        lw      a2, 0x0084(a0)              // ~
+        lw      a2, 0x0008(a2)              // a2 = current character ID
+        lli     a1, Character.id.KIRBY      // a1 = id.KIRBY
+        beql    a1, a2, pc() + 24           // if Kirby, load alternate action ID
+        lli     a1, Kirby.Action.WARIO_NSP_Recoil_Ground
+        lli     a1, Character.id.JKIRBY     // a1 = id.JKIRBY
+        beql    a1, a2, pc() + 12           // if J Kirby, load alternate action ID
+        lli     a1, Kirby.Action.WARIO_NSP_Recoil_Ground
+        lli     a1, Wario.Action.NSP_Recoil_Ground // a1(action id) = NSP_Recoil_Ground
+        lw      a2, 0x0078(a0)              // a2(starting frame) = current animation frame
+        lui     a3, 0x3F80                  // a3(frame speed multiplier) = 1.0
+        jal     0x800E6F24                  // change action
+        sw      r0, 0x0010(sp)              // argument 4 = 0
+        lw      ra, 0x001C(sp)              // load ra
+        addiu   sp, sp, 0x0050              // deallocate stack space
+        jr      ra                          // return
+        nop
+    }
+    
+    // @ Description
+    // Subroutine which transitions to NSP_Recoil_Air.
+    scope recoil_air_transition_: {
+        addiu   sp, sp,-0x0050              // allocate stack space
+        sw      ra, 0x001C(sp)              // store ra
+        sw      a0, 0x0038(sp)              // 0x0038(sp) = player object
+        lw      a0, 0x0084(a0)              // a0 = player struct
+        jal     0x800DEEC8                  // set aerial state
+        sw      a0, 0x0034(sp)              // 0x0034(sp) = player struct
+        lw      a0, 0x0038(sp)              // a0 = player object
+        lw      a2, 0x0084(a0)              // ~
+        lw      a2, 0x0008(a2)              // a2 = current character ID
+        lli     a1, Character.id.KIRBY      // a1 = id.KIRBY
+        beql    a1, a2, pc() + 24           // if Kirby, load alternate action ID
+        lli     a1, Kirby.Action.WARIO_NSP_Recoil_Air
+        lli     a1, Character.id.JKIRBY     // a1 = id.JKIRBY
+        beql    a1, a2, pc() + 12           // if J Kirby, load alternate action ID
+        lli     a1, Kirby.Action.WARIO_NSP_Recoil_Air
+        lli     a1, Wario.Action.NSP_Recoil_Air // a1(action id) = NSP_Recoil_Air
+        lw      a2, 0x0078(a0)              // a2(starting frame) = current animation frame
+        lui     a3, 0x3F80                  // a3(frame speed multiplier) = 1.0
+        jal     0x800E6F24                  // change action
+        sw      r0, 0x0010(sp)              // argument 4 = 0
+        jal     0x800D8EB8                  // momentum capture?
+        lw      a0, 0x0034(sp)              // a0 = player struct
+        lw      ra, 0x001C(sp)              // load ra
+        addiu   sp, sp, 0x0050              // deallocate stack space
+        jr      ra                          // return
         nop
     }
     

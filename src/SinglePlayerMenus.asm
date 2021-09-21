@@ -28,6 +28,27 @@ scope SinglePlayerMenus: {
         lw      v0, 0x31B8(v0)
     }
     
+    // @ Description
+    // This stops music from restarting when changing pages in 1p Mode Menu
+    scope stop_restart: {
+        OS.patch_start(0x11F110, 0x80133000)
+        j		stop_restart
+        nop 
+        _return:
+        OS.patch_end() 
+        
+        beq     t4, at, _music_continues // modified original line 1
+        addiu   at, r0, 0x0008           // insert 1p mode menu screen
+        beq     t4, at, _music_continues // continue music if on 1p mode menu screen
+        nop
+        j       _return
+        nop
+        
+        _music_continues:
+        j       0x80133014              // modified original line 1
+        lw      ra, 0x001C(sp)          // original line 2
+    }
+    
 // RENDERING
     
     // @ Description
@@ -76,6 +97,8 @@ scope SinglePlayerMenus: {
         
         _from_css:
         jal     remix1p_button_render     // Render Remix 1p Button 
+        nop
+        jal     allstar_button_render     // Render Allstar Button 
         nop
         jal     multi_man_button_render   // Render Multiman Button
         nop 
@@ -164,7 +187,7 @@ scope SinglePlayerMenus: {
 	}
 	
     // @ Description
-	//  This is the render routine for the Remix Modes button, largely based on Training Button at 80131F0C
+	//  This is the render routine for the Remix 1p button, largely based on Training Button at 80131F0C
     scope remix1p_button_render: {
 		
         OS.copy_segment(0x11E01C, 0x1C)		// 80131F0C
@@ -204,6 +227,47 @@ scope SinglePlayerMenus: {
         OS.copy_segment(0x11E0C0, 0x38)     // 80131FB0
 	}
     
+    // @ Description
+	//  This is the render routine for the Allstar button, largely based on Training Button at 80131F0C
+    scope allstar_button_render: {
+		
+        OS.copy_segment(0x11E01C, 0x1C)		// 80131F0C
+        
+        lui     a1, 0x800D
+        addiu   t6, r0, 0xFFFF
+        li      at, allstar_button_pointer  // load pointer for remix 1p button object
+        sw      v0, 0x0000(at)              // save pointer to location
+
+        OS.copy_segment(0x11E048, 0x20)		// 80131E60
+        
+        lui     a1, 0x42C6                  // set button's x position
+        lui     a2, 0x4264                  // set button's y position
+        jal     0x80131D04
+        addiu   a3, r0, 0x0010
+        lui     a1, 0x8013
+        lw      a1, 0x31B8(a1)
+        lw      a0, 0x0024(sp)       
+        addiu	a2, r0, 0x0007              // new index
+        xori	a1, a1, 0x0007              // new index, both are used to determine which to highlight when returning to option screen
+		
+        jal     0x80131B24
+        sltiu   a1, a1, 0x0001
+        lui     t7, 0x8013
+        lw      t7, 0x3294(t7)
+        lui     t8, 0x0000
+        ori     t8, t8, 0x8738              // load button graphic offset
+        lw      a0, 0x0024(sp)
+        jal     0x800CCFDC
+        addu    a1, t7, t8
+        lhu     t9, 0x0024(v0)
+        
+        lui     at, 0x42D6                  // originally 0x4286, x location of text
+        mtc1    at, f4
+        lui     at, 0x426B                  // originall, 4314, y location of text
+        
+        OS.copy_segment(0x11E0C0, 0x38)     // 80131FB0
+	}
+    
 	// @ Description
 	//  This is the render routine for the multiman button, largely based on Bonus Button 2 at 801320F8
     scope multi_man_button_render: {
@@ -217,14 +281,14 @@ scope SinglePlayerMenus: {
 
 		OS.copy_segment(0x11E234, 0x3C)     // 801320F8
 		
-        lui     at, 0x42C6                  // originally 0x4286, x location of button
+        lui     at, 0x429C                  // originally 0x4286, x location of button
 		mtc1	at, f4
-		lui     at, 0x4264                  // originall, 4314, y location of button
+		lui     at, 0x42C0                  // originall, 4314, y location of button
 		
 		OS.copy_segment(0x11E27C, 0x28)     // 8013216C
 		
-        addiu	a2, r0, 0x0007              // new index
-		xori	a1, a1, 0x0007              // new index, both are used to determine which to highlight when returning to option screen
+        addiu	a2, r0, 0x0008              // new index
+		xori	a1, a1, 0x0008              // new index, both are used to determine which to highlight when returning to option screen
 		
 		OS.copy_segment(0x11E2AC, 0x14)     // 8013219C
 		
@@ -234,9 +298,9 @@ scope SinglePlayerMenus: {
 		addu    a1, t3, t4
 		lhu     t5, 0x0024(v0)
 		
-		lui		at, 0x42EC                  // originally 0x42AC, x location of text
+		lui		at, 0x42C2                  // originally 0x42AC, x location of text
 		mtc1	at, f8
-		lui	    at, 0x4266                  // y location of text
+		lui	    at, 0x42C2                  // y location of text
 		
         OS.copy_segment(0x11E2E0, 0x38)     // 801321D0
 	}
@@ -254,14 +318,14 @@ scope SinglePlayerMenus: {
 		
         OS.copy_segment(0x11E234, 0x3C)		// 801320F8
 		
-        lui		at, 0x42AC					// originally 0x4286, x location of button
+        lui		at, 0x4282					// originally 0x4286, x location of button
 		mtc1	at, f4
-		lui		at, 0x42A0					// y location of button
+		lui		at, 0x42EC					// y location of button
 		
 		OS.copy_segment(0x11E27C, 0x28)		// 8013216C
 		
-        addiu	a2, r0, 0x0008				// new index
-		xori	a1, a1, 0x0008				// new index, both are used to determine which to highlight when returning to option screen
+        addiu	a2, r0, 0x0009				// new index
+		xori	a1, a1, 0x0009				// new index, both are used to determine which to highlight when returning to option screen
 		
 		OS.copy_segment(0x11E2AC, 0x14)		// 8013219C
 		
@@ -271,9 +335,9 @@ scope SinglePlayerMenus: {
 		addu	a1, t3, t4
 		lhu     t5, 0x0024(v0)
 		
-		lui		at, 0x42D2					// originally 0x42AC, x location of text
+		lui		at, 0x42AC					// originally 0x42AC, x location of text
 		mtc1	at, f8
-		lui		at, 0x42A2					// y location of text
+		lui		at, 0x42EE					// y location of text
 		
 		OS.copy_segment(0x11E2E0, 0x38)		// 801321D0
 	}
@@ -349,6 +413,8 @@ scope SinglePlayerMenus: {
     dw  0x00000000      // Remix Modes Button
     remix1p_button_pointer:
     dw  0x00000000      // Remix 1p Game Button
+    allstar_button_pointer:
+    dw  0x00000000      // Allstar Game Button
     multiman_button_pointer:
     dw  0x00000000      // Multiman Button
     cruel_button_pointer:
@@ -523,12 +589,17 @@ scope SinglePlayerMenus: {
         nop
         
         addiu   t0, r0, 0x0007     			// new index location 
-        li      t1, multiman_button_pointer	// insert ram address of pointer to index 7
-        beq     a2, t0, added_index
+        li	    t1, allstar_button_pointer	// insert ram address of pointer to index 7
+        beq	    a2, t0, added_index
         nop
         
         addiu   t0, r0, 0x0008     			// new index location 
-        li      t1, cruel_button_pointer	// insert ram address of pointer to index 8
+        li      t1, multiman_button_pointer	// insert ram address of pointer to index 8
+        beq     a2, t0, added_index
+        nop
+        
+        addiu   t0, r0, 0x0009     			// new index location 
+        li      t1, cruel_button_pointer	// insert ram address of pointer to index 9
         beq	    a2, t0, added_index
         nop
         
@@ -577,9 +648,13 @@ scope SinglePlayerMenus: {
         beq     a2, t7, _added_index
         addiu   t7, r0, 0x0007
         
-        li      t8, multiman_button_pointer
+        li      t8, allstar_button_pointer
         beq     a2, t7, _added_index
         addiu   t7, r0, 0x0008
+        
+        li      t8, multiman_button_pointer
+        beq     a2, t7, _added_index
+        addiu   t7, r0, 0x0009
         
         li      t8, cruel_button_pointer
         beq     a2, t7, _added_index
@@ -636,8 +711,8 @@ scope SinglePlayerMenus: {
         index_6_selected: {
         jal	    0x800269C0
         addiu   a0, r0, 0x009E
-        li      a0, remix1p_button_pointer          // putting this pointer in highlights index 5 object
-        lw      a0, 0x0000(a0)                      // putting this pointer in highlights index 5 object
+        li      a0, remix1p_button_pointer          // putting this pointer in highlights index 6 object
+        lw      a0, 0x0000(a0)                      // putting this pointer in highlights index 6 object
         addiu   a1, r0, 0x0002
         jal     0x80131B24
         addiu   a2, r0, 0x0006
@@ -653,8 +728,29 @@ scope SinglePlayerMenus: {
 	}
     
     // @ Description
-    // This is largely a copy of 80132BFC, it highlights Multiman and forces Bonus 2 Screen
+    // This is largely a copy of 80132BFC, it highlights Allstar and forces 1p Screen
         index_7_selected: {
+        jal	    0x800269C0
+        addiu   a0, r0, 0x009E
+        li      a0, allstar_button_pointer          // putting this pointer in highlights index 7 object
+        lw      a0, 0x0000(a0)                      // putting this pointer in highlights index 7 object
+        addiu   a1, r0, 0x0002
+        jal     0x80131B24
+        addiu   a2, r0, 0x0007                      // index?
+        
+        OS.copy_segment(0x11ED28, 0x10)             // 80132C0C
+        
+        addiu   t5, r0, 0x0011                      // set screen to 1p CSS
+      
+        OS.copy_segment(0x11ED3C, 0x18)             // 80132C0C
+        
+        j       0x80132E8C
+        sw      t8, 0x31C0(at)
+	}
+    
+    // @ Description
+    // This is largely a copy of 80132BFC, it highlights Multiman and forces Bonus 2 Screen
+        index_8_selected: {
         jal	    0x800269C0
         addiu   a0, r0, 0x009E
         li      a0, multiman_button_pointer         // putting this pointer in highlights index 7 object
@@ -668,7 +764,7 @@ scope SinglePlayerMenus: {
     
     // @ Description
     // This is largely a copy of 80132BFC, it highlights Cruel Multiman and forces Bonus 2 Screen
-        index_8_selected: {
+        index_9_selected: {
         jal	    0x800269C0
         addiu   a0, r0, 0x009E
         li      a0, cruel_button_pointer            // putting this pointer in highlights index 8 object
@@ -696,6 +792,8 @@ scope SinglePlayerMenus: {
         beq     a2, at, _training_button
         addiu   at, r0, 0x0006
         beq     a2, at, _training_button
+        addiu   at, r0, 0x0007
+        beq     a2, at, _training_button
         addiu   at, r0, 0x0001
         
         j       0x80131BCC                  // modified original line 1
@@ -718,7 +816,7 @@ scope SinglePlayerMenus: {
         li      t4, SinglePlayerModes.page_flag
         lw      t4, 0x0000(t4)
         bnez    t4, _page_2                 // page check
-        addiu	at, r0, 0x0008     			// modified original line 1, page 2
+        addiu	at, r0, 0x0009     			// modified original line 1, page 2, total index?
         
         addiu   at, r0, 0x0005              // modified original line 1, page 1
         
@@ -770,12 +868,15 @@ scope SinglePlayerMenus: {
                     
         addiu   at, r0, 0x0006              // insert index 6
         beq	    a2, at, _index_6            // modified original line 2
+        
+        addiu   at, r0, 0x0007              // insert index 7
+        beq	    a2, at, _index_7            // modified original line 2
                     
-        addiu   at, r0, 0x0008              // insert index 8
-        beq	    a2, at, _index_8            // modified original line 2
+        addiu   at, r0, 0x0009              // insert index 9
+        beq	    a2, at, _index_9            // modified original line 2
         nop
         
-        // index 7 routines
+        // index 8 routines
         li      t6, multiman_button_pointer // insert index 8 address
         lw      t4, 0x31C4(t4)				// original line 4
         
@@ -818,8 +919,13 @@ scope SinglePlayerMenus: {
         li      t6, remix1p_button_pointer
         j       0x80132E6C                  // skip portion that loads address for originals
         nop
+        
+        _index_7:
+        li      t6, allstar_button_pointer
+        j       0x80132E6C                  // skip portion that loads address for originals
+        nop
 
-        _index_8:
+        _index_9:
         li      t6, cruel_button_pointer
         lui     at, 0x8013					// original line 5
         j       0x80132E6C                  // skip portion that loads address for originals
@@ -838,7 +944,7 @@ scope SinglePlayerMenus: {
         li      t1, SinglePlayerModes.page_flag
         lw      t1, 0x0000(t1)
         bnez    t1, _page_2                 // page check since pages end on different index IDs
-        addiu	t9, r0, 0x0008     			// modified original line 1, page 2
+        addiu	t9, r0, 0x0009     			// modified original line 1, page 2
         
         addiu   t9, r0, 0x0005              // modified original line 1, page 1
         
@@ -882,6 +988,8 @@ scope SinglePlayerMenus: {
         beq     t4, a2, _index_7            
         addiu   t4, r0, 0x0008	            // insert index 8
         beq     t4, a2, _index_8            
+        addiu   t4, r0, 0x0009	            // insert index 9
+        beq     t4, a2, _index_9            
         nop
         
         bne     t4, a2, _end                // skip index 8 ram insertion if not index 8
@@ -925,12 +1033,17 @@ scope SinglePlayerMenus: {
         sw      t2, 0x31C4(at)
         
         _index_7:
-        li		t3, multiman_button_pointer   // insert ram address of pointer to index 1
+        li		t3, allstar_button_pointer   // insert ram address of pointer to index 1
         j		_end
         nop
         
         _index_8:
-        li		t3, cruel_button_pointer   // insert ram address of pointer to index 1
+        li		t3, multiman_button_pointer   // insert ram address of pointer to index 1
+        j		_end
+        nop
+        
+        _index_9:
+        li		t3, cruel_button_pointer      // insert ram address of pointer to index 1
         j		_end
         nop
         
@@ -962,13 +1075,16 @@ scope SinglePlayerMenus: {
         addiu   at, r0, SinglePlayerModes.REMIX_1P_ID
         addiu   at, r0, 0x0007
         beql    v0, at, _index_7
-        addiu   at, r0, SinglePlayerModes.MULTIMAN_ID
+        addiu   at, r0, SinglePlayerModes.ALLSTAR_ID
         addiu   at, r0, 0x0008
+        beql    v0, at, _index_8
+        addiu   at, r0, SinglePlayerModes.MULTIMAN_ID
+        addiu   at, r0, 0x0009
         bne	    v0, at, _end
         addiu   at, r0, SinglePlayerModes.CRUEL_ID
         sw      at, 0x0000(t6)
         
-        j       index_8_selected
+        j       index_9_selected
         addiu   t6, r0, r0
         
         _end:
@@ -999,6 +1115,13 @@ scope SinglePlayerMenus: {
         _index_7:
         sw      at, 0x0000(t6)
         j       index_7_selected
+        addiu   t6, r0, r0
+        j       _return
+        nop
+        
+        _index_8:
+        sw      at, 0x0000(t6)
+        j       index_8_selected
         addiu   t6, r0, r0
         j       _return
         nop
@@ -1036,7 +1159,7 @@ scope SinglePlayerMenus: {
     // CSS SCREENS
 	
     // @ Description
-	// sets the correct index number when exiting out of css for all Modes, added and original
+	// sets the correct index number when exiting out of css for all Bonus based Modes, added and original
     // By setting the correct index number, the correct button will be highlighted when exiting
     // 80132970 hook for putting in the correct index number
 	 scope css_exit: {
@@ -1058,6 +1181,8 @@ scope SinglePlayerMenus: {
         beq     t8, at, _cruel
         addiu   at, r0, 0x0004
         beq     t8, at, _remix_1p 
+        addiu   at, r0, 0x0005
+        beq     t8, at, _allstar 
         lui     at, 0x8013                  // original line 1
         
         _original:
@@ -1073,21 +1198,63 @@ scope SinglePlayerMenus: {
         
         _multiman:
         lui     at, 0x8013                  // original line 1
-        addiu   t8, r0, 0x0007
+        addiu   t8, r0, 0x0008
         j       _return
         sw      t8, 0x31B8(at)              // original line 2
         
         _cruel:
         lui     at, 0x8013                  // original line 1
-        addiu   t8, r0, 0x0008
+        addiu   t8, r0, 0x0009
         j       _return
         sw      t8, 0x31B8(at)              // original line 2
         
         _remix_1p:
+        lui     at, 0x8013                  // original line 1
         addiu   t8, r0, 0x0006
         j       _return
         sw      t8, 0x31B8(at)              // original line 2
+        
+        _allstar:
+        addiu   t8, r0, 0x0007
+        j       _return
+        sw      t8, 0x31B8(at)              // original line 2
     }
+    
+    // @ Description
+    // This sets the correct index/highlights allstar when exiting out of allstar
+	scope allstar_exit: {
+        OS.patch_start(0x11EA2C, 0x8013291C)
+        j	    allstar_exit
+        addiu   t9, r0, SinglePlayerModes.ALLSTAR_ID
+        _return:
+        OS.patch_end()
+        
+        li      at, SinglePlayerModes.singleplayer_mode_flag // t0 = singleplayer mode flag
+        lw     	at, 0x0000(at)              // at = 5 if Allstar was exited from
+        beq     at, t9, _allstar            // if added mode, skip
+        nop
+        
+        _normal:
+        addiu   at, r0, 0x0011              // re-insert 1p CSS screen
+        beq     v0, at, _1p                 // modified original line 1
+        addiu   at, r0, 0x0012              // original line 2
+        j       _return
+        nop
+        
+        _allstar:
+        li      at, SinglePlayerModes.page_flag // load current page address
+        lw      at, 0x0000(at)              // load current page
+        beqz    at, _normal                 // if transitioning to page 1, then proceed as normal
+        nop
+        addiu   t6, r0, 0x0001
+        addiu   t7, r0, 0x0002
+        j       0x80132970
+        addiu   t8, r0, 0x0003
+        
+        _1p:
+        j       0x8013294C              // modified original line 1
+        nop
+	}
     
 	// @ Description
 	//	Loading in the KO amount for the selected character in Multiman and Cruel Multiman Modes
@@ -1342,12 +1509,14 @@ scope SinglePlayerMenus: {
     scope header_graphic_remix_1p: {
         OS.patch_start(0x13C5DC, 0x801343DC)
         j	    header_graphic_remix_1p
-        addiu   t6, r0, SinglePlayerModes.REMIX_1P_ID         // Remix ID inserted
+        addiu   t6, r0, SinglePlayerModes.ALLSTAR_ID         // Remix ID inserted
         _return:
         OS.patch_end()
         
         li      t0, SinglePlayerModes.singleplayer_mode_flag       // t0 = multiman flag
         lw     	t0, 0x0000(t0)              // t0 = 2 if multiman
+        beq     t6, t0, _allstar            // branch if Allstar and should use custom texture       
+        addiu   t6, r0, SinglePlayerModes.REMIX_1P_ID         // Remix ID inserted
         bne     t6, t0, _normal             // branch if not Remix 1p and should use standard 1p Game texture
         lui     t0, 0x0000                  // original line 1
         
@@ -1357,6 +1526,11 @@ scope SinglePlayerMenus: {
         _normal:
         j       _return
         addiu	t0, t0, 0x0228				// original line 2, sets file offset to normal 1p Game texture
+        
+        _allstar:
+        lui     t0, 0x0000                  // original line 1
+        j       _return
+        addiu	t0, t0, 0x39C8				// this moves the file offset so it loads the added header image instead of original
 	}
 	
 	// @ Description
@@ -1461,30 +1635,33 @@ scope SinglePlayerMenus: {
 	}
 	
     //	skips the "BOARD THE PLATFORMS" FGM Call
-    scope _BTP_FGM_skip: {
+    scope _BTP_FGM_alter: {
         OS.patch_start(0x149340, 0x80133310)
-        j	    _BTP_FGM_skip
+        j	    _BTP_FGM_alter
         addiu   t6, r0, SinglePlayerModes.BONUS3_ID				
         _return:
         OS.patch_end()
         
-        li      a0, SinglePlayerModes.singleplayer_mode_flag       // a0 = multiman flag
-        lw      a0, 0x0000(a0)              // a0 = 2 if multiman
-        beq	    a0, t6, _bonus3
-        nop
-        bnez    a0, _multiman               // if multiman, cruel skip
-        nop
+        li      at, SinglePlayerModes.singleplayer_mode_flag       // a0 = multiman flag
+        lw      at, 0x0000(at)              // a0 = 2 if multiman
         
-        jal     0x800269C0					// original line 1
+        beq	    at, t6, _announce
+        addiu   a0, r0, 0x01EF				// replace original with Race to the Finish!
+        
+        addiu   t6, r0, SinglePlayerModes.MULTIMAN_ID
+        beq     at, t6, _announce           // if multiman jump
+        addiu   a0, r0, 0x03C7				// replace original with Multiman
+        
+        addiu   t6, r0, SinglePlayerModes.CRUEL_ID
+        beq     at, t6, _announce           // if multiman jump
+        addiu   a0, r0, 0x03C8				// replace original with Multiman
+        
+        // load call as normal if do not take other branches
         addiu   a0, r0, 0x01DC				// original line 2
         
-        _multiman:
-        j       _return
-        nop		
-        
-        _bonus3:
-        jal	    0x800269C0					// original line 1
-        addiu   a0, r0, 0x01EF				// replace original with Race to the Finish!
+        _announce:
+        jal     0x800269C0					// original line 1
+        nop
         j       _return
         nop	
 	}

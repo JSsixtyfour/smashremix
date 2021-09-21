@@ -1,0 +1,20 @@
+// Always call add_music_profile first to create the profile
+add_music_profile(vanilla, "Vanilla")
+
+// Then call add_to_music_profile for every track you want toggled on for this profile
+add_to_music_profile(vanilla, BONUS)
+add_to_music_profile(vanilla, CONGO_JUNGLE)
+add_to_music_profile(vanilla, CREDITS)
+add_to_music_profile(vanilla, DATA)
+add_to_music_profile(vanilla, DREAM_LAND)
+add_to_music_profile(vanilla, DUEL_ZONE)
+add_to_music_profile(vanilla, FINAL_DESTINATION)
+add_to_music_profile(vanilla, HOW_TO_PLAY)
+add_to_music_profile(vanilla, HYRULE_CASTLE)
+add_to_music_profile(vanilla, META_CRYSTAL)
+add_to_music_profile(vanilla, MUSHROOM_KINGDOM)
+add_to_music_profile(vanilla, PEACHS_CASTLE)
+add_to_music_profile(vanilla, PLANET_ZEBES)
+add_to_music_profile(vanilla, SAFFRON_CITY)
+add_to_music_profile(vanilla, SECTOR_Z)
+add_to_music_profile(vanilla, YOSHIS_ISLAND)

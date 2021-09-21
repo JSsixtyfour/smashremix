@@ -29,8 +29,9 @@ scope JNess {
     Character.table_patch_start(crowd_chant_fgm, Character.id.JNESS, 0x2)
     dh  0x031D
     OS.patch_end()
-        
-    
- 
-    
+
+    // Set action strings
+    Character.table_patch_start(action_string, Character.id.JNESS, 0x4)
+    dw  Action.NESS.action_string_table
+    OS.patch_end()
 }

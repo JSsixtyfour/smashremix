@@ -144,6 +144,9 @@ scope NessShared {
         addiu   at, r0, Character.id.LUCAS  // Lucas Character ID
         beq     v0, at, special_jump
         nop
+        addiu   at, r0, Character.id.MTWO   // Mewtwo Character ID
+        beq     v0, at, special_jump
+        nop
         j       _return                     // return
         nop
         
@@ -169,6 +172,9 @@ scope NessShared {
         nop
         addiu   at, r0, Character.id.LUCAS  // Lucas Character ID
         beq     v0, at, special_jump        // jump to special jump
+        nop
+        addiu   at, r0, Character.id.MTWO   // Mewtwo Character ID
+        beq     v0, at, special_jump
         nop
         j       _return                     // return
         nop

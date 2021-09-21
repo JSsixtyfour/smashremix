@@ -145,7 +145,7 @@ scope GBowser {
     Character.edit_action_parameters(GBOWSER,    Action.DamageFlyRoll,     File.BOWSER_DAMAGE_FLY_ROLL, -1,                        -1)
     Character.edit_action_parameters(GBOWSER,    Action.DeadU,             File.BOWSER_TUMBLE,          -1,                        -1)
     Character.edit_action_parameters(GBOWSER,    Action.ScreenKO,          File.BOWSER_TUMBLE,          -1,                        -1)
-    Character.edit_action_parameters(GBOWSER,    Action.Tumble2,           File.BOWSER_TUMBLE,          -1,                        -1)
+    Character.edit_action_parameters(GBOWSER,    Action.WallBounce,        File.BOWSER_TUMBLE,          -1,                        -1)
     Character.edit_action_parameters(GBOWSER,    Action.Tumble,            File.BOWSER_TUMBLE,          -1,                        -1)
     Character.edit_action_parameters(GBOWSER,    Action.Tornado,           File.BOWSER_TUMBLE,          -1,                        -1)
     Character.edit_action_parameters(GBOWSER,    Action.ShieldBreak,       File.BOWSER_DAMAGE_FLY_TOP,  -1,                        -1)
@@ -393,6 +393,11 @@ scope GBowser {
     OS.patch_end()
     Character.table_patch_start(jab_3, Character.id.GBOWSER, 0x4)
     dw Character.jab_3.ENABLED              // jab 3 = ENABLED
+    OS.patch_end()
+
+    // Set action strings
+    Character.table_patch_start(action_string, Character.id.GBOWSER, 0x4)
+    dw  Bowser.Action.action_string_table
     OS.patch_end()
 
     // @ Description

@@ -7,7 +7,9 @@ constant MAX_VALUE(2)
 constant DEFAULT_VALUE(0)
 // bitmask: [vs] [1p] [training] [bonus1] [bonus2]
 constant APPLIES_TO(0b10000)
-constant VALUE_ARRAY_POINTER(0)
+// bitmask: [human] [cpu]
+constant APPLIES_TO_HUMAN_CPU(0b11)
+constant VALUE_ARRAY_POINTER(StockMode.stockmode_table)
 constant ONCHANGE_HANDLER(0)
 
 // @ Description

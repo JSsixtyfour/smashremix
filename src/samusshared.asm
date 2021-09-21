@@ -75,6 +75,10 @@ scope SamusShared {
         li      a1, charge_anim_struct_esamus      // a1 = projectile struct
         beq     t1, t2, _end                // end if character id = ESAMUS
         nop
+        ori     t2, r0, Character.id.MTWO   // t2 = id.MTWO
+        li      a1, MewtwoNSP.projectile_struct     // a1 = projectile struct
+        beq     t1, t2, _end                // end if character id = MTWO
+        nop
         li      a1, 0x80189030              // original line (load charge animation struct)
         
         _end:
@@ -102,6 +106,8 @@ scope SamusShared {
         beq     v0, at, j_0x800EAC44        // if JSAMUS, take Samus branch
         lli     at, Character.id.ESAMUS     // at = ESAMUS
         beq     v0, at, j_0x800EAC44        // if ESAMUS, take Samus branch
+        lli     at, Character.id.MTWO       // at = MTWO
+        beq     v0, at, j_0x800EAC44        // if MTWO, take Samus branch
         nop
 
         jr      ra
@@ -115,6 +121,7 @@ scope SamusShared {
     // @ Description
     // Extends check in end_overlay that allows a Samus-powered Kirby to
     // retain the charged flashing effect when fully charged.
+    // Also handles Kirby's Mewtwo charge effect.
     scope kirby_power_check_flash_: {
         OS.patch_start(0x651C4, 0x800E99C4)
         jal     kirby_power_check_flash_
@@ -128,6 +135,8 @@ scope SamusShared {
         beq     v1, at, j_0x800E99D4        // if JSAMUS, take Samus branch
         lli     at, Character.id.ESAMUS     // at = ESAMUS
         beq     v1, at, j_0x800E99D4        // if ESAMUS, take Samus branch
+        lli     at, Character.id.MTWO       // at = MTWO
+        beq     v1, at, _mewtwo             // if MTWO, take Mewtwo branch
         nop
 
         jr      ra
@@ -135,6 +144,21 @@ scope SamusShared {
 
         j_0x800E99D4:
         j       0x800E99D4
+        nop
+        
+        _mewtwo:
+        lw      t0, 0x0AE0(a3)              // ~
+        addiu   at, r0, 0x0007              // ~
+        lw      a0, 0x0020(sp)              // ~
+        bne     t0, at, j_0x800E99FC        // original logic, skips if charge level != 7
+        lli     a1, GFXRoutine.id.KIRBY_MTWO_CHARGE // a1 = KIRBY_MTWO_CHARGE id
+        
+        // return to Samus branch with alternate GFX Routine ID
+        j       0x800E99E8                  
+        nop
+        
+        j_0x800E99FC:
+        j       0x800E99FC
         nop
     }
 
@@ -154,6 +178,10 @@ scope SamusShared {
         beq     v0, at, j_0x80161EE4        // if JSAMUS, take Samus branch
         lli     at, Character.id.ESAMUS     // at = ESAMUS
         beq     v0, at, j_0x80161EE4        // if ESAMUS, take Samus branch
+        lli     at, Character.id.MTWO       // at = MTWO
+        beq     v0, at, j_0x80161EE4        // if MTWO, take Samus branch (Mewtwo uses 0xAE0 as well)
+        lli     at, Character.id.MARTH      // at = MARTH
+        beq     v0, at, j_0x80161EE4        // if MARTH, take Samus branch (Marth uses 0xAE0 as well)
         nop
 
         j       _kirby_power_change_return

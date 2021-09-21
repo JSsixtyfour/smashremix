@@ -135,6 +135,9 @@ scope SinglePlayer {
         addiu	t0, r0, 0x0004              // Remix 1p Flag
         beql    t3, t0, _j_0x8018EA74       // skip saving if in Remix 1p
         lw      ra, 0x0014(sp)              // original line 6
+        addiu	t0, r0, 0x0005              // Allstar 1p Flag
+        beql    t3, t0, _j_0x8018EA74       // skip saving if in Remix 1p
+        lw      ra, 0x0014(sp)              // original line 6
         
         slti    at, a1, Character.id.BOSS   // if (it's not an original character) then use extended table
         bnez    at, _original               // otherwise use original table
@@ -187,6 +190,9 @@ scope SinglePlayer {
         addiu	t9, r0, 0x0004              // Remix 1p Flag
         beql    t4, t9, _j_0x8018EA74       // skip saving if in Remix 1p
         lw      ra, 0x0014(sp)              // original line 6
+        addiu	t9, r0, 0x0005              // Allstar Flag
+        beql    t4, t9, _j_0x8018EA74       // skip saving if in Allstar
+        lw      ra, 0x0014(sp)              // original line 6
         
         srl     v0, t1, 0x0005              // v0 = character_id
         slti    t2, v0, Character.id.BOSS   // if (it's not an original character) then use extended table
@@ -237,7 +243,10 @@ scope SinglePlayer {
         lw     	t2, 0x0000(t2)              // t2 = 4 if Remix 1p
         addiu	t3, r0, 0x0004              // Remix 1p Flag
         beql    t2, t3, _j_0x8018D5A8       // skip saving if in Remix 1p
-        nop             
+        nop  
+        addiu	t3, r0, 0x0005              // Allstar Flag
+        beql    t2, t3, _j_0x8018D5A8       // skip saving if in Allstar
+        nop 
         
         // t0 is character ID
         slti    t2, t0, Character.id.BOSS   // if (it's not an original character) then use extended table
@@ -258,7 +267,9 @@ scope SinglePlayer {
         lw     	t1, 0x0000(t2)              // t2 = 4 if Remix 1p
         addiu	at, r0, 0x0004              // Remix 1p Flag
         beq     t1, at, _j_0x8018D5A8       // skip saving if in Remix 1p
-        nop 
+        addiu	at, r0, 0x0005              // Allstar Flag
+        beq     t1, at, _j_0x8018D5A8       // skip saving if in Allstar
+        nop  
         
         lw      t4, 0x50E8(t4)              // original line 10
         lw      t6, 0x0010(v0)              // t6 = current best time (modified original line 11)
@@ -706,6 +717,9 @@ scope SinglePlayer {
         beq     v0, t6, _remix_1p
         // a0 is character ID
         slti    t6, a0, Character.id.BOSS   // if (it's not an original character) then use extended table
+        addiu	t6, r0, 0x0005              // Allstar Flag
+        beq     v0, t6, _allstar
+        slti    t6, a0, Character.id.BOSS   // if (it's not an original character) then use extended table
         bnez    t6, _original               // otherwise use original table
         nop                                 // ~
 
@@ -732,6 +746,15 @@ scope SinglePlayer {
         lw      v0, 0x0000(t6)              // v0 = high score
         jr      ra                          // return
         nop
+        
+        _allstar:
+        li      t6, Character.ALLSTAR_HIGH_SCORE_TABLE
+        addiu   v0, a0, r0                  // v0 = index to character struct in extended table
+        sll     v0, v0, 0x0005              // v0 = offset to character struct in extended table
+        addu    t6, t6, v0                  // t6 = address of high score character struct
+        lw      v0, 0x0000(t6)              // v0 = high score
+        jr      ra                          // return
+        nop
     }
 
     // @ Description
@@ -746,7 +769,11 @@ scope SinglePlayer {
         li      v0, SinglePlayerModes.singleplayer_mode_flag // v0 = Single Player Mode Flag
         lw     	v0, 0x0000(v0)              // v0 = 4 if Remix 1p
         addiu	t6, r0, 0x0004              // Remix 1p Flag
-        beq     v0, t6, _remix_1p
+        beql    v0, t6, _remix_1p
+        // a0 is character ID
+        slti    t6, a0, Character.id.BOSS   // if (it's not an original character) then use extended table
+        addiu	t6, r0, 0x0005              // Allstar Flag
+        beql    v0, t6, _allstar
         // a0 is character ID
         slti    t6, a0, Character.id.BOSS   // if (it's not an original character) then use extended table
         bnez    t6, _original               // otherwise use original table
@@ -775,6 +802,15 @@ scope SinglePlayer {
         lw      v0, 0x0008(t6)              // v0 = stock count
         jr      ra                          // return
         nop
+        
+        _allstar:
+        li      t6, Character.ALLSTAR_HIGH_SCORE_TABLE
+        addiu   v0, a0, r0                  // v0 = index to character struct in extended table
+        sll     v0, v0, 0x0005              // v0 = offset to character struct in extended table
+        addu    t6, t6, v0                  // t6 = address of high score character struct
+        lw      v0, 0x0008(t6)              // v0 = stock count
+        jr      ra                          // return
+        nop
     }
     
     // @ Description
@@ -790,6 +826,10 @@ scope SinglePlayer {
         lw     	t5, 0x0000(t5)              // t5 = 4 if Remix 1p
         addiu	t6, r0, 0x0004              // Remix 1p Flag
         beq     t5, t6, _remix_1p
+        // t4 is character ID
+        slti    t5, t4, Character.id.BOSS   // if (it's not an original character) then use extended table
+        addiu	t6, r0, 0x0005              // Allstar Flag
+        beq     t5, t6, _allstar
         // t4 is character ID
         slti    t5, t4, Character.id.BOSS   // if (it's not an original character) then use extended table
         bnez    t5, _original               // otherwise use original table
@@ -820,6 +860,15 @@ scope SinglePlayer {
         lbu     a2, 0x000C(t5)              // a2 = difficulty
         b       _return                     // return
         nop
+        
+        _allstar:
+        li      t5, Character.ALLSTAR_HIGH_SCORE_TABLE
+        addiu   a2, t4, r0                  // a2 = index to character struct in extended table
+        sll     a2, a2, 0x0005              // a2 = offset to character struct in extended table
+        addu    t5, t5, a2                  // t5 = address of high score character struct
+        lbu     a2, 0x000C(t5)              // a2 = difficulty
+        b       _return                     // return
+        nop
     }
 
     // @ Description
@@ -835,6 +884,12 @@ scope SinglePlayer {
         lw     	t2, 0x0000(t2)              // t2 = 4 if Remix 1p
         addiu	t7, r0, 0x0004              // Remix 1p Flag
         beq     t2, t7, _remix_1p
+        // t6 is character ID
+        slti    t2, t6, Character.id.BOSS   // if (it's not an original character) then use extended table
+        li      t2, SinglePlayerModes.singleplayer_mode_flag // v0 = Single Player Mode Flag
+        lw     	t2, 0x0000(t2)              // t2 = 4 if Remix 1p
+        addiu	t7, r0, 0x0005              // Allstar Flag
+        beq     t2, t7, _allstar
         // t6 is character ID
         slti    t2, t6, Character.id.BOSS   // if (it's not an original character) then use extended table
         bnez    t2, _original               // otherwise use original table
@@ -858,6 +913,15 @@ scope SinglePlayer {
         li      t7, SinglePlayerModes.page_flag               // load page flag
         sw      r0, 0x0000(t7)              // save page 1 ID, this is so at the end of a run it resets to the normal page
         li      a3, Character.REMIX_1P_HIGH_SCORE_TABLE
+        addiu   a3, a3, -0x045C             // a3 = adjusted table base for extended table
+        
+        j       _extend_high_score_1p_write_return
+        nop
+        
+        _allstar:
+        li      t7, SinglePlayerModes.page_flag               // load page flag
+        sw      r0, 0x0000(t7)              // save page 1 ID, this is so at the end of a run it resets to the normal page
+        li      a3, Character.ALLSTAR_HIGH_SCORE_TABLE
         addiu   a3, a3, -0x045C             // a3 = adjusted table base for extended table
         
         j       _extend_high_score_1p_write_return
@@ -1042,6 +1106,10 @@ scope SinglePlayer {
         li      a0, Character.REMIX_1P_HIGH_SCORE_TABLE_BLOCK
         jal     SRAM.save_
         nop
+        
+        li      a0, Character.ALLSTAR_HIGH_SCORE_TABLE_BLOCK
+        jal     SRAM.save_
+        nop
 
         jal     Toggles.save_               // save all toggles and mark save file present
         nop                                 // we save all toggles so that things stay in sync
@@ -1086,6 +1154,10 @@ scope SinglePlayer {
         nop
         
         li      a0, Character.REMIX_1P_HIGH_SCORE_TABLE_BLOCK
+        jal     SRAM.load_
+        nop
+        
+        li      a0, Character.ALLSTAR_HIGH_SCORE_TABLE_BLOCK
         jal     SRAM.load_
         nop
 
@@ -1158,6 +1230,8 @@ scope SinglePlayer {
         constant PIANO(0x00005A08)
         constant WOLF(0x00005B28)
         constant CONKER(0x00006068)
+        constant MTWO(0x00006408)
+        constant MARTH(0x00006578)
         // TODO: update J names
         constant JSAMUS(0x00004268)
         constant JNESS(0x00004688)
@@ -1312,6 +1386,8 @@ scope SinglePlayer {
         constant PIANO(0x00000046)
         constant WOLF(0x00000028)
         constant CONKER(0x0000002C)
+        constant MTWO(0x0000002C)
+        constant MARTH(0x00000028)
         // TODO: make sure these are good
         constant JSAMUS(0x00000032)
         constant JNESS(0x00000032)
@@ -1686,6 +1762,7 @@ scope SinglePlayer {
         beqz    a0, _custom                 // if this is a new character,
         nop                                 // then we will load a custom image
 
+        _original:
         lui     a0, 0x8013                  // original line
         sll     t1, t0, 0x0004              // original line
         addu    a0, a0, t1                  // original line
@@ -1697,10 +1774,26 @@ scope SinglePlayer {
         lli     a0, Character.id.NONE       // a0 = Character.id.NONE
         beq     t0, a0, _splash_1           // if character id is NONE, then we're on the splash screen
         nop
-        lli     a0, VICTORY_FILE_1          // use custom file
+        li      a0, Character.variant_type.table
+        addu    a0, a0, t0                  // a0 = variant type address
+        lbu     a0, 0x0000(a0)              // a0 = variant type
+        lli     t1, Character.variant_type.J
+        beq     a0,  t1, _variant           // if a J variant, use parent file
+        lli     t1, Character.variant_type.E
+        beq     a0,  t1, _variant           // if an E variant, use parent file
+        nop
 
         jr      ra
-        nop
+        lli     a0, VICTORY_FILE_1          // use custom file
+
+        _variant:
+        li      a0, Character.variant_original.table
+        sll     t0, t0, 0x0002              // t0 = offset in variant_original table
+        addu    a0, a0, t0                  // a0 = variant parent char_id address
+        lw      t0, 0x0000(a0)              // t0 = variant parent char_id
+        lui     a0, 0x8013                  // a0 = 80130000
+        b       _original                   // use original character's image
+        sw      t0, 0x22E0(a0)              // overwrite char_id with parent char_id
 
         _splash_1:
         lli     a0, SPLASH_FILE_1           // use custom file
@@ -1968,6 +2061,8 @@ scope SinglePlayer {
     add_to_single_player(Character.id.PIANO,   name_texture.PIANO,   name_delay.PIANO)
     add_to_single_player(Character.id.WOLF,    name_texture.WOLF,    name_delay.WOLF)
     add_to_single_player(Character.id.CONKER,  name_texture.CONKER,  name_delay.CONKER)
+    add_to_single_player(Character.id.MTWO,    name_texture.MTWO,    name_delay.MTWO)
+    add_to_single_player(Character.id.MARTH,   name_texture.MARTH,   name_delay.MARTH)
 
     // J CHARS           character id          name texture          name delay
     add_to_single_player(Character.id.JSAMUS,  name_texture.JSAMUS,  name_delay.JSAMUS)

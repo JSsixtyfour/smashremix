@@ -221,8 +221,13 @@ scope Hitbox {
 
     // @ Description
     // This prevents a dynamic buffer overflow on the CSS when rendering the hitbox display over the model.
+    // VS
     OS.patch_start(0x139C48, 0x8013B9C8)
     dw      0x00003A98 + 0x4000             // original is 0x3A98
+    OS.patch_end()
+    // 1P
+    OS.patch_start(0x140EC8, 0x80138CC8)
+    dw      0x00004A38 + 0x4000             // original is 0x4A38
     OS.patch_end()
 
     // @ Description

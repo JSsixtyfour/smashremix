@@ -167,8 +167,11 @@ scope GFX {
     // Adds a new GFX Texture block
     // name - Used for display only
     // num_textures - The number of textures to be added to the block
-    // TODO: may want to add additional parameters for the 4 words after num_textures
-    macro add_gfx_texture_block(name, num_textures, tile_format, texture_tile_size) {
+    // tile_format - Tile Format Encoding - 0:RGBA, 1:YUV, 2:CI, 3:IA, 4:I
+    // texture_tile_size - Size of Texels in Texture Tile - 0:4, 1:8, 2:16, 3:32
+    // width - Texture width
+    // height - Texture height
+    macro add_gfx_texture_block(name, num_textures, tile_format, texture_tile_size, width, height) {
         global variable new_gfx_texture_block_count(new_gfx_texture_block_count + 1) // increment new_gfx_texture_block_count
         evaluate n(new_gfx_texture_block_count)
         print " - Added GFX_TEXTURE_BLOCK_ID 0x"; OS.print_hex(0x2E + new_gfx_texture_block_count); print ": {name}\n"
@@ -181,8 +184,8 @@ scope GFX {
         dw      {num_textures}                           // number of textures in block
         dw      {tile_format}                            // Tile Format Encoding - 0:RGBA, 1:YUV, 2:CI, 3:IA, 4:I
         dw      {texture_tile_size}                      // Size of Texels in Texture Tile - 0:4, 1:8, 2:16, 3:32
-        dw      0x00000020                               // Either texture height or texture width
-        dw      0x00000020                               // Either texture height or texture width
+        dw      {width}                                  // Texture width
+        dw      {height}                                 // Texture height
         dw      0x00000001                               // ?
         // next words are the pointers to the textures
         fill    {num_textures} * 4, 0x00
@@ -359,45 +362,65 @@ scope GFX {
     }
 
     scope id {
+        constant FLAME(0x4)
         constant FIRE(0x6)
+	    constant SMOKE_PUFF(0x12)
+	    constant FIRE_CROSS(0x13)
 	    constant EXPLOSION(0x1C)
+	    constant WHITE_SPARK(0x1F)
 	    constant WHITE_SPARKLE(0x29)
 	    constant NOTE(0x5A)
 	}
 
     // ADD NEW GFX TEXTURES HERE
     // Add a texture block and specify the number of textures in the block, then add the textures.
-    // Example:
-    // add_gfx_texture_block(Coin, 9)
-    // add_gfx_texture(gfx/coin-1.rgba8888)
-    // add_gfx_texture(gfx/coin-2.rgba8888)
-    // add_gfx_texture(gfx/coin-3.rgba8888)
-    // add_gfx_texture(gfx/coin-4.rgba8888)
-    // add_gfx_texture(gfx/coin-5.rgba8888)
-    // add_gfx_texture(gfx/coin-6.rgba8888)
-    // add_gfx_texture(gfx/coin-7.rgba8888)
-    // add_gfx_texture(gfx/coin-8.rgba8888)
-    // add_gfx_texture(gfx/coin-9.rgba8888)
-    add_gfx_texture_block(Black and White Explosion, 9, 0, 3)
-    add_gfx_texture(gfx/explosion-bw-1.rgba8888)
-    add_gfx_texture(gfx/explosion-bw-2.rgba8888)
-    add_gfx_texture(gfx/explosion-bw-3.rgba8888)
-    add_gfx_texture(gfx/explosion-bw-4.rgba8888)
-    add_gfx_texture(gfx/explosion-bw-5.rgba8888)
-    add_gfx_texture(gfx/explosion-bw-6.rgba8888)
-    add_gfx_texture(gfx/explosion-bw-7.rgba8888)
-    add_gfx_texture(gfx/explosion-bw-8.rgba8888)
-    add_gfx_texture(gfx/explosion-bw-9.rgba8888)
 
-    add_gfx_texture_block(Dr. Mario Pill Effect, 3, 0, 2)
+    add_gfx_texture_block(Black and White Explosion, 9, 3, 1, 0x20, 0x20)
+    add_gfx_texture(gfx/explosion-bw-1.ia8)
+    add_gfx_texture(gfx/explosion-bw-2.ia8)
+    add_gfx_texture(gfx/explosion-bw-3.ia8)
+    add_gfx_texture(gfx/explosion-bw-4.ia8)
+    add_gfx_texture(gfx/explosion-bw-5.ia8)
+    add_gfx_texture(gfx/explosion-bw-6.ia8)
+    add_gfx_texture(gfx/explosion-bw-7.ia8)
+    add_gfx_texture(gfx/explosion-bw-8.ia8)
+    add_gfx_texture(gfx/explosion-bw-9.ia8)
+
+    add_gfx_texture_block(Dr. Mario Pill Effect, 3, 0, 2, 0x20, 0x20)
     add_gfx_texture(gfx/dr-mario-effect-1.rgba5551)
     add_gfx_texture(gfx/dr-mario-effect-2.rgba5551)
     add_gfx_texture(gfx/dr-mario-effect-3.rgba5551)
 
-    add_gfx_texture_block(PK Love, 3, 0, 2)
+    add_gfx_texture_block(PK Love, 3, 0, 2, 0x20, 0x20)
     add_gfx_texture(gfx/lucas-pk-love-1.rgba5551)
     add_gfx_texture(gfx/lucas-pk-love-2.rgba5551)
     add_gfx_texture(gfx/lucas-pk-love-3.rgba5551)
+
+    add_gfx_texture_block(Dark Cross, 9, 0, 3, 0x20, 0x20)
+    add_gfx_texture(gfx/dark_cross-1.rgba8888)
+    add_gfx_texture(gfx/dark_cross-2.rgba8888)
+    add_gfx_texture(gfx/dark_cross-3.rgba8888)
+    add_gfx_texture(gfx/dark_cross-4.rgba8888)
+    add_gfx_texture(gfx/dark_cross-5.rgba8888)
+    add_gfx_texture(gfx/dark_cross-6.rgba8888)
+    add_gfx_texture(gfx/dark_cross-7.rgba8888)
+    add_gfx_texture(gfx/dark_cross-8.rgba8888)
+    add_gfx_texture(gfx/dark_cross-9.rgba8888)
+
+    add_gfx_texture_block(Dark Flame, 6, 0, 2, 0x20, 0x20)
+    add_gfx_texture(gfx/dark_flame-1.rgba5551)
+    add_gfx_texture(gfx/dark_flame-2.rgba5551)
+    add_gfx_texture(gfx/dark_flame-3.rgba5551)
+    add_gfx_texture(gfx/dark_flame-4.rgba5551)
+    add_gfx_texture(gfx/dark_flame-5.rgba5551)
+    add_gfx_texture(gfx/dark_flame-6.rgba5551)
+
+    add_gfx_texture_block(Mewtwo Jab, 5, 3, 1, 0x20, 0x20)
+    add_gfx_texture(gfx/mewtwo-jab-1.ia8)
+    add_gfx_texture(gfx/mewtwo-jab-2.ia8)
+    add_gfx_texture(gfx/mewtwo-jab-3.ia8)
+    add_gfx_texture(gfx/mewtwo-jab-4.ia8)
+    add_gfx_texture(gfx/mewtwo-jab-5.ia8)
 
     // ADD NEW GFX HERE
     add_gfx(Blue Explosion, gfx/blue_explosion_instructions.bin, id.EXPLOSION)
@@ -416,6 +439,11 @@ scope GFX {
     add_gfx(PK Love, gfx/pk_love_instructions.bin, id.WHITE_SPARKLE)
     add_gfx(PK Love Rising, gfx/pk_love_rising_instructions.bin, id.NOTE)
     add_gfx(PK Love Rising Small, gfx/pk_love_rising_small_instructions.bin, id.FIRE)
+    add_gfx(Purple Spark, gfx/purple_spark_instructions.bin, id.WHITE_SPARK)
+    add_gfx(Purple Smoke Puff, gfx/purple_smoke_puff_instructions.bin, id.SMOKE_PUFF)
+    add_gfx(Dark Cross, gfx/dark_cross_instructions.bin, id.FIRE_CROSS)
+    add_gfx(Dark Flame, gfx/dark_flame_instructions.bin, id.FIRE)
+    add_gfx(Mewtwo Jab, gfx/mewtwo_jab_instructions.bin, id.WHITE_SPARKLE)
 
     // writes new GFX to ROM
     write_gfx()

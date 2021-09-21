@@ -12,7 +12,7 @@ include "OS.asm"
 
 scope Character {
     // number of character slots to add
-    constant ADD_CHARACTERS(28)
+    constant ADD_CHARACTERS(30)
     // start and end offset for the main character struct table
     constant STRUCT_TABLE(0x92610)
     variable STRUCT_TABLE_END(STRUCT_TABLE + 0x6C)
@@ -252,12 +252,12 @@ scope Character {
         add_to_table(str_winner_scale, id.{name}, id.{parent}, 0x4)
         add_to_table(winner_bgm, id.{name}, id.{parent}, 0x4)
         add_to_id_table(singleplayer_vs_preview, id.{name}, id.{parent})
-        // overlay end table
-        origin overlay_end.TABLE_ORIGIN + (id.{name} * 0x4)
+        // gfx routine end table
+        origin gfx_routine_end.TABLE_ORIGIN + (id.{name} * 0x4)
         if id.{parent} > id.FOX {
-            OS.copy_segment(overlay_end.ORIGINAL_TABLE + ((id.{parent} - 2) * 0x4), 0x4)
+            OS.copy_segment(gfx_routine_end.ORIGINAL_TABLE + ((id.{parent} - 2) * 0x4), 0x4)
         } else {
-            dw overlay_end.DISABLED
+            dw gfx_routine_end.DISABLED
         }
         
         // Copy parent character for projectile tables
@@ -1403,17 +1403,17 @@ scope Character {
         }
         
         // @ Description
-        // modifies a hard-coded routine which runs when an overlay/flash effect ends and is
+        // modifies a hard-coded routine which runs when a gfx routine ends or upon action change,
         // responsible for enabling the "charge flash" effect for samus and dk's neutral specials
-        scope get_overlay_end_script_: {
+        scope get_gfx_routine_end_: {
             origin  0x65148
             base    0x800E9948
             // t6 = character id
-            li      at, overlay_end.table   // at = overlay_end.table
+            li      at, gfx_routine_end.table // at = gfx_routine_end.table
             sll     t7, t6, 0x2             // ~
-            addu    at, at, t7              // at = overlay_end.table + (id * 4)
-            lw      t7, 0x0000(at)          // t7 = overlay ending script for {character}
-            jr      t7                      // jump to overlay ending script
+            addu    at, at, t7              // at = gfx_routine_end.table + (id * 4)
+            lw      t7, 0x0000(at)          // t7 = gfx routine ending jump for {character}
+            jr      t7                      // jump
             nop
             nop
             nop
@@ -1895,7 +1895,7 @@ scope Character {
         // pad table for new characters
         fill (table + (NUM_CHARACTERS * 0x4)) - pc()
     }
-    scope overlay_end {
+    scope gfx_routine_end {
         // this table originally begins with DONKEY and ends with GDONKEY
         constant ORIGINAL_TABLE(0xAB6AC)
         constant DISABLED(0x800E9A60)
@@ -2007,6 +2007,43 @@ scope Character {
         constant JIGGLY(0x140)
         constant JIGGLYPUFF(0x140)
         constant NESS(0x1F4)
+    }
+
+    // @ Description
+    // This table maps character-specific actions to strings for display in Training mode
+    scope action_string {
+        OS.align(16)
+        table:
+        constant TABLE_ORIGIN(origin())
+        dw  Action.MARIO.action_string_table     // 0x00 - MARIO
+        dw  Action.FOX.action_string_table       // 0x01 - FOX
+        dw  Action.DK.action_string_table        // 0x02 - DONKEY
+        dw  Action.SAMUS.action_string_table     // 0x03 - SAMUS
+        dw  Action.LUIGI.action_string_table     // 0x04 - LUIGI
+        dw  Action.LINK.action_string_table      // 0x05 - LINK
+        dw  Action.YOSHI.action_string_table     // 0x06 - YOSHI
+        dw  Action.CAPTAIN.action_string_table   // 0x07 - CAPTAIN
+        dw  Action.KIRBY.action_string_table     // 0x08 - KIRBY
+        dw  Action.PIKACHU.action_string_table   // 0x09 - PIKACHU
+        dw  Action.JIGGLY.action_string_table    // 0x0A - JIGGLY
+        dw  Action.NESS.action_string_table      // 0x0B - NESS
+        dw  0                                    // 0x0C - BOSS
+        dw  Action.MARIO.action_string_table     // 0x0D - METAL
+        dw  Action.MARIO.action_string_table     // 0x0E - NMARIO
+        dw  Action.FOX.action_string_table       // 0x0F - NFOX
+        dw  Action.DK.action_string_table        // 0x10 - NDONKEY
+        dw  Action.SAMUS.action_string_table     // 0x11 - NSAMUS
+        dw  Action.LUIGI.action_string_table     // 0x12 - NLUIGI
+        dw  Action.LINK.action_string_table      // 0x13 - NLINK
+        dw  Action.YOSHI.action_string_table     // 0x14 - NYOSHI
+        dw  Action.CAPTAIN.action_string_table   // 0x15 - NCAPTAIN
+        dw  Action.KIRBY.action_string_table     // 0x16 - NKIRBY
+        dw  Action.PIKACHU.action_string_table   // 0x17 - NPIKACHU
+        dw  Action.JIGGLY.action_string_table    // 0x18 - NJIGGLY
+        dw  Action.NESS.action_string_table      // 0x19 - NNESS
+        dw  Action.DK.action_string_table        // 0x1A - GDONKEY
+        // pad table for new characters
+        fill table + (NUM_CHARACTERS * 4) - pc()
     }
 
     // @ Description
@@ -2421,7 +2458,7 @@ scope Character {
     OS.align(16)
     
     // extend kirby's action arrays
-    extend_kirby_arrays(26)
+    extend_kirby_arrays(47)
 
     // set up extended high score table
     EXTENDED_HIGH_SCORE_TABLE_BLOCK:; SRAM.block((NUM_CHARACTERS - 12) * 0x20)   // exclude original 12 characters
@@ -2430,6 +2467,9 @@ scope Character {
     // set up high score table for Remix 1p
     REMIX_1P_HIGH_SCORE_TABLE_BLOCK:; SRAM.block((NUM_CHARACTERS) * 0x20)   // include all characters
     constant REMIX_1P_HIGH_SCORE_TABLE(REMIX_1P_HIGH_SCORE_TABLE_BLOCK + 0x000C)
+    // set up high score table for Allstar
+    ALLSTAR_HIGH_SCORE_TABLE_BLOCK:; SRAM.block((NUM_CHARACTERS) * 0x20)   // include all characters
+    constant ALLSTAR_HIGH_SCORE_TABLE(ALLSTAR_HIGH_SCORE_TABLE_BLOCK + 0x000C)
 
     // set up custom character bonus stages
     OS.align(16)
@@ -2650,7 +2690,7 @@ scope Character {
     // 0x20 - DRM
     define_character(DRM, MARIO, File.DRM_MAIN, 0x0CA, 0, File.DRM_CHARACTER, 0x12A, File.DRM_PROJECTILE_DATA, 0x164, File.DRM_PROJECTILE_GRAPHIC, 0, 0x454, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_DRM, Stages.id.BTP_DRM, Stages.id.BTT_YL, Stages.id.BTP_YL, sound_type.U, variant_type.NA)
     // 0x21 - WARIO
-    define_character(WARIO, MARIO, File.WARIO_MAIN, 0x0CA, 0, File.WARIO_CHARACTER, 0x12A, 0x0CC, 0x164, 0x129, 0, 0x51C, 0x0, OS.FALSE, OS.TRUE, Stages.id.BTT_WARIO, Stages.id.BTP_WARIO, Stages.id.BTT_JIGGLYPUFF, Stages.id.BTP_JIGGLYPUFF,sound_type.U, variant_type.NA)
+    define_character(WARIO, MARIO, File.WARIO_MAIN, 0x0CA, 0, File.WARIO_CHARACTER, 0x12A, 0x0CC, 0x164, 0x129, 0, 0x51C, 2, OS.FALSE, OS.TRUE, Stages.id.BTT_WARIO, Stages.id.BTP_WARIO, Stages.id.BTT_JIGGLYPUFF, Stages.id.BTP_JIGGLYPUFF,sound_type.U, variant_type.NA)
     // 0x22 - DSAMUS
     define_character(DSAMUS, SAMUS, File.DSAMUS_MAIN, 0x0D8, 0, File.DSAMUS_CHARACTER, 0x142, 0x15D, File.DSAMUS_SECONDARY, 0, 0, 0x6B4, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_DS, Stages.id.BTP_DS, Stages.id.BTT_LUCAS, Stages.id.BTP_LUCAS2, sound_type.U, variant_type.NA)
     // 0x23 - ELINK
@@ -2680,7 +2720,7 @@ scope Character {
     // 0x2F - EPUFF
     define_character(EPUFF, JIGGLYPUFF, 0x0E9, 0x0E8, 0, 0x14A, 0x14B, 0, 0x15F, 0, 0, 0x474, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_JIGGLYPUFF, Stages.id.BTP_JIGGLYPUFF, Stages.id.BTT_FALCO, Stages.id.BTP_MARIO, sound_type.U, variant_type.E)
     // 0x30 - JKIRBY
-    define_character(JKIRBY, KIRBY, File.JKIRBY_MAIN, 0x0E4, 0, 0x148, 0x149, 0, 0x15C, 0, 0, 0x808, 26, OS.TRUE, OS.FALSE, Stages.id.BTT_KIRBY, Stages.id.BTP_KIRBY, Stages.id.BTT_FOX, Stages.id.BTP_FOX, sound_type.J, variant_type.J)
+    define_character(JKIRBY, KIRBY, File.JKIRBY_MAIN, 0x0E4, 0, 0x148, 0x149, 0, 0x15C, 0, 0, 0x808, 47, OS.TRUE, OS.FALSE, Stages.id.BTT_KIRBY, Stages.id.BTP_KIRBY, Stages.id.BTT_FOX, Stages.id.BTP_FOX, sound_type.J, variant_type.J)
     // 0x31 - JYOSHI
     define_character(JYOSHI, YOSHI, File.JYOSHI_MAIN, 0x0F6, 0, 0x152, 0x154, 0, 0x162, 0x153, 0, 0x47C, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_YOSHI, Stages.id.BTP_YOSHI, Stages.id.BTT_FALCON, Stages.id.BTP_GND, sound_type.J, variant_type.J)
     // 0x32 - JPIKA
@@ -2697,6 +2737,10 @@ scope Character {
     define_character(WOLF, FOX, File.WOLF_MAIN, 0x0D0, 0, File.WOLF_CHARACTER, File.WOLF_SHIELD_POSE,  File.WOLF_PROJECTILE_HITBOX, File.WOLF_REFLECTOR, File.WOLFEN, File.WOLF_PROJECTILE_GRAPHIC, 0x4C4, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_WOLF, Stages.id.BTP_WOLF, Stages.id.BTT_FALCO, Stages.id.BTP_FALCO, sound_type.U, variant_type.NA)
     // 0x38 - CONKER
     define_character(CONKER, FOX, File.CONKER_MAIN, 0x0D0, 0, File.CONKER_CHARACTER, File.CONKER_SHIELD_POSE, File.CONKER_NUT_PROJECTILE_HITBOX, File.CONKER_GRENADE_PROJECTILE_HITBOX, File.GREGS_HAND, File.CONKER_NUT_PROJECTILE_GRAPHIC, 0x5DC, 6, OS.TRUE, OS.FALSE, Stages.id.BTT_CONKER, Stages.id.BTP_CONKER, Stages.id.BTT_FALCO, Stages.id.BTP_FALCO, sound_type.U, variant_type.NA)
+    // 0x39 - MTWO
+    define_character(MTWO, YOSHI, File.MTWO_MAIN, 0x0F6, 0, File.MTWO_CHARACTER, File.MTWO_SHIELD_POSE, 0, File.MTWO_USMASH_GRAPHIC, File.MTWO_SBALL_PROJECTILE_HITBOX, 0, 0x548, 6, OS.FALSE, OS.TRUE, Stages.id.BTT_MTWO, Stages.id.BTP_MTWO, Stages.id.BTT_DS, Stages.id.BTP_SAMUS, sound_type.U, variant_type.NA)
+    // 0x3A - MARTH
+    define_character(MARTH, CAPTAIN, File.MARTH_MAIN, 0x0EB, 0, File.MARTH_CHARACTER, File.MARTH_SHIELD, 0, 0x15E, File.MARTH_ENTRY_EFFECTS, 0, 0x524, 8, OS.FALSE, OS.TRUE, Stages.id.BTT_MARTH, Stages.id.BTP_MARTH, Stages.id.BTT_DRM, Stages.id.BTP_YL, sound_type.U, variant_type.NA)
     
     print "========================================================================== \n"
 }

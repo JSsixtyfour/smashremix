@@ -369,6 +369,9 @@ scope Hazards {
 		lli     t0, Stages.id.PCASTLE_O     // t0 = Stages.id.PCASTLE_O
         beq		v1, t0, _pc_clone			// if stage Peach's Castle Dreamland, load the bumper if hazards not off
 		nop
+        lli     t0, Stages.id.PCASTLE_BETA  // t0 = Stages.id.PCASTLE_O
+        beq		v1, t0, _pc_clone			// if stage Peach's Castle Dreamland, load the bumper if hazards not off
+		nop
 		
 		bnez    v1, _end                    // if current stage is not Peach's Castle (stage_id = 0), then always disable bumper
         nop
@@ -928,7 +931,9 @@ scope Hazards {
 		addiu	t0, r0, Stages.id.PCASTLE_DL
 		beq		t3, t0, _classic_bumper	    // check for Peach's Castle DL
 		addiu	t0, r0, Stages.id.PCASTLE_O
-		beq		t3, t0, _classic_bumper	    // original line 1 modified
+		beq		t3, t0, _classic_bumper	    // check for Peach's Castle O
+		addiu	t0, r0, Stages.id.PCASTLE_BETA
+        beq		t3, t0, _classic_bumper	    // check for Peach's Castle Beta
 		nop
 		lw      t0, 0x0004(sp)              // ~
         addiu   sp, sp, 0x0010              // deallocate stack space
@@ -1168,7 +1173,1208 @@ scope Hazards {
     dw 0                                    // p2
     dw 0                                    // p3
     dw 0                                    // p4
+    
+    
+    // @ Description
+    // This establishes Jungle Japes hazard object in which rushing water is tied to
+    scope jungle_japes_setup: {
+        addiu   sp, sp, -0x0068
+        sw      ra, 0x0014(sp)
+        
+        // _check_hazard:
+        li      t0, Toggles.entry_hazard_mode
+        lw      t0, 0x0004(t0)              // t0 = hazard_mode (hazards disabled when t0 = 1 or 3)
+        andi    t0, t0, 0x0001              // t0 = 1 if hazard_mode is 1 or 3, 0 otherwise
+        bnez    t0, _end                    // if hazard_mode enabled, skip original
+        nop
+        
+        addiu   a1, r0, r0                  // clear routine
+        
+        addiu   a2, r0, 0x0001              // group
+        addiu   a0, r0, 0x03F2              // object id
+        jal     Render.CREATE_OBJECT_       // create object
+        lui     a3, 0x8000                  // unknown
+        li      a1, rushing_water           // associated routine
+        or      a0, v0, r0                  // place object address in a0
+        addiu   a2, r0, 0x0001              // unknown, used by Dreamland
+        jal     0x80008188                  // assigns special routines that can work correctly with player location
+        addiu   a3, r0, 0x0004
+        
+        
+        li      t1, 0x80131300              // load the hardcoded address where header address (+14) is located
+        lw      t1, 0x0000(t1)              // load aforemention address
+        
+        sw      r0, 0x0008(t1)              // clear spot used for timer
+        
+        addiu   t1, t1, -0x0014             // acquire address of header
+        lw      t3, 0x00E0(t1)              // load pointer to klaptrap
+        addiu   t3, t3, -0x07E8             // subtract offset amount to get to top of klaptrap file
+        li      t2, 0x801313F0              // load hardcoded space used by hazards, generally for pointers
+        sw      t3, 0x0000(t2)              // save klaptrap header address to first word of this struct, as pirhana plant does the same
+        sw      t1, 0x0004(t2)              // save stage header address to second word of this struct, as Pirhana Plant does the same
 
+        sw      r0, 0x0054(sp)
+        sw      r0, 0x0050(sp)
+        sw      r0, 0x004C(sp)
+        addiu   t6, r0, 0x0001
+        sw      t6, 0x0010(sp)
+        addiu   a0, r0, 0x03F5              // set object ID
+        lli     a1, Item.KlapTrap.id        // set item id to klaptrap
+        li      a2, klaptrap_coordinates    // location in which klaptrap spawns
+        jal     0x8016EA78                  // spawn stage item
+        addiu   a3, sp, 0x0050              // a3 = address of setup floats
+        
+        _end:
+        lw      ra, 0x0014(sp)
+        addiu   sp, sp, 0x0068
+        jr      ra
+        nop
+    }
+    
+    klaptrap_coordinates:
+    dw  0x00000000
+    dw  0x00000000
+    dw  0x00000000
+    dw  0x00000000
+    
+    // @ Description
+    // main routine for klaptrap
+    scope klaptrap_main_: {
+        addiu   sp, sp, -0x0028
+        sw      ra, 0x001C(sp)
+        sw      a0, 0x0020(sp)
+        
+        sw      v1, 0x0024(sp)
+        sw      a2, 0x0018(sp)            // save item special struct to stack
+        
+        
+        
+        li      t5, 0x801313F0
+        lw      at, 0x0010(t5)
+        addiu   t6, r0, 0x0001
+        bne     at, t6, _timer_check
+        lli     at, 0x0001              // ~
+        sw      r0, 0x0010(t5)          // clear hitbox check
+        sw      at, 0x010C(a2)          // enable hitbox
+        sw      at, 0x0038(s0)          // make klaptrap visible again
+        
+        _timer_check:
+        lw      t6, 0x0008(t5)          // load timer
+        addiu   t7, t6, 0x0001          // add to timer
+        addiu   at, r0, 0x0001 
+        slti    t8, t6, 0x01E4          // wait 484 frames
+        bne     t8, r0, _end            // if not 484 or greater, skip animation application, this is the initial check, klaptrap won't spawn until at least 484 frames
+        sw      t7, 0x0008(t5)          // save updated timer
+        sw      t6, 0x0010(sp)          // save original timer
+        jal     Global.get_random_int_  // get random integer
+        addiu   a0, r0, 0x00A0          // decimal 160 possible integers
+        lw      a0, 0x0020(sp)          // load registers
+        addiu   t4, r0, 0x0050          // place 50 as the random number to spawn klaptrap
+        beq     t4, v0, _spawn          // if 50, spawn klaptrap             
+        addiu   t4, r0, 0x0258          // put in max time before klaptrap, 600 frames
+        lw      t6, 0x0010(sp)          // load timer from stack
+        bne     t4, t6, _end            // if not same as timer, skip animation
+        nop
+
+        // klaptrap is spawned
+        _spawn:
+        sw      r0, 0x0008(t5)          // restart timer
+        li      t5, 0x801313F0
+        addiu   at, r0, 0x0001
+        sw      at, 0x0010(t5)          // save klaptrap spawn hitbox id
+        li      at, 0xFFFFFFFF
+        
+        
+        lw      t1, 0x0000(t5)          // load klaptrap file ram address
+        addiu   t2, r0, 0x0908          // load in offset of animation track 1
+        addiu   a2, r0, 0x0000          // clear out a2
+            
+        lw      a0, 0x0074(a0)          // unknown, investigate (probably relates to the object location)
+        jal     0x8000BD1C              // animation track 1 set up
+        addu    a1, t1, t2              // place animation track address in a1
+        
+        lui     t3, 0x8013
+        lw      t3, 0x13F0(t3)          // load klaptrap file ram address
+        addiu   t4, r0, 0x0E20          // offset to track 2
+        lw      a0, 0x0080(a0)          // unknown, probably for image swapping
+        jal     0x8000BD54              // set up track 2
+        addu    a1, t3, t4              // place animation track address in a1
+        //jal     0x8000DF34              // apply animation tracks
+        //or      a0, s1, r0
+        
+        _end:
+        lw  ra, 0x001C(sp)
+        addiu   sp, sp, 0x0028
+        jr      ra
+        addu    v0, r0, r0 
+    }
+    
+    // @ Description
+    // Subroutine which sets up initial properties of klaptrap.
+    // a0 - no associated object
+    // a1 - item info array
+    // a2 - x/y/z coordinates to create item at
+    // a3 - unknown x/y/z offset
+    scope klaptrap_stage_setting_: {
+        addiu   sp, sp,-0x0060                  // allocate stack space
+        sw      s0, 0x0020(sp)                  // ~
+        sw      s1, 0x0024(sp)                  // ~
+        sw      ra, 0x0028(sp)                  // store s0, s1, ra
+        sw      a1, 0x0038(sp)                  // 0x0038(sp) = unknown
+        li      a1, Item.KlapTrap.item_info_array
+        sw      a2, 0x003C(sp)                  // 0x003C(sp) = original x/y/z
+        li      a3, klaptrap_coordinates
+        addiu   t6, r0, 0x0001                  // unknown, used by pirhana plant
+        jal     0x8016E174                      // create item
+        sw      t6, 0x0010(sp)                  // argument 4(unknown) = 1
+        li      a2, klaptrap_coordinates        // 0x003C(sp) = original x/y/z
+        beqz    v0, _end                        // end if no item was created
+        or      a0, v0, r0                      // a0 = item object
+
+        
+        // item is created
+        sw      r0, 0x0038(v0)                  // save to object struct to make klaptrap invisible
+        lw      v1, 0x0084(v0)                  // v1 = item special struct
+        sw      v1, 0x002C(sp)                  // 0x002C(sp) = item special struct
+        lw      t9, 0x0074(v0)                  // load location struct 2
+        lw      t8, 0x0000(a2)                  // load x coordinate
+        sw      t8, 0x0350(v1)                  // save initial x coordinates
+        sw      t8, 0x001C(t9)                  // save initial x coordinates
+        addiu   t2, r0, 0x00B4                  // unknown flag used by pirhana
+        sh      t2, 0x033E(v1)                  // save flag
+        
+        lw      t7, 0x0004(a2)                  // load initial y coordinates
+        sw      t7, 0x0354(v1)                  // save initial y coordinates
+        sw      t8, 0x0020(t9)
+        lw      t8, 0x0008(a2)                  // load initial z coordinates
+        sw      t8, 0x0358(v1)                  // save initial z coordinates
+        sw      t8, 0x0024(t9)
+        
+        lbu     t9, 0x0158(v1)                  // ~
+        ori     t9, t9, 0x0010                  // ~
+        sb      t9, 0x0158(v1)                  // enable unknown bitflag
+        sw      r0, 0x010C(v1)                  // disable hitbox
+
+        
+        
+        
+        addiu   t4, r0, 0x00014                 // hitbox damage set to 20
+        sw      t4, 0x0110(v1)                  // save hitbox damage
+        addiu   t4, r0, 0x0270                  // spike hitbox angle
+        sw      t4, 0x013C(v1)                  // save hitbox angle to location
+        // 0x0118 damage multiplier
+        addiu   t4, r0, 0x0003                  // slash effect id
+        sw      t4, 0x011C(v1)                  // knockback effect - 0x3 = slash
+        addiu   t4, r0, 0x0105                  // heavy slash sound ID
+        sh      t4, 0x0156(v1)                  // save hitbox sound to heavy slash (could also do bat ping 0x34)
+        addiu   t4, r0, 0x0100                  // put hitbox bkb at 100
+        sw      t4, 0x0148(v1)                  // set hitbox bkb 
+        sw      t4, 0x0140(v1)                  // set hitbox kbs
+        
+        lbu     t4, 0x02D3(v1)
+        ori     t5, t4, 0x0008
+        sb      t5, 0x02D3(v1)
+        sw      r0, 0x0248(v1)                  // disable hurtbox
+        // sw      r0, 0x01CC(v1)               // rotation direction = 0
+        sw      r0, 0x01D0(v1)                  // hitbox refresh timer = 0
+        sw      r0, 0x01D4(v1)                  // hitbox collision flag = FALSE
+        sw      r0, 0x35C(v1)
+        li      t1, klaptrap_blast_zone_        // load klaptrap blast zone routine
+        sw      t1, 0x0398(v1)                  // save routine to part of item special struct that carries unique blast wall destruction routines
+
+        _end:
+        or      v0, a0, r0                      // v0 = item object
+        lw      s0, 0x0020(sp)                  // ~
+        lw      s1, 0x0024(sp)                  // ~
+        lw      ra, 0x0028(sp)                  // load s0, s1, ra
+        jr      ra                              // return
+        addiu   sp, sp, 0x0060                  // deallocate stack space
+    }
+    
+
+    // @ Description
+    // this routine gets run by whenever a projectile crosses the blast zone. The purpose here is to restock Conker's grenades
+    scope klaptrap_blast_zone_: {
+        sw      r0, 0x010C(a2)                  // disable hitbox
+        lw      t9, 0x0074(a0)
+        li      t1, klaptrap_coordinates
+        lw      t8, 0x0000(t1)                  // load x coordinates
+        sw      t8, 0x0350(a2)                  // save x coordinates
+        sw      t8, 0x001C(t9)
+        
+        lw      t8, 0x0004(t1)                  // load y coordinates
+        sw      t8, 0x0354(a2)                  // save y coordinates
+        
+        j       0x8016F8C0                      // jump to address that bomb/grenade normally goes to
+        sw      r0, 0x0038(s0)                  // make klaptrap invisible
+    }
+    
+    // @ Description
+    // Room ordering fix for Klaptrap.
+    scope klaptrap_room_: {
+        OS.patch_start(0xE8C1C, 0x8016E1DC)
+        j       klaptrap_room_
+        lli     t8, Stages.id.BTP_MTWO      // t0 = Stages.id.BTP_MTWO
+        _return:
+        OS.patch_end()
+        
+		li      t6, Global.match_info
+        lw      t6, 0x0000(t6)              // t6 = match info
+        lbu     t6, 0x0001(t6)              // t6 = current stage ID
+        bne     t6, t8, _klaptrap_check     // if current stage is not Mewtwo's Board the Platforms, then do klaptrap check
+		lw      t6, 0x0000(t0)              // load item id
+        lli     t8, stage.RTTF_BOMB         // load RTTF Bomb ID
+        bne     t6, t8, _klaptrap_check     // if not RTTF Bomb, branch to klaptrap check
+        nop
+        li      t6, 0x8013141C              // load location of RTTF Ram address when in Mewtwo BTP
+        j       _return
+        addiu   a2, r0, 0x000B              // original line 1
+        
+        _klaptrap_check:
+        lli     t8, Item.KlapTrap.id
+        bnel    t6, t8, _end
+        addiu   a2, r0, 0x000B              // original line 1
+        addiu   a2, r0, 0x0004              // proper room for klaptrap
+
+        _end:
+        j       _return
+        lw      t6, 0x0004(t0)              // original line 2
+    }
+    
+    // @ Description
+    // Jungle Japes Rushing Water Routine based on Dreamland's wind at 0x8010595C
+    // This routine is fairly simple. It pulls the global player struct head and loops through to check each player
+    // it then checks how low the player is, if beneath a certain point it will subtract from the players position and save a new location, moving the player leftward
+    // a0 = rushing water object struct
+    scope rushing_water: {
+        addiu   sp, sp, -0x0020
+        sw      ra, 0x0014(sp)
+        sw      a0, 0x0000(sp)
+        
+        addiu   t1, r0, 0x0003            // establishes counter for loop
+        // player structs loaded in
+        li      v1, Global.p_struct_head  // v1= pointer to player struct linked list
+        _loop:
+        lw      v1, 0x0000(v1)            // v1 = 1p player struct address
+        beqz    v1, _player_loop          // if player is not initialized skips
+        lw      t5, 0x0004(v1)            // load player object pointer
+        beqz    t5, _player_loop          // check to see if player is loaded by checking to see if there's a pointer to the player object
+        nop
+
+        // player data loaded
+        _player_data:
+        lw      v0, 0x0078(v1)            // load address of location struct of player
+        lwc1    f0, 0x0000(v0)            // loads player's x position
+        lwc1    f2, 0x0004(v0)            // loads player's y position
+
+        // loading parameters of wind effect
+        lui     at, 0xc47a                // y address where rushing water effect becomes active
+        mtc1    at, f22                   // move to floating point
+        li      t9, under_water_table     // ~
+        lbu     t8, 0x000D(v1)            // ~
+        sll     t8, t8, 0x2               // ~
+        addu    t9, t9, t8                // t9 = px_under_water address
+        // location checks begin
+        // vertical checks
+        c.le.s  f2, f22                   // compare player location to beginning of water
+        nop
+        bc1fl   _player_loop              // branch taken if player is too high for effect to work
+        sw      r0, 0x0000(t9)            // clear out table location as player is now above water
+        
+        addiu   t3, r0, 0x0001            // load flag for already under water
+        
+        lw      t8, 0x0000(t9)            // t8 = px_under_water flag
+        beq     t8, t3, _position_calculation // skip fgm if already under water
+        
+        sw      v1, 0x0010(sp)            // save v1 to stack
+        sw      v0, 0x000C(sp)            // save v0 to stack
+        sw      t1, 0x0008(sp)            // save t1 to stack
+        sw      t3, 0x0000(t9)            // save 1 to player's under_water_table     
+        jal     0x800269C0                // play fgm
+        addiu   a0, r0, 0x03D1            // fgm id = 0x3D1 (Splash)
+        lw      v1, 0x0010(sp)            // load from stack to v1
+        lw      v0, 0x000C(sp)            // load from stack 
+        lw      t1, 0x0008(sp)            // load from stack to v1
+        
+         
+        //mtc1    r0, f18
+        //lw      at, 0x004C(v1)            // load player velocity
+        //mtc1    at, f16                   // move velocity to floating point register
+        //c.lt.s  f16, f18                  // compare player velocity to zero
+        //nop
+        //bc1f    _position_calculation     // if velocity is greater than or equal to 0, skip splash fgm
+        //nop
+        
+        
+
+        // the calculation of player's new position
+        _position_calculation:
+        li      at, Toggles.entry_hazard_mode
+        lw      at, 0x0004(at)
+        bne     at, r0, _player_loop
+        
+        lui     at, 0x42b4                // water speed (90)
+        mtc1    at, f4                    // water speed put into floating point
+
+        li      at, 0xc4034000            // load set number subtracted from current player position to determine rate of movement (based on Whispy)
+        mtc1    at, f22
+        sub.s   f2, f0, f20               // subtraction of set amount in location calculation
+        li      at, 0x3A1D4952            // multiplier used by whispy and reused here
+        mtc1    at, f6                    // move whispy multiplier to floating point
+        mul.s   f8, f2, f6                // multiply by whispy multiplier
+        sub.s   f8, f4, f8                // subtract product from water speed
+
+        sub.s   f0, f0, f8                // subtract amount from player x position
+
+        _set_new_position:                // this was based on 800E86B4 (from whispy) but tweaked to work within a player action, but really nothing remains at all
+        swc1    f0, 0x0000(v0)            // new location data saved [ this doesn't work right when player moves rightwards)
+        // swc1    f0, 0x00a4(v1)            // new location data saved, this is what Dreamland does but a function wipes this area out and our routine doesn't time it right
+
+        _player_loop:
+        bnel    t1, r0, _loop
+        addiu   t1, t1, -0x0001
+        
+        lw      ra, 0x0014(sp)
+        lw      a0, 0x0000(sp)
+        addiu   sp, sp, 0x0020
+        jr      ra
+        nop
+    }
+    
+    under_water_table:
+    dw 0                                    // p1
+    dw 0                                    // p2
+    dw 0                                    // p3
+    dw 0                                    // p4
+    
+    // @ Description
+    // This establishes Corneria hazard object in which lasers are fired
+    scope corneria_setup: {
+        addiu   sp, sp, -0x0020
+        sw      ra, 0x0014(sp)
+        
+        // _check_hazard:
+        li      t0, Toggles.entry_hazard_mode
+        lw      t0, 0x0004(t0)              // t0 = hazard_mode (hazards disabled when t0 = 1 or 3)
+        andi    t0, t0, 0x0001              // t0 = 1 if hazard_mode is 1 or 3, 0 otherwise
+        bnez    t0, _end                    // if hazard_mode enabled, skip original
+        nop
+        
+        jal     0x80107FCC                  // run normal Sector Z hard routine
+        nop
+        
+        addiu   a1, r0, r0                  // clear routine
+        addiu   a2, r0, 0x0001              // group
+        addiu   a0, r0, 0x03F2              // object id
+        jal     Render.CREATE_OBJECT_       // create object
+        lui     a3, 0x8000                  // unknown
+        li      a1, great_fox_              // associated routine
+        or      a0, v0, r0                  // place object address in a0
+        addiu   a2, r0, 0x0001              // unknown, used by Dreamland
+        jal     0x80008188                  // assigns special routines that can work correctly with player location
+        addiu   a3, r0, 0x0004
+        li      t1, 0x801313F0
+        sw      r0, 0x0060(t1)
+        _end:
+        lw      ra, 0x0014(sp)
+        addiu   sp, sp, 0x0020
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // Corneria Laser routine based on Arwings
+    // This code is responsible for firing the lasers of the great fox, it is largely reliant on the arwing's coding
+    // If the Corneria Stage is ever updated, the header will need to be modified by adding the hitbox information to it
+    // We have modified file a1 in Remix, so that other stages can have the arwing flying
+    // These files have the arwings hitbox (and pointer to the projectile graphic) in their headers and I added an additional one there for the great fox
+    // all stages use 0x99F instead of the normal sector z file 2
+    // a0 = great fox laser object
+    scope great_fox_: {
+        addiu   sp, sp, -0x0068
+        sw      ra, 0x0014(sp)
+        sw      a0, 0x0000(sp)
+        sw      s0, 0x0004(sp)
+  
+        li      t0, 0x801313F0          // load hardcoded stage struct
+        lw      t6, 0x0060(t0)          // load timer
+        addiu   t2, t6, 0x0001          // add 1 to timer
+        addiu   at, r0, 0x010E          // timer amount for lasers
+        beq     t6, at, _fire           // first shot jump
+        sw      t2, 0x0060(t0)          // save updated timer
+        addiu   at, r0, 0x97E
+        beq     t6, at, _fire           // second shot jump
+        addiu   at, r0, 0x987
+        beq     t6, at, _fire           // third shot jump
+        addiu   at, r0, 0x990
+        beq     t6, at, _fire           // fourth shot jump
+        addiu   at, r0, 0x999
+        beq     t6, at, _fire           // fifth shot jump
+        addiu   at, r0, 0x9A2
+        beq     t6, at, _fire           // sixth shot jump
+        addiu   at, r0, 0x9AB
+        beq     t6, at, _fire           // seventh shot jump
+        addiu   at, r0, 0x9B4
+        beq     t6, at, _fire           // eighth shot jump
+        addiu   at, r0, 0x9BD
+        beq     t6, at, _fire           // ninth shot jump
+        addiu   at, r0, 0x9C6
+        beq     t6, at, _fire           // tenth shot jump
+        addiu   at, r0, 0x107D
+        beql    t6, at, _end            // tenth shot jump
+        sw      r0, 0x0060(t0)          // restart timer
+        beq     r0, r0, _end            // no shot, so jump to end
+        nop
+     
+
+        _fire:
+        li      a1, great_fox_projectile_struct // a1 = main projectile struct address
+        li      a2, great_fox_spawn_location    // a2, spawn location x/y/z      
+        
+        jal     0x801655C8          // generic projectile stage setting that establishes much of what a projectile is
+        addiu   a3, r0, 0x0001      // I believe this makes the projectile hit all players
+        
+       
+        beq     v0, r0, _end        // jump to end if spawn projectile fails
+        lui     at, 0xC366
+        
+        lw      v1, 0x0084(v0)
+        mtc1    at, f18
+        mtc1    r0, f0
+        lui     at, 0xBF80
+        swc1    f18, 0x0020(v1)
+        mtc1    at, f4
+        sw      v0, 0x0064(sp)
+        addiu   a0, sp, 0x0024
+        addiu   a1, sp, 0x0030
+        swc1    f0, 0x0028(sp)
+        swc1    f0, 0x002C(sp)
+        
+        jal     0x8010719C          // determines projectile velocity
+        swc1    f4, 0x0024(sp)
+        
+        
+        // projectile rotation left shot
+        lw      a3, 0x0064(sp)      // load object struct for projectile
+        li      t1, great_fox_spawn_rotation    // load rotation pointer
+        lw      t9, 0x0074(a3)      // load positional struct from projectilesobject struct
+        lw      t3, 0x0000(t1)      // load x rotation
+        sw      t3, 0x0030(t9)      // save x rotation
+        lw      t3, 0x0004(t1)      // load y rotation
+        sw      t3, 0x0034(t9)      // save y rotation
+        lw      t3, 0x0008(t1)      // load z rotation
+        sw      t3, 0x0038(t9)      // save z rotation
+        
+       
+        li      a1, great_fox_projectile_struct  // a1 = main projectile struct address
+        
+        lw      a0, 0x0000(sp)          // load Great Fox Object Struct
+        li      a2, great_fox_spawn_location_2  // load x/y/z of projectile spawn location 2      
+        
+        jal     0x801655C8              // generic projectile stage setting that establishes much of what a projectile is
+        addiu   a3, r0, 0x0001          // believe this makes the projectile hit all players
+        
+        beq     v0, r0, _end            // jump to end if spawn projectile fails
+        lui     at, 0xC366
+        lw      v1, 0x0084(v0)          
+        mtc1    at, f4                  // unknown
+        
+        // projectile rotation right shot
+        li      t9, great_fox_spawn_rotation    // load rotation pointer
+        swc1    f4, 0x0020(v1)          // unknown        
+        lw      t2, 0x0000(t9)          // load x rotation
+        lw      t8, 0x0074(v0)          // load positional struct from projectiles object struct       
+        sw      t2, 0x0030(t8)          // save x rotation
+        lw      t1, 0x0004(t9)          // load y rotation
+        sw      t1, 0x0034(t8)          // save y rotation
+        lw      t2, 0x0008(t9)          // load z rotation
+        sw      t2, 0x0038(t8)          // save z rotation
+                                        
+        
+        _end:
+        lw      ra, 0x0014(sp)          // load ra
+        lw      a0, 0x0000(sp)          // load great fox object
+        lw      s0, 0x0004(sp)
+        addiu   sp, sp, 0x0068
+        
+        jr      ra
+        nop
+    }
+    
+    great_fox_spawn_location:
+    dw  0xc541c000           // x
+    dw  0xc3660000           // y
+    dw  0x43480000           // z
+    
+    great_fox_spawn_location_2:
+    dw  0xc541c000           // x
+    dw  0xc3660000           // y
+    dw  0xc2c80000           // y
+    
+    great_fox_spawn_rotation:
+    dw  0xBFC90FDB           // x
+    dw  0xBF978C23           // y
+    dw  0x3FC90FDB           // z
+    
+    OS.align(16)
+    great_fox_projectile_struct:
+    dw 0x00000000                     // unknown
+    dw 0x00000012                     // projectile id (Arwing's)
+    dw 0x80131428                     // address of hitbox and graphic pointer for stage header
+    dw 0x00000130                     // offset to hitbox added to header (normally 0xBC for regular arwing shot)
+    dw 0x1B000000                     // This determines z axis rotation? (samus is 1246)
+    dw 0x00000000                     // This is the main subroutine for the projectile, handles duration and other things. (default 0x80168540) (samus 0x80168F98)
+    dw 0x80107030                     // This function runs when the projectile collides with clipping. (0x801685F0 - Mario) (0x80169108 - Samus)
+    dw 0x80107074                     // This function runs when the projectile collides with a hurtbox.
+    dw 0x80107074                     // This function runs when the projectile collides with a shield.
+    dw 0x80107238                     // This function runs when the projectile collides with edges of a shield and bounces off
+    dw 0x80107074                     // This function runs when the projectile collides/clangs with a hitbox.
+    dw 0x801072C0                     // This function runs when the projectile collides with Fox's reflector (default 0x80168748)
+    dw 0x80107074                     // This function runs when the projectile collides with Ness's psi magnet
+    dw 0x00000000
+    dw 0x00000013
+    dw 0x80131428
+    
+    // @ Description
+    // This establishes GB Land Sound Effect and Music Changes
+    scope gbland_setup: {
+        addiu   sp, sp, -0x0020
+        sw      ra, 0x0014(sp)
+        
+        li      t0, Global.current_screen   // ~
+        lbu     t0, 0x0000(t0)              // t0 = screen_id
+        ori     t1, r0, 0x0036              // ~
+        beq     t0, t1, _end                // skip if screen_id = training mode
+        nop
+        
+        addiu   a1, r0, r0                  // clear routine
+        addiu   a2, r0, 0x0001              // group
+        addiu   a0, r0, 0x03F2              // object id
+        jal     Render.CREATE_OBJECT_       // create object
+        lui     a3, 0x8000                  // unknown
+        li      a1, gb_music_               // associated routine
+        or      a0, v0, r0                  // place object address in a0
+        addiu   a2, r0, 0x0001              // unknown, used by Dreamland
+        jal     0x80008188                  // assigns special routines that can work correctly with player location
+        addiu   a3, r0, 0x0004
+        li      t1, 0x801313F0
+        sw      r0, 0x0060(t1)              // clear timer
+        sw      r0, 0x0004(t1)              // clear transition flag
+        _end:
+        lw      ra, 0x0014(sp)
+        addiu   sp, sp, 0x0020
+        jr      ra
+        nop
+    }
+    
+    // @ Description
+    // Operates sounds and music for gameboy land
+    // a0 = object
+    scope gb_music_: {
+        addiu   sp, sp, -0x0040
+        sw      ra, 0x0014(sp)
+        sw      a0, 0x0000(sp)
+        sw      s0, 0x0004(sp)
+        
+        li      t0, 0x801313F0          // load hardcoded stage struct
+        sw      t0, 0x0030(sp)          // save struct
+        lw      t6, 0x0060(t0)          // load timer
+        addiu   t2, t6, 0x0001          // add 1 to timer
+        sw      t2, 0x0060(t0)          // save updated timer
+        
+        
+        
+        music_stop:
+        beqz    t6, _mute               // skip stoping music after initial loop
+        nop
+
+        _skip_mute:
+        addiu   at, r0, 0x00B4          // timer amount for gameboy sound
+        beq     t6, at, _beep           // skip if past timer
+        nop
+               
+        
+        _skip_beep:
+        addiu   at, r0, 0x0188
+        slt     t7, t6, at
+        bnez    t7, _end                // if not at frame 188, skip to end
+        nop
+        
+        li      t7, 0x8013139C          // load address of currently playing song
+        lw      t7, 0x0004(t7)          // load currently playing song
+        addiu   a1, r0, {MIDI.id.GB_MEDLEY}
+        bne     t7, a1, _random_check
+        lw      t0, 0x0030(sp)          // load struct
+        
+        lw      t3, 0x0004(t0)          // load transition skip flag
+        bnez    t3, _end                // skip to end
+        nop
+        
+       
+        jal     BGM.play_               // play music
+        addiu   a0, r0, r0              // needs to be 0 for some reason
+        lw      t0, 0x0030(sp)          // load struct
+        addiu   t5, r0, 0x0001
+        beq     r0, r0, _end            // play Gameboy Medley
+        sw      t5, 0x0004(t0)          // save to skip transitions flag address
+        
+        _random_check:
+        li      t9, Toggles.entry_random_music
+        lw      t9, 0x0004(t9)          // t0 = random_music (off when t9 = 0)
+        beqz    t9, _transitions
+        lw      t0, 0x0030(sp)          // load struct
+        
+        lw      t3, 0x0004(t0)          // load transition skip flag
+        bnez    t3, _end                // skip to end
+        nop
+        
+        addu    a1, r0, t7              // move stage song to a1
+        jal     BGM.play_               // play music
+        addiu   a0, r0, r0              // needs to be 0 for some reason
+        lw      t0, 0x0030(sp)          // load struct
+        addiu   t5, r0, 0x0001
+        beq     r0, r0, _play           // play random song
+        sw      t5, 0x0004(t0)          // save to skip transitions flag address
+        
+        _transitions:
+        beq     t6, at, _play           // play muda
+        addiu   a1, r0, {MIDI.id.MUDA}
+        
+        addiu   at, r0, 0x0CC8
+        beq     t6, at, _beep           // stop muda
+        addiu   at, r0, 0x0D40
+        
+        beq     t6, at, _play           // start bubbly
+        addiu   a1, r0, {MIDI.id.BUBBLY}
+        addiu   at, r0, 0x1880
+        
+        beq     t6, at, _beep           // stop bubbly
+        addiu   at, r0, 0x18F8
+        
+        beq     t6, at, _play           // start road to cerulean 
+        addiu   a1, r0, {MIDI.id.ROADTOCERULEANCITY}
+        addiu   at, r0, 0x2439
+        
+        beq     t6, at, _beep           // stop cerulean
+        addiu   at, r0, 0x24B0
+        
+        beq     t6, at, _play           // start Stage 1 Music
+        addiu   a1, r0, {MIDI.id.LEVEL1_WARIO}
+        addiu   at, r0, 0x2FF0
+        
+        beq     t6, at, _beep           // stop stage 1 music
+        addiu   at, r0, 0x3068
+        
+        beq     t6, at, _play           // start mabe
+        addiu   a1, r0, {MIDI.id.MABE}
+        addiu   at, r0, 0x3BA8
+        
+        beq     t6, at, _beep           // stop mabe
+        addiu   t1, r0, 0x0188
+        
+        addiu   at, r0, 0x3C20          
+        beql    t6, at, _end            // restart timer branch
+        sw      t1, 0x0060(t0)          // restart timer
+        beq     r0, r0, _end            // no shot, so jump to end
+        nop
+     
+        _mute:
+        jal     BGM.stop_               // stop music
+        nop
+        beq     r0, r0, _end
+        nop
+        
+        _beep:
+        jal     0x800269C0              // play fgm
+        addiu   a0, r0, 0x03D2          // fgm id = gameboy_startup_sound
+        beq     r0, r0, _mute
+        nop
+
+        _play:
+        li      t1, 0x8013139C          // load address of currently playing song
+        lw      t2, 0x0000(t1)          // load currently playing song
+        addiu   t3, r0, 0x002D
+        beq     t2, t3, _end
+        addiu   t3, r0, 0x002E
+        beq     t2, t3, _end
+        nop
+        // NEED A WAY TO HAVE THIS ONLY FUNCTION WHEN MAIN THEME PLAYS
+        //addiu   t4, r0, 0x00A2
+        //slt     t5, t2, t4
+        //bnez    t5, _end
+        //addiu   t4, r0, 0x00A6
+        //slt     t5, t4, t2
+        //bnez    t5, _end
+        addiu   a0, r0, r0              // needs to be 0 for some reason
+        sw      a1, 0x0000(t1)          // save song to stage song (it will play after star or
+        jal     BGM.play_               // play music
+        sw      a1, 0x0004(t1)          // save song to stage song (it will play after star or hammer ends)
+        
+        _end:
+        lw      ra, 0x0014(sp)          // load ra
+        lw      a0, 0x0000(sp)          // load object
+        lw      s0, 0x0004(sp)
+        addiu   sp, sp, 0x0040
+        
+        jr      ra
+        nop
+    }
+    
+//    // @ Description
+//    // Spawns the RTTF bombs used on Mewtwo's Board the Platforms
+//    scope mtwo_btp_setup: {
+//        addiu   sp, sp, -0x0020
+//        sw      ra, 0x0014(sp)
+//        
+//        jal     0x8010B4D0          // establish stage free space to work with bombs
+//        nop
+//        
+//        jal     0x8010B660          // setups up bomb spawning object
+//        nop
+//        
+//        _end:
+//        lw      ra, 0x0014(sp)
+//        addiu   sp, sp, 0x0020
+//        jr      ra
+//        nop
+//    }
+    
+    // @ Description
+    // Adds rolling bombs to mewtwos board the platforms
+    scope mtwo_btp_setup: {
+        OS.patch_start(0x11228C, 0x8018DB24)
+        jal     mtwo_btp_setup
+        lli     v1, Stages.id.BTP_MTWO         // t0 = Stages.id.BTP_MTWO
+		return:
+        OS.patch_end()
+
+		li      a1, Global.match_info
+        lw      a1, 0x0000(a1)              // a1 = match info
+        lbu     a1, 0x0001(a1)              // a1 = current stage ID
+        bne     a1, v1, _normal     		// if current stage is not Mewtwo's Board the Platforms, then do normal functions
+		nop
+
+        addiu   sp, sp, -0x0020
+        sw      ra, 0x0014(sp)
+        sw      t6, 0x0004(sp)
+        // the code below is to replace a jal to   0x8010B4D0
+        // it establishes stage free space to work with bombs
+        // needed to be moved to accomodate targets
+        lui     v0, 0x8013
+        lw      v0, 0x1300(v0)             // load hardcoded stage pointer
+        lui     t7, 0x0000
+        lui     t9, 0x0000
+        lw      t6, 0x0080(v0)
+        lui     v1, 0x8013
+        addiu   t7, t7, 0x0000
+        addiu   t9, t9, 0x0000
+        addiu   v1, v1, 0x13F0              // load to stage free space
+        subu    t0, v0, t9
+        subu    t8, t6, t7
+        sw      t8, 0x0028(v1)              // save RTF bomb relevant pointer
+        sw      t0, 0x002C(v1)              // save RTF bomb relevant pointer
+        li      t0, 0x45960000              // floating point for bomb spawn point X (4800)
+        sw      t0, 0x0030(v1)              // save X address
+        li      t0, 0x45834000              // floating point for bomb spawn point Y (4200)
+        sw      t0, 0x0034(v1)              // save Y address
+        jal     0x8010B660                  // setups up bomb spawning object
+        sw      r0, 0x0038(v1)              // save Z address in the interest of caution
+        lw      t6, 0x0004(sp) 
+        lw      ra, 0x0014(sp)
+        addiu   sp, sp, 0x0020
+        
+        // targets use same spots as bombs for ram address, maybe modify code to use other address, it needs 0x0, 0x4, and 0x14
+		
+		_normal:
+        lw      a1, 0x0080(t6)              // original line 1
+		jr		ra
+		lui     v1, 0x800A                  // original line 2
+    }
+    
+    // @ Description
+    // Changes how bombs position are set
+    scope mtwo_btp_bomb_position: {
+        OS.patch_start(0x86E1C, 0x8010B61C)
+        j       mtwo_btp_bomb_position
+        lli     a0, Stages.id.BTP_MTWO         // t0 = Stages.id.BTP_MTWO
+		return:
+        OS.patch_end()
+
+		li      a1, Global.match_info
+        lw      a1, 0x0000(a1)              // a1 = match info
+        lbu     a1, 0x0001(a1)              // a1 = current stage ID
+        bnel    a1, a0, _normal     		// if current stage is not Mewtwo's Board the Platforms, then do normal functions
+		addiu   a2, a2, 0x13F8              // original line 1
+
+        addiu   a2, a2, 0x1420              // x and y as done in m2 btp
+        
+        // targets use same spots as bombs for ram address, maybe modify code to use other address, it needs 0x0, 0x4, and 0x14
+		
+		_normal:            
+		j       return  
+		or      a0, r0, r0                  // original line 2
+    }
+    
+    // @ Description
+    // Changes how bombs explosions are loaded
+    scope mtwo_btp_bomb_explosion_1: {
+        OS.patch_start(0xFF614, 0x80184BD4)
+        j       mtwo_btp_bomb_explosion_1
+        lli     at, Stages.id.BTP_MTWO         // t0 = Stages.id.BTP_MTWO
+		return:
+        OS.patch_end()
+
+		li      t7, Global.match_info
+        lw      t7, 0x0000(t7)              // t7 = match info
+        lbu     t7, 0x0001(t7)              // t7 = current stage ID
+        bne     t7, at, _normal     		// if current stage is not Mewtwo's Board the Platforms, then do normal functions
+		lui     at, 0xC1C0                  // original line 1
+
+        li      t7, 0x8013141C              // load in new address for pointer
+        j       return
+        nop
+        
+        // targets use same spots as bombs for ram address, maybe modify code to use other address, it needs 0x0, 0x4, and 0x14
+		
+		_normal:            
+		j       return  
+		lw      t7, 0x0004(v0)              // original line 2
+    }
+    
+    // @ Description
+    // Changes how bombs explosions are loaded
+    scope mtwo_btp_bomb_explosion_2: {
+        OS.patch_start(0xFFC98, 0x80185258)
+        j       mtwo_btp_bomb_explosion_2
+        lli     t8, Stages.id.BTP_MTWO         // t0 = Stages.id.BTP_MTWO
+		return:
+        OS.patch_end()
+
+		li      t9, Global.match_info
+        lw      t9, 0x0000(t9)              // t7 = match info
+        lbu     t9, 0x0001(t9)              // t7 = current stage ID
+        bne     t9, t8, _normal     		// if current stage is not Mewtwo's Board the Platforms, then do normal functions
+		lui     t9, 0x0000                  // original line 2
+
+        li      t7, 0x8013141C              // load in new address for pointer
+        j       return
+        nop
+        
+        // targets use same spots as bombs for ram address, maybe modify code to use other address, it needs 0x0, 0x4, and 0x14
+		
+		_normal:            
+		j       return  
+		lw      t7, 0xB5A4(t7)              // original line 1
+    }
+    
+    // @ Description
+    // Changes how bombs explosions are loaded
+    scope mtwo_btp_bomb_explosion_3: {
+        OS.patch_start(0xFFA44, 0x80185004)
+        j       mtwo_btp_bomb_explosion_3
+        lli     a1, Stages.id.BTP_MTWO         // t0 = Stages.id.BTP_MTWO
+		return:
+        OS.patch_end()
+
+		li      t1, Global.match_info
+        lw      t1, 0x0000(t1)              // t7 = match info
+        lbu     t1, 0x0001(t1)              // t7 = current stage ID
+        bne     t1, a1, _normal     		// if current stage is not Mewtwo's Board the Platforms, then do normal functions
+		lui     t1, 0x0000                  // original line 2
+
+        li      t9, 0x8013141C              // load in new address for pointer
+        j       return
+        nop
+        
+        // targets use same spots as bombs for ram address, maybe modify code to use other address, it needs 0x0, 0x4, and 0x14
+		
+		_normal:            
+		j       return  
+		lw      t9, 0xB5A4(t9)              // original line 1
+    }
+    
+     // @ Description
+     // Changes wind parameters for Dream Greens
+     scope dream_greens_wind: {
+         OS.patch_start(0x811A0, 0x801059A0)
+         j       dream_greens_wind
+         lwc1    f30, 0x0A94(at)             // original line 1
+  		return:
+         OS.patch_end()
+         addiu   v1, r0, Stages.id.DREAM_LAND_SR         // v1 = Dream Greens
+  		li      at, Global.match_info
+         lw      at, 0x0000(at)              // at = match info
+         lbu     at, 0x0001(at)              // at = current stage ID
+         bne     v1, at, _normal     		// if current stage is not Dream Greens, then do normal settings
+  		lui     at, 0x8013                  // original line 2
+         
+  
+         li      v1, 0x456e3000              // load in new max right
+         mtc1    v1, f30
+         li      v1, 0xc56e3000              // load in new max left
+         mtc1    v1, f28
+         mtc1    r0, f20                     // load in new center X
+         mtc1    r0, f22                     // load in center Y?
+         lui     v1, 0x447A                  // max high
+         mtc1    v1, f24
+         lui     v1, 0xC120                  // load in max low
+         j       0x801059C8                  // skip loading f28 normally
+         mtc1    v1, f26
+         
+  		_normal:            
+  		j       return  
+  		nop
+     }
+     
+     // @ Description
+     // Changes hardcoding for Dream Greens
+     scope dream_greens_hardcoding_1: {
+         OS.patch_start(0x81DAC, 0x801065AC)
+         j       dream_greens_hardcoding_1
+         addiu   a1, r0, Stages.id.DREAM_LAND_SR         // v1 = Dream Greens
+  		return:
+         OS.patch_end()
+        
+  		li      a3, Global.match_info
+         lw      a3, 0x0000(a3)              // a3 = match info
+         lbu     a3, 0x0001(a3)              // a3 = current stage ID
+         bnel    a1, a3, _normal     		// if current stage is not Dream Greens, then do normal settings
+  		addiu   a0, a0, 0x10F0              // original line 1
+         
+         lui     a2, 0x8010                  // original line 2
+         addiu   a0, a0, 0x0158              // hardcoding fix 1
+         addiu   s0, s0, 0x13F0              
+         addiu   a2, a2, 0x4D90
+         lui     a1, 0x0000
+         subu    t8, t7, a0
+         sw      t8, 0x0000(s0)
+         j       0x801065CC                  // jump to correct spot
+         addiu   a1, a1, 0x0298              // hardcoding fix 2
+         
+         
+  		_normal:            
+  		j       return  
+  		lui     a2, 0x8010                  // original line 2
+     }
+     
+     // @ Description
+     // Changes hardcoding for Dream Greens
+     scope dream_greens_hardcoding_2: {
+         OS.patch_start(0x81DE4, 0x801065E4)
+         j       dream_greens_hardcoding_2
+         addiu   a2, r0, Stages.id.DREAM_LAND_SR         // v1 = Dream Greens
+  		return:
+         OS.patch_end()
+        
+  		li      a3, Global.match_info
+         lw      a3, 0x0000(a3)              // a3 = match info
+         lbu     a3, 0x0001(a3)              // a3 = current stage ID
+         bnel    a2, a3, _normal     		// if current stage is not Dream Greens, then do normal settings
+  		addiu   a1, a1, 0x13B0              // original line 1
+         
+         addiu   a1, a1, 0x0960              // hardcoding 1
+         j       return
+         addiu   a0, a0, 0x0798              // hardcoding 2
+         
+         
+  		_normal:            
+  		j       return  
+  		addiu   a0, a0, 0x1770              // original line 2
+     }
+     
+     // @ Description
+     // Changes hardcoding for Dream Greens
+     scope dream_greens_hardcoding_3: {
+         OS.patch_start(0x81E00, 0x80106600)
+         j       dream_greens_hardcoding_3
+         addiu   a2, r0, Stages.id.DREAM_LAND_SR         // v1 = Dream Greens
+  		return:
+         OS.patch_end()
+        
+  		li      a3, Global.match_info
+         lw      a3, 0x0000(a3)              // a3 = match info
+         lbu     a3, 0x0001(a3)              // a3 = current stage ID
+         bnel    a2, a3, _normal     		// if current stage is not Dream Greens, then do normal settings
+  		addiu   a0, a0, 0x2A80              // original line 1
+         
+         addiu   a0, a0, 0x1A20              // hardcoding 1       
+         
+  		_normal:            
+  		j       return  
+  		or      a1, r0, r0                  // original line 2
+     }
+     
+     // @ Description
+     // Changes hardcoding for Dream Greens
+     scope dream_greens_hardcoding_4: {
+         OS.patch_start(0x81E24, 0x80106624)
+         j       dream_greens_hardcoding_4
+         addiu   a1, r0, Stages.id.DREAM_LAND_SR         // v1 = Dream Greens
+  		return:
+         OS.patch_end()
+        
+  		li      a3, Global.match_info
+         lw      a3, 0x0000(a3)              // a3 = match info
+         lbu     a3, 0x0001(a3)              // a3 = current stage ID
+         bnel    a1, a3, _normal     		// if current stage is not Dream Greens, then do normal settings
+  		addiu   a0, a0, 0x31F8              // original line 1
+         
+         addiu   a0, a0, 0x2190              // hardcoding 1       
+         
+  		_normal:            
+  		j       return  
+  		or      a1, r0, r0                  // original line 2
+    }
+    
+    insert DREAM_GREENS_OFFSETS,"stages/dream_greens_offsets.bin"
+   
+    // @ Description
+    // Changes hardcoding for Dream Greens animation
+     scope dream_greens_hardcoding_animation_1: {
+         OS.patch_start(0x81B4C, 0x8010634C)
+         j       dream_greens_hardcoding_animation_1
+         addiu   t0, r0, Stages.id.DREAM_LAND_SR         // v1 = Dream Greens
+  		return:
+         OS.patch_end()
+        
+  		li      v1, Global.match_info
+        lw      v1, 0x0000(v1)              // v1 = match info
+        lbu     v1, 0x0001(v1)              // v1 = current stage ID
+        bnel    t0, v1, _normal     		// if current stage is not Dream Greens, then do normal settings
+  		addiu   t1, t1, 0xE870              // original line 1
+         
+        li      t1, DREAM_GREENS_OFFSETS    // hardcoding 1 
+         
+  		_normal:            
+  		j       return  
+  		addu    t0, t9, t1                  // original line 2
+    }
+    
+    // @ Description
+    // Changes hardcoding for Dream Greens animation
+     scope dream_greens_hardcoding_animation_2: {
+         OS.patch_start(0x81B98, 0x80106398)
+         j       dream_greens_hardcoding_animation_2
+         addiu   t5, r0, Stages.id.DREAM_LAND_SR         // v1 = Dream Greens
+  		return:
+         OS.patch_end()
+        
+  		li      t7, Global.match_info
+        lw      t7, 0x0000(t7)              // t7 = match info
+        lbu     t7, 0x0001(t7)              // t7 = current stage ID
+        bnel    t5, t7, _normal     		// if current stage is not Dream Greens, then do normal settings
+  		lui     t7, 0x8013                  // original line 1
+         
+        li      t7, DREAM_GREENS_OFFSETS    // hardcoding 1 
+        j       return
+        addiu   t7, t7, 0x0020              // additional offsetting 
+         
+  		_normal:            
+  		j       return  
+  		addiu   t7, t7,0xE890               // original line 2
+    }
+    
+    // @ Description
+    // Changes hardcoding for Dream Greens animation
+     scope dream_greens_hardcoding_animation_3: {
+         OS.patch_start(0x81C14, 0x80106414)
+         j       dream_greens_hardcoding_animation_3
+         addiu   a2, r0, Stages.id.DREAM_LAND_SR         // v1 = Dream Greens
+  		return:
+         OS.patch_end()
+        
+  		li      a1, Global.match_info
+        lw      a1, 0x0000(a1)              // a1 = match info
+        lbu     a1, 0x0001(a1)              // a1 = current stage ID
+        bnel    a2, a1, _normal     		// if current stage is not Dream Greens, then do normal settings
+  		lw      t5, 0xE8D0(t5)              // original line 1
+        
+        li      t5, DREAM_GREENS_OFFSETS    // hardcoding 1 
+        addu    t5, t5, t4                  // additional offset
+        lw      t5, 0x0060(t5)              // load offset
+         
+  		_normal:            
+  		j       return  
+  		addiu   a2, r0,0x0000               // original line 2
+    }
+    
+    // @ Description
+    // Changes hardcoding for Dream Greens animation
+    scope dream_greens_hardcoding_animation_4: {
+        OS.patch_start(0x81C60, 0x80106460)
+        j       dream_greens_hardcoding_animation_4
+        addiu   a2, r0, Stages.id.DREAM_LAND_SR         // v1 = Dream Greens
+  		return:
+        OS.patch_end()
+        
+  		li      a1, Global.match_info
+        lw      a1, 0x0000(a1)              // a1 = match info
+        lbu     a1, 0x0001(a1)              // a1 = current stage ID
+        bnel    a2, a1, _normal     		// if current stage is not Dream Greens, then do normal settings
+  		lw      t2, 0xE8E8(t2)              // original line 1
+        
+        li      t2, DREAM_GREENS_OFFSETS    // hardcoding 1 
+        addu    t2, t2, t1                  // additional offset
+        lw      t2, 0x0078(t2)              // load offset
+         
+  		_normal:            
+  		j       return  
+  		addiu   a2, r0,0x0000               // original line 2
+    }
+   
+//   // @ Description
+//   // Changes hardcoding for Dream Greens
+//   scope dream_greens_hardcoding_5: {
+//       OS.patch_start(0x81EAC, 0x801066AC)
+//       j       dream_greens_hardcoding_5
+//       addiu   t6, r0, Stages.id.DREAM_LAND_SR         // v1 = Dream Greens
+//		return:
+//       OS.patch_end()
+//      
+//		li      at, Global.match_info
+//       lw      at, 0x0000(at)              // at = match info
+//       lbu     at, 0x0001(at)              // at = current stage ID
+//       bnel    t6, at, _normal     		// if current stage is not Dream Greens, then do normal settings
+//		addiu   a3, a3, 0xa880              // original line 1
+//       
+//       addiu   a3, a3, 0x1E10              // hardcoding 1     
+//       addiu   a2, a2, 0x0C90              // hardcoding 2 
+//       addiu   a1, a1, 0x0C90              // hardcoding 3
+//       jal     0x801159F8                  // run subroutine 
+//       addiu   a0, a0, 0x0AF0              // hardcoding 4
+//       j       0x801066C0
+//       nop
+//       
+//		_normal:            
+//		j       return  
+//		addiu   a2, a2, 0x9700              // original line 2
+//   }
+//   
+//   // @ Description
+//   // Changes hardcoding for Dream Greens
+//   scope dream_greens_hardcoding_6: {
+//       OS.patch_start(0x81E88, 0x80106688)
+//       j       dream_greens_hardcoding_6
+//       addiu   t6, r0, Stages.id.DREAM_LAND_SR         // v1 = Dream Greens
+//		return:
+//       OS.patch_end()
+//      
+//		li      at, Global.match_info
+//       lw      at, 0x0000(at)              // at = match info
+//       lbu     at, 0x0001(at)              // at = current stage ID
+//       bnel    t6, at, _normal     		// if current stage is not Dream Greens, then do normal settings
+//		lui     a0, 0x0146                  // original line 1
+//       
+//       lui     a0, 0x00B2                  // hardcoding 1 
+//       lui     a1, 0x00B2                  // hardcoding 2 
+//       lui     a2, 0x00B2                  // hardcoding 3
+//       j       0x80106698                  // jump to the correct spot
+//       lui     a3, 0x00B2                  // hardcoding 4
+//       
+//		_normal:            
+//		j       return  
+//		lui     a1, 0x0146                  // original line 1
+//   }
 }
 
 

@@ -199,8 +199,10 @@ scope CharacterSelect {
 	dw  0x11020 + 0x200                     // 0x34 - BOWSER
 	dw  0xFA40 + 0x200                      // 0x35 - GBOWSER
     dw  0x4DB0 + 0x200                      // 0x36 - PIANO
-	dw  0x76A0 + 0x200                      // 0x37 - WOLF
+    dw  0x76A0 + 0x200                      // 0x37 - WOLF
     dw  0x110F0 + 0x200                     // 0x38 - CONKER
+    dw  0x19080 + 0x200                     // 0x39 - MEWTWO
+    dw  0x15200 + 0x200                     // 0x3A - MARTH
 
     // @ Description
     // Holds the ROM offset of an alternate req list, used by get_alternate_req_list_
@@ -297,6 +299,8 @@ scope CharacterSelect {
     add_alt_req_list(Character.id.PIANO, req/PIANO_MODEL)
 	add_alt_req_list(Character.id.WOLF, req/WOLF_MODEL)
     add_alt_req_list(Character.id.CONKER, req/CONKER_MODEL)
+    add_alt_req_list(Character.id.MTWO, req/MTWO_MODEL)
+    add_alt_req_list(Character.id.MARTH, req/MARTH_MODEL)
     OS.align(4)
 
     // @ Description
@@ -1821,220 +1825,6 @@ scope CharacterSelect {
     db 0x00                                 // player 3
     db 0x00                                 // player 4
 
-
-    // @ Description
-    // JORG TODO
-    scope modifier_type {
-        constant NONE(0x00)
-        constant MEGA(0x01)
-        constant MINI(0x02)
-        constant CLOAK(0x03)
-        constant LAST(CLOAK)
-
-        // not yet implemented
-        constant METAL(0x04)
-        constant FAST(0x05)
-        constant SLOW(0x06)
-        constant INVISIBLE(0x07)
-        constant NO_SPECIALS(0x08)
-        constant NO_GRABS(0x09)
-    }
-
-
-
-    // @ Description
-    // Contain contents of dpad modification
-    scope modifiers: {
-        db 0, 0, 0, 0                       // p1 (up variant, right mod, down mod, left mod)
-        db 0, 0, 0, 0                       // p2
-        db 0, 0, 0, 0                       // p3
-        db 0, 0, 0, 0                       // p4
-        constant UP(0)
-        constant RIGHT(1)
-        constant DOWN(2)
-        constant LEFT(3)
-    }
-
-    scope handle_none_: {
-        jr      ra
-        nop
-    }
-
-    // @ Arguments
-    // a0 - player
-    // @ Note
-    // All handler take player (0-3) as the first argument
-
-    scope handle_mega_: {
-        addiu   sp, sp,-0x0010              // allocate stack space
-        sw      a1, 0x0004(sp)              // ~
-        sw      ra, 0x0008(sp)              // save registers
-
-        li      a1, 0x40000000              // a1 = (float) 2.0
-        jal     Size.scale_size_by_
-        nop
-        
-        lw      a1, 0x0004(sp)              // ~
-        lw      ra, 0x0008(sp)              // restore registers
-        addiu   sp, sp, 0x0010              // deallocate stack space
-        jr      ra
-        nop
-    }
-
-    scope handle_mini_: {
-        addiu   sp, sp,-0x0010              // allocate stack space
-        sw      a1, 0x0004(sp)              // ~
-        sw      ra, 0x0008(sp)              // save registers
-
-        li      a1, 0x3F000000              // a1 = (float) 0.5
-        jal     Size.scale_size_by_
-        nop
-        
-        lw      a1, 0x0004(sp)              // ~
-        lw      ra, 0x0008(sp)              // restore registers
-        addiu   sp, sp, 0x0010              // deallocate stack space
-        jr      ra
-        nop
-    }
-
-    // TODO: add activate cloak function rather than directly setting this
-    // in fact, all properties should have activate_ deaactivate_ or equivalents
-    // interface time baby
-    scope handle_cloak_: {
-        OS.save_registers()
-        li      t0, 0xFFFFFF30              // t0 = slightly transparent rgba888
-        li      t1, CharEnvColor.override_table
-        sll     t2, a0, 0x0002              // t2 = index from player
-        addu    t1, t1, t2                  // t1 = &overide[player]
-        sw      t0, 0x0000(t1)              // update value to cloaked
-        OS.restore_registers()
-        jr      ra
-        nop
-    }
-
-    // @ Description
-    // Resets cloak to default
-    // @ Arguments
-    // a0 - player
-    scope reset_cloak_: {
-        OS.save_registers()
-        li      t1, CharEnvColor.override_table
-        sll     t2, a0, 0x0002              // t2 = index from player
-        addu    t1, t1, t2                  // t1 = &overide[player]
-        sw      r0, 0x0000(t1)
-        OS.restore_registers()
-        jr      ra
-        nop
-    }
-
-    // JORG: reenable later
-    // @ Description
-    // Loads modifiers in for each player on versus screen only (for now)
-    // This is called four times for each player
-    scope load_modifiers_: {
-       OS.patch_start(0x1389EC, 0x8013A76C)
-       // v1 holds player but is immediatelky incremented
-//       j       load_modifiers_
-//       nop
-       _return:
-       OS.patch_end()
-    
-        lbu     t5, 0x0003(a3)          // original line 1
-        addiu   v1, v1, 0x0001          // original line 2
-
-        OS.save_registers()
-        addiu   a0, v1,-0x0001          // a0 - player
-        jal     Size.reset_size_
-        nop
-        jal     reset_cloak_
-        nop
-        OS.restore_registers()
-        j       _return
-        nop
-    }
-
-
-
-    handler_table:
-    dw handle_none_
-    dw handle_mega_
-    dw handle_mini_
-    dw handle_cloak_
-
-    // @ Description
-    // Updates the modifier values AND redraws the dpad when called.
-    // @ Arguments
-    // a0 - value to set
-    // a1 - int panel/port
-    // a2 - direction
-    // @ Note
-    // Don't call this directly to increment. Use increment_modifier_ instead.
-    scope set_modifier_: {
-        addiu   sp, sp,-0x0020              // allocate stack space
-        sw      t0, 0x0004(sp)              // ~
-        sw      t1, 0x0008(sp)              // ~
-        sw      a0, 0x000C(sp)              // ~
-        sw      a1, 0x0010(sp)              // ~
-        sw      a2, 0x0014(sp)              // ~
-        sw      v0, 0x0018(sp)              // ~
-        sw      ra, 0x001C(sp)              // save registers
-
-        li      t0, modifiers               // t0 = modifiers
-        sll     t1, a1, 0x0002              // ~
-        addu    t0, t0, t1                  // t0 = &modifiers[player]
-        addu    t0, t0, a2                  // t0 = &modifiers[player][direction]
-        sb      a0, 0x0000(t0)              // set modifier    
-
-        // JORG: VISUAL CHANGES HERE
-        move    a0, a1                      // a1 - player port
-        jal     Character.port_to_struct_   // v0 = player_struct
-        nop        
-        li      t0, Character.variant_original.table
-        lbu     t1, 0x000B(v0)              // t1 = current character_id
-        sll     t1, t1, 0x0002              // t1 = character_index
-        addu    t0, t0, t1                  // t0 = &variant_original[character_id]
-        lw      a0, 0x0000(t0)              // a0 = variant_original[character_id] = character_parent_id
-        lw      a1, 0x0010(sp)              // a1 - panel index
-        jal     draw_variant_indicator_     // redraw dpad on update
-        lw      a2, 0x0014(sp)              // a2 - direction
-        
-        lw      t0, 0x0004(sp)              // ~
-        lw      t1, 0x0008(sp)              // ~
-        lw      a0, 0x000C(sp)              // ~
-        lw      a1, 0x0010(sp)              // ~
-        lw      a2, 0x0014(sp)              // ~
-        lw      v0, 0x0018(sp)              // ~
-        lw      ra, 0x001C(sp)              // restore registers
-        addiu   sp, sp, 0x0020              // deallocate stack space
-        jr      ra
-        nop
-    }
-
-    // @ Description
-    // Returns modifier value requested
-    // @ Arguments
-    // a1 - int panel/port
-    // a2 - direction
-    // @ Return
-    // v0 - modifier return 
-    scope get_modifier_: {
-        addiu   sp, sp,-0x0010              // allocate stack space
-        sw      t0, 0x0004(sp)              // ~
-        sw      t1, 0x0008(sp)              // save registers
-        
-        li      t0, modifiers               // t0 = modifiers
-        sll     t1, a1, 0x0002              // ~
-        addu    t0, t0, t1                  // t0 = &modifiers[player]
-        addu    t0, t0, a2                  // t0 = &modifiers[player][direction]
-        lbu     v0, 0x0000(t0)              // v0 = return  = modifier
-
-        lw      t0, 0x0004(sp)              // ~
-        lw      t1, 0x0008(sp)              // save registers   
-        addiu   sp, sp, 0x0010              // deallocate stack space
-        jr      ra
-        nop
-    }
-
     // @ Description
     // New table for sound fx (for each character)
     fgm_table:
@@ -2192,8 +1982,10 @@ scope CharacterSelect {
         constant WARIO(0x00012D38)
         constant LUCAS(0x00013DF8)
         constant BOWSER(0x00014EB8)
-		constant WOLF(0x0001A278)
+        constant WOLF(0x0001A278)
         constant CONKER(0x0001B338)
+        constant MTWO(0x0001C3F8)
+        constant MARTH(0x0001D4B8)
         // j
         constant JMARIO(0x00001078)
         constant JFOX(0x00002138)
@@ -2217,52 +2009,191 @@ scope CharacterSelect {
     // @ Description
     // Logo offsets in file 0x14
     scope series_logo {
-        constant MARIO_BROS(0x00000618)
-        constant STARFOX(0x00001938)
-        constant DONKEY_KONG(0x00000C78)
-        constant METROID(0x000012D8)
-        constant ZELDA(0x000025F8)
-        constant YOSHI(0x00002C58)
-        constant FZERO(0x000032B8)
-        constant KIRBY(0x00001F98)
-        constant POKEMON(0x00003918)
-        constant EARTHBOUND(0x00003F78)
-        constant SMASH(0x000045D8)
-        constant DR_MARIO(0x00004C38)
-		constant BOWSER(0x00005298)
-        constant CONKER(0x000058F8)
-        constant WARIO(0x00005F58)
+        constant NONE(0)
+        constant MARIO_BROS(1)
+        constant STARFOX(2)
+        constant DONKEY_KONG(3)
+        constant METROID(4)
+        constant ZELDA(5)
+        constant YOSHI(6)
+        constant FZERO(7)
+        constant KIRBY(8)
+        constant POKEMON(9)
+        constant EARTHBOUND(10)
+        constant SMASH(11)
+        constant DR_MARIO(12)
+        constant BOWSER(13)
+        constant CONKER(14)
+        constant WARIO(15)
+        constant FIRE_EMBLEM(16)
+        constant REMIX(17)
+        constant BANJO_KAZOOIE(18)
+        constant GAME_AND_WATCH(19)
+        constant JET_FORCE_GEMINI(20)
+        constant MISCHIEF_MAKERS(21)
+        constant MVC(22)
+        constant PERFECT_DARK(23)
+        constant PERSONA(24)
+        constant NBA_JAM(25)
+        constant TOH(26)
+        constant ANIMAL_CROSSING(27)
+
+        scope offset {
+            constant NONE(0)
+            constant MARIO_BROS(0x00000618)
+            constant STARFOX(0x00001938)
+            constant DONKEY_KONG(0x00000C78)
+            constant METROID(0x000012D8)
+            constant ZELDA(0x000025F8)
+            constant YOSHI(0x00002C58)
+            constant FZERO(0x000032B8)
+            constant KIRBY(0x00001F98)
+            constant POKEMON(0x00003918)
+            constant EARTHBOUND(0x00003F78)
+            constant SMASH(0x000045D8)
+            constant DR_MARIO(0x00004C38)
+            constant BOWSER(0x00005298)
+            constant CONKER(0x000058F8)
+            constant WARIO(0x00005F58)
+            constant FIRE_EMBLEM(0x000065B8)
+            constant REMIX(0x00006C18)
+            constant BANJO_KAZOOIE(0x00007278)
+            constant GAME_AND_WATCH(0x000078D8)
+            constant JET_FORCE_GEMINI(0x00007F38)
+            constant MISCHIEF_MAKERS(0x00008598)
+            constant MVC(0x00008BF8)
+            constant PERFECT_DARK(0x00009258)
+            constant PERSONA(0x000098B8)
+            constant NBA_JAM(0x00009F18)
+            constant TOH(0x0000A578)
+            constant ANIMAL_CROSSING(0x0000ABD8)
+        }
+
+        // @ Description
+        // Logo X/Y coordinates for stage select screen
+        scope position {
+            constant X_NONE(0)
+            constant Y_NONE(0)
+            constant X_MARIO_BROS(0x40400000)
+            constant Y_MARIO_BROS(0x41980000)
+            constant X_STARFOX(0x40400000)
+            constant Y_STARFOX(0x41980000)
+            constant X_DONKEY_KONG(0x40400000)
+            constant Y_DONKEY_KONG(0x41A00000)
+            constant X_METROID(0x40000000)
+            constant Y_METROID(0x41A00000)
+            constant X_ZELDA(0x40400000)
+            constant Y_ZELDA(0x41880000)
+            constant X_YOSHI(0xBF800000)
+            constant Y_YOSHI(0x41980000)
+            constant X_FZERO(0x40A00000)
+            constant Y_FZERO(0x41A00000)
+            constant X_KIRBY(0x3F800000)
+            constant Y_KIRBY(0x41A00000)
+            constant X_POKEMON(0x3F800000)
+            constant Y_POKEMON(0x41A00000)
+            constant X_EARTHBOUND(0x3F800000)
+            constant Y_EARTHBOUND(0x419C0000)
+            constant X_SMASH(0x3F800000)
+            constant Y_SMASH(0x419C0000)
+            constant X_DR_MARIO(0)
+            constant Y_DR_MARIO(0x41980000)
+            constant X_BOWSER(0)
+            constant Y_BOWSER(0x41980000)
+            constant X_CONKER(0x40400000)
+            constant Y_CONKER(0x41780000)
+            constant X_WARIO(0x40400000)
+            constant Y_WARIO(0x41780000)
+            constant X_FIRE_EMBLEM(0x00000000)
+            constant Y_FIRE_EMBLEM(0x41980000)
+            constant X_REMIX(0x40400000)
+            constant Y_REMIX(0x419C0000)
+            constant X_BANJO_KAZOOIE(0x00000000)
+            constant Y_BANJO_KAZOOIE(0x41900000)
+            constant X_GAME_AND_WATCH(0x3F800000)
+            constant Y_GAME_AND_WATCH(0x41900000)
+            constant X_JET_FORCE_GEMINI(0x40000000)
+            constant Y_JET_FORCE_GEMINI(0x41800000)
+            constant X_MISCHIEF_MAKERS(0x40000000)
+            constant Y_MISCHIEF_MAKERS(0x419C0000)
+            constant X_MVC(0x40800000)
+            constant Y_MVC(0x419C0000)
+            constant X_PERFECT_DARK(0x3F800000)
+            constant Y_PERFECT_DARK(0x419C0000)
+            constant X_PERSONA(0x3F800000)
+            constant Y_PERSONA(0x419C0000)
+            constant X_NBA_JAM(0x40000000)
+            constant Y_NBA_JAM(0x41A80000)
+            constant X_TOH(0x40000000)
+            constant Y_TOH(0x41800000)
+            constant X_ANIMAL_CROSSING(0x3F800000)
+            constant Y_ANIMAL_CROSSING(0x419C0000)
+        }
+
+        table:
+        constant series_logo_table_origin(origin())
+        // offset                   // X position                // Y position
+        dw offset.NONE,             position.X_NONE,             position.Y_NONE
+        dw offset.MARIO_BROS,       position.X_MARIO_BROS,       position.Y_MARIO_BROS
+        dw offset.STARFOX,          position.X_STARFOX,          position.Y_STARFOX
+        dw offset.DONKEY_KONG,      position.X_DONKEY_KONG,      position.Y_DONKEY_KONG
+        dw offset.METROID,          position.X_METROID,          position.Y_METROID
+        dw offset.ZELDA,            position.X_ZELDA,            position.Y_ZELDA
+        dw offset.YOSHI,            position.X_YOSHI,            position.Y_YOSHI
+        dw offset.FZERO,            position.X_FZERO,            position.Y_FZERO
+        dw offset.KIRBY,            position.X_KIRBY,            position.Y_KIRBY
+        dw offset.POKEMON,          position.X_POKEMON,          position.Y_POKEMON
+        dw offset.EARTHBOUND,       position.X_EARTHBOUND,       position.Y_EARTHBOUND
+        dw offset.SMASH,            position.X_SMASH,            position.Y_SMASH
+        dw offset.DR_MARIO,         position.X_DR_MARIO,         position.Y_DR_MARIO
+        dw offset.BOWSER,           position.X_BOWSER,           position.Y_BOWSER
+        dw offset.CONKER,           position.X_CONKER,           position.Y_CONKER
+        dw offset.WARIO,            position.X_WARIO,            position.Y_WARIO
+        dw offset.FIRE_EMBLEM,      position.X_FIRE_EMBLEM,      position.Y_FIRE_EMBLEM
+        dw offset.REMIX,            position.X_REMIX,            position.Y_REMIX
+        dw offset.BANJO_KAZOOIE,    position.X_BANJO_KAZOOIE,    position.Y_BANJO_KAZOOIE
+        dw offset.GAME_AND_WATCH,   position.X_GAME_AND_WATCH,   position.Y_GAME_AND_WATCH
+        dw offset.JET_FORCE_GEMINI, position.X_JET_FORCE_GEMINI, position.Y_JET_FORCE_GEMINI
+        dw offset.MISCHIEF_MAKERS,  position.X_MISCHIEF_MAKERS,  position.Y_MISCHIEF_MAKERS
+        dw offset.MVC,              position.X_MVC,              position.Y_MVC
+        dw offset.PERFECT_DARK,     position.X_PERFECT_DARK,     position.Y_PERFECT_DARK
+        dw offset.PERSONA,          position.X_PERSONA,          position.Y_PERSONA
+        dw offset.NBA_JAM,          position.X_NBA_JAM,          position.Y_NBA_JAM
+        dw offset.TOH,              position.X_TOH,              position.Y_TOH
+        dw offset.ANIMAL_CROSSING,  position.X_ANIMAL_CROSSING,  position.Y_ANIMAL_CROSSING
     }
 
+    // @ Description
+    // Logo offsets by character ID
     series_logo_offset_table:
     constant series_logo_offset_table_origin(origin())
-    dw series_logo.MARIO_BROS               // Mario
-    dw series_logo.STARFOX                  // Fox
-    dw series_logo.DONKEY_KONG              // Donkey Kong
-    dw series_logo.METROID                  // Samus
-    dw series_logo.MARIO_BROS               // Luigi
-    dw series_logo.ZELDA                    // Link
-    dw series_logo.YOSHI                    // Yoshi
-    dw series_logo.FZERO                    // Captain Falcon
-    dw series_logo.KIRBY                    // Kirby
-    dw series_logo.POKEMON                  // Pikachu
-    dw series_logo.POKEMON                  // Jigglypuff
-    dw series_logo.EARTHBOUND               // Ness
-    dw series_logo.SMASH                    
-    dw series_logo.MARIO_BROS               
-    dw series_logo.SMASH                    
-    dw series_logo.SMASH                    
-    dw series_logo.SMASH                   
-    dw series_logo.SMASH                    
-    dw series_logo.SMASH                    
-    dw series_logo.SMASH                    
-    dw series_logo.SMASH                   
-    dw series_logo.SMASH                    
-    dw series_logo.SMASH                    
-    dw series_logo.SMASH                    
-    dw series_logo.SMASH                    
-    dw series_logo.SMASH                    
-    dw series_logo.DONKEY_KONG              
+    dw series_logo.offset.MARIO_BROS               // Mario
+    dw series_logo.offset.STARFOX                  // Fox
+    dw series_logo.offset.DONKEY_KONG              // Donkey Kong
+    dw series_logo.offset.METROID                  // Samus
+    dw series_logo.offset.MARIO_BROS               // Luigi
+    dw series_logo.offset.ZELDA                    // Link
+    dw series_logo.offset.YOSHI                    // Yoshi
+    dw series_logo.offset.FZERO                    // Captain Falcon
+    dw series_logo.offset.KIRBY                    // Kirby
+    dw series_logo.offset.POKEMON                  // Pikachu
+    dw series_logo.offset.POKEMON                  // Jigglypuff
+    dw series_logo.offset.EARTHBOUND               // Ness
+    dw series_logo.offset.SMASH
+    dw series_logo.offset.MARIO_BROS
+    dw series_logo.offset.SMASH
+    dw series_logo.offset.SMASH
+    dw series_logo.offset.SMASH
+    dw series_logo.offset.SMASH
+    dw series_logo.offset.SMASH
+    dw series_logo.offset.SMASH
+    dw series_logo.offset.SMASH
+    dw series_logo.offset.SMASH
+    dw series_logo.offset.SMASH
+    dw series_logo.offset.SMASH
+    dw series_logo.offset.SMASH
+    dw series_logo.offset.SMASH
+    dw series_logo.offset.DONKEY_KONG
     dw 0x00000000                           
     dw 0x00000000                           
     // add space for new characters
@@ -2319,6 +2250,8 @@ scope CharacterSelect {
         constant PIANO(0x000190A8)
 		constant WOLF(0x00019588)
         constant CONKER(0x00019A68)
+        constant MEWTWO(0x00019F48)
+        constant MARTH(0x0001A428)
         constant BLANK(0x0)
     }
 
@@ -2396,8 +2329,8 @@ scope CharacterSelect {
         define slot_20(BOWSER)
         define slot_21(WOLF)
         define slot_22(CONKER)
-        define slot_23(NONE)
-        define slot_24(NONE)
+        define slot_23(MTWO)
+        define slot_24(MARTH)
     }
     
     // @ Description
@@ -2809,6 +2742,7 @@ scope CharacterSelect {
         Render.load_font()                                                // load font for strings
         Render.load_file(File.CHARACTER_PORTRAITS, Render.file_pointer_1) // load character portraits into file_pointer_1
         Render.load_file(File.CSS_IMAGES, Render.file_pointer_2)          // load CSS images into file_pointer_2
+        Render.load_file(0x0024, Render.file_pointer_3)                   // load file with "x" image into file_pointer_3
 
         // add a room for our indicators that shows up on top of the panels
         lli     a0, 0x38                    // a0 = room
@@ -2834,6 +2768,7 @@ scope CharacterSelect {
         addu    a1, a1, a0                  // a1 = pointer to player struct address
         lw      a0, 0x0000(a1)              // a0 = player struct start
         sw      a0, 0x0040(v0)              // save player struct start address
+        sw      r0, 0x0044(v0)              // clear remaining stock icon and stock indicators object reference
 
         _add_dpad_image:
         lli     a0, 0x38                    // a0 = room
@@ -2953,6 +2888,31 @@ scope CharacterSelect {
         jal     CharacterSelectDebugMenu.init_debug_menu_
         lw      a0, 0x0008(sp)              // a0 = offset in css_player_structs
 
+        lw      a0, 0x0008(sp)              // a0 = offset in css_player_structs = 0 for VS
+        bnez    a0, _return                 // skip remaining stock and count indicators if not VS
+        nop
+
+        Render.register_routine(update_stock_icon_and_count_indicators_)
+        sw      r0, 0x0030(v0)              // clear p1 stocks remaining object pointer
+        sw      r0, 0x0034(v0)              // clear p1 previous portrait_id, char_id, stock mode, selected state
+        sw      r0, 0x003C(v0)              // clear p1 yellow rectangle object pointer
+        sw      r0, 0x0040(v0)              // clear p2 stocks remaining object pointer
+        sw      r0, 0x0044(v0)              // clear p2 previous portrait_id, char_id, stock mode, selected state
+        sw      r0, 0x004C(v0)              // clear p2 yellow rectangle object pointer
+        sw      r0, 0x0050(v0)              // clear p3 stocks remaining object pointer
+        sw      r0, 0x0054(v0)              // clear p3 previous portrait_id, char_id, stock mode, selected state
+        sw      r0, 0x005C(v0)              // clear p3 yellow rectangle object pointer
+        sw      r0, 0x0060(v0)              // clear p4 stocks remaining object pointer
+        sw      r0, 0x0064(v0)              // clear p4 previous portrait_id, char_id, stock mode, selected state
+        sw      r0, 0x006C(v0)              // clear p4 yellow rectangle object pointer
+        lui     t0, 0x8014                  // t0 = stock count
+        lw      t0, 0xBD80(t0)              // ~
+        sw      t0, 0x0070(a0)              // initialize previous num_stocks
+        sw      r0, 0x0084(v0)              // set mode to VS
+        lw      t1, 0x0024(sp)              // t1 = control object
+        sw      v0, 0x0044(t1)              // save stock icon and count indicators control object
+
+        _return:
         lw      ra, 0x0004(sp)              // restore registers
         addiu   sp, sp, 0x0030              // deallocate stack space
 
@@ -3250,19 +3210,6 @@ scope CharacterSelect {
         b       _draw_icon
         nop
 
-        // jorg: todo see if we need for 
-//        _right_down_left:
-//        move    t1, a1
-//        lli     t2, modifier_type.MEGA      // ~
-//        beql    t1, t2, _draw_icon          // ~
-//        addiu   a1, at, 0x8E8               // offset for giant mushroom image data in CSS_IMAGES
-//        lli     t2, modifier_type.MINI      // ~
-//        beql    t1, t2, _draw_icon          // ~
-//        addiu   a1, at, 0xB48               // offset for mini mushroom image data in CSS_IMAGES
-//        lli     t2, modifier_type.CLOAK     // ~
-//        beql    t1, t2, _draw_icon          // ~
-//        addiu   a1, at, 0xDA8               // offset for cloak image data in CSS_IMAGES
-
         _draw_icon:
         lw      a0, 0x0034(a0)              // a0 = RAM address of object block
         jal     Render.TEXTURE_INIT_        // v0 = RAM address of texture struct
@@ -3535,6 +3482,746 @@ scope CharacterSelect {
     }
 
     // @ Description
+    // This adds/updates stock icons and stocks remaining count indicators to the panels.
+    // TODO:
+    // - 12cb
+    //   - show modifier icons on portraits, e.g. mushrooms, cloak, starting stocks
+    scope update_stock_icon_and_count_indicators_: {
+        // a0 = control object
+        // 0x0030(a0) = p1 stocks remaining object (0 if non-existent)
+        // 0x0034(a0) = p1 previous portrait_id
+        // 0x0035(a0) = p1 previous character_id
+        // 0x0036(a0) = p1 previous stock mode
+        // 0x0037(a0) = p1 previous char selected state
+        // 0x0038(a0) = p1 previous costume_id
+        // 0x003C(a0) = p1 yellow rectangle object (0 if non-existent)
+        // 0x0040(a0) = p2 stocks remaining object (0 if non-existent)
+        // 0x0044(a0) = p2 previous portrait_id
+        // 0x0045(a0) = p2 previous character_id
+        // 0x0046(a0) = p2 previous stock mode
+        // 0x0047(a0) = p2 previous char selected state
+        // 0x0048(a0) = p2 previous costume_id
+        // 0x004C(a0) = p2 yellow rectangle object (0 if non-existent)
+        // 0x0050(a0) = p3 stocks remaining object (0 if non-existent)
+        // 0x0054(a0) = p3 previous portrait_id
+        // 0x0055(a0) = p3 previous character_id
+        // 0x0056(a0) = p3 previous stock mode
+        // 0x0057(a0) = p3 previous char selected state
+        // 0x0058(a0) = p3 previous costume_id
+        // 0x005C(a0) = p3 yellow rectangle object (0 if non-existent)
+        // 0x0060(a0) = p4 stocks remaining object (0 if non-existent)
+        // 0x0064(a0) = p4 previous portrait_id
+        // 0x0065(a0) = p4 previous character_id
+        // 0x0066(a0) = p4 previous stock mode
+        // 0x0067(a0) = p4 previous char selected state
+        // 0x0068(a0) = p4 previous costume_id
+        // 0x006C(a0) = p4 yellow rectangle object (0 if non-existent)
+        // 0x0070(a0) = previous num stocks
+        // 0x0084(a0) = CSS mode: 12cb if 1, VS if 0
+        OS.save_registers()
+        // a0 => 0x0010(sp)
+
+        lli     s0, 0x0000                  // s0 = panel index = start at 0
+        addiu   s1, a0, 0x0030              // s1 = address of p1 stocks remaining object pointer
+        li      s2, CharacterSelect.CSS_PLAYER_STRUCT // s2 = CSS player struct for p1
+        li      s4, p1_char_stocks_remaining // s4 = p1 stocks remaining for char
+        lw      t4, 0x0070(a0)              // t4 = previous num_stocks
+        lui     t5, 0x8014                  // t5 = stock count
+        lw      t5, 0xBD80(t5)              // ~
+        sw      t5, 0x0070(a0)              // update previous num_stocks
+
+        _loop:
+        lbu     t1, 0x0004(s1)              // t1 = previous portrait_id
+        lbu     t2, 0x0005(s1)              // t2 = previous character_id
+        lw      s3, 0x0048(s2)              // s3 = selected character_id
+        lw      a0, 0x0010(sp)              // a0 = control object
+        lw      t3, 0x0084(a0)              // t3 = mode: 12cb if 1, VS if 0
+        bnezl   t3, pc() + 8                // if 12cb, get the actual portrait_id, otherwise 0 is fine
+        lw      t3, 0x00B4(s2)              // t3 = portrait_id
+
+        li      t6, StockMode.stockmode_table
+        sll     t7, s0, 0x0002              // t7 = offset to stock mode for panel
+        addu    t6, t6, t7                  // t6 = address of stock mode for panel
+        lw      t6, 0x0000(t6)              // t6 = stock mode
+        lbu     t7, 0x0006(s1)              // t7 = previous stock mode
+
+        lbu     t8, 0x0007(s1)              // t8 = previous char selected state
+        lw      t9, 0x0088(s2)              // t9 = selected character_id (1 if selected, 0 if not)
+
+        lbu     t0, 0x0008(s1)              // t0 = previous costume_id
+        lw      a0, 0x004C(s2)              // a0 = selected costume_id
+
+        sb      t3, 0x0004(s1)              // update previous portrait_id
+        sb      s3, 0x0005(s1)              // update previous character_id
+        sb      t6, 0x0006(s1)              // update previous stock mode
+        sb      t9, 0x0007(s1)              // update previous char selected state
+        sb      a0, 0x0008(s1)              // update previous costume_id
+
+        bne     t1, t3, _handle             // if the portrait_id changed this frame, then handle
+        nop
+        bne     t2, s3, _handle             // if the character_id changed this frame, then handle
+        nop
+        bne     t6, t7, _handle             // if the stock mode changed this frame, then handle
+        nop
+        bne     t8, t9, _handle             // if the char selected state changed this frame, then handle
+        nop
+        bne     t0, a0, _handle             // if the costume_id changed this frame, then handle
+        nop
+        beq     t4, t5, _update_display     // if the num_stocks hasn't changes this frame, then skip creating
+        nop
+
+        _handle:
+        lw      a0, 0x0000(s1)              // a0 = stocks remaining object address
+        beqz    a0, _draw_indicator         // if there's not an object, skip destroying it
+        nop
+        sw      r0, 0x0000(s1)              // clear out reference
+        lw      v0, 0x000C(s1)              // v0 = yellow rectangle reference
+        beqz    v0, _destroy_stocks_remaining_object // if no reference, skip destroying rectangle objects
+        sw      a0, 0x0020(sp)              // save a0 (this is t0 from os.save_registers, which isn't important)
+
+        // destroy right yellow rectangle first
+        lw      a0, 0x006C(v0)              // a0 = right yellow rectangle reference
+        sw      r0, 0x000C(s1)              // clear yellow rectangle object reference
+        jal     Render.DESTROY_OBJECT_      // destroy object
+        sw      v0, 0x0024(sp)              // save v0 (this is t1 from os.save_registers, which isn't important)
+        // then destroy left yellow rectangle
+        jal     Render.DESTROY_OBJECT_      // destroy object
+        lw      a0, 0x0024(sp)              // a0 = yellow rectangle reference
+
+        _destroy_stocks_remaining_object:
+        jal     Render.DESTROY_OBJECT_      // destroy object
+        lw      a0, 0x0020(sp)              // a0 = stocks remaining object
+
+        _draw_indicator:
+        li      t1, Character.id.NONE
+        beq     t1, s3, _next               // skip drawing if no character displayed
+        nop
+        addiu   sp, sp,-0x0020              // allocate stack space
+        sw      s0, 0x0004(sp)              // save registers
+        sw      s1, 0x0008(sp)              // ~
+        sw      s2, 0x000C(sp)              // ~
+        sw      s3, 0x0010(sp)              // ~
+        sw      s4, 0x0014(sp)              // ~
+
+        lw      s0, 0x0004(sp)              // s0 = panel index
+        lw      s1, 0x0008(sp)              // s1 = address of stocks remaining object pointer
+        lbu     t7, 0x0006(s1)              // t7 = stock mode
+
+        lw      t8, 0x0030(sp)              // t8 = control object
+        lw      t8, 0x0084(t8)              // t8 = mode: 12cb if 1, VS if 0
+        bnez    t8, _12cb                   // if 12cb, handle stock mode differently
+        lw      t3, 0x00B4(s2)              // t3 = portrait_id
+
+        beqz    t7, _start_draw             // if stock mode is default, skip
+        lli     t6, StockMode.mode.LAST
+        li      s5, StockMode.stock_count_table
+        beql    t6, t7, pc() + 8            // if stock mode is last, then use previous count address
+        addiu   s5, s5, StockMode.previous_stock_count_table - StockMode.stock_count_table
+        addu    a2, s5, s0                  // a2 = address of stock count
+
+        lb      t8, 0x0000(a2)              // t8 = stocks remaining
+        addiu   t0, t8, 0x0001              // t0 = 0 if no stocks remaining
+        lui     t5, 0x8014                  // t5 = upper address of stock count
+        lw      t5, 0xBD80(t5)              // t5 = stock count
+        beqzl   t0, pc() + 8                // if no stocks remaining, set to global stock count
+        or      t8, t5, r0                  // t8 = stock count
+        sltu    t7, t8, t5                  // t7 = 1 if stocks remaining < stocks count
+        beqzl   t7, pc() + 8                // if stocks remaining >= stock count, then set to stock count
+        or      t8, t5, r0                  // t8 = stock count
+        sb      t8, 0x0000(a2)              // update stocks remaining (in case it was -1)
+        b       _start_draw
+        sw      t8, 0x0000(s4)              // store stocks remaining in our number holder address
+
+        _12cb:
+        li      s5, TwelveCharBattle.config.stocks_by_portrait_id
+        addu    a2, s5, t3                  // a2 = address of stocks remaining for this portrait_id
+        lb      t8, 0x0000(a2)              // t8 = stocks remaining
+        sw      t8, 0x0000(s4)              // store stocks remaining in our number holder address
+
+        _start_draw:
+        // first, draw stocks remaining
+        or      a2, r0, s4                  // a2 = address of number
+        li      a3, arrow_state_routine_    // a3 = routine
+        lw      t8, 0x0018(s2)              // t8 = panel object
+        lw      t8, 0x0074(t8)              // t8 = panel image struct
+        lwc1    f0, 0x0058(t8)              // f0 = panel ulx
+        lh      t8, 0x0014(t8)              // t8 = panel width
+        mtc1    t8, f2                      // f2 = panel width
+        cvt.s.w f2, f2                      // f2 = panel width, floating point
+        add.s   f0, f0, f2                  // f0 = urx
+        lw      t0, 0x0008(sp)              // t0 = address of stocks remaining pointer
+        lbu     t2, 0x0007(t0)              // t2 = char selected state
+        beqzl   t2, _set_right_padding      // if no char selected, don't adjust for arrows
+        lui     t8, 0xC080                  // t8 = right padding no arrows = -4, floating point
+        lbu     t2, 0x0006(t0)              // t2 = stock mode
+        lli     t1, StockMode.mode.MANUAL
+        bnel    t2, t1, _set_right_padding  // if not in manual stock mode, don't adjust for arrows
+        lui     t8, 0xC080                  // t8 = right padding no arrows = -4, floating point
+
+        li      t1, TwelveCharBattle.twelve_cb_flag
+        lw      t1, 0x0000(t1)              // t1 = 1 if 12cb
+        beqz    t1, _check_digits           // skip if not 12cb
+        nop
+
+        li      t1, TwelveCharBattle.config.status
+        lw      t1, 0x0000(t1)              // t1 = 0 if not started
+        lli     t2, TwelveCharBattle.config.STATUS_COMPLETE
+        beql    t1, t2, _set_right_padding  // if 12cb is complete, don't draw arrows
+        lui     t8, 0xC080                  // t8 = right padding no arrows = -4, floating point
+
+        or      a0, t3, r0                  // a0 = portrait_id
+        jal     TwelveCharBattle.was_portrait_played_
+        or      a1, s0, r0                  // a1 = port
+        sw      v0, 0x0020(sp)              // save v0 (this is t0 from os.save_registers, which isn't important)
+        bnezl   v0, _set_right_padding      // if portrait has been played, don't draw arrows
+        lui     t8, 0xC080                  // t8 = right padding no arrows = -4, floating point
+
+        _check_digits:
+        lw      t8, 0x0000(a2)              // t8 = number
+        slti    t8, t8, 0x0009              // t8 = 1 if 1 digit, 0 if 2 digits
+        beqzl   t8, _set_right_padding      // if 2 digits, then don't pad as much as 1
+        lui     t8, 0xC0E0                  // t8 = right padding w/arrows 2 digits = -7, floating point
+        lui     t8, 0xC120                  // t8 = right padding w/arrows 1 digit = -10, floating point
+        _set_right_padding:
+        mtc1    t8, f2                      // f2 = right padding
+        add.s   f0, f0, f2                  // f0 = urx
+        mfc1    s1, f0                      // s1 = urx
+        lui     s2, 0x433F                  // s2 = uly
+        addiu   s3, r0, -1                  // s3 = color (0xFFFFFFFF - Color.high.WHITE)
+        lui     s4, 0x3F68                  // s4 = scale
+        lli     s5, Render.alignment.RIGHT  // s5 = alignment
+        lli     s6, Render.string_type.NUMBER // s6 = string type
+        lli     s7, 0x0001                  // s7 = amount to adjust number (stocks remaining is 0-based)
+        lli     a0, 0x20                    // a0 = room
+        lli     a1, 0x13                    // a1 = group
+        jal     Render.draw_string_
+        lli     t8, OS.TRUE                 // t8 = blur
+
+        lw      s1, 0x0008(sp)              // s1 = address of stocks remaining pointer
+        sw      v0, 0x0000(s1)              // save reference to stocks remaining object
+        sw      r0, 0x0084(v0)              // this will hold reference to left arrow image struct if relevant
+        sw      s1, 0x0054(v0)              // this will hold reference to stock remaining object pointer address
+
+        // set initial display state based on debug menu visibility
+        li      t0, CharacterSelectDebugMenu.debug_control_object
+        lw      t0, 0x0000(t0)              // t0 = debug control object
+        lw      s0, 0x0004(sp)              // s0 = panel index
+        sll     s0, s0, 0x0002              // s0 = offset for panel
+        addu    t0, t0, s0                  // t0 = debug control object, offset for panel
+        lw      t0, 0x0030(t0)              // t0 = debug button object
+        beqzl   t0, _set_initial_display    // if it doesn't exist, set to hidden (button not initialized)
+        addiu   at, r0, -0x0001             // at = -1 to set visible
+        lw      at, 0x0044(t0)              // at = debug menu display state (0 = hidden, 1 = active)
+        addiu   at, at, -0x0001             // at = -1 if menu is hidden, 0 if not
+        _set_initial_display:
+        sw      at, 0x0038(v0)              // set initial display state
+
+        // next, draw stock icon
+        or      a0, r0, v0                  // a0 = stocks remaining object
+
+        lw      s3, 0x0010(sp)              // s3 = character_id
+        li      t1, 0x80116E10              // t1 = main character struct table
+        sll     t2, s3, 0x0002              // t2 = a1 * 4 (offset in struct table)
+        addu    t1, t1, t2                  // t1 = pointer to character struct
+        lw      t1, 0x0000(t1)              // t1 = character struct
+        lw      t2, 0x0028(t1)              // t2 = main character file address pointer
+        lw      t2, 0x0000(t2)              // t2 = main character file address
+        lw      t1, 0x0060(t1)              // t1 = offset to attribute data
+        addu    t1, t2, t1                  // t1 = attribute data address
+        lw      t1, 0x0340(t1)              // t1 = pointer to stock icon footer address
+        lw      a1, 0x0000(t1)              // a2 = stock icon footer address
+        lw      t1, 0x0004(t1)              // t1 = base palette address
+        sw      t1, 0x001C(sp)              // save base palette address
+
+        jal     Render.TEXTURE_INIT_        // v0 = RAM address of texture struct
+        addiu   sp, sp, -0x0030             // allocate stack space for TEXTURE_INIT_
+        addiu   sp, sp, 0x0030              // restore stack space
+
+        lw      s1, 0x0008(sp)              // ~
+        lw      a0, 0x0000(s1)              // a0 = stocks remaining object
+        lw      t0, 0x0074(a0)              // t0 = first letter image struct
+        lwc1    f0, 0x0058(t0)              // f0 = ulx of first letter
+        lui     t1, 0xC190                  // t1 = -18
+        mtc1    t1, f2                      // f2 = -18
+        add.s   f0, f0, f2                  // f0 = ulx of stock icon
+        swc1    f0, 0x0058(v0)              // update stock icon X position
+        lui     t1, 0x433F                  // t1 = uly
+        mtc1    t1, f0                      // f0 = uly
+        swc1    f0, 0x005C(v0)              // update stock icon Y position
+        lli     t0, 0x0201                  // t0 = render flags (blur)
+        sh      t0, 0x0024(v0)              // save render flags
+        lw      t0, 0x001C(sp)              // t0 = base palette address
+        lw      s2, 0x000C(sp)              // s2 = CSS player struct
+        lw      t1, 0x004C(s2)              // t1 = color index
+        sll     t1, t1, 0x0002              // t1 = offset to palette
+        addu    t0, t0, t1                  // t0 = selected palette address
+        lw      t0, 0x0000(t0)              // t0 = selected palette
+        sw      t0, 0x0030(v0)              // update palette
+
+        // now draw "x" image
+        li      t0, Render.file_pointer_3
+        lw      t0, 0x0000(t0)              // t0 = base address of file 0x0024
+        addiu   a1, t0, 0x0828              // a1 = "x" image address
+        jal     Render.TEXTURE_INIT_        // v0 = RAM address of texture struct
+        addiu   sp, sp, -0x0030             // allocate stack space for TEXTURE_INIT_
+        addiu   sp, sp, 0x0030              // restore stack space
+
+        lw      s1, 0x0008(sp)              // ~
+        lw      a0, 0x0000(s1)              // a0 = stocks remaining object
+        lw      t0, 0x0074(a0)              // t0 = first letter image struct
+        lwc1    f0, 0x0058(t0)              // f0 = ulx of first letter
+        lui     t1, 0xC110                  // t1 = -9
+        mtc1    t1, f2                      // f2 = -9
+        add.s   f0, f0, f2                  // f0 = ulx of stock icon
+        swc1    f0, 0x0058(v0)              // update "x" image X position
+        lui     t1, 0x4340                  // t1 = uly
+        mtc1    t1, f0                      // f0 = uly
+        swc1    f0, 0x005C(v0)              // update "x" image Y position
+        lui     t0, 0x3F60                  // t0 = scale
+        sw      t0, 0x0018(v0)              // update X scale
+        sw      t0, 0x001C(v0)              // update Y scale
+        lli     t0, 0x0201                  // t0 = render flags (blur)
+        sh      t0, 0x0024(v0)              // save render flags
+        lli     t0, 0x0401                  // t0 = image type (change to I8)
+        sh      t0, 0x0040(v0)              // save image type
+
+        lw      t0, 0x0008(sp)              // t0 = address of stocks remaining pointer
+        lbu     t0, 0x0006(t0)              // t0 = stock mode
+        lli     t1, StockMode.mode.MANUAL
+        bne     t0, t1, _finish_draw        // if not in manual stock mode, don't draw arrows/dpad
+        nop
+        li      t1, TwelveCharBattle.twelve_cb_flag
+        lw      t1, 0x0000(t1)              // t1 = 1 if 12cb
+        beqz    t1, _draw_arrows            // if not 12cb, draw arrows
+        nop
+        li      t1, TwelveCharBattle.config.status
+        lw      t1, 0x0000(t1)              // t1 = 0 if not started
+        addiu   t1, t1, -TwelveCharBattle.config.STATUS_COMPLETE
+        beqz    t1, _finish_draw            // if the 12cb is complete, don't draw arrows/dpad
+        lw      t0, 0x0020(sp)              // t0 = was_portrait_played_ result
+        bnez    t0, _finish_draw            // if the portrait was played, don't draw arrows/dpad
+        lw      t0, 0x0008(sp)              // t0 = address of stocks remaining pointer
+        lbu     t2, 0x0007(t0)              // t2 = char selected state
+        bnez    t2, _draw_arrows            // if char selected, draw arrows
+        nop                                 // otherwise, draw dpad
+
+        // draw dpad
+        li      a1, Render.file_pointer_2   // a1 = pointer to CSS images file start address
+        lw      a1, 0x0000(a1)              // a1 = base file address
+        addiu   a1, a1, 0x0218              // a1 = address of d-pad image TODO: make constant
+        jal     Render.TEXTURE_INIT_        // v0 = RAM address of texture struct
+        addiu   sp, sp, -0x0030             // allocate stack space for TEXTURE_INIT_
+        addiu   sp, sp, 0x0030              // restore stack space
+
+        lw      s1, 0x0008(sp)              // ~
+        lw      a0, 0x0000(s1)              // a0 = stocks remaining object
+        lw      t0, 0x0074(a0)              // t0 = first letter image struct
+        lwc1    f0, 0x0058(t0)              // f0 = ulx of first letter
+        lui     t1, 0xC1DC                  // t1 = -27.5
+        mtc1    t1, f2                      // f2 = -27.5
+        add.s   f0, f0, f2                  // f0 = ulx
+        swc1    f0, 0x0058(v0)              // update dpad image X position
+        lui     t1, 0x4340                  // t1 = uly
+        mtc1    t1, f0                      // f0 = uly
+        swc1    f0, 0x005C(v0)              // update dpad image Y position
+        lui     t0, 0x3F10                  // t0 = scale
+        sw      t0, 0x0018(v0)              // update X scale
+        sw      t0, 0x001C(v0)              // update Y scale
+        lli     t0, 0x0201                  // t0 = render flags (blur)
+        sh      t0, 0x0024(v0)              // save render flags
+
+        // next, create blinking rectangle objects
+        Render.draw_rectangle(0x20, 0x13, 1, 0xC4, 1, 1, Color.high.YELLOW, OS.FALSE)
+        lw      s1, 0x0008(sp)              // s1 = stocks remaining object address
+        sw      v0, 0x000C(s1)              // save rectangle reference
+        lw      a0, 0x0000(s1)              // a0 = stocks remaining object
+        lw      t0, 0x0074(a0)              // t0 = first letter image struct
+        lwc1    f0, 0x0058(t0)              // f0 = ulx of first letter
+        lui     t1, 0xC1C8                  // t1 = -25
+        mtc1    t1, f2                      // f2 = -25
+        add.s   f0, f0, f2                  // f0 = ulx
+        trunc.w.s f0, f0                    // f0 = ulx, decimal
+        swc1    f0, 0x0030(v0)              // update yellow rectangle X position
+        // next draw right rectangle
+        Render.draw_rectangle(0x20, 0x13, 1, 0xC4, 1, 1, Color.high.YELLOW, OS.FALSE)
+        lw      s1, 0x0008(sp)              // s1 = stocks remaining object address
+        lw      t0, 0x000C(s1)              // t0 = left rectangle reference
+        sw      v0, 0x006C(t0)              // save right rectangle reference
+        lw      a0, 0x0000(s1)              // a0 = stocks remaining object
+        lw      t0, 0x0074(a0)              // t0 = first letter image struct
+        lwc1    f0, 0x0058(t0)              // f0 = ulx of first letter
+        lui     t1, 0xC1A0                  // t1 = -20
+        mtc1    t1, f2                      // f2 = -20
+        add.s   f0, f0, f2                  // f0 = ulx
+        trunc.w.s f0, f0                    // f0 = ulx, decimal
+        swc1    f0, 0x0030(v0)              // update yellow rectangle X position
+
+        b       _finish_draw
+        nop
+
+        _draw_arrows:
+        lw      t0, 0x0008(sp)              // t0 = address of stocks remaining pointer
+        lbu     t2, 0x0007(t0)              // t2 = char selected state
+        beqz    t2, _finish_draw            // if no char selected, don't draw arrows
+        nop
+
+        // now draw left arrow
+        // file 0x11 is always the first file loaded
+        li      a1, file_table              // a1 = file_table
+        lw      a1, 0x0004(a1)              // a1 = base file 0x11 address
+        lli     t0, 0xECE8                  // t0 = offset to left arrow
+        addu    a1, a1, t0                  // a1 = address of left arrow image footer
+        jal     Render.TEXTURE_INIT_        // v0 = RAM address of texture struct
+        addiu   sp, sp, -0x0030             // allocate stack space for TEXTURE_INIT_
+        addiu   sp, sp, 0x0030              // restore stack space
+
+        lw      s1, 0x0008(sp)              // ~
+        lw      a0, 0x0000(s1)              // a0 = stocks remaining object
+        sw      v0, 0x0084(a0)              // save reference to arrow image struct
+        lw      t8, 0x0018(s2)              // t8 = panel object
+        lw      t8, 0x0074(t8)              // t8 = panel image struct
+        lwc1    f0, 0x0058(t8)              // f0 = panel ulx
+        lui     t8, 0x41A0                  // t8 = left padding = 20, floating point
+        mtc1    t8, f2                      // f2 = left padding
+        add.s   f0, f0, f2                  // f0 = ulx
+        swc1    f0, 0x0058(v0)              // update left arrow image X position
+        lui     t1, 0x4341                  // t1 = uly
+        mtc1    t1, f0                      // f0 = uly
+        swc1    f0, 0x005C(v0)              // update left arrow image Y position
+        lui     t0, 0x3F20                  // t0 = scale
+        sw      t0, 0x0018(v0)              // update X scale
+        sw      t0, 0x001C(v0)              // update Y scale
+        lli     t0, 0x0201                  // t0 = render flags (blur)
+        sh      t0, 0x0024(v0)              // save render flags
+
+        // now draw right arrow
+        // file 0x11 is always the first file loaded
+        li      a1, file_table              // a1 = file_table
+        lw      a1, 0x0004(a1)              // a1 = base file 0x11 address
+        lli     t0, 0xEDC8                  // t0 = offset to right arrow
+        addu    a1, a1, t0                  // a1 = address of right arrow image footer
+        jal     Render.TEXTURE_INIT_        // v0 = RAM address of texture struct
+        addiu   sp, sp, -0x0030             // allocate stack space for TEXTURE_INIT_
+        addiu   sp, sp, 0x0030              // restore stack space
+
+        lw      t8, 0x0018(s2)              // t8 = panel object
+        lw      t8, 0x0074(t8)              // t8 = panel image struct
+        lwc1    f0, 0x0058(t8)              // f0 = panel ulx
+        lh      t8, 0x0014(t8)              // t8 = panel width
+        mtc1    t8, f2                      // f2 = panel width
+        cvt.s.w f2, f2                      // f2 = panel width, floating point
+        add.s   f0, f0, f2                  // f0 = urx
+        lui     t8, 0xC0A0                  // t8 = right padding = -5, floating point
+        mtc1    t8, f2                      // f2 = right padding
+        add.s   f0, f0, f2                  // f0 = ulx
+        swc1    f0, 0x0058(v0)              // update right arrow image X position
+        lui     t1, 0x4341                  // t1 = uly
+        mtc1    t1, f0                      // f0 = uly
+        swc1    f0, 0x005C(v0)              // update right arrow image Y position
+        lui     t0, 0x3F20                  // t0 = scale
+        sw      t0, 0x0018(v0)              // update X scale
+        sw      t0, 0x001C(v0)              // update Y scale
+        lli     t0, 0x0201                  // t0 = render flags (blur)
+        sh      t0, 0x0024(v0)              // save render flags
+
+        _finish_draw:
+        lw      s0, 0x0004(sp)              // restore registers
+        lw      s1, 0x0008(sp)              // ~
+        lw      s2, 0x000C(sp)              // ~
+        lw      s3, 0x0010(sp)              // ~
+        lw      s4, 0x0014(sp)              // ~
+        addiu   sp, sp, 0x0020              // deallocate stack space
+
+        _update_display:
+        // here, update display if the object exists
+        lw      a0, 0x0010(sp)              // a0 = control object
+        lw      t0, 0x0084(a0)              // t0 = mode: 12cb if 1, VS if 0
+        bnez    t0, _next                   // skip if 12cb - always show regardless of stock mode
+        lw      a0, 0x0000(s1)              // a0 = stocks remaining object address
+        beqz    a0, _next                   // if there's not an object, skip updating display
+        nop
+        li      t0, StockMode.stockmode_table
+        sll     t1, s0, 0x0002              // t1 = offset to stock mode for panel
+        addu    t0, t0, t1                  // t0 = address of stock mode for panel
+        lw      t0, 0x0000(t0)              // t0 = stock mode
+        lli     t1, 0x0001                  // t1 = display off
+        beqzl   t0, _next                   // if stock mode is default, turn off display
+        sw      t1, 0x007C(a0)              // turn off display of stock indicators
+        sw      r0, 0x007C(a0)              // otherwise, turn on display of stock indicators
+
+        _next:
+        sltiu   t8, s0, 0x0003              // t8 = 1 until we've looped through all panels
+        beqz    t8, _end                    // if we just processed p4, then we're done
+        addiu   s0, s0, 0x0001              // s0++
+        addiu   s1, s1, 0x0010              // s1++
+        addiu   s4, s4, 0x0004              // s4 = p2 stocks remaining for char
+        b       _loop
+        addiu   s2, s2, 0x00BC              // s2++
+
+        _end:
+        // update blink timer here so they don't get annoyingly out of sync
+        li      t3, arrow_state_routine_.timer
+        lw      t0, 0x0000(t3)              // t0 = timer
+        addiu   t0, t0, 0x0001              // t0 = timer++
+        sltiu   at, t0, 0x0014              // at = 1 if timer < 20, 0 otherwise
+        beqzl   at, pc() + 8                // if timer past 20, reset
+        lli     t0, 0x0000                  // t0 = 0 to reset timer to 0
+        sw      t0, 0x0000(t3)              // update timer
+
+        OS.restore_registers()
+        jr      ra
+        nop
+
+        p1_char_stocks_remaining:; dw 0x00000000
+        p2_char_stocks_remaining:; dw 0x00000000
+        p3_char_stocks_remaining:; dw 0x00000000
+        p4_char_stocks_remaining:; dw 0x00000000
+    }
+
+    // @ Description
+    // Gives the stocks remaining indicator arrows blinking effects.
+    // @ Arguments
+    // a0 - stocks remaining object
+    scope arrow_state_routine_: {
+        // implement blink
+        li      t3, timer                   // t3 = timer address
+        lw      t0, 0x0000(t3)              // t0 = timer
+        sltiu   t2, t0, 0x000B              // t2 = 1 if timer < 11, 0 otherwise
+
+        lw      t0, 0x0084(a0)              // t0 = left arrow image struct
+        beqz    t0, _check_rectangles       // if 0, then no arrows so skip
+        lli     t1, 0x0201                  // t1 = render flags (blur)
+        beqzl   t2, pc() + 8                // if in hide state, update render flags
+        lli     t1, 0x0205                  // t1 = render flags (hide)
+        sh      t1, 0x0024(t0)              // update render flags
+        lw      t0, 0x0008(t0)              // t0 = right arrow image struct
+        b       _end
+        sh      t1, 0x0024(t0)              // update render flags
+
+        _check_rectangles:
+        lw      t0, 0x0054(a0)              // t0 = stocks remaining info array
+        lw      t0, 0x000C(t0)              // t0 = left rectangle object, if it exists
+        beqz    t0, _end                    // if 0, then no rectangles so skip
+        lli     t1, 0x0000                  // t1 = display on
+        beqzl   t2, pc() + 8                // if in hide state, update display flag
+        lli     t1, 0x0001                  // t1 = display off
+        sw      t1, 0x007C(t0)              // update display flag
+        lw      t0, 0x006C(t0)              // t0 = right yellow rectangle
+        sw      t1, 0x007C(t0)              // update display flag
+
+        _end:
+        jr      ra
+        nop
+
+        timer:
+        dw 0
+    }
+
+    // @ Description
+    // Checks if and handles when stock mode's arrow buttons are pressed
+    // a0 - cursor object
+    // a1 - ra to use if there is a press
+    scope check_manual_stock_arrow_press_: {
+        addiu   sp, sp,-0x0030              // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+        sw      a0, 0x0008(sp)              // ~
+        sw      a1, 0x000C(sp)              // ~
+        sw      a2, 0x0010(sp)              // ~
+        sw      a3, 0x0014(sp)              // ~
+
+        li      t0, render_control_object
+        lw      t0, 0x0000(t0)              // t0 = render control object
+        li      t1, TwelveCharBattle.twelve_cb_flag
+        lw      t1, 0x0000(t1)              // t1 = 1 if 12cb
+        beqzl   t1, pc() + 12               // if not 12cb, get at 0x0044 instead of 0x0034
+        lw      t0, 0x0044(t0)              // t0 = remaining stocks control object
+        lw      t0, 0x0034(t0)              // t0 = remaining stocks control object
+        addiu   t0, t0, 0x0030              // t0 = address of first stocks remaining object
+        sw      t0, 0x0018(sp)              // save stocks remaining object to stack
+
+        sw      r0, 0x001C(sp)              // initialize panel index to 0
+
+        _loop:
+        // first check for left arrow press
+        lw      t0, 0x0018(sp)              // t0 = address of stocks remaining object
+        lw      t0, 0x0000(t0)              // t0 = stocks remaining object
+        beqz    t0, _next                   // skip if not defined
+        nop
+        lw      a1, 0x0084(t0)              // a1 = left arrow object
+        beqz    a1, _next                   // skip if not defined
+        lli     a2, 0x0000                  // a2 = left padding
+        jal     check_image_footer_press_   // v0 = 1 if button pressed, 0 if not
+        lli     a3, 0x0008                  // a3 = right padding
+        bnez    v0, _pressed                // if pressed, handle
+        addiu   t0, r0, -0x0001             // t0 = -1 for left arrow
+
+        // next check for right arrow press
+        lw      t0, 0x0018(sp)              // t0 = address of stocks remaining object
+        lw      t0, 0x0000(t0)              // t0 = stocks remaining object
+        beqz    t0, _next                   // skip if not defined
+        lli     a2, 0x0008                  // a2 = left padding
+        lw      a1, 0x0084(t0)              // a1 = left arrow object
+        lw      a1, 0x0008(a1)              // a1 = rigt arrow object
+        jal     check_image_footer_press_   // v0 = 1 if button pressed, 0 if not
+        lli     a3, 0x0000                  // a3 = right padding
+        bnez    v0, _pressed                // if pressed, handle
+        lli     t0, 0x0001                  // t0 = +1 for right arrow
+
+        // not pressed, check next panel
+        _next:
+        lw      t0, 0x001C(sp)              // t0 = panel index
+        sltiu   t1, t0, 0x0003              // t1 = 0 if no more panels to loop over
+        beqz    t1, _end                    // checked everything, skip to end
+        addiu   t0, t0, 0x0001              // t0++
+        sw      t0, 0x001C(sp)              // update panel index
+        lw      t0, 0x0018(sp)              // t0 = address of stocks remaining object
+        addiu   t0, t0, 0x0010              // t0 = address of next stocks remaining object
+        b       _loop
+        sw      t0, 0x0018(sp)              // update address of stocks remaining object
+
+        _pressed:
+        lw      at, 0x000C(sp)              // at = new ra
+        sw      at, 0x0004(sp)              // set new ra
+
+        li      t1, TwelveCharBattle.twelve_cb_flag
+        lw      t1, 0x0000(t1)              // t1 = 1 if 12cb
+        bnez    t1, _12cb_pressed           // if 12cb, update portrait table and remaining stocks
+        nop
+
+        // vs pressed
+        li      t2, StockMode.stock_count_table
+        b       _update_stocks_remaining
+        lw      at, 0x001C(sp)              // at = panel index
+
+        _12cb_pressed:
+        lw      at, 0x0018(sp)              // t0 = address of stocks remaining object
+        lbu     at, 0x0004(at)              // at = portrait_id
+        li      t2, TwelveCharBattle.config.stocks_by_portrait_id
+
+        _update_stocks_remaining:
+        lw      a0, 0x0018(sp)              // a0 = address of stocks remaining object
+        lw      a1, 0x001C(sp)              // a1 = panel index
+        addu    a2, t2, at                  // a2 = stocks remaining address
+        jal     update_remaining_stocks_
+        or      a3, t0, r0                  // a3 = increment/decrement
+
+        // if portrait_id was set to -1, reset the panel
+        // this makes sure the animation switches to/from the defeated pose
+        lw      at, 0x0018(sp)              // at = address of stocks remaining object
+        lb      at, 0x0004(at)              // at = portrait_id
+        bgez    at, _end                    // if portrait_id is not -1, skip updating panel
+        lw      a0, 0x001C(sp)              // a0 = panel index
+        li      a1, CharacterSelect.CSS_PLAYER_STRUCT
+        bnezl   a0, pc() + 8                // if p2, adjust CSS player struct
+        addiu   a1, a1, 0x00BC              // a1 = p2 CSS_PLAYER_STRUCT
+        jal     TwelveCharBattle.update_character_panel_ // sync character model
+        lli     a2, OS.FALSE                // a2 = don't play announcer
+
+        _end:
+        lw      ra, 0x0004(sp)              // restore registers
+        lw      a0, 0x0008(sp)              // ~
+        lw      a1, 0x000C(sp)              // ~
+        lw      a2, 0x0010(sp)              // ~
+        lw      a3, 0x0014(sp)              // ~
+        addiu   sp, sp, 0x0030              // deallocate stack space
+
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // Updates remaining stocks indicators
+    // @ Arguments
+    // a0 - address of stocks remaining object
+    // a1 - panel index
+    // a2 - stocks remaining address
+    // a3 - -1/+1 = increment/decrement
+    scope update_remaining_stocks_: {
+        addiu   sp, sp,-0x0030              // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+
+        lb      t6, 0x0000(a2)              // t6 = stocks remaining
+
+        lui     t4, 0x8014                  // t4 = (global) stock count
+        lw      t4, 0xBD80(t4)              // ~
+
+        li      t1, TwelveCharBattle.twelve_cb_flag
+        lw      t1, 0x0000(t1)              // t1 = 1 if 12cb, 0 if not
+        addu    t4, t4, t1                  // t4 = (global) stock count, 1-based if 12cb
+
+        addu    t3, t6, a3                  // t3 = stocks remaining, updated
+        addu    t3, t3, t1                  // t3 = stocks remaining, 1-based if 12cb
+        bltzl   t3, _update_stock_count     // if < 0, set to global stock count
+        or      t3, t4, r0                  // set stock count to max
+        addiu   t4, t4, 0x0001              // t4 = max stock count + 1
+        sltu    t5, t3, t4                  // t5 = 0 if updated stocks remaining is too high
+        beqzl   t5, _update_stock_count     // if higher than max, set to 0
+        lli     t3, 0x0000                  // set stock count to 0
+
+        _update_stock_count:
+        subu    t3, t3, t1                  // t3 = stocks remaining, 0-based
+        sb      t3, 0x0000(a2)              // update stock count
+        addiu   at, r0, -0x0001             // at = -1
+        sb      at, 0x0007(a0)              // set previous char selected state to -1 to trigger redraw
+
+        beqz    t1, _play_fgm               // if not 12cb, skip updating 12cb remaining stocks
+        nop
+        bltzl   t3, pc() + 8                // if no stocks remaining...
+        sb      at, 0x0004(a0)              // ...then set previous portrait_id to -1 to trigger character redraw
+        bltzl   t6, pc() + 8                // if previously there were no stocks remaining...
+        sb      at, 0x0004(a0)              // ...then set previous portrait_id to -1 to trigger character redraw
+        subu    t3, t3, t6                  // t3 = t3 - t6 = difference in stock count
+        li      t1, TwelveCharBattle.config.p1.stocks_remaining
+        beqz    a1, _update_stocks_remaining // if p1, use p1 location
+        nop                                 // otherwise, use p2
+        li      t1, TwelveCharBattle.config.p2.stocks_remaining
+        _update_stocks_remaining:
+        lw      t2, 0x0000(t1)              // t2 = prior stocks remaining
+        addu    t2, t2, t3                  // t2 = new stocks remaining
+        sw      t2, 0x0000(t1)              // update stocks remaining
+
+        _play_fgm:
+        // play FGM
+        jal     0x800269C0
+        lli     a0, FGM.menu.TOGGLE         // a0 = FGM.menu.TOGGLE
+
+        _end:
+        lw      ra, 0x0004(sp)              // restore registers
+        addiu   sp, sp, 0x0030              // deallocate stack space
+
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // Forces all remaining stock indicators to refresh
+    scope refresh_stock_indicators_: {
+        addiu   sp, sp,-0x0030              // allocate stack space
+        sw      t0, 0x0004(sp)              // save registers
+        sw      t1, 0x0008(sp)              // ~
+
+        li      t0, CharacterSelect.render_control_object
+        lw      t0, 0x0000(t0)              // t0 = render control object
+        beqz    t0, _end                    // skip if control object not yet defined
+        addiu   t1, r0, -0x0001             // t1 = -1
+        lw      t0, 0x0034(t0)              // t0 = remaining stocks control object
+        beqz    t0, _end                    // skip if control object not yet defined
+        nop
+        sb      t1, 0x0037(t0)              // set p1 previous char selected state to -1 to trigger redraw
+        sb      t1, 0x0047(t0)              // set p2 previous char selected state to -1 to trigger redraw
+        sb      t1, 0x0057(t0)              // set p3 previous char selected state to -1 to trigger redraw
+        sb      t1, 0x0067(t0)              // set p4 previous char selected state to -1 to trigger redraw
+
+        _end:
+        lw      t0, 0x0004(sp)              // restore registers
+        lw      t1, 0x0008(sp)              // ~
+        addiu   sp, sp, 0x0030              // deallocate stack space
+
+        jr      ra
+        nop
+    }
+
+    // @ Description
     // This checks if an area was pressed.
     // Heavily based on BACK press check at 0x80138218 (ROM 0x136498).
     // @ Parameters
@@ -3608,16 +4295,22 @@ scope CharacterSelect {
         beqzl   a1, _end                    // if image object is empty, return
         lli     v0, 0x0000                  // ...and set v0 to 0
 
-        addiu   sp, sp,-0x0010              // allocate stack space
+        addiu   sp, sp,-0x0020              // allocate stack space
         sw      ra, 0x0004(sp)              // save registers
         sw      a1, 0x0008(sp)              // ~
+        sw      a2, 0x000C(sp)              // ~
+        sw      a3, 0x0010(sp)              // ~
 
+        lli     a2, 0x0000                  // a2 = left padding = 0
+        lli     a3, 0x0000                  // a3 = right padding = 0
         jal     check_image_footer_press_   // v0 = (bool) image pressed
         lw      a1, 0x0074(a1)              // a1 = image object image struct
 
         lw      ra, 0x0004(sp)              // restore registers
         lw      a1, 0x0008(sp)              // ~
-        addiu   sp, sp, 0x0010              // deallocate stack space
+        lw      a2, 0x000C(sp)              // ~
+        lw      a3, 0x0010(sp)              // ~
+        addiu   sp, sp, 0x0020              // deallocate stack space
 
         _end:
         jr      ra
@@ -3629,6 +4322,8 @@ scope CharacterSelect {
     // @ Parameters
     // a0 - cursor object
     // a1 - image footer struct
+    // a2 - left padding
+    // a3 - right padding
     // @ Returns
     // v0 - 1 if image pressed, 0 if not
     scope check_image_footer_press_: {
@@ -3642,12 +4337,19 @@ scope CharacterSelect {
         sw      a3, 0x0028(sp)              // ~
         sw      t4, 0x002C(sp)              // ~
 
-        lhu     a2, 0x0014(a1)              // a2 = image width
-        lw      a3, 0x005C(a1)              // a3 = image uly
         lhu     t4, 0x0016(a1)              // t4 = image height
-        lw      a1, 0x0058(a1)              // a1 = image ulx
-        jal     check_press_                // v0 = (bool) image pressed
         sw      t4, 0x0010(sp)              // 0x0010(sp) = image height
+        lhu     t4, 0x0014(a1)              // t4 = image width
+        addu    t4, t4, a2                  // t4 = image width + left padding
+        addu    t4, t4, a3                  // t4 = image width + left padding + right padding
+        lw      a3, 0x005C(a1)              // a3 = image uly
+        lwc1    f0, 0x0058(a1)              // f0 = image ulx
+        mtc1    a2, f2                      // f2 = left padding
+        cvt.s.w f2, f2                      // f2 = left padding, floating point
+        sub.s   f0, f0, f2                  // f0 = image ulx - left padding
+        mfc1    a1, f0                      // a1 = image ulx
+        jal     check_press_                // v0 = (bool) image pressed
+        or      a2, t4, r0                  // a2 = image width
 
         lw      ra, 0x0004(sp)              // restore registers
         lw      a1, 0x0020(sp)              // ~
@@ -3685,7 +4387,7 @@ scope CharacterSelect {
         dw  {action}
         // add to series logo offset table
         origin series_logo_offset_table_origin + ({character} * 4)
-        dw  {logo}
+        dw  series_logo.offset.{logo}
         // add to name texture table
         origin name_texture_table_origin + ({character} * 4)
         dw  {name_texture}
@@ -3705,35 +4407,37 @@ scope CharacterSelect {
     }
     
     // ADD CHARACTERS
-               // id                fgm                             circle size   action    series logo               name texture                 portrait offset                  portrait override
-    add_to_css(Character.id.FALCO,  FGM.announcer.names.FALCO,          1.50,   0x00010004, series_logo.STARFOX,      name_texture.FALCO,          portrait_offsets.FALCO,          -1)
-    add_to_css(Character.id.GND,    FGM.announcer.names.GANONDORF,      1.50,   0x00010002, series_logo.ZELDA,        name_texture.GND,            portrait_offsets.GND,            -1)
-    add_to_css(Character.id.YLINK,  FGM.announcer.names.YOUNG_LINK,     1.50,   0x00010002, series_logo.ZELDA,        name_texture.YLINK,          portrait_offsets.YLINK,          -1)
-    add_to_css(Character.id.DRM,    FGM.announcer.names.DR_MARIO,       1.50,   0x00010001, series_logo.DR_MARIO,     name_texture.DRM,            portrait_offsets.DRM,            -1)
-    add_to_css(Character.id.WARIO,  FGM.announcer.names.WARIO,          1.50,   0x00010004, series_logo.WARIO,        name_texture.WARIO,          portrait_offsets.WARIO,          -1)
-    add_to_css(Character.id.DSAMUS, FGM.announcer.names.DSAMUS,         1.50,   0x00010004, series_logo.METROID,      name_texture.DSAMUS,         portrait_offsets.DSAMUS,         -1)
-    add_to_css(Character.id.ELINK,  FGM.announcer.names.ELINK,          1.50,   0x00010001, series_logo.ZELDA,        name_texture.LINK,           portrait_offsets.ELINK,          4)
-    add_to_css(Character.id.JSAMUS, FGM.announcer.names.SAMUS,          1.50,   0x00010003, series_logo.METROID,      name_texture.SAMUS,          portrait_offsets.JSAMUS,         5)
-    add_to_css(Character.id.JNESS,  FGM.announcer.names.NESS,           1.50,   0x00010002, series_logo.EARTHBOUND,   name_texture.NESS,           portrait_offsets.JNESS,          9)
-    add_to_css(Character.id.LUCAS,  FGM.announcer.names.LUCAS,          1.50,   0x00010002, series_logo.EARTHBOUND,   name_texture.LUCAS,          portrait_offsets.LUCAS,          -1)
-    add_to_css(Character.id.JLINK,  FGM.announcer.names.LINK,           1.50,   0x00010001, series_logo.ZELDA,        name_texture.LINK,           portrait_offsets.JLINK,          4)
-    add_to_css(Character.id.JFALCON,FGM.announcer.names.CAPTAIN_FALCON, 1.50,   0x00010001, series_logo.FZERO,        name_texture.CAPTAIN_FALCON, portrait_offsets.JFALCON,        6)
-    add_to_css(Character.id.JFOX,   FGM.announcer.names.JFOX,           1.50,   0x00010004, series_logo.STARFOX,      name_texture.FOX,            portrait_offsets.JFOX,           12)
-    add_to_css(Character.id.JMARIO, FGM.announcer.names.MARIO,          1.50,   0x00010003, series_logo.MARIO_BROS,   name_texture.MARIO,          portrait_offsets.JMARIO,         2)
-    add_to_css(Character.id.JLUIGI, FGM.announcer.names.LUIGI,          1.50,   0x00010001, series_logo.MARIO_BROS,   name_texture.LUIGI,          portrait_offsets.JLUIGI,         1)
-    add_to_css(Character.id.JDK,    FGM.announcer.names.DONKEY_KONG,    2,      0x00010001, series_logo.DONKEY_KONG,  name_texture.JDK,            portrait_offsets.JDK,            3)
-    add_to_css(Character.id.EPIKA,  FGM.announcer.names.PIKACHU,        1.50,   0x00010001, series_logo.POKEMON,      name_texture.PIKACHU,        portrait_offsets.EPIKA,          13)
-    add_to_css(Character.id.JPUFF,  FGM.announcer.names.JPUFF,          1.50,   0x00010002, series_logo.POKEMON,      name_texture.JPUFF,          portrait_offsets.JPUFF,          14)
-    add_to_css(Character.id.EPUFF,  FGM.announcer.names.JIGGLYPUFF,     1.50,   0x00010002, series_logo.POKEMON,      name_texture.JIGGLYPUFF,     portrait_offsets.EPUFF,          14)
-    add_to_css(Character.id.JKIRBY, FGM.announcer.names.KIRBY,          1.50,   0x00010003, series_logo.KIRBY,        name_texture.KIRBY,          portrait_offsets.JKIRBY,         11)
-    add_to_css(Character.id.JYOSHI, FGM.announcer.names.YOSHI,          1.50,   0x00010002, series_logo.YOSHI,        name_texture.YOSHI,          portrait_offsets.JYOSHI,         10)
-    add_to_css(Character.id.JPIKA,  FGM.announcer.names.PIKACHU,        1.50,   0x00010001, series_logo.POKEMON,      name_texture.PIKACHU,        portrait_offsets.JPIKA,          13)
-    add_to_css(Character.id.ESAMUS, FGM.announcer.names.ESAMUS,         1.50,   0x00010003, series_logo.METROID,      name_texture.SAMUS,          portrait_offsets.ESAMUS,         5)
-    add_to_css(Character.id.BOWSER, FGM.announcer.names.BOWSER,         2,      0x00010002, series_logo.BOWSER,       name_texture.BOWSER,         portrait_offsets.BOWSER,         -1)
-    add_to_css(Character.id.GBOWSER,FGM.announcer.names.GBOWSER,        2.25,   0x00010002, series_logo.BOWSER,       name_texture.GBOWSER,        portrait_offsets.GBOWSER,        19)
-    add_to_css(Character.id.PIANO,  FGM.announcer.names.PIANO,          2,      0x00010004, series_logo.MARIO_BROS,   name_texture.PIANO,          portrait_offsets.PIANO,          1)
-    add_to_css(Character.id.WOLF,   FGM.announcer.names.WOLF,           1.50,   0x00010004, series_logo.STARFOX,      name_texture.WOLF,           portrait_offsets.WOLF,           -1)
-    add_to_css(Character.id.CONKER, FGM.announcer.names.CONKER,        	1.50,   0x00010004, series_logo.CONKER,       name_texture.CONKER,         portrait_offsets.CONKER,        	-1)
+               // id                fgm                                 circle size   action      series logo   name texture                 portrait offset                  portrait override
+    add_to_css(Character.id.FALCO,  FGM.announcer.names.FALCO,          1.50,         0x00010004, STARFOX,      name_texture.FALCO,          portrait_offsets.FALCO,          -1)
+    add_to_css(Character.id.GND,    FGM.announcer.names.GANONDORF,      1.50,         0x00010002, ZELDA,        name_texture.GND,            portrait_offsets.GND,            -1)
+    add_to_css(Character.id.YLINK,  FGM.announcer.names.YOUNG_LINK,     1.50,         0x00010002, ZELDA,        name_texture.YLINK,          portrait_offsets.YLINK,          -1)
+    add_to_css(Character.id.DRM,    FGM.announcer.names.DR_MARIO,       1.50,         0x00010001, DR_MARIO,     name_texture.DRM,            portrait_offsets.DRM,            -1)
+    add_to_css(Character.id.WARIO,  FGM.announcer.names.WARIO,          1.50,         0x00010004, WARIO,        name_texture.WARIO,          portrait_offsets.WARIO,          -1)
+    add_to_css(Character.id.DSAMUS, FGM.announcer.names.DSAMUS,         1.50,         0x00010004, METROID,      name_texture.DSAMUS,         portrait_offsets.DSAMUS,         -1)
+    add_to_css(Character.id.ELINK,  FGM.announcer.names.ELINK,          1.50,         0x00010001, ZELDA,        name_texture.LINK,           portrait_offsets.ELINK,          4)
+    add_to_css(Character.id.JSAMUS, FGM.announcer.names.SAMUS,          1.50,         0x00010003, METROID,      name_texture.SAMUS,          portrait_offsets.JSAMUS,         5)
+    add_to_css(Character.id.JNESS,  FGM.announcer.names.NESS,           1.50,         0x00010002, EARTHBOUND,   name_texture.NESS,           portrait_offsets.JNESS,          9)
+    add_to_css(Character.id.LUCAS,  FGM.announcer.names.LUCAS,          1.50,         0x00010002, EARTHBOUND,   name_texture.LUCAS,          portrait_offsets.LUCAS,          -1)
+    add_to_css(Character.id.JLINK,  FGM.announcer.names.LINK,           1.50,         0x00010001, ZELDA,        name_texture.LINK,           portrait_offsets.JLINK,          4)
+    add_to_css(Character.id.JFALCON,FGM.announcer.names.CAPTAIN_FALCON, 1.50,         0x00010001, FZERO,        name_texture.CAPTAIN_FALCON, portrait_offsets.JFALCON,        6)
+    add_to_css(Character.id.JFOX,   FGM.announcer.names.JFOX,           1.50,         0x00010004, STARFOX,      name_texture.FOX,            portrait_offsets.JFOX,           12)
+    add_to_css(Character.id.JMARIO, FGM.announcer.names.MARIO,          1.50,         0x00010003, MARIO_BROS,   name_texture.MARIO,          portrait_offsets.JMARIO,         2)
+    add_to_css(Character.id.JLUIGI, FGM.announcer.names.LUIGI,          1.50,         0x00010001, MARIO_BROS,   name_texture.LUIGI,          portrait_offsets.JLUIGI,         1)
+    add_to_css(Character.id.JDK,    FGM.announcer.names.DONKEY_KONG,    2,            0x00010001, DONKEY_KONG,  name_texture.JDK,            portrait_offsets.JDK,            3)
+    add_to_css(Character.id.EPIKA,  FGM.announcer.names.PIKACHU,        1.50,         0x00010001, POKEMON,      name_texture.PIKACHU,        portrait_offsets.EPIKA,          13)
+    add_to_css(Character.id.JPUFF,  FGM.announcer.names.JPUFF,          1.50,         0x00010002, POKEMON,      name_texture.JPUFF,          portrait_offsets.JPUFF,          14)
+    add_to_css(Character.id.EPUFF,  FGM.announcer.names.JIGGLYPUFF,     1.50,         0x00010002, POKEMON,      name_texture.JIGGLYPUFF,     portrait_offsets.EPUFF,          14)
+    add_to_css(Character.id.JKIRBY, FGM.announcer.names.KIRBY,          1.50,         0x00010003, KIRBY,        name_texture.KIRBY,          portrait_offsets.JKIRBY,         11)
+    add_to_css(Character.id.JYOSHI, FGM.announcer.names.YOSHI,          1.50,         0x00010002, YOSHI,        name_texture.YOSHI,          portrait_offsets.JYOSHI,         10)
+    add_to_css(Character.id.JPIKA,  FGM.announcer.names.PIKACHU,        1.50,         0x00010001, POKEMON,      name_texture.PIKACHU,        portrait_offsets.JPIKA,          13)
+    add_to_css(Character.id.ESAMUS, FGM.announcer.names.ESAMUS,         1.50,         0x00010003, METROID,      name_texture.SAMUS,          portrait_offsets.ESAMUS,         5)
+    add_to_css(Character.id.BOWSER, FGM.announcer.names.BOWSER,         2,            0x00010002, BOWSER,       name_texture.BOWSER,         portrait_offsets.BOWSER,         -1)
+    add_to_css(Character.id.GBOWSER,FGM.announcer.names.GBOWSER,        2.25,         0x00010002, BOWSER,       name_texture.GBOWSER,        portrait_offsets.GBOWSER,        19)
+    add_to_css(Character.id.PIANO,  FGM.announcer.names.PIANO,          2,            0x00010004, MARIO_BROS,   name_texture.PIANO,          portrait_offsets.PIANO,          1)
+    add_to_css(Character.id.WOLF,   FGM.announcer.names.WOLF,           1.50,         0x00010004, STARFOX,      name_texture.WOLF,           portrait_offsets.WOLF,           -1)
+    add_to_css(Character.id.CONKER, FGM.announcer.names.CONKER,        	1.50,         0x00010004, CONKER,       name_texture.CONKER,         portrait_offsets.CONKER,         -1)
+    add_to_css(Character.id.MTWO,   FGM.announcer.names.MEWTWO,         1.50,         0x00010004, POKEMON,      name_texture.MEWTWO,         portrait_offsets.MTWO,           -1)
+    add_to_css(Character.id.MARTH,  FGM.announcer.names.MARTH,          1.50,         0x00010004, FIRE_EMBLEM,  name_texture.MARTH,          portrait_offsets.MARTH,          -1)
 }
 
 } // __CHARACTER_SELECT__

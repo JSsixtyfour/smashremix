@@ -162,6 +162,7 @@ scope Surface {
     add_surface(big_blue_surface_2, 4.0, OS.TRUE, 8, 4, 90, 5, 0, 130, 1, -1)
     add_surface(corneria_surface_1, 4.0, OS.TRUE, 8, 60, 190, 20, 0, 130, 2, 0x3C)
     add_surface(corneria_surface_2, 4.0, OS.TRUE, 8, 30, 180, 20, 0, 130, 2, 0x16)
+    add_surface(klaptrap, 4.0, OS.TRUE, 8, 25, -90, 100, 0, 130, 0, 0x34)
     
     // write surfaces to ROM
     write_surfaces()

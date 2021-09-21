@@ -42,26 +42,15 @@ scope CharacterSelectDebugMenu {
         lw      a1, 0x0000(a1)              // a1 = player struct start
         sw      a1, 0x0040(v0)              // save player struct start address
         li      a1, menu_arrays             // a1 = menu_arrays
-        addu    a1, a1, a0                  // a1 = pointer to menu array address
-        lw      a1, 0x0000(a1)              // a1 = menu array
-        lw      t0, 0x0000(a1)              // t0 = array size
-        addiu   a1, a1, 0x0004              // a1 = menu array start
+        sll     t0, a0, 0x0001              // t0 = offset to menu array pointers address
+        addu    a1, a1, t0                  // a1 = pointer to menu array pointers address
         sw      a1, 0x0048(v0)              // save menu array address
         sw      r0, 0x0030(v0)              // 0 out panel reference slots we may not need
         sw      r0, 0x0034(v0)              // 0 out panel reference slots we may not need
         sw      r0, 0x0038(v0)              // 0 out panel reference slots we may not need
         sw      r0, 0x003C(v0)              // 0 out panel reference slots we may not need
 
-        beqz    t0, _end                    // if no menu items, use 0 as number of pages
-        lli     t1, 0x0003                  // t1 = 3 (number of menu items per page)
-        divu    t0, t1                      // t0 = max page
-        mflo    t0                          // ~
-        mfhi    t1                          // t1 = 0 if menu items divisible by 3
-        beqzl   t1, _end                    // if perfectly divisible, then adjust by 1 page
-        addiu   t0, t0, -0x0001             // t0 = max page
-
         _end:
-        sw      t0, 0x004C(v0)              // save number of pages
         lw      ra, 0x0004(sp)              // restore registers
         addiu   sp, sp, 0x0030              // deallocate stack space
 
@@ -80,7 +69,6 @@ scope CharacterSelectDebugMenu {
     // 0x40(a0) - address of css player struct
     // 0x44(a0) - offset in css_player_structs
     // 0x48(a0) - address of menu array
-    // 0x4C(a0) - max menu page, 0-based
     scope update_debug_menu_: {
         OS.save_registers()
         // a0 => 0x0010(sp)
@@ -133,6 +121,7 @@ scope CharacterSelectDebugMenu {
 
         // create debug button object
         // 0x30(x) - reference to pagination renderer
+        // 0x34(x) - reference to reset to defaults button
         // 0x40(x) - reference to panel struct
         // 0x44(x) - debug menu display state (0 = disabled, 1 = active)
         // 0x48(x) - debug menu previous display state (0 = disabled, 1 = active)
@@ -146,6 +135,7 @@ scope CharacterSelectDebugMenu {
         // 0x68(x) - reference to menu item 3
         // 0x6C(x) - reference to menu item 4
         // 0x70(x) - reference to menu renderer
+        // 0x84(x) - max menu page, 0-based
         addiu   sp, sp,-0x0030              // allocate stack space
         sw      s0, 0x0004(sp)              // save registers
         sw      s1, 0x0008(sp)              // ~
@@ -176,6 +166,37 @@ scope CharacterSelectDebugMenu {
         lui     s5, 0x3F40                  // s5 = scale
 
         sw      v0, 0x0020(sp)              // save created object address
+
+        li      t0, Toggles.entry_css_panel_menu
+        lw      t0, 0x0004(t0)              // t0 = 0 if CSS panel menu disabled, 1 if enabled
+        xori    t0, t0, 0x0001              // t0 = 1 if disabled (hide), 0 if enabled (show)
+        sw      t0, 0x007C(v0)              // set display state of button
+
+        // create reset to defaults button
+        lw      t0, 0x0024(sp)              // t0 = panel object
+        li      a2, Render.file_pointer_2   // a2 = pointer to CSS images file start address
+        lw      a2, 0x0000(a2)              // a2 = base file address
+        addiu   a2, a2, 0x1828              // a2 = pointer to reset to defaults button footer
+        lbu     a0, 0x000D(t0)              // a0 = room
+        lbu     a1, 0x000C(t0)              // a1 = group
+        lli     a3, 0x0000                  // a3 = routine (Render.NOOP)
+        lw      t1, 0x0074(t0)              // t1 = panel image struct
+        lwc1    f0, 0x0058(t1)              // f0 = ulx of panel
+        lui     at, 0x41A0                  // at = left padding (20)
+        mtc1    at, f2                      // f2 = left padding
+        add.s   f0, f0, f2                  // f0 = ulx
+        mfc1    s1, f0                      // s1 = ulx
+        lui     s2, 0x4302                  // s2 = uly
+        lli     s3, 0x0000                  // s3 = color
+        lli     s4, 0x0000                  // s4 = palette
+        jal     Render.draw_texture_
+        lui     s5, 0x3F40                  // s5 = scale
+
+        lw      at, 0x0020(sp)              // at = debug button object
+        sw      v0, 0x0034(at)              // save reference to reset to defaults button
+        lli     at, 0x0001                  // at = display off
+        sw      at, 0x007C(v0)              // hide reset to defaults button by default
+
         Render.register_routine(render_menu_page_)
         lw      at, 0x0020(sp)              // at = debug button object
         sw      v0, 0x0070(at)              // save reference to menu renderer in debug button object
@@ -311,6 +332,10 @@ scope CharacterSelectDebugMenu {
         bnezl   t1, pc() + 8                // only run the next line if t1 is not 0
         sw      t3, 0x0038(t1)              // show/hide name and series logo
 
+        xori    t1, at, 0x0001              // t1 = reset to defaults button display state
+        lw      t5, 0x0034(a0)              // t5 = reset to defaults button object
+        sw      t1, 0x007C(t5)              // hide/show reset to defaults button object
+
         _run_every_frame:
         lw      t1, 0x0030(t0)              // t1 = 1P/2P/3P/4P/CP texture object
         bnezl   t1, pc() + 8                // only run the next line if t1 is not 0
@@ -334,7 +359,16 @@ scope CharacterSelectDebugMenu {
         nop
 
         lw      t2, 0x0058(a0)              // t2 = dpad object index
+        sll     t5, t2, 0x0004              // t2 = offset to stock icon and count indicators object
         sll     t2, t2, 0x0002              // t2 = offset to dpad object
+        lw      t4, 0x0044(t1)              // t4 = stock icon and count indicators object
+        beqz    t4, _dpad                   // if no stock icon and count indicators object, skip
+        addu    t4, t4, t5                  // t4 = offset by panel
+        lw      t0, 0x0030(t4)              // t0 = stock icon and count indicators object
+        bnezl   t0, pc() + 8                // only run the next line if t0 is not 0
+        sw      t3, 0x0038(t0)              // show/hide stock icon and count indicators
+
+        _dpad:
         addu    t1, t1, t2                  // t1 = render control object offset by panel
         lw      t0, 0x0030(t1)              // t0 = dpad object
         beqz    t0, _end                    // skip if no dpad object
@@ -357,13 +391,14 @@ scope CharacterSelectDebugMenu {
         lw      t4, 0x0030(t1)              // t4 = variant indicators object
         lw      t2, 0x0054(a0)              // t2 = port index
         sll     t2, t2, 0x0002              // t2 = offset to variant indicators object
-        addu    t4, t4, t2                  // t1 = render control object offset by panel
+        addu    t4, t4, t2                  // t4 = offset by panel
         lw      t0, 0x0030(t4)              // t0 = variant indicators object
         bnezl   t0, pc() + 8                // only run the next line if t0 is not 0
         sw      t3, 0x0038(t0)              // show/hide variant indicators
 
         lw      t4, 0x0034(t1)              // t4 = stock icon and count indicators object
-        addu    t4, t4, t2                  // t1 = render control object offset by panel
+        sll     t5, t2, 0x0002              // t2 = offset to stock icon and count indicators object
+        addu    t4, t4, t5                  // t4 = offset by panel
         lw      t0, 0x0030(t4)              // t0 = stock icon and count indicators object
         bnezl   t0, pc() + 8                // only run the next line if t0 is not 0
         sw      t3, 0x0038(t0)              // show/hide stock icon and count indicators
@@ -391,6 +426,10 @@ scope CharacterSelectDebugMenu {
         lw      t1, 0x0034(t0)              // t1 = name and series logo object
         bnezl   t1, pc() + 8                // only run the next line if t1 is not 0
         sw      t3, 0x0038(t1)              // show/hide name and series logo
+
+        xori    t1, at, 0x0001              // t1 = reset to defaults button display state
+        lw      t5, 0x0034(a0)              // t5 = reset to defaults button object
+        sw      t1, 0x007C(t5)              // hide/show reset to defaults button object
 
         _run_every_frame_1p:
         lw      t1, 0x003C(t0)              // t1 = panel object
@@ -458,9 +497,36 @@ scope CharacterSelectDebugMenu {
         lw      at, 0x0060(a0)              // at = first menu pointer
         bnez    at, _end                    // skip if menu pointer is already populated
         nop
-        li      at, debug_control_object
-        lw      at, 0x0000(at)              // at = debug control object
-        lw      at, 0x0048(at)              // at = menu array
+        li      t0, debug_control_object
+        lw      t0, 0x0000(t0)              // t0 = debug control object
+        lw      at, 0x0048(t0)              // at = menu arrays
+        lw      t1, 0x004C(a0)              // t1 = 1 if 1P/Bonus, 0 if not
+        bnezl   t1, _get_max_pages          // if 1P/Bonus, then always use human array
+        lw      at, 0x0000(at)              // at = human menu array
+
+        lw      t1, 0x0040(a0)              // t1 = CSS panel struct
+        lw      t0, 0x0044(t0)              // t0 = offset to CSS settings: 0 if VS
+        beqzl   t0, _check_cpu              // if VS, use VS offset, otherwise use training offset
+        lw      t0, 0x0084(t1)              // t0 = type: 0 if HMN, 1 if CPU, 2 if NA
+        lw      t0, 0x0080(t1)              // t0 = type: 0 if HMN, 1 if CPU, 2 if NA
+        _check_cpu:
+        bnezl   t0, _get_max_pages          // if CPU, use CPU array
+        lw      at, 0x0004(at)              // at = cpu menu array
+        // otherwise use human array
+        lw      at, 0x0000(at)              // at = human menu array
+
+        _get_max_pages:
+        lw      t0, -0x0004(at)             // t0 = number of menu items
+        beqz    t0, _get_current_page       // if no menu items, use 0 as number of pages
+        lli     t1, 0x0003                  // t1 = 3 (number of menu items per page)
+        divu    t0, t1                      // t0 = max page
+        mflo    t0                          // ~
+        mfhi    t1                          // t1 = 0 if menu items divisible by 3
+        beqzl   t1, _get_current_page       // if perfectly divisible, then adjust by 1 page
+        addiu   t0, t0, -0x0001             // t0 = max page
+
+        _get_current_page:
+        sw      t0, 0x0084(a0)              // save max pages
         lw      t0, 0x005C(a0)              // t0 = current page
         lli     t1, 12                      // t1 = 12 (size of 3 pointers)
         multu   t0, t1                      // t1 = offset to first menu item pointer for page
@@ -778,6 +844,11 @@ scope CharacterSelectDebugMenu {
         // 0x0004(sp) - port index
         // 0x007C(sp) - debug button object
 
+        // we want to ensure blinking arrows are always drawn on top, even after recreated via update_live_string_
+        li      t0, Render.display_order_room
+        lui     t1, 0x4000                  // t1 = 0x40000000 (render after 0x80000000)
+        sw      t1, 0x0000(t0)              // update display order for room for draw_texture_
+
         // first, draw left arrow (I could make this a loop but I'm too lazy)
 
         or      t0, r0, a1                  // t0 = panel object
@@ -861,6 +932,10 @@ scope CharacterSelectDebugMenu {
         sw      t0, 0x001C(v0)              // save y scale
         lli     t0, 0x0201                  // t0 = render flags
         sh      t0, 0x0024(v0)              // turn on blur
+
+        li      t0, Render.display_order_room
+        lui     t1, Render.DISPLAY_ORDER_DEFAULT
+        sw      t1, 0x0000(t0)              // reset display order with default
 
         OS.restore_registers()
         jr      ra
@@ -959,9 +1034,8 @@ scope CharacterSelectDebugMenu {
         addiu   t8, a0, 0x0030              // t8 = address of object reference
         sw      t8, 0x0054(v0)              // save address storing object reference
 
-        li      t8, debug_control_object
-        lw      t8, 0x0000(t8)              // t8 = debug control object
-        lw      t8, 0x004C(t8)              // t8 = number of pages
+        lw      a1, 0x0070(a0)              // a1 = debug button object
+        lw      t8, 0x0084(a1)              // t8 = number of pages
         beqzl   t8, _finish_create          // if only 1 page, skip creating pagination buttons
         sw      r0, 0x0038(v0)              // and disable display of page number
 
@@ -1151,9 +1225,9 @@ scope CharacterSelectDebugMenu {
         lw      t1, 0x0024(sp)              // original line 2
         // port index is always 0, so save 0 to unused stack to match VS
         sw      r0, 0x0028(sp)              // save port index
-        // now we can carry on like this is VS
-        b       _vs
-        nop
+        // now we can carry on like other screens
+        b       _common
+        lw      a0, 0x0040(sp)              // a0 = cursor object
 
         _training_return:
         jr      ra
@@ -1165,13 +1239,30 @@ scope CharacterSelectDebugMenu {
         nop
         li      ra, 0x801359E4              // adjust ra so we return after the last button check code
         sll     t1, s0, 0x0002              // original line 2
-        // now we can carry on like this is VS
+        // now we can carry on like other screens
+        b       _common
+        lw      a0, 0x0040(sp)              // a0 = cursor object
 
         _vs:
         // 0x0040(sp) - cursor object
         // 0x0028(sp) - panel index
 
         lw      a0, 0x0040(sp)              // a0 = cursor object
+
+        // Rather than sprinkle in new hooks, let's check for stock mode's indicator arrows here
+
+        addiu   sp, sp,-0x0030              // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+        sw      t5, 0x000C(sp)              // ~
+
+        // a0 will be preserved
+        li      a1, press_a_handler_._end   // a1 = ra if there is a press, past other custom button handler checks
+        jal     CharacterSelect.check_manual_stock_arrow_press_
+        nop
+
+        lw      t5, 0x000C(sp)              // ~
+        lw      ra, 0x0004(sp)              // restore registers
+        addiu   sp, sp, 0x0030              // deallocate stack space
 
         _common:
         li      t0, debug_control_object
@@ -1181,6 +1272,8 @@ scope CharacterSelectDebugMenu {
         sw      ra, 0x0004(sp)              // save registers
         sw      t0, 0x0008(sp)              // ~
         sw      t5, 0x000C(sp)              // ~
+
+        // a0 is preserved for all the following routines
 
         jal     handle_debug_button_press_
         lw      a1, 0x0030(t0)              // a1 = debug button object (1)
@@ -1197,6 +1290,22 @@ scope CharacterSelectDebugMenu {
         jal     handle_debug_button_press_
         lw      a1, 0x003C(t0)              // a1 = debug button object (4)
 
+        lw      t0, 0x0008(sp)              // t0 = debug control object
+        jal     handle_reset_button_press_
+        lw      a1, 0x0030(t0)              // a1 = debug button object (1)
+
+        lw      t0, 0x0008(sp)              // t0 = debug control object
+        jal     handle_reset_button_press_
+        lw      a1, 0x0034(t0)              // a1 = debug button object (2)
+
+        lw      t0, 0x0008(sp)              // t0 = debug control object
+        jal     handle_reset_button_press_
+        lw      a1, 0x0038(t0)              // a1 = debug button object (3)
+
+        lw      t0, 0x0008(sp)              // t0 = debug control object
+        jal     handle_reset_button_press_
+        lw      a1, 0x003C(t0)              // a1 = debug button object (4)
+
         jal     handle_item_arrow_press_
         lw      a1, 0x0008(sp)              // a1 = debug control object
 
@@ -1204,8 +1313,8 @@ scope CharacterSelectDebugMenu {
         lw      a1, 0x0008(sp)              // a1 = debug control object
 
         _end:
-        lw      ra, 0x0004(sp)              // restore registers
         lw      t5, 0x000C(sp)              // ~
+        lw      ra, 0x0004(sp)              // restore registers
         addiu   sp, sp, 0x0030              // deallocate stack space
 
         jr      ra
@@ -1220,6 +1329,11 @@ scope CharacterSelectDebugMenu {
         addiu   sp, sp,-0x0030              // allocate stack space
         sw      ra, 0x0004(sp)              // save registers
         sw      a0, 0x0008(sp)              // ~
+
+        li      v0, Toggles.entry_css_panel_menu
+        lw      v0, 0x0004(v0)              // v0 = 0 if CSS panel menu disabled
+        beqz    v0, _end                    // if not enabled, skip
+        nop
 
         jal     CharacterSelect.check_image_press_ // v0 = 1 if button pressed, 0 if not
         nop
@@ -1250,6 +1364,128 @@ scope CharacterSelectDebugMenu {
         lw      a0, 0x0008(sp)              // ~
         addiu   sp, sp, 0x0030              // deallocate stack space
 
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // Checks if a reset to defaults button is pressed and updates debug menu state
+    // a0 - cursor object
+    // a1 - debug button object
+    scope handle_reset_button_press_: {
+        beqz    a1, _return                 // if no debug button object, skip
+        nop
+
+        addiu   sp, sp,-0x0030              // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+        sw      a0, 0x0008(sp)              // ~
+        sw      a1, 0x000C(sp)              // ~
+
+        jal     CharacterSelect.check_image_press_ // v0 = 1 if button pressed, 0 if not
+        lw      a1, 0x0034(a1)              // a1 = reset to defaults button object
+
+        beqz    v0, _end                    // if not pressed, skip
+        nop
+
+        lw      at, 0x007C(a1)              // at = button press state (0 = enabled, 1 = disabled)
+        bnez    at, _end                    // skip if button pressing not allowed
+        nop
+
+        li      at, press_a_handler_._end   // at = new ra, past other custom button handler checks
+        sw      at, 0x0004(sp)              // set new ra
+
+        // update all menu items to default values
+        li      at, debug_control_object
+        lw      at, 0x0000(at)              // at = debug control object
+        lw      at, 0x0048(at)              // at = menu array
+        lw      t0, 0x0000(at)              // t0 = human menu array
+        lw      a1, 0x000C(sp)              // a1 = debug button object
+        lw      t4, 0x0054(a1)              // t4 = panel index
+        sll     t4, t4, 0x0002              // t4 = offset in value string array
+        lli     t5, 0x0001                  // t5 = loop counter
+
+        _loop:
+        lw      t1, 0x0000(t0)              // t1 = menu item
+        beqz    t1, _next                   // if no more menu items, exit loop
+        nop
+        lw      t2, 0x0010(t1)              // t2 = default value
+        lw      t3, 0x001C(t1)              // t3 = value array
+        addu    t3, t3, t4                  // t3 = value address
+        sw      t2, 0x0000(t3)              // set to default
+
+        // call change handler
+        lw      t6, 0x0018(t1)              // t6 = change handler routine
+        beqzl   t6, _loop                   // if no change handler, skip calling change handler
+        addiu   t0, t0, 0x0004              // t0 = next menu item address
+
+        sw      at, 0x0014(sp)              // save menu arrays
+        sw      t0, 0x0018(sp)              // save menu array
+        sw      t1, 0x001C(sp)              // save menu item
+        sw      t2, 0x0020(sp)              // save updated value
+        sw      t5, 0x0024(sp)              // save loop counter
+        sw      t4, 0x0028(sp)              // save offset in value string array
+
+        or      a0, r0, t1                  // a0 = menu item
+        lw      a3, 0x0040(a1)              // a3 = panel struct
+        lw      t0, 0x004C(a1)              // t0 = 1 if 1P/Bonus, 0 otherwise
+        beqzl   t0, pc() + 12               // if not 1p/bonus...
+        lw      a3, 0x0008(a3)              // ...then player object is here...
+        lw      a3, 0x0030(a3)               // ...otherwise it's here
+        lw      a1, 0x0054(a1)              // a1 = port index
+        jalr    t6
+        or      a2, r0, t2                  // a2 = new value
+
+        lw      at, 0x0014(sp)              // restore menu arrays
+        lw      t0, 0x0018(sp)              // restore menu array
+        lw      t1, 0x001C(sp)              // restore menu item
+        lw      t2, 0x0020(sp)              // restore updated value
+        lw      t5, 0x0024(sp)              // restore loop counter
+        lw      t4, 0x0028(sp)              // restore offset in value string array
+        lw      a1, 0x000C(sp)              // restore debug button object
+
+        b       _loop
+        addiu   t0, t0, 0x0004              // t0 = next menu item address
+
+        _next:
+        beqz    t5, _refresh                // if done looping, skip ahead
+        lw      t0, 0x0004(at)              // t0 = cpu menu array
+        bnez    t0, _loop                   // reset cpu menu array, if it exists
+        addiu   t5, t5, -0x0001             // t5--
+
+        _refresh:
+        addiu   t3, a1, 0x0060              // t3 = pointer to first menu item
+        lw      t5, 0x0070(a1)              // t5 = menu renderer
+        lw      t0, 0x0040(t5)              // t0 = first menu item value object
+        beqz    t0, _play_fgm               // if no menu item yet (pressed same frame as toggle on), then skip
+        nop
+
+        _refresh_loop:
+        lw      t1, 0x0000(t3)              // t1 = menu item
+        lw      t6, 0x0004(t1)              // t6 = value type
+        lli     at, value_type.NUMERIC
+        beq     at, t6, _refresh_next       // if numeric, skip text stuff
+        lw      t6, 0x0014(t1)              // t6 = string table
+        sll     t7, t2, 0x0002              // t7 = offset in string table
+        addu    t7, t6, t7                  // t7 = pointer to string
+        lw      t7, 0x0000(t7)              // t7 = string
+        sw      t7, 0x0034(t0)              // update string address
+        _refresh_next:
+        addiu   t5, t5, 0x0004              // t5 = menu renderer, offset
+        lw      t0, 0x0040(t5)              // t0 = next menu item value object
+        bnez    t0, _refresh_loop           // loop if there is an item value object
+        addiu   t3, t3, 0x0004              // t3 = next menu item pointer
+
+        _play_fgm:
+        // play FGM
+        jal     0x800269C0
+        lli     a0, FGM.menu.TOGGLE         // a0 = FGM.menu.TOGGLE
+
+        _end:
+        lw      ra, 0x0004(sp)              // restore registers
+        lw      a0, 0x0008(sp)              // ~
+        addiu   sp, sp, 0x0030              // deallocate stack space
+
+        _return:
         jr      ra
         nop
     }
@@ -1287,19 +1523,22 @@ scope CharacterSelectDebugMenu {
         nop
 
         // We have an arrow object, so check for left arrow press
-        jal     CharacterSelect.check_image_press_ // v0 = 1 if button pressed, 0 if not
-        or      a1, r0, t3                  // a1 = arrow object
+        lli     a2, 0x0000                  // a2 = left padding
+        lli     a3, 0x0008                  // a3 = right padding
+        jal     CharacterSelect.check_image_footer_press_ // v0 = 1 if button pressed, 0 if not
+        lw      a1, 0x0074(t3)              // a1 = left arrow image footer struct
         bnez    v0, _pressed                // if pressed, branch accordingly
         addiu   t6, r0, -0x0001             // t6 = -1 for left press
-        lw      t4, 0x0074(a1)              // t4 = left arrow image footer struct
+        lli     a2, 0x0008                  // a2 = left padding
+        lli     a3, 0x0000                  // a3 = right padding
         jal     CharacterSelect.check_image_footer_press_ // v0 = 1 if button pressed, 0 if not
-        lw      a1, 0x0008(t4)              // a1 = right arrow image footer struct
+        lw      a1, 0x0008(a1)              // a1 = right arrow image footer struct
         beqz    v0, _next_arrow             // if not pressed, skip
         lli     t6, 0x0001                  // t6 = +1 for right press
-        lw      a1, 0x0004(a1)              // a1 = arrow object
 
         _pressed:
         // Check if enabled
+        lw      a1, 0x0004(a1)              // a1 = arrow object
         lw      t4, 0x007C(a1)              // t4 = 1 if disabled, 0 if enabled
         bnez    t4, _next_arrow             // if not enabled, skip
         nop
@@ -1340,6 +1579,14 @@ scope CharacterSelectDebugMenu {
         sw      t5, 0x001C(sp)              // save menu item
         sw      t7, 0x0020(sp)              // save updated value
         sw      a1, 0x0024(sp)              // save arrow object
+
+        lw      t0, 0x000C(sp)              // t0 = address of debug button object
+        lw      t1, 0x0000(t0)              // t1 = debug button object
+        lw      t0, 0x004C(t1)              // t0 = 1 if 1P/Bonus, 0 otherwise
+        lw      a3, 0x0040(t1)              // a3 = panel struct
+        beqzl   t0, pc() + 12               // if not 1p/bonus...
+        lw      a3, 0x0008(a3)              // ...then player object is here...
+        lw      a3, 0x0030(a3)               // ...otherwise it's here
 
         or      a0, r0, t5                  // a0 = menu item
         lw      a1, 0x0040(a1)              // a1 = port index
@@ -1421,22 +1668,27 @@ scope CharacterSelectDebugMenu {
         sw      t2, 0x0014(sp)              // save pagination renderer
         lw      a1, 0x0034(t2)              // a1 = left arrow object
         beqz    a1, _next                   // if no arrow object, skip
-        nop
+        lli     a2, 0x0000                  // a2 = 0 (no left padding)
 
         // We have an arrow object, so check for button press
-        jal     CharacterSelect.check_image_press_ // v0 = 1 if button pressed, 0 if not
-        nop
+        lli     a3, 0x0003                  // a3 = 3 (right padding)
+        jal     CharacterSelect.check_image_footer_press_ // v0 = 1 if button pressed, 0 if not
+        lw      a1, 0x0074(a1)              // a1 = image footer
         bnez    v0, _update_page            // if pressed, update page
         nop
 
         lw      t2, 0x0014(sp)              // t2 = pagination renderer
-        jal     CharacterSelect.check_image_press_ // v0 = 1 if button pressed, 0 if not
+        lli     a2, 0x0004                  // a2 = 4 (left padding)
+        lli     a3, 0x0000                  // a3 = 0 (no right padding)
         lw      a1, 0x0038(t2)              // a1 = right arrow object
+        jal     CharacterSelect.check_image_footer_press_ // v0 = 1 if button pressed, 0 if not
+        lw      a1, 0x0074(a1)              // a1 = image footer
         beqz    v0, _next                   // if not pressed, skip
         nop
 
         _update_page:
         // Check if enabled
+        lw      a1, 0x0004(a1)              // a1 = arrow image object
         lw      t4, 0x007C(a1)              // t4 = 1 if disabled, 0 if enabled
         bnez    t4, _next                   // if not enabled, skip
         nop
@@ -1450,17 +1702,14 @@ scope CharacterSelectDebugMenu {
         lw      t2, 0x0070(t2)              // t2 = debug button object
         lw      t6, 0x0048(a1)              // t6 = direction
 
-        li      t8, debug_control_object
-        lw      t8, 0x0000(t8)              // t8 = debug control object
-
         lw      t7, 0x005C(t2)              // t7 = current page
         addu    t7, t7, t6                  // t7 = new value
         lli     t6, 0x0000                  // t6 = min value
         slt     at, t7, t6                  // at = 1 if new value is less than min value (which is bad)
         bnezl   at, pc() + 8                // if less than the min value, set to max value
-        lw      t7, 0x004C(t8)              // t7 = new value (max value)
+        lw      t7, 0x0084(t2)              // t7 = new value (max value)
 
-        lw      t6, 0x004C(t8)              // t6 = max value
+        lw      t6, 0x0084(t2)              // t6 = max value
         slt     at, t6, t7                  // at = 1 if max value is less than new value (which is bad)
         bnezl   at, pc() + 8                // if higher than the max value, set to min value
         lli     t7, 0x0000                  // t7 = new value (min value)
@@ -1731,7 +1980,7 @@ scope CharacterSelectDebugMenu {
         addiu   t0, t6, 0x0030              // original line 1
     }
 
-    // Clear debug menu settings that shouldn't be applied before 1P, Bonus 3 and Multimans
+    // Clear debug menu settings that shouldn't be applied before 1P, Bonus 3 and Multimans.
     scope clear_debug_menu_settings_for_1p_: {
         OS.patch_start(0x52068, 0x800D6868)
         jal     clear_debug_menu_settings_for_1p_
@@ -1754,6 +2003,15 @@ scope CharacterSelectDebugMenu {
         
         jal     Knockback.clear_settings_for_1p_
         lw      a0, 0x000C(sp)              // a0 = human port
+        
+        jal     Shield.clear_settings_for_1p_
+        lw      a0, 0x000C(sp)              // a0 = human port
+
+        jal     InputDelay.clear_settings_for_1p_
+        lw      a0, 0x000C(sp)              // a0 = human port
+
+        jal     ModelDisplay.clear_settings_for_1p_
+        lw      a0, 0x000C(sp)              // a0 = human port
 
         lw      ra, 0x0004(sp)              // restore registers
         lw      a0, 0x0008(sp)              // ~
@@ -1771,19 +2029,23 @@ scope CharacterSelectDebugMenu {
 
     // @ Description
     // Points to menu arrays for each CSS
+    // 0x0000 - human array
+    // 0x0004 - CPU array
     menu_arrays:
-    dw menu_array_vs
-    dw menu_array_1p
-    dw menu_array_training
-    dw menu_array_bonus
-    dw menu_array_bonus
+    dw menu_array_vs,       menu_array_vs_cpu
+    dw menu_array_1p,       0
+    dw menu_array_training, menu_array_training_cpu
+    dw menu_array_bonus,    0
+    dw menu_array_bonus,    0
 
     // @ Description
     // Variables used for tracking counts
     variable menu_item_count(0)
     variable menu_item_count_vs(0)
+    variable menu_item_count_vs_cpu(0)
     variable menu_item_count_1p(0)
     variable menu_item_count_training(0)
+    variable menu_item_count_training_cpu(0)
     variable menu_item_count_bonus(0)
 
     // @ Description
@@ -1804,8 +2066,9 @@ scope CharacterSelectDebugMenu {
     // string_table - table containing pointers to strings to be displayed instead of the index value, if value_type = STRING
     // onchange_handler - routine to run when value is changed, or 0 if not necessary
     // applies_to - bitmask for which menu arrays to append... ex: 0b10100 means add to vs and training, 0b01011 means add to 1p and bonus 1 and 2
+    // applies_to_hmn_cpu - bitmask for whether the menu item applies to humans, cpus or both... ex: 0b10 means humans only, 0b01 means cpus only, 0b11 means both
     // value_array_pointer - if provided, a pointer to external value array pointer... if 0, value array will be created
-    macro add_menu_item(label, value_type, min_value, max_value, default_value, string_table, onchange_handler, applies_to, value_array_pointer) {
+    macro add_menu_item(label, value_type, min_value, max_value, default_value, string_table, onchange_handler, applies_to, applies_to_hmn_cpu, value_array_pointer) {
         evaluate i(menu_item_count)
         global variable menu_item_count(menu_item_count + 1)
 
@@ -1835,9 +2098,18 @@ scope CharacterSelectDebugMenu {
 
         // If applies to VS, setup for adding to VS menu item array
         if ({applies_to} & 0b10000) > 0 {
-            evaluate n(menu_item_count_vs)
-            global evaluate MENU_ITEM_VS_{n}(menu_item_{i})
-            global variable menu_item_count_vs(menu_item_count_vs + 1)
+            // human
+            if ({applies_to_hmn_cpu} & 0b10) > 0 {
+	            evaluate n(menu_item_count_vs)
+	            global evaluate MENU_ITEM_VS_{n}(menu_item_{i})
+	            global variable menu_item_count_vs(menu_item_count_vs + 1)
+	        }
+	        // cpu
+            if ({applies_to_hmn_cpu} & 0b01) > 0 {
+	            evaluate n(menu_item_count_vs_cpu)
+	            global evaluate MENU_ITEM_VS_CPU_{n}(menu_item_{i})
+	            global variable menu_item_count_vs_cpu(menu_item_count_vs_cpu + 1)
+	        }
         }
 
         // If applies to 1P, setup for adding to 1P menu item array
@@ -1849,9 +2121,18 @@ scope CharacterSelectDebugMenu {
 
         // If applies to Training, setup for adding to Training menu item array
         if ({applies_to} & 0b00100) > 0 {
-            evaluate n(menu_item_count_training)
-            global evaluate MENU_ITEM_TRAINING_{n}(menu_item_{i})
-            global variable menu_item_count_training(menu_item_count_training + 1)
+            // human
+            if ({applies_to_hmn_cpu} & 0b10) > 0 {
+	            evaluate n(menu_item_count_training)
+	            global evaluate MENU_ITEM_TRAINING_{n}(menu_item_{i})
+	            global variable menu_item_count_training(menu_item_count_training + 1)
+	        }
+	        // cpu
+            if ({applies_to_hmn_cpu} & 0b01) > 0 {
+	            evaluate n(menu_item_count_training_cpu)
+	            global evaluate MENU_ITEM_TRAINING_CPU_{n}(menu_item_{i})
+	            global variable menu_item_count_training_cpu(menu_item_count_training_cpu + 1)
+	        }
         }
 
         // If applies to Bonus, setup for adding to Bonus menu item array
@@ -1874,42 +2155,66 @@ scope CharacterSelectDebugMenu {
             evaluate string_table({item}.string_table)
         }
 
-        add_menu_item({{item}.LABEL}, {item}.VALUE_TYPE, {item}.MIN_VALUE, {item}.MAX_VALUE, {item}.DEFAULT_VALUE, {string_table}, {item}.ONCHANGE_HANDLER, {item}.APPLIES_TO, {item}.VALUE_ARRAY_POINTER)
+        add_menu_item({{item}.LABEL}, {item}.VALUE_TYPE, {item}.MIN_VALUE, {item}.MAX_VALUE, {item}.DEFAULT_VALUE, {string_table}, {item}.ONCHANGE_HANDLER, {item}.APPLIES_TO, {item}.APPLIES_TO_HUMAN_CPU, {item}.VALUE_ARRAY_POINTER)
     }
 
     // @ Description
     // Writes menu items to ROM
     macro write_menu_items() {
-        menu_array_vs:
-        define n(0)
+        menu_array_vs_info:
         dw menu_item_count_vs
+        define n(0)
+        menu_array_vs:
         while {n} < menu_item_count_vs {
             dw {MENU_ITEM_VS_{n}}
             evaluate n({n}+1)
         }
         dw 0 // terminator
 
+        menu_array_vs_cpu_info:
+        dw menu_item_count_vs_cpu
+        define n(0)
+        menu_array_vs_cpu:
+        while {n} < menu_item_count_vs_cpu {
+            dw {MENU_ITEM_VS_CPU_{n}}
+            evaluate n({n}+1)
+        }
+        dw 0 // terminator
+
+        menu_array_1p_info:
+        dw menu_item_count_1p
         menu_array_1p:
         define n(0)
-        dw menu_item_count_1p
         while {n} < menu_item_count_1p {
             dw {MENU_ITEM_1P_{n}}
             evaluate n({n}+1)
         }
         dw 0 // terminator
 
+        menu_array_training_info:
+        dw menu_item_count_training
         menu_array_training:
         define n(0)
-        dw menu_item_count_training
         while {n} < menu_item_count_training {
             dw {MENU_ITEM_TRAINING_{n}}
             evaluate n({n}+1)
         }
         dw 0 // terminator
 
+        menu_array_training_cpu_info:
+        dw menu_item_count_training_cpu
+        menu_array_training_cpu:
+        define n(0)
+        while {n} < menu_item_count_training_cpu {
+            dw {MENU_ITEM_TRAINING_CPU_{n}}
+            evaluate n({n}+1)
+        }
+        dw 0 // terminator
+
+        menu_array_bonus_info:
+        dw menu_item_count_bonus
         menu_array_bonus:
         define n(0)
-        dw menu_item_count_bonus
         while {n} < menu_item_count_bonus {
             dw {MENU_ITEM_BONUS_{n}}
             evaluate n({n}+1)
@@ -1917,21 +2222,15 @@ scope CharacterSelectDebugMenu {
         dw 0 // terminator
 
         print "Total menu items: ", menu_item_count, "\n"
-        print "Total VS menu items: ", menu_item_count_vs, "\n"
+        print "Total VS menu items: HMN=", menu_item_count_vs, " CPU=", menu_item_count_vs_cpu, "\n"
         print "Total 1p menu items: ", menu_item_count_1p, "\n"
-        print "Total Training menu items: ", menu_item_count_training, "\n"
+        print "Total Training menu items: HMN=", menu_item_count_training, " CPU=", menu_item_count_training_cpu, "\n"
         print "Total Bonus menu items: ", menu_item_count_bonus, "\n"
     }
 
     // Include menu item files, scoped
-    scope Costume {
-        include "css/Costume.asm"
-    }
     scope StockMode {
         include "css/StockMode.asm"
-    }
-    scope StockCount {
-        include "css/StockCount.asm"
     }
     scope Size {
         include "css/Size.asm"
@@ -1945,16 +2244,29 @@ scope CharacterSelectDebugMenu {
     scope Knockback {
         include "css/Knockback.asm"
     }
-    
+    scope Shield {
+        include "css/Shield.asm"
+    }
+    scope InputDelay {
+        include "css/InputDelay.asm"
+    }
+    scope Handicap {
+        include "css/Handicap.asm"
+    }
+    scope ModelDisplay {
+        include "css/ModelDisplay.asm"
+    }
 
     // Add Menu Items
-    //add_menu_item(Costume)
-    //add_menu_item(StockMode)
-    //add_menu_item(StockCount)
-    add_menu_item(Size)
+    add_menu_item(Shield)
     add_menu_item(Visibility)
     add_menu_item(Skeleton)
+    add_menu_item(ModelDisplay)
+    add_menu_item(Size)
+    add_menu_item(StockMode)
     add_menu_item(Knockback)
+    add_menu_item(InputDelay)
+    add_menu_item(Handicap)
 
     // Write Menu Items
     write_menu_items()

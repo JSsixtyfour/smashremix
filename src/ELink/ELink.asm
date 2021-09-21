@@ -19,6 +19,9 @@ scope ELink {
     Character.table_patch_start(crowd_chant_fgm, Character.id.ELINK, 0x2)
     dh  0x025F
     OS.patch_end()
-    
-    
+
+    // Set action strings
+    Character.table_patch_start(action_string, Character.id.ELINK, 0x4)
+    dw  Action.LINK.action_string_table
+    OS.patch_end()
 }

@@ -43,16 +43,29 @@ Computer controlled players have recieved a variety of improvements.
 ### Character Select Debug Menu
 A menu for modifying certain character attributes is available on each panel.
 
-#### Size
-- Allows playing as the giant or tiny version of the character.
-#### Visibility 
+##### Shield
+- Allows selecting a shield color.
+##### Visibility 
 - Allows playing as completely invisible (None), slightly visible (Cloaked), or as a silhouette (Dark).
-#### Skeleton 
+##### Skeleton 
 - Setting to enabled is perfect for Halloween. 
-#### Knockback 
+##### Model
+- Allows forcing high definition or low definition version of character.
+##### Size
+- Allows playing as the giant or tiny version of the character.
+##### Stock
+- "Last" mode maintains stock count from the previous game. Useful for crew battles.
+- "Manual" mode allows specifying the stock count.
+##### Knockback 
 - Setting to random will create a moveset for the character with randomized knockback.
 - The knockback angle is generated for each move at the start of the match and will persist until the end of the match.
 - Resetting training mode or performing a salty runback will not generate a new set of knockback angles.
+##### Delay
+- Adds input delay to imitate netplay. HMN ports only.
+##### Handicap
+- Allows modifying CPU handicap. CPU ports only.
+
+#### Toggle Name: _CSS Panel Menu_
 
 ### Expanded Stage Select Screen
 - The stage select screen is now expanded to multiple pages.
@@ -115,6 +128,7 @@ A menu for modifying certain character attributes is available on each panel.
 - Access all available costumes by scrolling with the left and right C buttons.
 - Access all available shades by scrolling with the up and down C buttons.
 - Metal Mario and the polygons also have alternate costumes.
+- To control CPU costumes, hover over the panel at the bottom of the screen and press the C buttons.
 
 ### Random Music
 - Random music allows players to listen to music from other stages.
@@ -125,6 +139,16 @@ A menu for modifying certain character attributes is available on each panel.
 - Changes the possible music tracks to be used when random music is enabled.
 
 #### Toggle Name: Each track's title is listed in the Music Settings menu
+
+### Random Music Profiles
+Load a curated list of tracks.
+- Community: All tracks.
+- Vanilla: Only tracks from the original game.
+- Classics: Features themes and arrangements from games on the N64 and prior systems.
+- Into Battle: Mostly comprised of dramatic, intense, or exciting music.
+- Positive Vibes: Mostly comprised of upbeat, energetic, or happy music.
+- Slappers Only: The_Smashfather's personal favorite tracks.
+- Staff Picks: Favorites of the contributors of Smash Remix.
 
 ### Menu Music
 - Choose between the classic SSB64 music or from Melee's and Brawl's menu themes.
@@ -142,6 +166,18 @@ A menu for modifying certain character attributes is available on each panel.
 
 #### Toggle Name: Each stage's name is listed under Random Stage Toggles in the Stage Settings menu
 
+### Random Stage Profiles
+Load a curated list of stages.
+- Community: All stages except for Dream Land Beta 1 and 2 and How to Play.
+- Tournament: All stages generally agreed to be "legal" in tournaments.
+- Semi-Competitive: Stages that give some variation but are still considered somewhat competitive.
+- Competitive: Stages that may not be "tournament legal" but are still considered competitive.
+- Vanilla: All original stages except for Dream Land Beta 1 and 2 and How to Play.
+- Dream Land Only: All stages with Dream Land layout.
+- No Omega Variants: All stages except for Omega variants, Dream Land Beta 1 and 2 and How to Play.
+- No Variants: All stages except for variants, Dream Land Beta 1 and 2 and How to Play. (Fray's Stage Night is included.)
+- Staff Picks: Favorites of the contributors of Smash Remix.
+
 ### Random Select With Variants
 - By default, the variants (Metal Mario, Giant DK, polygons, J/E regional versions) are not included in the random character select that occurs when toggling the CPU button on the character select screen.
 - This toggle allows for them to be included.
@@ -149,6 +185,11 @@ A menu for modifying certain character attributes is available on each panel.
 #### Toggle Name: _Random Select With Variants_
 
 ## Practice
+### Hold to Exit Training
+- Prevents accidentally exiting training mode by requiring the A button to be held for half of a second when on the Exit pause menu option.
+
+#### Toggle Name: _Hold To Pause_
+
 ### Special Model Display
 Use the toggle or cycle using D-Pad down in Training Mode.
 - Hitbox: Displays hitboxes and hurtboxes instead of normal characters/items/projectiles.
@@ -206,6 +247,11 @@ When Special Model Display is Hitbox or Hitbox+, these changes are applied:
 
 #### Toggle Name: _Widescreen_
 
+### Music Title at Match Start
+- See the title of the track and its game of origin at the start of matches.
+
+#### Toggle Name: _Music Title at Match Start_
+
 ### Disable Anti-Aliasing
 - Turn off anti-aliasing.
 
@@ -219,7 +265,7 @@ When Special Model Display is Hitbox or Hitbox+, these changes are applied:
 
 ## Training Mode
 ### Custom Menu
-- Pressing Z while the menu is open will open the custom 19XX training menu. This menu allows you to access special settings for each port.
+- Pressing Z while the menu is open will open the custom training menu. This menu allows you to access special settings for each port.
     - Character: The character used.
     - Costume: The costume used by the character.
     - Type: The type of player. (Human, CPU, Disabled)
@@ -243,6 +289,9 @@ When Special Model Display is Hitbox or Hitbox+, these changes are applied:
 
 ### Music
 - Pick which track you want to listen to while in Training Mode via the custom menu.
+
+### Show Action and Frame
+- Pressing L toggles display of each character's current action and frame of animation.
 
 ## Japanese Gameplay
 ### Japanese Hitlag
@@ -290,6 +339,10 @@ When Special Model Display is Hitbox or Hitbox+, these changes are applied:
     - Fight a Kirby Team with brand new powers
     - Face new boss characters
 
+### All-Star Mode
+- Fight all 24 characters.
+- Heal at the rest area between battles by using one of the three hearts.
+
 ### Multiman Mode
 - Fight a neverending polygon team and track KOs as highscores.
 
@@ -297,77 +350,117 @@ When Special Model Display is Hitbox or Hitbox+, these changes are applied:
 - Same as Multiman Mode but much more difficult.
 
 ## Profiles
-- Toggles can be controlled quickly by choosing one of three built-in profiles: Community, Tournament and Japanese
+- Toggles can be controlled quickly by choosing one of three built-in profiles: Community, Tournament, Netplay and Japanese
 
 ### Defaults
 #### Remix Settings
-Toggle                     | Community          | Tournament        | Japanese
----------------------------|--------------------|-------------------|-------------------
-Skip Results Screen        | Off                | Off               | Off
-Color Overlays             | Off                | Off               | Off
-Cinematic Camera           | Default            | Default           | Default
-Flash On Z-Cancel          | Off                | Off               | Off
-FPS Display *BETA          | Off                | Off               | Off
-Special Model Display      | Off                | Off               | Off
-Advanced Hurtbox Display   | Off                | Off               | Off
-Hold To Pause              | On                 | On                | On
-Improved Combo Meter       | On                 | Off               | On
-Tech Chase Combo Meter     | On                 | Off               | On
-VS Mode Combo Meter        | On                 | Off               | On
-1V1 Combo Meter Swap       | Off                | Off               | Off
-Improved AI                | On                 | Off               | On
-Neutral Spawns             | On                 | On                | On
-Stereo Sound               | On                 | On                | On
-Salty Runback              | On                 | Off               | On
-Widescreen                 | Off                | Off               | Off
-Japanese Hitlag            | Off                | Off               | On
-Japanese DI                | Off                | Off               | On
-Japanese Sounds            | Default            | Default           | Default
-Momentum Slide             | Off                | Off               | On
-Japanese Shield Stun       | Off                | Off               | On
-Random Select With Variants| Off                | Off               | Off
-Disable Anti-Aliasing      | Off                | Off               | Off
+Toggle                     | Community          | Tournament        | Netplay           | Japanese
+---------------------------|--------------------|-------------------|-------------------|-------------------
+Skip Results Screen        | Off                | Off               | On                | Off
+Hold To Pause              | Off                | On                | On                | Off
+CSS Panel Menu             | On                 | Off               | On                | On
+Color Overlays             | Off                | Off               | Off               | Off
+Cinematic Camera           | Default            | Default           | Default           | Default
+Flash On Z-Cancel          | Off                | Off               | Off               | Off
+FPS Display *BETA          | Off                | Off               | Off               | Off
+Model Display              | Default            | Default           | High Poly         | Default
+Special Model Display      | Off                | Off               | Off               | Off
+Advanced Hurtbox Display   | Off                | Off               | Off               | Off
+Hold To Exit Training      | Off                | On                | Off               | Off
+Improved Combo Meter       | On                 | Off               | On                | On
+Tech Chase Combo Meter     | On                 | Off               | On                | On
+VS Mode Combo Meter        | On                 | Off               | On                | On
+1v1 Combo Meter Swap       | Off                | Off               | Off               | Off
+Improved AI                | On                 | Off               | On                | On
+Neutral Spawns             | On                 | On                | On                | On
+Salty Runback              | On                 | Off               | On                | On
+Widescreen                 | Off                | Off               | Off               | Off
+Japanese Hitlag            | Off                | Off               | Off               | On
+Japanese DI                | Off                | Off               | Off               | On
+Japanese Sounds            | Default            | Default           | Default           | Always
+Momentum Slide             | Off                | Off               | Off               | On
+Japanese Shield Stun       | Off                | Off               | Off               | On
+Random Select With Variants| Off                | Off               | Off               | Off
+Disable VS Pause HUD       | Off                | Off               | Off               | Off
+Disable Anti-Aliasing      | Off                | Off               | Off               | Off
 
 #### Music Settings
-Toggle                          | Community          | Tournament        | Japanese
---------------------------------|--------------------|-------------------|-------------------
-Play Music                      | On                 | On                | On 
-Menu Music                      | DEFAULT            | DEFAULT           | DEFAULT
-Random Music                    | Off                | Off               | Off
-_Random Toggles for All Tracks_ | On                 | On                | On
+Toggle                          | Community          | Tournament        | Netplay           | Japanese
+--------------------------------|--------------------|-------------------|-------------------|-------------------
+Play Music                      | On                 | On                | On                | On 
+Random Music                    | Off                | Off               | On                | Off
+Menu Music                      | DEFAULT            | DEFAULT           | 64                | DEFAULT
+Music Title at Match Start      | On                 | Off               | On                | On 
+_Random Toggles for All Tracks_ | On                 | On                | On                | On
 
 #### Stage Settings
-Toggle                          | Community          | Tournament        | Japanese
---------------------------------|--------------------|-------------------|-------------------
+Toggle                          | Community          | Tournament        | Netplay           | Japanese
+--------------------------------|--------------------|-------------------|-------------------|-------------------
 Stage Select Layout             | NORMAL             | TOURNAMENT        | NORMAL
-Hazard Mode                     | Off                | Off               | Off
-Japanese Whispy                 | Off                | Off               | On
-_Random Toggles for All Stages_ | On                 | Off*              | On
+Hazard Mode                     | NORMAL             | NORMAL            | NORMAL            | NORMAL
+Japanese Whispy                 | Off                | Off               | Off               | On
+_Random Toggles for All Stages_ | [Community]        | [Tournament]      | [Semi-Competitive]| [Community]
 
-\* These stages are set to on in the Tournament profile:
+These stages are set to on in the Tournament profile:
 - Dream Land
-- Mini Yoshi's Island
 - Deku Tree
+- Pokemon Stadium
+- Glacial River
+- Dr. Mario
+- Fray's Stage
+- Zebes Landing
+- Smashville
+- Yoshi's Story
+- Gerudo Valley
+- Goomba Road
+- Saffron City DL
+- Planet Clancer
+
+These stages are set to on in the Semi-Competitive profile:
+- Congo Jungle
+- Dream Land
+- Hyrule Castle
+- Meta Crystal
+- Peach's Castle
+- Saffron City
+- Mini Yoshi's Island
 - First Destination
+- Ganon's Tower
 - Kalos Pokemon League
 - Pokemon Stadium
+- Skyloft
 - Glacial River
 - WarioWare, Inc.
 - Dr. Mario
-- Battlefield
-- Fray's Stage
+- Great Bay
 - Tower of Heaven
-- Spiral Mountain
+- Fountain of Dreams
+- Muda Kingdom
+- Mementos
+- Sprial Mountain
 - Mute City
-- Mushroom Kingdom DL
+- Mad Monster Mansion
+- Bowswer's Stadium
+- Delfino Plaza
+- Kitchen Island
 - Zebes Landing
 - Smashville
+- New Pork City
+- Norfair
+- Corneria City
+- Congo Falls
+- Yoshi's Story
 - Gerudo Valley
-- Hyrule Castle DL
-- Congo Jungle DL
-- Peach's Castle DL
-- Sector Z DL
+- Fray's Stage Night
+- Goomba Road
 - Saffron City DL
-- Saffron City O
 - Yoshi's Island DL
-- Planet Zebes DL
+- Bowser's Keep
+- Windy
+- dataDyne
+- Planet Clancer
+- Castle Siege
+- Yoshi's Island II
+- Tent Final Destination
+- Cool Cool Mountain SR
+- Cool Cool Mountain DL

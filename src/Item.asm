@@ -10,7 +10,11 @@ print "included Item.asm\n"
 scope Item {
     // @ Description
     // Number of custom items
-    constant NUM_ITEMS(3)
+    constant NUM_ITEMS(4)
+
+    // @ Description
+    // Number of standard custom items
+    constant NUM_STANDARD_ITEMS(3)
 
     // @ Description
     // Offsets to custom tables added to file 0xFE.
@@ -67,6 +71,7 @@ scope Item {
     // @ Description
     // Macro for adding custom items.
     // @ Arguments
+    // item - name of item
     // item_info_array - pc of item_info_array
     // item_info_array_origin - origin of item_info_array
     // spawn_routine - routine to run during item creation
@@ -75,9 +80,11 @@ scope Item {
     // pre_pickup_routine - routine to run before item pickup
     // drop_routine - routine to run when item is dropped
     // collision_routine - routine to run during item collision (like star)
-    macro add_item(item_info_array, item_info_array_origin, spawn_routine, rotate_when_spawned, main_pickup_routine, pre_pickup_routine, drop_routine, collision_routine) {
+    macro add_item(item, item_info_array, item_info_array_origin, spawn_routine, rotate_when_spawned, main_pickup_routine, pre_pickup_routine, drop_routine, collision_routine) {
         evaluate n(current_item)
         evaluate item_id(current_item + 0x2D)
+
+        constant {item}.id({item_id})
 
         pushvar origin, base
 
@@ -124,7 +131,7 @@ scope Item {
     // @ Arguments
     // item - the name of the scope containing the required constants and routines
     macro add_item(item) {
-        add_item({item}.item_info_array, {item}.ITEM_INFO_ARRAY_ORIGIN, {item}.SPAWN_ITEM, {item}.ROTATE_WHEN_SPAWNED, {item}.PICKUP_ITEM_MAIN, {item}.PICKUP_ITEM_INIT, {item}.DROP_ITEM, {item}.PLAYER_COLLISION)
+        add_item({item}, {item}.item_info_array, {item}.ITEM_INFO_ARRAY_ORIGIN, {item}.SPAWN_ITEM, {item}.ROTATE_WHEN_SPAWNED, {item}.PICKUP_ITEM_MAIN, {item}.PICKUP_ITEM_INIT, {item}.DROP_ITEM, {item}.PLAYER_COLLISION)
     }
 
     // @ Description
@@ -208,7 +215,7 @@ scope Item {
     // @ Description
     // Extends Training Mode Item menu.
     scope extend_training_mode_item_menu_: {
-        evaluate maxIndex(0x0011 + NUM_ITEMS)
+        evaluate maxIndex(0x0011 + NUM_STANDARD_ITEMS)
 
         // increase the index for the the Item menu
         OS.patch_start(0x113D50, 0x8018D530)
@@ -688,16 +695,33 @@ scope Item {
     scope prevent_1p_custom_item_spawns_: {
         OS.patch_start(0x10BF5C, 0x8018D6FC)
         j       prevent_1p_custom_item_spawns_
-        lw      t7, 0x0000(s6)                      // original line 2
+        lw      t7, 0x0000(s6)                         // original line 2
         _return:
         OS.patch_end()
 
         // t6 is free
-        li      t6, 0x000FFFFF                      // t6 = bitmask that keeps vanilla items but 0s out custom items
-        and     t4, t4, t6                          // t4 = item bitmask with custom items zeroed out
+        li      t6, SinglePlayerModes.singleplayer_mode_flag
+        lw      t6, 0x0000(t6)                         // t6 = singleplayer mode ID
+        addiu   t6, t6, -SinglePlayerModes.ALLSTAR_ID  // t6 = 0 if Remix 1P
+        beqz    t6, _allstar                           // if Allstar, prevent Heart and Tomato spawning
+        nop                                            // otherwise, ensure vanilla 1P does not spawn custom items
+        li      t6, SinglePlayerModes.singleplayer_mode_flag
+        lw      t6, 0x0000(t6)                         // t6 = singleplayer mode ID
+        addiu   t6, t6, -SinglePlayerModes.REMIX_1P_ID // t6 = 0 if Remix 1P
+        beqz    t6, _end                               // if Remix 1P, allow custom items
+        nop                                            // otherwise, ensure vanilla 1P does not spawn custom items
 
+        li      t6, 0x000FFFFF                         // t6 = bitmask that keeps vanilla items but 0s out custom items
+        beq     r0, r0, _end
+        and     t4, t4, t6                             // t4 = item bitmask with custom items zeroed out
+        
+        _allstar:
+        addiu   t6, r0, -0x0031                        // t6 = 0xFFFFFFCF = bitmask that keeps healing items out
+        and     t4, t4, t6                             // t4 = item bitmask with healing items zeroed out
+
+        _end:
         j       _return
-        sw      t4, 0x000C(t5)                      // original line 1
+        sw      t4, 0x000C(t5)                         // original line 1
     }
 
     // @ Description
@@ -770,7 +794,7 @@ scope Item {
             sw      v0, 0x0000(a1)                      // save value
             addiu   a1, a1, 0x0004                      // a1++
             addiu   t4, t4, 0x0001                      // t4++
-            sltiu   at, t4, NUM_ITEMS + 0x14            // at = 0 if done looping
+            sltiu   at, t4, NUM_STANDARD_ITEMS + 0x14            // at = 0 if done looping
             bnez    at, _loop
             nop
 
@@ -808,7 +832,7 @@ scope Item {
             _next:
             addiu   a1, a1, 0x0004                      // a1++
             addiu   t4, t4, 0x0001                      // t4++
-            sltiu   at, t4, NUM_ITEMS + 0x14            // at = 0 if done looping
+            sltiu   at, t4, NUM_STANDARD_ITEMS + 0x14            // at = 0 if done looping
             bnez    at, _loop
             sw      a0, 0x000C(v0)                      // save mask
 
@@ -871,7 +895,7 @@ scope Item {
 
             // hide unneeded ON/OFF images
             li      t0, 0x801333E4                      // t0 = address of pointer to first ON/OFF object
-            addiu   t2, t0, NUM_ITEMS * 4               // t2 = address of pointer to first ON/OFF object that should be hidden
+            addiu   t2, t0, NUM_STANDARD_ITEMS * 4               // t2 = address of pointer to first ON/OFF object that should be hidden
             _loop:
             lw      t3, 0x0000(t2)                      // t3 = ON/OFF object to hide
             sw      t1, 0x007C(t3)                      // hide ON/OFF object
@@ -881,9 +905,9 @@ scope Item {
             nop
 
             // ensure cursor is not past last row
-            sltiu   t1, a1, NUM_ITEMS + 1               // t1 = 1 if valid row
+            sltiu   t1, a1, NUM_STANDARD_ITEMS + 1               // t1 = 1 if valid row
             beqzl   t1, pc() + 8                        // if not a valid row, set to last row
-            lli     a1, NUM_ITEMS
+            lli     a1, NUM_STANDARD_ITEMS
             lui     t1, 0x8013
             sw      a1, 0x33D8(t1)                      // update row
 
@@ -951,7 +975,7 @@ scope Item {
                 sw      a1, 0x001C(sp)                  // save a1
                 lw      a0, 0x0020(sp)                  // a0 = row
                 addiu   a0, a0, 0x0001                  // row++
-                sltiu   a1, a0, NUM_ITEMS + 1           // a1 = 0 if we've reached the end
+                sltiu   a1, a0, NUM_STANDARD_ITEMS + 1           // a1 = 0 if we've reached the end
                 bnez    a1, _loop                       // loop while still more to initialize
                 sw      a0, 0x0020(sp)                  // save a0
 
@@ -982,7 +1006,7 @@ scope Item {
             beqzl   t8, _return                         // if normal list, use original line
             addiu   t8, r0, 0x000F                      // original line 1
             b       _return                             // otherwise use the number of custom items
-            addiu   t8, r0, NUM_ITEMS                   // set max NUM_ITEMS
+            addiu   t8, r0, NUM_STANDARD_ITEMS                   // set max NUM_STANDARD_ITEMS
 
             _down:
             li      at, ITEM_SWITCH_PAGE
@@ -990,7 +1014,7 @@ scope Item {
             beqzl   at, _return                         // if normal list, use original line
             addiu   at, r0, 0x000F                      // original line 1
             b       _return                             // otherwise use the number of custom items
-            addiu   at, r0, NUM_ITEMS                   // set max NUM_ITEMS
+            addiu   at, r0, NUM_STANDARD_ITEMS                   // set max NUM_STANDARD_ITEMS
 
             _return:
             jr      ra
@@ -1077,11 +1101,18 @@ scope Item {
     scope PoisonMushroom {
         include "items/PoisonMushroom.asm"
     }
+    scope KlapTrap {
+        include "items/KlapTrap.asm"
+    }
 
-    // Add items
+    // Add items:
+    // Standard Items
     add_item(CloakingDevice)       // 0x2D
     add_item(SuperMushroom)        // 0x2E
     add_item(PoisonMushroom)       // 0x2F
+    // Stage Items
+    add_item(KlapTrap)             // 0x30
+    // Pokemon
 
     // @ Description
     // Active item clean up.
@@ -1100,6 +1131,39 @@ scope Item {
         addiu   sp, sp, 0x0030                      // deallocate stack space
         jr      ra
         nop
+    }
+
+    // @ Description
+    // This ensures custom items are cleared at the start of 1p matches.
+    scope clear_items_in_1p_: {
+        OS.patch_start(0x10E5A0, 0x8018FD40)
+        j      clear_items_in_1p_._stage_rttf_init
+        lw     s0, 0x0024(sp)              // original line 1
+        _stage_rttf_init_return:
+        OS.patch_end()
+
+        OS.patch_start(0x113000, 0x8018E8C0)
+        j      clear_items_in_1p_._btt_btp_init
+        nop
+        _btt_btp_init_return:
+        OS.patch_end()
+
+        _stage_rttf_init:
+        // Ensure no custom items are still applied
+        jal     Item.clear_active_custom_items_
+        nop
+
+        j      _stage_rttf_init_return
+        lw     ra, 0x0034(sp)              // original line 2
+
+        _btt_btp_init:
+        // Ensure no custom items are still applied
+        jal     Item.clear_active_custom_items_
+        nop
+
+        lw     ra, 0x0024(sp)              // original line 1
+        j      _btt_btp_init_return
+        addiu  sp, sp, 0x0088              // original line 2
     }
 
 }

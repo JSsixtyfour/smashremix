@@ -93,13 +93,17 @@ scope Camera {
 		li      t1, Toggles.entry_hazard_mode
         lw      t1, 0x0004(t1)              // t1 = hazard_mode (hazards disabled when t1 = 1 or 3)
         andi    t1, t1, 0x0001              // t1 = 1 if hazard_mode is 1 or 3, 0 otherwise
-        bnez    t1, _normal                // if hazard_mode enabled, skip frozen camera for flat zones
+        bnez    t1, _normal                 // if hazard_mode enabled, skip frozen camera for flat zones
+        nop
+        li      t1, gb_land                 // t1 = frozen camera parameters for Gameboy Land
+        ori     t2, r0, Stages.id.GB_LAND   // t2 = id.GB_LAND
+        beq     t0, t2, _frozen             // use frozen camera if stage = GB_LAND
         nop
         li      t1, frozen_flat_zone_2      // t1 = frozen camera parameters for FLAT_ZONE_2
 		ori     t2, r0, Stages.id.FLAT_ZONE_2 // t1 = id.FLAT_ZONE_2
         beq     t0, t2, _frozen             // use frozen camera if stage = FLAT_ZONE_2
         nop
-		li      t1, frozen_flat_zone      // t1 = frozen camera parameters for FLAT_ZONE
+		li      t1, frozen_flat_zone        // t1 = frozen camera parameters for FLAT_ZONE
 		ori     t2, r0, Stages.id.FLAT_ZONE // t1 = id.FLAT_ZONE_2
         beq     t0, t2, _frozen             // use frozen camera if stage = FLAT_ZONE
         nop
@@ -156,7 +160,7 @@ scope Camera {
     float32 0                               // camera y position
     float32 8000                            // camera z position
     float32 0                               // camera focal x position
-    float32 0                            // camera focal y position
+    float32 0                               // camera focal y position
     float32 0                               // camera focal z position
 	
 	// @ Description
@@ -167,6 +171,16 @@ scope Camera {
     float32 6600                            // camera z position
     float32 0                               // camera focal x position
     float32 -100                            // camera focal y position
+    float32 0                               // camera focal z position
+    
+    	// @ Description
+    // Frozen camera parameters for GB_LAND
+    gb_land:
+    float32 0                               // camera x position
+    float32 1250                            // camera y position
+    float32 7000                            // camera z position
+    float32 0                               // camera focal x position
+    float32 1250                            // camera focal y position
     float32 0                               // camera focal z position
     
     // @ Description
@@ -182,7 +196,7 @@ scope Camera {
     }
     
     // @ Description
-    // This pushes back the camera when playing on Venom.
+    // This pushes back the camera when playing on Venom or GB Land.
     scope camera_adjust_: {
         OS.patch_start(0x62A70, 0x800E7270)
         j       camera_adjust_
@@ -196,7 +210,9 @@ scope Camera {
         beq     at, t8, _stage_check        // stage check if in vs
         addiu   at, r0, 0x0036              // Training screen ID
         beq     at, t8, _stage_check        // stage check if in vs
-        addiu   at, r0, 0x0034              // 1p screen ID
+        addiu   at, r0, 0x0077              // Special 1p screen ID used for Allstar and Multiman
+        beq     at, t8, _stage_check        // stage check if in vs
+        addiu   at, r0, 0x0001              // 1p screen ID
         bne     at, t8, _standard           // if not in any of the battle screens, skip to standard
         nop
         
@@ -204,11 +220,16 @@ scope Camera {
         li      t8, Global.match_info       // ~
         lw      t8, 0x0000(t8)              // t8 = match_info
         lbu     t8, 0x0001(t8)              // t8 = stage id
-        addiu   at, r0, Stages.id.VENOM     // insert venom stage ID
         
+        addiu   at, r0, Stages.id.GB_LAND   // insert venom stage ID
+        beq     t8, at, _max_zoom           // branch if on Gameboy Land
+        lui     at, 0x3FE0                  // load Venom Camera Distance
+        
+        addiu   at, r0, Stages.id.VENOM     // insert venom stage ID
         bne     t8, at, _standard           // branch if not on Venom
         lui     at, 0x3FE0                  // load Venom Camera Distance
         
+        _max_zoom:
         j       _return                     // return
         mtc1    at, f4                      // original line 2
         

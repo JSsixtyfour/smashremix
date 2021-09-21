@@ -1,7 +1,7 @@
 // @ Description
 // These constants must be defined for an item.
 constant SPAWN_ITEM(spawn_custom_item_based_on_star_)
-constant ROTATE_WHEN_SPAWNED(OS.FALSE)
+constant ROTATE_WHEN_SPAWNED(OS.TRUE)
 constant PICKUP_ITEM_MAIN(0)
 constant PICKUP_ITEM_INIT(0)
 constant DROP_ITEM(0)
@@ -247,7 +247,7 @@ scope handle_active_mushroom_: {
     lw      at, 0x0054(t6)              // at = state of previous
     beq     at, t8, _pre_clear          // if already in transition 2, don't set it up for transition 2
     lli     t8, GROW_DURATION + MAINTAIN_DURATION - 1
-    lli     at, 0x002F                  // at = Poison Mushroom ID
+    lli     at, Item.PoisonMushroom.id  // at = Poison Mushroom ID
     bnel    t7, at, pc() + 8            // if poison, adjust start frame for transition 2
     addiu   t8, t8, SHRINK_DURATION - GROW_DURATION
     sw      t8, 0x004C(t6)              // set timer of previous item to the frame before transition 2
@@ -301,7 +301,7 @@ scope handle_active_mushroom_: {
     // if STATE_TRANSITION_1 && poison, then revert
     // if STATE_TRANSITION_1 && super, then transition 1 should be grow_poison
     lli     t6, STATE_TRANSITION_1      // t6 = STATE_TRANSITION_1
-    lli     at, 0x002F                  // at = Poison Mushroom ID
+    lli     at, Item.PoisonMushroom.id  // at = Poison Mushroom ID
     bne     at, t7, _flash              // if Super, skip
     lw      t5, 0x0054(a0)              // t5 = state
 
@@ -316,7 +316,7 @@ scope handle_active_mushroom_: {
     // if STATE_TRANSITION_1 && super, then revert
     // if STATE_TRANSITION_1 && poison, then transition 1 should be shrink_super
     lli     t6, STATE_TRANSITION_1      // t6 = STATE_TRANSITION_1
-    lli     at, 0x002F                  // at = Poison Mushroom ID
+    lli     at, Item.PoisonMushroom.id  // at = Poison Mushroom ID
     beq     at, t7, _flash              // if Poison, skip
     lw      t5, 0x0054(a0)              // t5 = state
 
@@ -334,7 +334,7 @@ scope handle_active_mushroom_: {
     // play sound effect
     lw      t1, 0x0044(a0)              // t1 = this item ID
     lli     a0, 0x00D4                  // a0 = mushroom grow sound effect
-    lli     at, 0x002F                  // at = Poison Mushroom ID
+    lli     at, Item.PoisonMushroom.id  // at = Poison Mushroom ID
     beql    t1, at, pc() + 8            // if poison mushroom, change sound effect
     lli     a0, 0x00D5                  // a0 = mushroom shrink sound effect
     jal     FGM.play_                   // play FGM
@@ -362,8 +362,8 @@ scope handle_active_mushroom_: {
     sw      t0, 0x004C(a0)              // update timer value
 
     lhu     t2, 0x0026(t3)              // t2 = action
-    lli     at, Action.Revive1          // at = Action.Revive1
-    beq     t2, at, _revert             // if player died and is reviving, then revert
+    sltiu   at, t2, 0x0004              // at = 1 if player just died
+    bnez    at, _revert                 // if player died, then revert
     // delay slot below runs always, intentionally
 
     lw      t2, 0x0048(a0)              // t2 = address of size multiplier
@@ -371,7 +371,7 @@ scope handle_active_mushroom_: {
     lw      t8, 0x005C(a0)              // t8 = player's match size state
 
     lw      t4, 0x0044(a0)              // t4 = item ID
-    lli     at, 0x002F                  // at = Poison Mushroom ID
+    lli     at, Item.PoisonMushroom.id  // at = Poison Mushroom ID
     beq     t4, at, _poison             // if Poison Mushroom, set up transition variables differently
     lw      t4, 0x0050(a0)              // t4 = frame index
 
@@ -494,6 +494,41 @@ scope handle_active_mushroom_: {
     or      a0, t8, r0                  // a0 = fgm_id
     or      a0, t9, r0                  // restore a0 (routine object)
     or      ra, t7, r0                  // restore ra (routine object)
+
+    addiu   sp, sp, -0x0020             // allocate stack space
+    sw      ra, 0x0004(sp)              // save registers
+    sw      a0, 0x0008(sp)              // ~
+    sw      t0, 0x000C(sp)              // ~
+    sw      t2, 0x0010(sp)              // ~
+    sw      t4, 0x0014(sp)              // ~
+    sw      t5, 0x0018(sp)              // ~
+    sw      t6, 0x001C(sp)              // ~
+
+    // do rumble
+    lw      a0, 0x0040(a0)              // a0 = player struct
+    lbu     a1, 0x0023(a0)              // a1 = player type (0 = HMN, 1 = CPU)
+    bnez    a1, _end_rumble             // if port is CPU, skip rumble
+    lbu     a0, 0x000D(a0)              // a0 = port
+    lli     a1, 0x0007                  // a1 = rumble_id (same as Mario's taunt)
+    lli     a2, 0x003C                  // a2 = duration
+    jal     Global.rumble_              // add rumble
+    addiu   sp, sp, -0x0030             // allocate stack space (not a safe function)
+    addiu   sp, sp, 0x0030              // deallocate stack space
+    lli     t0, 0x0001                  // v0 can be 1 sometimes (like during Mario's taunt)
+    beq     v0, t0, _end_rumble         // if v0 not a rumble struct, skip updating rumble_id
+    lli     t0, 0x0017                  // t0 = non-valid rumble_id
+    bnezl   v0, _end_rumble             // if rumble struct was assigned, update rumble_id
+    sb      t0, 0x0000(v0)              // save non-valid rumble_id in rumble info struct to avoid action change disabling rumble
+
+    _end_rumble:
+    lw      ra, 0x0004(sp)              // ~
+    lw      a0, 0x0008(sp)              // ~
+    lw      t0, 0x000C(sp)              // ~
+    lw      t2, 0x0010(sp)              // ~
+    lw      t4, 0x0014(sp)              // ~
+    lw      t5, 0x0018(sp)              // ~
+    lw      t6, 0x001C(sp)              // ~
+    addiu   sp, sp, 0x0020              // deallocate stack space
 
     _begin_check:
     addu    t5, t5, t4                  // t5 = transition frame address

@@ -15,7 +15,7 @@ db  "SMASH REMIX"
 fill 0x34 - origin(), 0x20
 
 // add asm to rom
-origin  0x02000000
+origin  0x01C00000
 base    0x80400000
 include "src/OS.asm"
 include "src/String.asm"
@@ -38,6 +38,7 @@ include "src/FD.asm"
 include "src/FGM.asm"
 include "src/GameEnd.asm"
 include "src/Global.asm"
+include "src/Handicap.asm"
 include "src/Hazards.asm"
 include "src/Hitbox.asm"
 include "src/Item.asm"
@@ -67,7 +68,11 @@ include "src/TwelveCharBattle.asm"
 include "src/Size.asm"
 include "src/CharEnvColor.asm"
 include "src/SwordTrail.asm"
+include "src/GFXRoutine.asm"
+include "src/Damage.asm"
 include "src/Knockback.asm"
+include "src/InputDelay.asm"
+include "src/StockMode.asm"
 // CHARACTER
 include "src/Character.asm"
 include "src/CharacterSelect.asm"
@@ -144,6 +149,12 @@ include "src/Wolf/Wolf.asm"
 // CONKER
 include "src/Conker/ConkerSpecial.asm"
 include "src/Conker/Conker.asm"
+// MEWTWO
+include "src/Mewtwo/MewtwoSpecial.asm"
+include "src/Mewtwo/Mewtwo.asm"
+// MARTH
+include "src/Marth/MarthSpecial.asm"
+include "src/Marth/Marth.asm"
 
 // KIRBY
 include "src/Kirby/Kirby.asm"
@@ -154,6 +165,11 @@ include "src/JKirby/JKirby.asm"
 // MIDI
 include "src/MIDI.asm"
 
+OS.align(16)
+midi_memory_block: // This is where music files will be loaded
+fill MIDI.largest_midi  // Allocate as much space as we need!
+
+OS.align(16)
 file_table:  // This is where we move the file table to in order to load more files
 fill 0x400
 

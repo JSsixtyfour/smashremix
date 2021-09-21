@@ -44,17 +44,37 @@ scope CharEnvColor {
         dw 0xDF000000, 0x00000000           // end display list
     }
 
+    macro create_custom_display_list(render_mode1, render_mode2) {
+        dw 0xDE000000, 0x00000000           // branch to display list - will point to original part display list start
+        dw 0xE200001C, {render_mode1}       // set render mode
+        dw 0xDE000000, 0x00000000           // branch to display list - will point to the 2nd third of original part display list
+        dw 0xE200001C, {render_mode2}       // set render mode
+        dw 0xDE000000, 0x00000000           // branch to display list - will point to the last third of original part display list
+        dw 0xDF000000, 0x00000000           // end display list
+    }
+
+    macro create_custom_display_list(render_mode1, render_mode2, render_mode3) {
+        dw 0xDE000000, 0x00000000           // branch to display list - will point to original part display list start
+        dw 0xE200001C, {render_mode1}       // set render mode
+        dw 0xDE000000, 0x00000000           // branch to display list - will point to the 2nd fourth of original part display list
+        dw 0xE200001C, {render_mode2}       // set render mode
+        dw 0xDE000000, 0x00000000           // branch to display list - will point to the 3rd fourth of original part display list
+        dw 0xE200001C, {render_mode3}       // set render mode
+        dw 0xDE000000, 0x00000000           // branch to display list - will point to the last fourth of original part display list
+        dw 0xDF000000, 0x00000000           // end display list
+    }
+
     // @ Description
     // Custom display lists to help fix model issues for specific characters
     custom_display_lists_falcon:
     create_custom_display_list(RENDER_MODE_DEFAULT)
     create_custom_display_list(RENDER_MODE_ALPHA)
     custom_display_lists_gnd:
-    create_custom_display_list(RENDER_MODE_DEFAULT)
-    create_custom_display_list(RENDER_MODE_ALPHA)
+    create_custom_display_list(0xC4113878, RENDER_MODE_DEFAULT, 0xC4113878)
+    create_custom_display_list(RENDER_MODE_ALPHA, RENDER_MODE_ALPHA, RENDER_MODE_ALPHA)
     custom_display_lists_wario:
-    create_custom_display_list(RENDER_MODE_DEFAULT)
-    create_custom_display_list(RENDER_MODE_ALPHA)
+    create_custom_display_list(0xC4113878, RENDER_MODE_DEFAULT)
+    create_custom_display_list(RENDER_MODE_ALPHA, RENDER_MODE_ALPHA)
     custom_display_lists_kirby_dk_hat_hi:
     create_custom_display_list(RENDER_MODE_DEFAULT)
     create_custom_display_list(RENDER_MODE_ALPHA)
@@ -171,19 +191,31 @@ scope CharEnvColor {
         // Ganondorf's high poly model has some places where it turns off alpha compare and has its own render mode.
         // When it resets the render mode, it's not right for alpha, so we use a custom display list to set the render mode.
         // TODO: update when model is updated to include low poly model (and also skip low poly if not an issue)
+        bnezl   t6, pc() + 8                // change the offset to custom display list if not 0
+        lli     t6, 0x0040                  // t6 = offset to custom display list
         li      t9, custom_display_lists_gnd
         lw      t2, 0x0004(t9)              // t2 = original part display list pointer, if initialized
         bnez    t2, _skip_init_ganondorf    // if already initialized, skip setup
         lw      t2, 0x0900(s8)              // t2 = part 0x02 address
         lw      t3, 0x0050(t2)              // t3 = part 0x02 display list
         sw      t3, 0x0004(t9)              // save original part display list start to custom display list
-        sw      t3, 0x0024(t9)              // save original part display list start to custom display list for override
+        sw      t3, 0x0044(t9)              // save original part display list start to custom display list for override
         lui     t0, 0xDF00                  // t0 = DF000000 (end display list)
-        sw      t0, 0x01B8(t3)              // split original display list into 2 by putting end display list here
+        sw      t0, 0x01B8(t3)              // split original display list into 4 by putting end display list here
         sw      r0, 0x01BC(t3)              // ~
-        addiu   t0, t3, 0x01C0              // t0 = start of 2nd half of the original display list
+        sw      t0, 0x0118(t3)              // also here for shield
+        sw      r0, 0x011C(t3)              // ~
+        sw      t0, 0x03E8(t3)              // also here for shield
+        sw      r0, 0x03EC(t3)              // ~
+        addiu   t0, t3, 0x0120              // t0 = start of 2nd fourth of the original display list
         sw      t0, 0x0014(t9)              // save original part display list part 2 start to custom display list
-        sw      t0, 0x0034(t9)              // save original part display list part 2 start to custom display list for override
+        sw      t0, 0x0054(t9)              // save original part display list part 2 start to custom display list for override
+        addiu   t0, t3, 0x01C0              // t0 = start of 3rd fourth of the original display list
+        sw      t0, 0x0024(t9)              // save original part display list part 2 start to custom display list
+        sw      t0, 0x0064(t9)              // save original part display list part 2 start to custom display list for override
+        addiu   t0, t3, 0x03F0              // t0 = start of 4th fourth of the original display list
+        sw      t0, 0x0034(t9)              // save original part display list part 2 start to custom display list
+        sw      t0, 0x0074(t9)              // save original part display list part 2 start to custom display list for override
 
         _skip_init_ganondorf:
         addu    t9, t9, t6                  // t9 = address of display list to use
@@ -194,19 +226,26 @@ scope CharEnvColor {
         // Wario's high poly model has some places where it turns off alpha compare and has its own render mode.
         // When it resets the render mode, it's not right for alpha, so we use a custom display list to set the render mode.
         // TODO: update when model is updated to include low poly model (and also skip low poly if not an issue)
+        bnezl   t6, pc() + 8                // change the offset to custom display list if not 0
+        lli     t6, 0x0030                  // t6 = offset to custom display list
         li      t9, custom_display_lists_wario
         lw      t2, 0x0004(t9)              // t2 = original part display list pointer, if initialized
         bnez    t2, _skip_init_wario        // if already initialized, skip setup
         lw      t2, 0x0918(s8)              // t2 = part 0x08 address
         lw      t3, 0x0050(t2)              // t3 = part 0x08 display list
         sw      t3, 0x0004(t9)              // save original part display list start to custom display list
-        sw      t3, 0x0024(t9)              // save original part display list start to custom display list for override
+        sw      t3, 0x0034(t9)              // save original part display list start to custom display list for override
         lui     t0, 0xDF00                  // t0 = DF000000 (end display list)
-        sw      t0, 0x0398(t3)              // split original display list into 2 by putting end display list here
+        sw      t0, 0x0398(t3)              // split original display list into 3 by putting end display list here
         sw      r0, 0x039C(t3)              // ~
-        addiu   t0, t3, 0x03A0              // t0 = start of 2nd half of the original display list
+        sw      t0, 0x02B0(t3)              // also here for mustache
+        sw      r0, 0x02B4(t3)              // ~
+        addiu   t0, t3, 0x02B8              // t0 = start of 2nd third of the original display list
         sw      t0, 0x0014(t9)              // save original part display list part 2 start to custom display list
-        sw      t0, 0x0034(t9)              // save original part display list part 2 start to custom display list for override
+        sw      t0, 0x0044(t9)              // save original part display list part 2 start to custom display list for override
+        addiu   t0, t3, 0x03A0              // t0 = start of 3rd third of the original display list
+        sw      t0, 0x0024(t9)              // save original part display list part 2 start to custom display list
+        sw      t0, 0x0054(t9)              // save original part display list part 2 start to custom display list for override
 
         _skip_init_wario:
         addu    t9, t9, t6                  // t9 = address of display list to use
@@ -256,7 +295,7 @@ scope CharEnvColor {
         lui     t0, 0xDF00                  // t0 = DF000000 (end display list)
         sw      t0, 0x0000(t3)              // split original display list into 2 by putting end display list here
         sw      r0, 0x0004(t3)              // ~
-        addiu   t0, t3, 0x0010              // t0 = start of 2nd half of the original display list
+        addiu   t0, t3, 0x0008              // t0 = start of 2nd half of the original display list
         sw      t0, 0x0014(t9)              // save original part display list part 2 start to custom display list
         sw      t0, 0x0034(t9)              // save original part display list part 2 start to custom display list for override
 

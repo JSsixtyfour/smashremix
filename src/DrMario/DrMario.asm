@@ -82,6 +82,47 @@ scope DrMario {
     // Set default costumes
     Character.set_default_costumes(Character.id.DRM, 0, 1, 2, 4, 1, 3, 4)
     
+    // @ Description
+    // Dr. Mario's extra actions
+    scope Action {
+        constant Jab3(0x0DC)
+        constant Appear1(0x0DD)
+        constant Appear2(0x0DE)
+        constant Capsule(0x0DF)
+        constant CapsuleAir(0x0E0)
+        constant SuperJumpPunch(0x0E1)
+        constant SuperJumpPunchAir(0x0E2)
+        constant MarioTornado(0x0E3)
+        constant MarioTornadoAir(0x0E4)
+
+        // strings!
+        //string_0x0DC:; String.insert("Jab3")
+        //string_0x0DD:; String.insert("Appear1")
+        //string_0x0DE:; String.insert("Appear2")
+        string_0x0DF:; String.insert("Capsule")
+        string_0x0E0:; String.insert("CapsuleAir")
+        //string_0x0E1:; String.insert("SuperJumpPunch")
+        //string_0x0E2:; String.insert("SuperJumpPunchAir")
+        //string_0x0E3:; String.insert("MarioTornado")
+        //string_0x0E4:; String.insert("MarioTornadoAir")
+
+        action_string_table:
+        dw Action.COMMON.string_jab3
+        dw Action.COMMON.string_appear1
+        dw Action.COMMON.string_appear2
+        dw string_0x0DF
+        dw string_0x0E0
+        dw Action.MARIO.string_0x0E1
+        dw Action.MARIO.string_0x0E2
+        dw Action.MARIO.string_0x0E3
+        dw Action.MARIO.string_0x0E4
+    }
+
+    // Set action strings
+    Character.table_patch_start(action_string, Character.id.DRM, 0x4)
+    dw  Action.action_string_table
+    OS.patch_end()
+
     // Hardcoding for when Mario Clones use Pipes, ensures they face the correct way when entering
     // TEMP LOCATION
     scope pipe_turn_enter: {

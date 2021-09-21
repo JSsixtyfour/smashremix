@@ -44,11 +44,44 @@ scope Render {
     constant TEXTURE_RENDER_(0x800CCF00)
 
     // @ Description
+    // The routine that initializes stage objects for display based off joints
+    // a0 - object address (v0 from 0x80009968)
+    // a1 - RAM address of joint array
+    // a2 - ?
+    // a3 - ?
+    // 0x0010(sp) - ?
+    // 0x0014(sp) - ?
+    // @ Returns
+    // v0 - address of object joint data created
+    constant STAGE_OBJECT_INIT_(0x8000F590)
+
+    // @ Description
+    // The routine used to render stage objects - passed as a1 to 0x80009DF4
+    constant STAGE_OBJECT_RENDER_(0x800CB4B0)
+
+    // @ Description
+    // The routine that adds a model part image to a model part
+    // a0 - model part
+    // a1 - model part image
+    // @ Returns
+    // v0 - address of model part image struct created
+    constant MODEL_PART_IMAGE_INIT_(0x800090DC)
+
+    // @ Description
+    // The routine that adds associates a routine with an object
+    // a0 - object
+    // a1 - routine
+    // a2 - ? 1
+    // a3 - group/order (0-5)
+    constant REGISTER_OBJECT_ROUTINE_(0x80008188)
+
+    // @ Description
     // No operation - used when no routine is necessary
     constant NOOP(0x00000000)
 
     // @ Description
     // The routine that destroys objects
+    // **NOTE**: objects must be destroyed in the order they were created on the same frame.
     // a0 - object address (v0 from 0x80009968)
     constant DESTROY_OBJECT_(0x80009A84)
 
@@ -153,7 +186,7 @@ scope Render {
     define offset(0x160)
     define first(0x118)
     // first we'll just create all slots, then we'll go back and update widths
-    while {n} < 95 {
+    while {n} < 96 {
         evaluate x({first} + ({offset} * {n}))
         dw 0x070E0000
         dw {x}
@@ -162,13 +195,13 @@ scope Render {
     // now fix widths
     pushvar origin, base
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('!' - 0x20)); db 0x04
-    origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('\s' - 0x20)); db 0x03
+    origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('\s' - 0x20)); db 0x02
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('(' - 0x20)); db 0x03
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * (')' - 0x20)); db 0x03
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('*' - 0x20)); db 0x04
-    origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * (',' - 0x20)); db 0x04
+    origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * (',' - 0x20)); db 0x02
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('-' - 0x20)); db 0x04
-    origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('.' - 0x20)); db 0x04
+    origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('.' - 0x20)); db 0x02
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('/' - 0x20)); db 0x05
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * (':' - 0x20)); db 0x04
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('\b' - 0x20)); db 0x04
@@ -177,8 +210,8 @@ scope Render {
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('D' - 0x20)); db 0x08
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('G' - 0x20)); db 0x08
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('H' - 0x20)); db 0x09
-    origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('I' - 0x20)); db 0x04
-    origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('J' - 0x20)); db 0x05
+    origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('I' - 0x20)); db 0x05
+    origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('J' - 0x20)); db 0x06
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('K' - 0x20)); db 0x09
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('L' - 0x20)); db 0x06
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('M' - 0x20)); db 0x0B
@@ -196,15 +229,18 @@ scope Render {
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('f' - 0x20)); db 0x05
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('h' - 0x20)); db 0x08
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('i' - 0x20)); db 0x04
+    origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('j' - 0x20)); db 0x04
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('k' - 0x20)); db 0x06
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('l' - 0x20)); db 0x04
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('m' - 0x20)); db 0x0B
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('p' - 0x20)); db 0x08
+    origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('q' - 0x20)); db 0x08
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('r' - 0x20)); db 0x05
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('s' - 0x20)); db 0x05
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('t' - 0x20)); db 0x05
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('w' - 0x20)); db 0x0A
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('~' + 1 - 0x20)); db 0x0A // Omega
+    origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('~' + 2 - 0x20)); db 0x09 // Music Note
     pullvar base, origin
 
     // @ Description
@@ -522,10 +558,17 @@ scope Render {
     macro draw_string(room, group, string, routine, ulx, uly, color, scale, alignment, blur) {
         lli     a0, {room}
         lli     a1, {group}
-        li      a2, {string}
+        evaluate str({string})
+        if {str} != 0xFFFFFFFF {
+            li      a2, {string}
+        }
         li      a3, {routine}
-        li      s1, {ulx}
-        li      s2, {uly}
+        if {ulx} != 0xFFFFFFFF {
+            li      s1, {ulx}
+        }
+        if {uly} != 0xFFFFFFFF {
+            li      s2, {uly}
+        }
         li      s3, {color}
         li      s4, {scale}
         lli     s5, {alignment}
@@ -568,12 +611,21 @@ scope Render {
     // @ Returns
     // v0 - pointer to object created
     macro draw_string_pointer(room, group, string, routine, ulx, uly, color, scale, alignment, blur) {
-        lli     a0, {room}
+        if {room} != 0xFF {
+            lli     a0, {room}
+        }
         lli     a1, {group}
-        li      a2, {string}
+        evaluate str({string})
+        if {str} != 0xFFFFFFFF {
+            li      a2, {string}
+        }
         li      a3, {routine}
-        li      s1, {ulx}
-        li      s2, {uly}
+        if {ulx} != 0xFFFFFFFF {
+            li      s1, {ulx}
+        }
+        if {uly} != 0xFFFFFFFF {
+            li      s2, {uly}
+        }
         li      s3, {color}
         li      s4, {scale}
         lli     s5, {alignment}
@@ -616,12 +668,20 @@ scope Render {
     // @ Returns
     // v0 - pointer to object created
     macro draw_number(room, group, number, routine, ulx, uly, color, scale, alignment, blur) {
-        lli     a0, {room}
+        if {room} != 0xFF {
+            lli     a0, {room}
+        }
         lli     a1, {group}
-        li      a2, {number}
+        if {number} != 0xFFFFFFFF {
+            li      a2, {number}
+        }
         li      a3, {routine}
-        li      s1, {ulx}
-        li      s2, {uly}
+        if {ulx} != 0xFFFFFFFF {
+            li      s1, {ulx}
+        }
+        if {uly} != 0xFFFFFFFF {
+            li      s2, {uly}
+        }
         li      s3, {color}
         li      s4, {scale}
         lli     s5, {alignment}
@@ -1139,6 +1199,162 @@ scope Render {
     }
 
     // @ Description
+    // Draws a texture tied to stage coordinates.
+    // Currently, it will only work with RGBA5551 textures, and expects 0x32 x 0x32 dimensions.
+    // Will need to modify this routine if we need to draw anything else.
+    // @ Arguments
+    // a0 - room
+    // a1 - group - linked list to append
+    // a2 - pointer to image
+    // a3 - routine to run every frame
+    // s1 - x
+    // s2 - y
+    // s3 - z
+    // s4 - alpha (0x00 - 0xFF)
+    // @ Returns
+    // v0 - pointer to object created
+    scope draw_stage_texture_: {
+        addiu   sp, sp, -0x0030             // allocate stack space
+        sw      ra, 0x0004(sp)              // save ra
+        sw      a2, 0x0008(sp)              // save a2
+        sw      s4, 0x000C(sp)              // save s4
+
+        li      t0, model_part              // t0 = RAM address of model part
+        sw      s1, 0x0008(t0)              // update x
+        sw      s2, 0x000C(t0)              // update y
+        sw      s3, 0x0010(t0)              // update z
+
+        
+
+        or      a2, r0, a0                  // room
+        or      a0, r0, a3                  // routine
+        or      a3, r0, a1                  // group
+        li      a1, STAGE_OBJECT_RENDER_
+        jal     create_display_object_
+        nop
+        
+        lw      s4, 0x000C(sp)              // s4 = alpha
+        li      t0, model_part_image        // t0 = RAM address of model part image
+        sb      s4, 0x0053(t0)              // update alpha
+
+        lw      a2, 0x0008(sp)              // a2 = image pointer
+        sw      a2, 0x0040(v0)              // save image pointer
+        sw      r0, 0x0044(v0)              // terminate image array with a 0
+        addiu   t1, v0, 0x0040              // t1 = image array address
+        sw      t1, 0x0004(t0)              // save reference to image array
+
+        sw      v0, 0x0020(sp)              // save v0
+        addiu   sp, sp, -0x0030             // allocate stack space for STAGE_OBJECT_INIT_
+        addu    a0, r0, v0                  // a0 = RAM address of object block
+        li      a1, model_part              // a1 = RAM address of model part
+        lli     a2, 0x0000                  // ?
+        li      a3, 0x001C                  // ?
+        sw      r0, 0x0010(sp)              // ?
+        jal     STAGE_OBJECT_INIT_          // v0 = RAM address of joint struct
+        sw      r0, 0x0014(sp)              // ?
+        addiu   sp, sp, 0x0030              // restore stack space
+
+        lw      a0, 0x0020(sp)              // a0 = object
+        lw      a0, 0x0074(a0)              // a0 = RAM address of joint struct
+        li      a1, model_part_image        // a1 = RAM address of model part image
+        jal     MODEL_PART_IMAGE_INIT_      // v0 = RAM address of model part image struct
+        addiu   sp, sp, -0x0030             // allocate stack space for MODEL_PART_IMAGE_INIT_
+        addiu   sp, sp, 0x0030              // restore stack space
+
+        lw      ra, 0x0004(sp)              // restore ra
+        lw      v0, 0x0020(sp)              // restore v0
+        addiu   sp, sp, 0x0030              // deallocate stack space
+        jr      ra
+        nop
+
+        model_part:
+        dh 0x0000                           // joint flag (can control on top/always facing you)
+        dh 0x0000                           // joint (matrix depth)
+        dw part_display_list                // pointer to display list
+        float32 0                           // x position
+        float32 0                           // y position
+        float32 0                           // z position
+        float32 0                           // x rotation
+        float32 0                           // y rotation
+        float32 0                           // z rotation
+        float32 1                           // x scale
+        float32 1                           // y scale
+        float32 1                           // z scale
+
+        dh 0x0000
+        dh 0x0012                           // signifies end of model part array
+
+        vertex_data:
+        dw 0x00C8FF38, 0x00000000, 0x04000400, 0xFFFFFF00
+        dw 0xFF38FF38, 0x00000000, 0x00000400, 0xFFFFFF00
+        dw 0xFF3800C8, 0x00000000, 0x00000000, 0xFFFFFF00
+        dw 0x00C800C8, 0x00000000, 0x04000000, 0xFFFFFF00
+
+        part_display_list:
+        dw 0xD9DDFFFB, 0x00000000           //
+        dw 0xDE000000, 0x0E000008           // branch display list to dynamic display list created by part image (set prim color)
+        dw 0xD7000002, 0xFFFFFFFF           //
+        dw 0xF9000000, 0x00000008           //
+        dw 0xE7000000, 0x00000000           // pipe sync
+        dw 0xD9FFFFFF, 0x00000004           //
+        dw 0xE2001E01, 0x00000001           //
+        dw 0xFC121624, 0xFF2FFFFF           // set combiner ()
+        dw 0xF5100000, 0x07014050           //
+        dw 0xF5101000, 0x00094250           //
+        dw 0xF2000000, 0x0007C07C           //
+        dw 0xDE000000, 0x0E000000           // branch display list to dynamic display list created by part image (load texture)
+        dw 0xE6000000, 0x00000000           //
+        dw 0xF3000000, 0x073FF000           //
+        dw 0xE7000000, 0x00000000           // pipe sync
+        dw 0x01004008, vertex_data          // g_vtx
+        dw 0x06060402, 0x00000602           //
+        dw 0xE7000000, 0x00000000           // pipe sync
+        dw 0xD9FFFFFF, 0x00220000           //
+        dw 0xE2001E01, 0x00000000           //
+        dw 0xDF000000, 0x00000000           // end display list
+
+        // getting a lot of these descriptions from GE Setup Edtior
+        model_part_image:
+        dh 0x0000                           // ?
+        dh 0x0202                           // Image 1 Type and Bitsize
+        dw 0                                // Image Array Pointer
+        // Tile 0
+        dh 0x0020                           // Stretch
+        dh 0x0000                           // Shared Offset
+        dh 0x0020, 0x0020                   // Tile Width, Tile Height
+        dw 0x00000000                       // Tile XShift
+        dw 0x00000000                       // Tile YShift
+        dw 0x00000000                       // ? Tile ZShift?
+        // Tile
+        dw 0x3F800000                       // Tile XScale
+        dw 0x3F800000                       // Tile YScale
+        dw 0x00000000                       // Halve?
+        dw 0x3F800000                       // ?
+        dw 0x00000000                       // Palette Array Pointer
+        dh 0x0201                           // Flags: 0x1 = image array, 0x200 = prim color
+        dh 0x0200                           // Image 2 Type and Bitsize
+        // Tile 1
+        dh 0x0010, 0x0020                   // Width, Height
+        dh 0x0020, 0x0020                   // Tile Width, Tile Height
+        dw 0x00000000                       // Tile XShift
+        dw 0x00000000                       // Tile YShift
+        dw 0x00000000                       // ? Tile ZShift?
+        dw 0x00000000                       // ?
+
+        dw 0x00002005                       // Unused Flag?
+        dw 0xFFFFFFFF                       // Prim Color
+        dw 0x00000000                       // LOD Fraction
+        dw 0x000000FF                       // Env Color
+        dw 0x00000000                       // Blend Color
+        dw 0xFFFFFF00                       // Light Color
+        dw 0x80808000                       // Shadow Color
+        dw 0x00000000                       // unused
+        dw 0x00000000                       // unused
+        dw 0x00000000                       // unused
+        dw 0x00000000                       // unused
+    }
+
+    // @ Description
     // Draws a texture grid
     // @ Arguments
     // a0 - room
@@ -1322,6 +1538,12 @@ scope Render {
         lw      a1, 0x0020(sp)              // ~
         sw      a1, 0x004C(v0)              // save string_type
         sw      r0, 0x0054(v0)              // clear out address used to point to this object in update_live_string_
+        li      t0, display_order_room
+        lw      t0, 0x0000(t0)              // t0 = display_order_room
+        sw      t0, 0x0060(v0)              // save display_order_room at object creation
+        li      t0, display_order_group
+        lw      t0, 0x0000(t0)              // t0 = display_order_group
+        sw      t0, 0x0064(v0)              // save display_order_group at object creation
         andi    a1, a1, 0x0001              // a1 = 1 if pointer, 0 if not
         beqz    a1, _check_number           // if not a pointer, skip
         nop                                 // otherwise, a0 is actually a pointer
@@ -1551,10 +1773,25 @@ scope Render {
         // save possible object reference address for use after draw_string_
         lw      a0, 0x0010(sp)              // a0 = original object address
         lw      a1, 0x0054(a0)              // a1 = address storing object reference
-        addiu   sp, sp, -0x0010             // allocate some more stack space
+        addiu   sp, sp, -0x0020             // allocate some more stack space
         sw      a1, 0x0004(sp)              // save object reference
         lw      t0, 0x007C(v0)              // t0 = current display value
         sw      t0, 0x0008(sp)              // save current display value
+
+        li      t1, display_order_room
+        lw      t2, 0x0000(t1)              // t2 = current display_order_room
+        sw      t2, 0x000C(sp)              // save display_order_room
+        lw      t2, 0x0060(a0)              // t2 = display_order_room
+        sw      t2, 0x0000(t1)              // update display_order_room
+
+        li      t1, display_order_group
+        lw      t2, 0x0000(t1)              // t2 = current display_order_group
+        sw      t2, 0x0010(sp)              // save display_order_group
+        lw      t2, 0x0064(a0)              // t2 = display_order_group
+        sw      t2, 0x0000(t1)              // update display_order_group
+
+        lw      t0, 0x0018(v0)              // t0 = REGISTER_OBJECT_ROUTINE_ info block
+        sw      t0, 0x0014(sp)              // save info block
 
         lbu     a0, 0x000D(v0)              // a0 = room
         lbu     a1, 0x000C(v0)              // a1 = group
@@ -1576,7 +1813,32 @@ scope Render {
         sw      a1, 0x0054(v0)              // update address storing object reference
         lw      t0, 0x0008(sp)              // t0 = display value
         sw      t0, 0x007C(v0)              // update display value
-        addiu   sp, sp, 0x0010              // deallocate stack space
+
+        li      t1, display_order_room
+        lw      t2, 0x0000(t1)              // t2 = current display_order_room
+        sw      t2, 0x0060(v0)              // t2 = display_order_room
+        lw      t2, 0x000C(sp)              // load saved display_order_room
+        sw      t2, 0x0000(t1)              // restore display_order_room
+
+        li      t1, display_order_group
+        lw      t2, 0x0000(t1)              // t2 = current display_order_group
+        sw      t2, 0x0064(v0)              // t2 = display_order_group
+        lw      t2, 0x0010(sp)              // load saved display_order_group
+        sw      t2, 0x0000(t1)              // restore display_order_group
+
+        lw      t0, 0x0014(sp)              // t0 = REGISTER_OBJECT_ROUTINE_ info block
+        beqz    t0, _finish                 // if 0, skip
+        nop
+        or      a0, v0, r0                  // a0 = object
+        lw      a1, 0x001C(t0)              // a1 = routine
+        lbu     a2, 0x0014(t0)              // a2 = ?
+        lw      a3, 0x0010(t0)              // a3 = REGISTER_OBJECT_ROUTINE_ group
+        jal     REGISTER_OBJECT_ROUTINE_
+        addiu   sp, sp, -0x0030
+        addiu   sp, sp, 0x0030
+
+        _finish:
+        addiu   sp, sp, 0x0020              // deallocate stack space
 
         OS.restore_registers()
 
@@ -1719,7 +1981,7 @@ scope Render {
 		// 1P
         li      t1, SinglePlayerModes.singleplayer_mode_flag       // t1 = Single Player Mode flag address
         lw      t1, 0x0000(t1)              // t1 = 1 if bonus 3
-        beqz    t1, _vs_check               // if not multiman, skip
+        beqz    t1, _vs_check               // if not multiman or allstar modes, skip
         nop
 		addiu	t2, r0, 0x0004				// Remix 1p Flag
 		beq     t2, t1, _vs_check               // if Remix 1p, skip
@@ -1727,7 +1989,7 @@ scope Render {
 		
 		
 		lli     t1, 0x0077                  // t1 = 1P mode screen_id
-        beq     t0, t1, _multiman           // if (screen_id = multiman mode), jump to _multiman mode
+        beq     t0, t1, _multiman           // if (screen_id = multiman mode/allstar), jump to _multiman mode
         nop
 
         // VS
@@ -1738,11 +2000,11 @@ scope Render {
 
         // CSS
         // screen ids: vs - 0x10, 1p - 0x11, training - 0x12, bonus1 - 0x13, bonus2 - 0x14
-        slti    t1, t0, 0x0010               // t1 = 1 if not CSS
-        bnez    t1, _low_screens             // if (screen_id != css), go to _low_screens
+        slti    t1, t0, 0x0010              // t1 = 1 if not CSS
+        bnez    t1, _low_screens            // if (screen_id != css), go to _low_screens
         nop
-        slti    t1, t0, 0x0015               // t1 = 1 if CSS
-        bnez    t1, _css                     // if (screen_id = css), go to _css
+        slti    t1, t0, 0x0015              // t1 = 1 if CSS
+        bnez    t1, _css                    // if (screen_id = css), go to _css
         nop
 
         // SSS
@@ -1789,13 +2051,16 @@ scope Render {
         // Title
         // screen_id = 0x1 AND first file loaded = 0xA7
         lli     t1, 0x0001                  // t1 = Title screen (shared with other screens - at least 1p mode battle)
-        bne     t0, t1, _end               // if (screen_id != TITLE), skip
+        bne     t0, t1, _end                // if (screen_id != TITLE), skip
         nop
         li      a0, Global.files_loaded     // ~
         lw      a0, 0x0000(a0)              // a0 = address of loaded files list
         lw      a0, 0x0000(a0)              // a0 = first loaded file
         lli     t1, 0x00A7                  // t1 = 0xA7
         beq     a0, t1, _title              // if (first file loaded = 0xA7 Hole Image), jump to _title
+        nop
+
+        jal     BGM.setup_                  // load font file if necessary for music titles
         nop
 
         _end:
@@ -1811,7 +2076,7 @@ scope Render {
         nop
 		
 		_multiman:
-		jal     SinglePlayerModes.setup_             // Setup the KO counter
+		jal     SinglePlayerModes.setup_    // Setup the KO counter
         nop
 
         b       _end
@@ -1830,6 +2095,9 @@ scope Render {
         nop
 
         jal     Item.clear_active_custom_items_
+        nop
+
+        jal     BGM.setup_                  // load font file if necessary for music titles
         nop
 
         b       _end
@@ -1889,7 +2157,7 @@ scope Render {
         _bonus:
         lui     v0, 0x800A
         jal     CharacterSelectDebugMenu.clear_debug_menu_settings_for_1p_
-        lbu     v0, 0x4AE3(v0)                // v0 = port of human player
+        lbu     v0, 0x4AE3(v0)              // v0 = port of human player
 
         b       _end
         nop
