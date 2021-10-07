@@ -496,11 +496,18 @@ scope Training {
     // @ Description
     // Prevents exiting Training Mode unless A is held.
     scope hold_to_exit_: {
-        constant NUM_FRAMES(30)
+        // visual fill needs extra frame
+        constant NUM_FRAMES(31)
 
+        // runs when over Exit
         OS.patch_start(0x114078, 0x8018D858)
         jal     hold_to_exit_
         or      v0, r0, r0                  // original line 1
+        OS.patch_end()
+        // runs when menu is up
+        OS.patch_start(0x11414C, 0x8018D92C)
+        jal     hold_to_exit_._reset
+        lui     t6, 0x8019                  // original line 1
         OS.patch_end()
 
         // t6 = port
@@ -510,11 +517,12 @@ scope Training {
         lw      t9, 0x0004(t9)              // t9 = 1 if hold to exit training mode is enabled, else 0
         beqzl   t9, _return                 // if hold to exit disabled, return normally
         andi    t9, t8, 0x8000              // original line 2
-
+        
         lui     t8, 0x8004                  // t8 = controller input for the human port from previous frame
         addu    t8, t8, t7                  // ~
         lhu     t8, 0x5228(t8)              // ~
-
+        andi    t8, t8, 0x8000              // original line 2, modified
+        
         li      t7, held_frames
         lli     t9, OS.FALSE                // t9 = OS.FALSE = don't exit
 
@@ -527,13 +535,22 @@ scope Training {
         xori    t9, t9, 0x0001              // t9 = 1 if we should exit, 0 otherwise
         bnezl   t9, _end                    // if we should exit, reset count
         lli     t6, 0x0000                  // t6 = 0
-
+        
         _end:
         sw      t6, 0x0000(t7)              // update held count
 
         _return:
         jr      ra
         nop
+
+        _reset:
+        lw      t6, 0x0B58(t6)              // original line 2 - t6 = cursor index
+        lli     t9, 0x0005                  // t9 = Exit cursor index
+        beq     t6, t9, _return             // if on exit, don't reset held frames
+        nop                                 // otherwise, reset it
+        li      t9, held_frames
+        jr      ra
+        sw      r0, 0x0000(t9)              // reset held frames
 
         held_frames:
         dw 0
@@ -1205,7 +1222,17 @@ scope Training {
 
         Render.draw_string(0x17, 0xE, press_z, Render.NOOP, 0x43200000, 0x42480000, 0xFFFFFFFF, 0x3F800000, Render.alignment.CENTER, OS.FALSE)
         Render.draw_texture_at_offset(0x17, 0xE, Render.file_pointer_1, Render.file_c5_offsets.Z, Render.NOOP, 0x42EB0000, 0x42440000, 0x848484FF, 0x303030FF, 0x3F800000)
-
+        
+        // show 'Hold A'?
+        li      t9, Toggles.entry_hold_to_exit_training
+        lw      t9, 0x0004(t9)              // t9 = 1 if hold to exit training mode is enabled, else 0
+        beqzl   t9, _nold_a                  // if hold to exit disabled
+        nop
+        
+        Render.draw_string(0x17, 0xE, hold_a, Render.NOOP, 0x43290000, 0x43260000, 0xFFFFFFFF, 0x3F600000, Render.alignment.LEFT, OS.FALSE)
+        Render.draw_texture_at_offset(0x17, 0xE, Render.file_pointer_1, Render.file_c5_offsets.A, Render.NOOP, 0x434A0000, 0x43250000, 0x50A8FFFF, 0x303030FF, 0x3F700000)
+        
+        _nold_a:
         // Reset counter
         Render.draw_string(0x17, 0x15, reset_string, Render.NOOP, 0x42C70000, 0x41C80000, 0xFFFFFFFF, 0x3F800000, Render.alignment.LEFT, OS.FALSE)
         Render.draw_number(0x17, 0x15, reset_counter, Render.NOOP, 0x435D0000, 0x41C80000, 0xFFFFFFFF, 0x3F800000, Render.alignment.RIGHT, OS.FALSE)
@@ -1362,9 +1389,11 @@ scope Training {
         li      t0, toggle_menu             // t0 = address of toggle_menu
         lbu     t0, 0x0000(t0)              // t0 = toggle_menu
 
+        li      t2, hold_to_exit_.held_frames
+
         lli     t1, BOTH_DOWN               // t1 = both menus are down
-        beq     t0, t1, _both_down          // branch accordingly
-        nop
+        beql    t0, t1, _both_down          // branch accordingly
+        sw      r0, 0x0000(t2)              // reset held frames for hold to exit
 
         // check if the ssb menu is up
         lli     t1, SSB_UP                  // t1 = ssb menu is up
@@ -1373,19 +1402,19 @@ scope Training {
 
         // check if the custom menu is up
         lli     t1, CUSTOM_UP               // t1 = custom menu is up
-        beq     t0, t1, _custom_up          // branch accordingly
-        nop
+        beql    t0, t1, _custom_up          // branch accordingly
+        sw      r0, 0x0000(t2)              // reset held frames for hold to exit
 
         // otherwise skip
         b       _end
         nop
-
+        
         _custom_up:
         li      t0, skip_advance
         lw      t0, 0x0000(t0)              // t0 = 0 if we should check for menu updates
         bnez    t0, _check_b                // if not on a frame where we should check menu updates, skip
         nop
-
+        
         _update_menu:
         // update menu
         li      a0, info                    // a0 - address of Menu.info()
@@ -1458,7 +1487,8 @@ scope Training {
         li      a0, info                    // a0 - address of Menu.info()
         jal     Menu.redraw_                // check for updates
         lw      a1, 0x0018(a0)              // a1 - first entry
-
+        
+        // check for either B or Z
         _check_b:
         // check for b press
         lli     a0, Joypad.B                // a0 - button_mask
@@ -1466,8 +1496,17 @@ scope Training {
         lli     a2, Joypad.PRESSED          // a2 - type
         jal     Joypad.check_buttons_all_   // v0 - bool b_pressed
         nop
-        beqz    v0, _check_l                // if (!b_pressed), jump to L check
+        move    t0, v0
+        // check for z press
+        lli     a0, Joypad.Z                // a0 - button_mask
+        lli     a1, 000069                  // a1 - whatever you like!
+        lli     a2, Joypad.PRESSED          // a2 - type
+        jal     Joypad.check_buttons_all_   // v0 - bool z_pressed
         nop
+        or      t0, t0, v0
+
+        beqz    t0, _check_l                // if (!b_pressed && !z_pressed), jump to L check
+        nop        
         li      t0, toggle_menu             // t0 = toggle_menu
         lli     t1, SSB_UP                  // ~
         sb      t1, 0x0000(t0)              // toggle menu = SSB_UP
@@ -1515,9 +1554,9 @@ scope Training {
         _check_l:
         lli     a0, Joypad.L                // a0 - button_mask
         lli     a1, 000069                  // a1 - whatever you like!
-        jal     Joypad.check_buttons_all_   // v0 - bool z_pressed
+        jal     Joypad.check_buttons_all_   // v0 - bool l_pressed
         lli     a2, Joypad.PRESSED          // a2 - type
-        beqz    v0, _end                    // if (!z_pressed), skip
+        beqz    v0, _check_a_held           // if (!l_pressed), skip
         nop
         li      t0, show_action             // t0 = show action flag address
         lw      a1, 0x0000(t0)              // a1 = show action flag (will use for display flag below)
@@ -1525,7 +1564,83 @@ scope Training {
         sw      t2, 0x0000(t0)              // update flag
         jal     Render.toggle_group_display_
         lli     a0, 0x0017                  // a0 = action & frame group
+        
+        _check_a_held:
+        li      t9, Toggles.entry_hold_to_exit_training
+        lw      t9, 0x0004(t9)              // t9 = 1 if hold to exit training mode is enabled, else 0
+        beqzl   t9, _end                    // if hold to exit disabled
+        nop
+        
+        // clean up rect
+        li      s1, hold_a_rect
+        lw      a0, 0(s1)
+        jal     Render.DESTROY_OBJECT_
+        li      s1, hold_a_rect
+        li      a0, 0
+        sw      a0, 0(s1)
+        
+        // the cursor index is stored at 80190B58... 5 should be the exit index
+        li      t1, 0x80190B58
+        lw      t1, 0(t1)
+        li      t2, 5
+        bne     t1, t2, _no_rect            // if on different menu item
+        nop
+        li      t0, toggle_menu             // t0 = address of toggle_menu
+        lbu     t0, 0x0000(t0)              // t0 = toggle_menu
+        lli     t1, SSB_UP                  // t1 = ssb menu is up
+        bne     t0, t1, _no_rect            // branch accordingly
+        nop
+        lli     a0, Joypad.A                // a0 - button_mask
+        lli     a1, 000069                  // a1 - whatever you like!
+        jal     Joypad.check_buttons_all_   // v0 - bool a_pressed
+        lli     a2, Joypad.HELD             // a2 - type
+        beqz    v0, _check_a_up             // if (!a_pressed), skip
+        nop
+        
+        // Render.draw_rectangle(0x17, 0x15, 73, 179, 64, 2, 0x0088FFFF, OS.FALSE)
+        // macro draw_rectangle(room, group, ulx, uly, width, height, color, enable_alpha) {
+        lli     a0, 0x17
+        // same group? doesn't matter
+        // lli     a1, 0x15
+        lli     a1, 0xE
+        lli     s1, 73
+        lli     s2, 179
+        li      s4, hold_a_rect_len
+        lw      s3, 0(s4)
+        li      s5, 960
+        bltul   s3, s5, _grew_blue
+        
+        addiu   s3, s3, 32
+        
+        _grew_blue:
+        sw      s3, 0(s4)
+        li      s5, 15
+        divu    s3, s5
+        mflo    s3
+        
+        lli     s4, 2
+        li      s5, 0x0088FFFF
+        jal     Render.draw_rectangle_
+        lli     s6, OS.FALSE
 
+        li      s1, hold_a_rect
+        sw      v0, 0(s1)
+        
+        _check_a_up:
+        lli     a0, Joypad.A                // a0 - button_mask
+        lli     a1, 000069                  // a1 - whatever you like!
+        jal     Joypad.check_buttons_all_   // v0 - bool a_pressed
+        lli     a2, Joypad.RELEASED         // a2 - type
+        beqz    v0, _end                    // if (!a_released), keep rect
+        nop
+        
+        // bar whoosh :)
+        lli     a0, FGM.item.BEAM_SWORD_HEAVY
+        jal     FGM.play_
+        nop
+        b       _no_rect
+        nop
+        
         _end:
         OS.restore_registers()
         jr      ra
@@ -1535,6 +1650,10 @@ scope Training {
         lli     a0, 0x0015                  // a0 = custom pause group
         jal     Render.toggle_group_display_
         lli     a1, 0x0001                  // a1 = display off
+        _no_rect:
+        li      s4, hold_a_rect_len
+        li      s3, 0
+        sw      s3, 0(s4)
         b       _end
         nop
 
@@ -1911,6 +2030,10 @@ scope Training {
     dpad_frame:; db "Frame Advance", 0x00
     dpad_model:; db "Model Display", 0x00
     dpad_reset:; db "Quick Reset", 0x00
+    
+    // @ Description
+    // String next to 'EXIT', if hold to exit is enabled
+    hold_a:; db "(Hold --)", 0x00
     
     // @ Description
     // String used for reset counter which appears while the training menu is up
@@ -2442,6 +2565,7 @@ scope Training {
 
     string_training_mode:; String.insert("Training Mode")
 
+    // add "Off"? (MIDI_EMPTY for now)
     string_table_music:
     dw       string_training_mode
     dw       Toggles.entry_random_music_bonus + 0x28
@@ -2523,6 +2647,14 @@ scope Training {
     p2_action_pointer:; dw 0x00000000
     p3_action_pointer:; dw 0x00000000
     p4_action_pointer:; dw 0x00000000
-}
 
+    hold_a_rect:
+    // dd not dw
+    dd 0
+    
+    hold_a_rect_len:
+    dd 0
+    
+}
+   
 } // __TRAINING__
