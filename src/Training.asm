@@ -522,14 +522,14 @@ scope Training {
         addu    t8, t8, t7                  // ~
         lhu     t8, 0x5228(t8)              // ~
         andi    t8, t8, 0x8000              // original line 2, modified
-        
+
         li      t7, held_frames
         lli     t9, OS.FALSE                // t9 = OS.FALSE = don't exit
 
         beqzl   t8, _end                    // if not held, reset count
         lli     t6, 0x0000                  // t6 = 0
 
-        lw      t6, 0x0000(t7)              // t6 = current held count
+        lw      t6, 0x0000(t7)              // t6 = current held count      
         addiu   t6, t6, 0x0001              // t6++
         sltiu   t9, t6, NUM_FRAMES          // t9 = 0 if we should exit, 1 otherwise
         xori    t9, t9, 0x0001              // t9 = 1 if we should exit, 0 otherwise
@@ -1223,16 +1223,15 @@ scope Training {
         Render.draw_string(0x17, 0xE, press_z, Render.NOOP, 0x43200000, 0x42480000, 0xFFFFFFFF, 0x3F800000, Render.alignment.CENTER, OS.FALSE)
         Render.draw_texture_at_offset(0x17, 0xE, Render.file_pointer_1, Render.file_c5_offsets.Z, Render.NOOP, 0x42EB0000, 0x42440000, 0x848484FF, 0x303030FF, 0x3F800000)
         
-        // show 'Hold A'?
         li      t9, Toggles.entry_hold_to_exit_training
         lw      t9, 0x0004(t9)              // t9 = 1 if hold to exit training mode is enabled, else 0
-        beqzl   t9, _nold_a                  // if hold to exit disabled
+        beqzl   t9, _no_hold_a_text         // if hold to exit is disabled, skip
         nop
         
         Render.draw_string(0x17, 0xE, hold_a, Render.NOOP, 0x43290000, 0x43260000, 0xFFFFFFFF, 0x3F600000, Render.alignment.LEFT, OS.FALSE)
         Render.draw_texture_at_offset(0x17, 0xE, Render.file_pointer_1, Render.file_c5_offsets.A, Render.NOOP, 0x434A0000, 0x43250000, 0x50A8FFFF, 0x303030FF, 0x3F700000)
         
-        _nold_a:
+        _no_hold_a_text:
         // Reset counter
         Render.draw_string(0x17, 0x15, reset_string, Render.NOOP, 0x42C70000, 0x41C80000, 0xFFFFFFFF, 0x3F800000, Render.alignment.LEFT, OS.FALSE)
         Render.draw_number(0x17, 0x15, reset_counter, Render.NOOP, 0x435D0000, 0x41C80000, 0xFFFFFFFF, 0x3F800000, Render.alignment.RIGHT, OS.FALSE)
@@ -1365,6 +1364,11 @@ scope Training {
         jal     Render.toggle_group_display_
         lli     a0, 0x0017                  // a0 = action & frame group
 
+        li      s1, hold_a_rect
+        sw      r0, 0x0000(s1)
+        li      s1, hold_a_rect_len
+        sw      r0, 0x0000(s1)
+        
         // Ensure BGM volume is correct level.
         // Fixes bug where music is quiet if you do a quick reset while paused.
         // Do it here so the music doesn't get loud again before restarting.
@@ -1571,24 +1575,24 @@ scope Training {
         beqzl   t9, _end                    // if hold to exit disabled
         nop
         
-        // clean up rect
+        // clean up Hold A rectangle
         li      s1, hold_a_rect
         lw      a0, 0(s1)
         jal     Render.DESTROY_OBJECT_
+        nop
         li      s1, hold_a_rect
         li      a0, 0
         sw      a0, 0(s1)
         
-        // the cursor index is stored at 80190B58... 5 should be the exit index
-        li      t1, 0x80190B58
-        lw      t1, 0(t1)
-        li      t2, 5
-        bne     t1, t2, _no_rect            // if on different menu item
+        li      t1, 0x80190B58              // t1 = address of cursor index
+        lw      t1, 0x0000(t1)              // t1 = cursor index
+        lli     t2, 0x0005                  // t2 = 5 (EXIT)
+        bne     t1, t2, _no_rect            // if not on the EXIT option, don't draw rectangle
         nop
         li      t0, toggle_menu             // t0 = address of toggle_menu
         lbu     t0, 0x0000(t0)              // t0 = toggle_menu
         lli     t1, SSB_UP                  // t1 = ssb menu is up
-        bne     t0, t1, _no_rect            // branch accordingly
+        bne     t0, t1, _no_rect            // if menus are down, don't draw rectangle
         nop
         lli     a0, Joypad.A                // a0 - button_mask
         lli     a1, 000069                  // a1 - whatever you like!
@@ -1599,16 +1603,16 @@ scope Training {
         
         // Render.draw_rectangle(0x17, 0x15, 73, 179, 64, 2, 0x0088FFFF, OS.FALSE)
         // macro draw_rectangle(room, group, ulx, uly, width, height, color, enable_alpha) {
-        lli     a0, 0x17
         // same group? doesn't matter
         // lli     a1, 0x15
-        lli     a1, 0xE
-        lli     s1, 73
-        lli     s2, 179
-        li      s4, hold_a_rect_len
-        lw      s3, 0(s4)
-        li      s5, 960
-        bltul   s3, s5, _grew_blue
+        lli     a0, 0x17                    // a0 = room
+        lli     a1, 0xE                     // a1 = group
+        lli     s1, 73                      //
+        lli     s2, 179                     //
+        li      s4, hold_a_rect_len         //
+        lw      s3, 0(s4)                   //
+        li      s5, 960                     //
+        bltul   s3, s5, _grew_blue          //
         
         addiu   s3, s3, 32
         
@@ -2032,7 +2036,7 @@ scope Training {
     dpad_reset:; db "Quick Reset", 0x00
     
     // @ Description
-    // String next to 'EXIT', if hold to exit is enabled
+    // Message/visual indicator to hold A to exit training (displayed if hold to exit is enabled)
     hold_a:; db "(Hold --)", 0x00
     
     // @ Description
@@ -2649,11 +2653,10 @@ scope Training {
     p4_action_pointer:; dw 0x00000000
 
     hold_a_rect:
-    // dd not dw
-    dd 0
+    dw 0
     
     hold_a_rect_len:
-    dd 0
+    dw 0
     
 }
    
