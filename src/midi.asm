@@ -141,12 +141,15 @@ scope MIDI {
 
     // define games
     add_game(smb, "Super Mario Bros.")
+    add_game(smb2, "Super Mario Bros. 2")
     add_game(sml, "Super Mario Land")
     add_game(sm64, "Super Mario 64")
     add_game(sunshine, "Super Mario Sunshine")
     add_game(nsmb, "New Super Mario Bros.")
     add_game(drm, "Dr. Mario")
     add_game(mk64, "Mario Kart 64")
+    add_game(marioparty, "Mario Party")
+    add_game(marioparty2, "Mario Party 2")
     add_game(mariogolf, "Mario Golf 64")
     add_game(smrpg, "Super Mario RPG: Legend of the Seven Stars")
     add_game(papermario, "Paper Mario")
@@ -156,7 +159,7 @@ scope MIDI {
     add_game(yoshis_island_ds, "Yoshi's Island DS")
     add_game(warioland, "Wario Land: Super Mario Land 3")
     add_game(warioshake, "Wario Land - Shake It!")
-    add_game(warioworld, "Wario World") 
+    add_game(warioworld, "Wario World")
     add_game(dkl, "Donkey Kong Land")
     add_game(dkc, "Donkey Kong Country")
     add_game(dkc2, "Donkey Kong Country 2")
@@ -204,6 +207,14 @@ scope MIDI {
     add_game(persona, "Revelations: Persona")
     add_game(persona5, "Persona 5")
     add_game(fire_emblem, "Fire Emblem")
+    add_game(sonic1, "Sonic the Hedgehog")
+    add_game(sonic2, "Sonic the Hedgehog 2")
+    add_game(soniccd, "Sonic CD")
+    add_game(sonic3, "Sonic the Hedgehog 3")
+    add_game(sonicfighters, "Sonic the Fighters")
+    add_game(sonicadventure, "Sonic Adventure")
+    add_game(sonicadventure2, "Sonic Adventure 2")
+    add_game(rhfever, "Rhythm Heaven Fever")
     OS.align(4)
 
     // insert custom midi files
@@ -339,6 +350,28 @@ scope MIDI {
     insert_midi(MULTIMAN2, OS.TRUE, OS.TRUE, "Multi-Man Melee 2", melee)
     insert_midi(FIRE_EMBLEM, OS.TRUE, OS.TRUE, "Together We Ride (Melee)", fire_emblem)
     insert_midi(KANTO_WILD_BATTLE, OS.TRUE, OS.TRUE, "Kanto Wild Pokemon Battle", pokemongold)
+    insert_midi(SMB2OVERWORLD, OS.TRUE, OS.TRUE, "Super Mario Bros. 2 Overworld", smb2)
+    insert_midi(PIRATELAND, OS.TRUE, OS.TRUE, "Pirate Land", marioparty2)
+    insert_midi(TROPICALISLAND, OS.TRUE, OS.TRUE, "Yoshi's Tropical Island", marioparty)
+    insert_midi(FLYINGBATTERY, OS.TRUE, OS.TRUE, "Flying Battery", sonic3)
+    insert_midi(OPEN_YOUR_HEART, OS.TRUE, OS.TRUE, "Open Your Heart", sonicadventure)
+    insert_midi(SONIC2_BOSS, OS.TRUE, OS.TRUE, "Sonic 2 Boss", sonic2)
+    insert_victory_midi(SONIC_VICTORY)
+    insert_midi(CASINO_NIGHT, OS.TRUE, OS.TRUE, "Casino Night Zone", sonic2)
+    insert_midi(MONKEY_WATCH, OS.TRUE, OS.TRUE, "Monkey Watch", rhfever)
+    insert_midi(SONIC2_SPECIAL, OS.TRUE, OS.TRUE, "Sonic 2 Special Stage", sonic2)
+    insert_midi(SONICCD_SPECIAL, OS.TRUE, OS.TRUE, "Sonic CD Special Stage", soniccd)
+    insert_midi(GIANTWING, OS.TRUE, OS.TRUE, "Giant Wing", sonicfighters)
+    insert_midi(EMERALDHILL, OS.TRUE, OS.TRUE, "Emerald Hill Zone", sonic2)
+    insert_midi(LIVE_AND_LEARN, OS.TRUE, OS.TRUE, "Live and Learn", sonicadventure2)
+    insert_midi(STARDUST, OS.TRUE, OS.TRUE, "Stardust Speedway B Mix", soniccd)
+    insert_midi(GREEN_HILL_ZONE, OS.TRUE, OS.TRUE, "Green Hill Zone", sonic1)
+    insert_midi(CHEMICAL_PLANT, OS.TRUE, OS.TRUE, "Chemical Plant Zone", sonic2)
+    insert_midi(BABY_BOWSER, OS.TRUE, OS.TRUE, "Baby Bowser", yoshis_island)
+    insert_midi(WIDE_UNDERWATER, OS.TRUE, OS.TRUE, "Ocean Medley", marioparty)
+    insert_midi(METALLIC_MADNESS, OS.TRUE, OS.TRUE, "Metallic Madness", soniccd)
+    insert_midi(EVERYTHING, OS.TRUE, OS.TRUE, "Everything (Super Sonic)", sonicfighters)
+    insert_midi(ROCKSOLID, OS.TRUE, OS.TRUE, "Rock Solid", conker)
 
     pushvar origin, base
 
@@ -699,6 +732,12 @@ scope MIDI {
     add_instrument_sample(banjo_2_alt-2, 0x0, 0x0010C8E0, 25000, 0x7F, 0x00, 0x00, 0x7F, 84,  96, 84, 0x0, 0x3F, 0x7E, OS.TRUE, 2114, 2848, 0xFFFFFFFF, OS.FALSE)
     add_instrument(Banjo 2 Alt, 0x7E, 0x3F, 0x05, 0x04DD, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0)
 
+    // TODO: Make some synthy sounding tracks
+    add_instrument_sample(sawtoothK64_1, 0x0, 0x0, 66 * 200, 0x7F, 0x7F, 0x00, 0x7F, 0, 71, 60, -15, 0x3F, 0x7E, OS.TRUE, 12440, 26687, 0xFFFFFFFF, OS.FALSE)
+    add_instrument_sample(sawtoothK64_2, 0x0, 0x0, 66 * 200, 0x7F, 0x7F, 0x00, 0x7F, 72, 83, 72, -5, 0x3F, 0x7E, OS.TRUE, 12808, 27679, 0xFFFFFFFF, OS.FALSE)
+    add_instrument_sample(sawtoothK64_3, 0x0, 0x0, 66 * 200, 0x7F, 0x7F, 0x00, 0x7F, 84, 127, 84, -10, 0x3F, 0x7E, OS.TRUE, 13329, 20767, 0xFFFFFFFF, OS.FALSE)
+    add_instrument(Sawtooth Kirby 64, 0x7E, 0x3F, 0x05, 0x04DD, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0)
+
     move_instrument_bank_map()
 
     // @ Description
@@ -726,7 +765,7 @@ scope MIDI {
     }
 
     print "========================================================================== \n"
-    
+
     // @ Description
     // Adds a priority override for the given instrument/bgm combination.
     // Also creates a priority override array if it doesn't already exist.
@@ -735,29 +774,29 @@ scope MIDI {
     // priority - priority value to use for this track
     macro add_priority_override(bgm, instrument, priority) {
         evaluate bgm({bgm})
-        
+
         // create an override array for this bgm if it doesn't exist
         if !{defined override_{bgm}} {
             global define override_{bgm}()
-            
+
             override_array_{bgm}:
             constant override_array_{bgm}_origin(origin())
             fill instrument_count
             OS.align(16)
-            
+
             pushvar origin, base
             origin priority_override_table_origin + ({bgm} * 0x4)
             dw  override_array_{bgm}
             pullvar base, origin
         }
-        
+
         // add the override value for this instrument
         pushvar origin, base
         origin override_array_{bgm}_origin + {instrument}
         db  {priority}
         pullvar base, origin
     }
-    
+
     // @ Description
     // Alternate version of subroutine 0x8002E2AC which seems to load instrument parameters.
     // Checks to see if the current BGM gives an alternate priority value for the given instrument.
@@ -768,7 +807,7 @@ scope MIDI {
         OS.patch_start(0x2C820, 0x8002BC20)
         jal     override_instrument_priority_
         OS.patch_end()
-    
+
         lw      t6, 0x0068(a0)              // ~
         sll     v0, a2, 0x2                 // ~
         subu    v0, v0, a2                  // ~
@@ -776,7 +815,7 @@ scope MIDI {
         addu    t7, t6, v0                  // ~
         sw      a1, 0x0000(t7)              // ~
         lw      t9, 0x0068(a0)              // undocumented original logic
-        
+
         lui     t0, 0x800A                  // ~
         lw      t0, 0xD974(t0)              // t0 = address of current bgm_id
         lw      t0, 0x0000(t0)              // t0 = current bgm_id
@@ -786,7 +825,7 @@ scope MIDI {
         lw      t1, 0x0000(t1)              // t1 = address of override array for current bgm
         beql    t1, r0, _continue           // skip if array pointer = NULL...
         lbu     t8, 0x0002(a1)              // ...and load original priority to t8
-        
+
         // if there is an override array for the current bgm, check for an override value for the current instrument
         // fp/s8 is presumed to always contain the instrument id at this point, this is almost certainly safe because it's used for
         // a check for invalid instrument ids right before the function call we replace
@@ -794,7 +833,7 @@ scope MIDI {
         lbu     t8, 0x0000(t1)              // t8 = priority override value
         beql    t8, r0, _continue           // if priority override = 0...
         lbu     t8, 0x0002(a1)              // ...load original priority to t8 instead
-        
+
         _continue:
         addu    t0, t9, v0                  // ~
         sb      t8, 0x0008(t0)              // ~
@@ -808,13 +847,13 @@ scope MIDI {
         jr      ra                          // ~
         sb      t4, 0x0011(t6)              // undocumented original logic
     }
-    
+
     OS.align(16)
     priority_override_table:
     constant priority_override_table_origin(origin())
     fill midi_count * 0x4
     OS.align(16)
-    
+
     // ADD PRIORITY OVERRIDES HERE
     // This can be used when MIDI cc16 fails to provide satisfactory results.
     // It should only be used in advanced cases and be used with care, as giving instruments extreme priority can cause FGMs to cut out or play back wrong.
@@ -826,12 +865,18 @@ scope MIDI {
     add_priority_override({MIDI.id.FOREST_INTERLUDE}, 28, 0x7F)
     add_priority_override({MIDI.id.FOREST_INTERLUDE}, 40, 0x7F)
     add_priority_override({MIDI.id.FOREST_INTERLUDE}, 55, 0x7F)
-    
+
     add_priority_override({MIDI.id.TOADS_TURNPIKE}, 2, 0x7F)
     add_priority_override({MIDI.id.TOADS_TURNPIKE}, 7, 0x7F)
     add_priority_override({MIDI.id.TOADS_TURNPIKE}, 44, 0x7F)
-    
+
     add_priority_override({MIDI.id.FIRE_EMBLEM}, 34, 0x7F)
+
+    add_priority_override({MIDI.id.GREEN_HILL_ZONE}, 5, 0x7F)
+    add_priority_override({MIDI.id.GREEN_HILL_ZONE}, 7, 0x7F)
+    add_priority_override({MIDI.id.GREEN_HILL_ZONE}, 29, 0x7F)
+
+    add_priority_override({MIDI.id.ROCKSOLID}, 7, 0x7F)
 }
 
 } // __MIDI__

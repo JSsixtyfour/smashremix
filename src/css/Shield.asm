@@ -3,7 +3,7 @@
 define LABEL("Shield")
 constant VALUE_TYPE(CharacterSelectDebugMenu.value_type.STRING)
 constant MIN_VALUE(0)
-constant MAX_VALUE(15)
+constant MAX_VALUE(17)
 constant DEFAULT_VALUE(0)
 // bitmask: [vs] [1p] [training] [bonus1] [bonus2]
 constant APPLIES_TO(0b11111)
@@ -31,6 +31,8 @@ dw string_pink
 dw string_brown
 dw string_black
 dw string_white
+dw string_vanilla
+dw string_costume
 
 // @ Description
 // Value labels
@@ -48,8 +50,10 @@ string_purple:; String.insert("Purple")
 string_magenta:; String.insert("Magenta")
 string_pink:; String.insert("Pink")
 string_brown:; String.insert("Brown")
-string_black:; String.insert("Black") 
-string_white:; String.insert("White") 
+string_black:; String.insert("Black")
+string_white:; String.insert("White")
+string_vanilla:; String.insert("Vanilla")
+string_costume:; String.insert("Costume")
 
 // @ Description
 // Runs before 1p modes to ensure settings aren't applied.

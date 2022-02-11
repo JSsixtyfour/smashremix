@@ -24,11 +24,11 @@ scope Training {
     constant BOTH_DOWN(0x01)
     constant SSB_UP(0x02)
     constant CUSTOM_UP(0x03)
-    
+
     // @ Description
     // Byte, contains the training mode stage id
     constant stage(0x80190969)
-    
+
     // @ Description
     // Contains game settings, as well as information and properties for each port.
     // PORT STRUCT INFO
@@ -116,7 +116,7 @@ scope Training {
             spawn_dir:
             dw FACE_LEFT
         }
-        
+
         // @ Description
         // table of pointers to each port struct
         table:
@@ -133,24 +133,26 @@ scope Training {
         jal load_character_
         nop
         OS.patch_end()
-        
-        addiu   sp, sp,-0x0020              // allocate stack space
+
+        addiu   sp, sp,-0x0030              // allocate stack space
         sw      ra, 0x0004(sp)              // ~
         sw      t0, 0x0008(sp)              // ~
         sw      t1, 0x000C(sp)              // ~
         sw      t2, 0x0010(sp)              // ~
         sw      t3, 0x0014(sp)              // ~
         sw      t4, 0x0018(sp)              // ~
-        sw      t5, 0x001C(sp)              // store ra, t0-t5
-        
+        sw      t5, 0x001C(sp)              // ~
+        sw      t6, 0x0020(sp)              // store ra, t0-t6
+
         li      t0, Global.match_info       // ~
         lw      t0, 0x0000(t0)              // t1 = match info address
         li      t1, reset_counter           // t1 = reset counter
         lw      t1, 0x0000(t1)              // t1 = reset counter value
+        li      t6, Sonic.classic_table     // t6 = classic_table
         beq     t1, r0, _initialize_p1      // initialize values if load from sss is detected
         ori     t3, r0, Character.id.NONE   // t3 = character id: NONE
         li      t4, entry_id_to_char_id     // t4 = entry_id_to_char_id table address
-        
+
         _load_p1:
         addiu   t0, Global.vs.P_OFFSET      // t0 = p1 info
         li      t1, struct.port_1.ID        // ~
@@ -169,6 +171,18 @@ scope Training {
         li      t1, struct.port_1.costume   // ~
         lw      t1, 0x0000(t1)              // t1 = port 1 costume
         sb      t1, 0x0006(t0)              // store costume
+
+        lli     t5, Character.id.SONIC      // t5 = Character.id.SONIC
+        lb      t2, 0x0003(t0)              // t2 = char id
+        bne     t2, t5, _load_p2            // if not Sonic, skip
+        sltiu   t2, t1, 0x0006              // t2 = 0 if Classic Sonic costume NOTE: this is hardcoded costume count
+        bnez    t2, _load_p2                // skip if not a Classic Sonic costume
+        sb      r0, 0x0000(t6)              // p1 is_classic = FALSE
+        lli     t2, OS.TRUE                 // ~
+        sb      t2, 0x0000(t6)              // p1 is_classic = TRUE
+        addiu   t1, t1, -0x0006             // t1 = adjusted costume ID for Classic Sonic
+        sb      t1, 0x0006(t0)              // store costume for Classic Sonic
+
         _load_p2:
         addiu   t0, Global.vs.P_DIFF        // t0 = p2 info
         li      t1, struct.port_2.ID        // ~
@@ -187,6 +201,18 @@ scope Training {
         li      t1, struct.port_2.costume   // ~
         lw      t1, 0x0000(t1)              // t1 = port 2 costume
         sb      t1, 0x0006(t0)              // store costume
+
+        lli     t5, Character.id.SONIC      // t5 = Character.id.SONIC
+        lb      t2, 0x0003(t0)              // t2 = char id
+        bne     t2, t5, _load_p3            // if not Sonic, skip
+        sltiu   t2, t1, 0x0006              // t2 = 0 if Classic Sonic costume NOTE: this is hardcoded costume count
+        bnez    t2, _load_p3                // skip if not a Classic Sonic costume
+        sb      r0, 0x0001(t6)              // p2 is_classic = FALSE
+        lli     t2, OS.TRUE                 // ~
+        sb      t2, 0x0001(t6)              // p2 is_classic = TRUE
+        addiu   t1, t1, -0x0006             // t1 = adjusted costume ID for Classic Sonic
+        sb      t1, 0x0006(t0)              // store costume for Classic Sonic
+
         _load_p3:
         addiu   t0, Global.vs.P_DIFF        // t0 = p3 info
         li      t1, struct.port_3.ID        // ~
@@ -205,6 +231,18 @@ scope Training {
         li      t1, struct.port_3.costume   // ~
         lw      t1, 0x0000(t1)              // t1 = port 3 costume
         sb      t1, 0x0006(t0)              // store costume
+
+        lli     t5, Character.id.SONIC      // t5 = Character.id.SONIC
+        lb      t2, 0x0003(t0)              // t2 = char id
+        bne     t2, t5, _load_p4            // if not Sonic, skip
+        sltiu   t2, t1, 0x0006              // t2 = 0 if Classic Sonic costume NOTE: this is hardcoded costume count
+        bnez    t2, _load_p4                // skip if not a Classic Sonic costume
+        sb      r0, 0x0002(t6)              // p3 is_classic = FALSE
+        lli     t2, OS.TRUE                 // ~
+        sb      t2, 0x0002(t6)              // p3 is_classic = TRUE
+        addiu   t1, t1, -0x0006             // t1 = adjusted costume ID for Classic Sonic
+        sb      t1, 0x0006(t0)              // store costume for Classic Sonic
+
         _load_p4:
         addiu   t0, Global.vs.P_DIFF        // t0 = p4 info
         li      t1, struct.port_4.ID        // ~
@@ -223,9 +261,20 @@ scope Training {
         li      t1, struct.port_4.costume   // ~
         lw      t1, 0x0000(t1)              // t1 = port 4 costume
         sb      t1, 0x0006(t0)              // store costume
-        j       _end                        // jump to end
-        nop
-        
+
+        lli     t5, Character.id.SONIC      // t5 = Character.id.SONIC
+        lb      t2, 0x0003(t0)              // t2 = char id
+        bne     t2, t5, _end                // if not Sonic, skip
+        sltiu   t2, t1, 0x0006              // t2 = 0 if Classic Sonic costume NOTE: this is hardcoded costume count
+        bnez    t2, _end                    // skip if not a Classic Sonic costume
+        sb      r0, 0x0003(t6)              // p4 is_classic = FALSE
+        lli     t2, OS.TRUE                 // ~
+        sb      t2, 0x0003(t6)              // p4 is_classic = TRUE
+        addiu   t1, t1, -0x0006             // t1 = adjusted costume ID for Classic Sonic
+        sb      t1, 0x0006(t0)              // store costume for Classic Sonic
+        b       _end                        // go to end
+        sb      t5, 0x0003(t0)              // save char id
+
         _initialize_p1:
         li      t4, char_id_to_entry_id     // t4 = char_id_to_entry_id table address
         addiu   t0, Global.vs.P_OFFSET      // t0 = p1 info
@@ -233,12 +282,18 @@ scope Training {
         addu    t5, t1, t4                  // t5 = address of training char id
         lb      t5, 0x0000(t5)              // t5 = training char id
         li      t2, struct.port_1.ID        // t2 = struct id address
-        bnel    t1, t3, _initialize_p1+0x24 // ~
+        bnel    t1, t3, pc() + 8            // ~
         sw      t5, 0x0000(t2)              // if id != NONE, store in struct
         lbu     t1, 0x0002(t0)              // t1 = type
         li      t2, struct.port_1.type      // t2 = struct type address
         sw      t1, 0x0000(t2)              // store type in struct
         lbu     t1, 0x0006(t0)              // t1 = costume id
+        lli     t2, Character.id.SONIC      // t2 = Character.id.SONIC
+        lbu     t5, 0x0003(t0)              // t5 = char id
+        bne     t2, t5, pc() + 16           // skip if character isn't Sonic
+        lbu     t5, 0x0000(t6)              // t5 = p1 is_classic
+        bnezl   t5, pc() + 8                // if Classic Sonic, adjust costume_id
+        addiu   t1, t1, 0x0006              // t1 = costume id adjusted
         li      t2, struct.port_1.costume   // t2 = struct costume address
         sw      t1, 0x0000(t2)              // store costume id in struct
         li      t2, struct.port_1.percent   // t2 = struct percent address
@@ -249,12 +304,18 @@ scope Training {
         addu    t5, t1, t4                  // t5 = address of training char id
         lb      t5, 0x0000(t5)              // t5 = training char id
         li      t2, struct.port_2.ID        // t2 = struct id address
-        bnel    t1, t3, _initialize_p2+0x20 // ~
+        bnel    t1, t3, pc() + 8            // ~
         sw      t5, 0x0000(t2)              // if id != NONE, store in struct
         lbu     t1, 0x0002(t0)              // t1 = type
         li      t2, struct.port_2.type      // t2 = struct type address
         sw      t1, 0x0000(t2)              // store type in struct
         lbu     t1, 0x0006(t0)              // t1 = costume id
+        lli     t2, Character.id.SONIC      // t2 = Character.id.SONIC
+        lbu     t5, 0x0003(t0)              // t5 = char id
+        bne     t2, t5, pc() + 16           // skip if character isn't Sonic
+        lbu     t5, 0x0001(t6)              // t5 = p2 is_classic
+        bnezl   t5, pc() + 8                // if Classic Sonic, adjust costume_id
+        addiu   t1, t1, 0x0006              // t1 = costume id adjusted
         li      t2, struct.port_2.costume   // t2 = struct costume address
         sw      t1, 0x0000(t2)              // store costume id in struct
         li      t2, struct.port_2.percent   // t2 = struct percent address
@@ -265,12 +326,18 @@ scope Training {
         addu    t5, t1, t4                  // t5 = address of training char id
         lb      t5, 0x0000(t5)              // t5 = training char id
         li      t2, struct.port_3.ID        // t2 = struct id address
-        bnel    t1, t3, _initialize_p3+0x20 // ~
+        bnel    t1, t3, pc() + 8            // ~
         sw      t5, 0x0000(t2)              // if id != NONE, store in struct
         lbu     t1, 0x0002(t0)              // t1 = type
         li      t2, struct.port_3.type      // t2 = struct type address
         sw      t1, 0x0000(t2)              // store type in struct
         lbu     t1, 0x0006(t0)              // t1 = costume id
+        lli     t2, Character.id.SONIC      // t2 = Character.id.SONIC
+        lbu     t5, 0x0003(t0)              // t5 = char id
+        bne     t2, t5, pc() + 16           // skip if character isn't Sonic
+        lbu     t5, 0x0002(t6)              // t5 = p3 is_classic
+        bnezl   t5, pc() + 8                // if Classic Sonic, adjust costume_id
+        addiu   t1, t1, 0x0006              // t1 = costume id adjusted
         li      t2, struct.port_3.costume   // t2 = struct costume address
         sw      t1, 0x0000(t2)              // store costume id in struct
         li      t2, struct.port_3.percent   // t2 = struct percent address
@@ -281,35 +348,42 @@ scope Training {
         addu    t5, t1, t4                  // t5 = address of training char id
         lb      t5, 0x0000(t5)              // t5 = training char id
         li      t2, struct.port_4.ID        // t2 = struct id address
-        bnel    t1, t3, _initialize_p4+0x20 // ~
+        bnel    t1, t3, pc() + 8            // ~
         sw      t5, 0x0000(t2)              // if id != NONE, store in struct
         lbu     t1, 0x0002(t0)              // t1 = type
         li      t2, struct.port_4.type      // t2 = struct type address
         sw      t1, 0x0000(t2)              // store type in struct
         lbu     t1, 0x0006(t0)              // t1 = costume id
+        lli     t2, Character.id.SONIC      // t2 = Character.id.SONIC
+        lbu     t5, 0x0003(t0)              // t5 = char id
+        bne     t2, t5, pc() + 16           // skip if character isn't Sonic
+        lbu     t5, 0x0003(t6)              // t5 = p4 is_classic
+        bnezl   t5, pc() + 8                // if Classic Sonic, adjust costume_id
+        addiu   t1, t1, 0x0006              // t1 = costume id adjusted
         li      t2, struct.port_4.costume   // t2 = struct costume address
         sw      t1, 0x0000(t2)              // store costume id in struct
         li      t2, struct.port_4.percent   // t2 = struct percent address
         sw      r0, 0x0000(t2)              // reset percent
-        
+
         jal     struct_to_tail_             // update menu
         nop
-        
+
         _end:
         lw      t0, 0x0008(sp)              // ~
         lw      t1, 0x000C(sp)              // ~
         lw      t2, 0x0010(sp)              // ~
         lw      t3, 0x0014(sp)              // ~
         lw      t4, 0x0018(sp)              // ~
-        lw      t5, 0x001C(sp)              // load t0-t5
+        lw      t5, 0x001C(sp)              // ~
+        lw      t6, 0x0020(sp)              // load t0-t6
         jal     0x801906D0                  // original line 1
         nop                                 // original line 2
         lw      ra, 0x0004(sp)              // load ra
-        addiu   sp, sp, 0x0020              // deallocate stack space
+        addiu   sp, sp, 0x0030              // deallocate stack space
         jr      ra                          // return
         nop
-    }    
-    
+    }
+
     // @ Description
     // Initializes character properties on death/reset. This hook runs in all modes.
    scope init_character_: {
@@ -350,7 +424,7 @@ scope Training {
         nop
         lw      t0, 0x001C(t2)              // t1 = spawn_dir
         sw      t0, 0x0044(v1)              // player facing direction = spawn_dir
-        
+
         _update_percent:
         li      t0, toggle_table            // t0 = toggle table
         add     t0, t0, t1                  // t0 = toggle table + offset
@@ -496,11 +570,17 @@ scope Training {
     // @ Description
     // Prevents exiting Training Mode unless A is held.
     scope hold_to_exit_: {
-        constant NUM_FRAMES(30)
+        constant NUM_FRAMES(33)             // visual fill needs extra frame (32+1)
 
+        // runs when over Exit
         OS.patch_start(0x114078, 0x8018D858)
         jal     hold_to_exit_
         or      v0, r0, r0                  // original line 1
+        OS.patch_end()
+        // runs when menu is up
+        OS.patch_start(0x11414C, 0x8018D92C)
+        jal     hold_to_exit_._reset
+        lui     t6, 0x8019                  // original line 1
         OS.patch_end()
 
         // t6 = port
@@ -514,6 +594,7 @@ scope Training {
         lui     t8, 0x8004                  // t8 = controller input for the human port from previous frame
         addu    t8, t8, t7                  // ~
         lhu     t8, 0x5228(t8)              // ~
+        andi    t8, t8, 0x8000              // original line 2, modified
 
         li      t7, held_frames
         lli     t9, OS.FALSE                // t9 = OS.FALSE = don't exit
@@ -535,10 +616,19 @@ scope Training {
         jr      ra
         nop
 
+        _reset:
+        lw      t6, 0x0B58(t6)              // original line 2 - t6 = cursor index
+        lli     t9, 0x0005                  // t9 = Exit cursor index
+        beq     t6, t9, _return             // if on exit, don't reset held frames
+        nop                                 // otherwise, reset it
+        li      t9, held_frames
+        jr      ra
+        sw      r0, 0x0000(t9)              // reset held frames
+
         held_frames:
         dw 0
     }
-      
+
     // @ Description
     // This hook runs when training is loaded from stage select, but not when reset is used
     scope load_from_sss_: {
@@ -554,10 +644,10 @@ scope Training {
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // store t0, t1
-        
+
         li      t0, reset_counter           // t0 = reset_counter
         sw      r0, 0x0000(t0)              // reset reset_counter value
-        
+
         li      t0, player_shield_status    // t0 = player_shield_status
         sw      r0, 0x0000(t0)              // reset player_shield_status value
 
@@ -594,18 +684,18 @@ scope Training {
         nop
         _exit_game:
         OS.patch_end()
-        
+
         // the original code: resets the game when the branch is taken, exits otherwise
         // bnez    t2, 0x80190654           // original line 1
         // nop                              // original line 2
-        
+
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // store t0, t1
 
         li      t0, action_control_object
         sw      r0, 0x0000(t0)              // clear action & frame control object pointer
-        
+
         li      t0, reset_counter           // t0 = reset_counter
         lw      t1, 0x0000(t0)              // t1 = reset_counter value
         addiu   t1, t1, 0x00001             // t1 = reset counter value + 1
@@ -618,14 +708,14 @@ scope Training {
         sw      r0, 0x0000(t1)              // freeze = false
         bnez    t2, _reset_game             // modified original branch
         nop
-        
+
         sw      r0, 0x0000(t0)              // reset reset_counter value
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // load t0, t1
         addiu   sp, sp, 0x0010              // deallocate stack space
         j       _exit_game
         nop
-        
+
         _reset_game:
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // load t0, t1
@@ -633,14 +723,14 @@ scope Training {
         j       0x80190654
         nop
     }
-    
+
     //init_struct_p1:; fill 0x40
     //init_struct_p2:; fill 0x40
     //init_struct_p3:; fill 0x40
     //init_struct_p4:; fill 0x40
-    
+
     //// @ Description
-    //// This hook copies the init_struct when a character is initialized in training mode. 
+    //// This hook copies the init_struct when a character is initialized in training mode.
     //// The struct is not fully understood, but contains things like character, port, spawn
     //// position and direction, HMN/CPU status, and other match info.
     //// The copied struct is then used for quick resets.
@@ -651,7 +741,7 @@ scope Training {
     //    sb  t5, 0x007B(sp)                  // original line 2
     //    _return:
     //    OS.patch_end()
-    //    
+    //
     //    // a0 = init_struct
     //    // s0 = player port
     //    sll     t5, s0, 0x6                 // t5 = port * 0x40 (struct size)
@@ -669,17 +759,17 @@ scope Training {
     //    addiu   t8, t8, 0x0004              // increment init_struct position
     //    bnez    t6, _loop                   // loop if transfer size !0
     //    nop
-    //    
+    //
     //    _exit_loop:
     //    jal     0x800D7F3C                  // original line 1
     //    nop
     //    j       _return                     // return
-    //    nop       
+    //    nop
     //}
-    
+
     allow_reset:
     dw  0
-    
+
     skip_advance:
     dw  0
 
@@ -687,13 +777,13 @@ scope Training {
     // This hook replaces a branch which determines whether the in-game advance frame
     // function should be called while in training mode.
     // Additionally, contains a shortcut for toggling hitbox mode.
-    scope advance_frame_: {      
+    scope advance_frame_: {
         OS.patch_start(0x00114260, 0x8018DA40)
         j   advance_frame_
         nop
         _advance_frame_return:
         OS.patch_end()
-        
+
         // the original code: skips the frame advance function if the branch is taken
         // bnez    v0, 0x8018DA58           // original line 1
         // lui     a0, 0x8013               // original line 2
@@ -718,8 +808,8 @@ scope Training {
         nop
         beqz    v0, _check_dd               // if (!dl_pressed), skip
         nop
-        
-        _quick_reset:        
+
+        _quick_reset:
         // play the reset sound effect
         lli     a0, 0xA2                    // ~
         jal     FGM.play_                   // play reset fgm
@@ -733,7 +823,7 @@ scope Training {
         sb      t1, 0x0C2A(t0)              // set this to 1 for reset instead of exit
         li      t0, Global.screen_interrupt // ~
         sw      t1, 0x0000(t0)              // generate screen_interrupt
-        
+
         // TODO: Experimental quick reset function, disabled since it's not stable for now.
         // TODO: If you run this function while a player is dead, their percent will no longer be drawn.
         // It is unclear how stable this function will be on hardware etc.
@@ -750,14 +840,14 @@ scope Training {
         // or      a0, s0, r0                  // a0 = current FGX object
         // b       _gfx_loop                   // ~
         // or      s0, s1, r0                  // s0 = address of next GFX object
-        // 
+        //
         // _gfx_loop_end:
         // // after mercilessly destroying all of the GFX objects, we need to rebuild the object list
         // // this function seems to be used to build the inital GFX object list while a screen loads,
         // // I'm not sure if calling it here has any other side effects but it seems to be fine.
         // jal     0x800FD300                  // this function builds the initial GFX object list
         // nop
-        // 
+        //
         // // this loop resets the position of all players
         // _reset_players:
         // li      t9, Global.p_struct_head    // t9 = pointer to player struct linked list
@@ -765,14 +855,14 @@ scope Training {
         // addiu   sp, sp,-0x0018              // allocate stack space
         // swc1    f4, 0x0010(sp)              // ~
         // swc1    f6, 0x0014(sp)              // store f4, f6
-        // 
+        //
         // _loop:
         // beqz    t9, _exit_loop              // if t9 is zero, then player structs not initialized or we reached the end of the linked list, so exit the loop
         // nop
         // lw      a0, 0x0004(t9)              // a0 = player object struct
         // beqz    a0, _end_loop               // if a0 is zero, then this player struct is not linked to an active object, so check the next player struct instead
         // sw      t9, 0x0008(sp)              // store t9
-        // 
+        //
         // // if we reach this point, reset the current player
         // lbu     t0, 0x000D(t9)              // t0 = port
         // sll     t1, t0, 0x6                 // t1 = port * 0x40 (struct size)
@@ -783,7 +873,7 @@ scope Training {
         // jal     0x800FAF64                  // this function sets up the spawn position in the initial struct
         // sw      t2, 0x000C(sp)              // save init_struct_px
         // lw      t9, 0x0008(sp)              // load t9
-        // lw      a1, 0x000C(sp)              // a1 = init_struct_px 
+        // lw      a1, 0x000C(sp)              // a1 = init_struct_px
         // // replicate original logic to determine facing position
         // lwc1    f4, 0x0004(a1)              // f4 = spawn_x
         // mtc1    r0, f6                      // f6 = 0
@@ -795,7 +885,7 @@ scope Training {
         // sw      t0, 0x0010(a1)              // spawn_dir = 1 (face right)
         // // if spawn_x >= 0
         // sw      t1, 0x0010(a1)              // spawn_dir = -1 (face left)
-        // 
+        //
         // _custom_spawn_dir:
         // // update facing position if the spawn point is custom
         // li      t0, struct.table            // t0 = struct table
@@ -809,23 +899,23 @@ scope Training {
         // nop
         // lw      t0, 0x001C(t2)              // t1 = custom spawn_dir
         // sw      t0, 0x0010(a1)              // spawn_dir = custom
-        // 
+        //
         // _apply_reset:
         // jal     0x800D79F0                  // this function moves the player to their spawn position and initalizes their properties
         // lw      a0, 0x0004(t9)              // a0 = player object struct
         // lw      t9, 0x0008(sp)              // load t9
         // jal     0x800DEE54                  // this function sets the player's initial action
         // lw      a0, 0x0004(t9)              // a0 = player object struct
-        // 
+        //
         // _end_loop:
         // lw      t9, 0x0008(sp)              // load t9
         // b       _loop                       // loop over all player structs
-        // lw      t9, 0x0000(t9)              // t9 = next player struct address   
+        // lw      t9, 0x0000(t9)              // t9 = next player struct address
         // _exit_loop:
         // lwc1    f4, 0x0010(sp)              // ~
         // lwc1    f6, 0x0014(sp)              // load f4, f6
         // addiu   sp, sp, 0x0018              // deallocate stack space
-        
+
         _check_dd:
         // check for a DPAD DOWN press, cycles through special model display if detected
         lli     a0, Joypad.DD               // a0 - button_mask
@@ -841,7 +931,7 @@ scope Training {
         lli     t2, 0x0004                  // t2 = 4
         beql    t0, t2, _update_model_display
         addu    t0, r0, r0                  // turn off special model display
-        
+
         _update_model_display:
         sw      t0, 0x0004(t1)              // store updated model display
 
@@ -854,7 +944,7 @@ scope Training {
         or      t0, t4, t5                  // ~
         bnez    t0, _skip_input             // if (du_pressed) or (dr_pressed), skip checking for inputs
         nop
-        
+
         _check_du:
         // check for a DPAD UP press and store the result
         lli     a0, Joypad.DU               // a0 - button_mask
@@ -863,7 +953,7 @@ scope Training {
         jal     Joypad.check_buttons_all_   // v0 - bool du_pressed
         nop
         sw      v0, 0x0000(t2)              // store bool du_pressed
-        
+
         _check_dr:
         // check for a DPAD RIGHT press and store the result
         lli     a0, Joypad.DR               // a0 - button_mask
@@ -872,14 +962,14 @@ scope Training {
         jal     Joypad.check_buttons_all_   // v0 - bool dr_pressed
         nop
         sw      v0, 0x0000(t3)              // store bool dr_pressed
-        
+
         _skip_input:
         // replicate the original branch if skip_advance = true
         li      ra, 0x8018DA58              // return value - skip
         sw      ra, 0x006C(sp)              // save ra
         bnez    t6, _skip                   // if (skip_advance), skip
         nop
-        
+
         _load_du:
         // toggle freeze if a dpad up input is given
         lw      t4, 0x0000(t2)              // t4 = bool du_pressed
@@ -888,7 +978,7 @@ scope Training {
         lw      t0, 0x0000(t1)              // t0 = bool freeze
         xori    t0, t0, 0x0001              // 0 -> 1 or 1 -> 0 (flip bool)
         sw      t0, 0x0000(t1)              // store bool freeze
-       
+
         _load_dr:
         // advance one frame and freeze if a dpad right input is given
         li      ra, _advance_frame_return   // return value - advance frame
@@ -900,14 +990,14 @@ scope Training {
         sw      t0, 0x0000(t1)              // freeze = true
         b       _end                        // force advance frame
         nop
-        
+
         _check_freeze:
         lw      t0, 0x0000(t1)              // t0 = bool freeze
         beqz    t0, _end                    // if (!freeze), end
         nop
         li      ra, 0x8018DA50              // return value - freeze
         sw      ra, 0x006C(sp)              // save ra
-        
+
         _end:
         sw      r0, 0x0000(t2)              // du_pressed = false
         sw      r0, 0x0000(t3)              // dr_pressed = false
@@ -959,18 +1049,18 @@ scope Training {
         _finish:
         OS.restore_registers()
         jr      ra
-        nop 
+        nop
 
         freeze:
         dw OS.FALSE
-        
+
         du_pressed:
         dw OS.FALSE
-        
+
         dr_pressed:
         dw OS.FALSE
     }
-    
+
     // @ Description
     // This hook runs after the call to run object routines while in training mode.
     // This allows for our hooks to always run even if in freeze mode,
@@ -1023,7 +1113,7 @@ scope Training {
         sw      t2, 0x000C(sp)              // ~
         sw      ra, 0x0010(sp)              // ~
         sw      v0, 0x0014(sp)              // save registers
-        
+
         // set custom spawn
         li      t2, struct.table            // t2 = struct table address
         lbu     t0, 0x000D(a0)              // ~
@@ -1037,7 +1127,7 @@ scope Training {
         sw      t1, 0x0018(t2)              // save player y position to struct
         lw      t1, 0x0044(a0)              // t1 = player facing direction
         sw      t1, 0x001C(t2)              // save player facing direction to struct
-        
+
         // set spawn type to custom
         lli     t1, 0x0004                  // t1 = spawn_id: CUSTOM
         sw      t1, 0x0004(a1)              // save spawn_id to tail_px
@@ -1061,7 +1151,7 @@ scope Training {
         jr      ra                          // return
         nop
     }
-    
+
     // @ Description
     // A counter that tracks how many times the current training mode session has been reset.
     // This could be displayed on-screen, but is also useful for differentiating between loads from
@@ -1206,6 +1296,36 @@ scope Training {
         Render.draw_string(0x17, 0xE, press_z, Render.NOOP, 0x43200000, 0x42480000, 0xFFFFFFFF, 0x3F800000, Render.alignment.CENTER, OS.FALSE)
         Render.draw_texture_at_offset(0x17, 0xE, Render.file_pointer_1, Render.file_c5_offsets.Z, Render.NOOP, 0x42EB0000, 0x42440000, 0x848484FF, 0x303030FF, 0x3F800000)
 
+        // cleanup
+        li      t0, hold_A_rect_object      // t0 = address of hold_A_rect_object
+        sw      r0, 0x0000(t0)              // hold_A_rect_object = 0
+        li      s1, hold_A_rect_width       // s1 = address of hold_A_rect_width
+        sw      r0, 0x0000(s1)              // hold_A_rect_width = 0
+
+        li      t9, Toggles.entry_hold_to_exit_training
+        lw      t9, 0x0004(t9)              // t9 = 1 if hold to exit training mode is enabled, else 0
+        beqzl   t9, _no_hold_A_text         // if hold to exit is disabled, skip
+        nop
+
+        Render.draw_string(0x17, 0xF, hold_A_text, Render.NOOP, 0x43290000, 0x43260000, 0xFFFFFFFF, 0x3F600000, Render.alignment.LEFT, OS.FALSE)
+        Render.draw_texture_at_offset(0x17, 0xF, Render.file_pointer_1, Render.file_c5_offsets.A, Render.NOOP, 0x434A0000, 0x43250000, 0x50A8FFFF, 0x303030FF, 0x3F700000)
+
+        // based on Render.draw_rectangle() macro
+        lli     a0, 0x17                    // a0 = room
+        lli     a1, 0xF                     // a1 = group
+        lli     s1, 73                      // s1 = ulx
+        lli     s2, 179                     // s2 = uly
+        move    s3, r0                      // s3 = width
+        lli     s4, 2                       // s4 = height
+        li      s5, 0x0088FFFF              // s5 = color
+        jal     Render.draw_rectangle_
+        lli     s6, OS.FALSE                // s6 = enable_alpha
+        li      s1, hold_A_rect_object      // s1 = address of hold_A_rect_object
+        sw      v0, 0x0000(s1)              // hold_A_rect_object = v0, the return value of Render.draw_rectangle_
+        li      s1, hold_A_rect_width       // s1 = address of hold_A_rect_width
+        sw      r0, 0x0000(s1)              // hold_A_rect_width = 0
+
+        _no_hold_A_text:
         // Reset counter
         Render.draw_string(0x17, 0x15, reset_string, Render.NOOP, 0x42C70000, 0x41C80000, 0xFFFFFFFF, 0x3F800000, Render.alignment.LEFT, OS.FALSE)
         Render.draw_number(0x17, 0x15, reset_counter, Render.NOOP, 0x435D0000, 0x41C80000, 0xFFFFFFFF, 0x3F800000, Render.alignment.RIGHT, OS.FALSE)
@@ -1332,6 +1452,10 @@ scope Training {
         jal     Render.toggle_group_display_
         lli     a1, 0x0001                  // a1 = display off
 
+        lli     a0, 0x000F                  // a0 = Hold A text
+        jal     Render.toggle_group_display_
+        lli     a1, 0x0001                  // a1 = display off
+
         li      t0, run_.show_action
         lw      a1, 0x0000(t0)              // a1 = show action flag
         xori    a1, a1, 0x0001              // a1 = initial display state
@@ -1362,9 +1486,11 @@ scope Training {
         li      t0, toggle_menu             // t0 = address of toggle_menu
         lbu     t0, 0x0000(t0)              // t0 = toggle_menu
 
+        li      t2, hold_to_exit_.held_frames
+
         lli     t1, BOTH_DOWN               // t1 = both menus are down
-        beq     t0, t1, _both_down          // branch accordingly
-        nop
+        beql    t0, t1, _both_down          // branch accordingly
+        sw      r0, 0x0000(t2)              // reset held frames for hold to exit
 
         // check if the ssb menu is up
         lli     t1, SSB_UP                  // t1 = ssb menu is up
@@ -1373,8 +1499,8 @@ scope Training {
 
         // check if the custom menu is up
         lli     t1, CUSTOM_UP               // t1 = custom menu is up
-        beq     t0, t1, _custom_up          // branch accordingly
-        nop
+        beql    t0, t1, _custom_up          // branch accordingly
+        sw      r0, 0x0000(t2)              // reset held frames for hold to exit
 
         // otherwise skip
         b       _end
@@ -1417,13 +1543,13 @@ scope Training {
 
         li      t4, entry_id_to_char_id     // t4 = entry_id_to_char_id table address
         addu    t4, t4, t0                  // t4 = address of char_id
-        lbu     t4, 0x0000(t4)              // t4 = char_id
+        lbu     t6, 0x0000(t4)              // t6 = char_id
 
         li      t5, Costumes.select_.num_costumes
-        add     t5, t5, t4                  // t5 = num_costumes + offset
+        add     t5, t5, t6                  // t5 = num_costumes + offset
         lb      t5, 0x0000(t5)              // t5 = number of original costumes char has (0-based)
         li      t2, Costumes.extra_costumes_table
-        sll     at, t4, 0x0002              // at = offset in extra_costumes_table
+        sll     at, t6, 0x0002              // at = offset in extra_costumes_table
         addu    t2, t2, at                  // t2 = extra_costumes_table + offset
         lw      t2, 0x0000(t2)              // t2 = extra costumes table, or 0
         lli     t3, 0x0000                  // t2 = costumes to skip
@@ -1437,6 +1563,11 @@ scope Training {
         _update_max_costume:
         lw      t0, 0x001C(t1)              // t0 = next entry, which is costume
         lw      t1, 0x0004(t0)              // t1 = current costume ID
+
+        lli     at, Character.id.SONIC      // at = Character.id.SONIC
+        beql    t6, at, pc() + 8            // if Sonic, assume Classic Sonic has the same number of costumes
+        addiu   t4, t4, 0x0006              // t4 = max costume ID for Sonic NOTE: this is hardcoded
+
         sw      t4, 0x000C(t0)              // save new max
         sltu    at, t1, t4                  // at = 0 if current costume ID >= max ID
         bnez    at, _check_b                // if current costume ID < max ID, then don't redraw
@@ -1466,8 +1597,17 @@ scope Training {
         lli     a2, Joypad.PRESSED          // a2 - type
         jal     Joypad.check_buttons_all_   // v0 - bool b_pressed
         nop
-        beqz    v0, _check_l                // if (!b_pressed), jump to L check
+        bnez    v0, _close_custom_menu      // if (b_pressed), close custom menu
         nop
+        // check for z press
+        lli     a0, Joypad.Z                // a0 - button_mask
+        lli     a1, 000069                  // a1 - whatever you like!
+        lli     a2, Joypad.PRESSED          // a2 - type
+        jal     Joypad.check_buttons_all_   // v0 - bool b_pressed
+        nop
+        beqz    v0, _check_l                // if (!z_pressed), jump to L check
+        nop
+        _close_custom_menu:
         li      t0, toggle_menu             // t0 = toggle_menu
         lli     t1, SSB_UP                  // ~
         sb      t1, 0x0000(t0)              // toggle menu = SSB_UP
@@ -1484,6 +1624,7 @@ scope Training {
         nop
 
         _ssb_up:
+
         lli     a0, 0x0015                  // a0 = custom pause group
         jal     Render.toggle_group_display_
         lli     a1, 0x0000                  // a1 = display on
@@ -1512,12 +1653,16 @@ scope Training {
         jal     Render.toggle_group_display_
         lli     a1, 0x0001                  // a1 = display off
 
+        lli     a0, 0x000F                  // a0 = Hold A text
+        jal     Render.toggle_group_display_
+        lli     a1, 0x0001                  // a1 = display off
+
         _check_l:
         lli     a0, Joypad.L                // a0 - button_mask
         lli     a1, 000069                  // a1 - whatever you like!
-        jal     Joypad.check_buttons_all_   // v0 - bool z_pressed
+        jal     Joypad.check_buttons_all_   // v0 - bool l_pressed
         lli     a2, Joypad.PRESSED          // a2 - type
-        beqz    v0, _end                    // if (!z_pressed), skip
+        beqz    v0, _check_A_held           // if (!l_pressed), skip
         nop
         li      t0, show_action             // t0 = show action flag address
         lw      a1, 0x0000(t0)              // a1 = show action flag (will use for display flag below)
@@ -1525,6 +1670,71 @@ scope Training {
         sw      t2, 0x0000(t0)              // update flag
         jal     Render.toggle_group_display_
         lli     a0, 0x0017                  // a0 = action & frame group
+
+        _check_A_held:
+        li      t9, Toggles.entry_hold_to_exit_training
+        lw      t9, 0x0004(t9)              // t9 = 1 if hold to exit training mode is enabled, else 0
+        beqzl   t9, _end                    // if hold to exit disabled
+        nop
+
+        li      t0, toggle_menu             // t0 = address of toggle_menu
+        lbu     t0, 0x0000(t0)              // t0 = toggle_menu
+        lli     t1, SSB_UP                  // t1 = ssb menu is up
+        bne     t0, t1, _no_rect            // if menus are down, don't draw rectangle
+        nop
+
+        li      t1, 0x80190B58              // t1 = address of cursor index
+        lw      t1, 0x0000(t1)              // t1 = cursor index
+        lli     t2, 0x0005                  // t2 = 5 (EXIT)
+        beq     t1, t2, _cursor_on_exit     // if on the EXIT option, show 'Hold A' text
+        nop
+
+        lli     a0, 0x000F                  // a0 = Hold A text
+        jal     Render.toggle_group_display_
+        lli     a1, 0x0001                  // a1 = display off
+        b       _no_rect                    // if not on the EXIT option, don't draw rectangle
+        nop
+
+        _cursor_on_exit:
+        lli     a0, 0x000F                  // a0 = Hold A text
+        jal     Render.toggle_group_display_
+        lli     a1, 0x0000                  // a1 = display on
+
+        lli     a0, Joypad.A                // a0 - button_mask
+        lli     a1, 000069                  // a1 - whatever you like!
+        jal     Joypad.check_buttons_all_   // v0 - bool a_pressed
+        lli     a2, Joypad.HELD             // a2 - type
+        move    s3, r0
+        beqz    v0, _check_A_up             // if (!a_pressed), skip
+        nop
+
+        li      s4, hold_A_rect_width       // s4 = address of hold_A_rect_width
+        lw      s3, 0x0000(s4)              // s3 = hold_A_rect_width
+        li      s5, 64                      // s5 = maximum width of red bar (and therefore also our blue rect)
+        bltul   s3, s5, _hold_A_rect_grew   // only increment rect width if has not reached maximum width
+        addiu   s3, s3, 2                   // increment rect width
+
+        _hold_A_rect_grew:
+        sw      s3, 0x0000(s4)              // hold_A_rect_width = s3
+
+        _check_A_up:
+        li      s4, hold_A_rect_object      // s4 = address of hold_A_rect_object pointer
+        lw      s5, 0x0000(s4)              // s5 = hold_A_rect_object pointer
+        sw      s3, 0x0038(s5)              // set width of hold_A_rect_object to s3
+
+        lli     a0, Joypad.A                // a0 - button_mask
+        lli     a1, 000069                  // a1 - whatever you like!
+        jal     Joypad.check_buttons_all_   // v0 - bool a_pressed
+        lli     a2, Joypad.RELEASED         // a2 - type
+        beqz    v0, _end                    // if (!a_released), keep rect
+        nop
+
+        // placeholder - find a suitable sound effect(?)
+        //lli     a0, FGM.item.BEAM_SWORD_HEAVY
+        //jal     FGM.play_
+        //nop
+        b       _no_rect
+        nop
 
         _end:
         OS.restore_registers()
@@ -1535,13 +1745,29 @@ scope Training {
         lli     a0, 0x0015                  // a0 = custom pause group
         jal     Render.toggle_group_display_
         lli     a1, 0x0001                  // a1 = display off
+
+        lli     a0, 0x000F                  // a0 = Hold A text
+        jal     Render.toggle_group_display_
+        lli     a1, 0x0001                  // a1 = display off
+
+        li      t9, Toggles.entry_hold_to_exit_training
+        lw      t9, 0x0004(t9)              // t9 = 1 if hold to exit training mode is enabled, else 0
+        beqzl   t9, _end                    // if hold to exit disabled
+        nop
+
+        _no_rect:
+        li      s4, hold_A_rect_object      // s4 = address of hold_A_rect_object pointer
+        lw      s5, 0x0000(s4)              // s5 = hold_A_rect_object pointer
+        sw      r0, 0x0038(s5)              // set width of hold_A_rect_object to 0
+        li      s4, hold_A_rect_width       // s4 = address of hold_A_rect_width
+        sw      r0, 0x0000(s4)              // hold_A_rect_width = 0
         b       _end
         nop
 
         show_action:
         dw OS.FALSE
     }
-    
+
     // @ Description
     // Control object for action and frame strings
     action_control_object:
@@ -1568,7 +1794,7 @@ scope Training {
         // 0x0064(a0) - frame string object for p2
         // 0x0068(a0) - frame string object for p3
         // 0x006C(a0) - frame string object for p4
-        
+
         li      t0, Global.p_struct_head
         lw      t0, 0x0000(t0)              // t0 = 1st player struct
 
@@ -1756,7 +1982,8 @@ scope Training {
     scope shield_break_mode_: {
         constant SHIELD(0x0000)
         constant STUN(0x0001)
-        constant OOS(0x0002)
+        constant OOS_FRAME_1(0x0002)
+        constant OOS_FRAME_2(0x0003)
 
         OS.patch_start(0x5CC2C, 0x800E142C)
         jal     shield_break_mode_
@@ -1786,28 +2013,46 @@ scope Training {
         beq     at, v1, _shielding          // if player isn't being attacked, force shield
         lli     v1, STUN                    // v1 = STUN
         beq     at, v1, _in_shield_stun     // if player is being attacked, allow shield damage but continue to force shield
-        lli     v1, OOS                     // v1 = OOS
+        lli     v1, OOS_FRAME_2             // v1 = OOS_FRAME_2
         beq     at, v1, _end_oos            // if player has executed their OOS option, reset shield status
         nop
 
         _oos:
         // if we're here, then the player can execute their OOS option
-        // TODO: expand this to allow for multiple OOS options to be used, potentially allow for selection
-        // for now, the cpu will just short hop
-        lli     t7, OOS                     // t7 = OOS
-        sb      t7, 0x0000(t3)              // update shield status to OOS
-        lli     a3, 0x0002                  // force CPU to jump out of shield
+        lli     t7, OOS_FRAME_1             // t7 = OOS_FRAME_1
+        beql    at, t7, pc() + 8            // if already in OOS_FRAME_1, set to OOS_FRAME_2
+        lli     t7, OOS_FRAME_2             // t7 = OOS_FRAME_2
+        sb      t7, 0x0000(t3)              // update shield status to OOS_FRAME_1/2
+        li      t7, entry_oos_option
+        lw      t7, 0x0004(t7)              // t7 = OOS option
+        sll     t7, t7, 0x0002              // t7 = offset to button mask/stick value
+        lbu     at, 0x0000(t3)              // at = shield status (OOS_FRAME_1 or OOS_FRAME_2)
+        li      a3, oos_inputs_frame_1
+        beql    at, v1, pc() + 8            // if shield status is OOS_FRAME_2, then use frame 2 table
+        addiu   a3, a3, oos_inputs_frame_2 - oos_inputs_frame_1
+        addu    t7, a3, t7                  // t7 = button mask address
+        lh      a3, 0x0000(t7)              // a3 = button mask for OOS option
         sh      a3, 0x0002(v0)              // store button press
-        b       _force_shield               // continue holding shield on this frame
-        nop
-        
+        lh      t7, 0x0002(t7)              // t7 = stick value
+        sh      t7, 0x0006(v0)              // store stick value
+        lli     t7, Joypad.Z
+        b       _original                   // don't continue holding shield on this frame
+        sh      t7, 0x0004(v0)              // store shield button release
+
         _end_oos:
         sb      r0, 0x0000(t3)              // reset shield status to SHIELD
-        lli     a3, 0x0002                  // force CPU to release jump button
+        li      t7, entry_oos_option
+        lw      t7, 0x0004(t7)              // t7 = OOS option
+        sll     t7, t7, 0x0002              // t7 = offset to button mask
+        li      a3, oos_inputs_frame_2
+        addu    t7, a3, t7                  // t7 = button mask address
+        lh      a3, 0x0000(t7)              // a3 = button mask for OOS option
         sh      a3, 0x0004(v0)              // store button release
-        b       _force_shield               // continue holding shield on this frame
+        lh      t7, 0x0002(t7)              // t7 = stick value
+        sh      t7, 0x0006(v0)              // store stick release
+        b       _force_shield               // start holding shield on this frame
         nop
-        
+
         _shielding:
         // let's first check if we're being hit - the character will be in the ShieldStun action while being hit
         lw      v1, 0x0024(a2)              // a1 = current action
@@ -1827,7 +2072,7 @@ scope Training {
         lli     at, Action.ShieldStun       // at = Action.ShieldStun
         bnel    v1, at, _original           // if not in shield stun, change shield status back to SHIELD
         sb      r0, 0x0000(t3)              // update shield status to SHIELD
-        
+
         // check if shield stun is on final frame and input OOS option
         lwc1    f0, 0x0B34(a2)              // f0 = shield stun (float)
         lui     at, 0x3F80                  // ~
@@ -1838,12 +2083,13 @@ scope Training {
         nop                                 // otherwise, CPU should keep shielding
 
         _force_shield:
-        lli     a3, 0x2000                  // force CPU to shield
+        lli     a3, Joypad.Z                // force CPU to shield
+
 
         _original:
         sh      a3, 0x0000(v0)              // original line 1
 
-        
+
         lwc1    f0, 0x0004(sp)              // ~
         lwc1    f2, 0x0008(sp)              // store f0, f2
         addiu   sp, sp, 0x0010              // allocate stack space
@@ -1906,16 +2152,42 @@ scope Training {
     }
 
     // @ Description
+    // This allows us to not hear the crowd cheer when entering/reseting Training Mode
+    scope skip_crowd_cheer_: {
+        OS.patch_start(0x116D68, 0x80190548)
+        j       skip_crowd_cheer_
+        nop
+        _return:
+        OS.patch_end()
+
+        li      a0, Toggles.entry_skip_training_start_cheer
+        lw      a0, 0x0004(a0)              // a0 = 1 if skip crowd noise is enabled, else 0
+        bnez    a0, _end                    // if skip crowd noise is enabled, skip crowd noise lol
+        nop
+
+        jal     0x800269C0                  // original line 1 - play fgm
+        addiu   a0, r0, 0x0272              // original line 2 - a0 = crowd cheer fgm_id
+
+        _end:
+        j       _return
+        nop
+    }
+
+    // @ Description
     // Strings used to explain advance_frame_ shortcuts
     dpad_pause:; db "Toggle Pause", 0x00
     dpad_frame:; db "Frame Advance", 0x00
     dpad_model:; db "Model Display", 0x00
     dpad_reset:; db "Quick Reset", 0x00
-    
+
+    // @ Description
+    // Message/visual indicator to hold A to exit training (displayed if hold to exit is enabled)
+    hold_A_text:; db "(Hold --)", 0x00
+
     // @ Description
     // String used for reset counter which appears while the training menu is up
     reset_string:; db "Reset Count:", 0x00
-    
+
     // @ Description
     // Message/visual indicator to press Z for custom menu
     press_z:; db "Press    for Custom Menu", 0x00
@@ -1931,12 +2203,63 @@ scope Training {
     action_legend_1:; db "Show", 0x00
     action_legend_2:; db "Action", 0x00
 
+    // @ Description
+    // Out of Shield Options
+    oos_jump:; db "Jump", 0x00
+    oos_roll_left:; db "Roll Left", 0x00
+    oos_roll_right:; db "Roll Right", 0x00
+    oos_grab:; db "Grab", 0x00
+    oos_upsmash:; db "Up Smash", 0x00
+    oos_usp:; db "Up Special", 0x00
+    oos_dsp:; db "Down Special", 0x00
+    oos_shield_drop:; db "Shield Drop", 0x00
+    oos_shield_drop_dsp:; db "S. Drop DSP", 0x00
+    oos_shield_drop_nair:; db "S. Drop NAir", 0x00
+
     OS.align(4)
 
     string_table_type:
     dw type_1
     dw type_2
     dw type_3
+
+    string_table_oos_options:
+    dw oos_jump
+    dw oos_roll_left
+    dw oos_roll_right
+    dw oos_grab
+    dw oos_upsmash
+    dw oos_usp
+    dw oos_shield_drop
+    dw oos_shield_drop_dsp
+    dw oos_shield_drop_nair
+    constant OOS_MAX(8)
+
+    // @ Description
+    // Holds button masks and stick values for the first 2 frames after shied stun ends in shield break mode
+    oos_inputs_frame_1:
+    // button mask          stick value
+    dh Joypad.Z,            0x0035      // jump
+    dh Joypad.Z,            0xB000      // roll left
+    dh Joypad.Z,            0x5000      // roll right
+    dh Joypad.Z | Joypad.A, 0x0000      // grab
+    dh Joypad.Z,            0x0035      // usmash (enter jumpsquat first)
+    dh Joypad.Z,            0x0035      // usp (enter jumpsquat first)
+    dh Joypad.Z,            0x00B0      // shield drop
+    dh Joypad.Z,            0x00B0      // shield drop dsp
+    dh Joypad.Z,            0x00B0      // shield drop nair
+
+    oos_inputs_frame_2:
+    // button mask          stick value
+    dh Joypad.Z,            0x0035      // jump
+    dh Joypad.Z,            0xB000      // roll left
+    dh Joypad.Z,            0x5000      // roll right
+    dh Joypad.Z | Joypad.A, 0x0000      // grab
+    dh Joypad.A,            0x0050      // usmash
+    dh Joypad.B,            0x0050      // usp
+    dh Joypad.Z,            0x00B0      // shield drop
+    dh Joypad.B,            0x00B0      // shield drop dsp
+    dh Joypad.A,            0x0000      // shield drop nair
 
     // @ Description
     // Character Strings
@@ -1999,6 +2322,9 @@ scope Training {
     char_0x38:; db "Conker", 0x00
     char_0x39:; db "Mewtwo", 0x00
     char_0x3A:; db "Marth", 0x00
+    char_0x3B:; db "Sonic", 0x00
+    char_0x3C:; db "Sandbag", 0x00
+    char_0x3D:; db "Super Sonic", 0x00
     OS.align(4)
 
     string_table_char:
@@ -2027,6 +2353,7 @@ scope Training {
     dw char_0x38            // CONKER
     dw char_0x39            // MEWTWO
     dw char_0x3A            // MARTH
+    dw char_0x3B            // SONIC
 
     dw char_0x2A            // J MARIO
     dw char_0x29            // J FOX
@@ -2050,6 +2377,8 @@ scope Training {
     dw char_0x1A            // GIANT DK
 	dw char_0x35            // GIGA BOWSER
     dw char_0x36            // PIANO
+    dw char_0x3D            // SUPER SONIC
+    dw char_0x3C            // SANDBAG
     dw char_0x0E            // POLYGON MARIO
     dw char_0x0F            // POLYGON FOX
     dw char_0x10            // POLYGON DK
@@ -2094,10 +2423,11 @@ scope Training {
         constant CONKER(0x15)
         constant MTWO(0x16)
         constant MARTH(0x17)
+        constant SONIC(0x18)
 
         // Increment JMARIO after adding more characters above
         // j characters
-        constant JMARIO(0x18)
+        constant JMARIO(0x19)
         constant JFOX(JMARIO + 0x01)
         constant JDK(JMARIO + 0x02)
         constant JSAMUS(JMARIO + 0x03)
@@ -2119,18 +2449,20 @@ scope Training {
         constant GDONKEY(JMARIO + 0x11)
         constant GBOWSER(JMARIO + 0x12)
         constant PIANO(JMARIO + 0x13)
-		constant NMARIO(JMARIO + 0x14)
-        constant NFOX(JMARIO + 0x15)
-        constant NDONKEY(JMARIO + 0x16)
-        constant NSAMUS(JMARIO + 0x17)
-        constant NLUIGI(JMARIO + 0x18)
-        constant NLINK(JMARIO + 0x19)
-        constant NYOSHI(JMARIO + 0x1A)
-        constant NCAPTAIN(JMARIO + 0x1B)
-        constant NKIRBY(JMARIO + 0x1C)
-        constant NPIKACHU(JMARIO + 0x1D)
-        constant NJIGGLY(JMARIO + 0x1E)
-        constant NNESS(JMARIO + 0x1F)
+        constant SSONIC(JMARIO + 0x14)
+        constant SANDBAG(JMARIO + 0x15)
+		constant NMARIO(JMARIO + 0x16)
+        constant NFOX(JMARIO + 0x17)
+        constant NDONKEY(JMARIO + 0x18)
+        constant NSAMUS(JMARIO + 0x19)
+        constant NLUIGI(JMARIO + 0x1A)
+        constant NLINK(JMARIO + 0x1B)
+        constant NYOSHI(JMARIO + 0x1C)
+        constant NCAPTAIN(JMARIO + 0x1D)
+        constant NKIRBY(JMARIO + 0x1E)
+        constant NPIKACHU(JMARIO + 0x1F)
+        constant NJIGGLY(JMARIO + 0x20)
+        constant NNESS(JMARIO + 0x21)
     }
 
 
@@ -2160,6 +2492,7 @@ scope Training {
     db Character.id.CONKER
     db Character.id.MTWO
     db Character.id.MARTH
+    db Character.id.SONIC
 
     db Character.id.JMARIO
     db Character.id.JFOX
@@ -2183,6 +2516,8 @@ scope Training {
     db Character.id.GDONKEY
 	db Character.id.GBOWSER
     db Character.id.PIANO
+    db Character.id.SSONIC
+    db Character.id.SANDBAG
     db Character.id.NMARIO
     db Character.id.NFOX
     db Character.id.NDONKEY
@@ -2232,7 +2567,7 @@ scope Training {
     db id.DRM
     db id.WARIO
     db id.DSAMUS
-    db id.ELINK   
+    db id.ELINK
     db id.JSAMUS
     db id.JNESS
     db id.LUCAS
@@ -2256,8 +2591,11 @@ scope Training {
     db id.CONKER
     db id.MTWO
     db id.MARTH
+    db id.SONIC
+    db id.SANDBAG
+    db id.SSONIC
 
-    // @ Description 
+    // @ Description
     // Spawn Position Strings
     spawn_1:; db "Port 1", 0x00
     spawn_2:; db "Port 2", 0x00
@@ -2290,10 +2628,10 @@ scope Training {
         li      a1, entry_spawn_p{player}
         jal     set_custom_spawn_
         nop
-        
+
         _skip_spawn_{player}:
         lw      a0, 0x0004(sp)              // ~
-        lw      v0, 0x0008(sp)              // 
+        lw      v0, 0x0008(sp)              //
         lw      ra, 0x000C(sp)              // restore registers
         addiu   sp, sp, 0x0010              // deallocate stack space
         jr      ra
@@ -2304,28 +2642,34 @@ scope Training {
     spawn_func_2_:; set_custom_spawn(2)
     spawn_func_3_:; set_custom_spawn(3)
     spawn_func_4_:; set_custom_spawn(4)
-    
-    macro set_percent(player) {
+
+    scope set_percent_: {
         addiu   sp, sp,-0x0018              // allocate stack space
         sw      a0, 0x0004(sp)              // ~
         sw      a1, 0x0008(sp)              // ~
         sw      v0, 0x000C(sp)              // ~
         sw      ra, 0x0010(sp)              // save registers
-    
-        lli     a0, {player} - 1            // a0 - player (p1 = 0, p4 = 3)
+
+        // v0 = menu item
+        // 0x0024(v0) = player (p1 = 0, p4 = 3)
+
         jal     Character.port_to_struct_   // v0 = address of player struct
+        lw      a0, 0x0024(v0)              // a0 = player (p1 = 0, p4 = 3)
+        beqz    v0, _skip_percent           // skip if no player struct is returned
         nop
-        beqz    v0, _skip_percent_{player}  // skip if no player struct is returned
-        nop
-        move    a0, v0                      // a0 = player pointer
         jal     reset_percent_              // reset percent
-        nop
-        li      a1, struct.port_{player}.percent
-        lw      a1, 0x0000(a1)              // a1 = percent to add
+        or      a0, v0, r0                  // a0 = player pointer
+
+        lw      v0, 0x000C(sp)              // menu item
+        lw      v0, 0x0024(v0)              // v0 = player (p1 = 0, p4 = 3)
+        li      a1, struct.table
+        sll     v0, v0, 0x0002              // v0 = offset to struct.port_{player}
+        addu    a1, a1, v0                  // a1 = address of struct.port_{player}
+        lw      a1, 0x0000(a1)              // a1 = struct.port_{player}
         jal     Character.add_percent_
-        nop
-        
-        _skip_percent_{player}:
+        lw      a1, 0x000C(a1)              // a1 = percent to add
+
+        _skip_percent:
         lw      a0, 0x0004(sp)              // ~
         lw      a1, 0x0008(sp)              // ~
         lw      v0, 0x000C(sp)              // ~
@@ -2334,12 +2678,7 @@ scope Training {
         jr      ra
         nop
     }
-        
-    percent_func_1_:; set_percent(1)
-    percent_func_2_:; set_percent(2)
-    percent_func_3_:; set_percent(3)
-    percent_func_4_:; set_percent(4)
-    
+
     macro tail_px(player) {
         define character(Training.struct.port_{player}.ID)
         define costume(Training.struct.port_{player}.costume)
@@ -2347,16 +2686,13 @@ scope Training {
         define spawn_id(Training.struct.port_{player}.spawn_id)
         define spawn_func(Training.spawn_func_{player}_)
         define percent(Training.struct.port_{player}.percent)
-        define percent_func(Training.percent_func_{player}_)
-
 
         Menu.entry("Character:", Menu.type.U8, 0, 0, char_id_to_entry_id - entry_id_to_char_id - 1, OS.NULL, OS.NULL, string_table_char, {character}, entry_costume_p{player})
         entry_costume_p{player}:; Menu.entry("Costume:", Menu.type.U8, 0, 0, 5, OS.NULL, OS.NULL, OS.NULL, {costume}, entry_type_p{player})
         entry_type_p{player}:; Menu.entry("Type:", Menu.type.U8, 2, 0, 2, OS.NULL, OS.NULL, string_table_type, {type}, entry_spawn_p{player})
         entry_spawn_p{player}:; Menu.entry("Spawn:", Menu.type.U8, 0, 0, 4, OS.NULL, OS.NULL, string_table_spawn, {spawn_id}, entry_set_custom_spawn_p{player})
         entry_set_custom_spawn_p{player}:; Menu.entry_title("Set Custom Spawn", {spawn_func}, entry_percent_p{player})
-        entry_percent_p{player}:; Menu.entry("Percent:", Menu.type.U16, 0, 0, 999, OS.NULL, OS.NULL, OS.NULL, {percent}, entry_set_percent_p{player})
-        entry_set_percent_p{player}:; Menu.entry_title("Set Percent", {percent_func}, entry_percent_toggle_p{player})
+        entry_percent_p{player}:; Menu.entry("Percent:", Menu.type.U16, 0, 0, 999, set_percent_, {player} - 1, OS.NULL, {percent}, entry_percent_toggle_p{player})
         entry_percent_toggle_p{player}:; Menu.entry_bool("Reset Sets Percent:", OS.TRUE, entry_shield_break_mode)
     }
 
@@ -2376,7 +2712,7 @@ scope Training {
     dw  entry_percent_toggle_p2
     dw  entry_percent_toggle_p3
     dw  entry_percent_toggle_p4
-    
+
     // @ Description
     // Updates tail_px struct with values Training.struct
     macro struct_to_tail(player) {
@@ -2386,7 +2722,7 @@ scope Training {
         lw      t2, 0x0000(t0)              // t2 = struct.port_{player}.ID
         sw      t2, 0x0004(t1)              // update curr_val
         lw      t1, 0x001C(t1)              // t1 = curr->next
-        
+
         lw      t2, 0x0008(t0)              // t2 = struct.port_{player}.costume
         sw      t2, 0x0004(t1)              // update curr_val
         lw      t1, 0x001C(t1)              // t1 = curr->next
@@ -2394,19 +2730,17 @@ scope Training {
         lw      t2, 0x0004(t0)              // t2 = struct.port_{player}.type
         sw      t2, 0x0004(t1)              // update curr_val
         lw      t1, 0x001C(t1)              // t1 = curr->next
-        
+
         lw      t2, 0x0010(t0)              // t2 = struct.port_{player}.spawn_id
         sw      t2, 0x0004(t1)              // update curr_val
         lw      t1, 0x001C(t1)              // t1 = curr->next
-        
+
         lw      t1, 0x001C(t1)              // t1 = curr->next
-        
+
         lw      t2, 0x000C(t0)              // t2 = struct.port_{player}.percent
         sw      t2, 0x0004(t1)              // update curr_val
         lw      t1, 0x001C(t1)              // t1 = curr->next
-        
-        lw      t1, 0x001C(t1)              // t1 = curr->next
-        
+
         lli     t2, 0x0001                  // t2 = is_enabled
         sw      t2, 0x0004(t1)              // update curr_val
         lw      t1, 0x001C(t1)              // t1 = curr->next
@@ -2434,13 +2768,14 @@ scope Training {
     }
 
     info:
-    Menu.info(head, 68, 50, 0x17, 0x16, 23, Color.high.RED, Color.high.WHITE, Color.high.WHITE, 0x3F6C0000, 0xE, 12, OS.FALSE)
+    Menu.info(head, 68, 50, 0x17, 0x16, 23, Color.high.RED, Color.high.WHITE, Color.high.WHITE, 0x3F6C0000, 0xE, 12, OS.FALSE, OS.FALSE)
 
     head:
     entry_port_x:
     Menu.entry("Port:", Menu.type.U8, 1, 1, 4, OS.NULL, OS.NULL, OS.NULL, OS.NULL, tail_p1)
 
     string_training_mode:; String.insert("Training Mode")
+
 
     string_table_music:
     dw       string_training_mode
@@ -2499,8 +2834,35 @@ scope Training {
     }
     OS.align(4)
 
-    entry_shield_break_mode:; Menu.entry_bool("Shield Break Mode:", OS.FALSE, entry_music)
-    entry_music:; Menu.entry("Music:", Menu.type.U8, 0, 0, {total} - 1, OS.NULL, OS.NULL, OS.NULL, OS.NULL, OS.NULL)
+    // @ Description
+    // Allows A button to play selected music entry
+    scope play_bgm_: {
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      a0, 0x0004(sp)              // ~
+        sw      a1, 0x0008(sp)              // ~
+        sw      ra, 0x000C(sp)              // save registers
+
+        // v0 = menu item
+        // 0x0004(v0) = index in bgm_table to bgm_id
+        li      a0, bgm_table
+        lw      a1, 0x0004(v0)              // a1 = index in bgm_table to bgm_id
+        addu    a1, a0, a1                  // a1 = address of bgm_id
+        lbu     a1, 0x0000(a1)              // a1 = bgm_id
+
+        jal     BGM.play_
+        lli     a0, 0x0000
+
+        lw      a0, 0x0004(sp)              // restore registers
+        lw      a1, 0x0008(sp)              // ~
+        lw      ra, 0x000C(sp)              // ~
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        jr      ra
+        nop
+    }
+
+    entry_shield_break_mode:; Menu.entry_bool("Shield Break Mode:", OS.FALSE, entry_oos_option)
+    entry_oos_option:; Menu.entry("OOS Action:", Menu.type.U8, 0, 0, OOS_MAX, OS.NULL, OS.NULL, string_table_oos_options, OS.NULL, entry_music)
+    entry_music:; Menu.entry("Music:", Menu.type.U8, 0, 0, {total} - 1, play_bgm_, OS.NULL, OS.NULL, OS.NULL, OS.NULL)
 
     // @ Description
     // Holds the initial value of the special model display toggle
@@ -2523,6 +2885,13 @@ scope Training {
     p2_action_pointer:; dw 0x00000000
     p3_action_pointer:; dw 0x00000000
     p4_action_pointer:; dw 0x00000000
+
+    hold_A_rect_object:
+    dw 0
+
+    hold_A_rect_width:
+    dw 0
+
 }
 
 } // __TRAINING__

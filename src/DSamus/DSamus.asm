@@ -37,8 +37,8 @@ scope DSamus {
     insert CHARGELOOP, "moveset/CHARGELOOP.bin"; Moveset.GO_TO(CHARGELOOP)    // loops
     insert CLAP, "moveset/CLAP.bin"
     insert TAUNT, "moveset/TAUNT.bin"
-    
-    
+
+
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(DSAMUS, Action.Dash,           File.DSAMUS_DASH,           -1,                         -1)
     Character.edit_action_parameters(DSAMUS, Action.Walk3,          File.DSAMUS_WALK3,          -1,                         -1)
@@ -75,7 +75,7 @@ scope DSamus {
     Character.edit_action_parameters(DSAMUS, 0xE3,                  -1,                         UP_SPECIAL_GROUND,          -1)
     Character.edit_action_parameters(DSAMUS, 0xE4,                  -1,                         UP_SPECIAL_AIR,             -1)
     Character.edit_action_parameters(DSAMUS, 0xDF,                  -1,                         CHARGE,                     -1)
-    
+
      // Modify Actions            // Action             // Staling ID   // Main ASM                 // Interrupt/Other ASM          // Movement/Physics ASM         // Collision ASM
        Character.edit_action(DSAMUS, 0xE4,                 -1,             -1,                         0x80160370,                     -1,                             -1)
 
@@ -86,7 +86,7 @@ scope DSamus {
     Character.edit_menu_action_parameters(DSAMUS,   0x4,               File.DSAMUS_SELECT,         SELECT,                      -1)
     Character.edit_menu_action_parameters(DSAMUS,   0x5,               -1,                         CLAP,                        -1)
     Character.edit_menu_action_parameters(DSAMUS,   0xE,               File.DSAMUS_1P_CPU_POSE,    0x80000000,                  -1)
-    
+
     // Set menu zoom size.
     Character.table_patch_start(menu_zoom, Character.id.DSAMUS, 0x4)
     float32 1.05
@@ -101,7 +101,13 @@ scope DSamus {
     Character.table_patch_start(action_string, Character.id.DSAMUS, 0x4)
     dw  Action.SAMUS.action_string_table
     OS.patch_end()
-        
+
+    // Set default costumes
+    Character.set_default_costumes(Character.id.DSAMUS, 0, 1, 2, 4, 5, 1, 3)
+
+    // Shield colors for costume matching
+    Character.set_costume_shield_colors(DSAMUS, BLACK, CYAN, ORANGE, WHITE, RED, RED, NA, NA)
+
     // Prevents Dark Samus from losing a jump after using air down special
     scope bomb_loss_prevention: {
         OS.patch_start(0xD8D34, 0x8015E2F4)
@@ -109,7 +115,7 @@ scope DSamus {
         nop
         _return:
         OS.patch_end()
-        
+
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // store t0, t1
@@ -118,7 +124,7 @@ scope DSamus {
         beq     t1, t0, _end                // end if character id = DSAMUS
         nop
         sb      t9, 0x0148(s0)              // original code
-        
+
         _end:
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // load t0, t1
@@ -127,7 +133,7 @@ scope DSamus {
         j       _return                     // return
         nop
     }
-        
+
     // Prevents Dark Samus from losing a jump after using ground down special
     scope ground_bomb_loss_prevention: {
         OS.patch_start(0xD8C04, 0x8015E1C4)
@@ -135,7 +141,7 @@ scope DSamus {
         nop
         _return:
         OS.patch_end()
-        
+
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // store t0, t1
@@ -144,7 +150,7 @@ scope DSamus {
         beq     t1, t0, _end                // end if character id = DSAMUS
         nop
         sb      t9, 0x0148(s0)              // original code
-        
+
         _end:
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // load t0, t1
@@ -153,7 +159,7 @@ scope DSamus {
         j       _return                     // return
         nop
     }
-    
+
         // Loads an alternate animation for Dark Samus bomb explosion if explodes via timer
     scope alt_bomb_explosion: {
         OS.patch_start(0xE3A04, 0x80168FC4)
@@ -161,7 +167,7 @@ scope DSamus {
         addiu   a0, a0, 0x001C              // original line
         _return:
         OS.patch_end()
-        
+
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // store t0, t1
@@ -174,7 +180,7 @@ scope DSamus {
         addiu   sp, sp, 0x0010              // deallocate stack space
         j     0x801005C8                    // original line modified
         nop
-        
+
         _dsbombgraphic:
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // load t0, t1
@@ -193,7 +199,7 @@ scope DSamus {
         j       _return                     // return
         nop
     }
-    
+
     // Loads an alternate animation for Dark Samus bomb explosion if explodes via connecting with an opponent
     // active projectile struct is in 0x34(sp)
     scope alt_bomb_explosion_connect: {
@@ -202,7 +208,7 @@ scope DSamus {
         addiu   a0, a0, 0x001C              // original line
         _return:
         OS.patch_end()
-        
+
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // store t0, t1
@@ -217,12 +223,6 @@ scope DSamus {
         j     0x801005C8                    // original line modified
         nop
     }
-    
-    constant TYPE(0x2)                  // electric type damage used in Dark Samus down special in contrast to Samus (Fire type 0x1)
-        
-    
-    
-    // Set default costumes
-    Character.set_default_costumes(Character.id.DSAMUS, 0, 1, 2, 4, 5, 1, 3)
 
+    constant TYPE(0x2)                  // electric type damage used in Dark Samus down special in contrast to Samus (Fire type 0x1)
 }

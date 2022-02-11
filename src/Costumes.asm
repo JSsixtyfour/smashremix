@@ -579,7 +579,7 @@ scope Costumes {
     // This function replaces the original costume selection in favor of the 19XX style selection.
     // CLeft and Cright will now cycle through colors while CUp and CDown cycle through shades.
     // @ Warning
-    // This is not a function that should be called. It is a patch/hook. 
+    // This is not a function that should be called. It is a patch/hook.
     scope select_: {
         // vs
         OS.patch_start(0x001361B4, 0x80137F34)
@@ -626,7 +626,7 @@ scope Costumes {
         sw      ra, 0x0020(sp)              // ~
         sw      t3, 0x0024(sp)              // ~
         sw      t4, 0x0028(sp)              // save registers
-        
+
         li      t0, functions               // t0 = functions
         sll     t1, a1, 0x0002              // t1 = action * 4 = offset
         add     t0, t0, t1                  // t0 = functions + offset
@@ -672,7 +672,7 @@ scope Costumes {
 
         _go_to_function:
         jr      t0                          // go to function
-        lw      v0, 0x004C(s0)              // v0 = current costume_id          
+        lw      v0, 0x004C(s0)              // v0 = current costume_id
 
         // change costume
         _right:
@@ -680,9 +680,17 @@ scope Costumes {
         beql    v0, t1, pc() + 8            // if costume is the original max costume ID, add skipped costumes
         addu    v0, v0, t3                  // v0 = costume ID of last costume before first extra costume, if it exists
         sltu    at, v0, t4                  // at = 1 if not the last valid costume
-        beql    at, r0, _end                // if (costume_id >= num_costumes)
-        or      v0, r0, r0                  // then, v0 = 0
-        addiu   v0, v0, 0x0001              // else, costume_id ++
+        bnel    at, r0, _end                // if (costume_id < num_costumes)
+        addiu   v0, v0, 0x0001              // then, costume_id ++
+
+        or      v0, r0, r0                  // else, v0 = 0
+
+        lw      a0, 0x0008(s0)              // a0 = player object
+        lw      a0, 0x0084(a0)              // a0 = player struct
+        lw      a1, 0x0008(a0)              // a1 = char_id
+        lli     at, Character.id.SONIC      // at = Character.id.SONIC
+        beq     a1, at, _sonic              // branch if Sonic
+        nop
         b       _end                        // end
         nop
 
@@ -694,7 +702,15 @@ scope Costumes {
         or      t2, r0, r0                  // reset shade
         bgtz    v0, _end                    // if (costume_id > 0)
         addiu   v0, v0,-0x0001              // then, v0--
+
         or      v0, t4, r0                  // else, v0 = last costume_id
+
+        lw      a0, 0x0008(s0)              // a0 = player object
+        lw      a0, 0x0084(a0)              // a0 = player struct
+        lw      a1, 0x0008(a0)              // a1 = char_id
+        lli     at, Character.id.SONIC      // at = Character.id.SONIC
+        beq     a1, at, _sonic              // branch if Sonic
+        nop
         b       _end                        // end
         nop
 
@@ -717,12 +733,69 @@ scope Costumes {
         _1p_or_bonus_2:
         sw      v0, 0x0024(s0)              // store updated costume_id
         sw      t2, 0x001C(s0)              // store updated shade_id
-        lw      a0, 0x0008(s0)              // a0 = (?)
+        lw      a0, 0x0008(s0)              // a0 = player object
         b       _finish
         nop
 
+        _sonic:
+        lbu     a0, 0x000D(a0)              // a0 = player port
+        li      a1, Sonic.classic_table     // a1 = classic_table
+        addu    a1, a1, a0                  // a1 = classic_table + port
+        lbu     at, 0x0000(a1)              // at = px is_classic
+        xori    at, at, 0x0001              // ~
+        sb      at, 0x0000(a1)              // flip px_is_classic
+        li      a1, Sonic.select_anim_frame // a1 = select_anim_frame
+        sll     at, a0, 0x2                 // at = port * 4
+        addu    a1, a1, at                  // a1 = px select_anim_frame address
+        lw      at, 0x0008(s0)              // at = player object
+        lw      at, 0x0078(at)              // at = current animation frame
+
+        OS.save_registers()
+
+        li      v0, 0x80136B68              // v0 = ra for 1p
+        beq     v0, ra, _sonic_1p           // if we're in 1p, then call right model routine
+        nop
+
+        li      v0, 0x80135608              // v0 = ra for bonus
+        beq     v0, ra, _sonic_bonus        // if we're in bonus, then call right model routine
+        nop
+
+        li      v0, 0x80137F3C              // v0 = ra for vs
+        beq     v0, ra, _sonic_vs           // if we're in vs, then call right model routine
+        nop
+
+        jal     0x80133E30                  // set up character model (training)
+        lw      a0, 0x00C8(sp)              // a0 = panel index
+        b       _sonic_end
+        nop
+
+        _sonic_1p:
+        jal     0x80135804                  // set up character model (1p)
+        lli     a0, 0x0000                  // a0 = panel index
+        b       _sonic_end
+        nop
+
+        _sonic_bonus:
+        jal     0x8013476C                  // set up character model (bonus)
+        lli     a0, 0x0000                  // a0 = panel index
+        b       _sonic_end
+        nop
+
+        _sonic_vs:
+        jal     0x80136128                  // set up character model (vs)
+        nop
+
+        _sonic_end:
+        OS.restore_registers()
+        beqzl   at, pc() + 8                // if current animation frame = 0...
+        // note: hard coded to length of selection animation
+        lui     at, 0x4341                  // ...set current animation frame to 193 instead
+        sw      at, 0x0000(a1)              // update px select_anim_frame
+        lw      a0, 0x0008(s0)              // a0 = player object
+        sw      at, 0x0078(a0)              // set current animation frame
+
         _end:
-        lw      a0, 0x0008(s0)              // a0 = (?)
+        lw      a0, 0x0008(s0)              // a0 = player object
         addu    a1, v0, r0                  // a1 = costume_id
 
         li      at, 0x80136B68              // at = ra for 1p
@@ -738,8 +811,18 @@ scope Costumes {
         nop
         lui     at, 0x8014
         lw      at, 0xBDA8(at)              // at = 0 if FFA, 1 for Team Battle
-        bnezl   at, _store_costume          // if Team Battle,
-        lw      v0, 0x004C(s0)              // then let's not allow updating the costume
+        beqz    at, _store_costume          // if FFA, continue normally
+        lw      at, 0x0048(s0)              // at = char_id
+        lli     a2, Character.id.SONIC      // a2 = id.SONIC
+        bnel    at, a2, _store_costume      // if not Sonic, then don't allow updating the costume
+        lw      v0, 0x004C(s0)              // v0 = current costume_id
+
+        // if we're here, we need may need to update the costume
+        lw      at, 0x004C(s0)              // at = current costume_id
+        beq     v0, at, _store_costume      // if the costumes match, shade was changed, so skip
+        or      v0, at, r0                  // v0 = current costume_id
+        b       _sonic                      // branch to sonic case to switch models
+        lw      a0, 0x0084(a0)              // a0 = player struct
 
         _store_costume:
         sw      v0, 0x004C(s0)              // store updated costume_id
@@ -770,9 +853,9 @@ scope Costumes {
         lw      t3, 0x0024(sp)              // ~
         lw      t4, 0x0028(sp)              // restore registers
         addiu   sp, sp, 0x0030              // deallocate stack space
-        
+
         sw      v0, 0x0024(sp)              // original line 1
-        lw      a0, 0x0048(s0)              // original line 2  
+        lw      a0, 0x0048(s0)              // original line 2
 
         jr      ra                          // return
         nop
@@ -837,6 +920,10 @@ scope Costumes {
         db 0x05                             // Conker
         db 0x05                             // Mewtwo
         db 0x05                             // Marth
+        db 0x05                             // Sonic
+        db 0x05                             // Sandbag
+        db 0x05                             // Super Sonic
+        db 0x05                             // Classic Sonic
         OS.align(4)
 
         functions:
@@ -1050,7 +1137,7 @@ scope Costumes {
     // a1 - costume_id
     // a2 - shade_id
     constant update_(0x800E9248)
-    
+
     // @ Description
     // Prevents illegal sound from playing when selecting the same costume
     scope prevent_illegal_sound_: {
@@ -1199,7 +1286,7 @@ scope Costumes {
 
         beqz    at, _prim_color                 // if no textures, skip updating palette array
         nop
-        
+
         // SAMUS FRIGGIN ARAN
         // Need to swap her lo poly 0x2_0 and 0x2_1 images
         lw      t2, 0x0008(t1)                  // t2 = character_id
@@ -1396,124 +1483,124 @@ scope Costumes {
 
     // @ Description
     // Revises attribute location within main file to adjust for Polygon Characters and Metal Mario's new costumes
-    
+
     // Polygon Mario
     pushvar origin, base
     origin 0x94490
     dw 0x000002B0
     pullvar base, origin
-    
+
     // Set default costumes
     Character.set_default_costumes(Character.id.NMARIO, 0, 1, 4, 5, 1, 3, 2)
-    
+
     // Polygon Fox
     pushvar origin, base
     origin 0x95A14
     dw 0x000002BC
     pullvar base, origin
-    
+
     // Set default costumes
     Character.set_default_costumes(Character.id.NFOX, 0, 1, 4, 5, 1, 3, 2)
-    
+
     // Polygon DK
     pushvar origin, base
     origin 0x96FCC
     dw 0x000002B0
     pullvar base, origin
-    
+
     // Set default costumes
     Character.set_default_costumes(Character.id.NDONKEY, 0, 1, 4, 5, 1, 3, 2)
-    
+
     // Polygon Samus
     pushvar origin, base
     origin 0x98EF8
     dw 0x000003D4
     pullvar base, origin
-    
+
     // Set default costumes
     Character.set_default_costumes(Character.id.NSAMUS, 0, 1, 4, 5, 1, 3, 2)
-    
+
     // Polygon Luigi
     pushvar origin, base
     origin 0x9A310
     dw 0x000002B8
     pullvar base, origin
-    
+
     // Set default costumes
     Character.set_default_costumes(Character.id.NLUIGI, 0, 1, 4, 5, 1, 3, 2)
-    
+
     // Polygon Link
     pushvar origin, base
     origin 0x9B7F0
     dw 0x000002F0
     pullvar base, origin
-    
+
     // Set default costumes
     Character.set_default_costumes(Character.id.NLINK, 0, 1, 4, 5, 1, 3, 2)
-    
+
     // Polygon Yoshi
     pushvar origin, base
     origin 0x9CC70
     dw 0x000002D0
     pullvar base, origin
-    
+
     // Set default costumes
     Character.set_default_costumes(Character.id.NYOSHI, 0, 1, 4, 5, 1, 3, 2)
-    
+
     // Polygon Falcon
     pushvar origin, base
     origin 0x9E178
     dw 0x000002B4
     pullvar base, origin
-    
+
     // Set default costumes
     Character.set_default_costumes(Character.id.NCAPTAIN, 0, 1, 4, 5, 1, 3, 2)
-    
+
     // Polygon Kirby
     pushvar origin, base
     origin 0x9FADC
     dw 0x000002D8
     pullvar base, origin
-    
+
     // Set default costumes
     Character.set_default_costumes(Character.id.NKIRBY, 0, 1, 4, 5, 1, 3, 2)
-    
+
     // Polygon Pikachu
     pushvar origin, base
     origin 0xA0F8C
     dw 0x000002C0
     pullvar base, origin
-    
+
     // Set default costumes
     Character.set_default_costumes(Character.id.NPIKACHU, 0, 1, 4, 5, 1, 3, 2)
-    
+
     // Polygon Jigglypuff
     pushvar origin, base
     origin 0xA242C
     dw 0x000002B8
     pullvar base, origin
-    
+
     // Set default costumes
     Character.set_default_costumes(Character.id.NJIGGLY, 0, 1, 4, 5, 1, 3, 2)
-    
+
     // Polygon Ness
     pushvar origin, base
     origin 0xA39D0
     dw 0x00000308
     pullvar base, origin
-    
+
     // Set default costumes
     Character.set_default_costumes(Character.id.NNESS, 0, 1, 4, 5, 1, 3, 2)
-    
+
     // Metal Mario
     pushvar origin, base
     origin 0x93A80
     dw 0x000002BC
     pullvar base, origin
-    
+
     // Set default costumes
     Character.set_default_costumes(Character.id.METAL, 0, 1, 4, 5, 1, 3, 2)
-    
-    
-    
+
+
+
 } // __COSTUMES__

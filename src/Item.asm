@@ -10,7 +10,7 @@ print "included Item.asm\n"
 scope Item {
     // @ Description
     // Number of custom items
-    constant NUM_ITEMS(4)
+    constant NUM_ITEMS(5)
 
     // @ Description
     // Number of standard custom items
@@ -58,9 +58,9 @@ scope Item {
     fill NUM_ITEMS * 0x4
 
     // @ Description
-    // Holds flags for determining if custom items should rotate on spawn.
-    spawn_rotation_table:
-    constant SPAWN_ROTATION_TABLE_ORIGIN(origin())
+    // Holds flags for determining if custom items should have the spawn gfx on spawn.
+    spawn_gfx_table:
+    constant SPAWN_GFX_TABLE_ORIGIN(origin())
     fill NUM_ITEMS
     OS.align(4)
 
@@ -75,12 +75,12 @@ scope Item {
     // item_info_array - pc of item_info_array
     // item_info_array_origin - origin of item_info_array
     // spawn_routine - routine to run during item creation
-    // rotate_when_spawned - flag whether to rotate or not when spawned
+    // show_gfx_when_spawned - flag whether to show gfx or not when spawned
     // main_pickup_routine - routine to run during item pickup
     // pre_pickup_routine - routine to run before item pickup
     // drop_routine - routine to run when item is dropped
     // collision_routine - routine to run during item collision (like star)
-    macro add_item(item, item_info_array, item_info_array_origin, spawn_routine, rotate_when_spawned, main_pickup_routine, pre_pickup_routine, drop_routine, collision_routine) {
+    macro add_item(item, item_info_array, item_info_array_origin, spawn_routine, show_gfx_when_spawned, main_pickup_routine, pre_pickup_routine, drop_routine, collision_routine) {
         evaluate n(current_item)
         evaluate item_id(current_item + 0x2D)
 
@@ -116,9 +116,9 @@ scope Item {
         origin EXTENDED_ITEM_PRE_PICKUP_TABLE_ORIGIN + (current_item * 0x4)
         dw {pre_pickup_routine}
 
-        // update spawn rotation table
-        origin SPAWN_ROTATION_TABLE_ORIGIN + current_item
-        db {rotate_when_spawned}
+        // update spawn GFX table
+        origin SPAWN_GFX_TABLE_ORIGIN + current_item
+        db {show_gfx_when_spawned}
 
         pullvar base, origin
 
@@ -131,7 +131,7 @@ scope Item {
     // @ Arguments
     // item - the name of the scope containing the required constants and routines
     macro add_item(item) {
-        add_item({item}, {item}.item_info_array, {item}.ITEM_INFO_ARRAY_ORIGIN, {item}.SPAWN_ITEM, {item}.ROTATE_WHEN_SPAWNED, {item}.PICKUP_ITEM_MAIN, {item}.PICKUP_ITEM_INIT, {item}.DROP_ITEM, {item}.PLAYER_COLLISION)
+        add_item({item}, {item}.item_info_array, {item}.ITEM_INFO_ARRAY_ORIGIN, {item}.SPAWN_ITEM, {item}.SHOW_GFX_WHEN_SPAWNED, {item}.PICKUP_ITEM_MAIN, {item}.PICKUP_ITEM_INIT, {item}.DROP_ITEM, {item}.PLAYER_COLLISION)
     }
 
     // @ Description
@@ -159,10 +159,10 @@ scope Item {
     }
 
     // @ Description
-    // Checks the item ID for a custom item during item creation to determine if it should rotate.
-    scope extend_item_spawn_rotation_: {
+    // Checks the item ID for a custom item during item creation to determine if it should show spawn gfx.
+    scope extend_item_spawn_gfx_: {
         OS.patch_start(0xE9508, 0x8016EAC8)
-        jal     extend_item_spawn_rotation_
+        jal     extend_item_spawn_gfx_
         addiu   t0, t0, 0x94BC                  // original line 1
         OS.patch_end()
 
@@ -172,11 +172,10 @@ scope Item {
         sltiu   at, t1, 0x002D                  // at = 0 if custom item ID
         bnez    at, _normal                     // if a vanilla item, continue normally
         addiu   t1, t1, -0x002D                 // t1 = index in extended table
-
-        li      at, spawn_rotation_table        // at = extended table
-        addu    t1, at, t1                      // t1 = address of rotation flag
+        li      at, spawn_gfx_table             // at = extended table
+        addu    t1, at, t1                      // t1 = address of spawn gfx flag
         jr      ra
-        lbu     at, 0x0000(t1)                  // at = 0 if no rotation, 1 if yes
+        lbu     at, 0x0000(t1)                  // at = 0 if do not spawn gfx, 1 if yes
 
         _normal:
         jr      ra
@@ -714,7 +713,7 @@ scope Item {
         li      t6, 0x000FFFFF                         // t6 = bitmask that keeps vanilla items but 0s out custom items
         beq     r0, r0, _end
         and     t4, t4, t6                             // t4 = item bitmask with custom items zeroed out
-        
+
         _allstar:
         addiu   t6, r0, -0x0031                        // t6 = 0xFFFFFFCF = bitmask that keeps healing items out
         and     t4, t4, t6                             // t4 = item bitmask with healing items zeroed out
@@ -1104,6 +1103,9 @@ scope Item {
     scope KlapTrap {
         include "items/KlapTrap.asm"
     }
+    scope RobotBee {
+        include "items/RobotBee.asm"
+    }
 
     // Add items:
     // Standard Items
@@ -1112,6 +1114,7 @@ scope Item {
     add_item(PoisonMushroom)       // 0x2F
     // Stage Items
     add_item(KlapTrap)             // 0x30
+    add_item(RobotBee)             // 0x31
     // Pokemon
 
     // @ Description
@@ -1164,6 +1167,324 @@ scope Item {
         lw     ra, 0x0024(sp)              // original line 1
         j      _btt_btp_init_return
         addiu  sp, sp, 0x0088              // original line 2
+    }
+
+    // @ Description
+    // Enables skipping item spawn gfx.
+    scope skip_item_spawn_gfx_: {
+        OS.patch_start(0xE9518, 0x8016EAD8)
+        jal     skip_item_spawn_gfx_
+        lw      a0, 0x0028(sp)             // original line 2
+        OS.patch_end()
+
+        li     t1, flag
+        lw     t1, 0x0000(t1)              // t1 = 0 if don't skip
+        bnez   t1, _end                    // if flag is set, skip
+        nop
+
+        addiu   sp, sp, -0x0030            // allocate stack space
+        sw      ra, 0x0004(sp)             // save registers
+
+        jal     0x801044B4                 // original line 1 - create spawn gfx
+        nop
+
+        lw      ra, 0x0004(sp)             // restore ra
+        addiu   sp, sp, 0x0030             // deallocate stack space
+
+        _end:
+        jr     ra
+        nop
+
+        // flag to control skipping
+        flag:
+        dw OS.FALSE
+    }
+
+    // @ Description
+    // Enables skipping item pick sound.
+    scope skip_item_pickup_sound_: {
+        OS.patch_start(0xED850, 0x80172E10)
+        jal    skip_item_pickup_sound_
+        addiu  a0, r0, 0x0031              // original line 2
+        OS.patch_end()
+
+        li     t1, flag
+        lw     t1, 0x0000(t1)              // t1 = 0 if don't skip
+        bnez   t1, _end                    // if flag is set, skip
+        nop
+
+        addiu   sp, sp, -0x0030            // allocate stack space
+        sw      ra, 0x0004(sp)             // save registers
+
+        jal     0x800269C0                 // original line 1 - play FGM
+        nop
+
+        lw      ra, 0x0004(sp)             // restore ra
+        addiu   sp, sp, 0x0030             // deallocate stack space
+
+        _end:
+        jr     ra
+        nop
+
+        // flag to control skipping
+        flag:
+        dw OS.FALSE
+    }
+
+    // @ Description
+    // Holds adjusted item_id to start with per port
+    // 0x00 = no item
+    // 0x01 = BEAM_SWORD(0x0007)
+    // 0x02 = HOME_RUN_BAT(0x0008)
+    // 0x03 = FAN(0x0009)
+    // 0x04 = STAR_ROD(0x000A)
+    // 0x05 = RAY_GUN(0x000B)
+    // 0x06 = FIRE_FLOWER(0x000C)
+    // 0x07 = MOTION_SENSOR_BOMB(0x000E)
+    // 0x08 = BOBOMB(0x000F)
+    // 0x09 = BUMPER(0x0010)
+    // 0x0A = GREEN_SHELL(0x0011)
+    // 0x0B = RED_SHELL(0x0012)
+    // 0x0C = POKEBALL(0x0013)
+    // 0x0D = random item
+    start_with_item:
+    dw 0, 0, 0, 0
+
+    // @ Description
+    // Allows players to start with items.
+    scope start_with_item_: {
+        addiu   sp, sp, -0x0030                     // allocate stack space
+        sw      ra, 0x0004(sp)                      // save registers
+
+        lui     t0, 0x8013
+        lw      t0, 0x0D84(t0)                      // t0 = first player struct
+        li      t1, start_with_item
+        sw      t1, 0x0008(sp)                      // save start_with_item address to stack
+
+        _loop:
+        sw      t0, 0x000C(sp)                      // save player struct to stack
+        lbu     t2, 0x000D(t0)                      // t2 = port
+        sll     t2, t2, 0x0002                      // t2 = offset to port
+        addu    t1, t1, t2                          // t1 = address of start with item_id
+        lw      a1, 0x0000(t1)                      // a1 = item_id, unadjusted
+        beqz    a1, _next                           // if no item, skip this port
+        lw      a0, 0x0004(t0)                      // a0 = player object
+        beqz    a0, _next                           // if no player object, skip this port
+        lli     t0, Hazards.standard.POKEBALL + 1   // t0 = random item
+        addiu   a1, a1, Hazards.standard.BEAM_SWORD - 1 // a1 = item_id, maybe
+        sltiu   at, a1, Hazards.standard.HAMMER     // at = 1 if index is below HAMMER
+        beqzl   at, pc() + 8                        // if it's not below HAMMER, we need to adjust by 1
+        addiu   a1, a1, 0x0001                      // a1 = item_id
+        bne     a1, t0, _create                     // if not random, go ahead and create
+        sw      a0, 0x0010(sp)                      // save player object to stack
+
+        // if here, get a random number, then convert to a valid item_id
+        _random:
+        jal     Global.get_random_int_
+        lli     a0, Hazards.standard.POKEBALL - Hazards.standard.BEAM_SWORD + 1
+        addiu   a1, v0, Hazards.standard.BEAM_SWORD // a1 = random item_id
+
+        lli     t0, Hazards.standard.HAMMER
+        beq     a1, t0, _random                     // if we got HAMMER, get another one instead
+        nop
+
+        _create:
+        lli     a2, OS.TRUE                         // a2 = skip spawn gfx
+        lli     a3, OS.TRUE                         // a3 = skip pickup sfx
+        jal     create_and_assign_item_
+        lw      a0, 0x0010(sp)                      // a0 = player object
+
+        _next:
+        lw      t0, 0x000C(sp)                      // t0 = player struct
+        lw      t0, 0x0000(t0)                      // t0 = next player struct
+        bnez    t0, _loop                           // if more players, keep looping
+        lw      t1, 0x0008(sp)                      // t1 = start_with_item
+
+        lw      ra, 0x0004(sp)                      // restore ra
+        addiu   sp, sp, 0x0030                      // deallocate stack space
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // Allows players to respawn with items.
+    // @ Arguments
+    // a0 - player object
+    // a1 - action ID
+    scope respawn_with_item_: {
+        addiu   sp, sp, -0x0030                     // allocate stack space
+        sw      ra, 0x0004(sp)                      // save registers
+
+        lli     t0, Action.Revive1
+        bne     a1, t0, _end                        // if not respawning, skip
+        nop
+
+        lw      t0, 0x0084(a0)                      // t0 = player struct
+        li      t1, start_with_item
+        lbu     t2, 0x000D(t0)                      // t2 = port
+        sll     t2, t2, 0x0002                      // t2 = offset to port
+        addu    t1, t1, t2                          // t1 = address of start with item_id
+        lw      a1, 0x0000(t1)                      // a1 = item_id, unadjusted
+        beqz    a1, _end                            // if no item, skip this port
+        lli     t0, Hazards.standard.POKEBALL + 1   // t0 = random item
+        addiu   a1, a1, Hazards.standard.BEAM_SWORD - 1 // a1 = item_id, maybe
+        sltiu   at, a1, Hazards.standard.HAMMER     // at = 1 if index is below HAMMER
+        beqzl   at, pc() + 8                        // if it's not below HAMMER, we need to adjust by 1
+        addiu   a1, a1, 0x0001                      // a1 = item_id
+        bne     a1, t0, _create                     // if not random, go ahead and create
+        sw      a0, 0x0010(sp)                      // save player object to stack
+
+        // if here, get a random number, then convert to a valid item_id
+        _random:
+        jal     Global.get_random_int_
+        lli     a0, Hazards.standard.POKEBALL - Hazards.standard.BEAM_SWORD + 1
+        addiu   a1, v0, Hazards.standard.BEAM_SWORD // a1 = random item_id
+
+        lli     t0, Hazards.standard.HAMMER
+        beq     a1, t0, _random                     // if we got HAMMER, get another one instead
+        nop
+
+        _create:
+        lli     a2, OS.TRUE                         // a2 = skip spawn gfx
+        lli     a3, OS.TRUE                         // a3 = skip pickup sfx
+        jal     create_and_assign_item_
+        lw      a0, 0x0010(sp)                      // a0 = player object
+
+        _end:
+        lw      ra, 0x0004(sp)                      // restore ra
+        addiu   sp, sp, 0x0030                      // deallocate stack space
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // Holds adjusted item_id to spawn during taunt per port
+    // 0x00 = no item
+    // 0x01 = BEAM_SWORD(0x0007)
+    // 0x02 = HOME_RUN_BAT(0x0008)
+    // 0x03 = FAN(0x0009)
+    // 0x04 = STAR_ROD(0x000A)
+    // 0x05 = RAY_GUN(0x000B)
+    // 0x06 = FIRE_FLOWER(0x000C)
+    // 0x07 = MOTION_SENSOR_BOMB(0x000E)
+    // 0x08 = BOBOMB(0x000F)
+    // 0x09 = BUMPER(0x0010)
+    // 0x0A = GREEN_SHELL(0x0011)
+    // 0x0B = RED_SHELL(0x0012)
+    // 0x0C = POKEBALL(0x0013)
+    // 0x0D = random item
+    taunt_spawn_item:
+    dw 0, 0, 0, 0
+
+    // @ Description
+    // Allows players to spawn items via taunt.
+    scope taunt_spawn_item_: {
+        OS.patch_start(0xC918C, 0x8014E74C)
+        jal     taunt_spawn_item_
+        lw      v0, 0x0024(sp)                      // original line 1 - v0 = player struct
+        OS.patch_end()
+
+        sw      r0, 0x0180(v0)                      // original line 2
+
+        addiu   sp, sp, -0x0030                     // allocate stack space
+        sw      ra, 0x0004(sp)                      // save registers
+
+        li      t1, taunt_spawn_item
+        lbu     t2, 0x000D(v0)                      // t2 = port
+        sll     t2, t2, 0x0002                      // t2 = offset to port
+        addu    t1, t1, t2                          // t1 = address of item_id
+        lw      a1, 0x0000(t1)                      // a1 = item_id, unadjusted
+        beqz    a1, _end                            // if no item, skip this port
+        lw      a0, 0x0004(v0)                      // a0 = player object
+        lli     t0, Hazards.standard.POKEBALL + 1   // t0 = random item
+        addiu   a1, a1, Hazards.standard.BEAM_SWORD - 1 // a1 = item_id, maybe
+        sltiu   at, a1, Hazards.standard.HAMMER     // at = 1 if index is below HAMMER
+        beqzl   at, pc() + 8                        // if it's not below HAMMER, we need to adjust by 1
+        addiu   a1, a1, 0x0001                      // a1 = item_id
+        bne     a1, t0, _create                     // if not random, go ahead and create
+        sw      a0, 0x0010(sp)                      // save player object to stack
+
+        // if here, get a random number, then convert to a valid item_id
+        _random:
+        jal     Global.get_random_int_
+        lli     a0, Hazards.standard.POKEBALL - Hazards.standard.BEAM_SWORD + 1
+        addiu   a1, v0, Hazards.standard.BEAM_SWORD // a1 = random item_id
+
+        lli     t0, Hazards.standard.HAMMER
+        beq     a1, t0, _random                     // if we got HAMMER, get another one instead
+        nop
+
+        _create:
+        lli     a2, OS.FALSE                        // a2 = don't skip spawn gfx
+        lli     a3, OS.TRUE                         // a3 = skip pickup sfx
+        jal     create_and_assign_item_
+        lw      a0, 0x0010(sp)                      // a0 = player object
+
+        _end:
+        lw      ra, 0x0004(sp)                      // restore ra
+        addiu   sp, sp, 0x0030                      // deallocate stack space
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // Creates and assigns the item to a player.
+    // Does not work with hammers :(
+    // @ Arguments
+    // a0 - player object
+    // a1 - item ID
+    // a2 - show spawn gfx
+    // a3 - play pickup sfx
+    scope create_and_assign_item_: {
+        lw      t0, 0x0084(a0)                      // t0 = player struct
+        lw      t0, 0x084C(t0)                      // t0 = player held pointer
+        bnez    t0, _end                            // if player is holding an item, skip
+        nop
+
+        li      t0, skip_item_spawn_gfx_.flag
+        sw      a2, 0x0000(t0)                      // update override flag to skip showing spawn gfx
+
+        li      t0, skip_item_pickup_sound_.flag
+        sw      a3, 0x0000(t0)                      // update override flag to skip playing pickup sfx
+
+        addiu   sp, sp, -0x0010                     // allocate stack space
+        sw      ra, 0x0004(sp)                      // save registers
+        sw      a0, 0x0008(sp)                      // ~
+
+        addiu   sp, sp, -0x0030                     // allocate stack space (0x8016EA78 is unsafe)
+        lw      t1, 0x0074(a0)                      // t1 = top joint
+        or      a0, r0, r0
+        addiu   a2, t1, 0x001C                      // a2 = location of coordinates (use player position)
+        addiu   a3, sp, 0x0020                      // a3 = address of setup floats
+        lli     t3, 0x0001                          // t3 = 1
+        sw      t3, 0x0010(sp)                      // 0x0010(sp) = 1
+        sw      r0, 0x0000(a3)                      // set up float 1
+        lui     t3, 0x41F0
+        sw      t3, 0x0004(a3)                      // set up float 2
+        jal     0x8016EA78
+        sw      r0, 0x0008(a3)                      // set up float 3
+        addiu   sp, sp, 0x0030                      // deallocate stack space
+
+        beqz    v0, _finish                         // if no item spawned, don't try to assign it!
+        or      a0, v0, r0                          // a0 = item object
+        lw      a1, 0x0008(sp)                      // a1 = player object
+        jal     0x80172CA4                          // initiate item pickup
+        addiu   sp, sp, -0x0030                     // allocate stack space (0x80172CA4 is unsafe)
+        addiu   sp, sp, 0x0030                      // deallocate stack space
+
+        _finish:
+        li      t0, skip_item_spawn_gfx_.flag
+        sw      r0, 0x0000(t0)                      // clear skip gfx flag
+
+        li      t0, skip_item_pickup_sound_.flag
+        sw      r0, 0x0000(t0)                      // clear skip sfx flag
+
+        lw      ra, 0x0004(sp)                      // restore ra
+        addiu   sp, sp, 0x0010                      // deallocate stack space
+
+        _end:
+        jr      ra
+        nop
     }
 
 }

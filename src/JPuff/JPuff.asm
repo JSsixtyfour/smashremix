@@ -42,7 +42,7 @@ scope JPuff {
     Character.edit_action_parameters(JPUFF, 0xE9,                   -1,                         UP_SPECIAL,                    -1)
     Character.edit_action_parameters(JPUFF, 0xEA,                   -1,                         DSPECIAL,                     -1)
     Character.edit_action_parameters(JPUFF, 0xEB,                   -1,                         DSPECIAL,                     -1)
-    
+
     // Set crowd chant FGM.
     Character.table_patch_start(crowd_chant_fgm, Character.id.JPUFF, 0x2)
     dh  0x031F

@@ -12,11 +12,11 @@ scope EPuff {
     dw 0x00000000
 
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
-    
+
     Character.edit_action_parameters(EPUFF, Action.AttackAirD,      -1,                         DAIR,                       -1)
     Character.edit_action_parameters(EPUFF, 0xEA,                   -1,                         DSPECIAL,                     -1)
     Character.edit_action_parameters(EPUFF, 0xEB,                   -1,                         DSPECIAL,                     -1)
-    
+
     // Set crowd chant FGM.
     Character.table_patch_start(crowd_chant_fgm, Character.id.EPUFF, 0x2)
     dh  0x0264

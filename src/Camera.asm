@@ -45,7 +45,7 @@ scope Camera {
 
     // @ Description
     // Allows 360 control over the camera by changing the floats to check against
-    // inspired by [Gaudy (Emudigital)] 
+    // inspired by [Gaudy (Emudigital)]
     OS.patch_start(0x000AC494, 0x80130C94)
     float32 100                             // x limit
     dw 0x39AE9681                           // x increment
@@ -54,41 +54,45 @@ scope Camera {
     dw 0x39AE9681                           // y increment
     float32 -100                            // y limit
     OS.patch_end()
-    
+
     // @ Description
     // Subroutine which freezes the camera on the World 1-1 stage.
     // Replaces a JAL to subroutine to 0x80018FBC which is used to update the camera's position.
     scope frozen_camera_: {
-    
+
         OS.patch_start(0x87DA8, 0x8010C5A8)
         jal     frozen_camera_
         OS.patch_end()
-        
+
         OS.patch_start(0x87E58, 0x8010C658)
         jal     frozen_camera_
         OS.patch_end()
-        
+
         OS.patch_start(0x87EC8, 0x8010C6C8)
         jal     frozen_camera_
         OS.patch_end()
-        
+
         OS.patch_start(0x880AC, 0x8010C8AC)
         jal     frozen_camera_
         OS.patch_end()
-        
+
         // Function
         addiu   sp, sp,-0x0018             // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // ~
         sw      t2, 0x000C(sp)              // ~
         sw      ra, 0x0010(sp)              // store t0 - t2, ra
-        
+
         li      t0, Global.match_info       // ~
         lw      t0, 0x0000(t0)              // t0 = match_info
         lbu     t0, 0x0001(t0)              // t0 = stage id
         li      t1, frozen_world1           // t1 = frozen camera parameters for WORLD1
         ori     t2, r0, Stages.id.WORLD1    // t2 = id.WORLD1
         beq     t0, t2, _frozen             // use frozen camera if stage = WORLD1
+        nop
+        li      t1, hrc                     // t1 = frozen camera parameters for HRC
+        ori     t2, r0, Stages.id.HRC       // t1 = id.HRC
+        beq     t0, t2, _frozen             // use frozen camera if stage = HRC
         nop
 		li      t1, Toggles.entry_hazard_mode
         lw      t1, 0x0004(t1)              // t1 = hazard_mode (hazards disabled when t1 = 1 or 3)
@@ -103,18 +107,18 @@ scope Camera {
 		ori     t2, r0, Stages.id.FLAT_ZONE_2 // t1 = id.FLAT_ZONE_2
         beq     t0, t2, _frozen             // use frozen camera if stage = FLAT_ZONE_2
         nop
-		li      t1, frozen_flat_zone        // t1 = frozen camera parameters for FLAT_ZONE
-		ori     t2, r0, Stages.id.FLAT_ZONE // t1 = id.FLAT_ZONE_2
+        li      t1, frozen_flat_zone        // t1 = frozen camera parameters for FLAT_ZONE
+        ori     t2, r0, Stages.id.FLAT_ZONE // t1 = id.FLAT_ZONE_2
         beq     t0, t2, _frozen             // use frozen camera if stage = FLAT_ZONE
         nop
-        
+
         _normal:
         // if we reach this point, update camera as normal
         jal     0x80018FBC                  // original JAL
         nop
         b       _end                        // end subroutine
         nop
-        
+
 		_frozen:
         // if we reach this point, update camera position with fixed camera parameters
         // t1 = frozen camera parameters
@@ -132,7 +136,7 @@ scope Camera {
         sw      t2, struct.focal_y(t0)      // update camera focal y
         lw      t2, 0x0014(t1)              // ~
         sw      t2, struct.focal_z(t0)      // update camera focal z
-        
+
         _end:
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // ~
@@ -142,7 +146,7 @@ scope Camera {
         jr      ra                          // return
         nop
     }
-    
+
     // @ Description
     // Frozen camera parameters for WORLD1
     frozen_world1:
@@ -152,8 +156,8 @@ scope Camera {
     float32 0                               // camera focal x position
     float32 -100                            // camera focal y position
     float32 0                               // camera focal z position
-	
-	// @ Description
+
+    // @ Description
     // Frozen camera parameters for FLAT_ZONE_2
     frozen_flat_zone_2:
     float32 0                               // camera x position
@@ -162,8 +166,8 @@ scope Camera {
     float32 0                               // camera focal x position
     float32 0                               // camera focal y position
     float32 0                               // camera focal z position
-	
-	// @ Description
+
+    // @ Description
     // Frozen camera parameters for FLAT_ZONE
     frozen_flat_zone:
     float32 0                               // camera x position
@@ -172,8 +176,8 @@ scope Camera {
     float32 0                               // camera focal x position
     float32 -100                            // camera focal y position
     float32 0                               // camera focal z position
-    
-    	// @ Description
+
+    // @ Description
     // Frozen camera parameters for GB_LAND
     gb_land:
     float32 0                               // camera x position
@@ -182,7 +186,17 @@ scope Camera {
     float32 0                               // camera focal x position
     float32 1250                            // camera focal y position
     float32 0                               // camera focal z position
-    
+
+    // @ Description
+    // Frozen camera parameters for HRC
+    hrc:
+    float32 -21312                          // camera x position
+    float32 1536                            // camera y position
+    float32 6112                            // camera z position
+    float32 -21312                          // camera focal x position
+    float32 -512                            // camera focal y position
+    float32 -3584                           // camera focal z position
+
     // @ Description
     // camera struct constants
     scope struct {
@@ -194,7 +208,7 @@ scope Camera {
         constant focal_y(0xD4)
         constant focal_z(0xD8)
     }
-    
+
     // @ Description
     // This pushes back the camera when playing on Venom or GB Land.
     scope camera_adjust_: {
@@ -203,7 +217,7 @@ scope Camera {
         nop
         _return:
         OS.patch_end()
-        
+
         li      t8, Global.current_screen   // ~
         lbu     t8, 0x0000(t8)              // t8 = current screen
         addiu   at, r0, 0x0016              // Vs screen ID
@@ -215,24 +229,24 @@ scope Camera {
         addiu   at, r0, 0x0001              // 1p screen ID
         bne     at, t8, _standard           // if not in any of the battle screens, skip to standard
         nop
-        
+
         _stage_check:
         li      t8, Global.match_info       // ~
         lw      t8, 0x0000(t8)              // t8 = match_info
         lbu     t8, 0x0001(t8)              // t8 = stage id
-        
+
         addiu   at, r0, Stages.id.GB_LAND   // insert venom stage ID
         beq     t8, at, _max_zoom           // branch if on Gameboy Land
         lui     at, 0x3FE0                  // load Venom Camera Distance
-        
+
         addiu   at, r0, Stages.id.VENOM     // insert venom stage ID
         bne     t8, at, _standard           // branch if not on Venom
         lui     at, 0x3FE0                  // load Venom Camera Distance
-        
+
         _max_zoom:
         j       _return                     // return
         mtc1    at, f4                      // original line 2
-        
+
         _standard:
         lui     at, 0x3F80                  // load camera distance, original line 1
         j       _return                     // return

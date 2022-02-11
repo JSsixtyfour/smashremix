@@ -18,8 +18,8 @@ scope JLuigi {
     Character.edit_action_parameters(JLUIGI,   Action.ThrowF,          -1,                      FTHROW,                     -1)
     Character.edit_action_parameters(JLUIGI,   0xE1,                   -1,                      USPECIALGRND,               -1)
     Character.edit_action_parameters(JLUIGI,   0xE2,                   -1,                      USPECIALAIR,                -1)
-    
-    
+
+
     // Set crowd chant FGM.
     Character.table_patch_start(crowd_chant_fgm, Character.id.JLUIGI, 0x2)
     dh  0x031C

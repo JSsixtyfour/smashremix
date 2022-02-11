@@ -19,7 +19,7 @@ scope ResultsScreen {
         nop
         _return:
         OS.patch_end()
-        
+
         li      s0, Global.vs.p1            // ~
         jal     0x800D786C                  // load character
         lbu     a0, 0x0003(s0)              // a0 = p1 character
@@ -35,7 +35,7 @@ scope ResultsScreen {
         j       _return                     // return
         nop
     }
-    
+
     // @ Description
     // Patch which substitutes working character/opponent ids (0-11) for vs records.
     scope vs_record_fix_: {
@@ -51,7 +51,7 @@ scope ResultsScreen {
         nop
         or      v0, at, r0                  // update character id
         OS.patch_end()
-        
+
         _character:
         addu    t5, r0, ra                  // save ra
         lbu     s4, 0x0023(v0)              // s4 = character id (original line 1)
@@ -62,13 +62,13 @@ scope ResultsScreen {
         addu    ra, r0, t5                  // restore ra
         jr      ra
         sll     t5, s4, 0x2                 // original line 3
-        
+
         _opponent:
         lbu     v0, 0x0023(v1)              // v0 = opponent id (original line 1)
         sll     t6, s1, 0x2                 // original line 2
         addu    t0, t7, t6                  // original line 3
         or      at, v0, r0                  // at = opponent id
-       
+
         _get_id:
         sll     at, at, 0x0002              // at = id * 4
         li      t6, Character.vs_record.table
@@ -92,7 +92,7 @@ scope ResultsScreen {
         jr      ra
         sb      t4, 0x003C(sp)              // original line 2
     }
-    
+
     // @ Description
     // Patch which gets the FGM id for the winning character from an extended table.
     scope get_winner_fgm_: {
@@ -111,7 +111,7 @@ scope ResultsScreen {
         j       _return
         nop
     }
-    
+
     // @ Description
     // Extends the series logo offset table so we can use more than the original character logos
     scope winner_logo_fix_: {
@@ -185,7 +185,7 @@ scope ResultsScreen {
         jal     label_height_fix_
         sw      v1, 0x0028(sp)              // original line 2
         OS.patch_end()
-        
+
         addiu   sp, sp,-0x0008              // allocate stack space
         sw      ra, 0x0004(sp)              // store ra
         jal     0x80133148                  // Result.getCharFromPlayer (original line 1)
@@ -198,7 +198,7 @@ scope ResultsScreen {
         jr      ra                          // return
         addiu   sp, sp, 0x0008              // deallocate stack space
     }
-    
+
     // @ Description
     // Patch which gets the "WINS" string left x position for the winner from an extended table.
     // Also changes the WINS! to WIN! for J characters.
@@ -208,7 +208,7 @@ scope ResultsScreen {
         nop
         _return:
         OS.patch_end()
-        
+
         // t5 = char_id
         // t4 = char_id * 4
         // a0 = pointer to WINS! string
@@ -228,7 +228,7 @@ scope ResultsScreen {
         j       _return                     // return
         nop
     }
-    
+
     // @ Description
     // Patch which gets the string pointer, left x position, and x scaling for the winning
     // character's name string from extended tables.
@@ -242,7 +242,7 @@ scope ResultsScreen {
         nop
         _return:
         OS.patch_end()
-        
+
         // v1 = id * 4
         li      t5, Character.str_winner_scale.table
         addu    t5, t5, v1                  // t5 = str_winner_scale.table + (id * 4)
@@ -256,7 +256,7 @@ scope ResultsScreen {
         j       _return                     // return
         nop
     }
-    
+
     // @ Description
     // Patch which adjusts the max number of characters in the bgm jump table, and loads the
     // victory bgm address from an extended table.
@@ -277,7 +277,7 @@ scope ResultsScreen {
         lw      t6, LOWER(at)               // original line 7
         OS.patch_end()
     }
-    
+
     // @ Description
     // Adds a victory bgm routine for winner_bgm.table
     macro add_victory_bgm(bgm) {
@@ -307,6 +307,7 @@ scope ResultsScreen {
         constant CONKER(0x8D70)
         constant WARIO(0x9040)
         constant FIRE_EMBLEM(0x97F8)
+        constant SONIC(0xA1B8)
     }
 
     // @ Description
@@ -328,6 +329,7 @@ scope ResultsScreen {
         constant CONKER(0x8E78)
         constant WARIO(0x9148)
         constant FIRE_EMBLEM(0x9900)
+        constant SONIC(0xA2C0)
     }
 
     // @ Description
@@ -349,6 +351,7 @@ scope ResultsScreen {
         constant CONKER(0x8ED0)
         constant WARIO(MARIO_BROS)
         constant FIRE_EMBLEM(0x9958)
+        constant SONIC(0xA318)
     }
 
     // @ Description
@@ -581,4 +584,7 @@ scope ResultsScreen {
     add_to_results_screen(Character.id.CONKER,   FGM.announcer.names.CONKER,                 CONKER,      Character.id.FOX,     180,     CONKER,       25,     0.85,      {MIDI.id.CONKER_VICTORY})
     add_to_results_screen(Character.id.MTWO,     FGM.announcer.names.MEWTWO,                 POKEMON,     Character.id.SAMUS,   185,     MEWTWO,       20,     0.8,       {MIDI.id.MEWTWO_VICTORY})
     add_to_results_screen(Character.id.MARTH,    FGM.announcer.names.MARTH,                  FIRE_EMBLEM, Character.id.CAPTAIN, 185,     MARTH,        20,     1,         {MIDI.id.MARTH_VICTORY})
+    add_to_results_screen(Character.id.SONIC,    FGM.announcer.names.SONIC,                  SONIC,       Character.id.FOX,     170,     SONIC,        30,     1,         {MIDI.id.SONIC_VICTORY})
+    add_to_results_screen(Character.id.SANDBAG,  FGM.announcer.names.MARTH,                  YOSHI,       Character.id.CAPTAIN, 175,     SANDBAG,      25,     1,         0x0B)
+    add_to_results_screen(Character.id.SSONIC,   FGM.announcer.names.SSONIC,                 SONIC,       Character.id.FOX,     170,     SUPER SONIC,  20,     0.55,      {MIDI.id.SONIC_VICTORY})
 }

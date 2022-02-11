@@ -369,6 +369,95 @@ scope Joypad {
     dw 0x00000000                       // right
     dw 0x00000000                       // down
     dw 0x00000000                       // up
+
+    // @ Description
+    // Holds a reference to button masks for taunt for each port
+    taunt_mask_per_port:
+    dw 0, 0, 0, 0
+
+    // @ Description
+    // Allows overriding button mask for taunts per port.
+    scope set_taunt_mask_: {
+        OS.patch_start(0x53CD8, 0x800D84D8)
+        jal     set_taunt_mask_
+        lw      t4, 0x0104(v1)               // original line 2
+        OS.patch_end()
+
+        li      t3, taunt_mask_per_port
+        lbu     t8, 0x000D(s5)               // t8 = port
+        sll     t8, t8, 0x0002               // t8 = offset
+        addu    t3, t3, t8                   // t3 = address of taunt mask index
+        lw      t3, 0x0000(t3)               // t3 = taunt mask index
+        beqz    t3, _end                     // if 0, then use default mask
+        sll     t3, t3, 0x0001               // t3 = taunt mask index * 2 (offset)
+        addiu   t3, t3, -0x0002              // t3 = offset to mask
+        li      t8, mask_table
+        addu    t8, t8, t3                   // t8 = address of mask
+        lhu     t7, 0x0000(t8)               // t7 = mask
+
+        _end:
+        jr      ra
+        sh      t7, 0x01BA(s5)               // original line 1 - set taunt button mask
+
+        mask_table:
+        dh CU
+        dh CD
+        dh CL
+        dh CR
+        dh DU
+        dh DD
+        dh DL
+        dh DR
+    }
+
+    // @ Description
+    // This hook prevents the remapped taunt button from causing a jump
+    scope prevent_taunt_jump_: {
+        // double jump
+        OS.patch_start(0xB9E94, 0x8013F454)
+        j       prevent_taunt_jump_
+        andi    t7, t6, 0x000F               // original line 2 - t7 = 0 if no c button pressed
+        OS.patch_end()
+
+        // kirby/puff 3rd and beyond jumps
+        OS.patch_start(0xBAB70, 0x80140130)
+        j       prevent_taunt_jump_
+        andi    t7, t6, 0x000F               // original line 2 - t7 = 0 if no c button pressed
+        OS.patch_end()
+
+        // a0 = player struct
+        // t6 = pressed button mask
+
+        beqz    t7, _no_jump                 // if no c button pressed, return normally as no jump
+        lbu     t6, 0x000D(a0)               // t6 = port
+
+        // If we are here, then a C button press occurred
+
+        li      v0, taunt_mask_per_port
+        sll     t6, t6, 0x0002               // t6 = offset to taunt button index
+        addu    v0, v0, t6                   // v0 = address of taunt mask index
+        lw      v0, 0x0000(v0)               // v0 = taunt mask index
+        beqz    v0, _jump                    // if 0, then it's the default taunt button, so return normally as jump
+        sll     v0, v0, 0x0001               // v0 = taunt mask index * 2 (offset)
+        addiu   v0, v0, -0x0002              // v0 = offset to mask
+        li      t6, set_taunt_mask_.mask_table
+        addu    t6, t6, v0                   // t6 = address of mask
+        lhu     v0, 0x0000(t6)               // v0 = mask
+
+        and     t6, t7, v0                   // t6 = 0 if the taunt button wasn't pressed
+        beqz    t6, _jump                    // if the taunt button wasn't pressed, return normally as jump
+        nop
+        bne     t6, t7, _jump                // if the masks don't match, then a different c button was pressed, so jump
+        nop                                  // otherwise, only the remapped taunt button was pressed, so don't jump
+
+        _no_jump:
+        jr      ra
+        or      v0, r0, r0                   // original line 1 - v0 = jump flag = no jump
+
+        _jump:
+        jr      ra
+        lli     v0, 0x0001                   // v0 = jump flag = jump
+    }
 }
 
 } // __JOYPAD__

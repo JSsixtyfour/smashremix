@@ -104,6 +104,17 @@ scope BGM {
         bnez    v0, _get_bgm_id             // if CR pressed,
         ori     a0, r0, 0x0002              // then use the Occasional song
 
+        // check for salty song preservation
+        li      t0, Toggles.entry_preserve_salty_song
+        lw      t0, 0x0004(t0)              // t0 = 0 if OFF, 1 if ON
+        li      a0, current_track           // a0 = address of current_track
+        beqz    t0, alt_music               // branch accordingly
+        li      t0, GameEnd.is_salty_runback// t0 = salty runback flag
+        lw      t0, 0x0000(t0)              // t0 = 1 if salty runback
+        bnezl   t0, _save                   // branch accordingly
+        lw      a1, 0x0000(a0)              // a1 = current_track
+
+        alt_music:
         // otherwise, alt music will play by chance
         lli     a0, 100                     // a0 - range (0, N-1)
         jal     Global.get_random_int_      // v0 = (0, N-1)
@@ -132,6 +143,8 @@ scope BGM {
 
         _save:
         // remember bgm_id
+        li      a0, current_track           // a0 = address of current_track
+        sw      a1, 0x0000(a0)              // store current_track
         lui     a0, 0x8013
         lw      a0, 0x1300(a0)              // a0 = stage file
         sw      a1, 0x007C(a0)              // store bgm_id
@@ -286,10 +299,25 @@ scope BGM {
         beqz    v1, _end                    // if there were no valid entries in the random table, then use default bgm_id
         nop
 
+        // check for salty song preservation
+        li      t0, Toggles.entry_preserve_salty_song
+        lw      t0, 0x0004(t0)              // t0 = 0 if OFF, 1 if ON
+        li      s3, current_track           // s3 = address of current_track
+        beqz    t0, randomize_music         // branch accordingly
+        lw      v0, 0x0000(s3)              // v0 = current_track
+        li      t0, GameEnd.is_salty_runback// t0 = salty runback flag
+        lw      t0, 0x0000(t0)              // t0 = 1 if salty runback
+        bnez    t0, load_random_track       // branch accordingly
+        nop
+
+        randomize_music:
         // this block loads from the random list using a random int
         move    a0, v1                      // a0 - range (0, N-1)
         jal     Global.get_random_int_      // v0 = (0, N-1)
         nop
+        sw      v0, 0x0000(s3)              // store v0 as current random track
+
+        load_random_track:
         li      t0, random_table            // t0 = random_table
         sll     v0, v0, 0x0002              // v0 = offset = random_int * 4
         addu    t0, t0, v0                  // t0 = random_table + offset
@@ -401,6 +429,9 @@ scope BGM {
         lli     t1, 0x0003                  // t1 = 3 (BRAWL)
         beql    t1, t0, _check_current_track// if BRAWL, then use BRAWL BGM
         addiu   a1, r0, menu.MAIN_BRAWL
+        lli     t1, 0x0004                  // t1 = 4 (OFF)
+        beq     t1, t0, _menu_music_off     // if OFF, then stop music
+        nop
 
         // otherwise, alt menu music will play by chance - unless we already are playing MELEE or BRAWL
         lui     t0, 0x800A
@@ -444,6 +475,7 @@ scope BGM {
         bnez    t0, _finish                 // if music is on, then we can finish
         nop                                 // otherwise, we have to call stop_
 
+        _menu_music_off:
         jal     BGM.stop_                   // stop current track
         nop
         b       _finish                     // skip to _finish
@@ -828,6 +860,9 @@ scope BGM {
         constant HAMMER(45)
         constant INVINCIBLE(46)
     }
+
+    current_track:
+    dw -1
 
 }
 

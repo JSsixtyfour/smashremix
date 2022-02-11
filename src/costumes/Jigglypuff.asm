@@ -1,7 +1,7 @@
 scope jigglypuff_costumes {
     // @ Description
     // Number of additional costumes
-    constant NUM_EXTRA_COSTUMES(2)
+    constant NUM_EXTRA_COSTUMES(3)
 
     // @ Description
     // Number of parts
@@ -120,5 +120,38 @@ scope jigglypuff_costumes {
         Costumes.set_diffuse_ambient_colors_for_part(1, 18, 0, diffuse_ambient_pair)
 
         Costumes.set_stock_icon_palette_for_costume(1, Jigglypuff/cos_7_stock_icon.bin)
+    }
+    
+    // Costume 0x8
+    scope costume_0x8 {
+        constant PRIM_COLOR_1(0xF4F4F4FF)
+        diffuse_ambient_pair:; dw 0xFFFFFF00, 0x80808000
+        palette_1:; insert "Jigglypuff/cos_8_1.bin"
+        palette_2:; insert "Jigglypuff/cos_8_2.bin"
+        palette_3:; insert "Jigglypuff/cos_8_3.bin"
+
+        Costumes.set_palette_for_part(2, 2, 0, palette_1)
+        Costumes.set_palette_for_part(2, 2, 1, palette_1)
+        Costumes.set_palette_for_part(2, 2, 2, palette_2)
+        Costumes.set_palette_for_part(2, 2, 3, palette_2)
+        Costumes.set_prim_color_for_part(2, 2, 3, PRIM_COLOR_1)
+        Costumes.set_palette_for_part(2, 2, 4, palette_2)
+        Costumes.set_prim_color_for_part(2, 2, 4, PRIM_COLOR_1)
+        Costumes.set_palette_for_part(2, 2, 5, palette_2)
+        Costumes.set_prim_color_for_part(2, 2, 5, PRIM_COLOR_1)
+        Costumes.set_prim_color_for_part(2, 2, 6, PRIM_COLOR_1)
+        Costumes.set_palette_for_part(2, 2, 7, palette_2)
+        Costumes.set_prim_color_for_part(2, 2, 8, PRIM_COLOR_1)
+        Costumes.set_palette_for_part(2, 2, 9, palette_3)
+        Costumes.set_palette_for_part(2, 2, A, palette_3)
+        Costumes.set_prim_color_for_part(2, 6, 0, PRIM_COLOR_1)
+        Costumes.set_prim_color_for_part(2, 7, 0, PRIM_COLOR_1)
+        Costumes.set_prim_color_for_part(2, A, 0, PRIM_COLOR_1)
+        Costumes.set_prim_color_for_part(2, B, 0, PRIM_COLOR_1)
+        Costumes.set_prim_color_for_part(2, 13, 0, PRIM_COLOR_1)
+        Costumes.set_prim_color_for_part(2, 18, 0, PRIM_COLOR_1)
+        Costumes.set_diffuse_ambient_colors_for_part(2, 18, 0, diffuse_ambient_pair)
+
+        Costumes.set_stock_icon_palette_for_costume(2, Jigglypuff/cos_8_stock_icon.bin)
     }
 }

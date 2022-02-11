@@ -19,10 +19,10 @@ scope SRAM {
     //  - A new MIDI is added
     //  - A new toggle is added
     //  - The order of the toggles is changed
-    constant REVISION(0x0062)
+    constant REVISION(0x0076)
 
     // @ Description
-    // Struct that holds information for a block of save data. 
+    // Struct that holds information for a block of save data.
     macro block(size) {
         dw SRAM.address
         dw pc() + 8
@@ -48,7 +48,7 @@ scope SRAM {
         sw      a0, 0x0004(sp)              // ~
         sw      a1, 0x0008(sp)              // ~
         sw      a2, 0x000C(sp)              // ~
-        sw      ra, 0x0014(sp)              // save registers 
+        sw      ra, 0x0014(sp)              // save registers
 
         li      a0, true                    // a0 - RAM source
         li      a1, ADDRESS                 // a1 - SRAM destination
@@ -59,7 +59,7 @@ scope SRAM {
         lw      a0, 0x0004(sp)              // ~
         lw      a1, 0x0008(sp)              // ~
         lw      a2, 0x000C(sp)              // ~
-        lw      ra, 0x0014(sp)              // restore registers 
+        lw      ra, 0x0014(sp)              // restore registers
         addiu   sp, sp, 0x0018              // deallocate stack space
         jr      ra                          // return
         nop
@@ -81,7 +81,7 @@ scope SRAM {
         sw      a0, 0x0004(sp)              // ~
         sw      a1, 0x0008(sp)              // ~
         sw      a2, 0x000C(sp)              // ~
-        sw      ra, 0x0014(sp)              // save registers 
+        sw      ra, 0x0014(sp)              // save registers
 
         li      a0, ADDRESS                 // a0 - SRAM source
         li      a1, return                  // a1 - RAM destination
@@ -102,7 +102,7 @@ scope SRAM {
         lw      a0, 0x0004(sp)              // ~
         lw      a1, 0x0008(sp)              // ~
         lw      a2, 0x000C(sp)              // ~
-        lw      ra, 0x0014(sp)              // restore registers 
+        lw      ra, 0x0014(sp)              // restore registers
         addiu   sp, sp, 0x0018              // deallocate stack space
         jr      ra                          // return
         nop
@@ -182,6 +182,54 @@ scope SRAM {
         addiu   sp, sp, 0x0018              // deallocate stack space
         jr      ra                          // return
         nop
+    }
+
+    // @ Description
+    // Initializes SRAM
+    scope initialize_: {
+        addiu   sp, sp, -0x0010             // allocate stack space
+        sw      a0, 0x0004(sp)              // save registers
+        sw      ra, 0x0008(sp)              // ~
+
+        li      a0, Character.EXTENDED_HIGH_SCORE_TABLE_BLOCK
+        jal     SRAM.save_
+        nop
+
+        li      a0, Character.MULTIMAN_HIGH_SCORE_TABLE_BLOCK
+        jal     SRAM.save_
+        nop
+
+        li      a0, Character.CRUEL_HIGH_SCORE_TABLE_BLOCK
+        jal     SRAM.save_
+        nop
+
+        li      a0, Character.BONUS3_HIGH_SCORE_TABLE_BLOCK
+        jal     SRAM.save_
+        nop
+
+        li      a0, Character.REMIX_1P_HIGH_SCORE_TABLE_BLOCK
+        jal     SRAM.save_
+        nop
+
+        li      a0, Character.ALLSTAR_HIGH_SCORE_TABLE_BLOCK
+        jal     SRAM.save_
+        nop
+
+        li      a0, Character.HRC_HIGH_SCORE_TABLE_BLOCK
+        jal     SRAM.save_
+        nop
+
+        li      a0, Bonus.REMIX_BONUS_HIGH_SCORE_TABLE_BLOCK
+        jal     SRAM.save_
+        nop
+
+        jal     SRAM.mark_saved_            // mark save file present
+        nop
+
+        lw      a0, 0x0004(sp)              // restore registers
+        lw      ra, 0x0008(sp)              // ~
+        jr      ra                          // return
+        addiu   sp, sp, 0x0010              // deallocate stack space
     }
 }
 

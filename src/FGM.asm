@@ -133,7 +133,7 @@ scope FGM {
     // sample rate - The desired sample rate, for now 16000 Hz and 32000 Hz are supported
     // fgm_type - The type of sound, for now Voice and Chant are supported, with Chant including crowd noise
     // reverb - Amount of reverb to apply to the sample, 0-127, only supported by Voice type
-    // fgm_length - The length of the sound, -1 will determine length automatically  
+    // fgm_length - The length of the sound, -1 will determine length automatically
     macro add_sound(name, sample_rate, fgm_type, reverb, fgm_length) {
         global variable new_sample_count(new_sample_count + 1)
         global variable new_sfx_count(new_sfx_count + 1)
@@ -174,7 +174,7 @@ scope FGM {
         } else {
             global variable new_sfx_fgm_size(new_sfx_fgm_size + 0xA)
         }
-        
+
         global define SOUND_LOOP_PARAMS_{num}(0x00000000)
 
         print "Added {SOUND_NAME_{num}}\nFGM_ID: 0x"; OS.print_hex(ORIGINAL_FGM_COUNT - 1 + {fgm_num}); print " (", ORIGINAL_FGM_COUNT - 1 + {fgm_num},")\n"
@@ -1028,10 +1028,53 @@ scope FGM {
     add_fgm(MewtwoCharge6, Mewtwo/sounds/CHARGE_6_fgm_microcode, 0x19, -1, Mewtwo/sounds/CHARGE_6_sfx_microcode, 0x1E, 0xD)
     add_fgm(MewtwoCharge7, Mewtwo/sounds/CHARGE_7_fgm_microcode, 0x19, -1, Mewtwo/sounds/CHARGE_7_sfx_microcode, 0x1E, 0xD)
     add_fgm(MewtwoCharge8, Mewtwo/sounds/CHARGE_8_fgm_microcode, 0x19, -1, Mewtwo/sounds/CHARGE_8_sfx_microcode, 0x18, 0xD)
-    add_sound(sounds/misc/splash, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 40, -1)
-    add_sound(sounds/misc/gameboy_start_up, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 40, -1)
+    add_sound(sounds/misc/splash, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(sounds/misc/gameboy_start_up, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound(Marth/sounds/ENTRY, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 50, -1)
-    
+    add_sound(Sonic/sounds/ANNOUNCER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 40, -1)
+    add_sound(sounds/misc/sonic_bumper, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(sounds/misc/triangle_bumper, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Sonic/sounds/SPRING, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Sonic/sounds/SPINDASH_CHARGE, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Sonic/sounds/SPINDASH_ROLL, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Sonic/sounds/HOMING_CHARGE, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Sonic/sounds/HOMING_ATTACK, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Sonic/sounds/SONIC_JUMP, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Sonic/sounds/SONIC_SKID, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Sonic/sounds/CLASSIC_SPINDASH_CHARGE, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Sonic/sounds/CLASSIC_SPRING, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Sonic/sounds/CLASSIC_SONIC_JUMP, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Sonic/sounds/CLASSIC_SONIC_SKID, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Sonic/sounds/CLASSIC_SONIC_SPIN, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Sonic/sounds/CLASSIC_SPINDASH_ATTACK, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Sonic/sounds/CLASSIC_SONIC_KO, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Sonic/sounds/SONIC_ATTACK1, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Sonic/sounds/SONIC_ATTACK2, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Sonic/sounds/SONIC_ATTACK3, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(sounds/misc/badnik_destroy, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Sonic/sounds/SONIC_DAMAGE, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Sonic/sounds/SONIC_FSMASH, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Sonic/sounds/SONIC_KO, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Sonic/sounds/SONIC_SHIELDBREAKSTUN, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Sonic/sounds/SONIC_SLEEP, SAMPLE_RATE_16000, FGM_TYPE_SLEEP, 0, 0x120)
+    add_sound(Sonic/sounds/SONIC_STARKO, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Sonic/sounds/SONIC_VICTORY, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Sonic/sounds/SONIC_TEETER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Sonic/sounds/SONIC_ROLL, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Sonic/sounds/SONIC_TECH, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Sonic/sounds/SONIC_HEAVYLIFT, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(sounds/misc/cannon_turn, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(sounds/misc/cannon_shoot, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(sounds/all_star, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(sounds/homerun_contest, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(sounds/twelve_character_battle, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Sonic/sounds/SONIC_CHANT, SAMPLE_RATE_16000, FGM_TYPE_CHANT, 0, -1)
+    add_sound(Sonic/sounds/TAILSFLY, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(sounds/misc/shrinkray, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Sonic/sounds/SONIC_JUMP_2, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Sonic/sounds/CLASSIC_SONIC_JUMP_2, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(SSonic/sounds/ANNOUNCER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 40, -1)
+	add_sound(Sonic/sounds/SONIC_TAUNT, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
 
     // This is always last
     write_sounds()
@@ -1127,6 +1170,8 @@ scope FGM {
             constant PIANO(966)
             constant MEWTWO(944)
             constant MARTH(864)
+            constant SONIC(980)
+            constant SSONIC(1022)
         }
 
         scope css {
@@ -1134,6 +1179,9 @@ scope FGM {
             constant FREE_FOR_ALL(512)
             constant TEAM_BATTLE(526)
             constant TRAINING_MODE(530)
+            constant ALLSTAR(1014)
+            constant HRC(1015)
+            constant TWELVECB(1016)
         }
 
         scope team {

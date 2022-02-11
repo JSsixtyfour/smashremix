@@ -295,8 +295,14 @@ scope JigglypuffKirbyShared {
         beq     v0, at, _linkblast_1
         addiu   at, r0, Character.id.JLINK     // JLINK ID
         beq     v0, at, _linkblast_1
+        addiu   at, r0, Character.id.BOWSER    // BOWSER ID
+        bne     v0, at, _normal
         nop
         
+        addiu   at, r0, 0x0014
+        sh      at, 0x0ADE(s1)              // refill ammo
+        
+        _normal:
         j       _return                     // return
         addiu   at, r0, 0x0013              // original line 2   
         
@@ -393,6 +399,8 @@ scope JigglypuffKirbyShared {
         addiu   at, r0, Character.id.JKIRBY      // JKIRBY ID
 		beq     t0, at, _kirby_fix_1
         nop
+        
+        
         j       0x800E23FC          		// modified original line 1, was a bnel for everyone but kirby
         lw		v0, 0x09E8(s1)                  // original line 2  
         
@@ -658,6 +666,26 @@ scope JigglypuffKirbyShared {
         j_0x80161F04:
         j       0x80161F04
         sw      r0, 0x0AF0(a0)              // original line 2
+    }
+    
+    // @ Description
+    // Fills Kirby's flame ammo after Bowser absorption
+    scope kirby_ammo_: {
+        OS.patch_start(0xDC9C0, 0x80161F80)
+        jal     kirby_ammo_
+        sw      v0, 0x0ADC(s0)              // original line 1 (saves Bowser ID to Kirby Power address in player struct)
+        _return:
+        OS.patch_end()
+
+        ori     t3, r0, Character.id.BOWSER // Bowser ID in t3
+        bne     t3, v0, _end
+        ori     t3, r0, 0x0014              // max ammo
+        
+        sh      t3, 0xAE2(s0)               // save max ammo
+
+        _end:
+        j       _return
+        addu    t3, v1, t2                  // original line 2
     }
     
     OS.align(16)

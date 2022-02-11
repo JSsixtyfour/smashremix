@@ -24,6 +24,13 @@ scope StockMode {
     db 3, 3, 3, 3                           // previous stock count override for p1 through p4
 
     // @ Description
+    // Holds initial stock count for the match for players 1-4, for all stock modes.
+    // This is helpful when scoring on the results screen.
+    // Initialize for 4 stocks
+    initial_stock_count_table:
+    db 3, 3, 3, 3                           // initial stock count for p1 through p4
+
+    // @ Description
     // Mode constants
     scope mode {
     	constant DEFAULT(0)
@@ -75,6 +82,10 @@ scope StockMode {
         or      t8, a1, r0                  // t8 = previous stock count
 
         _end:
+        li      a0, initial_stock_count_table
+        addu    a0, a0, s0                  // a0 = address of port's initial stock count
+        sb      t8, 0x0000(a0)              // save initial stock count in our custom table
+
         jr      ra
         sb      t8, 0x0077(sp)              // original line 1
     }

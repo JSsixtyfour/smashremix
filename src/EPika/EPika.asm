@@ -17,7 +17,7 @@ scope EPika {
 	Character.edit_action_parameters(EPIKA,   0xE2,         		-1,                         DOWN_SPECIAL_CONNECT,      -1)
 	Character.edit_action_parameters(EPIKA,   0xE6,         		-1,                         DOWN_SPECIAL_CONNECT,      -1)
 
-    
+
     // Set crowd chant FGM.
     Character.table_patch_start(crowd_chant_fgm, Character.id.EPIKA, 0x2)
     dh  0x0263

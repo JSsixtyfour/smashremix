@@ -162,7 +162,13 @@ scope Surface {
     add_surface(big_blue_surface_2, 4.0, OS.TRUE, 8, 4, 90, 5, 0, 130, 1, -1)
     add_surface(corneria_surface_1, 4.0, OS.TRUE, 8, 60, 190, 20, 0, 130, 2, 0x3C)
     add_surface(corneria_surface_2, 4.0, OS.TRUE, 8, 30, 180, 20, 0, 130, 2, 0x16)
-    add_surface(klaptrap, 4.0, OS.TRUE, 8, 25, -90, 100, 0, 130, 0, 0x34)
+    add_surface(mute, 4.0, OS.TRUE, 20, 15, 90, 100, 0, 65, 0, 0x1F)
+    add_surface(casino_left_diagonal, 4.0, OS.TRUE, 20, 10, 315, 100, 0, 65, 0, 0x3D6)
+    add_surface(casino_left_top, 4.0, OS.TRUE, 20, 10, 100, 100, 0, 65, 0, 0x3D6)
+    add_surface(casino_left_side, 4.0, OS.TRUE, 20, 10, 0, 100, 0, 65, 0, 0x3D6)
+    add_surface(casino_right_diagonal, 4.0, OS.TRUE, 20, 10, 225, 100, 0, 65, 0, 0x3D6)
+    add_surface(casino_right_top, 4.0, OS.TRUE, 20, 10, 100, 80, 0, 65, 0, 0x3D6)
+    add_surface(casino_right_side, 4.0, OS.TRUE, 20, 10, 180, 0, 0, 65, 0, 0x3D6)
     
     // write surfaces to ROM
     write_surfaces()

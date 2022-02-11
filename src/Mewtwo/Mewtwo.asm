@@ -8,7 +8,7 @@ scope Mewtwo {
     insert RUN_TURN,"moveset/RUN_TURN.bin"
     insert JUMP_1, "moveset/JUMP_1.bin"
     insert JUMP_2, "moveset/JUMP_2.bin"
-    
+
     insert DOWN_BOUNCE, "moveset/DOWN_BOUNCE.bin"
     insert DOWN_ATTACK_D, "moveset/DOWN_ATTACK_D.bin"
     insert DOWN_ATTACK_U, "moveset/DOWN_ATTACK_U.bin"
@@ -16,15 +16,15 @@ scope Mewtwo {
     insert EDGE_WAIT, "moveset/EDGE_WAIT.bin"
     insert EDGE_ATTACK_QUICK_2, "moveset/EDGE_ATTACK_QUICK_2.bin"
     insert EDGE_ATTACK_SLOW_2, "moveset/EDGE_ATTACK_SLOW_2.bin"
-    
+
     insert SPARKLE,"moveset/SPARKLE.bin"; Moveset.GO_TO(SPARKLE)                    // loops
     insert SHIELD_BREAK,"moveset/SHIELD_BREAK.bin"; Moveset.GO_TO(SPARKLE)          // loops
     insert STUN, "moveset/STUN.bin"; Moveset.GO_TO(STUN)                            // loops
     insert ASLEEP, "moveset/ASLEEP.bin"; Moveset.GO_TO(ASLEEP)                      // loops
-    
+
     insert TECH_ROLL,"moveset/TECH_ROLL.bin"
     insert TECH,"moveset/TECH.bin"
-    
+
     insert GRAB_RELEASE_DATA,"moveset/GRAB_RELEASE_DATA.bin"
     GRAB:; Moveset.THROW_DATA(GRAB_RELEASE_DATA); insert "moveset/GRAB.bin"
     insert GRAB_PULL,"moveset/GRAB_PULL.bin"
@@ -34,7 +34,7 @@ scope Mewtwo {
     insert BTHROW_DATA,"moveset/BACK_THROW_DATA.bin"
     BTHROW:; Moveset.CONCURRENT_STREAM(THROW_CONCURRENT); Moveset.THROW_DATA(BTHROW_DATA); insert "moveset/BACK_THROW.bin"
     insert ITEM_SHOOT,"moveset/ITEM_SHOOT.bin"
-    
+
     insert TAUNT,"moveset/TAUNT.bin"
     insert JAB_1,"moveset/JAB_1.bin"
     insert JAB_LOOP_START,"moveset/JAB_LOOP_START.bin"
@@ -58,7 +58,7 @@ scope Mewtwo {
     insert DAIR,"moveset/DOWN_AERIAL.bin"
     insert NAIR_LANDING,"moveset/NEUTRAL_AERIAL_LANDING.bin"
     insert FAIR_LANDING,"moveset/FORWARD_AERIAL_LANDING.bin"
-    
+
     insert NSPG_BEGIN,"moveset/NSPG_BEGIN.bin"
     insert NSPG_CHARGE, "moveset/NSPG_CHARGE.bin"
     insert NSP_CHARGE_LOOP, "moveset/NSP_CHARGE_LOOP.bin"; Moveset.GO_TO(NSP_CHARGE_LOOP) // loops
@@ -69,7 +69,7 @@ scope Mewtwo {
     insert USP_BEGIN,"moveset/USP_BEGIN.bin"
     insert USP_END,"moveset/USP_END.bin"
     insert DSP,"moveset/DSP.bin"
-    
+
     insert ENTRY,"moveset/ENTRY.bin"
     insert VICTORY_1,"moveset/VICTORY_1.bin"
     insert VICTORY_2,"moveset/VICTORY_2.bin"
@@ -285,7 +285,7 @@ scope Mewtwo {
     Character.edit_action_parameters(MTWO,  0xE7,                       File.MTWO_JAB_2,            JAB_LOOP_START,             0x00000000)
     Character.edit_action_parameters(MTWO,  0xE8,                       File.MTWO_JAB_2_LOOP,       JAB_LOOP,                   0x00000000)
     Character.edit_action_parameters(MTWO,  0xE9,                       File.MTWO_JAB_2_END,        0x80000000,                 0x00000000)
-    
+
     // Modify Actions            // Action          // Staling ID   // Main ASM                     // Interrupt/Other ASM              // Movement/Physics ASM         // Collision ASM
     Character.edit_action(MTWO, 0xDE,               0x12,             MewtwoNSP.begin_main_,        0x8015D464,                         0x800D8BB4,                     MewtwoNSP.ground_begin_collision_)  //NSP_Ground_Begin
     Character.edit_action(MTWO, 0xDF,               0x12,             MewtwoNSP.charge_main_,       MewtwoNSP.ground_charge_interrupt_, 0x800D8BB4,                     MewtwoNSP.ground_charge_collision_) //NSP_Ground_Charge
@@ -300,13 +300,13 @@ scope Mewtwo {
     Character.edit_action(MTWO, 0xE7,               0x4,              0x8014F0D0,                   0,                                  0x800D8BB4,                     0x800DDF44)                         //RapidJabStart
     Character.edit_action(MTWO, 0xE8,               0x4,              0x8014F2A8,                   0x8014F388,                         0x800D8BB4,                     0x800DDF44)                         //RapidJabLoop
     Character.edit_action(MTWO, 0xE9,               0x4,              0x800D94C4,                   0,                                  0x800D8BB4,                     0x800DDF44)                         //RapidJabEnd
-    
+
     // Add Action Parameters                // Action Name      // Base Action  // Animation                // Moveset Data             // Flags
     Character.add_new_action_params(MTWO,   USP_Ground_Begin,   -1,             File.MTWO_USPG_BEGIN,       USP_BEGIN,                  0)
     Character.add_new_action_params(MTWO,   USP_Ground_End,     -1,             File.MTWO_USPG_END,         USP_END,                    0)
     Character.add_new_action_params(MTWO,   USP_Air_Begin,      -1,             File.MTWO_USPA_BEGIN,       USP_BEGIN,                  0)
     Character.add_new_action_params(MTWO,   USP_Air_End,        -1,             File.MTWO_USPA_END,         USP_END,                    0)
-    
+
     // Add Actions                   // Action Name     // Base Action  //Parameters                        // Staling ID   // Main ASM                     // Interrupt/Other ASM          // Movement/Physics ASM             // Collision ASM
     Character.add_new_action(MTWO,   USP_Ground_Begin,  -1,             ActionParams.USP_Ground_Begin,      0x11,           MewtwoUSP.begin_main_,          0,                              0x800D8BB4,                         MewtwoUSP.ground_begin_collision_)
     Character.add_new_action(MTWO,   USP_Ground_Move,   -1,             -1,                                 0x11,           MewtwoUSP.move_main_,           0,                              MewtwoUSP.move_physics_,            MewtwoUSP.ground_move_collision_)
@@ -314,7 +314,7 @@ scope Mewtwo {
     Character.add_new_action(MTWO,   USP_Air_Begin,     -1,             ActionParams.USP_Air_Begin,         0x11,           MewtwoUSP.begin_main_,          0,                              0x800D91EC,                         MewtwoUSP.air_begin_collision_)
     Character.add_new_action(MTWO,   USP_Air_Move,      -1,             -1,                                 0x11,           MewtwoUSP.move_main_,           0,                              MewtwoUSP.move_physics_,            MewtwoUSP.air_move_collision_)
     Character.add_new_action(MTWO,   USP_Air_End,       -1,             ActionParams.USP_Air_End,           0x11,           MewtwoUSP.air_end_main_,        0,                              0x800D91EC,                         MewtwoUSP.end_collision_)
-    
+
     // Modify Menu Action Parameters                // Action       // Animation                 // Moveset Data             // Flags
     Character.edit_menu_action_parameters(MTWO,     0x0,            File.MTWO_IDLE,             -1,                         -1)
     Character.edit_menu_action_parameters(MTWO,     0x1,            File.MTWO_VICTORY_1,        VICTORY_1,                  -1)
@@ -326,7 +326,7 @@ scope Mewtwo {
     Character.edit_menu_action_parameters(MTWO,     0xA,            File.MTWO_CONTINUE_UP,      0x80000000,                 -1)
     Character.edit_menu_action_parameters(MTWO,     0xD,            File.MTWO_POSE_1P,          0x80000000,                 -1)
     Character.edit_menu_action_parameters(MTWO,     0xE,            File.MTWO_1P_CPU_POSE,      0x80000000,                 -1)
-    
+
     // Set subroutines for special move initiations.
     Character.table_patch_start(ground_nsp, Character.id.MTWO, 0x4)
     dw      MewtwoNSP.ground_begin_initial_
@@ -346,7 +346,7 @@ scope Mewtwo {
     Character.table_patch_start(air_dsp, Character.id.MTWO, 0x4)
     dw      MewtwoDSP.air_initial_
     OS.patch_end()
-    
+
     // Set subroutines for rapid jab actions.
     Character.table_patch_start(rapid_jab_begin_action, Character.id.MTWO, 0x4)
     dw      set_rapid_jab_begin_action_
@@ -357,25 +357,28 @@ scope Mewtwo {
     Character.table_patch_start(rapid_jab_ending_action, Character.id.MTWO, 0x4)
     dw      set_rapid_jab_ending_action_
     OS.patch_end()
-    
+
     // Set menu zoom size.
     Character.table_patch_start(menu_zoom, Character.id.MTWO, 0x4)
     float32 0.9
     OS.patch_end()
-    
+
     // Set default costumes
     Character.set_default_costumes(Character.id.MTWO, 0, 2, 3, 1, 2, 3, 1)
-    
+
+    // Shield colors for costume matching
+    Character.set_costume_shield_colors(MTWO, PURPLE, GREEN, RED, BLUE, YELLOW, CYAN, NA, NA)
+
     // Remove entry script.
     Character.table_patch_start(entry_script, Character.id.MTWO, 0x4)
     dw 0x8013DD68                           // skips entry script
     OS.patch_end()
-    
+
     // Remove grounded script.
     Character.table_patch_start(grounded_script, Character.id.MTWO, 0x4)
     dw Character.grounded_script.DISABLED   // skips grounded script
     OS.patch_end()
-    
+
     // Set crowd chant FGM.
     Character.table_patch_start(crowd_chant_fgm, Character.id.MTWO, 0x2)
     dh 0x3B1
@@ -385,7 +388,7 @@ scope Mewtwo {
     Character.table_patch_start(kirby_inhale_struct, 0x2, Character.id.MTWO, 0xC)
     dh 0x1B
     OS.patch_end()
-    
+
     // Patches for full charge Neutral B effect.
     Character.table_patch_start(gfx_routine_end, Character.id.MTWO, 0x4)
     dw      charge_gfx_routine_
@@ -465,7 +468,7 @@ scope Mewtwo {
     Character.table_patch_start(action_string, Character.id.MTWO, 0x4)
     dw  Action.action_string_table
     OS.patch_end()
-    
+
     // @ Description
     // Jump table patch which sets the rapid jab begin action.
     scope set_rapid_jab_begin_action_: {
@@ -473,7 +476,7 @@ scope Mewtwo {
         j       0x8014F174                  // return
         sw      t8, 0x0020(sp)              // store action id
     }
-    
+
     // @ Description
     // Jump table patch which sets the rapid jab loop action.
     scope set_rapid_jab_loop_action_: {
@@ -481,7 +484,7 @@ scope Mewtwo {
         j       0x8014F42C                  // return
         sw      t8, 0x0020(sp)              // store action id
     }
-    
+
     // @ Description
     // Jump table patch which sets the rapid jab ending action.
     scope set_rapid_jab_ending_action_: {
@@ -489,7 +492,7 @@ scope Mewtwo {
         j       0x8014F42C                  // return
         sw      t8, 0x0020(sp)              // store action id
     }
-    
+
     // @ Description
     // Patch which initiates a rapid jab instead of jab 2 for Mewtwo.
     scope rapid_jab_patch_: {
@@ -498,7 +501,7 @@ scope Mewtwo {
         nop
         _return:
         OS.patch_end()
-        
+
         addiu   sp, sp,-0x0028              // original line 1
         sw      ra, 0x001C(sp)              // original line 2
         lw      t6, 0x0084(a0)              // ~
@@ -506,11 +509,11 @@ scope Mewtwo {
         lli     at, Character.id.MTWO       // at = id.MTWO
         beq     t6, at, _mewtwo             // branch if character = MTWO
         nop
-        
+
         // if the character is not mewtwo
         j       _return                     // return and continue original subroutine
         nop
-        
+
         _mewtwo:
         jal     0x8014F0F4                  // rapid jab initial subroutine
         nop
@@ -518,7 +521,7 @@ scope Mewtwo {
         jr      ra                          // end subroutine
         addiu   sp, sp, 0x0028              // deallocate stack space
     }
-    
+
     // @ Description
     // Jump table patch which enables Mewtwo's charged neutral b effect when another gfx routine ends, or upon action change.
     scope charge_gfx_routine_: {
@@ -527,24 +530,24 @@ scope Mewtwo {
         lw      a0, 0x0020(sp)              // a0 = player object
         bne     t9, at, _end                // skip if charge level != 7 (full)
         lli     a1, GFXRoutine.id.MEWTWO_CHARGE // a1 = MEWTWO_CHARGE id
-        
+
         // if the neutral special is full charged
         or      a2, r0, r0                  // a2 = 0
         jal     0x800E9814                  // begin gfx routine
         sw      a3, 0x001C(sp)              // store a3
-        
+
         _end:
         j       0x800E9A60                  // return
         lw      a3, 0x001C(sp)              // load a3
     }
 
-    // Originally, Mewtwo was intended to use a unique graphical effect for Up Smash. This was never finished.    
+    // Originally, Mewtwo was intended to use a unique graphical effect for Up Smash. This was never finished.
 //  // @ Description
 //  // Modifies the standard Up Smash Main Routine so that Mewtwo can use his Up Smash GFX
 //      OS.patch_start(0xA5608, 0x80129E08)
 //      dw      custom_usmash_
 //      OS.patch_end()
-//      
+//
 //      scope custom_usmash_: {
 //      addiu   sp, sp, -0x0018
 //      sw      ra, 0x0014(sp)
@@ -568,9 +571,9 @@ scope Mewtwo {
 //      sb      t2, 0x018F(v1)              // this is done so that the GFX can be destroyed, this a bitfield related to the bone struct
 //      beq     r0, r0, _normal
 //      sw      r0, 0x017C(v1)
-//      
+//
 //      _end_graphics:
-//      lw      v1, 0x0004(sp)              // load player struct     
+//      lw      v1, 0x0004(sp)              // load player struct
 //      jal     0x800E9C3C                  // routine that ends graphics
 //      lw      a0, 0x0004(v1)              // load player object into a0
 //

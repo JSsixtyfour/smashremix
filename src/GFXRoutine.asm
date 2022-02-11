@@ -6,9 +6,9 @@ print "included GFXRoutine.asm\n"
 // This file adds support for additional gfx routines.  These are called by function 0x800E974C (wrapped version for players is 0x800E9814)
 // They can also be called with the moveset command BXXXYYYY, XXX = gfx routine index, YYYY = duration
 
-scope GFXRoutine {  
+scope GFXRoutine {
     variable new_gfx_routine_count(0)       // number of new gfx routines
-    
+
     // COMMANDS
     // 0400XXXX - synchronous timer, wait X frames)
     // 08000000 XXXXXXXX - goto, jump to address X
@@ -24,13 +24,13 @@ scope GFXRoutine {
     // 38000000 - unknown, seems like maybe copy of create GFX?
     // 3CXXYYZZ - use custom light, offset light position by XX/YY/ZZ (s16)
     // 40000000 - unknown, usually at the end of non-looping routines? maybe clears light?
-    
+
     // @ Description
     // adds an END command
     macro END() {
         dw 0x00000000                       // command
     }
-    
+
     // @ Description
     // adds a WAIT command
     macro WAIT(frames) {
@@ -86,13 +86,13 @@ scope GFXRoutine {
         dw 0x34000000 | (({bone} & 0xFF) << 19) | (({id} & 0xFF) << 10)  // command
         dh {x1}; dh {y1}; dh {z1}           // X/Y/Z (offset)
         dh {x2}; dh {y2}; dh {z2}           // X/Y/Z (range)
-    }  
+    }
     // @ Description
     macro SET_LIGHT(x,y,z) {
         dw 0x3C000000 | (({x} & 0xFF) << 16) | (({y} & 0xFF) << 8) | ({z} & 0xFF) // command
     }
-    
-    
+
+
     // @ Description
     // Adds a gfx routine from a binary file.
     // name - gfx routine name, id.{name} will be created
@@ -111,7 +111,7 @@ scope GFXRoutine {
         // print message
         print "Added GFX Routine: {name} - Moveset command is 0x" ; OS.print_hex(0xB000 + (id.{name} << 2)) ;; print "0000, ID is 0x" ; OS.print_hex(id.{name}) ; print "\n"
     }
-    
+
     // @ Description
     // Adds a gfx routine with a given address.
     // name - gfx routine name, id.{name} will be created
@@ -146,7 +146,7 @@ scope GFXRoutine {
             // increment
             evaluate n({n}+1)
         }
-        
+
         // Define a table containing new gfx routine effects
         OS.align(16)
         gfx_routine_table_extended:                      // 0x01
@@ -166,11 +166,11 @@ scope GFXRoutine {
             evaluate n({n}+1)
         }
     }
-    
+
     // ADD NEW GFX ROUTINES HERE
-    
+
     print "============================= GFX ROUTINES =============================== \n"
-    
+
     insert MEWTWO_NAIR, "gfx/routines/MEWTWO_NAIR.bin"; GO_TO(MEWTWO_NAIR) // loops
     insert MEWTWO_FLAME_HAND, "gfx/routines/MEWTWO_FLAME_HAND.bin"; GO_TO(MEWTWO_FLAME_HAND) // loops
     insert MEWTWO_CHARGE, "gfx/routines/MEWTWO_CHARGE.bin"; GO_TO(MEWTWO_CHARGE) // loops
@@ -188,8 +188,14 @@ scope GFXRoutine {
     MARTH_COUNTER_FLASH:; OVERLAY(0xFFFFFFC0); WAIT(1); BEGIN_LOOP(4); OVERLAY(0xFFFFFF50); WAIT(2); OVERLAY(0xC030FF50); WAIT(2); CLEAR_OVERLAY(); WAIT(2); END_LOOP(); END()
     PHANTASM_BLUE:; OVERLAY(0x00F0FFE0); WAIT(4); END()
     FLASH_PINK:; OVERLAY(0xFF80DFE0); WAIT(5); END()
-    MARTH_ENTRY:; OVERLAY(0xFFFFFFFF); WAIT(4); OVERLAY_SHIFT(0xFFE8A0FF, 10); WAIT(10);  OVERLAY_SHIFT(0xFFE8A000, 60); WAIT(60); CLEAR_OVERLAY(); END()
-    
+    MARTH_ENTRY:; OVERLAY(0xFFFFFFFF); WAIT(4); OVERLAY_SHIFT(0xFFE8A0FF, 10); WAIT(10); OVERLAY_SHIFT(0xFFE8A000, 60); WAIT(60); CLEAR_OVERLAY(); END()
+    STAMINA_KO:;   OVERLAY(0xFF000080); WAIT(2); OVERLAY_SHIFT(0xFF000000, 16); WAIT(16); CLEAR_OVERLAY(); GO_TO(STAMINA_KO)
+    SONIC_NSP_CHARGE:;  OVERLAY(0x00A0FF0A); OVERLAY_SHIFT(0x80C0FFA0, 22); WAIT(22); BEGIN_LOOP(8); OVERLAY(0x80C0FF80); WAIT(2); OVERLAY(0xF0FFFFD0); WAIT(2); END_LOOP(); END()
+    SONIC_NSP_ATTACK:;  OVERLAY(0xF0FFFFD0); OVERLAY_SHIFT(0x40A0FF00, 18); WAIT(18); CLEAR_OVERLAY(); END()
+    SSONIC_NSP_CHARGE:;  OVERLAY(0xfff9000A); OVERLAY_SHIFT(0xf5ff62A0, 22); WAIT(22); BEGIN_LOOP(8); OVERLAY(0xf5ff6280); WAIT(2); OVERLAY(0xfaf8abD0); WAIT(2); END_LOOP(); END()
+    SSONIC_NSP_ATTACK:;  OVERLAY(0xfaf8abD0); OVERLAY_SHIFT(0xfaff0000, 18); WAIT(18); CLEAR_OVERLAY(); END()
+    LASER:;  BEGIN_LOOP(4); OVERLAY(0xFF0000A0); WAIT(2); OVERLAY(0x0000FFA0); WAIT(2); END_LOOP(); BEGIN_LOOP(4); OVERLAY(0xFF000060); WAIT(2); OVERLAY(0x0000FF60); WAIT(2); END_LOOP(); BEGIN_LOOP(4); OVERLAY(0xFF000030); WAIT(2); OVERLAY(0x0000FF30); WAIT(2); END_LOOP(); CLEAR_OVERLAY(); END()
+
     // name - gfx routine effect name, used for display only
     // filename - file containing gfx routine commands
     // priority - the priority this routine has relative to others, higher/equal priority will override an active routine
@@ -197,7 +203,7 @@ scope GFXRoutine {
     // bool_action - TRUE = end routine when changing actions, FALSE = continue routine when changing actions
     // Generally 60 is used for character/moveset gfx routines, 100 is used for damage related effects, and other lower values are used for less common specific scenarios
     // In order to maintain these conventions, we should generally be using 60 for new character gfx routines, or 100 for effects that are important enough that they should always appear
-    
+
     add_gfx_routine(MEWTWO_NAIR, MEWTWO_NAIR, 100, OS.TRUE)
     add_gfx_routine(MEWTWO_FLAME_HAND, MEWTWO_FLAME_HAND, 100, OS.TRUE)
     add_gfx_routine(MEWTWO_CHARGE, MEWTWO_CHARGE, 10, OS.FALSE)
@@ -214,14 +220,20 @@ scope GFXRoutine {
     add_gfx_routine(FLASH_PINK, FLASH_PINK, 100, OS.TRUE)
     add_gfx_routine(KIRBY_MTWO_CHARGE, KIRBY_MTWO_CHARGE, 10, OS.FALSE)
     add_gfx_routine(MARTH_ENTRY, MARTH_ENTRY, 60, OS.TRUE)
-    
+    add_gfx_routine(STAMINA_KO, STAMINA_KO, 101, OS.FALSE)
+    add_gfx_routine(SONIC_NSP_CHARGE, SONIC_NSP_CHARGE, 60, OS.TRUE)
+    add_gfx_routine(SONIC_NSP_ATTACK, SONIC_NSP_ATTACK, 60, OS.TRUE)
+    add_gfx_routine(SSONIC_NSP_CHARGE, SSONIC_NSP_CHARGE, 60, OS.TRUE)
+    add_gfx_routine(SSONIC_NSP_ATTACK, SSONIC_NSP_ATTACK, 60, OS.TRUE)
+    add_gfx_routine(LASER, LASER, 100, OS.FALSE)
+
     // write gfx routines to ROM
     write_gfx_routines()
-    
+
     print "========================================================================== \n"
-    
+
     // ASM PATCHES
-    
+
     // @ Description
     // Modifies the original routine (0x800E974C) to use the extended gfx routine table when a new id is used.
     scope extend_gfx_routine_table_: {
@@ -230,31 +242,31 @@ scope GFXRoutine {
         nop
         _return:
         OS.patch_end()
-        
+
         // v1 = original table
         // a1 = new gfx routine id
         // t8 = current gfx routine id
         li      t7, gfx_routine_table_extended // t7 = gfx_routine_table_extended
         addiu   t7, t7,-0x02B0              // decrement base table address by the size of the original table (this means the first new id maps to the first extended table entry)
-        
+
         sltiu   at, t8, 0x0056              // at = 1 if current gfx routine id is original, 0 otherwise
         bnez    at, _continue               // branch if current id is original...
         addu    t0, v1, t9                  // ...and add offset to original table (original line 1)
-        
+
         addu    t0, t7, t9                  // if the id is new, add use the extended table instead
-        
+
         _continue:
         sltiu   at, a1, 0x0056              // at = 1 if new gfx routine id is original, 0 otherwise
         bnez    at, _end                    // branch if current id is original...
         addu    v0, v1, t6                  // ...and add offset to original table (original line 2)
-        
+
         addu    v0, t7, t6                  // if the id is new, add use the extended table instead
-        
+
         _end:
         j       _return                     // return
         nop
     }
-    
+
     // @ Description
     // Patch which adds the extended routine table to the check which occurs on action changes.
     scope action_change_fix_: {
@@ -265,17 +277,17 @@ scope GFXRoutine {
         nop
         _return:
         OS.patch_end()
-        
+
         // t7 = current gfx routine id
         li      t9, 0x8012DBD0              // t9 = original table address
         sltiu   at, t7, 0x0056              // at = 1 if new gfx routine id is original, 0 otherwise
         bnez    at, _end                    // branch if current id is original
         sll     t8, t7, 0x0003              // t8 = offset (id * 8)
-        
+
         // if id is new
         li      t9, gfx_routine_table_extended // t9 = gfx_routine_table_extended
         addiu   t9, t9,-0x02B0              // decrement base table address by the size of the original table (this means the first new id maps to the first extended table entry)
-        
+
         _end:
         addu    t9, t9, t8                  // t9 = table + offset
         j       _return                     // return

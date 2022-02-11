@@ -45,6 +45,8 @@ A menu for modifying certain character attributes is available on each panel.
 
 ##### Shield
 - Allows selecting a shield color.
+- The Costume option will use a shield color matching the selected costume.
+- The Vanilla option will use the vanilla shield color scheme for that port.
 ##### Visibility 
 - Allows playing as completely invisible (None), slightly visible (Cloaked), or as a silhouette (Dark).
 ##### Skeleton 
@@ -64,6 +66,15 @@ A menu for modifying certain character attributes is available on each panel.
 - Adds input delay to imitate netplay. HMN ports only.
 ##### Handicap
 - Allows modifying CPU handicap. CPU ports only.
+##### Input HUD
+- Allows showing the button and joystick inputs in an unobtrusive overlay.
+- Can be configured to show on top or bottom of screen.
+##### Start With
+- Allows specifying an item for the character to start matches and respawn with.
+##### Taunt Itm.
+- Allows specifying an item that will spawn in the character's possession when the taunt button is pressed.
+##### Taunt Btn.
+- Allows remapping the taunt button to C or d-pad buttons.
 
 #### Toggle Name: _CSS Panel Menu_
 
@@ -75,11 +86,13 @@ A menu for modifying certain character attributes is available on each panel.
 - Pressing L on the stage select screen will cycle through options related to stage hazards.
 - This is indicated by the stage selection cursor's color changing to blue and the wooden circle having the state of hazards.
 - Hazards (bumpers, barrels, etc.) and Movement (of platforms) can be controlled.
+- Note: Movement set to OFF will also freeze animations such as the Dreamland water.
+- Note: This setting is ignored for the Tournament profile and Tournament stage select layout.
 
 #### Toggle Name: _Hazard Mode_
 
 ### Stage Select Layout
-- Choose between NORMAL and TOURNAMENT stage select layouts. In the TOURNAMENT layout, the best performing and likely tournament legal stages are on the first page.
+- Choose between NORMAL and TOURNAMENT stage select layouts. In the TOURNAMENT layout, the stages available align with the Smash Remix Tour ruleset.
 
 #### Toggle Name: _Stage Select Layout_
 
@@ -98,6 +111,11 @@ A menu for modifying certain character attributes is available on each panel.
 
 #### Toggle Name: _Salty Runback_
 
+### Salty Runback Preserves Song
+- Salty Runbacks will restart with the same track.
+
+#### Toggle Name: _Salty Runback Preserves Song_
+
 ### Timed Stock Matches
 - Stock matches have a timer. Enabled by default but can be toggled off by setting TIME to "infinity."
 
@@ -110,6 +128,10 @@ A menu for modifying certain character attributes is available on each panel.
 - Features 3 preset character sets (Default, Japanese, Remix) and allows for a custom character set per player.
 - Best character for each player is tracked as the number of TKOs the opposing player experiences against your character.
 - Only ports 1 and 2 work with this mode.
+
+### Stamina Mode
+- New VS mode rule option which enables H.P. to be used instead of damage.
+- The player is out when H.P. reaches 0, and the match ends when only one player/team has H.P. remaining.
 
 ### Additional Items
  - New items available in training mode and in VS mode.
@@ -153,6 +175,7 @@ Load a curated list of tracks.
 ### Menu Music
 - Choose between the classic SSB64 music or from Melee's and Brawl's menu themes.
 - By default, the Melee and Brawl themes will play from time to time.
+- Can turn menu music off if desired.
 
 #### Toggle Name: _Menu Music_
 
@@ -216,6 +239,9 @@ When Special Model Display is Hitbox or Hitbox+, these changes are applied:
 #### Toggle Name: _Flash On Z-Cancel_
 
 ## Quality of Life
+## New Music Added
+- Dozens of new music tracks featuring some new instruments added.
+
 ### 360 Degree Pause Camera
 - Allows the camera to be rotated freely while the game is paused.
 
@@ -235,10 +261,14 @@ When Special Model Display is Hitbox or Hitbox+, these changes are applied:
 - Tournament approved match settings set by default. (4 stocks, 8:00 timer)
 
 ### Shield Colors Match Player Ports and Teams
-- Shield colors will match the color of the port or team the character is on.
+- Shield colors will match the color of the port or team the character is on, unless the Shield CSS debug menu setting is set to Vanilla for the port.
+
+### Improved VS Results Screen Scoring for Timeouts
+- In timed matches, ties are broken by number of KOs.
 
 ### Skip Results Screen
 - The results screen is not shown.
+- Can be overridden by holding L + R at the end of a match.
 
 #### Toggle Name: _Skip Results Screen_
 
@@ -262,6 +292,16 @@ When Special Model Display is Hitbox or Hitbox+, these changes are applied:
 - For an overclocked N64, use the OVERCLOCKED option.
 
 #### Toggle Name: _FPS Display *BETA_
+
+### Stereo Fix for Hit SFX
+- Fixes a vanilla bug where some SFX is panned in the wrong direction.
+
+#### Toggle Name: _Stereo Fix for Hit SFX_
+
+### Always Show Full Results
+- When off, restores vanilla results screen behavior for stock matches.
+
+#### Toggle Name: Always Show Full Results
 
 ## Training Mode
 ### Custom Menu
@@ -292,6 +332,11 @@ When Special Model Display is Hitbox or Hitbox+, these changes are applied:
 
 ### Show Action and Frame
 - Pressing L toggles display of each character's current action and frame of animation.
+
+### Skip Training Start Cheer
+- Disables the cheer sound at the start of Training Mode.
+
+#### Toggle Name: Skip Training Start Cheer
 
 ## Japanese Gameplay
 ### Japanese Hitlag
@@ -330,6 +375,9 @@ When Special Model Display is Hitbox or Hitbox+, these changes are applied:
 ### Bonus 3 (Race to the Finish)
 - Record best times for completing the RTTF stage using all characters just like for Bonus 1 and Bonus 2.
 
+### Remix BTT/BTP
+- Use any character on any BTT/BTP stage and track best times.
+
 ### Remix 1p Mode
 - A new take on the standard 1p Mode
     - Fight randomly selected Remix characters at one of their three randomly selected stages
@@ -348,6 +396,9 @@ When Special Model Display is Hitbox or Hitbox+, these changes are applied:
 
 ### Cruel Multiman
 - Same as Multiman Mode but much more difficult.
+
+### Home-Run Contest
+- Deal as much damage to the Sandbag to knock it as far as you can before time runs out.
 
 ## Profiles
 - Toggles can be controlled quickly by choosing one of three built-in profiles: Community, Tournament, Netplay and Japanese
@@ -380,15 +431,19 @@ Japanese DI                | Off                | Off               | Off       
 Japanese Sounds            | Default            | Default           | Default           | Always
 Momentum Slide             | Off                | Off               | Off               | On
 Japanese Shield Stun       | Off                | Off               | Off               | On
+Stereo Fix for Hit SFX     | On                 | On                | On                | On
 Random Select With Variants| Off                | Off               | Off               | Off
 Disable VS Pause HUD       | Off                | Off               | Off               | Off
 Disable Anti-Aliasing      | Off                | Off               | Off               | Off
+Always Show Full Results   | On                 | On                | On                | On
+Skip Training Start Cheer  | Off                | Off               | Off               | Off
 
 #### Music Settings
 Toggle                          | Community          | Tournament        | Netplay           | Japanese
 --------------------------------|--------------------|-------------------|-------------------|-------------------
 Play Music                      | On                 | On                | On                | On 
 Random Music                    | Off                | Off               | On                | Off
+Salty Runback Preserves Song    | Off                | Off               | Off               | Off
 Menu Music                      | DEFAULT            | DEFAULT           | 64                | DEFAULT
 Music Title at Match Start      | On                 | Off               | On                | On 
 _Random Toggles for All Tracks_ | On                 | On                | On                | On
@@ -408,13 +463,25 @@ These stages are set to on in the Tournament profile:
 - Glacial River
 - Dr. Mario
 - Fray's Stage
+- Spiral Mountain
+- Mute City DL
 - Zebes Landing
 - Smashville
 - Yoshi's Story
 - Gerudo Valley
+- Hyrule Castle DL (Hazards Off)
+- Congo Jungle DL (Hazards Off)
+- Peach's Castle DL (Hazards Off)
+- Fray's Stage - Night
 - Goomba Road
+- Sector Z DL (Hazards Off)
 - Saffron City DL
+- Yoshi's Island DL (Hazards Off)
+- Zebes DL (Hazards Off)
 - Planet Clancer
+- Final Destination DL
+- Duel Zone DL
+- Meta Crysal DL
 
 These stages are set to on in the Semi-Competitive profile:
 - Congo Jungle
@@ -438,9 +505,9 @@ These stages are set to on in the Semi-Competitive profile:
 - Muda Kingdom
 - Mementos
 - Sprial Mountain
-- Mute City
+- Mute City DL
 - Mad Monster Mansion
-- Bowswer's Stadium
+- Bowser's Stadium
 - Delfino Plaza
 - Kitchen Island
 - Zebes Landing
@@ -464,3 +531,9 @@ These stages are set to on in the Semi-Competitive profile:
 - Tent Final Destination
 - Cool Cool Mountain SR
 - Cool Cool Mountain DL
+- Mute City
+- Green Hill Zone
+- Subcon
+- Pirate Land
+- Casino Night Zone
+- Metallic Madness

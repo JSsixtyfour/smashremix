@@ -9,10 +9,10 @@ scope JDK {
     insert DAIR, "moveset/DAIR.bin"
 
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
-    
+
     Character.edit_action_parameters(JDK, Action.AttackAirB,      -1,                         BAIR,                       -1)
     Character.edit_action_parameters(JDK, Action.AttackAirD,      -1,                         DAIR,                       -1)
-    
+
     // Set crowd chant FGM.
     Character.table_patch_start(crowd_chant_fgm, Character.id.JDK, 0x2)
     dh  0x0315
@@ -22,7 +22,7 @@ scope JDK {
     Character.table_patch_start(action_string, Character.id.JDK, 0x4)
     dw  Action.DK.action_string_table
     OS.patch_end()
-    
+
     // coding for JDK's unique Spinning Kong Velocity Startup
     // the constant velocity multiplier is actually identical in all versions
     // the difference is a slight coding change at the very beginning of the move
@@ -33,7 +33,7 @@ scope JDK {
         nop
         _return:
         OS.patch_end()
-        
+
         lw      v0, 0x0084(a0)              // original line 1
         lwc1    f4, 0xC878(at)              // original line 2
         addiu   sp, sp,-0x0010              // allocate stack space
@@ -48,8 +48,8 @@ scope JDK {
         addiu   sp, sp, 0x0010              // deallocate stack space
         j       _return                     // return
         nop
-        
-        
+
+
         _jdkspin:
         lui     t2, 0x4190
         mtc1    t2, f4
@@ -59,7 +59,7 @@ scope JDK {
         j       _return                     // return
         nop
     }
-    
+
     // coding for JDK's unique cargo hold, which requires a higher base amount of inputs to escape
     // J version has a number of 0x41A0 and the U version has 0x4160
     scope jdk_cargo_: {
@@ -68,7 +68,7 @@ scope JDK {
         nop
         _return:
         OS.patch_end()
-        
+
         lui     at, 0x4160                  // original line 1
         mtc1    at, f16                     // original line 2
         addiu   sp, sp,-0x0010              // allocate stack space
@@ -83,8 +83,8 @@ scope JDK {
         addiu   sp, sp, 0x0010              // deallocate stack space
         j       _return                     // return
         nop
-        
-        
+
+
         _jdkcargo:
         lui     at, 0x41A0
         mtc1    at, f16                     // original line 2
@@ -94,6 +94,6 @@ scope JDK {
         j       _return                     // return
         nop
     }
-    
+
 
     }

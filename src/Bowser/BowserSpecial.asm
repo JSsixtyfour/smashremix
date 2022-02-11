@@ -24,14 +24,11 @@ scope BowserNSP {
         sw      r0, 0x0B2C(v0)      // used
 		ori		a1, r0, Character.id.GBOWSER	// load Giga Bowser ID for check
 		lw		t6, 0x0008(v0)		// load character id
-		beql	t6, a1, _ammo_store	// branch for G Bowser ammo
+		bne	    t6, a1, _bowser	    // branch for everyone else but G Bowser ammo
         addiu   t6, r0, 0x0028      // setting initial ammo amount for GBOWSER
-		
-		addiu   t6, r0, 0x0014      // setting initial ammo amount for Bowser
-		
-		_ammo_store:
         sw      t6, 0x0B30(v0)      // I store ammo here, could potentially be unsafe, but seems to be used by other no conflicting things
     
+        _bowser:
         // lui     t6, 0x8016
         // addiu   t6, t6, 0xE57C
         
@@ -85,13 +82,12 @@ scope BowserNSP {
         sw      r0, 0x0B2C(v0)      // used
 		ori		a1, r0, Character.id.GBOWSER	// load Giga Bowser ID for check
 		lw		t6, 0x0008(v0)		// load character id
-		beql	t6, a1, _ammo_store	// branch for G Bowser ammo
+		bne	    t6, a1, _bowser	    // branch for everyone but G Bowser ammo
 		addiu	t6, r0, 0x0028		// setting gbowser initial ammo
-        addiu   t6, r0, 0x0014      // setting initial ammo amount for Bowser
 		
-		_ammo_store:
         sw      t6, 0x0B30(v0)      // I store ammo here, could potentially be unsafe, but seems to be used by other no conflicting things
     
+        _bowser:
         //lui     t6, 0x8016
         //addiu   t6, t6, 0xE588
         
@@ -199,7 +195,20 @@ scope BowserNSP {
         //      lw      t4, 0x0078(sp)                  // shouldn't be necessary with new ammo coding
         lw      t6, 0x0074(sp)
         lui     t7, 0x8019
+        ori     t5, r0, Character.id.GBOWSER
+        lw      t4, 0x0008(s0)                      // load character ID
+        beq     t4, t5, _post_ammo
         lw      t5, 0x0B30(s0)                      // load ammo (modified from original coding)
+        
+        ori     t5, r0, Character.id.BOWSER
+        beq     t4, t5, _post_ammo
+        lhu     t5, 0x0ADE(s0)                      // load ammo (modified from original coding)
+        
+        // kirby
+        
+        lhu     t5, 0x0AE2(s0)                      // load ammo (modified from original coding)
+        
+        _post_ammo:
         lui     t4, 0x8019
         addiu   t7, t7, 0x8684
         // slti    at, t5, t6
@@ -307,9 +316,18 @@ scope BowserNSP {
         
         bne     t2, at, skip_initial                // branch's purpose is to skip the initial graphic effects spawned after the first frame (801475E4 of fireflower original code)
         lw      t5, 0x0074(sp)
-        
+        lw      at, 0x0008(s0)
+        ori     t4, r0, Character.id.GBOWSER
+        beq     at, t4, _post_character_check
         lw      t4, 0x0B30(s0)                      // load ammo (modified from original coding)
+        ori     t4, r0, Character.id.BOWSER
+        beq     at, t4, _post_character_check
+        lhu     t4, 0x0ADE(s0)                      // load ammo (modified from original coding)
         
+        // kirby
+        lhu     t4, 0x0AE2(s0)                      // load ammo (modified from original coding)
+        
+        _post_character_check:
         OS.copy_segment(0xC203C, 0x0C)
         
         bnel    at, r0, unknowncheck2_              // 801476CC, doesn't seem to work right with revised ammo and probably relates to when fireflower is started without ammo, not necessary
@@ -381,7 +399,18 @@ scope BowserNSP {
         
         OS.copy_segment(0xC1D34, 0x20)
         
+        lw      at, 0x0008(s0)
+        ori     t0, r0, Character.id.GBOWSER
+        beq     at, t0, _branch
         lw      t0, 0x0B30(s0)                      // load ammo (modified from original coding) 
+        ori     t0, r0, Character.id.BOWSER
+        beq     at, t0, _branch
+        lhu     t0, 0x0ADE(s0)                      // load ammo (modified from original coding) 
+        
+        // kirby
+        lhu     t0, 0x0AE2(s0)                      // load ammo (modified from original coding) 
+        
+        _branch:
         slt     at, t0, a1
         bnel    at, r0, smoke_                      // used to breakdown here because at is based on t0, which is based on V0, which is based on T6, which is the fireflower object struct the game can't load. This is another ammo check, which skips much of the code if failed.
         lw      t7, 0x0B24(s0)
@@ -513,9 +542,33 @@ scope BowserNSP {
         swc1    f10, 0x0024(sp)
         //      lw      v0, 0x002C(sp)      // shouldn't be necessary with new ammo code
         lw      t5, 0x003C(sp)                      // load amount to subtract from ammo
+        lw      t6, 0x0008(s0)
+        ori     t4, r0, Character.id.GBOWSER
+        beq     t6, t4, gbowser_subtract
         lw      t4, 0x0B30(s0)                      // load ammo (modified from original coding)
+        
+        ori     t4, r0, Character.id.BOWSER
+        beq     t6, t4, bowser_subtract
+        lhu     t4, 0x0ADE(s0)                      // load ammo (modified from original coding)
+        
+        // kirby
+        lhu     t4, 0x0AE2(s0)                      // load ammo (modified from original coding)
+        subu    t6, t4, t5                          // subtract from ammo amount
+        beq     r0, r0, _end
+        sh      t6, 0x0AE2(s0)                      // save ammo (modified from original coding)
+        
+        
+        bowser_subtract:
+        subu    t6, t4, t5                          // subtract from ammo amount
+        beq     r0, r0, _end
+        sh      t6, 0x0ADE(s0)                      // save ammo (modified from original coding)
+        
+        gbowser_subtract:
         subu    t6, t4, t5                          // subtract from ammo amount
         sw      t6, 0x0B30(s0)                      // save ammo (modified from original coding)
+        
+        
+        _end:
         lw      ra, 0x0014(sp)
         addiu   sp, sp, 0x0030
         jr      ra
@@ -580,9 +633,33 @@ scope BowserNSP {
         swc1    f10, 0x0024(sp)
         //      lw      v0, 0x002C(sp)      // shouldn't be necessary with new ammo code
         lw      t5, 0x003C(sp)                      // load amount to subtract from ammo
+        
+        lw      t6, 0x0008(s0)
+        ori     t4, r0, Character.id.GBOWSER
+        beq     t6, t4, gbowser_subtract_2
         lw      t4, 0x0B30(s0)                      // load ammo (modified from original coding)
+        
+        ori     t4, r0, Character.id.BOWSER
+        beq     t6, t4, bowser_subtract_2
+        lhu     t4, 0x0ADE(s0)                      // load ammo (modified from original coding)
+        
+        // kirby
+        lhu     t4, 0x0AE2(s0)                      // load ammo (modified from original coding)
+        subu    t6, t4, t5                          // subtract from ammo amount
+        beq     r0, r0, _end_section
+        sh      t6, 0x0AE2(s0)                      // save ammo (modified from original coding)
+        
+        
+        bowser_subtract_2:
+        subu    t6, t4, t5                          // subtract from ammo amount
+        beq     r0, r0, _end_section
+        sh      t6, 0x0ADE(s0)                      // save ammo (modified from original coding)
+        
+        gbowser_subtract_2:
         subu    t6, t4, t5                          // subtract from ammo amount
         sw      t6, 0x0B30(s0)                      // save ammo (modified from original coding)
+        
+        _end_section:
         lw      ra, 0x0014(sp)
         addiu   sp, sp, 0x0030
         jr      ra

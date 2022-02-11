@@ -8,17 +8,15 @@ print "included CharacterSelectDebugMenu.asm\n"
 // provides greater control over characters and gameplay.
 
 // TODO:
-// - Prevent bonus autostart when debug menu shown
-// - CPU Level stuff flashes when debug menu is on when CPU is selected
-// - Add CPU-only flag (or something) so that some only apply to CPUs
-// - Probably still buggy with 4 panels
+// - CPU Level stuff flashes sometimes when debug menu is on when CPU is selected
+// - Team button flashes sometimes when debug menu is on when Team Battle is toggled
 
 include "Global.asm"
 include "OS.asm"
 
 scope CharacterSelectDebugMenu {
     // @ Description
-    // This points to the object that olds the debug button and menu objects
+    // This points to the object that holds the debug button and menu objects
     debug_control_object:
     dw 0x00000000
 
@@ -308,12 +306,28 @@ scope CharacterSelectDebugMenu {
         lw      at, 0x0044(a0)              // at = display state (0 = hidden, 1 = active)
         lw      t2, 0x0048(a0)              // t2 = previous display state (0 = hidden, 1 = active)
         addiu   t3, at, -0x0001             // t3 = -1 if menu is hidden, 0 if not
-
         lw      t4, 0x004C(a0)              // t4 = 1 if 1P/Bonus, 0 otherwise
 
         bnez    t4, _1p_bonus               // if 1P/Bonus, will use different offsets
         nop
 
+        lw      t1, 0x0014(t0)              // t1 = panel doors object, or 0
+        beqz    t1, _check_if_state_changed // if no panel doors, skip
+        lw      t1, 0x00A4(t0)              // t1 = panel door state (0 if completely open)
+
+        // The panel door should always be open all the way when the debug menu is open, unless
+        // the controller was just unplugged.
+
+        beqz    t1, _check_if_state_changed // if the doors are open, skip
+        nop
+        beqz    at, _check_if_state_changed // if the menu is hidden, skip
+        nop
+
+        // If here, the doors aren't open but the debug menu is showing, which is bad... so fix!
+        lli     at, 0x0000                  // at = display state = hidden
+        sw      at, 0x0044(a0)              // update display state
+
+        _check_if_state_changed:
         beq     t2, at, _run_every_frame    // skip the things that only need to change when toggling state
         sw      at, 0x0048(a0)              // update previous display state
 
@@ -321,22 +335,23 @@ scope CharacterSelectDebugMenu {
         bnezl   t1, pc() + 8                // only run the next line if t1 is not 0
         sw      at, 0x007C(t1)              // show/hide HMN/CPU/NA button
 
-        lw      t1, 0x001C(t0)              // t1 = Team button object
-        bnezl   t1, pc() + 8                // only run the next line if t1 is not 0
-        sw      at, 0x007C(t1)              // show/hide Team button
-
         lw      t1, 0x0008(t0)              // t1 = player object
         bnezl   t1, pc() + 8                // only run the next line if t1 is not 0
         sw      t3, 0x0038(t1)              // show/hide player
-        lw      t1, 0x0010(t0)              // t1 = name and series logo object
-        bnezl   t1, pc() + 8                // only run the next line if t1 is not 0
-        sw      t3, 0x0038(t1)              // show/hide name and series logo
 
         xori    t1, at, 0x0001              // t1 = reset to defaults button display state
         lw      t5, 0x0034(a0)              // t5 = reset to defaults button object
         sw      t1, 0x007C(t5)              // hide/show reset to defaults button object
 
         _run_every_frame:
+        // this one needs to be here instead of only once per toggle since controller unplugs can mess it up
+        lw      t1, 0x0010(t0)              // t1 = name and series logo object
+        bnezl   t1, pc() + 8                // only run the next line if t1 is not 0
+        sw      t3, 0x0038(t1)              // show/hide name and series logo
+
+        lw      t1, 0x001C(t0)              // t1 = Team button object
+        bnezl   t1, pc() + 8                // only run the next line if t1 is not 0
+        sw      at, 0x007C(t1)              // show/hide Team button
         lw      t1, 0x0030(t0)              // t1 = 1P/2P/3P/4P/CP texture object
         bnezl   t1, pc() + 8                // only run the next line if t1 is not 0
         sw      at, 0x007C(t1)              // show/hide 1P/2P/3P/4P/CP texture
@@ -402,16 +417,20 @@ scope CharacterSelectDebugMenu {
         lw      t0, 0x0030(t4)              // t0 = stock icon and count indicators object
         bnezl   t0, pc() + 8                // only run the next line if t0 is not 0
         sw      t3, 0x0038(t0)              // show/hide stock icon and count indicators
+        lw      t0, 0x003C(t4)              // t0 = left rectangle object, if it exists
+        beqz    t0, _custom_portrait_indicators // if 0, then no rectangles so skip
+        xori    t5, at, 0x0001              // t5 = width = 1 if menu hidden, 0 if active
+        sw      t5, 0x0038(t0)              // save width
+        lw      t0, 0x006C(t0)              // t0 = right rectangle object
+        sw      t5, 0x0038(t0)              // save width
 
+        _custom_portrait_indicators:
         lw      t4, 0x0038(t1)              // t4 = custom portrait indicators object
         addu    t4, t4, t2                  // t1 = render control object offset by panel
         lw      t0, 0x0030(t4)              // t0 = custom portrait indicators object
         beqz    t0, _end                    // only run the next lines if t0 is not 0
         nop
         sw      t3, 0x0038(t0)              // show/hide custom portrait indicators
-        lw      t0, 0x0030(t0)              // t0 = "set all" object
-        bnezl   t0, pc() + 8                // only run the next lines if t0 is not 0
-        sw      t3, 0x0038(t0)              // show/hide "set all" texture
 
         b       _end
         nop
@@ -1024,6 +1043,7 @@ scope CharacterSelectDebugMenu {
         addiu   s3, r0, -0x0001             // s3 = color (white)
         li      s4, 0x3F600000              // s4 = scale
         lli     s5, Render.alignment.CENTER // s5 = alignment
+        lli     s6, Render.string_type.NUMBER // s6 = type
         li      a3, Render.update_live_string_ // a3 = routine
         lli     t8, 0x0001                  // t8 = blur (on)
         jal     Render.draw_string_
@@ -1221,6 +1241,9 @@ scope CharacterSelectDebugMenu {
         // if v0 is 1, then we need to return, otherwise we need to adjust ra
         bnez    v0, _bonus_return           // if v0 is 1, return
         nop
+        jal     Bonus.handle_arrow_press_
+        lw      a0, 0x0040(sp)              // a0 = cursor object
+
         li      ra, 0x80135A04              // adjust ra so we return after the last button check code
         lw      t1, 0x0024(sp)              // original line 2
         // port index is always 0, so save 0 to unused stack to match VS
@@ -2000,10 +2023,10 @@ scope CharacterSelectDebugMenu {
 
         jal     Skeleton.clear_settings_for_1p_
         lw      a0, 0x000C(sp)              // a0 = human port
-        
+
         jal     Knockback.clear_settings_for_1p_
         lw      a0, 0x000C(sp)              // a0 = human port
-        
+
         jal     Shield.clear_settings_for_1p_
         lw      a0, 0x000C(sp)              // a0 = human port
 
@@ -2011,6 +2034,18 @@ scope CharacterSelectDebugMenu {
         lw      a0, 0x000C(sp)              // a0 = human port
 
         jal     ModelDisplay.clear_settings_for_1p_
+        lw      a0, 0x000C(sp)              // a0 = human port
+
+        jal     StartWith.clear_settings_for_1p_
+        lw      a0, 0x000C(sp)              // a0 = human port
+
+        jal     TauntItem.clear_settings_for_1p_
+        lw      a0, 0x000C(sp)              // a0 = human port
+
+        jal     TauntButton.clear_settings_for_1p_
+        lw      a0, 0x000C(sp)              // a0 = human port
+
+        jal     InputDisplay.clear_settings_for_1p_
         lw      a0, 0x000C(sp)              // a0 = human port
 
         lw      ra, 0x0004(sp)              // restore registers
@@ -2256,17 +2291,33 @@ scope CharacterSelectDebugMenu {
     scope ModelDisplay {
         include "css/ModelDisplay.asm"
     }
+    scope StartWith {
+        include "css/StartWith.asm"
+    }
+    scope TauntItem {
+        include "css/TauntItem.asm"
+    }
+    scope TauntButton {
+        include "css/TauntButton.asm"
+    }
+    scope InputDisplay {
+        include "css/InputDisplay.asm"
+    }
 
     // Add Menu Items
     add_menu_item(Shield)
     add_menu_item(Visibility)
     add_menu_item(Skeleton)
     add_menu_item(ModelDisplay)
+    add_menu_item(InputDisplay)
     add_menu_item(Size)
     add_menu_item(StockMode)
     add_menu_item(Knockback)
     add_menu_item(InputDelay)
     add_menu_item(Handicap)
+    add_menu_item(StartWith)
+    add_menu_item(TauntItem)
+    add_menu_item(TauntButton)
 
     // Write Menu Items
     write_menu_items()

@@ -49,7 +49,7 @@ scope Falco {
     insert VICTORY_POSE_3,"moveset/VICTORY_POSE_3.bin"
     insert CLAP, "moveset/CLAP.bin"
     insert POSE_1P, "moveset/POSE_1P.bin"
-    
+
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(FALCO, Action.Run,              -1,                        RUN,                        -1)
     Character.edit_action_parameters(FALCO, Action.Dash,             -1,                        DASH,                       -1)
@@ -92,7 +92,7 @@ scope Falco {
     // Modify Actions            // Action          // Staling ID   // Main ASM                 // Interrupt/Other ASM          // Movement/Physics ASM         // Collision ASM
     Character.edit_action(FALCO, 0xE1,              -1,             0x800D94C4,                 Phantasm.ground_subroutine_,    -1,                             -1)
     Character.edit_action(FALCO, 0xE2,              -1,             0x8015C750,                 Phantasm.air_subroutine_,       Phantasm.air_physics_,          Phantasm.air_collision_)
-    
+
     // Modify Menu Action Parameters             // Action          // Animation                // Moveset Data             // Flags
     Character.edit_menu_action_parameters(FALCO, 0x1,               -1,                         VICTORY_POSE_1,             -1)
     Character.edit_menu_action_parameters(FALCO, 0x2,               File.FALCO_SELECT,          VICTORY_POSE_2,             -1)
@@ -101,17 +101,17 @@ scope Falco {
     Character.edit_menu_action_parameters(FALCO, 0x5,               File.FALCO_CLAP,            CLAP,                       -1)
     Character.edit_menu_action_parameters(FALCO, 0xD,               File.FALCO_POSE_1P,         POSE_1P,                    -1)
     Character.edit_menu_action_parameters(FALCO, 0xE,               File.FALCO_1P_CPU_POSE,         POSE_1P,                    -1)
-    
+
     // Set menu zoom size.
     Character.table_patch_start(menu_zoom, Character.id.FALCO, 0x4)
     float32 1.2
     OS.patch_end()
-    
+
     // Set crowd chant FGM.
     Character.table_patch_start(crowd_chant_fgm, Character.id.FALCO, 0x2)
     dh  0x02C8
     OS.patch_end()
-    
+
     // Set Kirby hat_id
     Character.table_patch_start(kirby_inhale_struct, 0x2, Character.id.FALCO, 0xC)
     dh 0x12
@@ -119,6 +119,9 @@ scope Falco {
 
     // Set default costumes
     Character.set_default_costumes(Character.id.FALCO, 0, 1, 4, 5, 1, 2, 3)
+
+    // Shield colors for costume matching
+    Character.set_costume_shield_colors(FALCO, WHITE, RED, BLUE, GREEN, BLACK, ORANGE, NA, NA)
 
     // @ Description
     // Falco's extra actions
@@ -211,7 +214,7 @@ scope Falco {
     Character.table_patch_start(action_string, Character.id.FALCO, 0x4)
     dw  Action.action_string_table
     OS.patch_end()
-    
+
     // @ Description
     // Replaces a small subroutine which usually sets the up special delay for Fox, extends to
     // include Falco.
@@ -222,7 +225,7 @@ scope Falco {
         OS.patch_start(0xD6A7C, 0x8015C03C)
         jal     up_special_delay_
         OS.patch_end()
-        
+
         addiu   sp, sp,-0x0008              // allocate stack space
         sw      t0, 0x0004(sp)              // store t0
         lw      v0, 0x0084(a0)              // v0 = player struct, (original line 1 )
@@ -230,15 +233,15 @@ scope Falco {
         ori     t0, r0, Character.id.FALCO  // t0 = FALCO
         beq     t0, t6, _end                // branch if chracter = FALCO
         addiu   t6, r0, 0x0016              // up special delay = 0x16
-            
+
         addiu   t6, r0, 0x0023              // up special delay = 0x23 (original line 2)
-        _end:   
+        _end:
         lw      t0, 0x0004(sp)              // load t0
         addiu   sp, sp, 0x0008              // deallocate stack space
         jr      ra                          // return (original line 3)
         sw      t6, 0x0B18(v0)              // store up special delay (original line 4)
     }
-    
+
     // @ Description
     // Loads a unique up special velocity value for Falco.
     scope up_special_velocity_1_: {
@@ -247,7 +250,7 @@ scope Falco {
         nop
         _return:
         OS.patch_end()
-        
+
         // s0 = player struct
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
@@ -256,9 +259,9 @@ scope Falco {
         ori     t1, r0, Character.id.FALCO  // t1 = FALCO
         beq     t0, t1, _end                // branch if character = FALCO
         lui     at, 0x42C4                  // up special velocity = 0x42C40000
-        
+
         lui     at, 0x42E6                  // up special velocity = 0x42E60000 (original line 1)
-        _end:        
+        _end:
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // load t0, t1
         addiu   sp, sp, 0x0010              // deallocate stack space
@@ -266,7 +269,7 @@ scope Falco {
         j       _return                     // return
         nop
     }
-    
+
     // @ Description
     // Loads a unique up special velocity value for Falco.
     scope up_special_velocity_2_: {
@@ -275,7 +278,7 @@ scope Falco {
         nop
         _return:
         OS.patch_end()
-        
+
         // s0 = player struct
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
@@ -284,9 +287,9 @@ scope Falco {
         ori     t1, r0, Character.id.FALCO  // t1 = FALCO
         beq     t0, t1, _end                // branch if character = FALCO
         lui     at, 0x42C4                  // up special velocity = 0x42C40000
-        
+
         lui     at, 0x42E6                  // up special velocity = 0x42E60000 (original line 1)
-        _end:        
+        _end:
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // load t0, t1
         addiu   sp, sp, 0x0010              // deallocate stack space
@@ -294,7 +297,7 @@ scope Falco {
         j       _return                     // return
         nop
     }
-    
+
     // @ Description
     // Loads a unique up special velocity value for Falco.
     scope up_special_velocity_3_: {
@@ -303,7 +306,7 @@ scope Falco {
         nop
         _return:
         OS.patch_end()
-        
+
         // s0 = player struct
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
@@ -312,9 +315,9 @@ scope Falco {
         ori     t1, r0, Character.id.FALCO  // t1 = FALCO
         beq     t0, t1, _end                // branch if character = FALCO
         lui     at, 0x42C4                  // up special velocity = 0x42C40000
-        
+
         lui     at, 0x42E6                  // up special velocity = 0x42E60000 (original line 1)
-        _end:        
+        _end:
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // load t0, t1
         addiu   sp, sp, 0x0010              // deallocate stack space

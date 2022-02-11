@@ -34,6 +34,7 @@ include "src/Camera.asm"
 include "src/Color.asm"
 include "src/Combo.asm"
 include "src/Crash.asm"
+include "src/Credits.asm"
 include "src/FD.asm"
 include "src/FGM.asm"
 include "src/GameEnd.asm"
@@ -64,6 +65,8 @@ include "src/Skeleton.asm"
 include "src/Surface.asm"
 include "src/SinglePlayerModes.asm"
 include "src/SinglePlayerMenus.asm"
+include "src/HRC.asm"
+include "src/Bonus.asm"
 include "src/TwelveCharBattle.asm"
 include "src/Size.asm"
 include "src/CharEnvColor.asm"
@@ -72,7 +75,10 @@ include "src/GFXRoutine.asm"
 include "src/Damage.asm"
 include "src/Knockback.asm"
 include "src/InputDelay.asm"
+include "src/InputDisplay.asm"
 include "src/StockMode.asm"
+include "src/Stereo.asm"
+include "src/Stamina.asm"
 // CHARACTER
 include "src/Character.asm"
 include "src/CharacterSelect.asm"
@@ -155,6 +161,13 @@ include "src/Mewtwo/Mewtwo.asm"
 // MARTH
 include "src/Marth/MarthSpecial.asm"
 include "src/Marth/Marth.asm"
+// SONIC
+include "src/Sonic/SonicSpecial.asm"
+include "src/Sonic/Sonic.asm"
+// SANDBAG
+include "src/Sandbag/Sandbag.asm"
+// SUPER SONIC
+include "src/SSonic/SSonic.asm"
 
 // KIRBY
 include "src/Kirby/Kirby.asm"
@@ -171,13 +184,10 @@ fill MIDI.largest_midi  // Allocate as much space as we need!
 
 OS.align(16)
 file_table:  // This is where we move the file table to in order to load more files
-fill 0x400
-
-free_memory_pointer: // this will point to free memory so we can load any number of custom files
-dw   custom_heap
+fill 0x480
 
 custom_heap: // This is where we move the heap to when we need to increase its size
 
-// rom size = 40MB
-origin 0x27FFFFF
+// rom size = 48MB
+origin 0x2FFFFFF
 db 0x00

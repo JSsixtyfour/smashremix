@@ -5,14 +5,14 @@
 scope ELink {
     // Insert Moveset files
     insert FSMASH,"moveset/FORWARD_SMASH.bin"
-    
-    
+
+
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
-    Character.edit_action_parameters(ELINK, Action.FSmash,          -1,                         FSMASH,                     -1)   
-    
+    Character.edit_action_parameters(ELINK, Action.FSmash,          -1,                         FSMASH,                     -1)
+
     // Modify Menu Action Parameters             // Action          // Animation                // Moveset Data             // Flags
-    
-    
+
+
     // Modify Actions            // Action          // Staling ID   // Main ASM                 // Interrupt/Other ASM          // Movement/Physics ASM         // Collision ASM
 
     // Set crowd chant FGM.

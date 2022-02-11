@@ -59,7 +59,7 @@ scope Piano {
     TAUNT_FGM_ARRAY:; dh 0x380; dh 0x381; dh 0x382; OS.align(4)
     TAUNT:; dw 0x08000005                           // wait 5 frames
     Moveset.RANDOM_SFX(100, 0x1, 0x3, TAUNT_FGM_ARRAY)   // play a random voice fx
-    insert "moveset/TAUNT.bin" 
+    insert "moveset/TAUNT.bin"
     insert DSP_BEGIN, "moveset/DOWN_SPECIAL_BEGIN.bin"
     insert DSP_WAIT, "moveset/DOWN_SPECIAL_WAIT.bin"
     insert DSP_ABSORB, "moveset/DOWN_SPECIAL_ABSORB.bin"
@@ -72,7 +72,7 @@ scope Piano {
     VICTORY_1:; Moveset.CONCURRENT_STREAM(VICTORY_1_CONCURRENT); insert "moveset/VICTORY_1.bin"; Moveset.GO_TO(VICTORY_1+0x8) // loops
     insert VICTORY_2, "moveset/VICTORY_2.bin"
     insert SELECT, "moveset/SELECT.bin"
-    
+
 
     // Modify Action Parameters             // Action                   // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(PIANO, Action.DeadU,               File.PIANO_TUMBLE,          0x80000000,                 -1)
@@ -280,12 +280,12 @@ scope Piano {
     Character.edit_action_parameters(PIANO, 0xDF,                       File.PIANO_NSP_G,           NSP,                        0)
     Character.edit_action_parameters(PIANO, 0xE0,                       File.PIANO_NSP_A,           NSP,                        0)
     Character.edit_action_parameters(PIANO, 0xE1,                       File.PIANO_USP,             USP,                        0)
-    
+
     // Modify Actions            // Action          // Staling ID   // Main ASM                 // Interrupt/Other ASM          // Movement/Physics ASM         // Collision ASM
     Character.edit_action(PIANO, 0xE0,              -1,             -1,                         -1,                             0x800D91EC,                     -1)
     Character.edit_action(PIANO, 0xE1,              -1,             PianoUSP.main_,             PianoUSP.change_direction_,     PianoUSP.physics_,              PianoUSP.collision_)
-    
-    
+
+
     // Modify Menu Action Parameters                // Action           // Animation                // Moveset Data             // Flags
     Character.edit_menu_action_parameters(PIANO,    0x0,                File.PIANO_IDLE,            0x80000000,                 -1)
     Character.edit_menu_action_parameters(PIANO,    0x1,                File.PIANO_VICTORY_1,       VICTORY_1,                  -1)
@@ -297,7 +297,7 @@ scope Piano {
     Character.edit_menu_action_parameters(PIANO,    0xA,                File.PIANO_CONTINUE_UP,     0x80000000,                 -1)
     Character.edit_menu_action_parameters(PIANO,    0xD,                File.PIANO_POSE_1P,         0x80000000,                 -1)
     Character.edit_menu_action_parameters(PIANO,    0xE,                File.PIANO_1P_CPU_POSE,     0x80000000,                 -1)
-    
+
     // Add Action Parameters                // Action Name      // Base Action  // Animation                // Moveset Data             // Flags
     Character.add_new_action_params(PIANO,  DSP_Ground_Begin,   -1,             File.PIANO_DSP_BEGIN_G,     DSP_BEGIN,                  -1)
     Character.add_new_action_params(PIANO,  DSP_Ground_Wait,    -1,             File.PIANO_DSP_WAIT,        DSP_WAIT,                   -1)
@@ -309,7 +309,7 @@ scope Piano {
     Character.add_new_action_params(PIANO,  DSP_Air_End,        -1,             File.PIANO_DSP_END_A,       DSP_END,                    -1)
     Character.add_new_action_params(PIANO,  Ground_Cmd_Throw,   Action.ThrowF,  File.PIANO_DSP_THROW_G,     COMMAND_THROW,              -1)
     Character.add_new_action_params(PIANO,  Air_Cmd_Throw,      Action.ThrowF,  File.PIANO_DSP_THROW_A,     COMMAND_THROW,              -1)
-    
+
     // Add Actions                   // Action Name     // Base Action  //Parameters                        // Staling ID   // Main ASM                     // Interrupt/Other ASM          // Movement/Physics ASM             // Collision ASM
     Character.add_new_action(PIANO,  DSP_Ground_Begin,  -1,             ActionParams.DSP_Ground_Begin,      0x1E,           PianoDSP.ground_begin_main_,    PianoUSP.change_direction_,     0x800D8BB4,                         PianoDSP.ground_collision_)
     Character.add_new_action(PIANO,  DSP_Ground_Wait,   -1,             ActionParams.DSP_Ground_Wait,       0x1E,           PianoDSP.ground_wait_main_,     0,                              0x800D8BB4,                         PianoDSP.ground_collision_)
@@ -321,7 +321,7 @@ scope Piano {
     Character.add_new_action(PIANO,  DSP_Air_End,       -1,             ActionParams.DSP_Air_End,           0x1E,           0x800D94E8,                     0,                              0x800D90E0,                         PianoDSP.air_collision_)
     Character.add_new_action(PIANO,  Ground_Cmd_Throw,  Action.ThrowF,  ActionParams.Ground_Cmd_Throw,      0x1E,           -1,                             PianoDSP.cmd_throw_hide_,       PianoDSP.cmd_throw_ground_physics_, PianoDSP.cmd_throw_ground_collision_)
     Character.add_new_action(PIANO,  Air_Cmd_Throw,     Action.ThrowF,  ActionParams.Air_Cmd_Throw,         0x1E,           -1,                             PianoDSP.cmd_throw_hide_,       0x800D90E0,                         PianoDSP.cmd_throw_air_collision_)
-    
+
     // Set subroutines for special move initiations.
     Character.table_patch_start(ground_dsp, Character.id.PIANO, 0x4)
     dw      PianoDSP.ground_begin_initial_
@@ -335,7 +335,7 @@ scope Piano {
     Character.table_patch_start(air_usp, Character.id.PIANO, 0x4)
     dw      PianoUSP.initial_
     OS.patch_end()
-    
+
     // Set the fireball jump table routines for Piano's book projectile.
     Character.table_patch_start(fireball, Character.id.PIANO, 0x4)
     dw      Fireball.Book.create_
@@ -343,35 +343,38 @@ scope Piano {
     Character.table_patch_start(kirby_fireball, Character.id.PIANO, 0x4)
     dw      Fireball.Book.create_
     OS.patch_end()
-    
+
     // Set Luigi as original character (not Mario, who PIANO is a clone of)
     Character.table_patch_start(variant_original, Character.id.PIANO, 0x4)
     dw      Character.id.LUIGI
     OS.patch_end()
-    
+
     // Remove entry script.
     Character.table_patch_start(entry_script, Character.id.PIANO, 0x4)
     dw 0x8013DD68                           // skips entry script
     OS.patch_end()
-    
+
     // Remove grounded script.
     Character.table_patch_start(grounded_script, Character.id.PIANO, 0x4)
     dw Character.grounded_script.DISABLED   // skips grounded script
     OS.patch_end()
-    
+
     // Set crowd chant FGM.
     Character.table_patch_start(crowd_chant_fgm, Character.id.PIANO, 0x2)
     dh  0x02B7
     OS.patch_end()
-    
+
     // Set menu zoom size.
     Character.table_patch_start(menu_zoom, Character.id.PIANO, 0x4)
     float32 1.1
     OS.patch_end()
-    
+
     // Set default costumes
     Character.set_default_costumes(Character.id.PIANO, 0, 1, 2, 3, 1, 3, 4)
-    
+
+    // Shield colors for costume matching
+    Character.set_costume_shield_colors(PIANO, BLACK, RED, YELLOW, CYAN, GREEN, WHITE, NA, NA)
+
     // Set Kirby star damage
     Character.table_patch_start(kirby_inhale_struct, 0x8, Character.id.PIANO, 0xC)
     dw Character.kirby_inhale_struct.star_damage.DK
@@ -382,7 +385,7 @@ scope Piano {
     dh Character.id.PIANO
     dh 0x17
     OS.patch_end()
-    
+
     // Set Yoshi Egg Size override ID, these values are just copied from DK
     Character.table_patch_start(yoshi_egg, Character.id.PIANO, 0x1C)
     dw  0x40600000
@@ -464,7 +467,7 @@ scope Piano {
     Character.table_patch_start(action_string, Character.id.PIANO, 0x4)
     dw  Action.action_string_table
     OS.patch_end()
-    
+
     // @ Description
     // Controls visibility for Piano's tongue and held item.
     scope extra_part_visibility_: {
@@ -474,7 +477,7 @@ scope Piano {
         jal     extra_part_visibility_
         nop
         OS.patch_end()
-        
+
         // s1 = player struct
         ori     t6, t4, 0x0002            // original line 1
         sb      t6, 0x0190(s1)            // original line 2
@@ -484,7 +487,7 @@ scope Piano {
         lli     t1, Character.id.PIANO      // t1 = id.PIANO
         bne     t0, t1, _end                // skip if character != PIANO
         nop
-        
+
         // determine whether or not the Piano's tongue and item parts should be displayed
         lw      t8, 0x0024(s1)              // t8 = current action
         lli     t0, Action.Grab             // t0 = Action.Grab
@@ -492,15 +495,15 @@ scope Piano {
         lli     t0, Action.GrabPull         // t0 = Action.GrabPull
         beq     t0, t8, _end                // show parts if action = GrabPull
         nop
-        // every action from LightItemPickup to HammerLanding should display the tongue and item 
+        // every action from LightItemPickup to HammerLanding should display the tongue and item
         slti    t0, t8, Action.LightItemPickup // if (action < LightItemPickup)...
         bnez    t0, _hide_parts                // ...then hide parts
         nop
         slti    t0, t8, Action.HammerLanding + 0x1 // if (action is between LightItemPickup and HammerLanding)...
         bnez    t0, _end                       // ...then show parts
         nop
-        
-        
+
+
         _hide_parts:
         // if we reach this point, hide the tongue and item
         // disable the display item bitflag
@@ -511,9 +514,9 @@ scope Piano {
         // this is loosely based on the loop at 0x800E912C
         _begin_loop:
         lli     s2, 0x000E                  // s2 = 0xE (first/current part)
-        lli     s3, 0x0010                  // s3 = 0x10 (final part)  
+        lli     s3, 0x0010                  // s3 = 0x10 (final part)
         addiu   sp, sp,-0x0030              // deallocate stack space
-        
+
         _loop:
         // begin a loop which iterates through the three tongue parts, and sets them up to be
         // visually disabled and then reverted later
@@ -527,7 +530,7 @@ scope Piano {
         sw      s0, 0x0010(sp)              // ~
         sw      s1, 0x0014(sp)              // ~
         sw      s2, 0x0018(sp)              // ~
-        sw      s3, 0x001C(sp)              // store s0-s3 (safety, probably not needed) 
+        sw      s3, 0x001C(sp)              // store s0-s3 (safety, probably not needed)
         // call 800091F4, which pushes a model part so that its display list can later be reverted
         jal     0x800091F4                  // push model part
         or      a0, s0, r0                  // a0 = model part struct
@@ -538,19 +541,19 @@ scope Piano {
         sw      r0, 0x0050(s0)              // clear display list for pushed model part
         bne     s2, s3, _loop               // loop if current part number != final part number
         addiu   s2, s2, 0x0001              // increment current part number
-        
+
         _exit_loop:
         addiu   sp, sp, 0x0030              // allocate stack space
         // finally, enable a bitflag which will cause model parts to be reverted on the next action change
         lbu     t0, 0x018C(s1)              // t0 = bit field
         ori     t0, t0, 0x0010              // t0 = bit field | bitmask (enables revert model parts bitflag)
         sb      t0, 0x018C(s1)              // update bit field
-        
-        
+
+
         _end:
         OS.restore_registers()
         jr      ra                          // return
         lbu     t6, 0x0190(s1)              // refresh t6
     }
-    
+
 }

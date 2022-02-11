@@ -6,7 +6,7 @@ scope Action {
     constant DeadS(0x001)
     constant DeadU(0x002)
     constant ScreenKO(0x003)
-    // constant ?(0x004)
+    constant ScreenKOWait(0x004)
     constant Entry(0x005)
     // constant ?(0x006)
     constant Revive1(0x007)
@@ -1290,6 +1290,14 @@ scope Action {
         constant DancingBlade3HighAir(0x15B)
         constant DancingBlade3MidAir(0x15C)
         constant DancingBlade3LowAir(0x15D)
+        constant HomingStart(0x15E)
+        constant HomingMove(0x15F)
+        constant HomingLockedMove(0x160)
+        constant HomingEndGround(0x161)
+        constant HomingEndAir(0x162)
+        constant HomingRecoilGround(0x163)
+        constant HomingRecoilAir(0x164)
+        constant HomingBounce(0x165)     
 
         // strings!
         string_0x0DC:; String.insert("JabLoopStart")
@@ -1422,6 +1430,14 @@ scope Action {
         string_0x15B:; String.insert("DancingBlade3HighAir")
         string_0x15C:; String.insert("DancingBlade3MidAir")
         string_0x15D:; String.insert("DancingBlade3LowAir")
+        string_0x15E:; String.insert("HomingStart")
+        string_0x15F:; String.insert("HomingMove")
+        string_0x160:; String.insert("HomingLockedMove")
+        string_0x161:; String.insert("HomingEndGround")
+        string_0x162:; String.insert("HomingEndAir")
+        string_0x163:; String.insert("HomingRecoilGround")
+        string_0x164:; String.insert("HomingRecoilAir")
+        string_0x165:; String.insert("HomingBounce")
 
         action_string_table:
         dw string_0x0DC
@@ -1554,6 +1570,14 @@ scope Action {
         dw string_0x15B
         dw string_0x15C
         dw string_0x15D
+        dw string_0x15E
+        dw string_0x15F
+        dw string_0x160
+        dw string_0x161
+        dw string_0x162
+        dw string_0x163
+        dw string_0x164
+        dw string_0x165
     }
 
     // @ Description

@@ -46,6 +46,7 @@ scope Size {
     jumping_height_multiplier:;             float32 0.3234
     base_jumping_height_multiplier:;        float32 0.0727
     second_jumping_height_multiplier:;      float32 0.0395604
+    weight_multiplier:;                     float32 -0.24
 
     // @ Description
     // Adjusts the height of the player label.
@@ -74,6 +75,13 @@ scope Size {
         jal     passive_armor_
         lwc1    f12, 0x07E4(s0)             // original line 1 (loads passive armor amount)
         OS.patch_end()
+        
+        addiu   sp, sp, -0x0010 
+        sw      ra, 0x0004(sp)
+        jal     Stamina.stamina_armor_fix_  // jump to code relevant to stamina and armor
+        nop
+        lw      ra, 0x0004(sp)
+        addiu   sp, sp, 0x0010
 
         li      t0, multiplier_table        // t0 = multiplier_table
         lbu     t1, 0x000D(s0)              // t1 = port
@@ -94,6 +102,7 @@ scope Size {
         add.s   f12, f12, f2
         jr      ra
         lwc1    f2, 0x07E8(s0)              // refresh f2
+
     }
 
     // @ Description
@@ -629,7 +638,7 @@ scope Size {
         _end:
         j       _return
         c.le.s  f4, f18                     // original line 2
-   // }
+    }
 	
 	// @ Description
     // Adjusts jumping height multiplier and base jumping height for first jump.
@@ -750,6 +759,351 @@ scope Size {
         mul.s   f16, f16, f6                  // f8 = multiplier * 2nd jumpin height multiplier
     }
     
+    
+    // @ Description
+    // Adjusts weight for knockbacks from player's normals and such.
+    scope adjust_player_weight_1: {
+        OS.patch_start(0x5F788, 0x800E3F88)
+        j       adjust_player_weight_1
+        nop
+        _return:
+        OS.patch_end()
+        
+        addiu   sp, sp, -0x0020
+        sw      t1, 0x0004(sp)
+        sw      t2, 0x0008(sp)
+        swc1    f6, 0x000C(sp)
+        swc1    f22, 0x0010(sp)
+        swc1    f20, 0x0014(sp)
+  
+        li      t1, multiplier_table        // t7 = multiplier_table
+        lbu     t2, 0x000D(s5)              // t8 = port
+        sll     t2, t2, 0x0002              // t8 = index = port * 4
+        addu    t1, t1, t2                  // t7 = &multiplier_table[index]
+        lwc1    f6, 0x0000(t1)              // f6 = size multiplier (s)
+        lui     t1, 0x3F80                  // t1 = 1
+        mtc1    t1, f22                     // f22 = 1
+        sub.s   f6, f6, f22                 // f22 = s - 1
+  
+        li      t2, weight_multiplier
+        lwc1    f20, 0x0000(t2)             // f20 = weight multiplier (m)
+        mul.s   f20, f20, f6                // f20 = m * (s - 1)
+        add.s   f20, f22, f20               // f20 = multiplier = 1 + m * (s - 1)
+        lwc1    f6, 0x0068(s7)              // original line 1, load weight
+        mul.s   f6, f6, f20                 // f6 = multiplier * weight
+        swc1    f6, 0x0038(sp)              // original line 2, save new weight
+        
+        lw      t1, 0x0004(sp)
+        lw      t2, 0x0008(sp)
+        lwc1    f6, 0x000C(sp)
+        lwc1    f22, 0x0010(sp)
+        lwc1    f20, 0x0014(sp)
+        addiu   sp, sp, 0x0020
+        
+        j       _return
+        nop
+    }
+    
+    // Adjusts weight. Used by Projectiles.
+    scope adjust_player_weight_2: {
+        OS.patch_start(0x5F920, 0x800E4120)
+        j       adjust_player_weight_2
+        nop
+        _return:
+        OS.patch_end()
+        
+        addiu   sp, sp, -0x0020
+        sw      t1, 0x0004(sp)
+        sw      t2, 0x0008(sp)
+        swc1    f6, 0x000C(sp)
+        swc1    f22, 0x0010(sp)
+        swc1    f20, 0x0014(sp)
+  
+        li      t1, multiplier_table        // t7 = multiplier_table
+        lbu     t2, 0x000D(s5)              // t8 = port
+        sll     t2, t2, 0x0002              // t8 = index = port * 4
+        addu    t1, t1, t2                  // t7 = &multiplier_table[index]
+        lwc1    f6, 0x0000(t1)              // f6 = size multiplier (s)
+        lui     t1, 0x3F80                  // t1 = 1
+        mtc1    t1, f22                     // f22 = 1
+        sub.s   f6, f6, f22                 // f22 = s - 1
+  
+        li      t2, weight_multiplier
+        lwc1    f20, 0x0000(t2)             // f20 = weight multiplier (m)
+        mul.s   f20, f20, f6                // f20 = m * (s - 1)
+        add.s   f20, f22, f20               // f20 = multiplier = 1 + m * (s - 1)
+        lwc1    f6, 0x0068(s7)              // original line 1, load weight
+        mul.s   f6, f6, f20                 // f6 = multiplier * weight
+        swc1    f6, 0x0038(sp)              // original line 2, save new weight
+        
+        lw      t1, 0x0004(sp)
+        lw      t2, 0x0008(sp)
+        lwc1    f6, 0x000C(sp)
+        lwc1    f22, 0x0010(sp)
+        lwc1    f20, 0x0014(sp)
+        addiu   sp, sp, 0x0020
+        
+        j       _return
+        nop
+    }
+    
+    // Adjusts weight. Used by items.
+    scope adjust_player_weight_3: {
+        OS.patch_start(0x5FA44, 0x800E4244)
+        j       adjust_player_weight_3
+        nop
+        _return:
+        OS.patch_end()
+        
+        addiu   sp, sp, -0x0020
+        sw      t1, 0x0004(sp)
+        sw      t2, 0x0008(sp)
+        swc1    f6, 0x000C(sp)
+        swc1    f22, 0x0010(sp)
+        swc1    f20, 0x0014(sp)
+  
+        li      t1, multiplier_table        // t7 = multiplier_table
+        lbu     t2, 0x000D(s5)              // t8 = port
+        sll     t2, t2, 0x0002              // t8 = index = port * 4
+        addu    t1, t1, t2                  // t7 = &multiplier_table[index]
+        lwc1    f6, 0x0000(t1)              // f6 = size multiplier (s)
+        lui     t1, 0x3F80                  // t1 = 1
+        mtc1    t1, f22                     // f22 = 1
+        sub.s   f6, f6, f22                 // f22 = s - 1
+  
+        li      t2, weight_multiplier
+        lwc1    f20, 0x0000(t2)             // f20 = weight multiplier (m)
+        mul.s   f20, f20, f6                // f20 = m * (s - 1)
+        add.s   f20, f22, f20               // f20 = multiplier = 1 + m * (s - 1)
+        lwc1    f6, 0x0068(s7)              // original line 1, load weight
+        mul.s   f6, f6, f20                 // f6 = multiplier * weight
+        swc1    f6, 0x0038(sp)              // original line 2, save new weight
+        
+        lw      t1, 0x0004(sp)
+        lw      t2, 0x0008(sp)
+        lwc1    f6, 0x000C(sp)
+        lwc1    f22, 0x0010(sp)
+        lwc1    f20, 0x0014(sp)
+        addiu   sp, sp, 0x0020
+        
+        j       _return
+        nop
+    }
+    
+    // Adjusts weight for tornado, stage hazards.
+    scope adjust_player_weight_4: {
+        OS.patch_start(0xBE770, 0x80143D30)
+        j       adjust_player_weight_4
+        sw      t4, 0x001C(sp)              // original line 2
+        nop
+        _return:
+        OS.patch_end()
+        
+        addiu   sp, sp, -0x0020
+        sw      t1, 0x0004(sp)
+        sw      t2, 0x0008(sp)
+        swc1    f6, 0x000C(sp)
+        swc1    f22, 0x0010(sp)
+        swc1    f20, 0x0014(sp)
+  
+        li      t1, multiplier_table        // t7 = multiplier_table
+        lbu     t2, 0x000D(s0)              // t8 = port
+        sll     t2, t2, 0x0002              // t8 = index = port * 4
+        addu    t1, t1, t2                  // t7 = &multiplier_table[index]
+        lwc1    f6, 0x0000(t1)              // f6 = size multiplier (s)
+        lui     t1, 0x3F80                  // t1 = 1
+        mtc1    t1, f22                     // f22 = 1
+        sub.s   f6, f6, f22                 // f22 = s - 1
+  
+        li      t2, weight_multiplier
+        lwc1    f20, 0x0000(t2)             // f20 = weight multiplier (m)
+        mul.s   f20, f20, f6                // f20 = m * (s - 1)
+        add.s   f20, f22, f20               // f20 = multiplier = 1 + m * (s - 1)
+        lwc1    f6, 0x0068(t3)              // original line 1, load weight
+        mul.s   f6, f6, f20                 // f6 = multiplier * weight
+        swc1    f6, 0x0038(sp)              // original line 3, save new weight
+        
+        lw      t1, 0x0004(sp)
+        lw      t2, 0x0008(sp)
+        lwc1    f6, 0x000C(sp)
+        lwc1    f22, 0x0010(sp)
+        lwc1    f20, 0x0014(sp)
+        addiu   sp, sp, 0x0020
+        
+        j       _return
+        nop
+    }
+    
+    // Adjusts weight for back throws.
+    scope adjust_player_weight_5: {
+        OS.patch_start(0xC5AC4, 0x8014B084)
+        j       adjust_player_weight_5
+        nop
+        _return:
+        OS.patch_end()
+        
+        addiu   sp, sp, -0x0020
+        sw      t1, 0x0004(sp)
+        sw      t2, 0x0008(sp)
+        swc1    f6, 0x000C(sp)
+        swc1    f22, 0x0010(sp)
+        swc1    f20, 0x0014(sp)
+  
+        li      t1, multiplier_table        // t7 = multiplier_table
+        lbu     t2, 0x000D(s1)              // t8 = port
+        sll     t2, t2, 0x0002              // t8 = index = port * 4
+        addu    t1, t1, t2                  // t7 = &multiplier_table[index]
+        lwc1    f6, 0x0000(t1)              // f6 = size multiplier (s)
+        lui     t1, 0x3F80                  // t1 = 1
+        mtc1    t1, f22                     // f22 = 1
+        sub.s   f6, f6, f22                 // f22 = s - 1
+  
+        li      t2, weight_multiplier
+        lwc1    f20, 0x0000(t2)             // f20 = weight multiplier (m)
+        mul.s   f20, f20, f6                // f20 = m * (s - 1)
+        add.s   f20, f22, f20               // f20 = multiplier = 1 + m * (s - 1)
+        lwc1    f6, 0x0068(t3)              // original line 1, load weight
+        mul.s   f6, f6, f20                 // f6 = multiplier * weight
+        swc1    f6, 0x0038(sp)              // original line 2, save new weight
+        
+        lw      t1, 0x0004(sp)
+        lw      t2, 0x0008(sp)
+        lwc1    f6, 0x000C(sp)
+        lwc1    f22, 0x0010(sp)
+        lwc1    f20, 0x0014(sp)
+        addiu   sp, sp, 0x0020
+        
+        j       _return
+        nop
+    }
+    
+    // Adjusts weight. Getting hit while grabbing?
+    scope adjust_player_weight_6: {
+        OS.patch_start(0xC5E30, 0x8014B3F0)
+        j       adjust_player_weight_6
+        nop
+        _return:
+        OS.patch_end()
+        
+        addiu   sp, sp, -0x0020
+        sw      t1, 0x0004(sp)
+        sw      t2, 0x0008(sp)
+        swc1    f6, 0x000C(sp)
+        swc1    f22, 0x0010(sp)
+        swc1    f20, 0x0014(sp)
+  
+        li      t1, multiplier_table        // t1 = multiplier_table
+        lbu     t2, 0x000D(s0)              // t2 = port
+        sll     t2, t2, 0x0002              // t2 = index = port * 4
+        addu    t1, t1, t2                  // t1 = &multiplier_table[index]
+        lwc1    f6, 0x0000(t1)              // f6 = size multiplier (s)
+        lui     t1, 0x3F80                  // t1 = 1
+        mtc1    t1, f22                     // f22 = 1
+        sub.s   f6, f6, f22                 // f22 = s - 1
+  
+        li      t2, weight_multiplier
+        lwc1    f20, 0x0000(t2)             // f20 = weight multiplier (m)
+        mul.s   f20, f20, f6                // f20 = m * (s - 1)
+        add.s   f20, f22, f20               // f20 = multiplier = 1 + m * (s - 1)
+        lwc1    f6, 0x0068(t7)              // original line 1, load weight
+        mul.s   f6, f6, f20                 // f6 = multiplier * weight
+        swc1    f6, 0x0038(sp)              // original line 2, save new weight
+        
+        lw      t1, 0x0004(sp)
+        lw      t2, 0x0008(sp)
+        lwc1    f6, 0x000C(sp)
+        lwc1    f22, 0x0010(sp)
+        lwc1    f20, 0x0014(sp)
+        addiu   sp, sp, 0x0020
+        
+        j       _return
+        nop
+    }
+    
+    // Adjusts weight for cargo hold
+    scope adjust_player_weight_7: {
+        OS.patch_start(0xC904C, 0x8014E60C)
+        j       adjust_player_weight_7
+        or      a3, r0, r0                 // original line 2
+        nop
+        _return:
+        OS.patch_end()
+        
+        addiu   sp, sp, -0x0020
+        sw      t1, 0x0004(sp)
+        sw      t2, 0x0008(sp)
+        swc1    f6, 0x000C(sp)
+        swc1    f22, 0x0010(sp)
+        swc1    f20, 0x0014(sp)
+  
+        li      t1, multiplier_table        // t7 = multiplier_table
+        lbu     t2, 0x000D(s2)              // t8 = port
+        sll     t2, t2, 0x0002              // t8 = index = port * 4
+        addu    t1, t1, t2                  // t7 = &multiplier_table[index]
+        lwc1    f6, 0x0000(t1)              // f6 = size multiplier (s)
+        lui     t1, 0x3F80                  // t1 = 1
+        mtc1    t1, f22                     // f22 = 1
+        sub.s   f6, f6, f22                 // f22 = s - 1
+  
+        li      t2, weight_multiplier
+        lwc1    f20, 0x0000(t2)             // f20 = weight multiplier (m)
+        mul.s   f20, f20, f6                // f20 = m * (s - 1)
+        add.s   f20, f22, f20               // f20 = multiplier = 1 + m * (s - 1)
+        lwc1    f6, 0x0068(t9)              // original line 1, load weight
+        mul.s   f6, f6, f20                 // f6 = multiplier * weight
+        swc1    f6, 0x0038(sp)              // original line 3, save new weight
+        
+        lw      t1, 0x0004(sp)
+        lw      t2, 0x0008(sp)
+        lwc1    f6, 0x000C(sp)
+        lwc1    f22, 0x0010(sp)
+        lwc1    f20, 0x0014(sp)
+        addiu   sp, sp, 0x0020
+        
+        j       _return
+        nop
+    }
+    
+    // Adjusts weight used by mushroom kingdom objects.
+    scope adjust_player_weight_8: {
+        OS.patch_start(0x845E8, 0x80108DE8)
+        j       adjust_player_weight_8
+        addu    t9, s3, t8                 // original line 2
+        _return:
+        OS.patch_end()
+        
+        addiu   sp, sp, -0x0020
+        sw      t1, 0x0004(sp)
+        sw      t2, 0x0008(sp)
+        swc1    f6, 0x000C(sp)
+        swc1    f22, 0x0010(sp)
+        swc1    f20, 0x0014(sp)
+  
+        li      t1, multiplier_table        // t7 = multiplier_table
+        lbu     t2, 0x000D(s0)              // t8 = port
+        sll     t2, t2, 0x0002              // t8 = index = port * 4
+        addu    t1, t1, t2                  // t7 = &multiplier_table[index]
+        lwc1    f6, 0x0000(t1)              // f6 = size multiplier (s)
+        lui     t1, 0x3F80                  // t1 = 1
+        mtc1    t1, f22                     // f22 = 1
+        sub.s   f6, f6, f22                 // f22 = s - 1
+  
+        li      t2, weight_multiplier
+        lwc1    f20, 0x0000(t2)             // f20 = weight multiplier (m)
+        mul.s   f20, f20, f6                // f20 = m * (s - 1)
+        add.s   f20, f22, f20               // f20 = multiplier = 1 + m * (s - 1)
+        lwc1    f4, 0x0068(t7)              // original line 1, load weight
+        mul.s   f4, f4, f20                 // f6 = multiplier * weight
+        
+        lw      t1, 0x0004(sp)
+        lw      t2, 0x0008(sp)
+        lwc1    f6, 0x000C(sp)
+        lwc1    f22, 0x0010(sp)
+        lwc1    f20, 0x0014(sp)
+        addiu   sp, sp, 0x0020
+        
+        j       _return
+        nop
+    }
 }
-
 } // __SIZE__

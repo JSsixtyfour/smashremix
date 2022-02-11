@@ -11,12 +11,12 @@ scope Marth {
     dw 0x04000050; Moveset.SUBROUTINE(BLINK)    // wait 80 frames then blink
     dw 0x04000014; Moveset.SUBROUTINE(BLINK)    // wait 20 frames then blink
     dw 0x04000050; Moveset.GO_TO(IDLE)          // wait 80 frames then loop
-    
+
     insert JUMP,"moveset/JUMP.bin"
     insert JUMP_AERIAL,"moveset/JUMP_AERIAL.bin"
     insert TEETER,"moveset/TEETER.bin"
-    insert TEETER_START,"moveset/TEETER_START.bin" 
-    
+    insert TEETER_START,"moveset/TEETER_START.bin"
+
     insert DAMAGED_FACE,"moveset/DAMAGED_FACE.bin"
     DMG_1:; Moveset.SUBROUTINE(DAMAGED_FACE); dw 0
     DMG_2:; Moveset.SUBROUTINE(DAMAGED_FACE); Moveset.GO_TO_FILE(0x270); dw 0
@@ -26,19 +26,19 @@ scope Marth {
     insert SHIELD_BREAK,"moveset/SHIELD_BREAK.bin"; Moveset.GO_TO(SPARKLE)          // loops
     insert STUN, "moveset/STUN.bin"; Moveset.GO_TO(STUN)                            // loops
     insert ASLEEP, "moveset/ASLEEP.bin"; Moveset.GO_TO(ASLEEP)                      // loops
-    
+
     insert DOWN_ATTACK_D,"moveset/DOWN_ATTACK_D.bin"
     insert DOWN_ATTACK_U,"moveset/DOWN_ATTACK_U.bin"
     insert TECH_ROLL,"moveset/TECH_ROLL.bin"
     insert TECH,"moveset/TECH.bin"
     insert ROLL_F,"moveset/ROLL_F.bin"
     insert ROLL_B,"moveset/ROLL_B.bin"
-    
+
     insert EDGE_GRAB, "moveset/EDGE_GRAB.bin"
     insert EDGE_IDLE, "moveset/EDGE_IDLE.bin"
     insert EDGE_ATTACK_QUICK_2, "moveset/EDGE_ATTACK_QUICK_2.bin"
     insert EDGE_ATTACK_SLOW_2, "moveset/EDGE_ATTACK_SLOW_2.bin"
-    
+
     BEAMSWORD_JAB:; dw 0xBC000003; dw 0x08000005; dw 0xCC040000; dw 0x08000006; Moveset.SUBROUTINE(Moveset.shared.BEAMSWORD_JAB); dw 0x04000005; dw 0x18000000; dw 0x04000004; dw 0xCC03FFFF; dw 0
     BEAMSWORD_TILT:; dw 0xBC000003; dw 0x08000004; dw 0xBC000004; dw 0xCC040000; dw 0x08000006; Moveset.SUBROUTINE(Moveset.shared.BEAMSWORD_TILT); dw 0x04000004; dw 0x18000000; dw 0x04000006; dw 0xCC03FFFF; dw 0x08000026; dw 0xBC000003; dw 0
     BEAMSWORD_SMASH:; dw 0xBC000003; dw 0x08000012; dw 0xCC040000; dw 0x08000013; dw 0xBC000004; dw 0x50000000; dw 0x08000014; Moveset.SUBROUTINE(Moveset.shared.BEAMSWORD_SMASH); dw 0x04000007; dw 0x18000000; dw 0x04000002; dw 0xCC03FFFF; dw 0x0800002D; dw 0xBC000003; dw 0
@@ -55,7 +55,7 @@ scope Marth {
     STARROD_TILT:; dw 0xBC000003; dw 0x08000004; dw 0xBC000004; dw 0xB12C000D; dw 0x08000006; Moveset.SUBROUTINE(Moveset.shared.STARROD_TILT); dw 0x04000002; dw 0x54000001; dw 0x04000002; dw 0x18000000;  dw 0x08000026; dw 0xBC000003; dw 0
     STARROD_SMASH:; dw 0xBC000003; dw 0x08000013; dw 0xBC000004; dw 0xB12C0024; dw 0x50000000; dw 0x08000014; Moveset.SUBROUTINE(Moveset.shared.STARROD_SMASH); dw 0x04000002; dw 0x54000002; dw 0x04000005; dw 0x18000000; dw 0x0800002D; dw 0xBC000003; dw 0
     STARROD_DASH:; dw 0xBC000004; dw 0xB12C0014; dw 0x08000007; Moveset.SUBROUTINE(Moveset.shared.STARROD_DASH); dw 0x04000012; dw 0x18000000; dw 0x08000020; dw 0xBC000003; dw 0
-    
+
     insert TAUNT,"moveset/TAUNT.bin"
     insert GRAB_RELEASE_DATA,"moveset/GRAB_RELEASE_DATA.bin"
     GRAB:; Moveset.THROW_DATA(GRAB_RELEASE_DATA); insert "moveset/GRAB.bin"
@@ -72,13 +72,13 @@ scope Marth {
     insert F_SMASH,"moveset/F_SMASH.bin"
     insert U_SMASH,"moveset/U_SMASH.bin"
     insert D_SMASH,"moveset/D_SMASH.bin"
-    
+
     insert ATTACK_AIR_N,"moveset/ATTACK_AIR_N.bin"
     insert ATTACK_AIR_F,"moveset/ATTACK_AIR_F.bin"
     insert ATTACK_AIR_B,"moveset/ATTACK_AIR_B.bin"
     insert ATTACK_AIR_U,"moveset/ATTACK_AIR_U.bin"
     insert ATTACK_AIR_D,"moveset/ATTACK_AIR_D.bin"
-    
+
     insert USP,"moveset/USP.bin"
     insert DSP,"moveset/DSP.bin"
     COUNTER_VOICE_ARRAY:; dh 0x35B; dh 0x361; dh 0x362; OS.align(4)
@@ -90,14 +90,14 @@ scope Marth {
     insert NSP_3_HIGH,"moveset/NSP_3_HIGH.bin"
     insert NSP_3,"moveset/NSP_3.bin"
     insert NSP_3_LOW,"moveset/NSP_3_LOW.bin"
-    
+
     insert ENTRY,"moveset/ENTRY.bin"
     insert CLAP,"moveset/CLAP.bin"
     insert SELECT,"moveset/SELECT.bin"
     VICTORY_1:; Moveset.CONCURRENT_STREAM(SELECT); insert "moveset/VICTORY_1.bin"
     insert VICTORY_2,"moveset/VICTORY_2.bin"
     insert VICTORY_3,"moveset/VICTORY_3.bin"
-    
+
     // @ Description
     // Marth's extra actions
     scope Action {
@@ -124,8 +124,8 @@ scope Marth {
         constant DSPG_Attack(0xF0)
         constant DSPGA(0xF1)
         constant DSPGA_Attack(0xF2)
-    
-    
+
+
         // strings!
         string_0x0DE:; String.insert("DolphinSlash")
         string_0x0DF:; String.insert("DolphinSlashAir")
@@ -148,7 +148,7 @@ scope Marth {
         string_0x0F0:; String.insert("CounterAttack")
         string_0x0F1:; String.insert("CounterAir")
         string_0x0F2:; String.insert("CounterAttackAir")
-        
+
         action_string_table:
         dw Action.COMMON.string_appear1
         dw Action.COMMON.string_appear2
@@ -397,8 +397,8 @@ scope Marth {
     Character.edit_action_parameters(MARTH, Action.NSPA_3_High,             File.MARTH_NSPA_3_HI,               NSP_3_HIGH,                 0)
     Character.edit_action_parameters(MARTH, Action.NSPA_3_Mid,              File.MARTH_NSPA_3,                  NSP_3,                      0)
     Character.edit_action_parameters(MARTH, Action.NSPA_3_Low,              File.MARTH_NSPA_3_LO,               NSP_3_LOW,                  0)
-    Character.edit_action_parameters(MARTH, 0x0EE,                          0,                                  0x80000000,                 0)                
-    
+    Character.edit_action_parameters(MARTH, 0x0EE,                          0,                                  0x80000000,                 0)
+
     // Modify Actions            // Action              // Staling ID   // Main ASM                 // Interrupt/Other ASM          // Movement/Physics ASM         // Collision ASM
     Character.edit_action(MARTH, Action.Entry_R,        0,              0x8013DA94,                 0,                              0x8013DB2C,                     0x800DE348)
     Character.edit_action(MARTH, Action.Entry_L,        0,              0x8013DA94,                 0,                              0x8013DB2C,                     0x800DE348)
@@ -418,7 +418,7 @@ scope Marth {
     Character.edit_action(MARTH, Action.NSPA_3_High,    0x12,           MarthNSP.air_main_,         0,                              0x800D91EC,                     MarthNSP.air_collision_)
     Character.edit_action(MARTH, Action.NSPA_3_Mid,     0x12,           MarthNSP.air_main_,         0,                              0x800D91EC,                     MarthNSP.air_collision_)
     Character.edit_action(MARTH, Action.NSPA_3_Low,     0x12,           MarthNSP.air_main_,         0,                              0x800D91EC,                     MarthNSP.air_collision_)
-    
+
     // Modify Menu Action Parameters             // Action      // Animation                // Moveset Data             // Flags
     // TODO: add game over and continue
     Character.edit_menu_action_parameters(MARTH, 0x0,           File.MARTH_MENU_IDLE,       IDLE,                       -1)
@@ -431,19 +431,19 @@ scope Marth {
     Character.edit_menu_action_parameters(MARTH, 0xA,           File.MARTH_GAME_CONTINUE,   -1,                         -1)
     Character.edit_menu_action_parameters(MARTH, 0xD,           File.MARTH_POSE_1P,         0x80000000,                 -1)
     Character.edit_menu_action_parameters(MARTH, 0xE,           File.MARTH_POSE_1P_CPU,     0x80000000,                 -1)
-    
+
     // Add Action Parameters                // Action Name      // Base Action  // Animation                // Moveset Data             // Flags
     Character.add_new_action_params(MARTH, DSP_Ground,         -1,             File.MARTH_COUNTER_G,       DSP,                        0)
     Character.add_new_action_params(MARTH, DSP_Ground_Attack,  -1,             File.MARTH_COUNTER_ATK_G,   DSP_ATTACK,                 0)
     Character.add_new_action_params(MARTH, DSP_Air,            -1,             File.MARTH_COUNTER_A,       DSP,                        0)
     Character.add_new_action_params(MARTH, DSP_Air_Attack,     -1,             File.MARTH_COUNTER_ATK_A,   DSP_ATTACK,                 0)
-    
+
     // Add Actions                   // Action Name     // Base Action  //Parameters                        // Staling ID   // Main ASM                 // Interrupt/Other ASM          // Movement/Physics ASM             // Collision ASM
     Character.add_new_action(MARTH, DSP_Ground,        -1,             ActionParams.DSP_Ground,            0x1E,            MarthDSP.main_,             0,                              0x800D8BB4,                         MarthDSP.ground_collision_)
     Character.add_new_action(MARTH, DSP_Ground_Attack, -1,             ActionParams.DSP_Ground_Attack,     0x1E,            0x800D94C4,                 0,                              0x800D8BB4,                         MarthDSP.ground_collision_)
     Character.add_new_action(MARTH, DSP_Air,           -1,             ActionParams.DSP_Air,               0x1E,            MarthDSP.main_,             0,                              MarthDSP.air_physics_,              MarthDSP.air_collision_)
     Character.add_new_action(MARTH, DSP_Air_Attack,    -1,             ActionParams.DSP_Air_Attack,        0x1E,            0x800D94E8,                 0,                              MarthDSP.air_physics_,              MarthDSP.air_collision_)
-    
+
     Character.table_patch_start(air_nsp, Character.id.MARTH, 0x4)
     dw      MarthNSP.air_1_initial_
     OS.patch_end()
@@ -462,7 +462,7 @@ scope Marth {
     Character.table_patch_start(ground_dsp, Character.id.MARTH, 0x4)
     dw      MarthDSP.ground_initial_
     OS.patch_end()
-    
+
     // Use Mario's initial/grounded script.
     Character.table_patch_start(initial_script, Character.id.MARTH, 0x4)
     dw 0x800D7DCC
@@ -470,7 +470,7 @@ scope Marth {
     Character.table_patch_start(grounded_script, Character.id.MARTH, 0x4)
     dw 0x800DE428
     OS.patch_end()
-    
+
     // Set menu zoom size.
     Character.table_patch_start(menu_zoom, Character.id.MARTH, 0x4)
     float32 0.93
@@ -485,23 +485,26 @@ scope Marth {
     Character.table_patch_start(kirby_inhale_struct, 0x2, Character.id.MARTH, 0xC)
     dh 0x1C
     OS.patch_end()
-    
+
     // Set default costumes
     Character.set_default_costumes(Character.id.MARTH, 0, 1, 2, 3, 1, 0, 2)
+
+    // Shield colors for costume matching
+    Character.set_costume_shield_colors(MARTH, BLUE, RED, GREEN, YELLOW, WHITE, ORANGE, NA, NA)
 
     // Set action strings
     Character.table_patch_start(action_string, Character.id.MARTH, 0x4)
     dw  Action.action_string_table
     OS.patch_end()
-    
+
     // Allows Marth to use his entry which is similar to Link
     Character.table_patch_start(entry_action, Character.id.MARTH, 0x8)
     dw 0xDC, 0xDD
-    OS.patch_end()  
+    OS.patch_end()
     Character.table_patch_start(entry_script, Character.id.MARTH, 0x4)
     dw marth_entry_routine_
     OS.patch_end()
-    
+
     // @ Description
     // Entry routine for Marth. Sets the correct facing direction and then jumps to Link's entry routine.
     scope marth_entry_routine_: {
@@ -509,12 +512,12 @@ scope Marth {
         addiu   at, r0,-0x0001              // at = -1 (left)
         beql    a1, at, _end                // branch if direction = left...
         sw      v1, 0x0B24(s0)              // ...and enable reversed direction flag
-        
+
         _end:
         j       0x8013DCCC                  // jump to Link's entry routine to load entry object
         nop
     }
-    
+
     entry_anim_struct_1_MARTH:
     dw  0x040A0000
     dw  Character.MARTH_file_8_ptr
@@ -523,16 +526,16 @@ scope Marth {
 	dw  0x00000218
     dw  0x00000344
     dw  0x000003A0
-    
+
     entry_anim_struct_2_MARTH:
     dw  0x040A0000
     dw  Character.MARTH_file_8_ptr
     OS.copy_segment(0xA9D14, 0x10)
 	dw	0x00000638					        // Marth entry alters these
-	dw  0x00000740 
-    dw  0x0000076C 
+	dw  0x00000740
+    dw  0x0000076C
     dw  0x000007B4
-    
+
     // @ Description
     // loads a different animation struct when Marth uses his entry animation.
     scope get_entry_anim_struct_1: {
@@ -541,7 +544,7 @@ scope Marth {
         sw      a0, 0x0018(sp)              // original line 1
         _return:
         OS.patch_end()
-        
+
         // s0 = player struct
         sw      ra, 0x0014(sp)              // original line 2
         addiu   sp, sp,-0x0010              // allocate stack space
@@ -550,15 +553,15 @@ scope Marth {
         lw      t0, 0x0008(s0)              // t0 = character id
         ori     t1, r0, Character.id.MARTH  // t1 = id.MARTH
         li      a0, entry_anim_struct_1_MARTH       // a0 = entry_anim_struct
-        beq     t0, t1, _marth              // branch if Marth      
+        beq     t0, t1, _marth              // branch if Marth
         lw      t0, 0x0004(sp)              // ~
-        
+
         // normal path
         lw      t1, 0x0008(sp)              // load t0, t1
         addiu   sp, sp, 0x0010              // deallocate stack space
         j       _return
         nop
-		
+
 		_marth:
         lw      t1, 0x0008(sp)              // load t0, t1
         addiu   sp, sp, 0x0010              // deallocate stack space
@@ -567,7 +570,7 @@ scope Marth {
         j       0x80102AFC                  // return
         nop
     }
-    
+
     // @ Description
     // loads a different animation struct when Marth uses his entry animation.
     scope get_entry_anim_struct_2: {
@@ -576,7 +579,7 @@ scope Marth {
         sw      a0, 0x0018(sp)              // original line 1
         _return:
         OS.patch_end()
-        
+
         // s0 = player struct
         sw      ra, 0x0014(sp)              // original line 2
         addiu   sp, sp,-0x0010              // allocate stack space
@@ -587,13 +590,13 @@ scope Marth {
         li      a0, entry_anim_struct_2_MARTH       // a0 = entry_anim_struct
         beq     t0, t1, _marth              // branch if Marth
         lw      t0, 0x0004(sp)              // ~
-        
+
         // normal path
         lw      t1, 0x0008(sp)              // load t0, t1
         addiu   sp, sp, 0x0010              // deallocate stack space
         j       _return
         nop
-		
+
 		_marth:
         lw      t1, 0x0008(sp)              // load t0, t1
         addiu   sp, sp, 0x0010              // deallocate stack space

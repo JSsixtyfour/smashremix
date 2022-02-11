@@ -6,8 +6,8 @@
 scope KirbyHats {
     // @ Description
     // Number of new "hats" added
-    variable new_hats(14)
-    
+    variable new_hats(15)
+
     // @ Description
     // Used in add_hat to adjust offset
     variable current_custom_hat_id(0)
@@ -111,7 +111,7 @@ scope KirbyHats {
         lli     t8, 0x0011                  // t8 = 11, the special part index for guns
         bne     a1, t8, _end                // if not the special part index for hats or guns, exit
         nop
-        
+
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // store registers
         sw      t2, 0x0008(sp)              // ~
@@ -122,7 +122,7 @@ scope KirbyHats {
         lli     t6, Character.id.JKIRBY     // t6 = Character.id.JKIRBY
         bne     t2, t6, _gun_end            // if not Kirby or J Kirby, exit
         nop
-        
+
         _check_hat_id:
         lb      t2, 0x0980(t0)              // load hat ID into t2
         addiu   t6, r0, 0x001C              // put Marth Hat ID into t6
@@ -132,62 +132,62 @@ scope KirbyHats {
         addiu   t6, r0, 0x0019              // put Conker Hat ID into t6
         bne     t2, t6, _gun_end            // if not Conker Hat ID, exit
         nop
-        
-        
-        
+
+
+
         _conker:
         lw      t2, 0x0008(t0)              // Load Character ID
         addiu   t6, r0, Character.id.JKIRBY
         beq     t6, t2, _jkirby_conker
         nop
-        li      t2, 0x80131078              // Kirby's File pointer to model file 
+        li      t2, 0x80131078              // Kirby's File pointer to model file
         beq     r0, r0, _load_address_conker
         nop
-        
+
         _jkirby_conker:
         li      t2, Character.JKIRBY_file_4_ptr // J Kirby's File pointer to model file
-        
+
         _load_address_conker:
         lw      t2, 0x0000(t2)              // load address of model file for kirby
         li      t6, 0x1D860                 // offset of special part struct for Conker's Catapult [UPDATE IF CATAPULT MODEL CHANGED]
         beq     r0, r0, _gun_end            // jump to end of fox gun swapping
         addu    v1, t2, t6                  // add offset to file address
-        
+
         _wolf:
         lw      t2, 0x0008(t0)              // Load Character ID
         addiu   t6, r0, Character.id.JKIRBY
         beq     t6, t2, _jkirby_wolf
         nop
-        li      t2, 0x80131078              // Kirby's File pointer to model file 
+        li      t2, 0x80131078              // Kirby's File pointer to model file
         beq     r0, r0, _load_address_wolf
         nop
-        
+
         _jkirby_wolf:
         li      t2, Character.JKIRBY_file_4_ptr // J Kirby's File pointer to model file
-        
+
         _load_address_wolf:
         lw      t2, 0x0000(t2)              // load address of model file for kirby
         li      t6, 0x1D830                 // offset of special part struct for Wolf's Gun [UPDATE IF GUN MODEL CHANGED]
         beq     r0, r0, _gun_end            // jump to end of fox gun swapping
         addu    v1, t2, t6                  // add offset to file address
-        
+
         _marth:
         lw      t2, 0x0008(t0)              // Load Character ID
         addiu   t6, r0, Character.id.JKIRBY
         beq     t6, t2, _jkirby_marth
         nop
-        li      t2, 0x80131078              // Kirby's File pointer to model file 
+        li      t2, 0x80131078              // Kirby's File pointer to model file
         beq     r0, r0, _load_address_marth
         nop
-        
+
         _jkirby_marth:
         li      t2, Character.JKIRBY_file_4_ptr // J Kirby's File pointer to model file
-        
+
         _load_address_marth:
         lw      t2, 0x0000(t2)              // load address of model file for kirby
         li      t6, 0x1D890                 // offset of special part struct for Marth's Sword [UPDATE IF SWORD MODEL CHANGED]
-        addu    v1, t2, t6                  // add offset to file address       
-        
+        addu    v1, t2, t6                  // add offset to file address
+
         _gun_end:
         lw      t0, 0x0004(sp)              // restore registers
         lw      t2, 0x0008(sp)              // ~
@@ -429,4 +429,6 @@ scope KirbyHats {
     add_hat(Character.kirby_hat_id.PIKACHU, 0x17DE8, -1, -1, 0x188B0, -1, -1)
     // Marth hat_id: 0x1C
     add_hat(Character.kirby_hat_id.FOX, 0x199A8, -1, -1, 0x1A858, -1, -1)
+    // Sonic hat_id: 0x1D
+    add_hat(Character.kirby_hat_id.FOX, 0x1BD18, -1, -1, 0x1CD18, -1, -1)
 }

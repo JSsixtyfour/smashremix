@@ -42,7 +42,7 @@ scope Ganondorf {
     insert DSP_GROUND,"moveset/DOWN_SPECIAL_GROUND.bin"
     insert DSP_FLIP,"moveset/DOWN_SPECIAL_FLIP.bin"
     insert DSP_LAND,"moveset/DOWN_SPECIAL_LANDING.bin"
-    insert DSP_AIR,"moveset/DOWN_SPECIAL_AIR.bin"  
+    insert DSP_AIR,"moveset/DOWN_SPECIAL_AIR.bin"
     insert VICTORY_POSE_1,"moveset/VICTORY_POSE_1.bin"
     insert VICTORY_POSE_2,"moveset/VICTORY_POSE_2.bin"
     insert VICTORY_POSE_3,"moveset/VICTORY_POSE_3.bin"
@@ -73,9 +73,9 @@ scope Ganondorf {
     Character.edit_action_parameters(GND,   Action.UTilt,           -1,                         UTILT,                      -1)
     Character.edit_action_parameters(GND,   Action.DTilt,           -1,                         DTILT,                      -1)
     Character.edit_action_parameters(GND,   Action.FSmashHigh,      0,                          0x80000000,                 0)
-    Character.edit_action_parameters(GND,   Action.FSmash,          0x64E,                      FSMASH,                     0)   
+    Character.edit_action_parameters(GND,   Action.FSmash,          0x64E,                      FSMASH,                     0)
     Character.edit_action_parameters(GND,   Action.FSmashLow,       0,                          0x80000000,                 0)
-    Character.edit_action_parameters(GND,   Action.USmash,          File.GND_USMASH,            USMASH,                     0) 
+    Character.edit_action_parameters(GND,   Action.USmash,          File.GND_USMASH,            USMASH,                     0)
     Character.edit_action_parameters(GND,   Action.DSmash,          File.GND_DSMASH,            DSMASH,                     -1)
     Character.edit_action_parameters(GND,   Action.AttackAirN,      0x667,                      NAIR,                       -1)
     Character.edit_action_parameters(GND,   Action.AttackAirF,      File.GND_FAIR,              FAIR,                       -1)
@@ -106,30 +106,33 @@ scope Ganondorf {
     Character.edit_menu_action_parameters(GND,   0x4,               -1,                         VICTORY_POSE_3,             -1)
     Character.edit_menu_action_parameters(GND,   0xE,               File.GND_1P_CPU,            ONEP,                       -1)
     Character.edit_menu_action_parameters(GND,   0xD,               File.GND_POSE_1P,           ONEP,                       -1)
-    
+
     // Set menu zoom size.
     Character.table_patch_start(menu_zoom, Character.id.GND, 0x4)
     float32 1.2
     OS.patch_end()
-    
+
     // Remove entry script.
     Character.table_patch_start(entry_script, Character.id.GND, 0x4)
     dw 0x8013DD68                           // skips entry script
     OS.patch_end()
-	
+
 	// Set crowd chant FGM.
     Character.table_patch_start(crowd_chant_fgm, Character.id.GND, 0x2)
     dh  0x02EA
     OS.patch_end()
-    
+
     // Set default costumes
     Character.set_default_costumes(Character.id.GND, 0, 1, 2, 3, 5, 1, 4)
-    
+
+    // Shield colors for costume matching
+    Character.set_costume_shield_colors(GND, BLACK, BLUE, AZURE, PURPLE, GREEN, RED, NA, NA)
+
     // Set Kirby star damage
     Character.table_patch_start(kirby_inhale_struct, 0x8, Character.id.GND, 0xC)
     dw Character.kirby_inhale_struct.star_damage.DK
     OS.patch_end()
-    
+
     // Set Kirby hat_id
     Character.table_patch_start(kirby_inhale_struct, 0x2, Character.id.GND, 0xC)
     dh 0x11

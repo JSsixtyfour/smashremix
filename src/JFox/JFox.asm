@@ -14,7 +14,7 @@ scope JFox {
     UPSPECIALMID:; Moveset.CONCURRENT_STREAM(UPSPECIALMIDCONCURRENT); insert "moveset/UPSPECIALMID.bin"
     insert UPSPECIALMIDCONCURRENT,"moveset/UPSPECIALMIDCONCURRENT.bin"
     insert VICTORY_POSE_1, "moveset/VICTORY_POSE_1.bin"
-    
+
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(JFOX, 0xE7,                   -1,                         USP_GROUND_MOVE,            -1)
     Character.edit_action_parameters(JFOX, 0xE8,                   -1,                         USP_AIR_MOVE,               -1)
@@ -26,10 +26,10 @@ scope JFox {
 
     // Modify Actions            // Action          // Staling ID   // Main ASM                 // Interrupt/Other ASM          // Movement/Physics ASM         // Collision ASM
 
-    
+
     // Modify Menu Action Parameters             // Action          // Animation                // Moveset Data             // Flags
     Character.edit_menu_action_parameters(JFOX, 0x2,               -1,                         VICTORY_POSE_1,             -1)
-    
+
     // Set crowd chant FGM.
      Character.table_patch_start(crowd_chant_fgm, Character.id.JFOX, 0x2)
      dh  0x031A
@@ -39,7 +39,7 @@ scope JFox {
     Character.table_patch_start(action_string, Character.id.JFOX, 0x4)
     dw  Action.FOX.action_string_table
     OS.patch_end()
-	 
+
     // @ Description
     // loads a different special struct when JFox uses his up special.
     scope get_laser_special_struct_: {
@@ -48,7 +48,7 @@ scope JFox {
         addiu	a1, a1, 0x8ED0
         _return:
         OS.patch_end()
-        
+
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // store registers
@@ -67,7 +67,7 @@ scope JFox {
 		bne		t1, t0, _end
 		nop
         li      a1, laser_special_struct  	// a1 = laser_special_struct
-                
+
         _end:
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // load t0, t1
@@ -75,7 +75,7 @@ scope JFox {
         j       _return                     // return
         lw		a2, 0x0024(sp)
     }
-    
+
 	OS.align(16)
     laser_special_struct:
     dw 0x00000000

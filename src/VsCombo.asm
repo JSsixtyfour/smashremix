@@ -555,14 +555,9 @@ scope VsCombo {
         Toggles.guard(Toggles.entry_vs_mode_combo_meter, _toggle_off)
 
         // First, load the combo textures file
-        li      a0, req_list                // a0 = req_list (array of file IDs)
-        li      a2, file_address            // a1 = file_address (array of file RAM addresses to use for later referencing)
-        li      a3, free_memory_pointer     // a3 = free_memory_pointer (free memory space to load the file to)
-        lw      a3, 0x0000(a3)              // a3 = address to load file to
-        jal     0x800CDE04
-        addiu   a1, r0, 0x0001              // a2 = 1 (number of files in array)
-        li      a3, free_memory_pointer     // a3 = free_memory_pointer (free memory space to load the file to)
-        sw      t7, 0x0000(a3)              // store updated free memory address
+        li      a1, file_address            // a1 = file_address (array of file RAM addresses to use for later referencing)
+        jal     Render.load_file_
+        lli     a0, File.VS_COMBO_METER_TEXTURES // a0 = file containing combo meter textures
 
         lli     t1, 0x0000                  // t1 = player_count
 
@@ -728,9 +723,6 @@ scope VsCombo {
         addiu   sp, sp, 0x0010              // deallocate stack space
         jr      ra
         nop
-
-        req_list:
-        dw      File.VS_COMBO_METER_TEXTURES// file containing combo meter textures
 
         x_coord_table:
         dw 0x00                             // left player x_coord (singles)

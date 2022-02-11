@@ -33,7 +33,7 @@ scope JPika {
     Character.table_patch_start(action_string, Character.id.JPIKA, 0x4)
     dw  Action.PIKACHU.action_string_table
     OS.patch_end()
-    
+
     // Changes the duration of Thunder Jolt to match that of the Japanese Version
     scope thunderjolt_duration: {
         OS.patch_start(0xE405C, 0x8016961C)
@@ -41,20 +41,20 @@ scope JPika {
         or      v0, a0, r0                  // original line 2
         _return:
         OS.patch_end()
-        
+
         addiu   t6, r0, 0x0078              // J Pika Duration
-        
+
         lw      t7, 0x0008(s1)              // t0 = character id
         ori     t9, r0, Character.id.JPIKA  // t1 = id.JPIKA
         bne     t7, t9, _end                // end if character id = JPIKA
         nop
-                
+
         addiu   t6, r0, 0x0064              // original line 1 (U Pika Duration)
 
         _end:
         j       _return                     // return
         nop
     }
-    
+
 
     }

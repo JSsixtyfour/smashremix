@@ -36,7 +36,7 @@ scope YoungLink {
     insert VICTORY_POSE_2,"moveset/VICTORY_POSE_2.bin"
     insert POSE_1P, "moveset/POSE_1P.bin"
     insert VICTORY_POSE_1,"moveset/VICTORY_POSE_1.bin"
-    
+
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(YLINK, Action.JumpF,            -1,                        JUMP,                       -1)
     Character.edit_action_parameters(YLINK, Action.JumpB,            -1,                        JUMP,                       -1)
@@ -55,7 +55,7 @@ scope YoungLink {
     Character.edit_action_parameters(YLINK, Action.FTilt,           -1,                         FTILT,                      -1)
     Character.edit_action_parameters(YLINK, Action.UTilt,           -1,                         UTILT,                      -1)
     Character.edit_action_parameters(YLINK, Action.DTilt,           -1,                         DTILT,                      -1)
-    Character.edit_action_parameters(YLINK, Action.FSmash,          -1,                         FSMASH,                     -1)   
+    Character.edit_action_parameters(YLINK, Action.FSmash,          -1,                         FSMASH,                     -1)
     Character.edit_action_parameters(YLINK, Action.USmash,          File.YLINK_USMASH,          USMASH,                     -1)
     Character.edit_action_parameters(YLINK, Action.DSmash,          -1,                         DSMASH,                     -1)
     Character.edit_action_parameters(YLINK, Action.AttackAirN,      -1,                         NAIR,                       -1)
@@ -69,13 +69,13 @@ scope YoungLink {
     Character.edit_action_parameters(YLINK, 0xE2,                   -1,                         USP_GROUND,                 -1)
     Character.edit_action_parameters(YLINK, 0xE3,                   -1,                         USP_GROUND_END,             -1)
     Character.edit_action_parameters(YLINK, 0xE4,                   -1,                         USP_AIR,                    -1)
-    
+
     // Modify Menu Action Parameters             // Action          // Animation                // Moveset Data             // Flags
     Character.edit_menu_action_parameters(YLINK, 0x1,               File.YL_VICTORY,            VICTORY_POSE_1,             -1)
     Character.edit_menu_action_parameters(YLINK, 0x2,               -1,                         VICTORY_POSE_2,             -1)
     Character.edit_menu_action_parameters(YLINK, 0xD,               -1,                         POSE_1P,                    -1)
     Character.edit_menu_action_parameters(YLINK, 0xE,               File.YLINK_1P_CPU_POSE,     0x80000000,                 -1)
-    
+
     // @ Description
     // Subroutine for Young Link's up special, allows a direction change with the command 58000002
     scope up_special_direction_: {
@@ -99,7 +99,7 @@ scope YoungLink {
         jr      ra                          // return
         nop
     }
-    
+
     // Modify Actions            // Action          // Staling ID   // Main ASM                 // Interrupt/Other ASM          // Movement/Physics ASM         // Collision ASM
     Character.edit_action(YLINK, 0xE4,              -1,             -1,                         up_special_direction_,          -1,                             -1)
 
@@ -107,15 +107,18 @@ scope YoungLink {
     Character.table_patch_start(menu_zoom, Character.id.YLINK, 0x4)
     float32 1.05
     OS.patch_end()
-    
+
     // Set crowd chant FGM.
     Character.table_patch_start(crowd_chant_fgm, Character.id.YLINK, 0x2)
     dh  0x02D7
     OS.patch_end()
-    
+
     // Set default costumes
     Character.set_default_costumes(Character.id.YLINK, 0, 1, 4, 5, 2, 3, 0)
-    
+
+    // Shield colors for costume matching
+    Character.set_costume_shield_colors(YLINK, GREEN, WHITE, RED, AZURE, PINK, BLACK, NA, NA)
+
     // @ Description
     // Young Link's extra actions
     scope Action {
@@ -183,7 +186,7 @@ scope YoungLink {
 
     up_special_landing_fsm:
     float32 0.33                // 25 frames of landing lag
-    
+
     // @ Description
     // modifies a subroutine which determines the speed of Link's boomerang
     // uses a different speed value if character is Young Link
@@ -193,61 +196,61 @@ scope YoungLink {
         nop
         _slow_return:
         OS.patch_end()
-        
+
         OS.patch_start(0xE859C, 0x8016DB5C)
         j       _fast
         nop
         _fast_return:
         OS.patch_end()
-        
+
         _slow:
         or      a1, s1, r0                  // a1 = player struct (original line 1)
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // store t0, t1
-        
+
         lw      t0, 0x0008(a1)              // t0 = character id
-        
+
         lli     t1, Character.id.KIRBY      // t1 = id.KIRBY
         beql    t0, t1, pc() + 8            // if Kirby, get held power character_id
         lw      t0, 0x0ADC(s1)              // t0 = character id of copied power
         lli     t1, Character.id.JKIRBY     // t1 = id.JKIRBY
         beql    t0, t1, pc() + 8            // if J Kirby, get held power character_id
         lw      t0, 0x0ADC(s1)              // t0 = character id of copied power
-        
+
         ori     t1, r0, Character.id.YLINK  // t1 = id.YLINK
         lui     a3, 0x428C                  // a3 = float: 65
         beq     t1, t0, _slow_end           // end if character id = YLINK
         nop
         lui     a3, 0x42AA                  // a3 = float: 85 (original line 2)
-        
+
         _slow_end:
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // load t0, t1
         addiu   sp, sp, 0x0010              // deallocate stack space
         j       _slow_return                // return
         nop
-        
+
         _fast:
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // store t0, t1
-        
+
         lw      t0, 0x0008(a1)              // t0 = character id
-        
+
         lli     t1, Character.id.KIRBY      // t1 = id.KIRBY
         beql    t0, t1, pc() + 8            // if Kirby, get held power character_id
         lw      t0, 0x0ADC(s1)              // t0 = character id of copied power
         lli     t1, Character.id.JKIRBY     // t1 = id.JKIRBY
         beql    t0, t1, pc() + 8            // if J Kirby, get held power character_id
         lw      t0, 0x0ADC(s1)              // t0 = character id of copied power
-        
+
         ori     t1, r0, Character.id.YLINK  // t1 = id.YLINK
         lui     a3, 0x42C6                  // a3 = float: 99
         beq     t1, t0, _fast_end           // end if character id = YLINK
         nop
         lui     a3, 0x42E4                  // a3 = float: 114 (original line 2)
-        
+
         _fast_end:
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // load t0, t1
@@ -257,7 +260,7 @@ scope YoungLink {
         j       _fast_return                // return
         nop
     }
-    
+
     // @ Description
     // modifies a subroutine which runs when Link uses up special
     // uses character id to determine special fall landing speed
@@ -280,7 +283,7 @@ scope YoungLink {
         nop
         li      a1, 0x8018CA28              // ~
         lwc1    f8, 0x0000(a1)              // f8 = LINK landing fsm value (modified original logic)
-        
+
         _end:
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // load t0, t1
@@ -288,5 +291,5 @@ scope YoungLink {
         j       _return                     // return
         nop
     }
-    
+
 }

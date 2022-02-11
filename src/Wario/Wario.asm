@@ -133,10 +133,10 @@ scope Wario {
     Character.edit_action_parameters(WARIO, Action.UTilt,           File.WARIO_UTILT,           UTILT,                      0)
     Character.edit_action_parameters(WARIO, Action.DTilt,           File.WARIO_DTILT,           DTILT,                      -1)
     Character.edit_action_parameters(WARIO, Action.FSmashHigh,      0,                          0x80000000,                 0)
-    Character.edit_action_parameters(WARIO, Action.FSmashMidHigh,   0,                          0x80000000,                 0)  
+    Character.edit_action_parameters(WARIO, Action.FSmashMidHigh,   0,                          0x80000000,                 0)
     Character.edit_action_parameters(WARIO, Action.FSmash,          File.WARIO_FSMASH,          FSMASH,                     0x40000000)
-    Character.edit_action_parameters(WARIO, Action.FSmashMidLow,    0,                          0x80000000,                 0) 
-    Character.edit_action_parameters(WARIO, Action.FSmashLow,       0,                          0x80000000,                 0)  
+    Character.edit_action_parameters(WARIO, Action.FSmashMidLow,    0,                          0x80000000,                 0)
+    Character.edit_action_parameters(WARIO, Action.FSmashLow,       0,                          0x80000000,                 0)
     Character.edit_action_parameters(WARIO, Action.USmash,          File.WARIO_USMASH,          USMASH,                     -1)
     Character.edit_action_parameters(WARIO, Action.DSmash,          File.WARIO_DSMASH,          DSMASH,                     0x80000000)
     Character.edit_action_parameters(WARIO, Action.AttackAirN,      File.WARIO_NAIR,            NAIR,                       -1)
@@ -154,7 +154,7 @@ scope Wario {
     Character.edit_action_parameters(WARIO, 0xE2,                   File.WARIO_DSP_LANDING,     DSP_LANDING,                0)
     Character.edit_action_parameters(WARIO, 0xE3,                   File.WARIO_DSP_GROUND,      DSP_GROUND,                 0)
     Character.edit_action_parameters(WARIO, 0xE4,                   File.WARIO_DSP_AIR,         DSP_AIR,                    0)
-    
+
     // Modify Actions            // Action          // Staling ID   // Main ASM                 // Interrupt/Other ASM          // Movement/Physics ASM         // Collision ASM
     Character.edit_action(WARIO, 0xDF,              -1,             0x800D94C4,                 WarioNSP.ground_move_,          WarioNSP.ground_physics_,       WarioNSP.ground_collision_)
     Character.edit_action(WARIO, 0xE0,              -1,             0x800D94E8,                 WarioNSP.air_move_,             WarioNSP.air_physics_,          WarioNSP.air_collision_)
@@ -162,15 +162,15 @@ scope Wario {
     Character.edit_action(WARIO, 0xE2,              0x1E,           0x800D94C4,                 0,                              0x800D8BB4,                     0x800DDEE8)
     Character.edit_action(WARIO, 0xE3,              -1,             0x800D94E8,                 WarioDSP.ground_move_,          WarioDSP.physics_,              WarioDSP.collision_)
     Character.edit_action(WARIO, 0xE4,              -1,             0x800D94E8,                 WarioDSP.air_move_,             WarioDSP.physics_,              WarioDSP.collision_)
-    
+
     // Add Action Parameters                // Action Name      // Base Action  // Animation                // Moveset Data             // Flags
     Character.add_new_action_params(WARIO,  NSP_Recoil_Ground,  -1,             File.WARIO_NSP_RECOIL_G,    NSP_RECOIL,                 0)
     Character.add_new_action_params(WARIO,  NSP_Recoil_Air,     -1,             File.WARIO_NSP_RECOIL_A,    NSP_RECOIL,                 0)
-    
+
     // Add Actions                  // Action Name      // Base Action  //Parameters                        // Staling ID   // Main ASM                 // Interrupt/Other ASM          // Movement/Physics ASM         // Collision ASM
     Character.add_new_action(WARIO, NSP_Recoil_Ground,  -1,             ActionParams.NSP_Recoil_Ground,     0x12,           0x800D94C4,                 0,                              0x800D8BB4,                     WarioNSP.recoil_ground_collision_)
     Character.add_new_action(WARIO, NSP_Recoil_Air,     -1,             ActionParams.NSP_Recoil_Air,        0x12,           0x800D94E8,                 WarioNSP.recoil_move_,          WarioNSP.recoil_physics_,       WarioNSP.recoil_air_collision_)
-    
+
     // Modify Menu Action Parameters                // Action           // Animation                // Moveset Data             // Flags
     Character.edit_menu_action_parameters(WARIO,    0x0,                File.WARIO_IDLE,            IDLE,                       -1)
     Character.edit_menu_action_parameters(WARIO,    0x1,                File.WARIO_VICTORY_1,       VICTORY_1,                  0)
@@ -180,7 +180,7 @@ scope Wario {
     Character.edit_menu_action_parameters(WARIO,    0x5,                File.WARIO_CLAP,            CLAPPING,                   0)
     Character.edit_menu_action_parameters(WARIO,    0xD,                File.WARIO_POSE_1P,         POSE_1P,                    -1)
     Character.edit_menu_action_parameters(WARIO,    0xE,                File.WARIO_1P_CPU_POSE,     0x80000000,                    -1)
-    
+
     Character.table_patch_start(ground_nsp, Character.id.WARIO, 0x4)
     dw      WarioNSP.ground_initial_
     OS.patch_end()
@@ -199,35 +199,38 @@ scope Wario {
     Character.table_patch_start(air_dsp, Character.id.WARIO, 0x4)
     dw      WarioDSP.air_initial_
     OS.patch_end()
-    
+
     // Set menu zoom size.
     Character.table_patch_start(menu_zoom, Character.id.WARIO, 0x4)
     float32 1.4
     OS.patch_end()
-    
+
     // Remove entry script.
     Character.table_patch_start(entry_script, Character.id.WARIO, 0x4)
     dw 0x8013DD68                           // skips entry script
     OS.patch_end()
-    
+
     // Remove grounded script.
     Character.table_patch_start(grounded_script, Character.id.WARIO, 0x4)
     dw Character.grounded_script.DISABLED   // skips grounded script
     OS.patch_end()
-    
+
     // Set crowd chant FGM.
     Character.table_patch_start(crowd_chant_fgm, Character.id.WARIO, 0x2)
     dh 0x303
     OS.patch_end()
-    
+
     // Set default costumes
     Character.set_default_costumes(Character.id.WARIO, 0, 1, 2, 3, 1, 2, 4)
-    
+
+    // Shield colors for costume matching
+    Character.set_costume_shield_colors(WARIO, YELLOW, BLUE, TURQUOISE, PINK, LIME, WHITE, NA, NA)
+
     // Set Kirby star damage
     Character.table_patch_start(kirby_inhale_struct, 0x8, Character.id.WARIO, 0xC)
     dw Character.kirby_inhale_struct.star_damage.YOSHI
     OS.patch_end()
-    
+
     // Set Kirby hat_id
     Character.table_patch_start(kirby_inhale_struct, 0x2, Character.id.WARIO, 0xC)
     dh 0xF
@@ -288,19 +291,20 @@ scope Wario {
         nop
         _return:
         OS.patch_end()
-    
+
         // a0 = player struct
         // a3 = hitbox contact type (0 = hurtbox, 1 = shield, 2 = don't disable? (unsafe), 3 = clang)
         // s0-s3 are safe
         lw      s0, 0x0008(a0)              // s0 = character id
         ori     s1, r0, Character.id.WARIO  // s1 = id.WARIO
         beq     s0, s1, _check_action_wario // if id = WARIO, check action
+        nop
         ori     s1, r0, Character.id.KIRBY  // s1 = id.KIRBY
         beq     s0, s1, _check_action_kirby // if id = KIRBY, check action
         ori     s1, r0, Character.id.JKIRBY // s1 = id.JKIRBY
         bne     s0, s1, _end                // if id != JKIRBY, skip
         nop
-        
+
         _check_action_kirby:
         lw      s0, 0x0024(a0)              // s0 = current action
         lli     s1, Kirby.Action.WARIO_NSP_Ground
@@ -310,7 +314,15 @@ scope Wario {
         nop
         b       _check_type                 // check contact type
         nop
-        
+
+
+        lw      s0, 0x0024(a0)              // s0 = current action
+        ori     s1, r0, 0x00E5              // s1 = action id: DSP_ATTACK
+        beq     s0, s1, _recoil             // branch if current action = down special attack
+        nop
+        beq     r0, r0, _end                // if any other attack, function normally
+        nop
+
         _check_action_wario:
         lw      s0, 0x0024(a0)              // s0 = current action
         ori     s1, r0, 0x00DF              // s1 = action id: NSP_GROUND
@@ -318,21 +330,21 @@ scope Wario {
         ori     s1, r0, 0x00E0              // s1 = action id: NSP_AIR
         bne     s0, s1, _end                // skip if current action != aerial neutral special
         nop
-        
+
         _check_type:
         beq     a3, r0, _recoil             // branch if contact type = hurtbox
         nop
         ori     s2, r0, 0x0001              // ~
         beq     a3, s2, _recoil             // branch if contact type = shield
         nop
-        
+
         _clang:
         // when clanging, Wario should recoil if his invincibility is not active
         ori     s2, r0, 0x0003              // ~
         bne     a3, s2, _end                // skip if contact type != clang
         nop
         lw      s0, 0x05BC(a0)              // s0 = shoulder hurtbox vulnerability
-        
+
         lw      s1, 0x0008(a0)              // s1 = character id
         lli     s2, Character.id.KIRBY      // s2 = id.KIRBY
         beql    s1, s2, pc() + 8            // if Kirby, load alternate shoulder hurtbox offset
@@ -340,22 +352,22 @@ scope Wario {
         lli     s2, Character.id.JKIRBY     // s2 = id.JKIRBY
         beql    s1, s2, pc() + 8            // if J Kirby, load alternate shoulder hurtbox offset
         lw      s0, 0x0640(a0)              // s0 = shoulder hurtbox vulnerability
-        
+
         ori     s1, r0, 0x0002              // at = 0x2 (invincible)
         beq     s0, s1, _end                // skip if shoulder hurtbox is invincible
         nop
-        
+
         _recoil:
         ori     s2, r0, 0x0001              // ~
         sw      s2, 0x017C(a0)              // temp variable 1 = 0x1 (recoil flag = true)
-        
+
         _end:
         or      s0, a2, r0                  // original line 1
         or      s1, a3, r0                  // original line 2
         j       _return                     // return
         nop
     }
-    
+
     // @ Description
     // Routine used for body_slam_clang_x_ patches
     // The hook for these patches replaces these two lines:
@@ -368,14 +380,14 @@ scope Wario {
         sw      v0, 0x000C(sp)              // store v0
         beqz    v0, _end                    // skip if shoulder hurtbox isn't invincible
         nop
-        
+
         lw      ra, 0x0008(sp)              // ~
         lw      v0, 0x000C(sp)              // load v0, ra
         addiu   sp, sp, 0x0010              // deallocate stack space
         or      at, r0, r0                  // at = 0 (beats other hitbox)
         j       _return
         nop
-        
+
         _end:
         lw      ra, 0x0008(sp)              // ~
         lw      v0, 0x000C(sp)              // load v0, ra
@@ -385,7 +397,7 @@ scope Wario {
         j       _return                     // return
         nop
     }
-    
+
     // @ Description
     // Subroutine which checks if Wario is currently in the invincible stage of body slam.
     // @ Arguments
@@ -397,7 +409,7 @@ scope Wario {
         sw      t0, 0x0008(sp)              // ~
         sw      t1, 0x000C(sp)              // ~
         sw      at, 0x0010(sp)              // store t0, t1, at
-        
+
         lw      t0, 0x0008(a0)              // t0 = character id
         ori     at, r0, Character.id.WARIO  // at = id.WARIO
         beq     t0, at, _check_action_wario // if id = WARIO, check action
@@ -406,7 +418,7 @@ scope Wario {
         ori     at, r0, Character.id.JKIRBY // at = id.JKIRBY
         bne     t0, at, _end                // if id != JKIRBY, skip
         lli     v0, OS.FALSE                // v0 = FALSE
-        
+
         _check_action_kirby:
         lw      t0, 0x0024(a0)              // t0 = current action
         lli     at, Kirby.Action.WARIO_NSP_Ground
@@ -416,7 +428,7 @@ scope Wario {
         lli     v0, OS.FALSE                // v0 = FALSE
         b       _body_slam                  // current action is body slam
         nop
-        
+
         _check_action_wario:
         lw      t0, 0x0024(a0)              // t0 = current action
         ori     at, r0, 0x00DF              // at = action id: NSP_GROUND
@@ -424,10 +436,10 @@ scope Wario {
         ori     at, r0, 0x00E0              // at = action id: NSP_AIR
         bne     t0, at, _end                // skip if current action != aerial neutral special
         lli     v0, OS.FALSE                // v0 = FALSE
-        
+
         _body_slam:
         lw      t0, 0x05BC(a0)              // t0 = shoulder hurtbox vulnerability
-        
+
         lw      t1, 0x0008(a0)              // t1 = character id
         lli     at, Character.id.KIRBY      // at = id.KIRBY
         beql    t1, at, pc() + 8            // if Kirby, load alternate shoulder hurtbox offset
@@ -435,14 +447,14 @@ scope Wario {
         lli     at, Character.id.JKIRBY     // at = id.JKIRBY
         beql    t1, at, pc() + 8            // if J Kirby, load alternate shoulder hurtbox offset
         lw      t0, 0x0640(a0)              // t0 = shoulder hurtbox vulnerability
-        
+
         ori     at, r0, 0x0002              // at = 0x2 (invincible)
         bne     t0, at, _end                // skip if shoulder hurtbox isn't invincible
         lli     v0, OS.FALSE                // v0 = FALSE
-        
+
         // if we reach this point, Wario is currently in the invincible stage of Body Slam, so return TRUE
         lli     v0, OS.TRUE                 // v0 = TRUE
-        
+
         _end:
         lw      t0, 0x0008(sp)              // ~
         lw      t1, 0x000C(sp)              // ~
@@ -450,9 +462,9 @@ scope Wario {
         jr      ra                          // return
         addiu   sp, sp, 0x0018              // deallocate stack space
     }
-    
-    
-    
+
+
+
     // @ Description
     // Forces Wario's body slam to beat any other hitbox on clang when the shoulder is invincible. (1/4)
     // This patch is for check 1/2 in the hitbox vs hitbox clang function.
@@ -464,7 +476,7 @@ scope Wario {
         OS.patch_end()
         body_slam_clang_patch(t8, t7, t6)
     }
-    
+
     // @ Description
     // Forces Wario's body slam to beat any other hitbox on clang when the shoulder is invincible. (2/4)
     // This patch is for check 2/2 in the hitbox vs hitbox clang function.
@@ -476,7 +488,7 @@ scope Wario {
         OS.patch_end()
         body_slam_clang_patch(t0, t9, t8)
     }
-    
+
     // @ Description
     // Forces Wario's body slam to beat any other hitbox on clang when the shoulder is invincible. (3/4)
     // This patch is for the hitbox vs projectile clang function.
@@ -488,7 +500,7 @@ scope Wario {
         OS.patch_end()
         body_slam_clang_patch(t6, v1, s1)
     }
-    
+
     // @ Description
     // Forces Wario's body slam to beat any other hitbox on clang when the shoulder is invincible. (4/4)
     // This patch is for the an unknown clang function. The function is almost identical to the
@@ -502,7 +514,7 @@ scope Wario {
         OS.patch_end()
         body_slam_clang_patch(t6, v1, s1)
     }
-    
+
     // @ Description
     // When an opponent is grabbed by Wario, they will be put into the ThrownDK action (0xB8)
     // rather than the usual CapturePulled action (0xAB)
@@ -513,7 +525,7 @@ scope Wario {
         nop
         _return:
         OS.patch_end()
-        
+
         // v0 = grabbing player struct
         ori     a1, r0, Character.id.WARIO  // a1 = id.WARIO
         lw      a2, 0x0008(v0)              // a2 = grabbing player character id
@@ -522,17 +534,17 @@ scope Wario {
         ori     a1, r0, Character.id.PIANO  // a1 = id.PIANO
         bne     a1, a2, _end                // if id != PIANO, skip
         ori     a1, r0, Action.CapturePulled// original line 1
-        
+
         _wario:
         // if id = WARIO or PIANO
         ori     a1, r0, Action.ThrownDK     // captured player action = ThrownDK
-        
+
         _end:
         addiu   a2, r0, 0x0000              // original line 2
         j       _return                     // return
         nop
     }
-    
+
     // @ Decription
     // Attempts to fix the position of the grabbed character on frame 1 of Wario's GrabPull action.
     // Not perfect, but a big improvement.
@@ -543,7 +555,7 @@ scope Wario {
         nop
         _return:
         OS.patch_end()
-        
+
         lw      a0, 0x0044(sp)              // ~
         lw      a0, 0x0084(a0)              // v0 = grabbing player struct
         lw      a0, 0x0008(a0)              // a0 = grabbing player character id
@@ -557,7 +569,7 @@ scope Wario {
         or      a0, s1, r0                  // original line 2
         j       _return                     // return
         nop
-        
+
         _wario:
         // Usually, 8014A6B4 is used to set the captured player's position on the first frame of
         // being grabbed, with 8014AB64 being used on subsequent frames.
@@ -567,7 +579,7 @@ scope Wario {
         j       _return                     // return
         nop
     }
-    
+
     // @ Description
     // Modifies the subroutine which handles mashing/breaking out of the ThrownDK action.
     // Skips if the throwing character is Wario.
@@ -578,7 +590,7 @@ scope Wario {
         nop
         _return:
         OS.patch_end()
-        
+
         lw      a2, 0x0084(a0)              // a2 = captured player struct
         lw      a2, 0x0844(a2)              // a2 = player.entity_captured_by
         lw      a2, 0x0084(a2)              // a2 = grabbing player struct
@@ -593,7 +605,7 @@ scope Wario {
         sw      ra, 0x0014(sp)              // original line 2
         j       _return                     // return (and continue subroutine)
         nop
-        
+
         _piano:
         lli     a3, Action.GrabWait         // a3 = GrabWait
         lw      t7, 0x0024(a2)              // t7 = grabbing player action
@@ -603,12 +615,12 @@ scope Wario {
         lbu     t7, 0x018D(a2)              // t7 = bit field
         ori     t7, t7, 0x0001              // enable bitflag for invisibility
         sb      t7, 0x018D(a2)              // update bit field
-        
+
         _end:
         jr      ra                          // end subroutine
         nop
     }
-    
+
     // @ Description
     // Plays an alternate voice FGM for Wario's neutral special.
     scope alternate_voice_: {
@@ -617,7 +629,7 @@ scope Wario {
         nop
         _return:
         OS.patch_end()
-        
+
         constant L_HELD(0x0020)             // bitmask for the button L
         // a0 = player struct
         // a1 = fgm id
@@ -626,7 +638,7 @@ scope Wario {
         ori     a2, r0, 0x2FB               // a2 = wario neutral special voice FGM id
         bne     a1, a2, _end                // skip if fgm != wario neutral special voice
         nop
-        
+
         _check_alt_voice:
         lh      a2, 0x01BC(a0)              // a2 = buttons_held
         andi    a2, a2, L_HELD              // a2 = 0x0020 if (L_HELD); else a2 = 0
@@ -635,16 +647,16 @@ scope Wario {
         lw      a2, 0x0ADC(a0)              // a2 = flag (resets to FALSE on death/character load)
         bnez    a2, _end                    // skip if flag != FALSE
         nop
-        
+
         _set_alt_fgm:
         ori     a1, r0, 0x300               // a1 = alternate FGM id
         sw      a1, 0x001C(sp)              // update FGM id in stack
         ori     a2, r0, OS.TRUE             // ~
         sw      a2, 0x0ADC(a0)              // set flag to TRUE (resets to FALSE on death/character load)
-        
+
         _end:
         lw      a1, 0x001C(sp)              // load a1
         j       _return                     // return
         lw      a2, 0x0018(sp)              // load a2
-    }   
+    }
 }

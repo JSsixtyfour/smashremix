@@ -13,7 +13,7 @@ include "Stages.asm"
 scope Toggles {
 
     // @ Description
-    // Allows function 
+    // Allows function
     macro guard(entry_address, exit_address) {
         addiu   sp, sp,-0x0008              // allocate stack space
         sw      at, 0x0004(sp)              // save at
@@ -377,6 +377,11 @@ scope Toggles {
         sw      r0, 0x000C(a0)              // reset cursor to top
         jal     Menu.draw_                  // draw menu
         nop
+        // ensure Profiles text is hidden when first opening menu
+        lli     a0, 14                      // a0 = group
+        lli     a1, 0x0001                  // a1 = 1 (display off)
+        jal     Render.toggle_group_display_
+        nop
 
         Render.register_routine(run_)
 
@@ -529,7 +534,7 @@ scope Toggles {
         notes_blink_timer:
         dw 0x00000000
     }
-    
+
     // @ Description
     // Save toggles to SRAM
     scope save_: {
@@ -563,9 +568,6 @@ scope Toggles {
         li      a0, block_stages            // ~
         jal     SRAM.save_                  // save data
         nop
-    
-        jal     SRAM.mark_saved_            // mark save file present
-        nop
 
         lw      a0, 0x0004(sp)              // ~
         lw      a1, 0x0008(sp)              // ~
@@ -598,7 +600,7 @@ scope Toggles {
         li      a0, block_music             // a0 - address of block (music)
         jal     SRAM.load_                  // load data
         nop
-        li      a0, head_music_settings     // a0 - address of head 
+        li      a0, head_music_settings     // a0 - address of head
         li      a1, block_music             // a1 - address of block
         jal     Menu.import_
         nop
@@ -818,6 +820,7 @@ scope Toggles {
     menu_music_64:; db "64", 0x00
     menu_music_melee:; db "MELEE", 0x00
     menu_music_brawl:; db "BRAWL", 0x00
+    menu_music_off:; db "OFF", 0x00
     OS.align(4)
 
     string_table_menu_music:
@@ -825,6 +828,7 @@ scope Toggles {
     dw menu_music_64
     dw menu_music_melee
     dw menu_music_brawl
+    dw menu_music_off
 
     // @ Description
     // SSS Layout strings
@@ -859,7 +863,7 @@ scope Toggles {
         constant MOVEMENT_OFF(2)
         constant ALL_OFF(3)
     }
-    
+
     // @ Description
     // Allows A button to play selected menu music preference
     scope play_menu_music_: {
@@ -870,7 +874,7 @@ scope Toggles {
         sw      ra, 0x0010(sp)              // save registers
 
         li      t0, Toggles.entry_menu_music
-        lw      t0, 0x0004(t0)              // t0 = 0 if DEFAULT, 1 if 64, 2 if MELEE, 3 if BRAWL
+        lw      t0, 0x0004(t0)              // t0 = 0 if DEFAULT, 1 if 64, 2 if MELEE, 3 if BRAWL, 4 if OFF
 
         lli     t1, 0x0001                  // t1 = 1 (64)
         beql    t1, t0, _play               // if 64, then use 64 BGM
@@ -881,6 +885,9 @@ scope Toggles {
         lli     t1, 0x0003                  // t1 = 3 (BRAWL)
         beql    t1, t0, _play               // if BRAWL, then use BRAWL BGM
         addiu   a1, r0, BGM.menu.MAIN_BRAWL
+        lli     t1, 0x0004                  // t1 = 4 (OFF)
+        beq     t0, t1, _stop               // if OFF, then stop music
+        nop
 
         // v0 is the entry if we got here by pressing A button on the menu music entry
         // if v0 is 0, then we got here by calling it manually in order to reset the menu music
@@ -890,6 +897,12 @@ scope Toggles {
         _play:
         lli     a0, 0x0000
         jal     BGM.play_
+        nop
+        b _finish
+        nop
+
+        _stop:
+        jal     BGM.stop_
         nop
 
         _finish:
@@ -919,7 +932,7 @@ scope Toggles {
 
         lli     a0, 0x0000
         jal     BGM.play_
-        lw      a1, 0x0024(v0)              // a0 = bgm_id
+        lw      a1, 0x0024(v0)              // a1 = bgm_id
 
         lw      a0, 0x0004(sp)              // restore registers
         lw      a1, 0x0008(sp)              // ~
@@ -998,14 +1011,79 @@ scope Toggles {
     }
 
     // @ Description
+    // Loads the given screen
+    scope view_screen_: {
+        // v0 = menu item
+        // 0x0024(v0) = screen_id
+
+        or      a1, ra, r0                  // save ra
+        jal     Menu.change_screen_
+        lw      a0, 0x0024(v0)              // a0 = screen_id
+        or      ra, a1, r0                  // restore ra
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // Loads the credits screen, setting the port
+    scope view_credits_: {
+        // v0 = menu item
+        // 0x0024(v0) = screen_id
+
+        addiu   sp, sp, -0x0010             // allocate stack space
+        sw      ra, 0x0004(sp)              // ~
+        sw      t0, 0x0008(sp)              // ~
+        sw      t1, 0x000C(sp)              // save registers
+
+        lli     a0, Joypad.A | Joypad.START // a0 = button_mask
+
+        li      t0, Joypad.struct
+        lhu     t1, 0x0002(t0)              // t1 = pressed button mask, p1
+        and     t1, t1, a0                  // t1 = zero if no buttons pressed
+        bnezl   t1, _set_1p_port            // if pressed, use p1
+        lli     t1, 0x0000                  // t1 = p1
+
+        lhu     t1, 0x000C(t0)              // t1 = pressed button mask, p2
+        and     t1, t1, a0                  // t1 = zero if no buttons pressed
+        bnezl   t1, _set_1p_port            // if pressed, use p2
+        lli     t1, 0x0001                  // t1 = p2
+
+        lhu     t1, 0x0016(t0)              // t1 = pressed button mask, p3
+        and     t1, t1, a0                  // t1 = zero if no buttons pressed
+        bnezl   t1, _set_1p_port            // if pressed, use p3
+        lli     t1, 0x0002                  // t1 = p3
+
+        // otherwise, must be p4
+        lli     t1, 0x0003                  // t1 = p4
+
+        _set_1p_port:
+        lui     t0, 0x800A
+        sb      t1, 0x4AE3(t0)              // set 1p port
+
+        jal     Menu.change_screen_
+        lw      a0, 0x0024(v0)              // a0 = screen_id
+
+        lw      ra, 0x0004(sp)              // restore registers
+        lw      t0, 0x0008(sp)              // ~
+        lw      t1, 0x000C(sp)              // ~
+        addiu   sp, sp, 0x0010              // allocate stack space
+
+        jr      ra
+        nop
+    }
+
+    // @ Description
     // Contains list of submenus.
     head_super_menu:
     Menu.entry("Load Profile:", Menu.type.U8, OS.FALSE, 0, 3, load_profile_, OS.NULL, string_table_profile, OS.NULL, entry_remix_settings)
     entry_remix_settings:; Menu.entry_title("Remix Settings", set_info_2_, entry_music_settings)
     entry_music_settings:; Menu.entry_title("Music Settings", set_info_3_, entry_stage_settings)
-    entry_stage_settings:; Menu.entry_title("Stage Settings", set_info_4_, OS.NULL)
+    entry_stage_settings:; Menu.entry_title("Stage Settings", set_info_4_, entry_debug)
+    entry_debug:;          Menu.entry_title_with_extra("Debug", view_screen_, 0x0003, entry_view_intro)
+    entry_view_intro:;     Menu.entry_title_with_extra("View Intro", view_screen_, 0x001C, entry_view_credits)
+    entry_view_credits:;   Menu.entry_title_with_extra("View Credits", view_credits_, 0x0038, OS.NULL)
 
-    // @ Description 
+    // @ Description
     // Miscellaneous Toggles
     head_remix_settings:
     entry_skip_results_screen:;         entry_bool("Skip Results Screen", OS.FALSE, OS.FALSE, OS.TRUE, OS.FALSE, entry_hold_to_pause)
@@ -1031,17 +1109,22 @@ scope Toggles {
     entry_japanese_di:;                 entry_bool("Japanese DI", OS.FALSE, OS.FALSE, OS.FALSE, OS.TRUE, entry_japanese_sounds)
     entry_japanese_sounds:;             entry("Japanese Sounds", Menu.type.U8, 0, 0, 0, 1, 0, 2, OS.NULL, string_table_frequency, OS.NULL, entry_momentum_slide)
     entry_momentum_slide:;              entry_bool("Momentum Slide", OS.FALSE, OS.FALSE, OS.FALSE, OS.TRUE, entry_japanese_shieldstun)
-    entry_japanese_shieldstun:;         entry_bool("Japanese Shield Stun", OS.FALSE, OS.FALSE, OS.FALSE, OS.TRUE, entry_variant_random)
-	entry_variant_random:;              entry_bool("Random Select With Variants", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_disable_pause_hud)
+    entry_japanese_shieldstun:;         entry_bool("Japanese Shield Stun", OS.FALSE, OS.FALSE, OS.FALSE, OS.TRUE, entry_stereo_fix)
+	entry_stereo_fix:;                  entry_bool("Stereo Fix for Hit SFX", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, entry_variant_random)
+    entry_variant_random:;              entry_bool("Random Select With Variants", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_disable_pause_hud)
     entry_disable_pause_hud:;           entry_bool("Disable VS Pause HUD", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_disable_aa)
-    entry_disable_aa:;                  entry_bool("Disable Anti-Aliasing", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, OS.NULL)
+    entry_disable_aa:;                  entry_bool("Disable Anti-Aliasing", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_full_results)
+    entry_full_results:;                entry_bool("Always Show Full Results", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, entry_skip_training_start_cheer)
+    entry_skip_training_start_cheer:;   entry_bool("Skip Training Start Cheer", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, OS.NULL)
+    evaluate num_remix_toggles(num_toggles)
 
     // @ Description
     // Random Music Toggles
     head_music_settings:
     entry_play_music:;                      entry_bool("Play Music", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music)
-    entry_random_music:;                    entry_bool("Random Music", OS.FALSE, OS.FALSE, OS.TRUE, OS.FALSE, entry_menu_music)
-    entry_menu_music:;                      entry("Menu Music", Menu.type.U8, 0, 0, 1, 0, 0, 3, play_menu_music_, string_table_menu_music, OS.NULL, entry_show_music_title)
+    entry_random_music:;                    entry_bool("Random Music", OS.FALSE, OS.FALSE, OS.TRUE, OS.FALSE, entry_preserve_salty_song)
+    entry_preserve_salty_song:;             entry_bool("Salty Runback Preserves Song", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_menu_music)
+    entry_menu_music:;                      entry("Menu Music", Menu.type.U8, 0, 0, 1, 0, 0, 4, play_menu_music_, string_table_menu_music, OS.NULL, entry_show_music_title)
     entry_show_music_title:;                entry_bool("Music Title at Match Start", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_load_profile_music)
     evaluate LOAD_PROFILE_MUSIC_ENTRY_ORIGIN(origin())
     entry_load_profile_music:;              entry("Load Profile:", Menu.type.U8, 0, 0, 0, 0, 0, 0, load_sub_profile_, num_toggles, string_table_music_profile, OS.NULL, entry_random_music_title)
@@ -1066,14 +1149,12 @@ scope Toggles {
 
     entry_random_music_first_custom:
     // Add custom MIDIs
-    define toggled_custom_MIDIs(0)
     define last_toggled_custom_MIDI(0)
     evaluate n(0x2F)
     while {n} < MIDI.midi_count {
         evaluate can_toggle({MIDI.MIDI_{n}_TOGGLE})
         if ({can_toggle} == OS.TRUE) {
             evaluate last_toggled_custom_MIDI({n})
-            evaluate toggled_custom_MIDIs({toggled_custom_MIDIs}+1)
         }
         evaluate n({n}+1)
     }
@@ -1095,6 +1176,7 @@ scope Toggles {
         evaluate n({n}+1)
     }
     evaluate last_music_toggle(num_toggles)
+    evaluate num_music_toggles(num_toggles - {num_remix_toggles})
 
     // @ Description
     // Stage Toggles
@@ -1125,14 +1207,12 @@ scope Toggles {
 
     entry_random_stage_first_custom:
     // Add custom stages
-    define toggled_custom_stages(0)
     define last_toggled_custom_stage(0)
     evaluate n(0x29)
     while {n} <= Stages.id.MAX_STAGE_ID {
         evaluate can_toggle({Stages.STAGE_{n}_TOGGLE})
         if ({can_toggle} == OS.TRUE) {
             evaluate last_toggled_custom_stage({n})
-            evaluate toggled_custom_stages({toggled_custom_stages}+1)
         }
         evaluate n({n}+1)
     }
@@ -1156,12 +1236,15 @@ scope Toggles {
     }
     map 0, 0, 256 // restore string mappings
     evaluate last_stage_toggle(num_toggles)
+    evaluate num_stage_toggles(num_toggles - {num_remix_toggles} - {num_music_toggles})
+
+    print "*******************************\n{num_remix_toggles}, {num_stage_toggles}, {num_music_toggles}\n"
 
     // @ Description
     // SRAM blocks for toggle saving.
-    block_misc:; SRAM.block(27 * 4)
-    block_music:; SRAM.block((21 + {toggled_custom_MIDIs}) * 4)
-    block_stages:; SRAM.block((20 + {toggled_custom_stages}) * 4)
+    block_misc:; SRAM.block({num_remix_toggles} * 4)
+    block_music:; SRAM.block({num_music_toggles} * 4)
+    block_stages:; SRAM.block({num_music_toggles} * 4)
 
     profile_defaults_CE:; write_defaults_for(CE)
     profile_defaults_TE:; write_defaults_for(TE)

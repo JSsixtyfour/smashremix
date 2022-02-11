@@ -665,9 +665,10 @@ scope Render {
     // scale - scale the font size
     // alignment - alignment of string
     // blur - whether or not to respect the alpha and blur the edges (antialiasing?)
+    // decimals - number of decimals (e.g. if 1, 14 would become 1.4)
     // @ Returns
     // v0 - pointer to object created
-    macro draw_number(room, group, number, routine, ulx, uly, color, scale, alignment, blur) {
+    macro draw_number(room, group, number, routine, ulx, uly, color, scale, alignment, blur, decimals) {
         if {room} != 0xFF {
             lli     a0, {room}
         }
@@ -685,14 +686,33 @@ scope Render {
         li      s3, {color}
         li      s4, {scale}
         lli     s5, {alignment}
-        lli     s6, Render.string_type.NUMBER
+        lli     s6, Render.string_type.NUMBER | ({decimals} << 4)
         lli     s7, 0x0000
         jal     Render.draw_string_
         lli     t8, {blur}
     }
 
     // @ Description
-    // Draws a number as a string with blur set
+    // Draws a number as a string with no decimals
+    // @ Arguments
+    // room - room
+    // group - linked list to append
+    // number - pointer to number data
+    // routine - routine to run every frame
+    // ulx - upper left X coordinate for string
+    // uly - upper left Y coordinate for string
+    // color - color for string if supported for type: 0xRRGGBBFF
+    // scale - scale the font size
+    // alignment - alignment of string
+    // blur - whether or not to respect the alpha and blur the edges (antialiasing?)
+    // @ Returns
+    // v0 - pointer to object created
+    macro draw_number(room, group, number, routine, ulx, uly, color, scale, alignment, blur) {
+        Render.draw_number({room}, {group}, {number}, {routine}, {ulx}, {uly}, {color}, {scale}, {alignment}, {blur}, 0)
+    }
+
+    // @ Description
+    // Draws a number as a string with no decimals and with blur set
     // @ Arguments
     // room - room
     // group - linked list to append
@@ -706,7 +726,7 @@ scope Render {
     // @ Returns
     // v0 - pointer to object created
     macro draw_number(room, group, number, routine, ulx, uly, color, scale, alignment) {
-        Render.draw_number({room}, {group}, {number}, {routine}, {ulx}, {uly}, {color}, {scale}, {alignment}, 0x0001)
+        Render.draw_number({room}, {group}, {number}, {routine}, {ulx}, {uly}, {color}, {scale}, {alignment}, 0x0001, 0)
     }
 
     // @ Description
@@ -859,17 +879,23 @@ scope Render {
     scope load_file_: {
         addiu   sp, sp, -0x0010             // allocate stack space
         sw      ra, 0x0004(sp)              // save ra
+        sw      a1, 0x0008(sp)              // save a1
 
         li      a2, temp_file_ID            // a2 = pointer to file ID of file
         sw      a0, 0x0000(a2)              // set file ID to load
-        addu    a0, r0, a2                  // a0 = pointer to file ID of file
-        addu    a2, r0, a1                  // a2 = file RAM address to use for later referencing
-        li      a3, free_memory_pointer     // a3 = free_memory_pointer (free memory space to load the file to)
-        lw      a3, 0x0000(a3)              // a3 = address to load file to
-        jal     0x800CDE04
-        addiu   a1, r0, 0x0001              // a2 = 1 (number of files in array)
-        li      a3, free_memory_pointer     // a3 = free_memory_pointer (free memory space to load the file to)
-        sw      t7, 0x0000(a3)              // store updated free memory address
+        or      a0, a2, r0                  // a0 = pointer to file ID of file
+        jal     0x800CDEEC                  // v0 = length of file
+        addiu   a1, r0, 0x0001              // a1 = 1 (number of files in array)
+
+        or      a0, v0, r0                  // a0 = length of file
+        jal     0x80004980                  // allocate heap space (malloc)
+        addiu   a1, r0, 0x0010              // a1 = align to 0x10
+
+        li      a0, temp_file_ID            // a2 = pointer to file ID of file
+        lw      a2, 0x0008(sp)              // a2 = file RAM address to use for later referencing
+        or      a3, v0, r0                  // a3 = address to load file to
+        jal     0x800CDE04                  // load file
+        addiu   a1, r0, 0x0001              // a1 = 1 (number of files in array)
 
         lw      ra, 0x0004(sp)              // restore ra
         addiu   sp, sp, 0x0010              // deallocate stack space
@@ -1224,7 +1250,7 @@ scope Render {
         sw      s2, 0x000C(t0)              // update y
         sw      s3, 0x0010(t0)              // update z
 
-        
+
 
         or      a2, r0, a0                  // room
         or      a0, r0, a3                  // routine
@@ -1232,7 +1258,7 @@ scope Render {
         li      a1, STAGE_OBJECT_RENDER_
         jal     create_display_object_
         nop
-        
+
         lw      s4, 0x000C(sp)              // s4 = alpha
         li      t0, model_part_image        // t0 = RAM address of model part image
         sb      s4, 0x0053(t0)              // update alpha
@@ -1564,6 +1590,7 @@ scope Render {
         sw      a1, 0x0050(v0)              // save number adjust amount
         addu    a0, a0, a1                  // a0 = number, adjusted
         lw      a2, 0x0020(sp)              // a2 = string_type
+        srl     a3, a2, 0x0004              // a3 = number of decimal places
         andi    a1, a2, 0b0100              // a1 = 1 if signed
         andi    a2, a2, 0b1000              // a2 = 1 if always show + prefix
         jal     String.itoa_                // v0 = pointer to string
@@ -1977,17 +2004,17 @@ scope Render {
 
         li      t0, Global.current_screen   // ~
         lbu     t0, 0x0000(t0)              // t0 = current screen
-		
+
 		// 1P
         li      t1, SinglePlayerModes.singleplayer_mode_flag       // t1 = Single Player Mode flag address
         lw      t1, 0x0000(t1)              // t1 = 1 if bonus 3
         beqz    t1, _vs_check               // if not multiman or allstar modes, skip
         nop
 		addiu	t2, r0, 0x0004				// Remix 1p Flag
-		beq     t2, t1, _vs_check               // if Remix 1p, skip
+		beq     t2, t1, _vs_check           // if Remix 1p, skip
         nop
-		
-		
+
+
 		lli     t1, 0x0077                  // t1 = 1P mode screen_id
         beq     t0, t1, _multiman           // if (screen_id = multiman mode/allstar), jump to _multiman mode
         nop
@@ -2058,9 +2085,14 @@ scope Render {
         lw      a0, 0x0000(a0)              // a0 = first loaded file
         lli     t1, 0x00A7                  // t1 = 0xA7
         beq     a0, t1, _title              // if (first file loaded = 0xA7 Hole Image), jump to _title
+        lli     t1, 0x004F                  // t1 = 0x4F
+        beq     a0, t1, _end                // if (first file loaded = 0x4F Continue Image), skip to end (continue screen)
         nop
 
         jal     BGM.setup_                  // load font file if necessary for music titles
+        nop
+
+        jal     InputDisplay.setup_
         nop
 
         _end:
@@ -2074,7 +2106,7 @@ scope Render {
         addiu   sp, sp, 0x0010              // deallocate stack space
         jr      ra
         nop
-		
+
 		_multiman:
 		jal     SinglePlayerModes.setup_    // Setup the KO counter
         nop
@@ -2096,8 +2128,13 @@ scope Render {
 
         jal     Item.clear_active_custom_items_
         nop
+        jal     Item.start_with_item_
+        nop
 
         jal     BGM.setup_                  // load font file if necessary for music titles
+        nop
+
+        jal     InputDisplay.setup_
         nop
 
         b       _end
@@ -2117,6 +2154,17 @@ scope Render {
         jal     CharacterSelect.setup_
         addu    a0, r0, t0                  // a0 = screen_id
         jal     Item.clear_active_custom_items_
+        nop
+
+        li      t0, Global.current_screen   // ~
+        lbu     t0, 0x0000(t0)              // t0 = current screen
+        lli     t1, 0x0013                  // t1 = Bonus 1 screen_id
+        beq     t0, t1, _bonus_css          // if Bonus 1, do setup
+        lli     t1, 0x0014                  // t1 = Bonus 2 screen_id
+        bne     t0, t1, _end                // if not Bonus 1/2, end
+        nop
+        _bonus_css:
+        jal     Bonus.setup_
         nop
 
         b       _end
@@ -2143,6 +2191,10 @@ scope Render {
         nop
         jal     Item.clear_active_custom_items_
         nop
+        jal     Item.start_with_item_
+        nop
+        jal     InputDisplay.setup_
+        nop
 
         b       _end
         nop
@@ -2158,6 +2210,9 @@ scope Render {
         lui     v0, 0x800A
         jal     CharacterSelectDebugMenu.clear_debug_menu_settings_for_1p_
         lbu     v0, 0x4AE3(v0)              // v0 = port of human player
+
+        jal     InputDisplay.setup_
+        nop
 
         b       _end
         nop

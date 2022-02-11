@@ -139,7 +139,7 @@ scope Boot {
         nop
     }
 
-    string_version:; String.insert("Smash Remix v1.0.1")
+    string_version:; String.insert("Smash Remix v1.1.0")
 
     // @ Descritpion
     // Nintendo 64 logo cannot be skipped.
@@ -173,7 +173,7 @@ scope Boot {
         addiu   sp, sp,-0x0008          // allocate stack space
         sw      t0, 0x0004(sp)          // save t0
         lli     t0, OS.TRUE             // t0 = OS.TRUE
-        bne     v0, t0, _continue       // if (!has_saved), skip
+        bne     v0, t0, _initialize     // if (!has_saved), initialize SRAM
         nop
         jal     Toggles.load_           // load toggles
         nop
@@ -183,6 +183,12 @@ scope Boot {
         addiu   sp, sp, 0x0008          // deallocate stack space
 
         j       0x80000638              // return
+        nop
+
+        _initialize:
+        jal     SRAM.initialize_
+        nop
+        b       _continue
         nop
     }
 

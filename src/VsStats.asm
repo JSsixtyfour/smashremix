@@ -385,7 +385,20 @@ scope VsStats {
         sll     t2, a1, 0x0002              // t2 = a1 * 4 (offset in struct table)
         addu    t1, t1, t2                  // t1 = pointer to character struct
         lw      t1, 0x0000(t1)              // t1 = character struct
+
+        // Sonic costume check (player structs aren't loaded yet so we can't just use attribute data pointer)
+        lli     a2, Character.id.SONIC      // a2 = Character.id.SONIC
+        bne     a1, a2, _icon               // if not Sonic, use normal main file pointer
         lw      t2, 0x0028(t1)              // t2 = main character file address pointer
+
+        li      a3, Sonic.classic_table     // a3 = classic_table
+        lw      a2, 0x0008(sp)              // a2 = port (0 - 3)
+        addu    a3, a3, a2                  // a3 = classic_table + port
+        lbu     a3, 0x0000(a3)              // a3 = px is_classic
+        bnezl   a3, _icon                   // if Classic Sonic, use Classic Sonic's main file
+        lw      t2, 0x0040(t1)              // t2 = main character file address pointer
+
+        _icon:
         lw      t2, 0x0000(t2)              // t2 = main character file address
         lw      t1, 0x0060(t1)              // t1 = offset to attribute data
         addu    t1, t2, t1                  // t1 = attribute data address

@@ -269,4 +269,110 @@ scope DKShared {
         addiu   at, r0, 0x0010              // original line 2
     }
     
+    // character ID check add for when Characters use the barrel as a base for an entry object
+    scope barrel_alternate: {
+        OS.patch_start(0x7EC28, 0x80103428)
+        j       barrel_alternate
+        addiu   at, r0, Character.id.SONIC  // SONIC ID
+        _return:
+        OS.patch_end()
+        
+        lw      t6, 0x0008(s0)              // load character ID
+        beq     t6, at, _sonic              // modified original line 1
+        addiu   at, r0, Character.id.SSONIC // SSONIC ID
+        bnel    t6, at, _end
+        addiu   a0, a0, 0xE654              // original line 2
+        
+        _ssonic:
+        addiu   at, r0, 0x0001
+        lw      t6, 0x0044(s0)              // load character ID
+        bne     t6, at, _ssonic_left        // if facing left, use left
+        sw      r0, 0x0044(s0)              // clears out player facing
+        li      a0, ssonic_entry_struct_right
+        beq     r0, r0, _end
+        nop
+        
+        _ssonic_left:
+        li      a0, ssonic_entry_struct_left
+        beq     r0, r0, _end
+        nop
+        
+        _sonic:
+        addiu   at, r0, 0x0001
+        lw      t6, 0x0044(s0)              // load character ID
+        bne     t6, at, _sonic_left                 // if facing left, use left
+        sw      r0, 0x0044(s0)              // clears out player facing
+        li      a0, sonic_entry_struct_right
+        beq     r0, r0, _end
+        nop
+        
+        _sonic_left:
+        li      a0, sonic_entry_struct_left
+        beq     r0, r0, _end
+        nop
+        
+        _end:
+        jal     0x800FDAFC                  // original line 1
+        nop
+        
+        j       _return                     // return
+        nop
+    }
+    
+
+    sonic_entry_struct_right:
+    // Entry Objects like the barrel have structs which are used to load them, similar to the Blue Falcon and others
+    // Needs UPDATED whenever Tails file updated due to offsets
+    dw  0x040A0000 
+    dw  Character.SONIC_file_8_ptr // pointer to pointer to Tails file
+    dw  0x1C00001C 
+    dw  0x00000000 
+    dw  0x800FD568 
+    dw  0x80014038 
+    dw  0x00002A28          // offset
+    dw  0x00000000 
+    dw  0x000068C8          // offset
+    dw  0x00000000
+    
+    sonic_entry_struct_left:
+    // Entry Objects like the barrel have structs which are used to load them, similar to the Blue Falcon and others
+    // Needs UPDATED whenever Tails file updated due to offsets
+    dw  0x040A0000 
+    dw  Character.SONIC_file_8_ptr // pointer to pointer to Tails file
+    dw  0x1C00001C 
+    dw  0x00000000 
+    dw  0x800FD568 
+    dw  0x80014038 
+    dw  0x0000A5E8          // offset
+    dw  0x00000000 
+    dw  0x000112AC          // offset
+    dw  0x00000000
+    
+    ssonic_entry_struct_right:
+    // Entry Objects like the barrel have structs which are used to load them, similar to the Blue Falcon and others
+    // Needs UPDATED whenever Tails file updated due to offsets
+    dw  0x040A0000 
+    dw  Character.SSONIC_file_8_ptr // pointer to pointer to Tails file
+    dw  0x1C00001C 
+    dw  0x00000000 
+    dw  0x800FD568 
+    dw  0x80014038 
+    dw  0x00002A28          // offset
+    dw  0x00000000 
+    dw  0x000068C8          // offset
+    dw  0x00000000
+   
+    ssonic_entry_struct_left:
+    // Entry Objects like the barrel have structs which are used to load them, similar to the Blue Falcon and others
+    // Needs UPDATED whenever Tails file updated due to offsets
+    dw  0x040A0000 
+    dw  Character.SSONIC_file_8_ptr // pointer to pointer to Tails file
+    dw  0x1C00001C 
+    dw  0x00000000 
+    dw  0x800FD568 
+    dw  0x80014038 
+    dw  0x0000A5E8          // offset
+    dw  0x00000000 
+    dw  0x000112AC          // offset
+    dw  0x00000000
 }

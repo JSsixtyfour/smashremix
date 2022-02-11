@@ -39,6 +39,9 @@ scope Kirby {
     insert MARTH_NSP_3_HIGH,"moveset/MARTH_NSP_3_HIGH.bin"
     insert MARTH_NSP_3,"moveset/MARTH_NSP_3.bin"
     insert MARTH_NSP_3_LOW,"moveset/MARTH_NSP_3_LOW.bin"
+    insert SONIC_NSP_CHARGE,"moveset/SONIC_NSP_CHARGE.bin"
+    insert SONIC_NSP_MOVE,"moveset/SONIC_NSP_MOVE.bin"
+    insert SONIC_NSP_BOUNCE,"moveset/SONIC_NSP_BOUNCE.bin"
 
     // Add Action Parameters                // Action Name       // Base Action // Animation                    // Moveset Data         // Flags
     Character.add_new_action_params(KIRBY,  GND_NSP_Ground,             0x127,  -1,                             GND_NSP_GROUND,         -1)
@@ -88,6 +91,14 @@ scope Kirby {
     Character.add_new_action_params(KIRBY,  MARTH_NSPA_3_High,          -1,     File.KIRBY_MARTH_NSPA_3_HI,     MARTH_NSP_3_HIGH,       0)
     Character.add_new_action_params(KIRBY,  MARTH_NSPA_3_Mid,           -1,     File.KIRBY_MARTH_NSPA_3,        MARTH_NSP_3,            0)
     Character.add_new_action_params(KIRBY,  MARTH_NSPA_3_Low,           -1,     File.KIRBY_MARTH_NSPA_3_LO,     MARTH_NSP_3_LOW,        0)
+    Character.add_new_action_params(KIRBY,  SONIC_NSP_Begin,            -1,     File.KIRBY_SONIC_NSP_LOOP,      SONIC_NSP_CHARGE,       0x10000000)
+    Character.add_new_action_params(KIRBY,  SONIC_NSP_Move,             -1,     File.KIRBY_SONIC_NSP_LOOP,      SONIC_NSP_MOVE,         0x10000000)
+    Character.add_new_action_params(KIRBY,  SONIC_NSP_Locked_Move,      -1,     File.KIRBY_SONIC_NSP_LOOP,      SONIC_NSP_MOVE,         0x10000000)
+    Character.add_new_action_params(KIRBY,  SONIC_NSP_Ground_End,       -1,     File.KIRBY_SONIC_NSPG_END_F,    0x80000000,             0)
+    Character.add_new_action_params(KIRBY,  SONIC_NSP_Air_End,          -1,     File.KIRBY_SONIC_NSPA_END_F,    0x80000000,             0)
+    Character.add_new_action_params(KIRBY,  SONIC_NSP_Ground_Recoil,    -1,     File.KIRBY_SONIC_NSPG_END_B,    0x80000000,             0)
+    Character.add_new_action_params(KIRBY,  SONIC_NSP_Air_Recoil,       -1,     File.KIRBY_SONIC_NSPA_END_B,    0x80000000,             0)
+    Character.add_new_action_params(KIRBY,  SONIC_NSP_Bounce,           -1,     File.KIRBY_SONIC_NSPA_END_F,    SONIC_NSP_BOUNCE,       0)
 
 
     // Add Actions                  // Action Name       // Base Action //Parameters                       // Staling ID    // Main ASM                 // Interrupt/Other ASM              // Movement/Physics ASM     // Collision ASM
@@ -138,6 +149,14 @@ scope Kirby {
     Character.add_new_action(KIRBY, MARTH_NSPA_3_High,          -1,     ActionParams.MARTH_NSPA_3_High,         0x12,       MarthNSP.air_main_,         0,                                  0x800D91EC,                 MarthNSP.air_collision_)
     Character.add_new_action(KIRBY, MARTH_NSPA_3_Mid,           -1,     ActionParams.MARTH_NSPA_3_Mid,          0x12,       MarthNSP.air_main_,         0,                                  0x800D91EC,                 MarthNSP.air_collision_)
     Character.add_new_action(KIRBY, MARTH_NSPA_3_Low,           -1,     ActionParams.MARTH_NSPA_3_Low,          0x12,       MarthNSP.air_main_,         0,                                  0x800D91EC,                 MarthNSP.air_collision_)
+    Character.add_new_action(KIRBY, SONIC_NSP_Begin,            -1,     ActionParams.SONIC_NSP_Begin,           0x12,       SonicNSP.begin_main_,       0,                                  0,                          0x800DE6B0)
+    Character.add_new_action(KIRBY, SONIC_NSP_Move,             -1,     ActionParams.SONIC_NSP_Move,            0x12,       SonicNSP.move_main_,        0,                                  SonicNSP.move_physics_,     SonicNSP.move_collision_)
+    Character.add_new_action(KIRBY, SONIC_NSP_Locked_Move,      -1,     ActionParams.SONIC_NSP_Locked_Move,     0x12,       SonicNSP.move_main_,        0,                                  SonicNSP.move_physics_,     SonicNSP.move_collision_)
+    Character.add_new_action(KIRBY, SONIC_NSP_Ground_End,       -1,     ActionParams.SONIC_NSP_Ground_End,      0x12,       0x800D94C4,                 0,                                  0x800D8BB4,                 SonicNSP.ground_end_collision_)
+    Character.add_new_action(KIRBY, SONIC_NSP_Air_End,          -1,     ActionParams.SONIC_NSP_Air_End,         0x12,       0x800D94E8,                 0,                                  0x800D91EC,                 SonicNSP.air_end_collision_)
+    Character.add_new_action(KIRBY, SONIC_NSP_Ground_Recoil,    -1,     ActionParams.SONIC_NSP_Ground_Recoil,   0x12,       0x800D94C4,                 0,                                  0x800D8BB4,                 SonicNSP.ground_recoil_collision_)
+    Character.add_new_action(KIRBY, SONIC_NSP_Air_Recoil,       -1,     ActionParams.SONIC_NSP_Air_Recoil,      0x12,       0x800D94E8,                 0,                                  0x800D91EC,                 SonicNSP.air_recoil_collision_)
+    Character.add_new_action(KIRBY, SONIC_NSP_Bounce,           -1,     ActionParams.SONIC_NSP_Bounce,          0x12,       0x800D94E8,                 0,                                  0x800D91EC,                 0x800DE99C)
 
 
     Character.table_patch_start(kirby_ground_nsp, Character.id.WARIO, 0x4)
@@ -174,6 +193,13 @@ scope Kirby {
     OS.patch_end()
     Character.table_patch_start(kirby_air_nsp, Character.id.MARTH, 0x4)
     dw      MarthNSP.air_1_initial_
+    OS.patch_end()
+
+    Character.table_patch_start(kirby_ground_nsp, Character.id.SONIC, 0x4)
+    dw      SonicNSP.begin_initial_
+    OS.patch_end()
+    Character.table_patch_start(kirby_air_nsp, Character.id.SONIC, 0x4)
+    dw      SonicNSP.begin_initial_
     OS.patch_end()
 
     //TODO: maybe move this asm to the shared file?
@@ -307,12 +333,12 @@ scope Kirby {
         j       _return
         sw      a1, 0x0094(sp)              // original line 2
     }
-    
+
     // Modify grounded routine for Kirby
     Character.table_patch_start(grounded_script, Character.id.KIRBY, 0x4)
     dw clear_marth_flag_
     OS.patch_end()
-    
+
     // @ Description
     // Jump table patch for which clears the pseudo-jump flag if Kirby is using the Marth hat.
     scope clear_marth_flag_: {
@@ -320,7 +346,7 @@ scope Kirby {
         lli     at, Character.id.MARTH      // at = id.MARTH
         beql    at, t0, _end                // branch if copied character is Marth...
         sw      r0, 0x0AE0(v0)              // ...and clear pseudo-jump flag
-        
+
         _end:
         j       0x800DE44C                  // return
         nop

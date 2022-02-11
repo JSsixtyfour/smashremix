@@ -133,6 +133,11 @@ scope Command {
             _end:
         }
 
+        scope _respawn_with_item: {
+            jal     Item.respawn_with_item_
+            nop
+        }
+
         OS.restore_registers()              // full register load
         j   _change_action_return           // return
         nop

@@ -11,7 +11,7 @@ scope JNess {
     insert USMASH, "moveset/USMASH.bin"
     insert FSMASH, "moveset/FSMASH.bin"
     insert PKTHUNDER2, "moveset/PKTHUNDER2.bin"
-    
+
     // -1 means no change from the character from which this one was cloned
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(JNESS, Action.Jab2,            -1,                         NEUTRAL2,                   -1)
@@ -22,9 +22,9 @@ scope JNess {
     Character.edit_action_parameters(JNESS, Action.FSmash,          -1,                         FSMASH,                     -1)
     Character.edit_action_parameters(JNESS, 0xEC,                   -1,                         PKTHUNDER2,                 -1)
     Character.edit_action_parameters(JNESS, 0xE7,                   -1,                         PKTHUNDER2,                 -1)
-    
+
     // Modify Menu Action Parameters        // Action          // Animation                // Moveset Data             // Flags
-    
+
         // Set crowd chant FGM.
     Character.table_patch_start(crowd_chant_fgm, Character.id.JNESS, 0x2)
     dh  0x031D

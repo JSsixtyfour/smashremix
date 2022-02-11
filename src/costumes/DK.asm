@@ -1,7 +1,7 @@
 scope dk_costumes {
     // @ Description
     // Number of additional costumes
-    constant NUM_EXTRA_COSTUMES(2)
+    constant NUM_EXTRA_COSTUMES(3)
 
     // @ Description
     // Number of parts
@@ -137,41 +137,40 @@ scope dk_costumes {
         Costumes.set_stock_icon_palette_for_costume(1, DK/cos_6_stock_icon.bin)
     }
  
-// forbidden golden great ape costume, too powerful for public consumption 
-//// Costume 0x7
-//scope costume_7 {
-//    palette_1:; insert "DK/cos_7.bin"
-//    palette_2:; insert "DK/cos_5_2.bin"
-//    Costumes.set_palette_for_part(2, 1, 0, palette_1)
-//    Costumes.set_palette_for_part(2, 1, 1, palette_1)
-//    Costumes.set_palette_for_part(2, 2, 0, palette_1)
-//    Costumes.set_palette_for_part(2, 2, 1, palette_1)
-//    Costumes.set_palette_for_part(2, 4, 0, palette_1)
-//    Costumes.set_palette_for_part(2, 5, 0, palette_1)
-//    Costumes.set_palette_for_part(2, 6, 0, palette_2)
-//    Costumes.set_prim_color_for_part(2, 6, 0, 0xF7A56BFF)
-//    Costumes.set_palette_for_part(2, 6, 1, palette_2)
-//    Costumes.set_prim_color_for_part(2, 6, 2, 0xF7A56BFF)
-//    Costumes.set_palette_for_part(2, 8, 0, palette_1)
-//    Costumes.set_palette_for_part(2, 8, 1, palette_1)
-//    Costumes.set_palette_for_part(2, 8, 2, palette_2)
-//    Costumes.set_prim_color_for_part(2, 8, 3, 0xF7A56BFF)
-//    Costumes.set_palette_for_part(2, 8, 4, palette_1)
-//    Costumes.set_palette_for_part(2, A, 0, palette_1)
-//    Costumes.set_palette_for_part(2, B, 0, palette_1)
-//    Costumes.set_palette_for_part(2, C, 0, palette_2)
-//    Costumes.set_prim_color_for_part(2, C, 0, 0xF7A56BFF)
-//    Costumes.set_palette_for_part(2, C, 1, palette_2)
-//    Costumes.set_prim_color_for_part(2, C, 2, 0xF7A56BFF)
-//    Costumes.set_palette_for_part(2, 10, 0, palette_1)
-//    Costumes.set_palette_for_part(2, 11, 0, palette_1)
-//    Costumes.set_palette_for_part(2, 13, 0, palette_2)
-//    Costumes.set_palette_for_part(2, 13, 1, palette_2)
-//    Costumes.set_palette_for_part(2, 15, 0, palette_1)
-//    Costumes.set_palette_for_part(2, 16, 0, palette_1)
-//    Costumes.set_palette_for_part(2, 18, 0, palette_2)
-//    Costumes.set_palette_for_part(2, 18, 1, palette_2)
-//
-//    Costumes.set_stock_icon_palette_for_costume(2, DK/cos_7_stock_icon.bin)
-//}
+    // Costume 0x7
+    scope costume_7 {
+      palette_1:; insert "DK/cos_7.bin"
+      palette_2:; insert "DK/cos_7_2.bin"
+      Costumes.set_palette_for_part(2, 1, 0, palette_1)
+      Costumes.set_palette_for_part(2, 1, 1, palette_1)
+      Costumes.set_palette_for_part(2, 2, 0, palette_1)
+      Costumes.set_palette_for_part(2, 2, 1, palette_1)
+      Costumes.set_palette_for_part(2, 4, 0, palette_1)
+      Costumes.set_palette_for_part(2, 5, 0, palette_1)
+      Costumes.set_palette_for_part(2, 6, 0, palette_2)
+      Costumes.set_prim_color_for_part(2, 6, 0, 0xF7A56BFF)
+      Costumes.set_palette_for_part(2, 6, 1, palette_2)
+      Costumes.set_prim_color_for_part(2, 6, 2, 0xF7A56BFF)
+      Costumes.set_palette_for_part(2, 8, 0, palette_1)
+      Costumes.set_palette_for_part(2, 8, 1, palette_1)
+      Costumes.set_palette_for_part(2, 8, 2, palette_2)
+      Costumes.set_prim_color_for_part(2, 8, 3, 0xF7A56BFF)
+      Costumes.set_palette_for_part(2, 8, 4, palette_1)
+      Costumes.set_palette_for_part(2, A, 0, palette_1)
+      Costumes.set_palette_for_part(2, B, 0, palette_1)
+      Costumes.set_palette_for_part(2, C, 0, palette_2)
+      Costumes.set_prim_color_for_part(2, C, 0, 0xF7A56BFF)
+      Costumes.set_palette_for_part(2, C, 1, palette_2)
+      Costumes.set_prim_color_for_part(2, C, 2, 0xF7A56BFF)
+      Costumes.set_palette_for_part(2, 10, 0, palette_1)
+      Costumes.set_palette_for_part(2, 11, 0, palette_1)
+      Costumes.set_palette_for_part(2, 13, 0, palette_2)
+      Costumes.set_palette_for_part(2, 13, 1, palette_2)
+      Costumes.set_palette_for_part(2, 15, 0, palette_1)
+      Costumes.set_palette_for_part(2, 16, 0, palette_1)
+      Costumes.set_palette_for_part(2, 18, 0, palette_2)
+      Costumes.set_palette_for_part(2, 18, 1, palette_2)
+  
+      Costumes.set_stock_icon_palette_for_costume(2, DK/cos_7_stock_icon.bin)
+    }
 }

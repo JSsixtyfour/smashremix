@@ -3,7 +3,7 @@
 // This file contains subroutines used by Wario's special moves.
 
 // @ Description
-// Subroutines for Neutral Special    
+// Subroutines for Neutral Special
 scope WarioNSP {
     constant X_SPEED(0x4280)                // current setting - float:64.0
     constant Y_SPEED(0x41F0)                // current setting - float:30.0
@@ -14,19 +14,19 @@ scope WarioNSP {
     constant MAX_FALL_SPEED(0x4240)         // current setting - float:48.0
     constant AIR_FRICTION(0x4000)           // current setting - float:2.0
     constant GROUND_TRACTION(0x3F00)        // current setting - float:0.5
-    
+
     constant BEGIN(0x1)
     constant MOVE(0x2)
-    
+
     constant WALL_COLLISION_L(0x0001)       // bitmask for wall collision
     constant WALL_COLLISION_R(0x0020)       // bitmask for wall collision
-    
+
     // @ Description
     // Subroutine which runs when Wario initiates a grounded neutral special.
     // Changes action, and sets up initial variable values.
     scope ground_initial_: {
         OS.copy_segment(0xD0A54, 0x10)      // copy beginning of subroutine from Mario
-        
+
         lw      a2, 0x0084(a0)              // ~
         lw      a2, 0x0008(a2)              // a2 = current character ID
         lli     a1, Character.id.KIRBY      // a1 = id.KIRBY
@@ -35,9 +35,9 @@ scope WarioNSP {
         lli     a1, Character.id.JKIRBY     // a1 = id.JKIRBY
         beql    a1, a2, pc() + 12           // if J Kirby, load alternate action ID
         lli     a1, Kirby.Action.WARIO_NSP_Ground
-        
+
         OS.copy_segment(0xD0A64, 0x18)      // copy next part of subroutine from Mario
-        
+
         lw      a0, 0x0020(sp)              // ~
         lw      a0, 0x0084(a0)              // a0 = player struct
         sw      r0, 0x017C(a0)              // temp variable 1 = 0
@@ -49,13 +49,13 @@ scope WarioNSP {
         jr      ra                          // original return logic
         nop
     }
-    
+
     // @ Description
     // Subroutine which runs when Wario initiates an aerial neutral special.
     // Changes action, and sets up initial variable values.
     scope air_initial_: {
         OS.copy_segment(0xD0A94, 0x14)      // copy beginning of subroutine from Mario
-        
+
         lw      a2, 0x0084(a0)              // ~
         lw      a2, 0x0008(a2)              // a2 = current character ID
         lli     a1, Character.id.KIRBY      // a1 = id.KIRBY
@@ -64,7 +64,7 @@ scope WarioNSP {
         lli     a1, Character.id.JKIRBY     // a1 = id.JKIRBY
         beql    a1, a2, pc() + 12           // if J Kirby, load alternate action ID
         lli     a1, Kirby.Action.WARIO_NSP_Air
-        
+
         OS.copy_segment(0xD0AA8, 0x18)      // copy next part of subroutine from Mario
         lw      a0, 0x0020(sp)              // ~
         lw      a0, 0x0084(a0)              // a0 = player struct
@@ -85,7 +85,7 @@ scope WarioNSP {
         jr      ra                          // original return logic
         nop
     }
-    
+
     // @ Description
     // Subroutine which sets up the movement for the grounded version of Body Slam.
     // Uses the moveset data command 5C0000XX (orignally identified as "apply throw?" by toomai)
@@ -96,11 +96,11 @@ scope WarioNSP {
     scope ground_move_: {
         // a2 = player struct
         // 0x184 in player struct = temp variable 3
-        
+
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t0, 0x0008(sp)              // store t0, t1
-        
+
         _check_begin:
         lw      t0, 0x0184(a2)              // t0 = temp variable 3
         ori     t1, r0, BEGIN               // t1 = BEGIN
@@ -112,7 +112,7 @@ scope WarioNSP {
         mtc1    t0, f2                      // f2 = 0.875
         mul.s   f0, f0, f2                  // f0 = x velocity * 0.875
         swc1    f0, 0x0060(a2)              // x velocity = (x velocity * 0.875)
-        
+
         _check_move:
         lw      t0, 0x0184(a2)              // t0 = temp variable 3
         ori     t1, r0, MOVE                // t1 = MOVE
@@ -121,7 +121,7 @@ scope WarioNSP {
         // apply x velocity
         lui     t1, X_SPEED                 // t1 = X_SPEED
         sw		t1, 0x0060(a2)	            // ground x velocity = X_SPEED
-        
+
         _end:
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // load t0, t1
@@ -129,7 +129,7 @@ scope WarioNSP {
         jr      ra                          // return
         nop
     }
-    
+
     // @ Description
     // Subroutine which handles physics for Wario's grounded neutral special.
     // Copy of subroutine 0x800D8BB4, loads a hard-coded traction value instead of the character's
@@ -154,7 +154,7 @@ scope WarioNSP {
         // Copy the last 10 lines of subroutine 0x800D8BB4
         OS.copy_segment(0x543EC, 0x28)
     }
-    
+
     // @ Description
     // Subroutine which handles collision for Wario's grounded neutral special.
     scope ground_collision_: {
@@ -169,13 +169,13 @@ scope WarioNSP {
         ori     a2, r0, MOVE                // a2 = MOVE
         bnel    a1, a2, _recoil_check       // skip if a1 != MOVE
         sb      r0, 0x0000(t0)              // reset px special_jim_flag on branch
-        
+
         lhu     a1, 0x00CC(a0)              // a1 = collision flags
         lw      t1, 0x0044(a0)              // t0 = direction
-        bgez    t1, _wall_collision         // branch if direction = right
+        bgezl   t1, _wall_collision         // branch if direction = right
         andi    a1, a1, WALL_COLLISION_L    // a1 = collision flags & WALL_COLLISION_L
         andi    a1, a1, WALL_COLLISION_R    // a1 = collision flags & WALL_COLLISION_R
-        
+
         _wall_collision:
         beql    a1, r0, _recoil_check       // skip if !WALL_COLLISION
         sb      r0, 0x0000(t0)              // reset px special_jim_flag on branch
@@ -185,7 +185,7 @@ scope WarioNSP {
         // enable the flag to begin recoil
         ori     a1, r0, 0x0001              // ~
         sw      a1, 0x017C(a0)              // temp variable 1 = 0x1 (recoil flag = true)
-        
+
         _recoil_check:
         li      a1, _end                    // a1 = _end
         jal     check_recoil_               // check for recoil transition
@@ -195,14 +195,14 @@ scope WarioNSP {
         lw      a0, 0x0010(sp)              // load a0
         lw      a0, 0x0010(sp)              // load a0
         lw      a0, 0x0084(a0)              // a0 = player struct
-        
+
         lw      a1, 0x0008(a0)              // a1 = current character id
         lli     a2, Character.id.KIRBY      // a2 = id.KIRBY
         beq     a1, a2, _kirby              // branch if character id = KIRBY
         lli     a2, Character.id.JKIRBY     // a2 = id.JKIRBY
         bne     a1, a2, _wario              // branch if character id != JKIRBY
         nop
-        
+
         _kirby:
         lw      a1, 0x0024(a0)              // a1 = current action
         lli     a2, Kirby.Action.WARIO_NSP_Ground
@@ -210,13 +210,13 @@ scope WarioNSP {
         nop
         b       _jump                       // check for jump
         nop
-        
+
         _wario:
         lw      a1, 0x0024(a0)              // a1 = current action
         ori     a2, r0, 0x00DF              // a2 = action id: ground nsp
         bne     a1, a2, _end                // skip if action id != ground nsp
         nop
-        
+
         _jump:
         lw      a1, 0x0184(a0)              // a1 = temp variable 3
         ori     a2, r0, MOVE                // a2 = MOVE
@@ -241,20 +241,20 @@ scope WarioNSP {
         ori     a0, r0, 0x005E              // a0 = FGM ID
         jal     FGM.play_                   // play fgm
         nop
-        
+
         _end:
         lw      ra, 0x0014(sp)              // load ra
         addiu   sp, sp, 0x0018              // deallocate stack space
         jr      ra                          // return
         nop
     }
-    
+
     // @ Description
     // Subroutine which handles ground to air transition Wario's grounded neutral special.
     scope ground_to_air_: {
         OS.copy_segment(0xDE2EC, 0x18)      // copy beginning of subroutine from Link NSP
         ori     t7, r0, 0x0003              // t7 = 0x0003 (hitbox persist)
-        
+
         lw      a2, 0x0084(a0)              // ~
         lw      a2, 0x0008(a2)              // a2 = current character ID
         lli     a1, Character.id.KIRBY      // a1 = id.KIRBY
@@ -263,12 +263,12 @@ scope WarioNSP {
         lli     a1, Character.id.JKIRBY     // a1 = id.JKIRBY
         beql    a1, a2, pc() + 12           // if J Kirby, load alternate action ID
         lli     a1, Kirby.Action.WARIO_NSP_Air
-        
+
         ori     a1, r0, 0x00E0              // a1 = 0xE0
-        
+
         OS.copy_segment(0xDE30C, 0x20)      // copy end of subroutine from Link NSP
     }
-    
+
     // @ Description
     // Subroutine which sets up the movement for the aerial version of Body Slam.
     // Uses the moveset data command 5C0000XX (orignally identified as "apply throw?" by toomai)
@@ -281,7 +281,7 @@ scope WarioNSP {
     scope air_move_: {
         // a2 = player struct
         // 0x184 in player struct = temp variable 3
-        
+
         addiu   sp, sp,-0x0020              // allocate stack space
         sw      ra, 0x0004(sp)              // ~
         sw      a0, 0x0008(sp)              // ~
@@ -289,7 +289,7 @@ scope WarioNSP {
         sw      t1, 0x0010(sp)              // ~
         swc1    f0, 0x0014(sp)              // ~
         swc1    f2, 0x0018(sp)              // store a0, ra, t0, t1, f0, f2
-        
+
         _check_begin:
         lw      t0, 0x0184(a2)              // t0 = temp variable 3
         ori     t1, r0, BEGIN               // t1 = BEGIN
@@ -305,7 +305,7 @@ scope WarioNSP {
         lw      t1, 0x09C8(a2)              // t1 = attribute pointer
         lui     t1, GRAVITY                 // t1 = gravity
         sw      t1, 0x004C(a2)              // y velocity = gravity
-        
+
         _check_move:
         lw      t0, 0x0184(a2)              // t0 = temp variable 3
         ori     t1, r0, MOVE                // t1 = MOVE
@@ -318,7 +318,7 @@ scope WarioNSP {
         cvt.s.w f2, f2                      // f2 = DIRECTION
         mul.s   f0, f0, f2                  // f0 = X_SPEED * DIRECTION
         swc1    f0, 0x0048(a2)              // x velocity = X_SPEED * DIRECTION
-        
+
         _check_y:
         lw      t0, 0x0180(a2)              // temp variable 2
         beq     t0, r0, _end                // skip if temp variable 2 = 0
@@ -344,7 +344,7 @@ scope WarioNSP {
         mtc1    t0, f2                      // f2 = Y_SPEED
         add.s   f0, f0, f2                  // f0 = f2 + Y_SPEED
         swc1    f0, 0x004C(a2)              // store final y velocity
-        
+
         _end:
         lw      ra, 0x0004(sp)              // ~
         lw      a0, 0x0008(sp)              // ~
@@ -356,7 +356,7 @@ scope WarioNSP {
         jr      ra                          // return
         nop
     }
-    
+
     // @ Description
     // Subroutine which handles physics for Wario's aerial neutral special.
     // Modified version of subroutine 0x800D91EC.
@@ -368,11 +368,11 @@ scope WarioNSP {
         lw      s0, 0x0084(a0)              // ~
         lw      s1, 0x09C8(s0)              // ~
         or      a0, s0, r0                  // original lines
-        or      a3, s1, r0                  // a3 
+        or      a3, s1, r0                  // a3
         lui     a1, GRAVITY                 // a1 = GRAVITY
         jal     0x800D8D68                  // apply gravity/fall speed
         lui     a2, MAX_FALL_SPEED          // a2 = MAX_FALL_SPEED
-        
+
         // Subroutine 0x800D9074 applies air friction. Usually, air friction is loaded from
         // 0x0054(a1), with a1 being the attribute pointer for the character. In this case, a
         // different air friction value is stored at 0x0054(sp) and then the stack pointer is
@@ -390,13 +390,13 @@ scope WarioNSP {
         jr      ra                          // ~
         addiu   sp, sp, 0x0020              // original return logic
     }
-    
+
     // @ Description
     // Subroutine which handles collision for Wario's aerial neutral special.
     scope air_collision_: {
         addiu   sp, sp,-0x0018              // allocate stack space
         sw      a0, 0x0010(sp)              // ~
-        sw      ra, 0x0014(sp)              // store ra, a0  
+        sw      ra, 0x0014(sp)              // store ra, a0
         lw      a0, 0x0084(a0)              // a0 = player struct
         lbu     a1, 0x000D(a0)              // a1 = player port
         li      a2, special_jim_flag        // ~
@@ -405,19 +405,19 @@ scope WarioNSP {
         ori     a2, r0, MOVE                // a2 = MOVE
         bnel    a1, a2, _recoil_check       // skip if a1 != MOVE
         sb      r0, 0x0000(t0)              // reset px special_jim_flag on branch
-        
+
         lhu     a1, 0x00CC(a0)              // a1 = collision flags
         lw      t1, 0x0044(a0)              // t0 = direction
         bgezl   t1, _wall_collision         // branch if direction = right
         andi    a1, a1, WALL_COLLISION_L    // a1 = collision flags & WALL_COLLISION_L
         andi    a1, a1, WALL_COLLISION_R    // a1 = collision flags & WALL_COLLISION_R
-        
+
         _wall_collision:
         beql    a1, r0, _recoil_check       // skip if !WALL_COLLISION
         sb      r0, 0x0000(t0)              // reset px special_jim_flag on branch
         ori     a1, r0, OS.TRUE             // ~
         sb      a1, 0x0000(t0)              // px special_jim_flag = TRUE
-        
+
         _recoil_check:
         li      a1, _end                    // a1 = _end
         jal     check_recoil_               // check for recoil transition
@@ -438,19 +438,19 @@ scope WarioNSP {
         nop
         jal     0x80144C24                  // ledge grab subroutine
         nop
-        _end:  
+        _end:
         lw      ra, 0x0014(sp)              // load ra
         addiu   sp, sp, 0x0018              // deallocate stack space
         jr      ra
         nop
     }
-    
+
     // @ Description
     // Subroutine which handles air to ground transition Wario's grounded neutral special.
     scope air_to_ground_: {
         OS.copy_segment(0xD098C, 0x1C)      // copy beginning of subroutine from Mario NSP
         ori     t7, r0, 0x0003              // t7 = 0x0003 (hitbox persist)
-        
+
         lw      a2, 0x0084(a0)              // ~
         lw      a2, 0x0008(a2)              // a2 = current character ID
         lli     a1, Character.id.KIRBY      // a1 = id.KIRBY
@@ -459,9 +459,9 @@ scope WarioNSP {
         lli     a1, Character.id.JKIRBY     // a1 = id.JKIRBY
         beql    a1, a2, pc() + 12           // if J Kirby, load alternate action ID
         lli     a1, Kirby.Action.WARIO_NSP_Ground
-        
+
         ori     a1, r0, 0x00DF              // a1 = 0xDF
-        
+
         lw      a2, 0x0078(a0)              // a2 = current animation frame
         sw      t7, 0x0010(sp)              // store t7 (some kind of parameter for change action)
         jal     0x800E6F24                  // change action
@@ -471,23 +471,23 @@ scope WarioNSP {
         jr      ra                          // original return logic
         nop
     }
-    
+
     // @ Description
     // Subroutine which sets up the movement for the Body Slam recoil.
     // Uses the moveset data command 580000XX (orignally identified as "set flag" by toomai)
-    // This command's purpose appears to be setting a temporary variable in the player struct.  
+    // This command's purpose appears to be setting a temporary variable in the player struct.
     // Variable values used by this subroutine:
     // 0x1 = end special movement
     scope recoil_move_: {
         // a2 = player struct
         // 0x180 in player struct = temp variable 2
-        
+
         addiu   sp, sp,-0x0018              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // ~
         swc1    f0, 0x000C(sp)              // ~
         swc1    f2, 0x0010(sp)              // store t0, f0, f2
-        
+
         _check_movement:
         lw      t0, 0x0180(a2)              // t0 = temp variable 2
         bnez    t0, _end                    // skip if t0 > 0
@@ -503,11 +503,11 @@ scope WarioNSP {
         lli     t1, Character.id.WARIO      // t1 = id.WARIO
         beq     t1, t0, _modify_y_velocity  // branch if character id = WARIO
         lui     t0, 0x3FA0                  // t0 = 1.25
-        
+
         // if we're here, the character is Kirby or J Kirby
         // (unless another character is eventually allowed to use Wario's neutral special)
         li      t0, 0x3F0CCCCD              // t0 = 0.55
-        
+
         _modify_y_velocity:
         mtc1    t0, f0                      // f0 = 1.25/0.55
         lwc1    f2, 0x004C(a2)              // f2 = y velocity
@@ -522,7 +522,7 @@ scope WarioNSP {
         jr      ra                          // return
         nop
     }
-    
+
     // @ Description
     // Subroutine which handles physics for the recoil.
     // Prevents player control when temp variable 2 = 0
@@ -537,8 +537,8 @@ scope WarioNSP {
         li      t8, 0x800D90E0              // t8 = physics subroutine which allows player control
         bnez    t1, _subroutine             // skip if t1 != 0
         nop
-        li      t8, 0x800D91EC              // t8 = physics subroutine which prevents player control 
-        
+        li      t8, 0x800D91EC              // t8 = physics subroutine which prevents player control
+
         _subroutine:
         jalr      t8                        // run physics subroutine
         nop
@@ -549,7 +549,7 @@ scope WarioNSP {
         jr      ra                          // return
         nop
     }
-    
+
     // @ Description
     // Subroutine which handles hitbox collision for Wario's neutral special.
     // @ Arguments
@@ -564,13 +564,13 @@ scope WarioNSP {
         sw      ra, 0x0014(sp)              // ~
         swc1    f0, 0x0018(sp)              // ~
         swc1    f2, 0x001C(sp)              // store t0, t1, a0, a1, ra, f0, f2
-        
+
         _check:
         lw      t0, 0x0084(a0)              // t0 = player struct
         lw      t1, 0x017C(t0)              // t1 = temp variable 1
         beq     t1, r0, _end                // skip if temp variable 1 = 0
         nop
-        
+
         _collision:
         sw      a1, 0x0014(sp)              // overwrite return address in stack
         jal     begin_recoil_               // transition to recoil action
@@ -588,7 +588,7 @@ scope WarioNSP {
         // initial y velocity
         lui     t1, RECOIL_Y_SPEED          // t1 = RECOIL_Y_SPEED
         sw      t1, 0x004C(t0)              // y velocity = RECOIL_Y_SPEED
-        
+
         _end:
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // ~
@@ -600,7 +600,7 @@ scope WarioNSP {
         jr      ra                          // return
         nop
     }
-    
+
     // @ Description
     // Subroutine which transitions into Wario's neutral special recoil action.
     scope begin_recoil_: {
@@ -617,11 +617,11 @@ scope WarioNSP {
         nop
         jal     0x800DEEC8                  // set aerial state
         nop
-        
+
         _end:
         lw      a0, 0x0020(sp)              // a0 = entity struct?
         ori     t7, r0, 0x0003              // t7 = 0x0003 (hitbox persist)
-        
+
         lw      a2, 0x0084(a0)              // ~
         lw      a2, 0x0008(a2)              // a2 = current character ID
         lli     a1, Character.id.KIRBY      // a1 = id.KIRBY
@@ -630,7 +630,7 @@ scope WarioNSP {
         lli     a1, Character.id.JKIRBY     // a1 = id.JKIRBY
         beql    a1, a2, pc() + 12           // if J Kirby, load alternate action ID
         lli     a1, Kirby.Action.WARIO_NSP_Recoil_Air
-        
+
         ori     a1, r0, Wario.Action.NSP_Recoil_Air
         or      a2, r0, r0                  // a2 = 0(begin action frame)
         sw      t7, 0x0010(sp)              // store t7 (some kind of parameter for change action)
@@ -641,7 +641,7 @@ scope WarioNSP {
         jr      ra                          // original return logic
         nop
     }
-    
+
     // @ Description
     // Collision subroutine for NSP_Recoil_Ground.
     scope recoil_ground_collision_: {
@@ -649,13 +649,13 @@ scope WarioNSP {
         sw      ra, 0x0014(sp)              // store ra
         li      a1, recoil_air_transition_  // a1(transition subroutine) = air_begin_transition_
         jal     0x800DDE84                  // common ground collision subroutine (transition on no floor, no slide-off)
-        nop 
+        nop
         lw      ra, 0x0014(sp)              // load ra
         addiu   sp, sp, 0x0018              // deallocate stack space
         jr      ra                          // return
         nop
     }
-    
+
     // @ Description
     // Collision subroutine for NSP_Recoil_Air.
     scope recoil_air_collision_: {
@@ -663,13 +663,13 @@ scope WarioNSP {
         sw      ra, 0x0014(sp)              // store ra
         li      a1, recoil_ground_transition_ // a1(transition subroutine) = recoil_ground_transition_
         jal     0x800DE80C                  // common air collision subroutine (transition on landing, allow ledge grab)
-        nop 
+        nop
         lw      ra, 0x0014(sp)              // load ra
         addiu   sp, sp, 0x0018              // deallocate stack space
         jr      ra                          // return
         nop
     }
-    
+
     // @ Description
     // Subroutine which transitions to NSP_Recoil_Ground.
     scope recoil_ground_transition_: {
@@ -698,7 +698,7 @@ scope WarioNSP {
         jr      ra                          // return
         nop
     }
-    
+
     // @ Description
     // Subroutine which transitions to NSP_Recoil_Air.
     scope recoil_air_transition_: {
@@ -729,7 +729,7 @@ scope WarioNSP {
         jr      ra                          // return
         nop
     }
-    
+
     // @ Description
     // This is Jim's special collision flag.
     // Its primary purpose is to disable grounded wall collision recoil when Wario transitions from
@@ -743,11 +743,11 @@ scope WarioNSP {
 }
 
 // @ Description
-// Subroutines for Up Special    
+// Subroutines for Up Special
 scope WarioUSP {
     constant Y_SPEED(0x4280)                // current setting - float:64.0
     constant LANDING_FSM(0x3E80)            // current setting - float:0.25
-    
+
     // @ Description
     // Subroutine which runs when Wario initiates an up special (both ground/air).
     // Changes action, and sets up initial variable values.
@@ -788,7 +788,7 @@ scope WarioUSP {
         jr      ra                          // original return logic
         nop
     }
-    
+
     // @ Description
     // Main subroutine for Wario's up special.
     // Based on subroutine 0x8015C750, which is the main subroutine of Fox's up special ending.
@@ -804,17 +804,17 @@ scope WarioUSP {
         jal     0x801438F0                  // begin special fall
         sw      t6, 0x0014(sp)              // store LANDING_FSM
         lw      ra, 0x0024(sp)              // restore ra
-        
+
         _end:
         addiu   sp, sp, 0x0028              // deallocate stack space
         jr      ra                          // return
         nop
     }
-    
+
     // @ Description
     // Subroutine which allows a direction change for Wario's up special.
     // Uses the moveset data command 580000XX (orignally identified as "set flag" by toomai)
-    // This command's purpose appears to be setting a temporary variable in the player struct.  
+    // This command's purpose appears to be setting a temporary variable in the player struct.
     // Variable values used by this subroutine:
     // 0x2 = change direction
     scope change_direction_: {
@@ -838,7 +838,7 @@ scope WarioUSP {
         jr      ra                          // return
         nop
     }
-    
+
     // @ Description
     // Subroutine which handles movement for Wario's up special.
     // Uses the moveset data command 5C0000XX (orignally identified as "apply throw?" by toomai)
@@ -866,7 +866,7 @@ scope WarioUSP {
         swc1    f0, 0x002C(sp)              // ~
         swc1    f2, 0x0030(sp)              // ~
         swc1    f4, 0x0034(sp)              // store t0, t1, f0, f2, f4
-        
+
         OS.copy_segment(0x548F0, 0x40)      // copy from original air physics subroutine
         bnez    v0, _check_begin            // modified original branch
         nop
@@ -876,7 +876,7 @@ scope WarioUSP {
         beq     t0, t1, _continue           // branch if temp variable 3 = BEGIN
         nop
         li      t8, air_control_            // t8 = air_control_
-        
+
         _continue:
         or      a0, s0, r0                  // a0 = player struct
         jalr    t8                          // air control subroutine
@@ -884,7 +884,7 @@ scope WarioUSP {
         or      a0, s0, r0                  // a0 = player struct
         jal     0x800D9074                  // air friction subroutine?
         or      a1, s1, r0                  // a1 = attributes pointer
-        
+
         _check_begin:
         lw      t0, 0x0184(s0)              // t0 = temp variable 3
         ori     t1, r0, BEGIN               // t1 = BEGIN
@@ -898,7 +898,7 @@ scope WarioUSP {
         swc1    f0, 0x0048(s0)              // x velocity = (x velocity * 0.875)
         // freeze y position
         sw      r0, 0x004C(s0)              // y velocity = 0
-        
+
         _check_begin_move:
         lw      t0, 0x0184(s0)              // t0 = temp variable 3
         ori     t1, r0, BEGIN_MOVE          // t1 = BEGIN_MOVE
@@ -910,7 +910,7 @@ scope WarioUSP {
         lwc1    f0, 0x0044(s0)              // ~
         cvt.s.w f0, f0                      // f0 = direction
         lb      t0, 0x01C2(s0)              // ~
-        mtc1    t0, f2                      // ~         
+        mtc1    t0, f2                      // ~
         cvt.s.w f2, f2                      // f2 = stick_x
         mul.s   f0, f2, f0                  // f0 = stick_x * direction
         mtc1    r0, f2                      // f2 = 0
@@ -918,7 +918,7 @@ scope WarioUSP {
         nop                                 // ~
         bc1f    _apply_movement             // branch if stick_x * direction =< 0
         nop
-        
+
         // update x velocity based on stick_x
         // f0 = stick_x (relative to direction)
         lui     t0, 0x3F00                  // ~
@@ -929,7 +929,7 @@ scope WarioUSP {
         mtc1    t0, f0                      // f0 = 0.21875
         mul.s   f0, f0, f2                  // ~
         sub.s   f4, f4, f0                  // f4 = Y_SPEED - (x velocity * 0.21875)
-        
+
         _apply_movement:
         // f2 = x velocity
         // f4 = y velocity
@@ -946,8 +946,8 @@ scope WarioUSP {
         sb      t0, 0x0148(s0)              // jumps used = max jumps
         b       _end                        // end
         nop
-        
-       
+
+
         _check_move:
         lw      t0, 0x0184(s0)              // t0 = temp variable 3
         ori     t1, r0, MOVE                // t1 = MOVE
@@ -958,7 +958,7 @@ scope WarioUSP {
         lwc1    f2, 0x004C(s0)              // f2 = y velocity
         add.s   f2, f2, f0                  // f2 = y velocity + GRAVITY
         swc1    f2, 0x004C(s0)              // store updated y velocity
-        
+
         _check_end_move:
         lw      t0, 0x0184(s0)              // t0 = temp variable 3
         ori     t1, r0, END_MOVE            // t1 = END_MOVE
@@ -972,7 +972,7 @@ scope WarioUSP {
         swc1    f0, 0x0048(s0)              // x velocity = (x velocity * 0.875)
         // freeze y position
         sw      r0, 0x004C(s0)              // y velocity = 0
-        
+
         _end:
         lw      t0, 0x0024(sp)              // ~
         lw      t1, 0x0028(sp)              // ~
@@ -986,7 +986,7 @@ scope WarioUSP {
         jr      ra                          // return
         nop
     }
-    
+
     // @ Description
     // Subroutine which handles Wario's horizontal control for up special.
     scope air_control_: {
@@ -1008,7 +1008,7 @@ scope WarioUSP {
         ori     t1, r0, physics_.END_MOVE   // t1 = END_MOVE
         beql    t0, t1, _continue           // branch if temp variable 3 = END_MOVE
         lui     a2, 0x3C00                  // on branch, a2 = 0.0078125
-        
+
         _continue:
         jal     0x800D8FC8                  // air drift subroutine?
         nop
@@ -1019,7 +1019,7 @@ scope WarioUSP {
         jr      ra                          // return
         nop
     }
-    
+
     // @ Description
     // Subroutine which handles collision for Wario's up special.
     // Copy of subroutine 0x80156358, which is the collision subroutine for Mario's up special.
@@ -1034,17 +1034,17 @@ scope WarioUSP {
         OS.copy_segment(0xD0E14, 0x44)
     }
 }
-    
+
 // @ Description
-// Subroutines for Down Special    
+// Subroutines for Down Special
 scope WarioDSP {
     constant Y_SPEED(0xC2A0)                // current setting - float:-80.0
     constant INITIAL_Y_SPEED(0x4334)        // current setting - float:180.0
     constant INITIAL_X_SPEED(0x42B4)        // current setting - float:90.0
-    
+
     constant BEGIN(0x1)
     constant MOVE(0x2)
-    
+
     // @ Description
     // Subroutine which runs when Wario initiates a grounded down special.
     // Changes action, and sets up initial variable values.
@@ -1070,7 +1070,7 @@ scope WarioDSP {
         jr      ra                          // original return logic
         nop
     }
-    
+
     // @ Description
     // Subroutine which runs when Wario initiates an aerial down special.
     // Changes action, and sets up initial variable values.
@@ -1102,7 +1102,7 @@ scope WarioDSP {
         jr      ra                          // original return logic
         nop
     }
-    
+
     // @ Description
     // Subroutine which sets up the movement for the grounded version of Wario's down special.
     // Temp variable 1 (5400XXXX):
@@ -1115,21 +1115,21 @@ scope WarioDSP {
     scope ground_move_: {
         // a2 = player struct
         // 0x184 in player struct = temp variable 3
-        
+
         addiu   sp, sp,-0x0018              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // ~
         swc1    f0, 0x000C(sp)              // ~
         swc1    f2, 0x0010(sp)              // ~
         sw      ra, 0x0014(sp)              // store t0, t1, f0, f2, ra
-        
+
         // slow x movement
         lwc1    f0, 0x0048(a2)              // f0 = current x velocity
         lui     t0, 0x3F60                  // ~
         mtc1    t0, f2                      // f2 = 0.875
         mul.s   f0, f0, f2                  // f0 = x velocity * 0.875
         swc1    f0, 0x0048(a2)              // x velocity = (x velocity * 0.875)
-        
+
         _check_begin:
         lw      t0, 0x0184(a2)              // t0 = temp variable 3
         ori     t1, r0, BEGIN               // t1 = BEGIN
@@ -1160,7 +1160,7 @@ scope WarioDSP {
         sw      t0, 0x004C(a2)              // y velocity = INITIAL_Y_SPEED
         jal     0x800DEEC8                  // set aerial state
         or      a0, a2, r0                  // a0 = player struct
-        
+
         _end:
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // ~
@@ -1171,7 +1171,7 @@ scope WarioDSP {
         jr      ra                          // return
         nop
     }
-    
+
     // @ Description
     // Subroutine which sets up the movement for the aerial version of Wario's down special.
     // Temp variable 2 (5800XXXX):
@@ -1182,20 +1182,20 @@ scope WarioDSP {
     scope air_move_: {
         // a2 = player struct
         // 0x184 in player struct = temp variable 3
-        
+
         addiu   sp, sp,-0x0018              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // ~
         swc1    f0, 0x000C(sp)              // ~
         swc1    f2, 0x0010(sp)              // store t0, t1, f0, f2
-        
+
         // slow x movement
         lwc1    f0, 0x0048(a2)              // f0 = current x velocity
         lui     t0, 0x3F60                  // ~
         mtc1    t0, f2                      // f2 = 0.875
         mul.s   f0, f0, f2                  // f0 = x velocity * 0.875
         swc1    f0, 0x0048(a2)              // x velocity = (x velocity * 0.875)
-        
+
         _check_begin:
         lw      t0, 0x0184(a2)              // t0 = temp variable 3
         ori     t1, r0, BEGIN               // t1 = BEGIN
@@ -1207,7 +1207,7 @@ scope WarioDSP {
         mtc1    t0, f2                      // f2 = 0.875
         mul.s   f0, f0, f2                  // f0 = x velocity * 0.875
         swc1    f0, 0x004C(a2)              // y velocity = (y velocity * 0.875)
-        
+
         _end:
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // ~
@@ -1224,7 +1224,7 @@ scope WarioDSP {
     // Prevents negative Y velocity when temp variable 3 = 1 (BEGIN)
     scope physics_: {
         // 0x180 in player struct = temp variable 2
-        
+
         addiu   sp, sp,-0x0018              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // ~
@@ -1235,12 +1235,12 @@ scope WarioDSP {
         li      t8, 0x800D90E0              // t8 = physics subroutine which allows player control
         bnez    t1, _subroutine             // skip if t1 != 0
         nop
-        li      t8, 0x800D91EC              // t8 = physics subroutine which prevents player control 
-        
+        li      t8, 0x800D91EC              // t8 = physics subroutine which prevents player control
+
         _subroutine:
         jalr      t8                        // run physics subroutine
         nop
-        
+
         _check_fall:
         lw      a0, 0x0010(sp)              // ~
         lw      a0, 0x0084(a0)              // a0 = player struct
@@ -1248,7 +1248,7 @@ scope WarioDSP {
         ori     t1, r0, BEGIN               // t1 = BEGIN
         bne     t0, t1, _check_move         // skip if temp variable 3 != BEGIN
         nop
-        
+
         // Checks if the highest bit is set to 1, which is used to represent a negative floating
         // point value. If the highest bit is set to 1, sets y velocity to 0.
         lw      t0, 0x004C(a0)              // t0 = y velocity
@@ -1256,7 +1256,7 @@ scope WarioDSP {
         and     t1, t0, t1                  // t1 = 0 if y velocity is positive
         bnel    t1, r0, _end                // execute next instruction if y velocity is negative
         sw      r0, 0x004C(a0)              // y velocity = 0
-        
+
         _check_move:
         lw      t0, 0x0184(a0)              // t0 = temp variable 3
         ori     t1, r0, MOVE                // t1 = MOVE
@@ -1265,7 +1265,7 @@ scope WarioDSP {
         // apply y velocity
         lui     t1, Y_SPEED                 // ~
         sw      t1, 0x004C(a0)              // y velocity = Y_SPEED
-        
+
         _end:
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // ~
@@ -1275,10 +1275,10 @@ scope WarioDSP {
         jr      ra                          // return
         nop
     }
-    
+
     // @ Description
     // Subroutine which handles collision for Wario's down special.
-    // Transitions into the down special landing action when temp variable 3 = MOVE, 
+    // Transitions into the down special landing action when temp variable 3 = MOVE,
     // otherwise lands normally.
     scope collision_: {
         addiu   sp, sp,-0x0018              // allocate stack space
@@ -1288,26 +1288,26 @@ scope WarioDSP {
         lw      v0, 0x014C(a1)              // v0 = kinetic state
         bnez    v0, _aerial                 // branch if kinetic state != grounded
         nop
-        
+
         _grounded:
         jal     0x800DDF44                  // grounded collision subroutine
         nop
         b       _end                        // branch to end
         nop
-        
+
         _aerial:
         lw      v0, 0x184(a1)               // v0 = temp variable 3
         ori     a1, r0, MOVE                // a1 = MOVE
         beq     a1, v0, _main_collision     // branch if temp variable 3 = MOVE
         nop
-        
+
         // If Wario is not in the ground pound motion, run a normal aerial collision subroutine
         // instead.
         jal     0x800DE99C                  // aerial collision subroutine
         nop
         b       _end                        // branch to end
         nop
-        
+
         _main_collision:
         li      a1, begin_landing_          // a1 = begin_landing_
         jal     0x800DE6E4                  // general air collision?
@@ -1325,14 +1325,14 @@ scope WarioDSP {
         nop
         jal     0x80144C24                  // ledge grab subroutine
         nop
-        
-        _end:  
+
+        _end:
         lw      ra, 0x0014(sp)              // load ra
         addiu   sp, sp, 0x0018              // deallocate stack space
         jr      ra
         nop
     }
-    
+
     // @ Description
     // Subroutine which transitions into the landing action for Wario's down special.
     // Copy of subroutine 0x801600EC, which begins the landing action for Falcon Kick.

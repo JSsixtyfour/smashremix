@@ -1,7 +1,7 @@
 // @ Description
 // These constants must be defined for an item.
 constant SPAWN_ITEM(spawn_custom_item_based_on_star_)
-constant ROTATE_WHEN_SPAWNED(OS.TRUE)
+constant SHOW_GFX_WHEN_SPAWNED(OS.TRUE)
 constant PICKUP_ITEM_MAIN(0)
 constant PICKUP_ITEM_INIT(0)
 constant DROP_ITEM(0)
@@ -176,7 +176,9 @@ scope collide_mushroom_: {
     addu    t0, t0, t1                  // t0 = address of player's match size state
     lw      t0, 0x0000(t0)              // t0 = player's match size state
     sw      t0, 0x002C(sp)              // remember player's match size state
-
+    //li      t0, Hazards.shrink_timer_table
+    //addu    t0, t0, t1                  // t0 = address of Robot Bee shrink timer
+    //sw      r0, 0x0000(t0)              // clear timer
 
     // register routine that handles the countdown
     Render.register_routine(handle_active_mushroom_)

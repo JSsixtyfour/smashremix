@@ -1,7 +1,7 @@
 // @ Description
 // These constants must be defined for an item.
 constant SPAWN_ITEM(Item.spawn_custom_item_based_on_tomato_)
-constant ROTATE_WHEN_SPAWNED(OS.TRUE)
+constant SHOW_GFX_WHEN_SPAWNED(OS.TRUE)
 constant PICKUP_ITEM_MAIN(pickup_cloaking_device_)
 constant PICKUP_ITEM_INIT(0)
 constant DROP_ITEM(0x801745FC) // same as Maxim Tomato

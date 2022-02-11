@@ -25,7 +25,7 @@ scope JKirby {
         dw  0x5c000005; Moveset.SUBROUTINE(NEUTRALINF_SUB)
         dw  0x58000001
         dw  0x94000000; Moveset.SUBROUTINE(NEUTRALINF_SUB)
-        dw  0x58000001; Moveset.GO_TO(NEUTRALINF) 
+        dw  0x58000001; Moveset.GO_TO(NEUTRALINF)
     insert FTHROW_DATA, "moveset/FTHROW_DATA.bin"
     FTHROW:; Moveset.THROW_DATA(FTHROW_DATA); insert "moveset/FTHROW.bin"
     insert NEUTRAL_SPECIAL_START_THROW_DATA, "moveset/NEUTRAL_SPECIAL_START_THROW_DATA.bin"
@@ -34,8 +34,8 @@ scope JKirby {
     insert DOWN_SPECIAL_FALL, "moveset/DOWN_SPECIAL_FALL.bin"
     insert DOWN_SPECIAL_LANDING, "moveset/DOWN_SPECIAL_LANDING.bin"
     insert DOWN_SPECIAL_FALL_OFF, "moveset/DOWN_SPECIAL_FALL_OFF.bin"
-    
-        
+
+
 
     // Modify Action Parameters              // Action              // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(JKIRBY, Action.Jab2,           -1,                         NEUTRAL2,                   -1)
@@ -50,7 +50,7 @@ scope JKirby {
     Character.edit_action_parameters(JKIRBY, 0x109,                 -1,                         DOWN_SPECIAL_FALL,          -1)
     Character.edit_action_parameters(JKIRBY, 0x10A,                 -1,                         DOWN_SPECIAL_LANDING,       -1)
     Character.edit_action_parameters(JKIRBY, 0x10B,                 -1,                         DOWN_SPECIAL_FALL_OFF,      -1)
-    
+
     // Add Action Parameters                // Action Name       // Base Action // Animation                    // Moveset Data             // Flags
     Character.add_new_action_params(JKIRBY, GND_NSP_Ground,             0x127,  -1,                             Kirby.GND_NSP_GROUND,       -1)
     Character.add_new_action_params(JKIRBY, GND_NSP_Air,                0x128,  -1,                             Kirby.GND_NSP_AIR,          -1)
@@ -99,6 +99,14 @@ scope JKirby {
     Character.add_new_action_params(JKIRBY, MARTH_NSPA_3_High,          -1,     File.KIRBY_MARTH_NSPA_3_HI,     Kirby.MARTH_NSP_3_HIGH,     0)
     Character.add_new_action_params(JKIRBY, MARTH_NSPA_3_Mid,           -1,     File.KIRBY_MARTH_NSPA_3,        Kirby.MARTH_NSP_3,          0)
     Character.add_new_action_params(JKIRBY, MARTH_NSPA_3_Low,           -1,     File.KIRBY_MARTH_NSPA_3_LO,     Kirby.MARTH_NSP_3_LOW,      0)
+    Character.add_new_action_params(JKIRBY, SONIC_NSP_Begin,            -1,     File.KIRBY_SONIC_NSP_LOOP,      Kirby.SONIC_NSP_CHARGE,     0x10000000)
+    Character.add_new_action_params(JKIRBY, SONIC_NSP_Move,             -1,     File.KIRBY_SONIC_NSP_LOOP,      Kirby.SONIC_NSP_MOVE,       0x10000000)
+    Character.add_new_action_params(JKIRBY, SONIC_NSP_Locked_Move,      -1,     File.KIRBY_SONIC_NSP_LOOP,      Kirby.SONIC_NSP_MOVE,       0x10000000)
+    Character.add_new_action_params(JKIRBY, SONIC_NSP_Ground_End,       -1,     File.KIRBY_SONIC_NSPG_END_F,    0x80000000,                 0)
+    Character.add_new_action_params(JKIRBY, SONIC_NSP_Air_End,          -1,     File.KIRBY_SONIC_NSPA_END_F,    0x80000000,                 0)
+    Character.add_new_action_params(JKIRBY, SONIC_NSP_Ground_Recoil,    -1,     File.KIRBY_SONIC_NSPG_END_B,    0x80000000,                 0)
+    Character.add_new_action_params(JKIRBY, SONIC_NSP_Air_Recoil,       -1,     File.KIRBY_SONIC_NSPA_END_B,    0x80000000,                 0)
+    Character.add_new_action_params(JKIRBY, SONIC_NSP_Bounce,           -1,     File.KIRBY_SONIC_NSPA_END_F,    Kirby.SONIC_NSP_BOUNCE,     0)
 
 
     // Add Actions                   // Action Name      // Base Action //Parameters                       // Staling ID    // Main ASM                 // Interrupt/Other ASM              // Movement/Physics ASM     // Collision ASM
@@ -149,12 +157,20 @@ scope JKirby {
     Character.add_new_action(JKIRBY, MARTH_NSPA_3_High,         -1,     ActionParams.MARTH_NSPA_3_High,         0x12,       MarthNSP.air_main_,         0,                                  0x800D91EC,                 MarthNSP.air_collision_)
     Character.add_new_action(JKIRBY, MARTH_NSPA_3_Mid,          -1,     ActionParams.MARTH_NSPA_3_Mid,          0x12,       MarthNSP.air_main_,         0,                                  0x800D91EC,                 MarthNSP.air_collision_)
     Character.add_new_action(JKIRBY, MARTH_NSPA_3_Low,          -1,     ActionParams.MARTH_NSPA_3_Low,          0x12,       MarthNSP.air_main_,         0,                                  0x800D91EC,                 MarthNSP.air_collision_)
-    
+    Character.add_new_action(JKIRBY, SONIC_NSP_Begin,           -1,     ActionParams.SONIC_NSP_Begin,           0x12,       SonicNSP.begin_main_,       0,                                  0,                          0x800DE6B0)
+    Character.add_new_action(JKIRBY, SONIC_NSP_Move,            -1,     ActionParams.SONIC_NSP_Move,            0x12,       SonicNSP.move_main_,        0,                                  SonicNSP.move_physics_,     SonicNSP.move_collision_)
+    Character.add_new_action(JKIRBY, SONIC_NSP_Locked_Move,     -1,     ActionParams.SONIC_NSP_Locked_Move,     0x12,       SonicNSP.move_main_,        0,                                  SonicNSP.move_physics_,     SonicNSP.move_collision_)
+    Character.add_new_action(JKIRBY, SONIC_NSP_Ground_End,      -1,     ActionParams.SONIC_NSP_Ground_End,      0x12,       0x800D94C4,                 0,                                  0x800D8BB4,                 SonicNSP.ground_end_collision_)
+    Character.add_new_action(JKIRBY, SONIC_NSP_Air_End,         -1,     ActionParams.SONIC_NSP_Air_End,         0x12,       0x800D94E8,                 0,                                  0x800D91EC,                 SonicNSP.air_end_collision_)
+    Character.add_new_action(JKIRBY, SONIC_NSP_Ground_Recoil,   -1,     ActionParams.SONIC_NSP_Ground_Recoil,   0x12,       0x800D94C4,                 0,                                  0x800D8BB4,                 SonicNSP.ground_recoil_collision_)
+    Character.add_new_action(JKIRBY, SONIC_NSP_Air_Recoil,      -1,     ActionParams.SONIC_NSP_Air_Recoil,      0x12,       0x800D94E8,                 0,                                  0x800D91EC,                 SonicNSP.air_recoil_collision_)
+    Character.add_new_action(JKIRBY, SONIC_NSP_Bounce,          -1,     ActionParams.SONIC_NSP_Bounce,          0x12,       0x800D94E8,                 0,                                  0x800D91EC,                 0x800DE99C)
+
     // Set action strings
     Character.table_patch_start(action_string, Character.id.JKIRBY, 0x4)
     dw  Action.KIRBY.action_string_table
     OS.patch_end()
-    
+
     // Modify grounded routine for JKirby
     Character.table_patch_start(grounded_script, Character.id.JKIRBY, 0x4)
     dw Kirby.clear_marth_flag_

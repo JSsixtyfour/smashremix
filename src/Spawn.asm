@@ -38,6 +38,9 @@ scope Spawn {
         lli     t0, Stages.id.DREAM_LAND_BETA_2
         beq     t0, at, _fix
         nop
+        lli     t0, Stages.id.SECTOR_Z_REMIX
+        beq     t0, at, _sector_z_remix
+        nop
 
         _original:
         lh      t8, 0x0002(t7)              // original line 1
@@ -58,7 +61,18 @@ scope Spawn {
         addiu   sp, sp, 0x0010              // deallocate stack space
         jr      ra                          // scrap the rest of the function
         nop
-
+        
+        _sector_z_remix:
+        li      t0, 0x45cda000              // t0 = (float) 6580
+        sw      t0, 0x0000(a1)              // update x
+        li      t0, 0x4544e000              // t0 = (float) 3150
+        sw      t0, 0x0004(a1)              // update y
+        sw      r0, 0x0008(a1)              // update z
+        lw      at, 0x0004(sp)              // ~
+        lw      t0, 0x0008(sp)              // restore registers
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        jr      ra                          // scrap the rest of the function
+        nop
     }
 
     // Neutral Spawns (2 or 3 plat stages)
@@ -737,7 +751,7 @@ scope Spawn {
     float32 -1732,  1125
     float32  0853,  1114
     
-    // 3F - Mute City
+    // 3F - Mute City DL
     float32 -1400,  0910
     float32  1400,  0910
     float32  0000,  1545
@@ -1265,6 +1279,77 @@ scope Spawn {
     float32  0159,  0540
     float32 -0471,  0540
     
+    // 97 - Hyrule Castle Remix
+    float32 -1510,  1960
+    float32  1510,  1960
+    float32 -2150,  2875
+    float32  2150,  2875
+    
+    // 98 - Sector Z Remix
+    float32  4350,  0810
+    float32  7840,  0940
+    float32  5200,  0810
+    float32  6400,  0940
+    
+    // 99 - Mute City
+    float32 -1849,  2140
+    float32  1819,  1721
+    float32 -3289,  2140
+    float32  3549,  1721
+    
+    // 9A - Home Run Contest
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // 9B - Mushroom Kingdom Remix
+    float32 -2850,  0035
+    float32  2850,  0035
+    float32 -3550,  1540
+    float32  3550,  1540
+    
+    // 9C - Green Hill Zone
+    float32 -1500,  0035
+    float32  1500,  0035
+    float32 -0750,  0035
+    float32  0750,  0035
+    
+    // 9D - Subcon
+    float32 -0900,  0035
+    float32  0900,  0035
+    float32 -2850,  0950
+    float32  2850,  0950
+
+    // 9E - Pirate Land
+    float32 -3400,  0125
+    float32  2500,  0125
+    float32 -3400,  0900
+    float32  2500,  0900
+    
+    // 9F - Casino Night
+    float32 -0925,  0500
+    float32  0925,  0500
+    float32 -3118,  0150
+    float32  3118,  0150
+    
+    // A0 - Sonic Break the Targets
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // A1 - Sonic Board the Platforms
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // A2 - Metallic Madness
+    float32 -1250,  0001
+    float32  1250,  0001
+    float32 -0500,  0900
+    float32  0500,  0900
 
     neutral_table:
     // 00 - Peach's Castle
@@ -1649,7 +1734,7 @@ scope Spawn {
     float32 -1732,  1125
     float32  0853,  1114
     
-    // 3F - Mute City
+    // 3F - Mute City DL
     float32 -1400,  0910
     float32  1400,  0910
     float32 -1400,  0005
@@ -2176,6 +2261,78 @@ scope Spawn {
     float32  0471,  0540
     float32  0159,  0540
     float32 -0471,  0540
+    
+    // 97 - Hyrule Castle Remix
+    float32 -1510,  1960
+    float32  1510,  1960
+    float32 -2150,  2875
+    float32  2150,  2875
+    
+    // 98 - Sector Z Remix
+    float32  4350,  0810
+    float32  7840,  0940
+    float32  5200,  0810
+    float32  6400,  0940
+    
+    // 99 - Mute City
+    float32 -1849,  2140
+    float32  1819,  1721
+    float32 -3289,  2140
+    float32  3549,  1721
+    
+    // 9A - Home Run Contest
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // 9B - Mushroom Kingdom Remix
+    float32 -2850,  0035
+    float32  2850,  0035
+    float32 -3550,  1540
+    float32  3550,  1540
+    
+    // 9C - Green Hill Zone
+    float32 -1500,  0035
+    float32  1500,  0035
+    float32 -0750,  0035
+    float32  0750,  0035
+    
+    // 9D - Subcon
+    float32 -0900,  0035
+    float32  0900,  0035
+    float32 -2850,  0950
+    float32  2850,  0950
+
+    // 9E - Pirate Land
+    float32 -3400,  0125
+    float32  2500,  0125
+    float32 -3400,  0900
+    float32  2500,  0900
+    
+    // 9F - Casino Night
+    float32 -0925,  0500
+    float32  0925,  0500
+    float32 -3118,  0150
+    float32  3118,  0150
+    
+    // A0 - Sonic Break the Targets
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // A1 - Sonic Board the Platforms
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // A2 - Metallic Madness
+    float32 -1250,  0001
+    float32  1250,  0001
+    float32 -0500,  0900
+    float32  0500,  0900
 }
 
 } // __SPAWN__

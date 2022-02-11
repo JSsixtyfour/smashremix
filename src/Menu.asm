@@ -16,7 +16,7 @@ scope Menu {
         constant U8(0x0000)                 // 08 bit integer (unsigned)
         constant U16(0x0001)                // 16 bit integer (unsigned)
         constant U32(0x0002)                // 32 bit integer (unsigned)
-        constant S8(0x0003)                 // 08 bit integer (signed, not supported) 
+        constant S8(0x0003)                 // 08 bit integer (signed, not supported)
         constant S16(0x0004)                // 16 bit integer (signed, not supported)
         constant S32(0x0005)                // 32 bit integer (signed, not supported)
         constant BOOL(0x0006)               // bool
@@ -25,7 +25,7 @@ scope Menu {
 
     // @ Description
     // Struct for menu arguments.
-    macro info(head, ulx, uly, room, group, width, cursor_color, label_color, value_color, scale, row_height, max_per_page, blur) {
+    macro info(head, ulx, uly, room, group, width, cursor_color, label_color, value_color, scale, row_height, max_per_page, blur, dpad) {
         dw {head}                           // 0x0000 - address of menu head
         dh {ulx}                            // 0x0004 - ulx
         dh {uly}                            // 0x0006 - uly
@@ -43,13 +43,19 @@ scope Menu {
         dh {row_height}                     // 0x0030 - row height
         dh {max_per_page}                   // 0x0032 - max rows per page
         dh {blur}                           // 0x0034 - blur
-        dh 0x0000                           // free
+        dh {dpad}                           // 0x0036 - allow dpad control
     }
 
     // @ Description
-    // Struct for menu arguments using default scale.
+    // Struct for menu arguments, dpad control on.
+    macro info(head, ulx, uly, room, group, width, cursor_color, label_color, value_color, scale, row_height, max_per_page, blur) {
+        info({head}, {ulx}, {uly}, {room}, {group}, {width}, {cursor_color}, {label_color}, {value_color}, {scale}, {row_height}, {max_per_page}, {blur}, OS.TRUE)
+    }
+
+    // @ Description
+    // Struct for menu arguments using default scale, blur and dpad control.
     macro info(head, ulx, uly, room, group, width, cursor_color, label_color, value_color) {
-        Menu.info({head}, {ulx}, {uly}, {room}, {group}, {width}, {cursor_color}, {label_color}, {value_color}, Render.FONTSIZE_DEFAULT, 0x0E, 12, 0x0001)
+        Menu.info({head}, {ulx}, {uly}, {room}, {group}, {width}, {cursor_color}, {label_color}, {value_color}, Render.FONTSIZE_DEFAULT, 0x0E, 12, 0x0001, OS.TRUE)
     }
 
     // @ Description
@@ -537,9 +543,9 @@ scope Menu {
         addiu   sp, sp,-0x0020              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // ~
-        sw      ra, 0x000C(sp)              // ~ 
+        sw      ra, 0x000C(sp)              // ~
         sw      at, 0x0010(sp)              // ~
-        sw      a0, 0x0014(sp)              // ~ 
+        sw      a0, 0x0014(sp)              // ~
         sw      a1, 0x0018(sp)              // save registers
 
         _down:
@@ -547,8 +553,11 @@ scope Menu {
         jal     Joypad.check_stick_         // v0 = boolean
         nop
         bnez    v0, _update_down            // if (down was pushed) then do update
-        nop
-        li      a0, Joypad.DD | Joypad.CD   // a0 - dpad/c down
+        lw      t0, 0x0014(sp)              // t0 = info()
+        lhu     t0, 0x0036(t0)              // t0 = allow dpad
+        lli     a0, Joypad.DD | Joypad.CD   // a0 - dpad/c down
+        beqzl   t0, pc() + 8                // if dpad not allowed, just check C
+        lli     a0, Joypad.CD               // a0 - c down
         lli     a1, 00001                   // a1 - any
         li      a2, Joypad.PRESSED          // a2 - type
         jal     Joypad.check_buttons_all_   // v0 = dpad/c down pressed
@@ -561,7 +570,7 @@ scope Menu {
         nop
         lw      a0, 0x0014(sp)              // a0 - address of info()
         jal     get_num_entries_            // v0 = num_entries
-        nop        
+        nop
         addiu   v0, v0,-0x0001              // v0 = num_entries - 1
         lw      t0, 0x0014(sp)              // t0 = address of info()
         lhu     a0, 0x0032(t0)              // a0 = MAX_PER_PAGE
@@ -606,8 +615,11 @@ scope Menu {
         jal     Joypad.check_stick_         // v0 = boolean
         nop
         bnez    v0, _update_up              // if (up was pushed) then do update
-        nop
+        lw      t0, 0x0014(sp)              // t0 = info()
+        lhu     t0, 0x0036(t0)              // t0 = allow dpad
         li      a0, Joypad.DU | Joypad.CU   // a0 - dpad/c up
+        beqzl   t0, pc() + 8                // if dpad not allowed, just check C
+        lli     a0, Joypad.CU               // a0 - c up
         lli     a1, 00001                   // a1 - any
         li      a2, Joypad.PRESSED          // a2 - type
         jal     Joypad.check_buttons_all_   // v0 = dpad/c up pressed
@@ -657,8 +669,11 @@ scope Menu {
         jal     Joypad.check_stick_         // v0 = boolean
         nop
         bnez    v0, _update_right           // if (right was pushed) then do update
-        nop
+        lw      t0, 0x0014(sp)              // t0 = info()
+        lhu     t0, 0x0036(t0)              // t0 = allow dpad
         li      a0, Joypad.DR | Joypad.CR   // a0 - dpad/c right
+        beqzl   t0, pc() + 8                // if dpad not allowed, just check C
+        lli     a0, Joypad.CR               // a0 - c right
         lli     a1, 00001                   // a1 - any
         li      a2, Joypad.PRESSED          // a2 - type
         jal     Joypad.check_buttons_all_   // v0 = dpad/c right pressed
@@ -691,8 +706,11 @@ scope Menu {
         jal     Joypad.check_stick_         // v0 = boolean
         nop
         bnez    v0, _update_left            // if (left was pushed) then do update
-        nop
+        lw      t0, 0x0014(sp)              // t0 = info()
+        lhu     t0, 0x0036(t0)              // t0 = allow dpad
         li      a0, Joypad.DL | Joypad.CL   // a0 - dpad/c left
+        beqzl   t0, pc() + 8                // if dpad not allowed, just check C
+        lli     a0, Joypad.CL               // a0 - c left
         lli     a1, 00001                   // a1 - any
         li      a2, Joypad.PRESSED          // a2 - type
         jal     Joypad.check_buttons_all_   // v0 = dpad/c left pressed
@@ -778,7 +796,8 @@ scope Menu {
         lw      a0, 0x0014(sp)              // a0 - address of info()
         jal     get_num_entries_            // v0 = num_entries
         nop
-        sh      v0, 0x0036(a0)              // temporarily save number of entries in free space
+        addiu   v0, v0, -0x0001             // v0 = num_entries, 0 based
+        sh      v0, 0x001C(sp)              // temporarily save number of entries in free space
         lhu     a2, 0x0032(a0)              // a2 = max_per_page
         divu    v0, a2                      // t1 = number of pages, 0 based
         mflo    t1                          // ~
@@ -817,8 +836,7 @@ scope Menu {
         sw      t0, 0x0018(a0)              // update first entry
         sw      t0, 0x001C(a0)              // update last entry
         lw      t0, 0x000C(a0)              // t0 = row
-        lh      v0, 0x0036(a0)              // v0 = num_entries
-        addiu   v0, v0, -0x0001             // v0 = num_entries, 0 based
+        lh      v0, 0x001C(sp)              // v0 = num_entries, 0 based
         sltu    at, v0, t0                  // if selection is not higher than the total number
         beqz    at, _redraw                 // then we're done
         nop
@@ -898,7 +916,7 @@ scope Menu {
         lw      t1, 0x0008(sp)              // ~
         lw      ra, 0x000C(sp)              // ~
         lw      at, 0x0010(sp)              // ~
-        lw      a0, 0x0014(sp)              // ~ 
+        lw      a0, 0x0014(sp)              // ~
         lw      a1, 0x0018(sp)              // restore registers
         addiu   sp, sp, 0x0020              // deallocate stack space
         jr      ra                          // return
@@ -938,7 +956,7 @@ scope Menu {
         beq     at, t0, _end                // if (i == selection), end loop
         nop
         lw      a0, 0x001C(a0)              // a0 = entry->next
-        addiu   at, at, 0x0001              // increment i 
+        addiu   at, at, 0x0001              // increment i
         b       _loop                       // check again
         nop
 
@@ -956,7 +974,7 @@ scope Menu {
     }
 
     // @ Description
-    // This function will chnage the currently loaded SSB screen
+    // This function will change the currently loaded SSB screen
     // @ Arguments
     // a0 - int next_screen
     scope change_screen_: {
@@ -991,7 +1009,7 @@ scope Menu {
 
         lw      a0, 0x0000(a0)              // a0 = head
         lli     v0, 0x0000                  // ret = 0
-        
+
         _loop:
         beqz    a0, _end                    // if (entry = null), end
         nop
@@ -1051,7 +1069,7 @@ scope Menu {
     }
 
     // @ Description
-    // Imports a set of given 32 bit values to each entry's curr_value 
+    // Imports a set of given 32 bit values to each entry's curr_value
     // a0 - address of head
     // a1 - address of block
     scope import_: {
@@ -1063,7 +1081,7 @@ scope Menu {
 
         move    t0, a0                      // t0 = first entry
         addiu   a1, a1, 0x000C              // a1 = address of SRAM block data
-        
+
         _loop:
         beqz    t0, _end                    // if (entry = null), end
         nop

@@ -12,8 +12,8 @@ include "OS.asm"
 
 scope Character {
     // number of character slots to add
-    constant ADD_CHARACTERS(30)
-    // start and end offset for the main character struct table
+    constant ADD_CHARACTERS(33)
+    // start and end offset for the main character struct table (RAM 0x80116E10)
     constant STRUCT_TABLE(0x92610)
     variable STRUCT_TABLE_END(STRUCT_TABLE + 0x6C)
     // original action array table
@@ -42,7 +42,7 @@ scope Character {
         read32 {name}_parent_param_array_ptr, "../roms/original.z64", ({name}_parent_struct + 0x64)
         read32 {name}_parent_param_array_size, "../roms/original.z64", ({name}_parent_struct + 0x6C)
         constant {name}_parent_param_array({name}_parent_param_array_ptr - 0x80084800)
-        
+
         // Get menu array pointer and ROM offset of {parent}
         read32 {name}_parent_menu_array_ptr, "../roms/original.z64", ({name}_parent_struct + 0x68)
         constant {name}_parent_menu_array({name}_parent_menu_array_ptr - 0x80288A20)
@@ -50,7 +50,7 @@ scope Character {
         // Get action array pointer and ROM offset of {parent}
         read32 {name}_parent_action_array_ptr, "../roms/original.z64", (ACTION_ARRAY_TABLE_ORIGINAL + (id.{parent} * 0x4))
         global evaluate {name}_parent_action_array({name}_parent_action_array_ptr - 0x80084800)
-        
+
         // Action parameter array size
         constant {name}_param_array_size({name}_parent_param_array_size + {add_actions})
 
@@ -59,10 +59,10 @@ scope Character {
 
         // Parent character name
         global define {name}_parent({parent})
-        
+
         // Number of new action slots
         constant {name}_NEW_ACTION_SLOTS({add_actions})
-        
+
         // Print message
         print "Added Character: {name} \n"
         print "{name} ID: 0x" ; OS.print_hex(id.{name}) ; print "\n"
@@ -166,11 +166,11 @@ scope Character {
         {name}_action_array:
         global evaluate {name}_action_array_origin(origin())
         // copy array from parent character
-        
+
         OS.copy_segment({{name}_parent_action_array}, action_array_size.{parent})
         fill ({name}_action_array + (action_array_size.{parent} + ({add_actions} * 0x14))) - pc()
-        OS.align(16)   
-        
+        OS.align(16)
+
         // DEFINE MENU ARRAY //////////////////////////////////////////////////////////////////////
         {name}_menu_array:
         global evaluate {name}_menu_array_origin(origin())
@@ -225,7 +225,7 @@ scope Character {
         add_to_table(ground_dsp, id.{name}, id.{parent}, 0x4)
 
         // ENTRY ANIMATION ////////////////////////////////////////////////////////////////////////
-        // Copy entry animation settings from parent cahracter
+        // Copy entry animation settings from parent character
         add_to_table(entry_script, id.{name}, id.{parent}, 0x4)
         add_to_table(entry_action, id.{name}, id.{parent}, 0x8)
 
@@ -238,8 +238,8 @@ scope Character {
         add_to_table(crowd_chant_fgm, id.{name}, id.{parent}, 0x2)
         add_to_table(yoshi_egg, id.{name}, id.{parent}, 0x1C)
         add_to_table(ai_behaviour, id.{name}, id.{parent}, 0x4)
-        
-        // Copy parent character for menu tables  
+
+        // Copy parent character for menu tables
         add_to_table(menu_zoom, id.{name}, id.{parent}, 0x4)
         add_to_table(default_costume, id.{name}, id.{parent}, 0x8)
         add_to_id_table(variant_original, id.{name}, id.{parent})
@@ -259,7 +259,7 @@ scope Character {
         } else {
             dw gfx_routine_end.DISABLED
         }
-        
+
         // Copy parent character for projectile tables
         add_to_table(fireball, id.{name}, id.{parent}, 0x4)
         add_to_table(kirby_fireball, id.{name}, id.{parent}, 0x4)
@@ -287,7 +287,7 @@ scope Character {
         db      {btt_stage_id}
         origin BTP_TABLE_ORIGIN + id.{name}
         db      {btp_stage_id}
-        
+
         // update remix bonus stage tables
         origin REMIX_BTT_TABLE_ORIGIN + id.{name}
         db      {remix_btt_stage_id}
@@ -302,6 +302,11 @@ scope Character {
         // update variant type table
         table_patch_start(variant_type, id.{name}, 0x1)
         db      {variant_type}
+        OS.patch_end()
+
+        // update shield costume table
+        table_patch_start(costume_shield_color, id.{name}, 0x4)
+        dw      costume_shield_color.{parent} // default to parent
         OS.patch_end()
 
         pullvar base, origin
@@ -334,7 +339,7 @@ scope Character {
         global evaluate num({num} + 1)
         read16 param_read_{num}, "../roms/original.z64", PARENT_ACTION_STRUCT
         variable param_offset(param_read_{num} >> 6)
-        
+
         // Check for no parameters
         if param_offset == 0x3FF {
             print "\n\nWARNING: Action parameters do not exist for character: {name} action: {action} (0x" ; OS.print_hex({action}) ; print "). edit_action_parameters aborted.\n"
@@ -355,7 +360,7 @@ scope Character {
         }
     }
     }
-    
+
     // @ Description
     // modifies parameters for a menu action (animation id, command list offset, flags)
     // NOTE: this macro supports use outside of this file.
@@ -422,7 +427,7 @@ scope Character {
         pullvar base, origin
     }
     }
-    
+
     // @ Description
     // adds new action parameters for a character
     // NOTE: this macro supports use outside of this file, and use with KIRBY
@@ -447,9 +452,9 @@ scope Character {
             }
             // Get param_offset from {action_copy}
             global evaluate num({num} + 1)
-            read16 param_read_{num}, "../roms/original.z64", PARENT_ACTION_STRUCT   
+            read16 param_read_{num}, "../roms/original.z64", PARENT_ACTION_STRUCT
             variable param_offset(param_read_{num} >> 6)
-            
+
             // Get ROM offset for parent parameter struct
             if Character.id.{name} == Character.id.KIRBY {
                 variable PARENT_PARAM_STRUCT(Character.KIRBY_original_param_array + (param_offset * 0xC))
@@ -469,14 +474,14 @@ scope Character {
                 evaluate flags(flags_read_{num})
             }
         }
-        
+
         // Get original parameter array size.
         if Character.id.{name} == Character.id.KIRBY {
                 variable array_size(Character.KIRBY_original_param_array_size)
             } else {
                 variable array_size(Character.{name}_parent_param_array_size)
         }
-        
+
         // Get ID for new parameter struct
         constant ActionParams.{action_name}(array_size + {{name}_new_params})
         // Write new parameter struct
@@ -492,15 +497,15 @@ scope Character {
             dw {flags}                      // insert flags
         }
         pullvar base, origin
-        
+
         // Increment {name}_new_params
         global evaluate {name}_new_params({{name}_new_params} + 1)
     }
-    
+
     // @ Description
     // adds a new action for a character
     // NOTE: this macro supports use outside of this file, and use with KIRBY
-    macro add_new_action(name, action_name, action_copy, parameters_id, staling, asm1, asm2, asm3, asm4) {  
+    macro add_new_action(name, action_name, action_copy, parameters_id, staling, asm1, asm2, asm3, asm4) {
     if !{defined {name}_new_actions} {
         global evaluate {name}_new_actions(0)
     }
@@ -522,7 +527,7 @@ scope Character {
             } else {
                 variable PARENT_ACTION_STRUCT({Character.{name}_parent_action_array} + (({action_copy} - 0xDC) * 0x14))
             }
-            
+
             // Read values from original struct
             global evaluate num({num} + 1)
             read16 param_read_{num}, "../roms/original.z64", PARENT_ACTION_STRUCT
@@ -531,7 +536,7 @@ scope Character {
             read32 asm2_read_{num}, "../roms/original.z64", PARENT_ACTION_STRUCT + 0x8
             read32 asm3_read_{num}, "../roms/original.z64", PARENT_ACTION_STRUCT + 0xC
             read32 asm4_read_{num}, "../roms/original.z64", PARENT_ACTION_STRUCT + 0x10
-            
+
             // Copy param_offset from {action_copy}
             variable param_offset(param_read_{num} >> 6)
             // Copy staling from {action_copy} if not defined
@@ -555,7 +560,7 @@ scope Character {
             evaluate unknown(0)
             variable param_offset(0x3FF)
         }
-        
+
         // Get ID for new action.
         if Character.id.{name} == Character.id.KIRBY {
             constant Action.{action_name}((Character.action_array_size.KIRBY / 0x14) + {{name}_new_actions} + 0xDC)
@@ -588,12 +593,12 @@ scope Character {
             dw {asm4}                       // insert subroutine (collision)
         }
         pullvar base, origin
-        
+
         // Increment {name}_new_actions
         global evaluate {name}_new_actions({{name}_new_actions} + 1)
     }
-    
-    
+
+
     // @ Description
     // Copies menu actions from a base character to a target character.
     // base - character to copy actions from
@@ -605,13 +610,13 @@ scope Character {
         if !{defined {base}_struct} {
             read32 {base}_struct_ptr, "../roms/original.z64", (STRUCT_TABLE + (id.{base} * 0x4))
             global evaluate {base}_struct({base}_struct_ptr - 0x80084800)
-        }    
+        }
         // Get menu array pointer and ROM offset of {base}
         if !{defined {base}_menu_array} {
             read32 {base}_menu_array_ptr, "../roms/original.z64", ({{base}_struct} + 0x68)
             global evaluate {base}_menu_array({base}_menu_array_ptr - 0x80288A20)
         }
-        
+
         // Get struct pointer and ROM offset of {target}
         if !{defined {target}_struct} {
             read32 {target}_struct_ptr, "../roms/original.z64", (STRUCT_TABLE + (id.{target} * 0x4))
@@ -622,22 +627,22 @@ scope Character {
             read32 {target}_menu_array_ptr, "../roms/original.z64", ({{target}_struct} + 0x68)
             global evaluate {target}_menu_array({target}_menu_array_ptr - 0x80288A20)
         }
-        
+
         // Copy actions
-        pushvar origin, base   
+        pushvar origin, base
         origin {{target}_menu_array} + ({begin_action} * 0xC)
-        OS.copy_segment({{base}_menu_array} + ({begin_action} * 0xC), {num_actions} * 0xC)      
+        OS.copy_segment({{base}_menu_array} + ({begin_action} * 0xC), {num_actions} * 0xC)
         pullvar base, origin
     }
-    
+
     // @ Description
     // begins a patch in a character id based table, use OS.patch_end() to end
     // NOTE: this macro supports use outside of this file.
     macro table_patch_start(table_name, id, entry_size) {
         pushvar origin, base
-        origin  Character.{table_name}.TABLE_ORIGIN + ({id} * {entry_size})  
+        origin  Character.{table_name}.TABLE_ORIGIN + ({id} * {entry_size})
     }
-    
+
     // @ Description
     // begins a patch in a character id based table, use OS.patch_end() to end
     // NOTE: this macro supports use outside of this file.
@@ -670,7 +675,7 @@ scope Character {
         db  {green_team}
         OS.patch_end()
     }
-    
+
     // @ Description
     // adds a character to an extended jab_3 table
     macro add_to_jab_3_table(table_name, id, parent_id, bool_jab_3) {
@@ -762,7 +767,7 @@ scope Character {
             OS.align(4)
         }
     }
-    
+
     // @ Description
     // moves and extends a standard character related table, allowing for more characters to be
     // added to it, used for 12 character tables
@@ -829,7 +834,7 @@ scope Character {
             fill (table + (NUM_CHARACTERS * 0x4)) - pc()
         }
     }
-    
+
     // @ Description
     // adds an ID based table which can be used when it isn't feasible to move an original table,
     // and can instead be used to override the character ID before the offset for the original
@@ -884,7 +889,7 @@ scope Character {
         dw      mario_parameter_array
         pullvar base, origin
     }
-    
+
     // @ Description
     // moves Kirby's action array/action parameter array to allow for new copy ability actions to be added
     // add_actions - number of new actions to add for Kirby
@@ -903,13 +908,13 @@ scope Character {
         // Get action array pointer and ROM offset
         read32 KIRBY_original_action_array_ptr, "../roms/original.z64", (ACTION_ARRAY_TABLE_ORIGINAL + (id.KIRBY * 0x4))
         global evaluate KIRBY_original_action_array(KIRBY_original_action_array_ptr - 0x80084800)
-        
+
         // New action parameter array size
         constant KIRBY_param_array_size(KIRBY_original_param_array_size + {add_actions})
-        
+
         // Number of new action slots
         constant KIRBY_NEW_ACTION_SLOTS({add_actions})
-        
+
         // Move action parameter array
         KIRBY_param_array:
         global evaluate KIRBY_param_array_origin(origin())
@@ -925,23 +930,69 @@ scope Character {
         // Add space for new actions
         fill (KIRBY_action_array + (action_array_size.KIRBY + ({add_actions} * 0x14))) - pc()
         OS.align(16)
-        
+
         // Write new array pointers and size
         pushvar origin, base
-        
+
         // parameter array
         origin KIRBY_struct + 0x64
         dw KIRBY_param_array
         origin KIRBY_struct + 0x6C
         dw KIRBY_param_array_size
-        
+
         // action array
         origin  ACTION_ARRAY_TABLE_ORIGIN + (id.KIRBY * 0x4)
         dw KIRBY_action_array
         origin  ACTION_ARRAY_TABLE_ORIGIN + (id.NKIRBY * 0x4)
         dw KIRBY_action_array
-        
+
         pullvar base, origin
+    }
+
+    // @ Description
+    // Updates a character's costume shield colors
+    macro set_costume_shield_colors(name, costume_0_color, costume_1_color, costume_2_color, costume_3_color, costume_4_color, costume_5_color, costume_6_color, costume_7_color, costume_8_color, costume_9_color, costume_10_color, costume_11_color) {
+        scope costume_shield_color: {
+            db Shield.color.{costume_0_color}
+            db Shield.color.{costume_1_color}
+            db Shield.color.{costume_2_color}
+            db Shield.color.{costume_3_color}
+            db Shield.color.{costume_4_color}
+            db Shield.color.{costume_5_color}
+            if Shield.color.{costume_6_color} != Shield.color.NA {
+                db Shield.color.{costume_6_color}
+            }
+            if Shield.color.{costume_7_color} != Shield.color.NA {
+                db Shield.color.{costume_7_color}
+            }
+            if Shield.color.{costume_8_color} != Shield.color.NA {
+                db Shield.color.{costume_8_color}
+            }
+            if Shield.color.{costume_9_color} != Shield.color.NA {
+                db Shield.color.{costume_9_color}
+            }
+            if Shield.color.{costume_10_color} != Shield.color.NA {
+                db Shield.color.{costume_10_color}
+            }
+            if Shield.color.{costume_11_color} != Shield.color.NA {
+                db Shield.color.{costume_11_color}
+            }
+
+            OS.align(4)
+        }
+
+        pushvar origin, base
+
+        origin Character.costume_shield_color.TABLE_ORIGIN + (Character.id.{name} * 4)
+        dw costume_shield_color
+
+        pullvar base, origin
+    }
+
+    // @ Description
+    // Updates a character's costume shield colors - 8 costumes
+    macro set_costume_shield_colors(name, costume_0_color, costume_1_color, costume_2_color, costume_3_color, costume_4_color, costume_5_color, costume_6_color, costume_7_color) {
+        Character.set_costume_shield_colors({name}, {costume_0_color}, {costume_1_color}, {costume_2_color}, {costume_3_color}, {costume_4_color}, {costume_5_color}, {costume_6_color}, {costume_7_color}, NA, NA, NA, NA)
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -978,7 +1029,7 @@ scope Character {
             li      a3, SEGMENT_SIZE_TABLE_END
             lw      t2, 0x0038(sp)
         }
-        
+
         // @ Description
         // modifies a hard-coded routine which runs on character load and assigns pointers in each character's file table
         // s1 - loop iteration count
@@ -1401,7 +1452,7 @@ scope Character {
             addu    at, at, t7
             lw      t7, LOWER(at)
         }
-        
+
         // @ Description
         // modifies a hard-coded routine which runs when a gfx routine ends or upon action change,
         // responsible for enabling the "charge flash" effect for samus and dk's neutral specials
@@ -1504,7 +1555,7 @@ scope Character {
             base    0x801030E4
             lwc1    f0, LOWER(at)
         }
-        
+
         // @ Description
         // modifies a hard-coded routine which runs when a fireball projectile is created, and
         // determines which fireball struct id is loaded
@@ -1548,7 +1599,7 @@ scope Character {
             lw      t7, LOWER(at)           // original line 3
             OS.patch_end()
         }
-        
+
         // @ Description
         // modifies a hard-coded routine which seemingly runs when an AI switches behaviours?
         // the table contains pointers to what seems to be a struct for determining how the AI will
@@ -1605,8 +1656,11 @@ scope Character {
             OS.patch_start(0x00178AFC, 0x8013209C)
             li      t7, menu_zoom.table     // original line 1/2
             OS.patch_end()
+            OS.patch_start(0x00179D10, 0x801332B0)
+            li      a2, menu_zoom.table     // original line 1/2
+            OS.patch_end()
         }
-        
+
         // @ Description
         // When a character is thrown, the throwing character's ID is used for a redirect table
         // which applies a hitbox to the thrown character. As this redirect table is located in the
@@ -1764,7 +1818,7 @@ scope Character {
             OS.patch_start(0xDC960, 0x80161F20)
             li      t7, kirby_inhale_struct.table
             OS.patch_end()
-            
+
             // initialize character
             OS.patch_start(0x53660, 0x800D7E60)
             jal     get_extended_inhale_struct_._initialize
@@ -1915,7 +1969,7 @@ scope Character {
     move_table(crowd_chant_fgm, 0xA81A8, 0x2)
     move_table(yoshi_egg, 0x103160, 0x1C)
     move_table(ai_behaviour, 0x102B04, 0x4)
-    
+
     // menu tables
     move_table_12(menu_zoom, 0x108370, 0x4)
     // character select
@@ -1932,7 +1986,7 @@ scope Character {
     move_table_12(winner_bgm, 0x158A08, 0x4)
     // 1p
     id_table_12(singleplayer_vs_preview)
-    
+
     // projectile tables
     move_table(fireball, 0x107070, 0x4)
     move_table(kirby_fireball, 0x1070E0, 0x4)
@@ -2376,6 +2430,59 @@ scope Character {
     }
 
     // @ Description
+    // This table holds custom shield colors for each character's costume
+    scope costume_shield_color {
+        OS.align(16)
+        table:
+        constant TABLE_ORIGIN(origin())
+        dw MARIO         // MARIO
+        dw FOX           // FOX
+        dw DONKEY        // DONKEY
+        dw SAMUS         // SAMUS
+        dw LUIGI         // LUIGI
+        dw LINK          // LINK
+        dw YOSHI         // YOSHI
+        dw CAPTAIN       // CAPTAIN
+        dw KIRBY         // KIRBY
+        dw PIKACHU       // PIKACHU
+        dw JIGGLYPUFF    // JIGGLYPUFF
+        dw NESS          // NESS
+        dw 0             // BOSS
+        dw METAL         // METAL
+        dw POLYGON       // NMARIO
+        dw POLYGON       // NFOX
+        dw POLYGON       // NDONKEY
+        dw POLYGON       // NSAMUS
+        dw POLYGON       // NLUIGI
+        dw POLYGON       // NLINK
+        dw POLYGON       // NYOSHI
+        dw POLYGON       // NCAPTAIN
+        dw POLYGON       // NKIRBY
+        dw POLYGON       // NPIKACHU
+        dw POLYGON       // NJIGGLY
+        dw POLYGON       // NNESS
+        dw DONKEY        // GDONKEY
+        // pad table for new characters
+        fill table + (NUM_CHARACTERS * 4) - pc()
+
+        MARIO:;     db 0x01, 0x03, 0x0D, 0x09, 0x05, 0x0F, 0x0E
+        FOX:;       db 0x0D, 0x02, 0x0A, 0x06, 0x0E, 0x07
+        DONKEY:;    db 0x0D, 0x0E, 0x01, 0x09, 0x06, 0x0C, 0x0F, 0x03
+        SAMUS:;     db 0x02, 0x0C, 0x0E, 0x04, 0x09, 0x0F, 0x07
+        LUIGI:;     db 0x05, 0x0F, 0x07, 0x0C, 0x0A, 0x03
+        LINK:;      db 0x05, 0x0F, 0x01, 0x08, 0x0E, 0x03
+        YOSHI:;     db 0x05, 0x01, 0x07, 0x03, 0x0C, 0x09, 0x0E, 0x0F
+        CAPTAIN:;   db 0x01, 0x0A, 0x04, 0x0C, 0x0E, 0x09, 0x02, 0x0F
+        KIRBY:;     db 0x0C, 0x03, 0x07, 0x01, 0x05, 0x0F, 0x0A
+        PIKACHU:;   db 0x03, 0x01, 0x09, 0x05, 0x06, 0x06, 0x02, 0x04, 0x0A
+        JIGGLYPUFF:;db 0x0D, 0x01, 0x09, 0x05, 0x06, 0x04, 0x02, 0x0A, 0x0E
+        NESS:;      db 0x01, 0x03, 0x09, 0x05, 0x0F, 0x0A
+        METAL:;     db 0x0E, 0x01, 0x05, 0x09, 0x03, 0x02
+        POLYGON:;   db 0x0A, 0x01, 0x06, 0x09, 0x0E, 0x0F
+        OS.align(4)
+    }
+
+    // @ Description
     // Adds a 32-bit signed int to the player's percentage
     // the game will crash if the player's % goes below 0
     // @ Arguments
@@ -2391,22 +2498,22 @@ scope Character {
         jr      ra
         nop
     }
-    
+
     // @ Description
     // Returns the address of the player struct for the given port.
-    // @ Arguments 
+    // @ Arguments
     // a0 - player port (p1 = 0, p4 = 3)
     // @ Returns
     // v0 - address of player X struct, or 0 if no struct found for player X
     scope port_to_struct_: {
         constant FIRST_PLAYER_PTR(0x800466FC)
-    
+
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0008(sp)              // store t0
 
         li      v0, FIRST_PLAYER_PTR        // v0 = address of player object list head
-        lw      v0, 0x0000(v0)              // v0 = address of first player object  
-        
+        lw      v0, 0x0000(v0)              // v0 = address of first player object
+
         _loop:
         // a0 = port to check for
         // v0 = player struct to compare against
@@ -2418,14 +2525,14 @@ scope Character {
         lw      v0, 0x0084(v0)              // ...and return address of player struct for the current object
         b       _loop
         lw      v0, 0x0004(v0)              // v0 = next object
-        
+
         _end:
         lw      t0, 0x0008(sp)              // load t0
         addiu   sp, sp, 0x0010              // deallocate stack space
         jr      ra                          // return
         nop
     }
-    
+
     ///////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////// ADD CHARACTERS ////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -2456,9 +2563,9 @@ scope Character {
     OS.copy_segment(ACTION_ARRAY_TABLE_ORIGINAL, (27 * 4))
     fill (ACTION_ARRAY_TABLE + (NUM_CHARACTERS * 0x4)) - pc()
     OS.align(16)
-    
+
     // extend kirby's action arrays
-    extend_kirby_arrays(47)
+    extend_kirby_arrays(55)
 
     // set up extended high score table
     EXTENDED_HIGH_SCORE_TABLE_BLOCK:; SRAM.block((NUM_CHARACTERS - 12) * 0x20)   // exclude original 12 characters
@@ -2541,7 +2648,7 @@ scope Character {
     // we'll fill with 0xFF to purposely ignore ones we don't explicitly set
     fill ADD_CHARACTERS, 0xFF
     OS.align(16)
-    
+
     // set up alternate bonus stages for Remix 1P
     OS.align(16)
     REMIX_BTT_TABLE:
@@ -2612,20 +2719,25 @@ scope Character {
     // we'll fill with 0xFF to purposely ignore ones we don't explicitly set
     fill ADD_CHARACTERS, 0xFF
     OS.align(16)
-    
+
     // set up a high score table for multi-man mode
     MULTIMAN_HIGH_SCORE_TABLE_BLOCK:; SRAM.block((NUM_CHARACTERS) * 0x0004)   //
     constant MULTIMAN_HIGH_SCORE_TABLE(MULTIMAN_HIGH_SCORE_TABLE_BLOCK + 0x000C)
     OS.align(16)
-    
+
     // set up a high score table for multi-man mode
     CRUEL_HIGH_SCORE_TABLE_BLOCK:; SRAM.block((NUM_CHARACTERS) * 0x0004)   //
     constant CRUEL_HIGH_SCORE_TABLE(CRUEL_HIGH_SCORE_TABLE_BLOCK + 0x000C)
     OS.align(16)
-    
+
     // set up a high score table for Bonus 3
     BONUS3_HIGH_SCORE_TABLE_BLOCK:; SRAM.block((NUM_CHARACTERS) * 0x0004)   //
     constant BONUS3_HIGH_SCORE_TABLE(BONUS3_HIGH_SCORE_TABLE_BLOCK + 0x000C)
+    OS.align(16)
+
+    // set up a high score table for HRC
+    HRC_HIGH_SCORE_TABLE_BLOCK:; SRAM.block((NUM_CHARACTERS) * 0x0004)   //
+    constant HRC_HIGH_SCORE_TABLE(HRC_HIGH_SCORE_TABLE_BLOCK + 0x000C)
     OS.align(16)
 
     // Fix menu actions for MM, GDK and Polygons by copying them from the base character
@@ -2640,7 +2752,7 @@ scope Character {
     copy_menu_actions(KIRBY, NKIRBY, 1, 13)
     copy_menu_actions(PIKACHU, NPIKACHU, 1, 13)
     copy_menu_actions(NESS, NNESS, 1, 13)
-    
+
     pushvar base, origin
 
     // NLUIGI, NJIGGLY and GDONKEY do not have full menu arrays.
@@ -2720,7 +2832,7 @@ scope Character {
     // 0x2F - EPUFF
     define_character(EPUFF, JIGGLYPUFF, 0x0E9, 0x0E8, 0, 0x14A, 0x14B, 0, 0x15F, 0, 0, 0x474, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_JIGGLYPUFF, Stages.id.BTP_JIGGLYPUFF, Stages.id.BTT_FALCO, Stages.id.BTP_MARIO, sound_type.U, variant_type.E)
     // 0x30 - JKIRBY
-    define_character(JKIRBY, KIRBY, File.JKIRBY_MAIN, 0x0E4, 0, 0x148, 0x149, 0, 0x15C, 0, 0, 0x808, 47, OS.TRUE, OS.FALSE, Stages.id.BTT_KIRBY, Stages.id.BTP_KIRBY, Stages.id.BTT_FOX, Stages.id.BTP_FOX, sound_type.J, variant_type.J)
+    define_character(JKIRBY, KIRBY, File.JKIRBY_MAIN, 0x0E4, 0, 0x148, 0x149, 0, 0x15C, 0, 0, 0x808, 55, OS.TRUE, OS.FALSE, Stages.id.BTT_KIRBY, Stages.id.BTP_KIRBY, Stages.id.BTT_FOX, Stages.id.BTP_FOX, sound_type.J, variant_type.J)
     // 0x31 - JYOSHI
     define_character(JYOSHI, YOSHI, File.JYOSHI_MAIN, 0x0F6, 0, 0x152, 0x154, 0, 0x162, 0x153, 0, 0x47C, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_YOSHI, Stages.id.BTP_YOSHI, Stages.id.BTT_FALCON, Stages.id.BTP_GND, sound_type.J, variant_type.J)
     // 0x32 - JPIKA
@@ -2741,7 +2853,13 @@ scope Character {
     define_character(MTWO, YOSHI, File.MTWO_MAIN, 0x0F6, 0, File.MTWO_CHARACTER, File.MTWO_SHIELD_POSE, 0, File.MTWO_USMASH_GRAPHIC, File.MTWO_SBALL_PROJECTILE_HITBOX, 0, 0x548, 6, OS.FALSE, OS.TRUE, Stages.id.BTT_MTWO, Stages.id.BTP_MTWO, Stages.id.BTT_DS, Stages.id.BTP_SAMUS, sound_type.U, variant_type.NA)
     // 0x3A - MARTH
     define_character(MARTH, CAPTAIN, File.MARTH_MAIN, 0x0EB, 0, File.MARTH_CHARACTER, File.MARTH_SHIELD, 0, 0x15E, File.MARTH_ENTRY_EFFECTS, 0, 0x524, 8, OS.FALSE, OS.TRUE, Stages.id.BTT_MARTH, Stages.id.BTP_MARTH, Stages.id.BTT_DRM, Stages.id.BTP_YL, sound_type.U, variant_type.NA)
-    
+    // 0x3B - SONIC
+    define_character(SONIC, FOX, File.SONIC_MAIN, 0x0D0, 0, File.SONIC_CHARACTER, File.SONIC_SHIELD_POSE, File.SONIC_SPRING_HITBOX, File.CSONIC_MAIN, File.SONIC_ENTRY, File.SONIC_SPRING_GRAPHIC, 0x58C, 18, OS.TRUE, OS.TRUE, Stages.id.BTT_SONIC, Stages.id.BTP_SONIC, Stages.id.BTT_WARIO, Stages.id.BTP_DS, sound_type.U, variant_type.NA)
+    // 0x3C - SANDBAG
+    define_character(SANDBAG, CAPTAIN, File.SANDBAG_MAIN, 0x0EB, 0, 0x14C, 0x14E, 0, 0x15E, 0x14D, 0, 0x488, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_FALCON, Stages.id.BTP_FALCON, Stages.id.BTT_GND, Stages.id.BTP_GND, sound_type.U, variant_type.NA)
+    // 0x3D - SUPER SONIC
+    define_character(SSONIC, FOX, File.SSONIC_MAIN, 0x0D0, 0, File.SSONIC_CHARACTER, File.SONIC_SHIELD_POSE, File.SONIC_SPRING_HITBOX, 0x15A, File.SONIC_ENTRY, File.SONIC_SPRING_GRAPHIC, 0x58C, 18, OS.TRUE, OS.TRUE, Stages.id.BTT_SONIC, Stages.id.BTP_SONIC, Stages.id.BTT_WARIO, Stages.id.BTP_DS, sound_type.U, variant_type.SPECIAL)
+
     print "========================================================================== \n"
 }
 

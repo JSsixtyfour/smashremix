@@ -3,7 +3,7 @@
 // This file contains file inclusions, action edits, and assembly for Conker.
 
 scope Conker {
-    // Insert Moveset files   
+    // Insert Moveset files
     insert BLINK,"moveset/BLINK.bin"; Moveset.GO_TO(BLINK)            // loops
     IDLE:
     dw 0xbc000003                                   // set slope contour state
@@ -68,7 +68,7 @@ scope Conker {
     insert SELECTED,"moveset/SELECTED.bin"
     insert WALK1,"moveset/WALK1.bin"
     insert SFALL,"moveset/SFALL.bin"
-    
+
     // Modify Action Parameters             // Action                   // Animation                    // Moveset Data             // Flags
     Character.edit_action_parameters(CONKER, Action.Teeter,             -1,                             TEETERING,                  -1)
     Character.edit_action_parameters(CONKER, Action.ShieldBreak,        -1,                             SHIELD_BREAK,               -1)
@@ -98,7 +98,7 @@ scope Conker {
     Character.edit_action_parameters(CONKER, Action.Dash,               File.CONKER_DASH,               -1,                         -1)
     Character.edit_action_parameters(CONKER, Action.Run,                File.CONKER_RUN,                -1,                         -1)
     Character.edit_action_parameters(CONKER, Action.RunBrake,           File.CONKER_RUN_BRAKE,          -1,                         -1)
-    Character.edit_action_parameters(CONKER, Action.TurnRun,            File.CONKER_RUN_TURN,           -1,                         -1)   
+    Character.edit_action_parameters(CONKER, Action.TurnRun,            File.CONKER_RUN_TURN,           -1,                         -1)
     Character.edit_action_parameters(CONKER, Action.Crouch,             File.CONKER_CROUCH,             -1,                         -1)
     Character.edit_action_parameters(CONKER, Action.CrouchIdle,         File.CONKER_CROUCH_IDLE,        -1,                         -1)
     Character.edit_action_parameters(CONKER, Action.CrouchEnd,          File.CONKER_CROUCH_END,         -1,                         -1)
@@ -111,11 +111,11 @@ scope Conker {
     Character.edit_action_parameters(CONKER, Action.LandingAirF,        File.CONKER_FAIR_LANDING,       -1,                         -1)
     Character.edit_action_parameters(CONKER, Action.LandingAirB,        File.CONKER_BAIR_LANDING,       -1,                         -1)
     Character.edit_action_parameters(CONKER, Action.FallAerial,         File.CONKER_FALLAERIAL,         -1,                         -1)
-    
+
     Character.edit_action_parameters(CONKER, Action.JumpF,              File.CONKER_JUMPF,              JUMP,                       -1)
     Character.edit_action_parameters(CONKER, Action.JumpB,              File.CONKER_JUMPB,              JUMP,                       -1)
-    Character.edit_action_parameters(CONKER, Action.JumpAerialF,        File.CONKER_JUMPAF,             JUMP2,                      -1)  
-    Character.edit_action_parameters(CONKER, Action.JumpAerialB,        File.CONKER_JUMPAB,             JUMP2,                      -1)  
+    Character.edit_action_parameters(CONKER, Action.JumpAerialF,        File.CONKER_JUMPAF,             JUMP2,                      -1)
+    Character.edit_action_parameters(CONKER, Action.JumpAerialB,        File.CONKER_JUMPAB,             JUMP2,                      -1)
     Character.edit_action_parameters(CONKER, Action.Fall,               File.CONKER_FALL,               -1,                         -1)
     Character.edit_action_parameters(CONKER, Action.FallSpecial,        File.CONKER_SFALL,              SFALL,                      -1)
     Character.edit_action_parameters(CONKER, Action.Idle,               File.CONKER_IDLE,               IDLE,                       -1)
@@ -126,7 +126,7 @@ scope Conker {
     Character.edit_action_parameters(CONKER, Action.Turn,               File.CONKER_TURN,               -1,                         -1)
     Character.edit_action_parameters(CONKER, Action.RollF,              File.CONKER_ROLLF,              FROLL,                         -1)
     Character.edit_action_parameters(CONKER, Action.RollB,              File.CONKER_ROLLB,              BROLL,                         -1)
-    
+
     Character.edit_action_parameters(CONKER, Action.Taunt,              File.CONKER_TAUNT,              TAUNT,                      -1)
     Character.edit_action_parameters(CONKER, Action.ItemThrowAirF,      File.CONKER_ITEM_THROWF,        -1,                         -1)
     Character.edit_action_parameters(CONKER, Action.ItemThrowAirB,      File.CONKER_ITEM_THROWF,        -1,                         -1)
@@ -151,10 +151,10 @@ scope Conker {
     Character.edit_action_parameters(CONKER, Action.StarRodSmash,       File.CONKER_ITEM_SWING_SMASH,   -1,                         -1)
     Character.edit_action_parameters(CONKER, Action.StarRodDash,        File.CONKER_ITEM_SWING_DASH,    -1,                         -1)
     Character.edit_action_parameters(CONKER, Action.StarRodNeutral,     File.CONKER_ITEM_NEUTRAL,       -1,                         -1)
-    Character.edit_action_parameters(CONKER, Action.StarRodTilt,        File.CONKER_ITEM_TILT,          -1,                         -1) 
+    Character.edit_action_parameters(CONKER, Action.StarRodTilt,        File.CONKER_ITEM_TILT,          -1,                         -1)
     Character.edit_action_parameters(CONKER, Action.RayGunShoot,        File.CONKER_RAYGUN_GROUND,      -1,                         -1)
     Character.edit_action_parameters(CONKER, Action.FireFlowerShoot,    File.CONKER_RAYGUN_GROUND,      -1,                         -1)
-    
+
     Character.edit_action_parameters(CONKER, Action.CliffCatch,         File.CONKER_CLIFF_CATCH,        -1,                         -1)
     Character.edit_action_parameters(CONKER, Action.CliffWait,          File.CONKER_CLIFF_WAIT,         -1,                         -1)
     Character.edit_action_parameters(CONKER, Action.CliffQuick,         File.CONKER_CLIFF_QUICK,        -1,                         -1)
@@ -171,7 +171,7 @@ scope Conker {
     Character.edit_action_parameters(CONKER, Action.CliffEscapeQuick2,  File.CONKER_CLIFF_ESCAPE_QUICK2, -1,                        -1)
     Character.edit_action_parameters(CONKER, Action.CliffEscapeSlow1,   File.CONKER_CLIFF_ESCAPE_SLOW1, -1,                         -1)
     Character.edit_action_parameters(CONKER, Action.CliffEscapeSlow2,   File.CONKER_CLIFF_ESCAPE_SLOW2, -1,                         -1)
-    
+
     Character.edit_action_parameters(CONKER, Action.Grab,               File.CONKER_GRAB,               GRAB,                         -1)
     Character.edit_action_parameters(CONKER, Action.GrabPull,           File.CONKER_GRAB_PULL,          -1,                         -1)
     Character.edit_action_parameters(CONKER, Action.ThrowF,             File.CONKER_THROWF,             FTHROW,                         -1)
@@ -199,27 +199,27 @@ scope Conker {
     Character.edit_action_parameters(CONKER, Action.AttackAirD,         File.CONKER_DAIR,               DAIR,                       -1)
     Character.edit_action_parameters(CONKER, Action.AttackAirN,         File.CONKER_NAIR,               -1,                         -1)
     Character.edit_action_parameters(CONKER, Action.AttackAirU,         File.CONKER_UAIR,               UAIR,                       -1)
-    
-    
+
+
     Character.edit_action_parameters(CONKER, 0xDF,                      File.CONKER_ENTRY,              ENTRY,                -1)
     Character.edit_action_parameters(CONKER, 0xE0,                      File.CONKER_ENTRY,              ENTRY,                -1)
     Character.edit_action_parameters(CONKER, 0xE3,                      File.CONKER_USP_START_AIR,      USP_GROUND,                 0x00000000)
     Character.edit_action_parameters(CONKER, 0xE4,                      File.CONKER_USP_START_AIR,      USP,                        0x00000000)
     Character.edit_action_parameters(CONKER, 0xE6,                      File.CONKER_USP_LOOP_AIR,       USP_DESCENT_LOOP,           0x00000000)
     Character.edit_action_parameters(CONKER, 0xEC,                      File.CONKER_DSP_GROUND,         DSP_GROUND,                 -1)
-    Character.edit_action_parameters(CONKER, 0xEF,                      File.CONKER_DSP_GROUND_FAIL,    DSP_FAIL,                   0x00000000) 
+    Character.edit_action_parameters(CONKER, 0xEF,                      File.CONKER_DSP_GROUND_FAIL,    DSP_FAIL,                   0x00000000)
     Character.edit_action_parameters(CONKER, 0xF1,                      File.CONKER_DSP_AIR,            DSP_GROUND,                 -1)
     Character.edit_action_parameters(CONKER, 0xF5,                      File.CONKER_DSP_AIR_FAIL,       DSP_FAIL,                   0x00000000)
 
     // Modify Actions            // Action          // Staling ID   // Main ASM                 // Interrupt/Other ASM          // Movement/Physics ASM         // Collision ASM
     Character.edit_action(CONKER, 0xE3,             -1,            ConkerUSP.main_air,          ConkerUSP.ground_y_velocity_,   ConkerUSP.air_physics_,         0x8015DD58)
-    Character.edit_action(CONKER, 0xE4,             -1,            ConkerUSP.main_air,          0,                              ConkerUSP.air_physics_,         0x8015DD58)  
+    Character.edit_action(CONKER, 0xE4,             -1,            ConkerUSP.main_air,          0,                              ConkerUSP.air_physics_,         0x8015DD58)
     Character.edit_action(CONKER, 0xE6,             -1,            ConkerUSP.descent_main_air,  0,                              ConkerUSP.descent_air_physics_2, 0x8015DD58)
     Character.edit_action(CONKER, 0xEC,             -1,            ConkerDSP.main,              0,                              0x800D8CCC,                     ConkerDSP.ground_collision)
     Character.edit_action(CONKER, 0xEF,             -1,            0x800D94C4,                  0x00000000,                     0x800D8CCC,                     ConkerDSP.ground_collision_fail)
     Character.edit_action(CONKER, 0xF1,             -1,            ConkerDSP.main,              0,                              0x800D90E0,                     ConkerDSP.air_collision)
     Character.edit_action(CONKER, 0xF5,             -1,            0x800D94E8,                  0x00000000,                     0x800D90E0,                     ConkerDSP.air_collision_fail)
-    
+
     // Modify Menu Action Parameters             // Action          // Animation                // Moveset Data             // Flags
     Character.edit_menu_action_parameters(CONKER, 0x0,              File.CONKER_IDLE,           PLACEHOLDER,                -1)
     Character.edit_menu_action_parameters(CONKER, 0x1,              File.CONKER_VICTORY1,       VICTORY1,                   -1)
@@ -231,7 +231,7 @@ scope Conker {
     Character.edit_menu_action_parameters(CONKER, 0xA,              File.CONKER_PUPPET_UP,      -1,                         -1)
     Character.edit_menu_action_parameters(CONKER, 0xD,              File.CONKER_1P,             ONEP,                       -1)
     Character.edit_menu_action_parameters(CONKER, 0xE,              File.CONKER_1P_CPU_POSE,    -1,                         -1)
-    
+
     // Add Action Parameters                // Action Name      // Base Action  // Animation                // Moveset Data             // Flags
     Character.add_new_action_params(CONKER, NSP_Ground_Begin,   -1,             File.CONKER_NSPG_BEGIN,     NSP_BEGIN,                  0)
     Character.add_new_action_params(CONKER, NSP_Ground_Wait,    -1,             File.CONKER_NSPG_WAIT,      NSP_WAIT,                   0)
@@ -239,7 +239,7 @@ scope Conker {
     Character.add_new_action_params(CONKER, NSP_Air_Begin,      -1,             File.CONKER_NSPA_BEGIN,     NSP_BEGIN,                  0)
     Character.add_new_action_params(CONKER, NSP_Air_Wait,       -1,             File.CONKER_NSPA_WAIT,      NSP_WAIT,                   0)
     Character.add_new_action_params(CONKER, NSP_Air_End,        -1,             File.CONKER_NSPA_END,       NSP_END,                    0)
-    
+
     // Add Actions                   // Action Name     // Base Action  //Parameters                        // Staling ID   // Main ASM                     // Interrupt/Other ASM          // Movement/Physics ASM             // Collision ASM
     Character.add_new_action(CONKER, NSP_Ground_Begin,  -1,             ActionParams.NSP_Ground_Begin,      0x12,           ConkerNSP.ground_begin_main_,   0,                              0x800D8BB4,                         ConkerNSP.ground_collision_)
     Character.add_new_action(CONKER, NSP_Ground_Wait,   -1,             ActionParams.NSP_Ground_Wait,       0x12,           ConkerNSP.ground_wait_main_,    0,                              0x800D8BB4,                         ConkerNSP.ground_collision_)
@@ -247,39 +247,39 @@ scope Conker {
     Character.add_new_action(CONKER, NSP_Air_Begin,     -1,             ActionParams.NSP_Air_Begin,         0x12,           ConkerNSP.air_begin_main_,      0,                              0x800D90E0,                         ConkerNSP.air_collision_)
     Character.add_new_action(CONKER, NSP_Air_Wait,      -1,             ActionParams.NSP_Air_Wait,          0x12,           ConkerNSP.air_wait_main_,       0,                              0x800D90E0,                         ConkerNSP.air_collision_)
     Character.add_new_action(CONKER, NSP_Air_End,       -1,             ActionParams.NSP_Air_End,           0x12,           ConkerNSP.end_main_,            0,                              0x800D90E0,                         ConkerNSP.air_collision_end_)
-    
-    
+
+
     // Set crowd chant FGM.
     Character.table_patch_start(crowd_chant_fgm, Character.id.CONKER, 0x2)
     dh  0x02B7              // generic cheering
     OS.patch_end()
-    
+
     // Adds Greg's Hand to entry.
     Character.table_patch_start(entry_script, Character.id.CONKER, 0x4)
     dw 0x8013DD14                          // routine typically used by Captain Falcon to load Blue Falcon, now used for Greg's Hand
     OS.patch_end()
-    
+
     // Set menu zoom size.
     Character.table_patch_start(menu_zoom, Character.id.CONKER, 0x4)
     float32 0.8
     OS.patch_end()
-    
+
     Character.table_patch_start(air_nsp, Character.id.CONKER, 0x4)
     dw      ConkerNSP.air_begin_initial_
     OS.patch_end()
-     
+
     Character.table_patch_start(ground_nsp, Character.id.CONKER, 0x4)
     dw      ConkerNSP.ground_begin_initial_
     OS.patch_end()
-    
+
     Character.table_patch_start(ground_dsp, Character.id.CONKER, 0x4)
     dw      ConkerDSP.initial_
     OS.patch_end()
-    
+
     Character.table_patch_start(air_dsp, Character.id.CONKER, 0x4)
     dw      ConkerDSP.air_initial_
     OS.patch_end()
-    
+
     Character.table_patch_start(air_usp, Character.id.CONKER, 0x4)
     dw      ConkerUSP.air_initial_
     OS.patch_end()
@@ -293,9 +293,12 @@ scope Conker {
     dh Character.id.CONKER
     dh 0x19
     OS.patch_end()
-    
+
     // Set default costumes
     Character.set_default_costumes(Character.id.CONKER, 0, 1, 4, 5, 2, 0, 3)
+
+    // Shield colors for costume matching
+    Character.set_costume_shield_colors(CONKER, AZURE, PINK, RED, GREEN, BLACK, WHITE, NA, NA)
 
     // @ Description
     // Conker's extra actions

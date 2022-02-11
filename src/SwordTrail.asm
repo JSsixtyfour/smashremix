@@ -98,6 +98,8 @@ scope SwordTrail {
     add_sword_trail(kirby_marth_red_trail, -1, 0xD, 0xFF000000, 0xFFFFFF00, 50, 300)
     add_sword_trail(kirby_marth_blue_trail, -1, 0xD, 0x0050FF00, 0xFFFFFF00, 50, 300)
     add_sword_trail(kirby_marth_green_trail, -1, 0xD, 0x00FF0000, 0xFFFFFF00, 50, 300)
+    add_sword_trail(sonic_trail, -1, 0x1A, 0x00D0FF00, 0x0090FF00, -190, 190)
+    add_sword_trail(ssonic_trail, -1, 0x1A, 0xeeff5f00, 0xe4d72600, -190, 190)
     
     // write sword trails to ROM
     write_sword_trails()

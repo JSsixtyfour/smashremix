@@ -63,10 +63,10 @@ scope AI {
     constant CHANCE_FORWARD(30)
     constant CHANCE_BACKWARD(30)
     constant CHANCE_IN_PLACE(30)
-    
+
     // @ Description
     // Chance to roll
-    constant CHANCE_Z_CANCEL(95) 
+    constant CHANCE_Z_CANCEL(95)
 
     // @ Description
     // Functions that execute different tech options
@@ -118,6 +118,12 @@ scope AI {
         addiu   sp, sp,-0x0018              // allocate stack space
         sw      ra, 0x0014(sp)              // save ra
 
+        lw      t0, 0x0084(s0)              // t0 = player struct
+        lw      t0, 0x0008(t0)              // t0 = character ID
+        lli     t1, Character.id.SANDBAG
+        beq     t0, t1, _fail               // if sandbag, don't tech ever
+        nop
+
         addiu   t1, r0, 0x0004
         li      t0, SinglePlayerModes.singleplayer_mode_flag       // t0 = multiman flag
         lw      t0, 0x0000(t0)              // t0 = 4 if Remix 1p
@@ -129,13 +135,15 @@ scope AI {
         li      t0, Global.current_screen   // t0 = address of current screen
         lbu     t0, 0x0000(t0)              // t0 = current screen
         lli     t1, 0x003C                  // t1 = how to play screen id
-        beq     t1, t0, _original           // if we're on the how to play screen,
-        nop                                 // then skip all this
+        beq     t1, t0, _original           // if we're on the how to play screen, then skip all this
+        lli     t1, 0x002D                  // t1 = DK vs Samus intro screen id
+        beq     t1, t0, _original           // if we're on the DK vs Samus intro screen, then skip all this
+        nop
 
         li      t0, Global.match_info       // ~
         lw      t0, 0x0000(t0)              // t0 = address of match_info (0x800A4D08 in VS.)
         addiu   t0, t0, Global.vs.P_OFFSET  // t0 = address of first player sturct
-        
+
         _loop:
         lbu     t2, 0x0002(t0)              // t2 = enum (man, cpu, none)
         lli     t1, 0x0002                  // t1 = none
@@ -147,14 +155,14 @@ scope AI {
         addiu   t0, t0, Global.vs.P_DIFF    // else, increment pointer and loop
         b       _loop
         nop
-        
+
         _cpu_check:
         beqz    t2, _original               // if (t2 == man), skip
         nop
         lli     a0, 000100                  // ~
         jal     Global.get_random_int_      // v0 = (0-99)
         nop
-        
+
         _roll_forward:
         sltiu   t1, v0, CHANCE_FORWARD
         beqz    t1, _roll_backward          // if out of range, skip
@@ -186,14 +194,14 @@ scope AI {
         nop
         b       _end                        // end
         nop
-        
+
         _fail:
         move    a0, s0                      // a0 - player struct
         jal     tech_fail_                  // don't tech
         nop
         b       _end
         nop
-        
+
         _original:
         jal     tech_roll_og_               // original line 1
         move    a0, s0                      // original line 2
@@ -206,7 +214,7 @@ scope AI {
         jal     tech_fail_                  // original line 9
         move    a0, s0                      // original line 10
         nop                                 // original line 11
-        
+
         _end:
         lw      ra, 0x0014(sp)              // restore ra
         addiu   sp, sp, 0x0018              // deallocate stack space
@@ -228,31 +236,31 @@ scope AI {
         _original:
         lw      t6, 0x0160(v1)              // original line 1
         slti    at, t6, 0x000B              // original line 2
-        
+
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // save registers
-        
+
         addiu   t1, r0, 0x0004
         li      t0, SinglePlayerModes.singleplayer_mode_flag       // at = multiman flag
         lw      t0, 0x0000(t0)              // at = 4 if Remix 1p
 		beq     t0, t1, _remix_1p           // if Remix 1p, automatic advanced ai
-        nop 
-        
+        nop
+
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // save registers
         addiu   sp, sp, 0x0010              // deallocate stack space
-        
+
         j       _normal
         nop
-        
+
         _remix_1p:
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // save registers
         addiu   sp, sp, 0x0010              // deallocate stack space
         j       _skip_toggle
         nop
-        
+
 
         _normal:
         Toggles.guard(Toggles.entry_improved_ai, OS.NULL)
@@ -267,13 +275,15 @@ scope AI {
         li      t0, Global.current_screen   // t0 = address of current screen
         lbu     t0, 0x0000(t0)              // t0 = current screen
         lli     t1, 0x003C                  // t1 = how to play screen id
-        beq     t1, t0, _end                // if we're on the how to play screen,
-        nop                                 // then skip all this
+        beq     t1, t0, _end                // if we're on the how to play screen, then skip all this
+        lli     t1, 0x002D                  // t1 = DK vs Samus intro screen id
+        beq     t1, t0, _end                // if we're on the DK vs Samus intro screen, then skip all this
+        nop
 
         li      t0, Global.match_info       // ~
         lw      t0, 0x0000(t0)              // t0 = address of match_info (0x800A4D08 in VS.)
         addiu   t0, t0, Global.vs.P_OFFSET  // t0 = address of first player sturct
-        
+
         _loop:
         lbu     t2, 0x0002(t0)              // t2 = enum (man, cpu, none)
         lli     t1, 0x0002                  // t1 = none
@@ -285,7 +295,7 @@ scope AI {
         addiu   t0, t0, Global.vs.P_DIFF    // else, increment pointer and loop
         b       _loop
         nop
-        
+
         _cpu_check:
         beqz    t2, _end                    // if (t2 == man), skip
         nop
@@ -300,7 +310,7 @@ scope AI {
         lli     at, OS.TRUE                 // set true
         b       _end                        // end
         nop
-    
+
         _no_cancel:
         lli     at, OS.FALSE                // set false
         b       _end                        // end
@@ -312,7 +322,7 @@ scope AI {
         lw      v1, 0x0014(sp)              // ~
         lw      a0, 0x0018(sp)              // save registers
         addiu   sp, sp, 0x0020              // deallocate stack space
-        jr      ra                          // return 
+        jr      ra                          // return
         nop
     }
 
