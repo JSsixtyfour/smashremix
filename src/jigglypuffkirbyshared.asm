@@ -300,7 +300,7 @@ scope JigglypuffKirbyShared {
         nop
         
         addiu   at, r0, 0x0014
-        sh      at, 0x0ADE(s1)              // refill ammo
+        sh      at, 0x0ADE(v1)              // refill ammo
         
         _normal:
         j       _return                     // return

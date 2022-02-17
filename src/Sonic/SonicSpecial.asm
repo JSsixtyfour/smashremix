@@ -1512,8 +1512,10 @@ scope SonicUSP {
         bc1f    _next               // if Y velocity is not negative, skip
         lwc1    f4, 0x001C(t1)      // f4 = player X position
 
+        lw      t4, 0x0074(a0)      // t4 = spring position struct
+        lwc1    f6, 0x001C(t4)      // f6 = spring X position
+
         lw      t3, 0x0084(a0)      // t3 = spring projectile special struct
-        lwc1    f6, 0x0034(t3)      // f6 = spring X position
 
         sub.s   f4, f4, f6          // f4 = player X position - spring X position
         abs.s   f4, f4              // f4 = |player X position - spring X position|
@@ -1522,7 +1524,7 @@ scope SonicUSP {
         bc1f    _next               // if player is not within X bounds of spring, skip
         lwc1    f4, 0x0020(t1)      // f4 = player Y position
 
-        lwc1    f6, 0x0038(t3)      // f6 = spring center Y position
+        lwc1    f6, 0x0020(t4)      // f6 = spring center Y position
         lwc1    f2, 0x0064(t3)      // f2 = spring ECB top point Y offset
         add.s   f2, f6, f2          // f2 = spring top Y position
         c.lt.s  f4, f6              // check if player is below the spring center
@@ -1572,6 +1574,8 @@ scope SonicUSP {
         beq     t4, t3, _change_action  // if in Shield Break Fall, change action
         lli     t4, Action.ShieldBreak
         beq     t4, t3, _change_action  // if in Shield Break Fall, change action
+        lli     t4, Action.InhalePulled
+        beq     t4, t3, _next       // if in Inhale Pulled, ignore spring
         nop
 
         _keep_action:
@@ -1629,6 +1633,10 @@ scope SonicUSP {
 
         _kirby:
         // Change action for these actions
+        lli     t4, Action.KIRBY.FinalCutter
+        beq     t3, t4, _change_action
+        lli     t4, Action.KIRBY.FinalCutterAir
+        beq     t3, t4, _change_action
         lli     t4, Action.KIRBY.FinalCutterFall
         beq     t3, t4, _change_action
         lli     t4, Action.KIRBY.StoneFall
@@ -1651,14 +1659,14 @@ scope SonicUSP {
         // Change action for these actions
         lli     t4, Bowser.Action.BowserBombDrop
         beq     t3, t4, _change_action
+        // Skip for these actions
         lli     t4, Bowser.Action.BowserForwardThrow1   // same as Giga Bowser
-        beq     t3, t4, _change_action
+        beq     t3, t4, _next
         lli     t4, Bowser.Action.BowserForwardThrow2   // same as Giga Bowser
-        beq     t3, t4, _change_action
+        beq     t3, t4, _next
         lli     t4, Bowser.Action.BowserForwardThrow3   // same as Giga Bowser
-        beq     t3, t4, _change_action
+        beq     t3, t4, _next
         nop
-
         // Otherwise, don't change action
         b        _draw_smoke_gfx
         nop
@@ -1771,7 +1779,6 @@ scope SonicUSP {
         addiu   sp, sp, 0x0030      // deallocate stack space
 
         _end_rumble:
-        lw      a0, 0x0028(sp)      // a0 = spring projectile object
         lw      t0, 0x002C(sp)      // t0 = player object
 
         // if Sonic, restore specials
@@ -1785,6 +1792,7 @@ scope SonicUSP {
         sw      r0, 0x0ADC(t3)      // set up special bool to FALSE
 
         _next:
+        lw      a0, 0x0028(sp)      // a0 = spring projectile object
         b       _loop
         lw      t0, 0x0004(t0)      // t0 = next player object
 
@@ -2477,6 +2485,7 @@ scope SonicDSP {
         jal     0x800DDDDC                  // common ground collision subroutine (transition on no floor, slide-off)
         sw      a0, 0x0018(sp)              // store a0
 
+        beqz    v0, _end                    // skip if air transition occured
         lw      a0, 0x0018(sp)              // ~
         lw      a0, 0x0084(a0)              // a0 = player struct
         lhu     a1, 0x00CC(a0)              // a1 = collision flags

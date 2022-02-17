@@ -2351,7 +2351,7 @@ scope Stages {
     db id.SPIRALM                           // 14
     db id.KALOS_POKEMON_LEAGUE              // 25
     db id.GERUDO                            // 2
-    db id.RANDOM                            // 0D
+    db id.GHZ                               // 0D
     db id.RANDOM                            // 0D
     db id.RANDOM                            // 0D
     db id.RANDOM                            // 0
@@ -3996,7 +3996,7 @@ scope Stages {
     add_stage(mute, "Mute City", {MIDI.id.FIRE_FIELD}, {MIDI.id.MACHRIDER}, OS.FALSE, HAZARDS_ON_MOVEMENT_ON, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05, FZERO)
     add_stage(hrc, "Home Run Contest", -1, -1, OS.FALSE, HAZARDS_ON_MOVEMENT_ON, OS.FALSE, OS.FALSE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05, REMIX)
     add_stage(mk_remix, "Mushroom Kingdom SR", -1, -1, OS.FALSE, HAZARDS_ON_MOVEMENT_ON, OS.FALSE, OS.TRUE, class.BATTLE, -1, -1, -1, id.MUSHROOM_KINGDOM, variant_type.REMIX, 0x05, 0x05, 0x05, MARIO_BROS)
-    add_stage(ghz, "Green Hill Zone", {MIDI.id.EMERALDHILL}, {MIDI.id.CHEMICAL_PLANT}, OS.FALSE, HAZARDS_ON_MOVEMENT_ON, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05, SONIC)
+    add_stage(ghz, "Green Hill Zone", {MIDI.id.EMERALDHILL}, {MIDI.id.CHEMICAL_PLANT}, OS.TRUE, HAZARDS_ON_MOVEMENT_ON, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05, SONIC)
     add_bg_animation(GHZ)
     add_stage(subcon, "Subcon", -1, -1, OS.FALSE, HAZARDS_ON_MOVEMENT_ON, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05, MARIO_BROS)
     add_stage(pirate, "Pirate Land", {MIDI.id.TROPICALISLAND}, {MIDI.id.WIDE_UNDERWATER}, OS.FALSE, HAZARDS_ON_MOVEMENT_ON, OS.TRUE, OS.TRUE, class.BATTLE, -1, -1, -1, -1, -1, 0x05, 0x05, 0x05, MARIO_BROS)

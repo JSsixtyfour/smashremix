@@ -425,7 +425,7 @@ scope CharEnvColor {
         nop
 
         _clear_ssonic:
-        // clear extra display lists for Kirby
+        // clear extra display lists for Super Sonic
         // normal head
         sw      r0, 0x0000(a1)              // clear high poly initialized flag
         sw      r0, 0x0014(a1)              // clear low poly initialized flag
@@ -442,7 +442,7 @@ scope CharEnvColor {
         sw      r0, 0x0014(a1)              // clear low poly initialized flag
 
         // kirby Pika hat
-        li      a1, custom_display_lists_struct_dk_hat
+        li      a1, custom_display_lists_struct_pika_hat
         sw      r0, 0x0000(a1)              // clear high poly initialized flag
         sw      r0, 0x0014(a1)              // clear low poly initialized flag
 
