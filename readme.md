@@ -8,7 +8,7 @@ the compressed files within the rom. If you utilize a vanilla Smash 64 rom, it w
 
 You must utilize the xdelta patch to generate a good rom for Assembly.
 
-You must place your legally acquired patched ROM in the rom folder for this to work. It must be named original.z64
+You must place your legally acquired patched ROM in the 'roms' folder for this to work. It must be named ssb.rom
 
 # Features
 (Note: Smash Remix requires the the 8 MB expansion pak to be enabled.)
@@ -35,7 +35,7 @@ Computer controlled players have recieved a variety of improvements.
 #### Toggle Names: _VS Mode Combo Meter_, _1v1 Combo Meter Swap_
 
 ### Expanded Character Select Screen
-- The character select screen is now expanded to 24 slots including 8 custom characters.
+- The character select screen is now expanded to 27 slots including 14 custom characters.
 - Metal Mario, Giant DK, and polygon versions of the original cast are available via d-pad up or down.
 - Japanese versions of the original cast are available via d-pad left.
 - European versions of some of the original cast are available via d-pad right.
@@ -47,18 +47,24 @@ A menu for modifying certain character attributes is available on each panel.
 - Allows selecting a shield color.
 - The Costume option will use a shield color matching the selected costume.
 - The Vanilla option will use the vanilla shield color scheme for that port.
-##### Visibility 
+##### Visibility
 - Allows playing as completely invisible (None), slightly visible (Cloaked), or as a silhouette (Dark).
-##### Skeleton 
-- Setting to enabled is perfect for Halloween. 
+##### Player Tag
+- Allows player to select a stored tag.
+- Names are always visible when selected.
+##### Skeleton
+- Setting to enabled is perfect for Halloween.
 ##### Model
 - Allows forcing high definition or low definition version of character.
+##### Input HUD
+- Allows showing the button and joystick inputs in an unobtrusive overlay.
+- Can be configured to show on top or bottom of screen.
 ##### Size
 - Allows playing as the giant or tiny version of the character.
 ##### Stock
 - "Last" mode maintains stock count from the previous game. Useful for crew battles.
 - "Manual" mode allows specifying the stock count.
-##### Knockback 
+##### Knockback
 - Setting to random will create a moveset for the character with randomized knockback.
 - The knockback angle is generated for each move at the start of the match and will persist until the end of the match.
 - Resetting training mode or performing a salty runback will not generate a new set of knockback angles.
@@ -66,15 +72,18 @@ A menu for modifying certain character attributes is available on each panel.
 - Adds input delay to imitate netplay. HMN ports only.
 ##### Handicap
 - Allows modifying CPU handicap. CPU ports only.
-##### Input HUD
-- Allows showing the button and joystick inputs in an unobtrusive overlay.
-- Can be configured to show on top or bottom of screen.
 ##### Start With
 - Allows specifying an item for the character to start matches and respawn with.
 ##### Taunt Itm.
 - Allows specifying an item that will spawn in the character's possession when the taunt button is pressed.
 ##### Taunt Btn.
 - Allows remapping the taunt button to C or d-pad buttons.
+##### Kirby Hat
+- Allows setting Kirby's hat.
+##### Practice
+- Activates 1p Practice mode and allows stage selection (for 1p and Remix 1p).
+- Scores are disabled while this is active.
+- Can reset stage while mode is activated (press L while paused, during GameEnd, or at Score Screen).
 
 #### Toggle Name: _CSS Panel Menu_
 
@@ -83,16 +92,17 @@ A menu for modifying certain character attributes is available on each panel.
 - All original stages are playable as well as dozens of new stages.
 
 ### Stage Hazard Modes
-- Pressing L on the stage select screen will cycle through options related to stage hazards.
-- This is indicated by the stage selection cursor's color changing to blue and the wooden circle having the state of hazards.
-- Hazards (bumpers, barrels, etc.) and Movement (of platforms) can be controlled.
-- Note: Movement set to OFF will also freeze animations such as the Dreamland water.
-- Note: This setting is ignored for the Tournament profile and Tournament stage select layout.
+- Pressing L on the stage select screen will cycle through the selected stage's available hazards.
+- Hazards (bumpers, barrels, etc.) and Movement (of platforms) can turned off.
+- The Cursor's color indicates which hazard types are being turned off:
+    - Red = None, Lightblue = Hazards, Cyan = Movement, Blue = Both
+- Note: Stage hazards cannot be changed when using the TOURNAMENT stage select layout.
 
 #### Toggle Name: _Hazard Mode_
 
 ### Stage Select Layout
 - Choose between NORMAL and TOURNAMENT stage select layouts. In the TOURNAMENT layout, the stages available align with the Smash Remix Tour ruleset.
+- Note: Random stage selection respects layout.
 
 #### Toggle Name: _Stage Select Layout_
 
@@ -138,12 +148,22 @@ A menu for modifying certain character attributes is available on each panel.
  - VS Mode Item Switch expanded to allowing toggling new items.
 #### Cloaking Device
  - Renders the player invisible and impervious to damage for 10 seconds.
-#### Super Mushroom 
+#### Super Mushroom
  - Player grows into giant form with added passive armor while dealing higher damage.
- - Lasts 10 seconds. 
-#### Poison Mushroom 
+ - Lasts 10 seconds.
+#### Poison Mushroom
  - Player shrinks into tiny form and deals less damage.
- - Lasts 10 seconds. 
+ - Lasts 10 seconds.
+#### Spiny Shell
+ - Throwable. Similar to Red/Green Shells. While active, it will go towards the player who in first place.
+#### Lightning
+ - Shrinks the players opponents into tiny form.
+ - Lasts 10 seconds.
+#### Deku Nut
+ - Throwable. Stuns opponents who get hit.
+#### Franklin Badge
+ - Player becomes immune to projectiles. Projectiles that hit the player will be reflected back.
+ - Lasts 20 seconds.
 
 ## Customization
 ### Costume Selection Improvements
@@ -184,7 +204,7 @@ Load a curated list of tracks.
 - The "Occasional" alternate track plays more frequently than the "Rare" alternate track.
 - The music track can be forced by holding a C button when choosing the stage: C-up = Default, C-left = Occasional, C-right = Rare
 
-### Random Stage Switch 
+### Random Stage Switch
 - Changes possible outcomes of pressing RANDOM on the stage select screen.
 
 #### Toggle Name: Each stage's name is listed under Random Stage Toggles in the Stage Settings menu
@@ -206,6 +226,9 @@ Load a curated list of stages.
 - This toggle allows for them to be included.
 
 #### Toggle Name: _Random Select With Variants_
+
+### Player Tags
+- Can store up to 20 names (which are be selected via Character Menu Panel).
 
 ## Practice
 ### Hold to Exit Training
@@ -242,8 +265,9 @@ When Special Model Display is Hitbox or Hitbox+, these changes are applied:
 ## New Music Added
 - Dozens of new music tracks featuring some new instruments added.
 
-### 360 Degree Pause Camera
-- Allows the camera to be rotated freely while the game is paused.
+### Improved Pause Camera
+- Allows the camera to be zoomed, moved and rotated freely while the game is paused.
+- A and B to zoom, C buttons to move.
 
 ### Crash Debugger
 - When a game crash occurs, attempts to display a screen with detailed information on what went wrong.
@@ -303,17 +327,27 @@ When Special Model Display is Hitbox or Hitbox+, these changes are applied:
 
 #### Toggle Name: Always Show Full Results
 
+### Camera Mode
+- Override the in-game Camera
+- Normal: No change.
+- Bonus: Force the camera to follow and track players.
+- Fixed: Force the camera to show the entire stage.
+- Scene: Camera remains frozen at the last pause position, HUD is disabled.
+
+#### Toggle Name: _Camera Mode_
+
 ## Training Mode
 ### Custom Menu
 - Pressing Z while the menu is open will open the custom training menu. This menu allows you to access special settings for each port.
     - Character: The character used.
     - Costume: The costume used by the character.
     - Type: The type of player. (Human, CPU, Disabled)
-    - Spawn: The position the character  will spawn in when the reset button is pressed.
+    - Spawn: The position the character will spawn in when the reset button is pressed.
     - Set Custom Spawn: Sets the position to be used when the "Custom" spawn option is selected.
     - Percent: The percent to be applied to the character on reset, or when the "Set Percent" button is pressed.
     - Set Percent: Changes the character's percent to the above value.
     - Reset Sets Percent: Toggles whether or not the character's percent will be changed on reset.
+    - OOS Action: The action CPU will take out of shield in Shield Break Mode.
 
 ### D-Pad Shortcuts
 - Pressing up on the d-pad will pause/unpause the game
@@ -388,7 +422,7 @@ When Special Model Display is Hitbox or Hitbox+, these changes are applied:
     - Face new boss characters
 
 ### All-Star Mode
-- Fight all 24 characters.
+- Fight all characters in the roster.
 - Heal at the rest area between battles by using one of the three hearts.
 
 ### Multiman Mode
@@ -400,8 +434,13 @@ When Special Model Display is Hitbox or Hitbox+, these changes are applied:
 ### Home-Run Contest
 - Deal as much damage to the Sandbag to knock it as far as you can before time runs out.
 
+### 1p Enemy Control Mode
+- Activated by another player pressing 'Z' at 1p, Remix 1p, or Allstar CSS.
+- Scores are disabled while this is active.
+- Master Hand controls can be found [here](https://www.ssbwiki.com/Master_Hand_(SSB)#Moveset).
+
 ## Profiles
-- Toggles can be controlled quickly by choosing one of three built-in profiles: Community, Tournament, Netplay and Japanese
+- Toggles can be controlled quickly by choosing one of four built-in profiles: Community, Tournament, Netplay and Japanese
 
 ### Defaults
 #### Remix Settings
@@ -433,7 +472,7 @@ Momentum Slide             | Off                | Off               | Off       
 Japanese Shield Stun       | Off                | Off               | Off               | On
 Stereo Fix for Hit SFX     | On                 | On                | On                | On
 Random Select With Variants| Off                | Off               | Off               | Off
-Disable VS Pause HUD       | Off                | Off               | Off               | Off
+Disable HUD                | Off                | Off               | Off               | Off
 Disable Anti-Aliasing      | Off                | Off               | Off               | Off
 Always Show Full Results   | On                 | On                | On                | On
 Skip Training Start Cheer  | Off                | Off               | Off               | Off
@@ -441,36 +480,38 @@ Skip Training Start Cheer  | Off                | Off               | Off       
 #### Music Settings
 Toggle                          | Community          | Tournament        | Netplay           | Japanese
 --------------------------------|--------------------|-------------------|-------------------|-------------------
-Play Music                      | On                 | On                | On                | On 
+Play Music                      | On                 | On                | On                | On
 Random Music                    | Off                | Off               | On                | Off
 Salty Runback Preserves Song    | Off                | Off               | Off               | Off
 Menu Music                      | DEFAULT            | DEFAULT           | 64                | DEFAULT
-Music Title at Match Start      | On                 | Off               | On                | On 
+Music Title at Match Start      | On                 | Off               | On                | On
 _Random Toggles for All Tracks_ | On                 | On                | On                | On
 
 #### Stage Settings
 Toggle                          | Community          | Tournament        | Netplay           | Japanese
 --------------------------------|--------------------|-------------------|-------------------|-------------------
-Stage Select Layout             | NORMAL             | TOURNAMENT        | NORMAL
+Stage Select Layout             | NORMAL             | TOURNAMENT        | NORMAL            | NORMAL
 Hazard Mode                     | NORMAL             | NORMAL            | NORMAL            | NORMAL
 Japanese Whispy                 | Off                | Off               | Off               | On
+Camera Mode                     | NORMAL             | NORMAL            | NORMAL            | NORMAL
 _Random Toggles for All Stages_ | [Community]        | [Tournament]      | [Semi-Competitive]| [Community]
 
-These stages are set to on in the Tournament profile:
+These stages are set to On in the Tournament profile:
 - Dream Land
 - Deku Tree
+- Kalos Pokemon League
 - Pokemon Stadium
+- Tal Tal Heights (Hazards Off)
 - Glacial River
 - Dr. Mario
 - Fray's Stage
 - Spiral Mountain
-- Mute City DL
-- Zebes Landing
+- Mushroom Kingdom DL (Hazards Off)
+- Crateria
 - Smashville
 - Yoshi's Story
 - Gerudo Valley
 - Hyrule Castle DL (Hazards Off)
-- Congo Jungle DL (Hazards Off)
 - Peach's Castle DL (Hazards Off)
 - Fray's Stage - Night
 - Goomba Road
@@ -482,8 +523,11 @@ These stages are set to on in the Tournament profile:
 - Final Destination DL
 - Duel Zone DL
 - Meta Crysal DL
+- Green Hill Zone
+- Pokemon Stadium
+- Winter Dream Land
 
-These stages are set to on in the Semi-Competitive profile:
+These stages are set to On in the Semi-Competitive profile:
 - Congo Jungle
 - Dream Land
 - Hyrule Castle
@@ -495,7 +539,7 @@ These stages are set to on in the Semi-Competitive profile:
 - Ganon's Tower
 - Kalos Pokemon League
 - Pokemon Stadium
-- Skyloft
+- Tal Tal Heights
 - Glacial River
 - WarioWare, Inc.
 - Dr. Mario
@@ -510,7 +554,7 @@ These stages are set to on in the Semi-Competitive profile:
 - Bowser's Stadium
 - Delfino Plaza
 - Kitchen Island
-- Zebes Landing
+- Crateria
 - Smashville
 - New Pork City
 - Norfair
@@ -528,12 +572,15 @@ These stages are set to on in the Semi-Competitive profile:
 - Planet Clancer
 - Castle Siege
 - Yoshi's Island II
-- Tent Final Destination
 - Cool Cool Mountain SR
 - Cool Cool Mountain DL
+- Hyrule Castle SR
 - Mute City
 - Green Hill Zone
 - Subcon
 - Pirate Land
 - Casino Night Zone
 - Metallic Madness
+- Pokemon Stadium 2
+- Norfair Remix
+- Winter Dream Land

@@ -15,7 +15,7 @@ db  "SMASH REMIX"
 fill 0x34 - origin(), 0x20
 
 // add asm to rom
-origin  0x01C00000
+origin  0x02000000
 base    0x80400000
 include "src/OS.asm"
 include "src/String.asm"
@@ -79,6 +79,10 @@ include "src/InputDisplay.asm"
 include "src/StockMode.asm"
 include "src/Stereo.asm"
 include "src/Stamina.asm"
+include "src/Practice_1P.asm"
+include "src/SinglePlayerEnemy.asm"
+include "src/PlayerTag.asm"
+include "src/Reflect.asm"
 // CHARACTER
 include "src/Character.asm"
 include "src/CharacterSelect.asm"
@@ -168,6 +172,9 @@ include "src/Sonic/Sonic.asm"
 include "src/Sandbag/Sandbag.asm"
 // SUPER SONIC
 include "src/SSonic/SSonic.asm"
+// SHEIK
+include "src/Sheik/SheikSpecial.asm"
+include "src/Sheik/Sheik.asm"
 
 // KIRBY
 include "src/Kirby/Kirby.asm"

@@ -84,8 +84,9 @@ scope Pause {
         jal     0x80113E04                  // original line 1
         nop
 
-        li      a1, Toggles.entry_disable_pause_hud
-        lw      a1, 0x0004(a1)              // a1 = 1 if the HUD should be disabled, 0 else
+        li      a1, Toggles.entry_disable_hud
+        lw      a1, 0x0004(a1)              // a1 = entry_disable_hud (0 if OFF, 1 if PAUSE, 2 if ALL)
+        slt     a1, r0, a1                  // a1 = 1 if the HUD should be disabled, 0 else
 
         jal     Render.toggle_group_display_
         lli     a0, 0x000E                  // a0 = group of HUD

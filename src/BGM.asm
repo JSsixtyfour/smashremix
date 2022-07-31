@@ -160,7 +160,7 @@ scope BGM {
         nop
     }
 
-    // @ Descirption
+    // @ Description
     // Adds a song to the random list if it's toggled on.
     // @ Arguments
     // a0 - address of entry (random music entry)
@@ -201,7 +201,7 @@ scope BGM {
         nop
     }
 
-    // @ Descirption
+    // @ Description
     // Macro to (maybe) add a song to the random list.
     macro add_to_list(entry, bgm_id) {
         li      a0, {entry}                 // a0 - address of entry
@@ -210,7 +210,7 @@ scope BGM {
         nop
     }
 
-    // @ Descirption
+    // @ Description
     // Table of bgm_id (as words, 32 bit values)
     random_table:
     fill 4 * MIDI.midi_count                // allows for space for all songs, which is actually more than we need
@@ -220,7 +220,7 @@ scope BGM {
     random_count:
     dw 0
 
-    // @ Descirption
+    // @ Description
     // This function is an implementation of a play music tooggle
     scope play_music_: {
         OS.patch_start(0x000216B4, 0x80020AB4)

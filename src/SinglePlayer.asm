@@ -232,6 +232,11 @@ scope SinglePlayer {
 
         // a1 is character ID
 
+        li      at, SinglePlayerEnemy.enemy_port
+        lw      at, 0x0000(at)              // at = 0 for off/cpu, 1 for 1p, 2 for 2p, 3 for 3p, and 4 for 4p
+        bnezl   at, _j_0x8018EA74
+        lw      ra, 0x0014(sp)              // original line 6
+
         li      at, Global.match_info
         lw      at, 0x0000(at)              // at = match info
         lbu     v0, 0x0001(at)              // v0 = stage_id
@@ -255,6 +260,8 @@ scope SinglePlayer {
         slt     at, v0, v1                  // original line 4
         beql    at, r0, _j_0x8018EA74       // original line 5 (modified to use jump)
         lw      ra, 0x0014(sp)              // original line 6
+
+
 
         jal     0x800D45F4                  // original line 7
         sb      v1, 0x0000(t8)              // store new high score in extended table
@@ -303,6 +310,11 @@ scope SinglePlayer {
         nop
         _extend_high_score_btt_time_write_return:
         OS.patch_end()
+
+        li      at, SinglePlayerEnemy.enemy_port
+        lw      at, 0x0000(at)              // at = 0 for off/cpu, 1 for 1p, 2 for 2p, 3 for 3p, and 4 for 4p
+        bnezl   at, _j_0x8018EA74
+        lw      ra, 0x0014(sp)              // original line 14
 
         // t1 = character ID sll'd 0x0005
         srl     v0, t1, 0x0005              // v0 = character_id
@@ -469,6 +481,11 @@ scope SinglePlayer {
 
         // a1 is character ID
 
+        li      at, SinglePlayerEnemy.enemy_port
+        lw      at, 0x0000(at)              // at = 0 for off/cpu, 1 for 1p, 2 for 2p, 3 for 3p, and 4 for 4p
+        bnezl   at, _j_0x8018EA74
+        lw      ra, 0x0014(sp)              // original line 6
+
         li      at, Global.match_info
         lw      at, 0x0000(at)              // at = match info
         lbu     v0, 0x0001(at)              // v0 = stage_id
@@ -541,6 +558,11 @@ scope SinglePlayer {
         nop
         _extend_high_score_btp_time_write_return:
         OS.patch_end()
+
+        li      at, SinglePlayerEnemy.enemy_port
+        lw      at, 0x0000(at)              // at = 0 for off/cpu, 1 for 1p, 2 for 2p, 3 for 3p, and 4 for 4p
+        bnezl   at, _j_0x8018EA74
+        lw      ra, 0x0014(sp)              // original line 14
 
         // t8 is character ID sll'd 0x0005
         srl     v0, t8, 0x0005              // v0 = character_id
@@ -1154,6 +1176,15 @@ scope SinglePlayer {
         _extend_high_score_1p_write_return:
         OS.patch_end()
 
+        li      t2, SinglePlayerEnemy.enemy_port
+        lw      t2, 0x0000(t2)              // t2 = 0 for off/cpu, 1 for 1p, 2 for 2p, 3 for 3p, and 4 for 4p
+        bnezl   t2, _skip
+        nop
+        li      t2, Practice_1P.practice_active // load practice flag location
+        lw      t2, 0x0000(t2)              // t2 = Practice stage number (0 if OFF)
+        bnezl   t2, _skip                   // if Practice mode is active, skip
+        nop
+
         li      t2, SinglePlayerModes.singleplayer_mode_flag // v0 = Single Player Mode Flag
         lw     	t2, 0x0000(t2)              // t2 = 4 if Remix 1p
         addiu	t7, r0, 0x0004              // Remix 1p Flag
@@ -1200,6 +1231,10 @@ scope SinglePlayer {
 
         j       _extend_high_score_1p_write_return
         nop
+
+        _skip:
+        j       0x800D45F4
+        nop                                 // skips saving records when having a non-cpu player
     }
 
     // @ Description
@@ -1516,6 +1551,7 @@ scope SinglePlayer {
         constant MARTH(0x00006578)
         constant SONIC(0x000066E8)
         constant SSONIC(0x00006918)
+        constant SHEIK(0x00006A38)
         // TODO: update J names
         constant JSAMUS(0x00004268)
         constant JNESS(0x00004688)
@@ -1674,6 +1710,7 @@ scope SinglePlayer {
         constant MARTH(0x00000028)
         constant SONIC(0x0000002C)
         constant SSONIC(0x00000014 + SONIC)
+        constant SHEIK(0x00000032)
         // TODO: make sure these are good
         constant JSAMUS(0x00000032)
         constant JNESS(0x00000032)
@@ -1966,6 +2003,64 @@ scope SinglePlayer {
     constant SPLASH_FILE_2(File.SPLASH_IMAGE_TOP)
 
     // @ Description
+    // constants for a custom victory picture per custom character.
+    // Assume next file will always be the top part of the image
+    custom_victory_file_table:
+    dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // BOSS
+    dh 0xBA                                                 // METAL (same as Mario)
+    dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // NMARIO
+    dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // NFOX
+    dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // NDONKEY
+    dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // NSAMUS
+    dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // NLUIGI
+    dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // NLINK
+    dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // NYOSHI
+    dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // NCAPTAIN
+    dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // NKIRBY
+    dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // NPIKACHU
+    dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // NJIGGLY
+    dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // NNESS
+    dh 0xB8                                                 // GDONKEY (same as DK)
+    dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // PLACEHOLDER
+    dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // PLACEHOLDER
+    dh File.FALCO_VICTORY_IMAGE_BOTTOM                      // FALCO
+    dh File.GANON_VICTORY_IMAGE_BOTTOM                      // GND
+    dh File.YLINK_VICTORY_IMAGE_BOTTOM                      // YLINK
+    dh File.DRM_VICTORY_IMAGE_BOTTOM                        // DRM
+    dh File.WARIO_VICTORY_IMAGE_BOTTOM                      // WARIO
+    dh File.DSAMUS_VICTORY_IMAGE_BOTTOM                     // DARK SAMUS
+    dh 0xB2                                                 // ELINK
+    dh 0xB0                                                 // JSAMUS
+    dh 0xC0                                                 // JNESS
+    dh File.LUCAS_VICTORY_IMAGE_BOTTOM                      // LUCAS
+    dh 0xB2                                                 // JLINK
+    dh 0xB6                                                 // JFALCON
+    dh 0xBE                                                 // JFOX
+    dh 0xBA                                                 // JMARIO
+    dh 0xBC                                                 // JLUIGI
+    dh 0xB8                                                 // JDK
+    dh 0xAE                                                 // EPIKA
+    dh 0xB4                                                 // JPUFF
+    dh 0xB4                                                 // EPUFF
+    dh 0xAA                                                 // JKIRBY
+    dh 0xAC                                                 // JYOSHI
+    dh 0xAE                                                 // JPIKA
+    dh 0xB0                                                 // ESAMUS
+    dh File.BOWSER_VICTORY_IMAGE_BOTTOM                     // BOWSER
+    dh File.BOWSER_VICTORY_IMAGE_BOTTOM                     // GBOWSER (using Bowser)
+    dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // PIANO
+    dh File.WOLF_VICTORY_IMAGE_BOTTOM                       // WOLF
+    dh File.CONKER_VICTORY_IMAGE_BOTTOM                     // CONKER
+    dh File.MTWO_VICTORY_IMAGE_BOTTOM                       // MEWTWO
+    dh File.MARTH_VICTORY_IMAGE_BOTTOM                      // MARTH
+    dh File.SONIC_VICTORY_IMAGE_BOTTOM                      // SONIC
+    dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // SANDBAG
+    dh File.SONIC_VICTORY_IMAGE_BOTTOM                      // SUPER SONIC (using Sonic)
+    dh File.SHEIK_VICTORY_IMAGE_BOTTOM                      // SHEIK
+
+    OS.align(4)
+
+    // @ Description
     // Patch which substitutes the victory picture with a custom one for all non-original characters.
     // There are a number of hardcodings addressed.
     scope replace_victory_image_: {
@@ -2029,26 +2124,13 @@ scope SinglePlayer {
         lli     a0, Character.id.NONE       // a0 = Character.id.NONE
         beq     t0, a0, _splash_1           // if character id is NONE, then we're on the splash screen
         nop
-        li      a0, Character.variant_type.table
-        addu    a0, a0, t0                  // a0 = variant type address
-        lbu     a0, 0x0000(a0)              // a0 = variant type
-        lli     t1, Character.variant_type.J
-        beq     a0,  t1, _variant           // if a J variant, use parent file
-        lli     t1, Character.variant_type.E
-        beq     a0,  t1, _variant           // if an E variant, use parent file
-        nop
 
+        addiu   a0, t0, -Character.id.BOSS // a0 = character id - Boss id
+        sll     a0, a0, 1                   // a0 = offset to characters entry in victory file table
+        li      at, custom_victory_file_table
+        addu    a0, at, a0                  // a0 = pointer to file 1
         jr      ra
-        lli     a0, VICTORY_FILE_1          // use custom file
-
-        _variant:
-        li      a0, Character.variant_original.table
-        sll     t0, t0, 0x0002              // t0 = offset in variant_original table
-        addu    a0, a0, t0                  // a0 = variant parent char_id address
-        lw      t0, 0x0000(a0)              // t0 = variant parent char_id
-        lui     a0, 0x8013                  // a0 = 80130000
-        b       _original                   // use original character's image
-        sw      t0, 0x22E0(a0)              // overwrite char_id with parent char_id
+        lh      a0, 0x0000(a0)              // a0 = pointer to bottom image
 
         _splash_1:
         lli     a0, SPLASH_FILE_1           // use custom file
@@ -2090,7 +2172,13 @@ scope SinglePlayer {
         lli     a0, Character.id.NONE       // a0 = Character.id.NONE
         beq     t9, a0, _splash_2           // if character id is NONE, then we're on the splash screen
         nop
-        lli     a0, VICTORY_FILE_2          // use custom file
+        addiu   a0, t9, -Character.id.BOSS // a0 = character id - Boss id
+        sll     a0, a0, 1                   // a0 = offset to characters entry in victory file table
+        li      at, custom_victory_file_table
+        addu    a0, at, a0                  // a0 = pointer to file 1
+        lh      a0, 0x0000(a0)              // use custom tile
+        jr      ra
+        addiu   a0, a0, 0x0001              // argument = next image after characters image
 
         jr      ra
         nop
@@ -2320,6 +2408,7 @@ scope SinglePlayer {
     add_to_single_player(Character.id.MARTH,   name_texture.MARTH,   name_delay.MARTH)
     add_to_single_player(Character.id.SONIC,   name_texture.SONIC,   name_delay.SONIC)
     add_to_single_player(Character.id.SSONIC,  name_texture.SSONIC,  name_delay.SSONIC)
+    add_to_single_player(Character.id.SHEIK,   name_texture.SHEIK,   name_delay.SHEIK)
 
     // J CHARS           character id          name texture          name delay
     add_to_single_player(Character.id.JSAMUS,  name_texture.JSAMUS,  name_delay.JSAMUS)

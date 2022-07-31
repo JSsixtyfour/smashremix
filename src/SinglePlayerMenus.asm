@@ -21,6 +21,10 @@ scope SinglePlayerMenus: {
 
         li      v0, SinglePlayerModes.singleplayer_mode_flag
         sw      r0, 0x0000(v0)
+        li      v0, SinglePlayerEnemy.enemy_port
+        sw      r0, 0x0000(v0)          // clears port
+        li      v0, SinglePlayerEnemy.enemy_selected
+        sw      r0, 0x0000(v0)          // clears port
         lui     v0, 0x8013              // original line 1
 
         _end:
@@ -50,7 +54,7 @@ scope SinglePlayerMenus: {
     }
 
     // RENDERING
-    // We replcae a bunch of original menu rendering code by making things more generic.
+    // We replace a bunch of original menu rendering code by making things more generic.
 
     // @ Description
     // Constants for defining menu button type

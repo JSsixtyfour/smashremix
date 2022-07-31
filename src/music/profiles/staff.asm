@@ -46,4 +46,6 @@ add_to_music_profile(staff, LIVE_AND_LEARN)
 add_to_music_profile(staff, SONICCD_SPECIAL)
 add_to_music_profile(staff, FLYINGBATTERY)
 add_to_music_profile(staff, SMB2OVERWORLD)
+add_to_music_profile(staff, RAINBOWROAD)
+add_to_music_profile(staff, LINKS_AWAKENING_MEDLEY)
 

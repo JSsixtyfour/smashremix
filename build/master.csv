@@ -393,4 +393,11 @@ ADD,,.\original\0A05.bin,1,00810,3FFFC,,2
 ADD,,.\original\0A06.bin,1,00210,3FFFC,,2
 ADD,,.\original\0A07.bin,1,204D0,3FFFC,,2
 ADD,,.\original\0A15.bin,1,110,3FFFC,,2
+MODIFY,001D,.\original\001D.bin,1,0090,3FFFC,,2
+MODIFY,00FB,.\original\00FB.bin,1,3FFFC,0050,.\original\00FB.txt,2
+MODIFY,00FE,.\original\00FE.bin,1,3FFFC,0004,.\original\00FE.txt,2
+MODIFY,0A96,.\original\0A96.bin,1,02CC,3FFFC,,2
+MODIFY,0008,.\original\0008.bin,1,09A0,3FFFC,,2
+MODIFY,0A96,.\original\0A96.bin,1,02CC,3FFFC,,2
+MODIFY,00FB,.\original\00FB.bin,1,3FFFC,0050,.\original\00FB.txt,2
 END,,,,,,,

@@ -5,8 +5,8 @@ constant VALUE_TYPE(CharacterSelectDebugMenu.value_type.STRING)
 constant MIN_VALUE(0)
 constant MAX_VALUE(9)
 constant DEFAULT_VALUE(0)
-// bitmask: [vs] [1p] [training] [bonus1] [bonus2]
-constant APPLIES_TO(0b10100)
+// bitmask: [vs] [1p] [training] [bonus1] [bonus2] [allstar]
+constant APPLIES_TO(0b101000)
 // bitmask: [human] [cpu]
 constant APPLIES_TO_HUMAN_CPU(0b01)
 constant VALUE_ARRAY_POINTER(Handicap.override_table)

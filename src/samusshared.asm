@@ -4,6 +4,8 @@
 
 scope SamusShared {
 
+// NOTE: Samus white flicker is removed via a moveset command: b0bc0000
+
 // Redirect hardcoding related to Dark Samus Down Special
     // @ Description
     // loads a Dark Samus instruction set, instead of Samus. If Dark Samus uses bombs.
@@ -137,6 +139,8 @@ scope SamusShared {
         beq     v1, at, j_0x800E99D4        // if ESAMUS, take Samus branch
         lli     at, Character.id.MTWO       // at = MTWO
         beq     v1, at, _mewtwo             // if MTWO, take Mewtwo branch
+        lli     at, Character.id.SHEIK      // at = SHEIK
+        beq     v1, at, _sheik              // if SHEIK, take Mewtwo branch
         nop
 
         jr      ra
@@ -145,6 +149,17 @@ scope SamusShared {
         j_0x800E99D4:
         j       0x800E99D4
         nop
+        
+        _sheik:
+        lw      t0, 0x0AE0(a3)              // ~
+        addiu   at, r0, 0x0006              // ~
+        lw      a0, 0x0020(sp)              // ~
+        bne     t0, at, j_0x800E99FC        // original logic, skips if charge level != 7
+        lli     a1, GFXRoutine.id.SHEIK_CHARGE // a1 = SHEIK_CHARGE id
+        
+        // return to Samus branch with alternate GFX Routine ID
+        j       0x800E99E8                  
+        nop 
         
         _mewtwo:
         lw      t0, 0x0AE0(a3)              // ~
@@ -182,6 +197,8 @@ scope SamusShared {
         beq     v0, at, j_0x80161EE4        // if MTWO, take Samus branch (Mewtwo uses 0xAE0 as well)
         lli     at, Character.id.MARTH      // at = MARTH
         beq     v0, at, j_0x80161EE4        // if MARTH, take Samus branch (Marth uses 0xAE0 as well)
+        lli     at, Character.id.SHEIK      // at = SHEIK
+        beq     v0, at, j_0x80161EE4        // if SHEIK, take Samus branch (Sheik uses 0xAE0 as well)
         nop
 
         j       _kirby_power_change_return

@@ -63,9 +63,9 @@
 0880 Pokemon Stadium Header
 0881 Pokemon Stadium Stage
 0882 Pokemon Stadium BG
-0883 Skyloft Header
-0884 Skyloft Stage
-0885 Skyloft BG
+0883 Tal Tal Header
+0884 Tal Tal Stage
+0885 Tal Tal BG
 0886 Glacial River Header
 0887 Glacial River Stage file
 0888 Glacial River BG
@@ -279,7 +279,7 @@
 0958 Wario Entry L
 0959 Polygon Target Header
 095A Polygon Target Stage
-095B REPLACE WITH STAGE BG IMAGE
+095B Sheik Team Pose
 095C Wario Pose 1P
 095D Ganondorf Pose 1P
 095E Splash Screen Image Bottom
@@ -1567,6 +1567,201 @@
 0E60 Kirby Sonic Neutral Special Ground End B
 0E61 Super Sonic Victory 2
 0E62 Super Sonic CSS
+0E63 Rainbow Road Header
+0E64 Rainbow Road Stage
+0E65 Crateria Acid Rain Hitbox
+0E66 Crateria Acid Rain Graphic
+0E67 Rainbow Road Chain Chomp
+0E68 Rainbow Road Chain Chomp Hitbox
+0E69 Pokemon Stadium 2 Header
+0E6A Pokemon Stadium 2 Stage
+0E6B Pokemon Stadium 2 BG
+0E6C Dark Samus Up Special
+0E6D Sheik Main
+0E6E Sheik Character
+0E6F Sheik Projectile Hitbox
+0E70 Sheik Needle
+0E71 Sheik Up Special Ground Begin
+0E72 Sheik Up Special Ground End
+0E73 Sheik Up Special Air Begin
+0E74 Sheik Up Special Air End
+0E75 Sheik Down Special Begin
+0E76 Sheik Down Special Attack
+0E77 Sheik Down Special Landing
+0E78 Sheik Down Special Recoil
+0E79 Sheik Neutral Special Ground Begin
+0E7A Sheik Neutral Special Ground Charge
+0E7B Sheik Neutral Special Ground Shoot
+0E7C Sheik Appear
+0E7D Sheik Attack air b
+0E7E Sheik Attack air d
+0E7F Sheik Attack air f
+0E80 Sheik Attack air n
+0E81 Sheik Attack air u
+0E82 Sheik Crouch
+0E83 Sheik Crouch end
+0E84 Sheik Crouch idle
+0E85 Sheik Dash
+0E86 Sheik Dash Attack
+0E87 Sheik Down Smash
+0E88 Sheik Down Tilt
+0E89 Sheik Fall
+0E8A Sheik Fall Air
+0E8B Sheik Fsmash
+0E8C Sheik Fsmash high
+0E8D Sheik Fsmash low
+0E8E Sheik Ftilt high
+0E8F Sheik Ftilt low
+0E90 Sheik Ftilt mid high
+0E91 Sheik Ftilt mid low
+0E92 Sheik Idle
+0E93 Sheik Jab loop
+0E94 Sheik Jab loop End
+0E95 Sheik Jab loop Start
+0E96 Sheik Jab1
+0E97 Sheik Jab2
+0E98 Sheik Jump air B
+0E99 Sheik Jump air F
+0E9A Sheik Jump B
+0E9B Sheik Jump F
+0E9C Sheik Lose
+0E9D Sheik Run
+0E9E Sheik Runbrake
+0E9F Sheik Selected
+0EA0 Sheik Turn
+0EA1 Sheik Turn Run
+0EA2 Sheik Usmash
+0EA3 Sheik Utilt
+0EA4 Sheik Walk1
+0EA5 Sheik Walk2
+0EA6 Sheik Walk3
+0EA7 Sheik Shield Pose
+0EA8 Sheik Victory 1
+0EA9 Sheik FTilt
+0EAA Sheik Catch
+0EAB Sheik Catch Pull
+0EAC Sheik Taunt
+0EAD Sheik Throw B
+0EAE Sheik Throw F
+0EAF Sheik Down Back D
+0EB0 Sheik Down Back U
+0EB1 Sheik Down Bounce D
+0EB2 Sheik Down Bounce U
+0EB3 Sheik Down Forward D
+0EB4 Sheik Down Forward U
+0EB5 Sheik Down Stand D
+0EB6 Sheik Down Stand U
+0EB7 Sheik Fall Special
+0EB8 Sheik Stun
+0EB9 Sheik Tech
+0EBA Sheik Teeter
+0EBB Sheik Teeter Start
+0EBC Sheik Down Attack D
+0EBD Sheik Down Attack U
+0EBE Norfair Remix Header
+0EBF Norfair Remix Stage
+0EC0 Tal Tal Heights Remix Header
+0EC1 Tal Tal Heights Remix Stage
+0EC2 Toad's Turnpike Header
+0EC3 Toad's Turnpike Stage
+0EC4 Toad's Turnpike BG
+0EC5 Sheik Victory 2
+0EC6 Sheik Neutral Special Air Begin
+0EC7 Sheik Neutral Special Air Charge
+0EC8 Sheik Neutral Special Air Shoot
+0EC9 Sheik Entry Right
+0ECA Sheik Entry Left
+0ECB Sheik DamageHigh1
+0ECC Sheik DamageHigh2
+0ECD Sheik DamageHigh3
+0ECE Sheik DamageMid1
+0ECF Sheik DamageMid2
+0ED0 Sheik DamageMid3
+0ED1 Sheik DamageLow1
+0ED2 Sheik DamageLow2
+0ED3 Sheik DamageLow3
+0ED4 Sheik DamageAir1
+0ED5 Sheik DamageAir2
+0ED6 Sheik DamageAir3
+0ED7 Sheik DamageFlyHigh
+0ED8 Sheik DamageFlyMid
+0ED9 Sheik DamageFlyLow
+0EDA Sheik DamageFlyTop
+0EDB Sheik DamageFlyRoll
+0EDC Sheik Tumble
+0EDD Sheik Board the Platforms Header
+0EDE Sheik Board the Platforms Stage
+0EDF Winter Dreamland Header
+0EE0 Winter Dreamland Stage
+0EE1 Sheik Shield Off
+0EE2 Sheik Shield On
+0EE3 Sheik Victory 3
+0EE4 Sheik 1P CPU Pose
+0EE5 Sheik 1P Pose
+0EE6 Sheik Puppet Fall
+0EE7 Sheik Puppet Up
+0EE8 Mewtwo Ending Image 1
+0EE9 Mewtwo Ending Image 2
+0EEA Kirby Sheik Neutral Special Ground Start
+0EEB Kirby Sheik Neutral Special Ground Charge
+0EEC Kirby Sheik Neutral Special Ground Shoot
+0EED Kirby Sheik Neutral Special Air Start
+0EEE Kirby Sheik Neutral Special Air Charge
+0EEF Kirby Sheik Neutral Special Air Shoot
+0EF0 Sheik Break the Targets Header
+0EF1 Sheik Break the Targets Stage
+0EF2 Sheik Item Shoot Aerial
+0EF3 Sheik Landing
+0EF4 Onett Car
+0EF5 Sheik Fair Landing
+0EF6 Sheik Bair Landing
+0EF7 Sheik Cliff Quick
+0EF8 Sheik Cliff Quick Attack 1
+0EF9 Sheik Cliff Quick Attack 2
+0EFA Sheik Enter Pipe
+0EFB Sheik Exit Pipe
+0EFC Sheik Exit Pipe Walk
+0EFD Sheik Cliff Slow
+0EFE Sheik Cliff Slow Attack 1
+0EFF Sheik Cliff Slow Attack 2
+0F00 Sheik Cliff Climb Quick 2
+0F01 Sheik Cliff Climb Slow 2
+0F02 Bowser Ending Image 1
+0F03 Bowser Ending Image 2
+0F04 Conker Ending Image 1
+0F05 Conker Ending Image 2
+0F06 Ganon Ending Image 1
+0F07 Ganon Ending Image 2
+0F08 Marth Ending Image 1
+0F09 Marth Ending Image 2
+0F0A Sheik Ending Image 1
+0F0B Sheik Ending Image 2
+0F0C Wario Ending Image 1
+0F0D Wario Ending Image 2
+0F0E Sonic Ending Image 1
+0F0F Sonic Ending Image 2
+0F10 Young Link Ending Image 1
+0F11 Young Link Ending Image 2
+0F12 Wolf Ending Image 1
+0F13 Wolf Ending Image 2
+0F14 Dark Samus Ending Image 1
+0F15 Dark Samus Ending Image 2
+0F16 Lucas Ending Image 1
+0F17 Lucas Ending Image 2
+0F18 Doctor Mario Ending Image 1
+0F19 Doctor Mario Ending Image 2
+0F1A Falco Ending Image 1
+0F1B Falco Ending Image 2
+0F1C Sheik Item Neutral
+0F1D Sheik Item Tilt
+0F1E Sheik Item Smash
+0F1F Sheik Item Dash Attack
+0F20 Sheik Item Dash Throw
+0F21 Sheik Hammer Move
+0F22 Sheik Item Throw Air U
+0F23 Sheik Roll F
+0F24 Sheik Roll B
+0F25 Sheik Uair Landing
 
 0611 CAPTAIN DeadU
 0611 CAPTAIN ScreenKO
@@ -4102,3 +4297,16 @@
 079F YOSHI Egg Lay (air use/miss)
 079F YOSHI Egg Lay (air grab out)
 07A0 YOSHI Egg Lay (air grab in)
+00FE Dashed Numbers Image Lookup
+0028 Aeroplane Transition
+0029 Check Transition
+002A Gakubuthi Transition
+002B Kannon Transition
+002C Star Transition
+002D Sundare1 Transition
+002E Sundare2 Transition
+002F Unknown Transition
+0030 Block Transition
+0031 RotScale Transition
+0032 Curtain Transition
+0033 Camera Transition

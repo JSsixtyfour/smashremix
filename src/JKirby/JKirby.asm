@@ -107,6 +107,12 @@ scope JKirby {
     Character.add_new_action_params(JKIRBY, SONIC_NSP_Ground_Recoil,    -1,     File.KIRBY_SONIC_NSPG_END_B,    0x80000000,                 0)
     Character.add_new_action_params(JKIRBY, SONIC_NSP_Air_Recoil,       -1,     File.KIRBY_SONIC_NSPA_END_B,    0x80000000,                 0)
     Character.add_new_action_params(JKIRBY, SONIC_NSP_Bounce,           -1,     File.KIRBY_SONIC_NSPA_END_F,    Kirby.SONIC_NSP_BOUNCE,     0)
+    Character.add_new_action_params(JKIRBY, SHEIK_NSP_Ground_Begin,     -1,     File.KIRBY_SHEIK_NSPG_START,    Kirby.SHEIK_NSP_BEGIN,      0)
+    Character.add_new_action_params(JKIRBY, SHEIK_NSP_Ground_Charge,    -1,     File.KIRBY_SHEIK_NSPG_CHARGE,   Kirby.SHEIK_NSP_CHARGE,     0)
+    Character.add_new_action_params(JKIRBY, SHEIK_NSP_Ground_Shoot,     -1,     File.KIRBY_SHEIK_NSPG_SHOOT,    Kirby.SHEIK_NSP_SHOOT,      0)
+    Character.add_new_action_params(JKIRBY, SHEIK_NSP_Air_Begin,        -1,     File.KIRBY_SHEIK_NSPA_START,    Kirby.SHEIK_NSP_BEGIN,      0)
+    Character.add_new_action_params(JKIRBY, SHEIK_NSP_Air_Charge,       -1,     File.KIRBY_SHEIK_NSPA_CHARGE,   Kirby.SHEIK_NSP_CHARGE,     0)
+    Character.add_new_action_params(JKIRBY, SHEIK_NSP_Air_Shoot,        -1,     File.KIRBY_SHEIK_NSPA_SHOOT,    Kirby.SHEIK_NSP_SHOOT,      0)
 
 
     // Add Actions                   // Action Name      // Base Action //Parameters                       // Staling ID    // Main ASM                 // Interrupt/Other ASM              // Movement/Physics ASM     // Collision ASM
@@ -165,6 +171,12 @@ scope JKirby {
     Character.add_new_action(JKIRBY, SONIC_NSP_Ground_Recoil,   -1,     ActionParams.SONIC_NSP_Ground_Recoil,   0x12,       0x800D94C4,                 0,                                  0x800D8BB4,                 SonicNSP.ground_recoil_collision_)
     Character.add_new_action(JKIRBY, SONIC_NSP_Air_Recoil,      -1,     ActionParams.SONIC_NSP_Air_Recoil,      0x12,       0x800D94E8,                 0,                                  0x800D91EC,                 SonicNSP.air_recoil_collision_)
     Character.add_new_action(JKIRBY, SONIC_NSP_Bounce,          -1,     ActionParams.SONIC_NSP_Bounce,          0x12,       0x800D94E8,                 0,                                  0x800D91EC,                 0x800DE99C)
+    Character.add_new_action(JKIRBY, SHEIK_NSP_Ground_Begin,    -1,     ActionParams.SHEIK_NSP_Ground_Begin,    0x12,       SheikNSP.begin_main_,       0x8015D464,                         0x800D8BB4,                 SheikNSP.kirby_ground_begin_collision_) 
+    Character.add_new_action(JKIRBY, SHEIK_NSP_Ground_Charge,   -1,     ActionParams.SHEIK_NSP_Ground_Charge,   0x12,       SheikNSP.charge_main_,      SheikNSP.ground_charge_interrupt_,  0x800D8BB4,                 SheikNSP.kirby_ground_charge_collision_)
+    Character.add_new_action(JKIRBY, SHEIK_NSP_Ground_Shoot,    -1,     ActionParams.SHEIK_NSP_Ground_Shoot,    0x12,       SheikNSP.shoot_main_,       0,                                  0x800D8BB4,                 SheikNSP.kirby_ground_shoot_collision_) 
+    Character.add_new_action(JKIRBY, SHEIK_NSP_Air_Begin,       -1,     ActionParams.SHEIK_NSP_Air_Begin,       0x12,       SheikNSP.begin_main_,       0x8015D464,                         0x800D90E0,                 SheikNSP.air_begin_collision_)    
+    Character.add_new_action(JKIRBY, SHEIK_NSP_Air_Charge,      -1,     ActionParams.SHEIK_NSP_Air_Charge,      0x12,       SheikNSP.charge_main_,      SheikNSP.air_charge_interrupt_,     0x800D91EC,                 SheikNSP.air_charge_collision_)   
+    Character.add_new_action(JKIRBY, SHEIK_NSP_Air_Shoot,       -1,     ActionParams.SHEIK_NSP_Air_Shoot,       0x12,       SheikNSP.shoot_main_,       0,                                  0x800D91EC,                 SheikNSP.air_shoot_collision_) 
 
     // Set action strings
     Character.table_patch_start(action_string, Character.id.JKIRBY, 0x4)

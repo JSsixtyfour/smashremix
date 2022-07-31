@@ -46,6 +46,54 @@ scope Widescreen {
         nop
     }
 
+    // @ Description
+    // This hook corrects the aspect ratio of the menu when widescreen mode is enabled. This is called everytime the screen is changed.
+    // Intended for 16:9 displays that wish to play the game in widescreen mode but to retain original aspect ratio of menus without stretching.
+    scope menu_fix_aspect_ratio_: {
+        OS.patch_start(0x1B20, 0x80000F20)
+        j      menu_fix_aspect_ratio_
+        nop
+        _menu_fix_return:
+        OS.patch_end()
+
+        li     t5, Toggles.entry_widescreen
+        lw     t5, 0x0004(t5)               // t5 = 1 if enabled, 0 if disabled
+        beqz   t5, _end                     // if widescreen mode is disabled, skip menu fix
+        nop
+
+        li     t5, Global.current_screen
+        lb     t5, 0x0000(t5)
+        // list of screens we don't want to correct the aspect ratio for
+        addiu  at, r0, 0x16                 // at = vs mode
+        beq    at, t5, _end                 // skip if equal (already handled by enable_widescreen_)
+        addiu  at, r0, 0x33                 // at = end of stage screen for 1P mode
+        beq    at, t5, _end                 // skip if equal (already handled by enable_widescreen_)
+        addiu  at, r0, 0x01                 // at = 1P mode or title screen
+        beq    at, t5, _end                 // skip if equal (they share the same id/ handled by enable_widescreen_)
+        addiu  at, r0, 0x36                 // at = training mode
+        beq    at, t5, _end                 // skip if equal  (already handled by enable_widescreen_)
+        addiu  at, r0, 0x35                 // at = bonus mode
+        beq    at, t5, _end                 // skip if equal  (already handled by enable_widescreen_)
+        addiu  at, r0, 0x77                 // at = Remix mode
+        beq    at, t5, _end                 // skip if equal  (already handled by enable_widescreen_)
+        addiu  at, r0, 0x38                 // at = Credits screen
+        beq    at, t5, _end                 // skip if equal
+        nop
+
+        // if here, correct aspect ratio
+        lui    at, 0x8004                   // original line 1
+        addiu  t5, r0, 0x02A1               // VI_X_SCALE_REG(0x30)  = 0x2A1
+        sw     t5, 0x4F08(at)               // overwrite value for this Video Interface Register
+        li     t5, 0x00B402A0               // VI_H_START(0X24) = 0XB4, H_VIDEO_REG(0X26) = 0X02A0
+        sw     t5, 0x4F04(at)               // overwrite value for this Video Interface Register
+
+        _end:
+        lui    at, 0x8004                   // original line 1
+        j      _menu_fix_return
+        sw     r0, 0x4F88(at)               // original line 2
+
+    }
+
 }
 
 } // __WIDESCREEN__

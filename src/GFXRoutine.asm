@@ -195,6 +195,12 @@ scope GFXRoutine {
     SSONIC_NSP_CHARGE:;  OVERLAY(0xfff9000A); OVERLAY_SHIFT(0xf5ff62A0, 22); WAIT(22); BEGIN_LOOP(8); OVERLAY(0xf5ff6280); WAIT(2); OVERLAY(0xfaf8abD0); WAIT(2); END_LOOP(); END()
     SSONIC_NSP_ATTACK:;  OVERLAY(0xfaf8abD0); OVERLAY_SHIFT(0xfaff0000, 18); WAIT(18); CLEAR_OVERLAY(); END()
     LASER:;  BEGIN_LOOP(4); OVERLAY(0xFF0000A0); WAIT(2); OVERLAY(0x0000FFA0); WAIT(2); END_LOOP(); BEGIN_LOOP(4); OVERLAY(0xFF000060); WAIT(2); OVERLAY(0x0000FF60); WAIT(2); END_LOOP(); BEGIN_LOOP(4); OVERLAY(0xFF000030); WAIT(2); OVERLAY(0x0000FF30); WAIT(2); END_LOOP(); CLEAR_OVERLAY(); END()
+    DEKU_STUN:; OVERLAY(0x0000FF8E);  WAIT(1); GO_TO(DEKU_STUN); END()
+    insert SHEIK_CHARGE, "gfx/routines/SHEIK_CHARGE.bin"; GO_TO(SHEIK_CHARGE)
+    SHEIK_DSP:; OVERLAY(0xdb03fc80); WAIT(2); OVERLAY_SHIFT(0xdb03fc00, 16); WAIT(16); CLEAR_OVERLAY(); END()
+    SHEIK_SHOOT:; OVERLAY(0xFFFFFF49); WAIT(0x1); CLEAR_OVERLAY(); WAIT(0x2); END();
+    insert FRANKLIN_BADGE, "gfx/routines/FRANKLIN_BADGE.bin"; GO_TO(FRANKLIN_BADGE)
+    SHEIK_USP_END:; OVERLAY(0xDE240A80); WAIT(1); CLEAR_OVERLAY(); WAIT(1); OVERLAY(0xDE240A80); WAIT(1); CLEAR_OVERLAY(); WAIT(1); OVERLAY(0xDE240A80); WAIT(1); CLEAR_OVERLAY(); END();
 
     // name - gfx routine effect name, used for display only
     // filename - file containing gfx routine commands
@@ -226,6 +232,12 @@ scope GFXRoutine {
     add_gfx_routine(SSONIC_NSP_CHARGE, SSONIC_NSP_CHARGE, 60, OS.TRUE)
     add_gfx_routine(SSONIC_NSP_ATTACK, SSONIC_NSP_ATTACK, 60, OS.TRUE)
     add_gfx_routine(LASER, LASER, 100, OS.FALSE)
+    add_gfx_routine(DEKU_STUN, DEKU_STUN, 100, OS.TRUE)
+    add_gfx_routine(SHEIK_CHARGE, SHEIK_CHARGE, 10, OS.FALSE)
+    add_gfx_routine(SHEIK_DSP, SHEIK_DSP, 60, OS.TRUE)
+    add_gfx_routine(SHEIK_SHOOT, SHEIK_SHOOT, 60, OS.TRUE)
+    add_gfx_routine(FRANKLIN_BADGE, FRANKLIN_BADGE, 100, OS.FALSE)
+    add_gfx_routine(SHEIK_USP_END, SHEIK_USP_END, 60, OS.FALSE)
 
     // write gfx routines to ROM
     write_gfx_routines()
@@ -292,6 +304,71 @@ scope GFXRoutine {
         addu    t9, t9, t8                  // t9 = table + offset
         j       _return                     // return
         lbu     t9, 0x0005(t9)              // t9 = bool_action
+    }
+
+    // @ Description
+    // This allows us to set the players gfx routine similar to how super star item overrides it.
+    scope port_override: {
+
+        // @ Description
+        // This allows us to set the players gfx routine similar to how super star item overrides it.
+        override_table:
+        dw 0, 0, 0, 0
+
+        // @ Description
+        // Patch which extends the check for a characters gfx routine which occurs when a players gfx routine ends
+        scope extend_gfx_check_: {
+            OS.patch_start(0x652E4, 0x800E9AE4)
+            j       extend_gfx_check_
+            nop
+            _return:
+            OS.patch_end()
+
+            lw      a3, 0x001C(sp)          // a3 = player struct
+
+            li      at, override_table      // load gfx routine override table
+            lbu     t1, 0x000D(a3)          // t1 = player port
+            sll     t1, t1, 0x0002          // t1 = port offset
+            addu    at, at, t1              // at = entry in table
+            lw      a1, 0x0000(at)          // a1 = override value
+
+            beqz    a1, _end                // end if no override value
+            nop
+
+            // if here, there is an override value.
+            // a1 = gfx routine id
+            lw      a0, 0x0020(sp)          // a0 must be player object
+            jal     0x800E9814              // get routine from table
+            or      a2, r0, r0              // arg_2 = noone
+            lw      a0, 0x0020(sp)          // ~
+
+            jal     0x800F37CC              // apply routine to player
+            lw      a0, 0x0020(sp)          // arg_0 = player object
+
+            _end:
+            lw      ra, 0x0014(sp)          // original line 1
+            j       _return
+            addiu   sp, sp, 0x20            // original line 2
+        }
+
+        // @ Description
+        // Clean up gfx routine overrides for all ports
+        // Called when loading CSS, VS, Training and VS Results
+        scope clear_gfx_override_table_: {
+            addiu   sp, sp, -0x0030         // allocate stack space
+            sw      ra, 0x0004(sp)          // ~
+
+            li      t8, override_table      // t8 = array to clear
+            sw      r0, 0x0000(t8)          // clear ptrs
+            sw      r0, 0x0004(t8)          // ~
+            sw      r0, 0x0008(t8)          // ~
+            sw      r0, 0x000C(t8)          // ~
+
+            lw      ra, 0x0004(sp)          // restore ra
+            addiu   sp, sp, 0x0030          // deallocate stack space
+            jr      ra
+            nop
+        }
     }
 }
 }

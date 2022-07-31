@@ -3,10 +3,10 @@
 define LABEL("Taunt Itm.")
 constant VALUE_TYPE(CharacterSelectDebugMenu.value_type.STRING)
 constant MIN_VALUE(0)
-constant MAX_VALUE(Hazards.standard.POKEBALL - Hazards.standard.BEAM_SWORD + 1)
+constant MAX_VALUE(Item.taunt_item_random_entry)
 constant DEFAULT_VALUE(0)
-// bitmask: [vs] [1p] [training] [bonus1] [bonus2]
-constant APPLIES_TO(0b10100)
+// bitmask: [vs] [1p] [training] [bonus1] [bonus2] [allstar]
+constant APPLIES_TO(0b101000)
 // bitmask: [human] [cpu]
 constant APPLIES_TO_HUMAN_CPU(0b11)
 constant VALUE_ARRAY_POINTER(Item.taunt_spawn_item)
@@ -16,18 +16,27 @@ constant ONCHANGE_HANDLER(0)
 // Holds pointers to value labels
 string_table:
 dw StartWith.string_none
+//dw StartWith.string_tomato
+//dw StartWith.string_heart
+//dw StartWith.string_star
 dw StartWith.string_beam_sword
 dw StartWith.string_home_run_bat
 dw StartWith.string_fan
 dw StartWith.string_star_rod
 dw StartWith.string_ray_gun
 dw StartWith.string_fire_flower
+dw StartWith.string_hammer
 dw StartWith.string_motion_sensor_bomb
 dw StartWith.string_bobomb
 dw StartWith.string_bumper
 dw StartWith.string_green_shell
 dw StartWith.string_red_shell
 dw StartWith.string_pokeball
+//dw StartWith.string_cloaking_device
+//dw StartWith.string_super_mushroom
+//dw StartWith.string_poison_mushroom
+dw StartWith.string_blue_shell
+dw StartWith.string_deku_nut
 dw StartWith.string_random
 
 // @ Description

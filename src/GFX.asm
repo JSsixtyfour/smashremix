@@ -285,33 +285,43 @@ scope GFX {
         li      at, current_gfx_id                       // at = current_gfx_id address
         sw      r0, 0x0000(at)                           // clear the value
 
-        lw      t0, 0x0054(sp)                           // original line 1
-        or      a0, s0, r0                               // original line 2
-        lw      t1, 0x014C(t0)                           // original line 3
-        bnez    t1, no_plat_{n}                          // original line 4, modified for our label
+        lw      t0, 0x0054(sp)                           // original line 1 - t0 = player struct
+        or      a0, s0, r0                               // original line 2 - a0 = position array
+        lw      t1, 0x014C(t0)                           // original line 3 - t1 = kinetic state
+        bnez    t1, _aerial_{n}                          // original line 4, modified for our label
         nop                                              // original line 5
-        lw      v0, 0x00EC(t0)                           // original line 6 - v0 = platform ID of character
-        addiu   at, r0, 0xFFFF                           // original line 7
-        beq     v0, at, no_plat_{n}                      // original line 8, modified for our label
-        addiu   at, r0, 0xFFFE                           // original line 9
-        beq     v0, at, no_plat_{n}                      // original line 10, modified for our label
+        lw      v0, 0x00EC(t0)                           // original line 6 - v0 = clipping ID of character
+        addiu   at, r0, 0xFFFF                           // original line 7 - at = -1
+        beq     v0, at, _aerial_{n}                      // original line 8, modified for our label
+        addiu   at, r0, 0xFFFE                           // original line 9 - at = -2
+        beq     v0, at, _aerial_{n}                      // original line 10, modified for our label
         nop                                              // original line 11
         lwc1    f12, 0x00F8(t0)                          // original line 12 - related to angle of platform
         lwc1    f14, 0x00FC(t0)                          // original line 13 - related to angle of platform
-        jal     0x8001863C                               // original line 14
+        jal     0x8001863C                               // original line 14 - f0 = atan2(f12,f14)
         neg.s   f12, f12                                 // original line 15
-        mfc1    a2, f0                                   // original line 16
-        or      a0, s0, r0                               // original line 17
-        jal     0x800FFD58                               // original line 18
+        mfc1    a2, f0                                   // original line 16 - a2 = rotation angle
+        or      a0, s0, r0                               // original line 17 - a0 = position array
+        jal     0x800FFD58                               // original line 18 - create ground gfx
         addiu   a1, r0, {color_offset}                   // original line 19, modified to use custom color
-        j       0x800EB388                               // original line 20
-        or      v1, v0, r0                               // original line 21
+        b       _size_{n}
+        or      v1, v0, r0                               // original line 21 - v1 = gfx object
 
-        no_plat_{n}:
-        jal     0x800FFDE8                               // original line 22
+        _aerial_{n}:
+        jal     0x800FFDE8                               // original line 22 - create ground gfx
         addiu   a1, r0, {color_offset}                   // original line 23, modified to use custom color
-        j       0x800EB388                               // original line 24
-        or      v1, v0, r0                               // original line 25
+        or      v1, v0, r0                               // original line 25 - v1 = gfx object
+
+        // This enables us to adjust the size of the gfx object based on character size (see Size.asm)
+        _size_{n}:
+        beqz    v0, _end_{n}                             // if no gfx object was created, skip
+        lw      t0, 0x0054(sp)                           // t0 = player struct
+
+        sw      t0, 0x0040(v0)                           // save reference to player struct in gfx object
+
+        _end_{n}:
+        j       0x800EB388                               // original line 20/24
+        nop
 
         // instructions not necessary, but leave in label and variable so write_gfx() doesn't fail
         gfx_instructions_{n}:
@@ -444,6 +454,8 @@ scope GFX {
     add_gfx(Dark Cross, gfx/dark_cross_instructions.bin, id.FIRE_CROSS)
     add_gfx(Dark Flame, gfx/dark_flame_instructions.bin, id.FIRE)
     add_gfx(Mewtwo Jab, gfx/mewtwo_jab_instructions.bin, id.WHITE_SPARKLE)
+    add_gfx(Pink Smoke Puff, gfx/pink_smoke_puff_instructions.bin, id.SMOKE_PUFF)
+    add_gfx(White Smoke, gfx/white_smoke_instructions.bin, id.SMOKE_PUFF)
 
     // writes new GFX to ROM
     write_gfx()

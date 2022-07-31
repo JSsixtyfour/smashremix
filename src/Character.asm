@@ -12,7 +12,7 @@ include "OS.asm"
 
 scope Character {
     // number of character slots to add
-    constant ADD_CHARACTERS(33)
+    constant ADD_CHARACTERS(34)
     // start and end offset for the main character struct table (RAM 0x80116E10)
     constant STRUCT_TABLE(0x92610)
     variable STRUCT_TABLE_END(STRUCT_TABLE + 0x6C)
@@ -2565,7 +2565,7 @@ scope Character {
     OS.align(16)
 
     // extend kirby's action arrays
-    extend_kirby_arrays(55)
+    extend_kirby_arrays(61)
 
     // set up extended high score table
     EXTENDED_HIGH_SCORE_TABLE_BLOCK:; SRAM.block((NUM_CHARACTERS - 12) * 0x20)   // exclude original 12 characters
@@ -2832,7 +2832,7 @@ scope Character {
     // 0x2F - EPUFF
     define_character(EPUFF, JIGGLYPUFF, 0x0E9, 0x0E8, 0, 0x14A, 0x14B, 0, 0x15F, 0, 0, 0x474, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_JIGGLYPUFF, Stages.id.BTP_JIGGLYPUFF, Stages.id.BTT_FALCO, Stages.id.BTP_MARIO, sound_type.U, variant_type.E)
     // 0x30 - JKIRBY
-    define_character(JKIRBY, KIRBY, File.JKIRBY_MAIN, 0x0E4, 0, 0x148, 0x149, 0, 0x15C, 0, 0, 0x808, 55, OS.TRUE, OS.FALSE, Stages.id.BTT_KIRBY, Stages.id.BTP_KIRBY, Stages.id.BTT_FOX, Stages.id.BTP_FOX, sound_type.J, variant_type.J)
+    define_character(JKIRBY, KIRBY, File.JKIRBY_MAIN, 0x0E4, 0, 0x148, 0x149, 0, 0x15C, 0, 0, 0x808, 0x61, OS.TRUE, OS.FALSE, Stages.id.BTT_KIRBY, Stages.id.BTP_KIRBY, Stages.id.BTT_FOX, Stages.id.BTP_FOX, sound_type.J, variant_type.J)
     // 0x31 - JYOSHI
     define_character(JYOSHI, YOSHI, File.JYOSHI_MAIN, 0x0F6, 0, 0x152, 0x154, 0, 0x162, 0x153, 0, 0x47C, 0x0, OS.TRUE, OS.TRUE, Stages.id.BTT_YOSHI, Stages.id.BTP_YOSHI, Stages.id.BTT_FALCON, Stages.id.BTP_GND, sound_type.J, variant_type.J)
     // 0x32 - JPIKA
@@ -2859,6 +2859,8 @@ scope Character {
     define_character(SANDBAG, CAPTAIN, File.SANDBAG_MAIN, 0x0EB, 0, 0x14C, 0x14E, 0, 0x15E, 0x14D, 0, 0x488, 0x0, OS.TRUE, OS.FALSE, Stages.id.BTT_FALCON, Stages.id.BTP_FALCON, Stages.id.BTT_GND, Stages.id.BTP_GND, sound_type.U, variant_type.NA)
     // 0x3D - SUPER SONIC
     define_character(SSONIC, FOX, File.SSONIC_MAIN, 0x0D0, 0, File.SSONIC_CHARACTER, File.SONIC_SHIELD_POSE, File.SONIC_SPRING_HITBOX, 0x15A, File.SONIC_ENTRY, File.SONIC_SPRING_GRAPHIC, 0x58C, 18, OS.TRUE, OS.TRUE, Stages.id.BTT_SONIC, Stages.id.BTP_SONIC, Stages.id.BTT_WARIO, Stages.id.BTP_DS, sound_type.U, variant_type.SPECIAL)
+    // 0x3E - SHEIK
+    define_character(SHEIK, CAPTAIN, File.SHEIK_MAIN, 0x0EB, 0, 0x14C, File.SHEIK_SHIELD_POSE, File.SHEIK_PROJECTILE_HITBOX, 0x15E, 0x14D, 0, 0x4B0, 0x5, OS.TRUE, OS.TRUE, Stages.id.BTT_SHEIK, Stages.id.BTP_SHEIK, Stages.id.BTT_LINK, Stages.id.BTP_LUCAS2, sound_type.U, variant_type.NA)
 
     print "========================================================================== \n"
 }

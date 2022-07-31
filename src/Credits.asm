@@ -303,6 +303,7 @@ scope Credits {
     add_title("Developer")
     add_name("MarioReincarnate", "Let's just say you owe him|lunch", remix)
     add_name("Cyjorg", "Stage Engine", remix)
+    add_name("halofactory", "The secret of 2401|lies within", remix)
 
     add_title("Lead Artist")
     add_name("Sope", "Character Modeling|Character Artwork|Stage Modeling|Smash Remix Logo", remix)
@@ -312,6 +313,9 @@ scope Credits {
 
     add_title("Moveset Designer")
     add_name("Honey", "Gameplay Balance & Design", remix)
+
+    add_title("Lead Tester")
+    add_name("goombapatrol", "Quality Control|They make it, I break it", remix)
 
     add_title("Installation Specialist")
     add_name("CEnnis91", "-- .- -.. .|-.-- --- ..-|.-.. --- --- -.-", remix)
@@ -327,6 +331,7 @@ scope Credits {
     add_name("Adrian Garcia", "Dark Samus Textures", remix)
     add_name("M-1", "Wolf Model, Gerudo Valley", remix)
     add_name("TheQuickSlash", "Stage Modeller|\dDork\d -sope|oFTo", remix)
+    add_name("halofactory", "Sheik Model|Smashville v2", remix)
 
     add_title("Artists")
     add_name("Sope", "Character Models, VFX,|Character Artwork", remix)
@@ -337,6 +342,8 @@ scope Credits {
     add_name("Likiji123", "", remix)
     add_name("Pik", "Remix 1p Victory Image", remix)
     add_name("Gael Romo", "", remix)
+    add_name("TheQuickSlash", "Sonic Victory Image", remix)
+    add_name("halofactory", "Sheik Portrait", remix)
 
     add_title("Animators")
     add_name("Sope", "Character and Stage|Animations", remix)
@@ -352,6 +359,7 @@ scope Credits {
     add_name("PrufStudent", "Character Animations", remix)
     add_name("Zeozen", "Character Animations", remix)
     add_name("M-1", "Character Animations", remix)
+    add_name("halofactory", "Character Animations", remix)
 
     add_title("Musicians")
     add_name("TT", "Music Porter and Arranger", remix)
@@ -367,6 +375,7 @@ scope Credits {
     add_name("Pun", "Music Porter and Arranger", remix)
     add_name("Fray", "All-Star Rest Area and|Mewtwo Victory Theme|Arrangement, Various|Track Mixing", remix)
     add_name("TheQuickSlash", "Sonic 2 Special Stage,|Sonic CD Special Stage|Arrangements", remix)
+    add_name("supa", "", remix)
 
     add_title("Stage Designers")
     add_name("BridGurrr", "Ganon's Tower, Deku Tree,|First Destination", remix)
@@ -391,7 +400,7 @@ scope Credits {
     add_name("Qapples", "", remix)
     add_name("smb123w64gb", "", remix)
     add_name("FaxMeAppleJuice", "Regional Variant Porting", remix)
-    add_name("goombapatrol", "Menu Coding Support,|Miscellaneous Coding", remix)
+    add_name("goombapatrol", "Menu Coding Support,|1P Practice Mode,|Miscellaneous Coding", remix)
 
     add_title("Consultants")
     add_name("Madao", "Moveset Consultant", remix)
@@ -463,12 +472,18 @@ scope Credits {
     add_name("Kix", "", remix)
     add_name("HAMMERHEART", "", remix)
     add_name("beta", "", remix)
-    add_name("halofactory", "", remix)
     add_name("LOC", "", remix)
     add_name("Maciaga", "", remix)
     add_name("pecosix", "", remix)
     add_name("PKStickThing", "", remix)
     add_name("SyluxVIV", "", remix)
+    add_name("Weedwack", "", remix)
+    add_name("KeroKeroppi", "", remix)
+    add_name("1upShyguy", "", remix)
+    add_name("epona", "", remix)
+    add_name("Stew", "", remix)
+    add_name("thetaiter", "", remix)
+
 
     add_title("Original Sequencing Musical Credits")
     add_name("Golen", "Ganondorf Battle", none)
@@ -513,6 +528,7 @@ scope Credits {
     add_name("Monster Iestyn", "Emerald Hill Zone, Stardust|Speedway B Mix", none)
     add_name("William Borges", "Casino Night Zone", none)
     add_name("Blue Warrior", "Green Hill Zone", none)
+    add_name("isabellechiming", "Onett", none)
 
     add_title("Video Team")
     add_name("Fray", "Trailer Editing, Footage|Capturing, Marth Cinematic", remix)

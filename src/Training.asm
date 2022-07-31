@@ -654,6 +654,11 @@ scope Training {
         li      t0, action_control_object
         sw      r0, 0x0000(t0)              // clear action & frame control object pointer
 
+        li      t0, special_model_display
+        li      t1, Toggles.entry_special_model
+        lw      t1, 0x0004(t1)              // t1 = special model value
+        sw      t1, 0x0000(t0)              // remember special model display when starting
+
         _initialize_spawns:
         li      t0, struct.port_1.spawn_id  // t0 = port 1 spawn id address
         or      t1, r0, r0                  // t1 = port 1 id
@@ -1032,7 +1037,7 @@ scope Training {
         lw      a0, 0x0020(v0)              // a0 = label object
         beqz    a0, _finish                 // skip if no label object (shouldn't happen)
         nop
-        lw      a0, 0x0030(a0)              // a0 = value object
+        lw      a0, 0x006C(a0)              // a0 = value object
         beqz    a0, _finish                 // skip if no value object (can happen for titles)
         nop
         jal     Render.update_live_string_
@@ -1139,7 +1144,7 @@ scope Training {
         // when freeze is on, need to force update
         lw      t0, 0x0020(a1)              // t0 = label object
         jal     Render.update_live_string_
-        lw      a0, 0x0030(t0)              // a0 = value object
+        lw      a0, 0x006C(t0)              // a0 = value object
 
         _end:
         lw      t0, 0x0004(sp)              // ~
@@ -1158,6 +1163,12 @@ scope Training {
     // stage select and loads from the reset function
     reset_counter:
     dw 0
+
+    // @ Description
+    // This mirrors the Toggles.entry_special_model value when entering Training.
+    // Initially set to -1 to signify it hasn't been initialized
+    special_model_display:
+    dw -1
 
     // @ Description
     // Renders the frame to the training menu modal for our custom menu.
@@ -2263,68 +2274,69 @@ scope Training {
 
     // @ Description
     // Character Strings
-    char_0x00:; db "Mario" , 0x00
-    char_0x01:; db "Fox", 0x00
-    char_0x02:; db "DK", 0x00
-    char_0x03:; db "Samus", 0x00
-    char_0x04:; db "Luigi", 0x00
-    char_0x05:; db "Link", 0x00
-    char_0x06:; db "Yoshi", 0x00
-    char_0x07:; db "C. Falcon", 0x00
-    char_0x08:; db "Kirby", 0x00
-    char_0x09:; db "Pikachu", 0x00
-    char_0x0A:; db "Jigglypuff", 0x00
-    char_0x0B:; db "Ness", 0x00
-    //char_0x0C:; db "Master Hand", 0x00
-    char_0x0D:; db "Metal Mario", 0x00
-    char_0x0E:; db "Poly Mario", 0x00
-    char_0x0F:; db "Poly Fox", 0x00
-    char_0x10:; db "Poly DK", 0x00
-    char_0x11:; db "Poly Samus", 0x00
-    char_0x12:; db "Poly Luigi", 0x00
-    char_0x13:; db "Poly Link", 0x00
-    char_0x14:; db "Poly Yoshi", 0x00
-    char_0x15:; db "Poly Falcon", 0x00
-    char_0x16:; db "Poly Kirby", 0x00
-    char_0x17:; db "Poly Pikachu", 0x00
-    char_0x18:; db "Poly Puff", 0x00
-    char_0x19:; db "Poly Ness", 0x00
-    char_0x1A:; db "Giant DK", 0x00
+    string_mario:; string_Mario:; char_0x00:; db "Mario" , 0x00
+    string_fox:; char_0x01:; db "Fox", 0x00
+    string_dk:; char_0x02:; db "DK", 0x00
+    string_samus:; char_0x03:; db "Samus", 0x00
+    string_luigi:; char_0x04:; db "Luigi", 0x00
+    string_link:; char_0x05:; db "Link", 0x00
+    string_yoshi:; char_0x06:; db "Yoshi", 0x00
+    string_cfalcon:; char_0x07:; db "C. Falcon", 0x00
+    string_kirby:; char_0x08:; db "Kirby", 0x00
+    string_pikachu:; char_0x09:; db "Pikachu", 0x00
+    string_jigglypuff:; char_0x0A:; db "Jigglypuff", 0x00
+    string_ness:; char_0x0B:; db "Ness", 0x00
+    //string_boss:; char_0x0C:; db "Master Hand", 0x00
+    string_metal:; char_0x0D:; db "Metal Mario", 0x00
+    string_nmario:; char_0x0E:; db "Poly Mario", 0x00
+    string_nfox:; char_0x0F:; db "Poly Fox", 0x00
+    string_ndk:; char_0x10:; db "Poly DK", 0x00
+    string_nsamus:; char_0x11:; db "Poly Samus", 0x00
+    string_nluigi:; char_0x12:; db "Poly Luigi", 0x00
+    string_nlink:; char_0x13:; db "Poly Link", 0x00
+    string_nyoshi:; char_0x14:; db "Poly Yoshi", 0x00
+    string_nfalcon:; char_0x15:; db "Poly Falcon", 0x00
+    string_nkirby:; char_0x16:; db "Poly Kirby", 0x00
+    string_npikachu:; char_0x17:; db "Poly Pikachu", 0x00
+    string_npuff:; char_0x18:; db "Poly Puff", 0x00
+    string_nness:; char_0x19:; db "Poly Ness", 0x00
+    string_gdk:; char_0x1A:; db "Giant DK", 0x00
     //char_0x1B:; db "NONE", 0x00
     //char_0x1C:; db "NONE", 0x00
-    char_0x1D:; db "Falco", 0x00
-    char_0x1E:; db "Ganondorf", 0x00
-    char_0x1F:; db "Young Link", 0x00
-    char_0x20:; db "Dr. Mario", 0x00
-    char_0x21:; db "Wario", 0x00
-    char_0x22:; db "Dark Samus", 0x00
-    char_0x23:; db "E Link", 0x00
-    char_0x24:; db "J Samus", 0x00
-    char_0x25:; db "J Ness", 0x00
-    char_0x26:; db "Lucas", 0x00
-    char_0x27:; db "J Link", 0x00
-    char_0x28:; db "J Falcon", 0x00
-    char_0x29:; db "J Fox", 0x00
-    char_0x2A:; db "J Mario", 0x00
-    char_0x2B:; db "J Luigi", 0x00
-    char_0x2C:; db "J DK", 0x00
-    char_0x2D:; db "E Pikachu", 0x00
-    char_0x2E:; db "Purin", 0x00
-    char_0x2F:; db "E Jigglypuff", 0x00
-    char_0x30:; db "J Kirby", 0x00
-    char_0x31:; db "J Yoshi", 0x00
-    char_0x32:; db "J Pikachu", 0x00
-    char_0x33:; db "E Samus", 0x00
-    char_0x34:; db "Bowser", 0x00
-	char_0x35:; db "Giga Bowser", 0x00
-    char_0x36:; db "Mad Piano", 0x00
-	char_0x37:; db "Wolf", 0x00
-    char_0x38:; db "Conker", 0x00
-    char_0x39:; db "Mewtwo", 0x00
-    char_0x3A:; db "Marth", 0x00
-    char_0x3B:; db "Sonic", 0x00
-    char_0x3C:; db "Sandbag", 0x00
-    char_0x3D:; db "Super Sonic", 0x00
+    string_falco:; char_0x1D:; db "Falco", 0x00
+    string_ganondorf:; char_0x1E:; db "Ganondorf", 0x00
+    string_younglink:; char_0x1F:; db "Young Link", 0x00
+    string_drmario:; char_0x20:; db "Dr. Mario", 0x00
+    string_wario:; char_0x21:; db "Wario", 0x00
+    string_dsamus:; char_0x22:; db "Dark Samus", 0x00
+    string_elink:; char_0x23:; db "E Link", 0x00
+    string_jsamus:; char_0x24:; db "J Samus", 0x00
+    string_jness:; char_0x25:; db "J Ness", 0x00
+    string_lucas:; char_0x26:; db "Lucas", 0x00
+    string_jlink:; char_0x27:; db "J Link", 0x00
+    string_jfalcon:; char_0x28:; db "J Falcon", 0x00
+    string_jfox:; char_0x29:; db "J Fox", 0x00
+    string_jmario:; char_0x2A:; db "J Mario", 0x00
+    string_jluigi:; char_0x2B:; db "J Luigi", 0x00
+    string_jdk:; char_0x2C:; db "J DK", 0x00
+    string_epikachu:; char_0x2D:; db "E Pikachu", 0x00
+    string_purin:; char_0x2E:; db "Purin", 0x00
+    string_ejigglypuff:; char_0x2F:; db "E Jigglypuff", 0x00
+    string_jkirby:; char_0x30:; db "J Kirby", 0x00
+    string_jyoshi:; char_0x31:; db "J Yoshi", 0x00
+    string_jpikachu:; char_0x32:; db "J Pikachu", 0x00
+    string_esamus:; char_0x33:; db "E Samus", 0x00
+    string_bowser:; char_0x34:; db "Bowser", 0x00
+	string_gbowser:; char_0x35:; db "Giga Bowser", 0x00
+    string_piano:; char_0x36:; db "Mad Piano", 0x00
+	string_wolf:; char_0x37:; db "Wolf", 0x00
+    string_conker:; char_0x38:; db "Conker", 0x00
+    string_mewtwo:; char_0x39:; db "Mewtwo", 0x00
+    string_marth:; char_0x3A:; db "Marth", 0x00
+    string_sonic:; char_0x3B:; db "Sonic", 0x00
+    string_sandbag:; char_0x3C:; db "Sandbag", 0x00
+    string_ssonic:; char_0x3D:; db "Super Sonic", 0x00
+    string_sheik:; char_0x3E:; db "Sheik", 0x00
     OS.align(4)
 
     string_table_char:
@@ -2354,6 +2366,7 @@ scope Training {
     dw char_0x39            // MEWTWO
     dw char_0x3A            // MARTH
     dw char_0x3B            // SONIC
+    dw char_0x3E            // SONIC
 
     dw char_0x2A            // J MARIO
     dw char_0x29            // J FOX
@@ -2424,10 +2437,11 @@ scope Training {
         constant MTWO(0x16)
         constant MARTH(0x17)
         constant SONIC(0x18)
+        constant SHEIK(0x19)
 
         // Increment JMARIO after adding more characters above
         // j characters
-        constant JMARIO(0x19)
+        constant JMARIO(0x1A)
         constant JFOX(JMARIO + 0x01)
         constant JDK(JMARIO + 0x02)
         constant JSAMUS(JMARIO + 0x03)
@@ -2493,6 +2507,7 @@ scope Training {
     db Character.id.MTWO
     db Character.id.MARTH
     db Character.id.SONIC
+    db Character.id.SHEIK
 
     db Character.id.JMARIO
     db Character.id.JFOX
@@ -2594,6 +2609,7 @@ scope Training {
     db id.SONIC
     db id.SANDBAG
     db id.SSONIC
+    db id.SHEIK
 
     // @ Description
     // Spawn Position Strings

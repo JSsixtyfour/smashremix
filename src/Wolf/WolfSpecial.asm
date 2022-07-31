@@ -222,24 +222,34 @@ scope WolfNSP {
         lw      t0, 0x0000(t0)      // loads max duration from fireball struct
         sw      t0, 0x0268(a0)      // save max duration to active projectile struct current remaining duration
         lw      a1, 0x0084(t7)      // loads reflective character's struct
-        
-        // first subroutine
-        lw      t6, 0x0044(a1)      // loads direction 1 or -1 in fp
-        lwc1    f0, 0x0020(a0)      // loads velocity
+
+        // Before determining new direction, multiply speed.
+        lw      t6, 0x0044(a1)      // loads player direction 1 or -1 in fp
+        lwc1    f0, 0x0020(a0)      // loads projectile velocity
         mul.s   f0, f0, f4          // multiply current speed by reflection speed multiplier
-        mtc1    r0, f10             // move 0 to f10
-        mtc1    t6, f4              // place direction in f4
         nop
-        cvt.s.w f6, f4              // cvt to sw floating point
-        mul.s   f8, f0, f6          // change direction of projectile to the opposite direction via multiplication
-        // lw      t6, 0x0004(t0)      // load max speed
-        // mtc1    t6, f6              // move max speed to f6
-        c.lt.s  f8, f10             // current velocity compared to 0 (less than or equal to)
+        swc1    f0, 0x0020(a0)      // save new speed
         nop
-        bc1f    _branch              // jump if velocity is greater than 0
+        jal     0x801680EC          // go to the default subroutine that determines direction
         nop
-        neg.s   f16, f0
-        swc1    f16, 0x0020(a0)     // save velocity
+
+        // old routine for reference, was based on 0x801680EC
+        // lw      t6, 0x0044(a1)      // loads direction 1 or -1 in fp
+        // lwc1    f0, 0x0020(a0)      // loads velocity
+        // mul.s   f0, f0, f4          // multiply current speed by reflection speed multiplier (not original logic)
+        // mtc1    r0, f10             // move 0 to f10
+        // mtc1    t6, f4              // place direction in f4
+        // nop
+        // cvt.s.w f6, f4              // cvt to sw floating point
+        // mul.s   f8, f0, f6          // change direction of projectile to the opposite direction via multiplication
+        // //  lw      t6, 0x0004(t0)      // load max speed
+        // //  mtc1    t6, f6              // move max speed to f6
+        // c.lt.s  f8, f10             // current velocity compared to 0 (less than or equal to)
+        // nop
+        // bc1f    _branch              // jump if velocity is greater than 0
+        // nop
+        // neg.s   f16, f0
+        // swc1    f16, 0x0020(a0)     // save velocity
         
         _branch:
         lw      a0, 0x0018(sp)
@@ -271,7 +281,7 @@ scope WolfNSP {
 		_blaster_projectile_struct:
         dw 0x00000000                   // this has some sort of bit flag to tell it to use secondary type display list?
 		dw 0x00000000
-        dw Character.WOLF_file_6_ptr 		// grenade_hitbox_pointer2pointer
+        dw Character.WOLF_file_6_ptr    // pointer to file
         dw 0x00000000                   // 00000000
         dw 0x12480000                   // rendering routine?
         dw blaster_duration             // duration (default 0x80168540) (samus 0x80168F98)

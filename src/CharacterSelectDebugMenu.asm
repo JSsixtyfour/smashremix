@@ -40,7 +40,16 @@ scope CharacterSelectDebugMenu {
         lw      a1, 0x0000(a1)              // a1 = player struct start
         sw      a1, 0x0040(v0)              // save player struct start address
         li      a1, menu_arrays             // a1 = menu_arrays
+        lli     t0, 0x0004                  // t0 = 4 = 1p
+        bne     a0, t0, _get_menu_array     // if not 1p, don't need to check single player mode
         sll     t0, a0, 0x0001              // t0 = offset to menu array pointers address
+        li      t1, SinglePlayerModes.singleplayer_mode_flag
+        lw      t1, 0x0000(t1)              // t1 = 5 if allstar
+        lli     t2, SinglePlayerModes.ALLSTAR_ID
+        beql    t1, t2, _get_menu_array     // if allstar, set to that menu array offset
+        lli     t0, 0x0028                  // t0 = offset to menu array pointers address for allstar
+
+        _get_menu_array:
         addu    a1, a1, t0                  // a1 = pointer to menu array pointers address
         sw      a1, 0x0048(v0)              // save menu array address
         sw      r0, 0x0030(v0)              // 0 out panel reference slots we may not need
@@ -249,13 +258,17 @@ scope CharacterSelectDebugMenu {
         sw      r0, 0x0064(v0)              // clear reference to menu item 2
         sw      r0, 0x0068(v0)              // clear reference to menu item 3
         sw      r0, 0x006C(v0)              // clear reference to menu item 4
-        sltiu   t2, s5, 0x0002              // t2 = 1 for 1P/Bonus, 0 otherwise
-        sw      t2, 0x004C(v0)              // set flag for 1P/Bonus
+        sltiu   t0, s5, 0x0002              // t0 = 1 for 1P/Bonus, 0 otherwise
+        sw      t0, 0x004C(v0)              // set flag for 1P/Bonus
         lli     t2, 0x0001                  // t2 = 1 for button press enabled, 0 for disabled
         beqzl   s4, pc() + 8                // if on VS, initialize button as disabled
         lli     t2, 0x0000                  // t2 = 0 (disabled)
         sw      t2, 0x0050(v0)              // set flag for button press (0 = disabled, 1 = enabled)
-        sw      t9, 0x0054(v0)              // save panel index
+        sw      t9, 0x0054(v0)              // save port index for training/vs
+        lui     t2, 0x800A
+        lbu     t2, 0x4AE3(t2)              // t2 = port index for 1p/bonus
+        bnezl   t0, pc() + 8                // if 1p/bonus, save port index
+        sw      t2, 0x0054(v0)              // save port index for 1p/bonus
         lli     t0, 0x0008                  // t0 = offset to CSS settings for Training
         bne     t0, s4, _set_display_state  // if not training, skip
         sw      t9, 0x0058(v0)              // save dpad button index for render_control_object
@@ -793,9 +806,9 @@ scope CharacterSelectDebugMenu {
         lh      at, 0x0014(t1)              // at = panel width
         mtc1    at, f2                      // f2 = panel width
         cvt.s.w f2, f2                      // f2 = panel width, floating point
-        lui     at, 0x4000                  // at = 2, floating point
+        lui     at, 0x3F00                  // at = .5, floating point
         mtc1    at, f4                      // f4 = 2
-        div.s   f2, f2, f4                  // f2 = padding
+        mul.s   f2, f2, f4                  // f2 = padding
         add.s   f0, f0, f2                  // f0 = ucx
         mfc1    s1, f0                      // s1 = ucx
         lwc1    f0, 0x005C(t1)              // f0 = uly of panel
@@ -835,6 +848,13 @@ scope CharacterSelectDebugMenu {
         lw      a2, 0x0000(a2)              // a2 = string
 
         _end:
+        lw      t0, 0x0014(sp)              // t0 = panel object
+        lw      t1, 0x0074(t0)              // t1 = panel image struct
+        lh      at, 0x0014(t1)              // at = panel width
+        addiu   a1, at, -0x0018             // a1 = max width
+        jal     Render.apply_max_width_
+        or      a0, v0, r0                  // a0 = string object
+
         lw      a0, 0x0010(sp)              // a0 = menu renderer object, offset by 0x4 based on menu item row
         sw      v0, 0x0040(a0)              // save reference to value object
         addiu   t1, a0, 0x0040              // t1 = address of reference to value object
@@ -1295,6 +1315,7 @@ scope CharacterSelectDebugMenu {
         sw      ra, 0x0004(sp)              // save registers
         sw      t0, 0x0008(sp)              // ~
         sw      t5, 0x000C(sp)              // ~
+        sw      t1, 0x0010(sp)              // ~
 
         // a0 is preserved for all the following routines
 
@@ -1336,6 +1357,7 @@ scope CharacterSelectDebugMenu {
         lw      a1, 0x0008(sp)              // a1 = debug control object
 
         _end:
+        lw      t1, 0x0010(sp)              // ~
         lw      t5, 0x000C(sp)              // ~
         lw      ra, 0x0004(sp)              // restore registers
         addiu   sp, sp, 0x0030              // deallocate stack space
@@ -1423,7 +1445,7 @@ scope CharacterSelectDebugMenu {
         lw      at, 0x0048(at)              // at = menu array
         lw      t0, 0x0000(at)              // t0 = human menu array
         lw      a1, 0x000C(sp)              // a1 = debug button object
-        lw      t4, 0x0054(a1)              // t4 = panel index
+        lw      t4, 0x0054(a1)              // t4 = port index
         sll     t4, t4, 0x0002              // t4 = offset in value string array
         lli     t5, 0x0001                  // t5 = loop counter
 
@@ -1571,6 +1593,7 @@ scope CharacterSelectDebugMenu {
 
         sw      t6, 0x0048(a1)              // save direction
 
+        _update_value:
         // Update value
         // 0x0040(a1) - port index
         // 0x0044(a1) - menu item
@@ -1597,11 +1620,10 @@ scope CharacterSelectDebugMenu {
         // call change handler
         lw      t6, 0x0018(t5)              // t6 = change handler routine
         beqz    t6, _check_string_update    // if no change handler, skip calling change handler
-        nop
+        sw      a1, 0x0024(sp)              // save arrow object
 
         sw      t5, 0x001C(sp)              // save menu item
         sw      t7, 0x0020(sp)              // save updated value
-        sw      a1, 0x0024(sp)              // save arrow object
 
         lw      t0, 0x000C(sp)              // t0 = address of debug button object
         lw      t1, 0x0000(t0)              // t1 = debug button object
@@ -1629,6 +1651,8 @@ scope CharacterSelectDebugMenu {
         sll     t7, t7, 0x0002              // t7 = offset in string table
         addu    t7, t6, t7                  // t7 = pointer to string
         lw      t7, 0x0000(t7)              // t7 = string
+        lbu     t2, 0x0000(t7)              // t2 = first character
+        beqz    t2, _skip_value             // if this is blank, skip the value
         lw      t2, 0x0014(sp)              // t2 = address of arrow object
         addiu   t2, t2, -0x0010             // t2 = address of value object
         lw      t2, 0x0000(t2)              // t2 = value object
@@ -1642,6 +1666,11 @@ scope CharacterSelectDebugMenu {
 
         b       _end                        // we can stop checking if other arrows were pressed by this cursor
         nop
+
+        _skip_value:
+        lw      a1, 0x0024(sp)              // a1 = arrow object
+        b       _update_value               // loop until we find the next one
+        lw      t6, 0x0048(a1)              // t6 = direction
 
         _next_arrow:
         lw      t2, 0x0014(sp)              // t2 = address of current arrow object
@@ -1781,7 +1810,7 @@ scope CharacterSelectDebugMenu {
         nop
     }
 
-    // @ Desription
+    // @ Description
     // Moves Team buttons to the right 5 pixels
     OS.patch_start(0x130A6C, 0x801327EC)
     addiu   t9, t8, 0x0027                  // original: addiu   t9, t8, 0x0022
@@ -2048,6 +2077,12 @@ scope CharacterSelectDebugMenu {
         jal     InputDisplay.clear_settings_for_1p_
         lw      a0, 0x000C(sp)              // a0 = human port
 
+        jal     PlayerTag.clear_settings_for_1p_
+        lw      a0, 0x000C(sp)              // a0 = human port
+
+        jal     KirbyHat.clear_settings_for_1p_
+        lw      a0, 0x000C(sp)              // a0 = human port
+
         lw      ra, 0x0004(sp)              // restore registers
         lw      a0, 0x0008(sp)              // ~
         lw      v0, 0x000C(sp)              // ~
@@ -2072,6 +2107,7 @@ scope CharacterSelectDebugMenu {
     dw menu_array_training, menu_array_training_cpu
     dw menu_array_bonus,    0
     dw menu_array_bonus,    0
+    dw menu_array_allstar,  0
 
     // @ Description
     // Variables used for tracking counts
@@ -2082,6 +2118,7 @@ scope CharacterSelectDebugMenu {
     variable menu_item_count_training(0)
     variable menu_item_count_training_cpu(0)
     variable menu_item_count_bonus(0)
+    variable menu_item_count_allstar(0)
 
     // @ Description
     // Constants for value type
@@ -2100,7 +2137,7 @@ scope CharacterSelectDebugMenu {
     // default_value - default value
     // string_table - table containing pointers to strings to be displayed instead of the index value, if value_type = STRING
     // onchange_handler - routine to run when value is changed, or 0 if not necessary
-    // applies_to - bitmask for which menu arrays to append... ex: 0b10100 means add to vs and training, 0b01011 means add to 1p and bonus 1 and 2
+    // applies_to - bitmask for which menu arrays to append... ex: 0b101000 means add to vs and training, 0b010110 means add to 1p and bonus 1 and 2
     // applies_to_hmn_cpu - bitmask for whether the menu item applies to humans, cpus or both... ex: 0b10 means humans only, 0b01 means cpus only, 0b11 means both
     // value_array_pointer - if provided, a pointer to external value array pointer... if 0, value array will be created
     macro add_menu_item(label, value_type, min_value, max_value, default_value, string_table, onchange_handler, applies_to, applies_to_hmn_cpu, value_array_pointer) {
@@ -2132,7 +2169,7 @@ scope CharacterSelectDebugMenu {
         }
 
         // If applies to VS, setup for adding to VS menu item array
-        if ({applies_to} & 0b10000) > 0 {
+        if ({applies_to} & 0b100000) > 0 {
             // human
             if ({applies_to_hmn_cpu} & 0b10) > 0 {
 	            evaluate n(menu_item_count_vs)
@@ -2148,14 +2185,14 @@ scope CharacterSelectDebugMenu {
         }
 
         // If applies to 1P, setup for adding to 1P menu item array
-        if ({applies_to} & 0b01000) > 0 {
+        if ({applies_to} & 0b010000) > 0 {
             evaluate n(menu_item_count_1p)
             global evaluate MENU_ITEM_1P_{n}(menu_item_{i})
             global variable menu_item_count_1p(menu_item_count_1p + 1)
         }
 
         // If applies to Training, setup for adding to Training menu item array
-        if ({applies_to} & 0b00100) > 0 {
+        if ({applies_to} & 0b001000) > 0 {
             // human
             if ({applies_to_hmn_cpu} & 0b10) > 0 {
 	            evaluate n(menu_item_count_training)
@@ -2171,10 +2208,17 @@ scope CharacterSelectDebugMenu {
         }
 
         // If applies to Bonus, setup for adding to Bonus menu item array
-        if ({applies_to} & 0b00011) > 0 {
+        if ({applies_to} & 0b000110) > 0 {
             evaluate n(menu_item_count_bonus)
             global evaluate MENU_ITEM_BONUS_{n}(menu_item_{i})
             global variable menu_item_count_bonus(menu_item_count_bonus + 1)
+        }
+
+        // If applies to Allstar, setup for adding to Allstar menu item array
+        if ({applies_to} & 0b000001) > 0 {
+            evaluate n(menu_item_count_allstar)
+            global evaluate MENU_ITEM_ALLSTAR_{n}(menu_item_{i})
+            global variable menu_item_count_allstar(menu_item_count_allstar + 1)
         }
     }
 
@@ -2256,11 +2300,22 @@ scope CharacterSelectDebugMenu {
         }
         dw 0 // terminator
 
+        menu_array_allstar_info:
+        dw menu_item_count_allstar
+        menu_array_allstar:
+        define n(0)
+        while {n} < menu_item_count_allstar {
+            dw {MENU_ITEM_ALLSTAR_{n}}
+            evaluate n({n}+1)
+        }
+        dw 0 // terminator
+
         print "Total menu items: ", menu_item_count, "\n"
         print "Total VS menu items: HMN=", menu_item_count_vs, " CPU=", menu_item_count_vs_cpu, "\n"
         print "Total 1p menu items: ", menu_item_count_1p, "\n"
         print "Total Training menu items: HMN=", menu_item_count_training, " CPU=", menu_item_count_training_cpu, "\n"
         print "Total Bonus menu items: ", menu_item_count_bonus, "\n"
+        print "Total Allstar menu items: ", menu_item_count_allstar, "\n"
     }
 
     // Include menu item files, scoped
@@ -2303,9 +2358,19 @@ scope CharacterSelectDebugMenu {
     scope InputDisplay {
         include "css/InputDisplay.asm"
     }
+    scope Practice_1P {
+        include "css/Practice_1P.asm"
+    }
+    scope PlayerTag {
+        include "css/PlayerTag.asm"
+    }
+    scope KirbyHat {
+        include "css/KirbyHat.asm"
+    }
 
     // Add Menu Items
     add_menu_item(Shield)
+    add_menu_item(PlayerTag)
     add_menu_item(Visibility)
     add_menu_item(Skeleton)
     add_menu_item(ModelDisplay)
@@ -2318,6 +2383,8 @@ scope CharacterSelectDebugMenu {
     add_menu_item(StartWith)
     add_menu_item(TauntItem)
     add_menu_item(TauntButton)
+    add_menu_item(Practice_1P)
+    add_menu_item(KirbyHat)
 
     // Write Menu Items
     write_menu_items()

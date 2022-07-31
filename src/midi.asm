@@ -12,7 +12,7 @@ include "OS.asm"
 scope MIDI {
     read32 MUSIC_TABLE, "../roms/original.z64", 0x3D768
     variable MUSIC_TABLE_END(MUSIC_TABLE + 0x17C)   // variable containing the current end of the music table
-    constant MIDI_BANK(0x2000000)                   // defines the start of the additional MIDI bank
+    constant MIDI_BANK(0x2400000)                   // defines the start of the additional MIDI bank
     global variable MIDI_BANK_END(MIDI_BANK)        // variable containing the current end of the MIDI bank
     // These 2 variables will be used in FGM.asm to calculate the correct RAM offset for numerous pointers
     variable midi_count(0x2F)                       // variable containing total number of MIDIs
@@ -167,6 +167,7 @@ scope MIDI {
     add_game(dkr, "Diddy Kong Racing")
     add_game(zelda, "The Legend of Zelda")
     add_game(zelda2, "Zelda II: The Adventure of Link")
+    add_game(awakening, "The Legend of Zelda: Link's Awakening")
     add_game(ocarina, "The Legend of Zelda: Ocarina of Time")
     add_game(majora, "The Legend of Zelda: Majora's Mask")
     add_game(skyward, "The Legend of Zelda: Skyward Sword")
@@ -215,6 +216,7 @@ scope MIDI {
     add_game(sonicadventure, "Sonic Adventure")
     add_game(sonicadventure2, "Sonic Adventure 2")
     add_game(rhfever, "Rhythm Heaven Fever")
+    add_game(chrono, "Chrono Trigger")
     OS.align(4)
 
     // insert custom midi files
@@ -372,6 +374,11 @@ scope MIDI {
     insert_midi(METALLIC_MADNESS, OS.TRUE, OS.TRUE, "Metallic Madness", soniccd)
     insert_midi(EVERYTHING, OS.TRUE, OS.TRUE, "Everything (Super Sonic)", sonicfighters)
     insert_midi(ROCKSOLID, OS.TRUE, OS.TRUE, "Rock Solid", conker)
+    insert_midi(RAINBOWROAD, OS.TRUE, OS.TRUE, "Rainbow Road", mk64)
+    insert_midi(MK64_CREDITS, OS.TRUE, OS.TRUE, "Victory Lap", mk64)
+    insert_midi(RACEWAYS, OS.TRUE, OS.TRUE, "Raceways", mk64)
+    insert_midi(LINKS_AWAKENING_MEDLEY, OS.TRUE, OS.TRUE, "Link's Awakening Medley", awakening)
+    insert_midi(CORRIDORS_OF_TIME, OS.TRUE, OS.TRUE, "Corridors of Time", chrono)
 
     pushvar origin, base
 
@@ -737,6 +744,9 @@ scope MIDI {
     add_instrument_sample(sawtoothK64_2, 0x0, 0x0, 66 * 200, 0x7F, 0x7F, 0x00, 0x7F, 72, 83, 72, -5, 0x3F, 0x7E, OS.TRUE, 12808, 27679, 0xFFFFFFFF, OS.FALSE)
     add_instrument_sample(sawtoothK64_3, 0x0, 0x0, 66 * 200, 0x7F, 0x7F, 0x00, 0x7F, 84, 127, 84, -10, 0x3F, 0x7E, OS.TRUE, 13329, 20767, 0xFFFFFFFF, OS.FALSE)
     add_instrument(Sawtooth Kirby 64, 0x7E, 0x3F, 0x05, 0x04DD, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0)
+
+    add_instrument_sample(guitar_slide-0, 0x0, 0x0, 66 * 200, 0x7F, 0x7F, 0x00, 0x7F, 0, 71, 60, -15, 0x3F, 0x7E, OS.TRUE, 12440, 26687, 0xFFFFFFFF, OS.FALSE)
+    add_instrument(MOTHER 3 Shogo Sakai Guitar Slide, 0x7E, 0x3F, 0x05, 0x04DD, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0)
 
     move_instrument_bank_map()
 

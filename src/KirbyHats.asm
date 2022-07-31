@@ -6,7 +6,7 @@
 scope KirbyHats {
     // @ Description
     // Number of new "hats" added
-    variable new_hats(15)
+    variable new_hats(16)
 
     // @ Description
     // Used in add_hat to adjust offset
@@ -431,4 +431,207 @@ scope KirbyHats {
     add_hat(Character.kirby_hat_id.FOX, 0x199A8, -1, -1, 0x1A858, -1, -1)
     // Sonic hat_id: 0x1D
     add_hat(Character.kirby_hat_id.FOX, 0x1BD18, -1, -1, 0x1CD18, -1, -1)
+    // Sheik hat_id: 0x1E
+    add_hat(Character.kirby_hat_id.FALCON, 0x1E2C0, -1, -1, 0x1F5B8, -1, -1)
+
+    spawn_with_table_:
+    db 0x08                                   // NA = no hat
+    db 0x00                                   // 0x00 = mario
+    db 0x01                                   // 0x01 = fox
+    db 0x02                                   // 0x02 = dk
+    db 0x03                                   // 0x03 = samus
+    db 0x04                                   // 0x04 = luigi
+    db 0x05                                   // 0x05 = link
+    db 0x06                                   // 0x06 = yoshi
+    db 0x07                                   // 0x07 = captain falcon
+    db 0x09                                   // 0x09 = pikachu
+    db 0x0A                                   // 0x0A = jigglypuff
+    db 0x0B                                   // 0x0B = ness
+    db 0x1D                                   // 0x0C = falco
+    db 0x1E                                   // 0x0D = ganondorf
+    db 0x1F                                   // 0x0E = young link
+    db 0x20                                   // 0x0F = dr. mario
+    db 0x21                                   // 0x10 = Wario
+    db 0x22                                   // 0x11 = Dark Samus
+    db 0x26                                   // 0x12 = Lucas
+    db 0x34                                   // 0x13 = Bowser
+    db 0x36                                   // 0x14 = Mad Piano
+    db 0x37                                   // 0x15 = Wolf
+    db 0x38                                   // 0x16 = Conker
+    db 0x39                                   // 0x17 = Mewtwo
+    db 0x3A                                   // 0x18 = Marth
+    db 0x3B                                   // 0x19 = Sonic
+    db 0x3E                                   // 0x1A = Sheik
+    OS.align(4)
+
+    spawn_with_hat:
+    dw 0x00000000, 0x00000000, 0x00000000, 0x00000000
+
+    // @ Description
+    // This hooks into a kirby spawning routine which loads his hat, we substitute the desired hat here
+    scope kirby_hat_select_: {
+        OS.patch_start(0x53608, 0x800D7E08)
+        j       kirby_hat_select_
+        lbu     t8, 0x000D(v1)              // t8 = port
+        _return:
+        OS.patch_end()
+
+        li      v0, Global.current_screen   // t0 = address of current screen
+        lbu     v0, 0x0000(v0)              // t0 = current screen
+        lli     t5, 0x0011                  // t1 = 1p CSS
+        beq     t5, v0, _normal             // 
+        lli     t5, 0x0013                  // t1 = Bonus 1 CSS
+        beq     t5, v0, _normal             // 
+        lli     t5, 0x0014                  // t1 = Bonus 2 CSS
+        beq     t5, v0, _normal             //
+        lli     t5, 0x0014                  // t1 = Bonus 2 CSS
+        beq     t5, v0, _normal             //
+        lli     t5, 0x0035                  // t1 = Bonus Mode screen
+        beq     t5, v0, _normal             //
+        nop
+        
+        // v1 = player struct
+        li      v0, spawn_with_table_
+        li      t5, spawn_with_hat
+        
+
+        sll     t8, t8, 0x0002              // t8 = offset to port
+        addu    t5, t5, t8                  // t5 = address of spawn with hat id
+        lw      t8, 0x0000(t5)              // a1 = hat_id
+
+        addu    v0, t8, v0                  // add to table address to get character ID
+        lbu     t8, 0x0000(v0)              // load character ID
+
+        addiu   t5, r0, 0x0008              // kirby character ID
+        beql    t5, t8, _end                // if the ID is kirby's, do normal
+        _normal:
+        lw      t8, 0x0020(t2)              // original line 1, loads hat
+
+        _end:
+        j       _return
+        sw      r0, 0x0AE0(v1)              // original line 2
+    }
+
+    // @ Description
+    // Loads kirby files when needed for debug options in training mode
+    scope kirby_hat_files_training_: {
+        OS.patch_start(0x116B60, 0x80190340)
+        j       kirby_hat_files_training_
+        addiu   t7, r0, 0x0003              // amount of port loops
+        _return:
+        OS.patch_end()
+
+        li      s4, spawn_with_hat          // pointer to kirby hat settings
+
+        _loop:
+        lw      t1, 0x0000(s4)              // hat setting for that port
+        bnez    t1, _kirbyhat_selected      // if not default, load files
+        addiu   s4, s4, 0x0004              // move to next port
+
+        bnez    t7, _loop                   // if not all ports, loop
+        addiu   t7, t7, 0xFFFF              // subtract 1 from loop counter
+
+        beq     r0, r0, _end                // to end/default hat situation
+        nop
+
+        _kirbyhat_selected:
+        Render.load_file(0xE6, Render.file_pointer_1)              // load kirby hats classic
+        Render.load_file(0xC1B, Render.file_pointer_2)             // load kirby hats remix
+
+        _end:
+        or      s1, r0, r0                  // original line 1
+        j       _return
+        addiu   s4, sp, 0x005C              // original line 2
+    }
+
+    // @ Description
+    // Loads kirby files when needed for debug options in vs mode
+    scope kirby_hat_files_vs_: {
+        OS.patch_start(0x10A29C, 0x8018D3AC)
+        j       kirby_hat_files_vs_
+        addiu   t7, r0, 0x0003              // amount of port loops
+        _return:
+        OS.patch_end()
+
+        li      s4, spawn_with_hat          // pointer to kirby hat settings
+
+        _loop:
+        lw      t5, 0x0000(s4)              // hat setting for that port
+        bnez    t5, _kirbyhat_selected      // if not default, load files
+        addiu   s4, s4, 0x0004              // move to next port
+
+        bnez    t7, _loop                   // if not all ports, loop
+        addiu   t7, t7, 0xFFFF              // subtract 1 from loop counter
+
+        beq     r0, r0, _end                // to end/default hat situation
+        nop
+
+        _kirbyhat_selected:
+        Render.load_file(0xE6, Render.file_pointer_1)              // load kirby hats classic
+        Render.load_file(0xC1B, Render.file_pointer_2)             // load kirby hats remix
+
+        _end:
+        or      s1, r0, r0                  // original line 1
+        j       _return
+        addiu   s4, sp, 0x005C              // original line 2
+    }
+
+    // @ Description
+    // Prevents kirby from losing hat via hit or taunt when hat set
+    scope hat_loss_prevent_: {
+        OS.patch_start(0xDE034, 0x801635F4)
+        j       hat_loss_prevent_
+        sw      a0, 0x0020(sp)              // original line 1
+        _return:
+        OS.patch_end()
+
+        lw      at, 0x0084(a0)
+        lbu     at, 0x000D(at)              // at = port
+        li      v0, spawn_with_table_
+        li      a0, spawn_with_hat
+        sll     at, at, 0x0002              // at = offset to port
+        addu    a0, a0, at                  // a0 = address of spawn with hat id
+        lbu     at, 0x0003(a0)              // at = hat_id
+
+        addu    v0, at, v0                  // add to table address to get character ID
+        lbu     at, 0x0000(v0)              // load character ID
+
+        addiu   a0, r0, 0x0008              // kirby character ID
+        beq     a0, at, _end                // if the ID is kirby's, do normal
+        lw      a0, 0x0020(sp)              // original line 1
+
+        j       0x80163638                  // skip removal procedures
+        lw      a0, 0x0084(a0)              // original line 2
+
+        _end:
+        j       _return
+        lw      a0, 0x0084(a0)              // original line 2
+    }
+    
+    // @ Description
+    // Prevents kirby from having his power ID set to 0
+    scope kirby_power_loss_prevent_: {
+        OS.patch_start(0xD7D84, 0x8015D344)
+        j       kirby_power_loss_prevent_
+        lbu     a1, 0x000D(a0)              // amount of port loops
+        _return:
+        OS.patch_end()
+
+        li      a2, spawn_with_hat          // pointer to kirby hat settings
+
+        _loop:
+        sll     a1, a1, 0x0002              // a1 = offset to port
+        addu    a1, a2, a1                  // a0 = address of spawn with hat id
+        lbu     a2, 0x0003(a1)              // at = hat_id
+        
+        beqzl   a2, _no_kirbyhat_selected   // if default, remove power, if have a hat selected, do not
+        sw      r0, 0x0AE0(a0)              // original line 2, remove power
+
+        _no_kirbyhat_selected:
+        jal     0x80156E60                  // original line 2
+        nop
+        
+        j       _return
+        nop
+    }
 }

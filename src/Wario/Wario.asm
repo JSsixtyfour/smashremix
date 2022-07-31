@@ -299,6 +299,8 @@ scope Wario {
         ori     s1, r0, Character.id.WARIO  // s1 = id.WARIO
         beq     s0, s1, _check_action_wario // if id = WARIO, check action
         nop
+        ori     s1, r0, Character.id.SHEIK  // s1 = id.SHEIK
+        beq     s0, s1, _check_action_sheik // if id = SHEIK, check action
         ori     s1, r0, Character.id.KIRBY  // s1 = id.KIRBY
         beq     s0, s1, _check_action_kirby // if id = KIRBY, check action
         ori     s1, r0, Character.id.JKIRBY // s1 = id.JKIRBY
@@ -316,8 +318,9 @@ scope Wario {
         nop
 
 
+        _check_action_sheik:
         lw      s0, 0x0024(a0)              // s0 = current action
-        ori     s1, r0, 0x00E5              // s1 = action id: DSP_ATTACK
+        ori     s1, r0, Sheik.Action.DSP_ATTACK // s1 = action id: DSP_ATTACK
         beq     s0, s1, _recoil             // branch if current action = down special attack
         nop
         beq     r0, r0, _end                // if any other attack, function normally
@@ -545,7 +548,7 @@ scope Wario {
         nop
     }
 
-    // @ Decription
+    // @ Description
     // Attempts to fix the position of the grabbed character on frame 1 of Wario's GrabPull action.
     // Not perfect, but a big improvement.
     // Also used by Mad Piano.

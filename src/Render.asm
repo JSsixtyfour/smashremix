@@ -48,7 +48,7 @@ scope Render {
     // a0 - object address (v0 from 0x80009968)
     // a1 - RAM address of joint array
     // a2 - ?
-    // a3 - ?
+    // a3 - some sort of index for how to render the joint
     // 0x0010(sp) - ?
     // 0x0014(sp) - ?
     // @ Returns
@@ -195,6 +195,8 @@ scope Render {
     // now fix widths
     pushvar origin, base
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('!' - 0x20)); db 0x04
+    origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('\d' - 0x20)); db 0x04
+    origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('&' - 0x20)); db 0x09
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('\s' - 0x20)); db 0x02
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('(' - 0x20)); db 0x03
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * (')' - 0x20)); db 0x03
@@ -202,9 +204,10 @@ scope Render {
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * (',' - 0x20)); db 0x02
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('-' - 0x20)); db 0x04
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('.' - 0x20)); db 0x02
-    origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('/' - 0x20)); db 0x05
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * (':' - 0x20)); db 0x04
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('\b' - 0x20)); db 0x04
+    origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('?' - 0x20)); db 0x06
+    origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('@' - 0x20)); db 0x0B
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('A' - 0x20)); db 0x09
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('C' - 0x20)); db 0x08
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('D' - 0x20)); db 0x08
@@ -224,6 +227,10 @@ scope Render {
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('X' - 0x20)); db 0x08
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('W' - 0x20)); db 0x0B
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('Z' - 0x20)); db 0x08
+    origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('[' - 0x20)); db 0x04
+    origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * (']' - 0x20)); db 0x04
+    origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('_' - 0x20)); db 0x0A
+    origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('`' - 0x20)); db 0x02
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('c' - 0x20)); db 0x06
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('d' - 0x20)); db 0x08
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('f' - 0x20)); db 0x05
@@ -239,7 +246,10 @@ scope Render {
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('s' - 0x20)); db 0x05
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('t' - 0x20)); db 0x05
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('w' - 0x20)); db 0x0A
-    origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('~' + 1 - 0x20)); db 0x0A // Omega
+    origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('{' - 0x20)); db 0x04
+    origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('|' - 0x20)); db 0x02
+    origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('}' - 0x20)); db 0x04
+    origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('~' + 1 - 0x20)); db 0x09 // Omega
     origin  CHARACTER_OFFSETS_CUSTOM_ORIGIN + (8 * ('~' + 2 - 0x20)); db 0x09 // Music Note
     pullvar base, origin
 
@@ -1570,6 +1580,11 @@ scope Render {
         li      t0, display_order_group
         lw      t0, 0x0000(t0)              // t0 = display_order_group
         sw      t0, 0x0064(v0)              // save display_order_group at object creation
+        sw      r0, 0x0068(v0)              // set to no max width
+        sw      r0, 0x006C(v0)              // clear extra space for use outside this routine
+        sw      r0, 0x0070(v0)              // clear extra space for use outside this routine
+        sw      r0, 0x0074(v0)              // clear extra space for use outside this routine
+        sw      r0, 0x0078(v0)              // clear extra space for use outside this routine
         andi    a1, a1, 0x0001              // a1 = 1 if pointer, 0 if not
         beqz    a1, _check_number           // if not a pointer, skip
         nop                                 // otherwise, a0 is actually a pointer
@@ -1726,6 +1741,70 @@ scope Render {
     }
 
     // @ Description
+    // Scales a string if it is too long
+    // @ Arguments
+    // a0 - string object
+    // a1 - max width
+    // @ Returns
+    // v0 - string object
+    scope apply_max_width_: {
+        addiu   sp, sp, -0x0010             // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+        sw      a1, 0x0008(sp)              // ~
+
+        // calculate length
+        lw      t0, 0x0074(a0)              // t0 = image struct (first character)
+        beqz    t0, _end                    // skip if no image struct
+        sw      a1, 0x0068(a0)              // save max width value on string object
+        lwc1    f0, 0x0058(t0)              // f0 = startX
+        _loop_calc:
+        lw      t1, 0x0008(t0)              // t1 = next character image struct
+        bnezl   t1, _loop_calc              // if not the last character, keep looping
+        or      t0, t1, r0                  // t0 = next character image struct
+        lwc1    f2, 0x0018(t0)              // f2 = x scale
+        lhu     t1, 0x0014(t0)              // t1 = width
+        mtc1    t1, f4                      // f4 = width
+        cvt.s.w f4, f4                      // f4 = width, fp
+        mul.s   f2, f4, f2                  // f2 = actual width
+        lwc1    f4, 0x0058(t0)              // f4 = startX of last char
+        add.s   f2, f2, f4                  // f2 = endX
+        sub.s   f4, f2, f0                  // f4 = endX - startX = width
+        mtc1    a1, f6                      // a1 = maxWidth
+        cvt.s.w f6, f6                      // f6 = maxWidth, fp
+        div.s   f8, f6, f4                  // f8 = maxWidth / width (div.s takes 37 cycles, so do it early)
+        c.lt.s  f6, f4                      // check if maxWidth < width
+        bc1f    _end                        // if maxWidth >= width, then nothing needs to change so end
+        nop
+
+        // I'm lazy, so the fastest way is to call update_live_string_ with a new scale then update y scale after
+        lw      t0, 0x0044(a0)              // t0 = original scale
+        sw      t0, 0x000C(sp)              // save original scale
+        mfc1    t0, f8                      // t0 = new X scale
+        sw      r0, 0x0030(a0)              // clear pointer so string is recreated
+        sw      r0, 0x0068(a0)              // clear max width to avoid infinite loop
+        jal     update_live_string_         // v0 = new string object
+        sw      t0, 0x0044(a0)              // update X scale in object
+
+        lw      t0, 0x0008(sp)              // t0 = max width value
+        sw      t0, 0x0068(v0)              // save max width value
+
+        lw      t0, 0x0074(v0)              // t0 = image struct (first character)
+        lw      t1, 0x000C(sp)              // t1 = original Y scale
+        sw      t1, 0x0044(v0)              // update scale in object
+        _loop_update:
+        sw      t1, 0x001C(t0)              // update Y scale
+        lw      t0, 0x0008(t0)              // t0 = next character
+        bnez    t0, _loop_update            // if more characters, keep looping
+        or      a0, v0, r0                  // a0 = new string object
+
+        _end:
+        or      v0, a0, r0                  // v0 = string object
+        lw      ra, 0x0004(sp)              // restore registers
+        jr      ra
+        addiu   sp, sp, 0x0010              // deallocate stack space
+    }
+
+    // @ Description
     // Creates an array of addresses at the specified location given a base address and offset array.
     // @ Arguments
     // a0 - base RAM address
@@ -1754,6 +1833,8 @@ scope Render {
         // a0 = object struct address
         addiu   sp, sp, -0x0010             // allocate stack space
         sw      ra, 0x0004(sp)              // save ra
+
+        or      v0, a0, r0                  // v0 = object address
 
         lw      t0, 0x004C(a0)              // t0 = string_type
         andi    t2, t0, 0x0001              // t2 = 1 if pointer, 0 if not
@@ -1820,6 +1901,9 @@ scope Render {
         lw      t0, 0x0018(v0)              // t0 = REGISTER_OBJECT_ROUTINE_ info block
         sw      t0, 0x0014(sp)              // save info block
 
+        lw      t0, 0x0068(v0)              // t0 = max width value
+        sw      t0, 0x0018(sp)              // save max width
+
         lbu     a0, 0x000D(v0)              // a0 = room
         lbu     a1, 0x000C(v0)              // a1 = group
         lw      a2, 0x0034(v0)              // a2 = pointer
@@ -1841,6 +1925,8 @@ scope Render {
         lw      t0, 0x0008(sp)              // t0 = display value
         sw      t0, 0x007C(v0)              // update display value
 
+        sw      v0, 0x0008(sp)              // save reference so this routine returns the new address in v0
+
         li      t1, display_order_room
         lw      t2, 0x0000(t1)              // t2 = current display_order_room
         sw      t2, 0x0060(v0)              // t2 = display_order_room
@@ -1854,7 +1940,7 @@ scope Render {
         sw      t2, 0x0000(t1)              // restore display_order_group
 
         lw      t0, 0x0014(sp)              // t0 = REGISTER_OBJECT_ROUTINE_ info block
-        beqz    t0, _finish                 // if 0, skip
+        beqz    t0, _check_max_width        // if 0, skip
         nop
         or      a0, v0, r0                  // a0 = object
         lw      a1, 0x001C(t0)              // a1 = routine
@@ -1863,6 +1949,13 @@ scope Render {
         jal     REGISTER_OBJECT_ROUTINE_
         addiu   sp, sp, -0x0030
         addiu   sp, sp, 0x0030
+
+        _check_max_width:
+        lw      a1, 0x0018(sp)              // a1 = max width value
+        beqz    a1, _finish                 // if max width not set, skip
+        lw      a0, 0x0008(sp)              // v0 = string object
+        jal     apply_max_width_
+        nop
 
         _finish:
         addiu   sp, sp, 0x0020              // deallocate stack space
@@ -2065,6 +2158,11 @@ scope Render {
         beq     t0, t1, _mode_select        // if (screen_id = Mode Select), jump to _mode_select
         nop
 
+        // 1P Pose
+        lli     t1, 0x000E                  // t1 = 1P player vs cpu pose screen_id
+        beq     t0, t1, _1p_pose            // if (screen_id = 1p pose), jump to _1p_pose
+        nop
+
         // VS Game Mode
         lli     t1, 0x0009                  // t1 = VS Game Mode screen_id
         beq     t0, t1, _vs_game_mode       // if (screen_id = VS Game Mode), jump to _vs_game_mode
@@ -2079,6 +2177,10 @@ scope Render {
         // screen_id = 0x1 AND first file loaded = 0xA7
         lli     t1, 0x0001                  // t1 = Title screen (shared with other screens - at least 1p mode battle)
         bne     t0, t1, _end                // if (screen_id != TITLE), skip
+        nop
+        jal     Item.clear_active_custom_items_ // clear custom items to prevent crash during intro/demo
+        nop
+        jal     GFXRoutine.port_override.clear_gfx_override_table_ // clear gfx override that franklin badge uses
         nop
         li      a0, Global.files_loaded     // ~
         lw      a0, 0x0000(a0)              // a0 = address of loaded files list
@@ -2128,7 +2230,7 @@ scope Render {
 
         jal     Item.clear_active_custom_items_
         nop
-        jal     Item.start_with_item_
+        jal     GFXRoutine.port_override.clear_gfx_override_table_
         nop
 
         jal     BGM.setup_                  // load font file if necessary for music titles
@@ -2141,6 +2243,10 @@ scope Render {
         nop
 
         _css:
+        // Always clear 1P practice active flag
+        li      t9, Practice_1P.practice_active // t9 = practice flag location
+        sw      r0, 0x0000(t9)              // set state inactive
+
         li      a0, TwelveCharBattle.twelve_cb_flag
         lw      a0, 0x0000(a0)              // a0 = 1 if 12cb mode, 0 otherwise
         beqz    a0, _normal_css             // if not 12cb, then do normal css setup
@@ -2155,16 +2261,30 @@ scope Render {
         addu    a0, r0, t0                  // a0 = screen_id
         jal     Item.clear_active_custom_items_
         nop
+        jal     GFXRoutine.port_override.clear_gfx_override_table_
+        nop
 
         li      t0, Global.current_screen   // ~
         lbu     t0, 0x0000(t0)              // t0 = current screen
+        lli     t1, 0x0011                  // t1 = 1p CSS screen_id
+        beq     t0, t1, _1p_css             // if 1p CSS, do setup
+
+
         lli     t1, 0x0013                  // t1 = Bonus 1 screen_id
         beq     t0, t1, _bonus_css          // if Bonus 1, do setup
         lli     t1, 0x0014                  // t1 = Bonus 2 screen_id
         bne     t0, t1, _end                // if not Bonus 1/2, end
         nop
+
         _bonus_css:
         jal     Bonus.setup_
+        nop
+
+        b       _end
+        nop
+
+        _1p_css:
+        jal     SinglePlayerEnemy.setup_
         nop
 
         b       _end
@@ -2182,6 +2302,8 @@ scope Render {
         nop
         jal     Item.clear_active_custom_items_
         nop
+        jal     GFXRoutine.port_override.clear_gfx_override_table_
+        nop
 
         b       _end
         nop
@@ -2194,6 +2316,8 @@ scope Render {
         jal     Item.start_with_item_
         nop
         jal     InputDisplay.setup_
+        nop
+        jal     GFXRoutine.port_override.clear_gfx_override_table_
         nop
 
         b       _end
@@ -2219,6 +2343,10 @@ scope Render {
 
         _mode_select:
         jal     Toggles.mode_select_setup_
+        nop
+
+        _1p_pose:
+        jal     GFXRoutine.port_override.clear_gfx_override_table_
         nop
 
         b       _end

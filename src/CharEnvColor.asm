@@ -163,6 +163,25 @@ scope CharEnvColor {
         hi_alpha:;   create_custom_display_list(RENDER_MODE_ALPHA)
     }
 
+    scope custom_display_lists_struct_sheik: {
+        dw OS.FALSE     // 0x0000: initialized flag, high poly
+        dw hi_default   // 0x0004: pointer to default custom hi poly display list, or 0
+        dw hi_alpha     // 0x0008: pointer to alpha custom hi poly display list, or 0
+        dh 0x0918       // 0x000C: offset to part 0x08 in player struct
+        dh 0x0048       // 0x000E: offset to 1st set render mode command for high poly
+        dh 0x0120       // 0x0010: offset to 2nd set render mode command for high poly, or -1
+        dh 0xFFFF       // 0x0012: offset to 3rd set render mode command for high poly, or -1
+        dw OS.FALSE     // 0x0014: initialized flag, low poly
+        dw hi_default   // 0x0018: pointer to default custom lo poly display list, or 0
+        dw hi_alpha     // 0x001C: pointer to alpha custom lo poly display list, or 0
+        dh 0x0918       // 0x0020: offset to part 0x08 in player struct
+        dh 0x0048       // 0x0022: offset to 1st set render mode command for high poly
+        dh 0x0120       // 0x0024: offset to 2nd set render mode command for high poly, or -1
+        dh 0xFFFF       // 0x0026: offset to 3rd set render mode command for high poly, or -1
+        hi_default:; create_custom_display_list(0xC4113878, RENDER_MODE_DEFAULT)
+        hi_alpha:;   create_custom_display_list(RENDER_MODE_ALPHA, RENDER_MODE_ALPHA)
+    }
+
     scope custom_display_lists_struct_dk_hat: {
         dw OS.FALSE     // 0x0000: initialized flag, high poly
         dw hi_default   // 0x0004: pointer to default custom hi poly display list, or 0
@@ -219,6 +238,27 @@ scope CharEnvColor {
         dh 0x0900       // 0x0020: offset to part 0x02 in player struct
         dh 0x0188       // 0x0022: offset to 1st set render mode command for high poly
         dh 0x0278       // 0x0024: offset to 2nd set render mode command for high poly, or -1
+        dh 0xFFFF       // 0x0026: offset to 3rd set render mode command for high poly, or -1
+        hi_default:; create_custom_display_list(0xC4113878)
+        hi_alpha:;   create_custom_display_list(RENDER_MODE_ALPHA)
+        lo_default:; create_custom_display_list(0xC4113878, RENDER_MODE_DEFAULT)
+        lo_alpha:;   create_custom_display_list(RENDER_MODE_ALPHA, RENDER_MODE_ALPHA)
+    }
+
+    scope custom_display_lists_struct_sheik_hat: {
+        dw OS.FALSE     // 0x0000: initialized flag, high poly
+        dw hi_default   // 0x0004: pointer to default custom hi poly display list, or 0
+        dw hi_alpha     // 0x0008: pointer to alpha custom hi poly display list, or 0
+        dh 0x0900       // 0x000C: offset to part 0x02 in player struct
+        dh 0x0580       // 0x000E: offset to 1st set render mode command for high poly
+        dh 0xFFFF       // 0x0010: offset to 2nd set render mode command for high poly, or -1
+        dh 0xFFFF       // 0x0012: offset to 3rd set render mode command for high poly, or -1
+        dw OS.FALSE     // 0x0014: initialized flag, low poly
+        dw lo_default   // 0x0018: pointer to default custom lo poly display list, or 0
+        dw lo_alpha     // 0x001C: pointer to alpha custom lo poly display list, or 0
+        dh 0x0900       // 0x0020: offset to part 0x02 in player struct
+        dh 0x0388       // 0x0022: offset to 1st set render mode command for high poly
+        dh 0x04B0       // 0x0024: offset to 2nd set render mode command for high poly, or -1
         dh 0xFFFF       // 0x0026: offset to 3rd set render mode command for high poly, or -1
         hi_default:; create_custom_display_list(0xC4113878)
         hi_alpha:;   create_custom_display_list(RENDER_MODE_ALPHA)
@@ -292,6 +332,9 @@ scope CharEnvColor {
         lli     t9, Character.id.WARIO
         li      v0, custom_display_lists_struct_wario
         beq     t2, t9, _fix                // skip to fixing WARIO
+        lli     t9, Character.id.SHEIK
+        li      v0, custom_display_lists_struct_sheik
+        beq     t2, t9, _fix                // skip to fixing SHEIK
         lli     t9, Character.id.SSONIC
         li      v0, custom_display_lists_struct_ssonic_0
         beq     t2, t9, _fix_ssonic         // skip to fixing SSONIC
@@ -320,6 +363,9 @@ scope CharEnvColor {
         lli     t3, Character.kirby_hat_id.PIKACHU
         li      v0, custom_display_lists_struct_pika_hat
         beq     t2, t3, _fix                // if copying Pikachu, need to fix
+        lli     t3, 0x001E                  // t3 = Sheik hat ID
+        li      v0, custom_display_lists_struct_sheik_hat
+        beq     t2, t3, _fix                // if copying Sheik, need to fix
         lli     t3, 0x001D                  // t3 = Sonic hat ID
         li      v0, custom_display_lists_struct_sonic_hat
         bne     t2, t3, _return             // if not copying Sonic, skip
@@ -384,7 +430,7 @@ scope CharEnvColor {
         nop
     }
 
-    // @ Desription
+    // @ Description
     // Resets custom display lists during main character file loading.
     scope reset_custom_display_lists_: {
         OS.patch_start(0x52EA4, 0x800D76A4)
@@ -409,6 +455,10 @@ scope CharEnvColor {
         li      a1, custom_display_lists_struct_wario
         lli     a2, Character.id.WARIO
         beq     a0, a2, _clear              // if WARIO, clear WARIO's custom display lists
+        nop
+        li      a1, custom_display_lists_struct_sheik
+        lli     a2, Character.id.SHEIK
+        beq     a0, a2, _clear              // if SHEIK, clear WARIO's custom display lists
         nop
         li      a1, custom_display_lists_struct_ssonic_0
         lli     a2, Character.id.SSONIC
@@ -443,6 +493,11 @@ scope CharEnvColor {
 
         // kirby Pika hat
         li      a1, custom_display_lists_struct_pika_hat
+        sw      r0, 0x0000(a1)              // clear high poly initialized flag
+        sw      r0, 0x0014(a1)              // clear low poly initialized flag
+
+        // kirby Sheik hat
+        li      a1, custom_display_lists_struct_sheik_hat
         sw      r0, 0x0000(a1)              // clear high poly initialized flag
         sw      r0, 0x0014(a1)              // clear low poly initialized flag
 

@@ -123,7 +123,7 @@ scope Boot {
         lui     a1, 0x8040              // original line 1
     }
 
-    // @ Descritpion
+    // @ Description
     // Draws the version on the title screen
     scope draw_version_on_title_screen_: {
         addiu   sp, sp,-0x0030              // allocate stack space
@@ -139,9 +139,9 @@ scope Boot {
         nop
     }
 
-    string_version:; String.insert("Smash Remix v1.1.1")
+    string_version:; String.insert("Smash Remix v1.2.0")
 
-    // @ Descritpion
+    // @ Description
     // Nintendo 64 logo cannot be skipped.
     // Instead of checking for a button press, the check has been disabled.
     OS.patch_start(0x0017EE18, 0x80131C58)
@@ -160,7 +160,7 @@ scope Boot {
         OS.patch_start(0x00001038, 0x80000438)
         jal     Global.dma_copy_        // original line 1
         addiu   a2, r0, 0x0100          // original line 2
-        lui     a0, 0x01C0              // load rom address (0x01C00000)
+        lui     a0, 0x0200              // load rom address (0x02000000)
         lui     a1, 0x8040              // load ram address (0x80400000)
         jal     Global.dma_copy_        // add custom functions
         lui     a2, 0x0040              // load length of 0x400000

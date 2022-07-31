@@ -1626,7 +1626,6 @@ scope TwelveCharBattle {
         // restore portrait_id
         li      t0, config.current_game
         lw      t0, 0x0000(t0)              // t0 = current game
-        addiu   t0, t0, 0x0001              // ~
         sll     t0, t0, 0x0003              // t0 = offset to game struct
         li      t1, config.p1.match
         addu    t1, t1, t0                  // t1 = p1 game struct
@@ -2914,6 +2913,7 @@ scope TwelveCharBattle {
     add_defeat_parameters(0x2B1,                        defeated_moveset_sonic,     0)          // 0x3B - SONIC
     add_defeat_parameters(0x617,                        defeated_moveset_captain,   0)          // 0x3C - SANDBAG
     add_defeat_parameters(0x2B1,                        defeated_moveset_sonic,     0)          // 0x3D - SSONIC
+    add_defeat_parameters(0x617,                        defeated_moveset_captain,   0)          // 0x3E - SHEIK
 
     // REMIX 1p
 
@@ -3056,6 +3056,7 @@ scope TwelveCharBattle {
     add_team_parameters(File.SONIC_TEAM_POSE,         0x80000000,             0)          // 0x3B - SONIC
     add_team_parameters(0x617,                        team_moveset_captain,   0)          // 0x3C - SANDBAG
     add_team_parameters(File.SONIC_TEAM_POSE,         0x80000000,             0)          // 0x3D - SSONIC
+    add_team_parameters(File.SHEIK_TEAM_POSE,         0x80000000,             0)          // 0x3E - SHEIK
 
     // @ Description
     // This prevents picking up the token of a character with stocks remaining after a match.

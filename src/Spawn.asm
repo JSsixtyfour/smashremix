@@ -61,7 +61,7 @@ scope Spawn {
         addiu   sp, sp, 0x0010              // deallocate stack space
         jr      ra                          // scrap the rest of the function
         nop
-        
+
         _sector_z_remix:
         li      t0, 0x45cda000              // t0 = (float) 6580
         sw      t0, 0x0000(a1)              // update x
@@ -80,17 +80,17 @@ scope Spawn {
     //                   ________
     //
     //        ___S1___             ___S2___
-    // 
+    //
     //  _________S3___________________S4_________
     //  \_______________________________________/
 
-    
+
     // Neutral Spawns (other stages)
 
     //
     //
     //
-    // 
+    //
     //  ______S1______S3_________S4______S2______
     //  \_______________________________________/
 
@@ -114,7 +114,7 @@ scope Spawn {
         sw      a0, 0x0014(sp)              // ~
         sw      v0, 0x0018(sp)              // ~
         sw      ra, 0x001C(sp)              // save registers
-        
+
         // this block checks if we're in training mode
         li      t0, Global.current_screen
         lbu     t0, 0x0000(t0)              // t0 = screen_id
@@ -136,8 +136,8 @@ scope Spawn {
         nop
         addiu   t0, t3, 0x0014              // t0 = spawn_pos address
         j       _set_spawn                  // set spawn to spawn in table
-        nop 
-        
+        nop
+
         // at this point we know we're not in training mode
         // this block checks if we're in vs mode
         // if we're not in versus mode, we'll get an original spawn
@@ -151,7 +151,7 @@ scope Spawn {
         // at this point, we are sure we are in versus or training
         // the following toggle guard determines whether or not there is
         // a chance of getting a neutral spawn
-        // (the branch to _guard and _toggle_off label allows bass to jump 
+        // (the branch to _guard and _toggle_off label allows bass to jump
         // forward on failure)
         b       _guard
         nop
@@ -207,7 +207,7 @@ scope Spawn {
         li      t0, valid_teams             // t0 = valid_teams table
         li      t1, team_table              // t1 = team_table
         lw      t1, 0x0000(t1)              // t1 = teams
-        
+
         // this block loops through to see if a valid team combination
         // has been found. if so, we'll get a neutral spawn. otherwise,
         // we'll get an original spawn
@@ -222,14 +222,14 @@ scope Spawn {
         b       _load_neutral
         nop
 
-        // setup for singles loop 
+        // setup for singles loop
         // it's only checking for active vs inactive (cpu/player not important)
         _singles:
         li      t0, valid_singles           // t0 = valid_singles table
         li      t1, type_table              // t1 = type_table
         lw      t1, 0x0000(t1)              // t1 = teams
         li      t2, 0x02020202              // ~
-        and     t1, t1, t2                  // mask so 0 = 0, 1 = 0, 2 = 2 
+        and     t1, t1, t2                  // mask so 0 = 0, 1 = 0, 2 = 2
 
         // this block checks if we're in a 1v1
         // if not, we will just load an original spawn
@@ -350,7 +350,7 @@ scope Spawn {
         dw 0x01020102, 0x00010203
         dw 0x01020201, 0x00010302
         dw 0x02020101, 0x00020103
-        dw 0x02000201, 0x00010203
+        dw 0x02010201, 0x00010203
         dw 0x02010102, 0x00010302
 
         // null terminator
@@ -442,7 +442,7 @@ scope Spawn {
     // 0B - How to Play Stage
     float32  0660,  0000
     float32  1440,  0000
-    float32 -0660,  0000                    // missing from stage file 
+    float32 -0660,  0000                    // missing from stage file
     float32 -1440,  0000                    // missing from stage file
 
     // 0C - Yoshi's Island (1P)
@@ -474,385 +474,385 @@ scope Spawn {
     float32  1800,  0005
     float32 -0900,  0005
     float32  0900,  0005
-    
+
     // 11 - BTT_MARIO (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 12 - BTT_FOX (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 13 - BTT_DONKEY_KONG (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 14 - BTT_SAMUS (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 15 - BTT_LUIGI (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 16 - BTT_LINK (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 17 - BTT_YOSHI (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 18 - BTT_FALCON (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 19 - BTT_KIRBY (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 1A - BTT_PIKACHU (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 1B - BTT_JIGGLYPUFF (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 1C - BTT_NESS (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 1D - BTP_MARIO (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 1E - BTP_FOX (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 1F - BTP_DONKEY_KONG (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 20 - BTP_SAMUS (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 21 - BTP_LUIGI (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 22 - BTP_LINK (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 23 - BTP_YOSHI (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 24 - BTP_FALCON (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 25 - BTP_KIRBY (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 26 - BTP_PIKACHU (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 27 - BTP_JIGGLYPUFF (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 28 - BTP_NESS (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 29 - DEKU TREE
     float32 -1400,  0910
     float32  1400,  0910
     float32  0000,  1545
     float32  0000,  0005
-    
+
     // 2A - FIRST DESTINATION
     float32 -1600,  0018
-    float32  1612,  0018              
+    float32  1612,  0018
     float32 -0422,  0018
     float32  0768,  0018
-    
+
     // 2B - GANONS TOWER
     float32 -2200,  1954
-    float32  1996,  1954              
+    float32  1996,  1954
     float32 -1076,  1042
     float32  0902,  1042
-    
+
     // 2C - KALOS POKEMON LEAGUE
     float32 -2371,  0921
-    float32  2371,  0921              
+    float32  2371,  0921
     float32 -1510,  0025
     float32  1510,  0025
-    
-    // 2D - POKEMON STADIUM 2
+
+    // 2D - POKEMON STADIUM
     float32 -1222,  0805
-    float32  1222,  0805              
+    float32  1222,  0805
     float32 -1222,  0035
     float32  1222,  0035
-    
-    // 2E - SKYLOFT
+
+    // 2E - TALTAL
     float32 -1825,  0884
-    float32  1825,  0884              
+    float32  1825,  0884
     float32  0000,  1520
     float32  0000,  0010
-    
+
     // 2F - GLACIAL RIVER
     float32 -1647,  0130
-    float32  1647,  0130              
+    float32  1647,  0130
     float32 -0764,  0955
     float32  0764,  0955
-    
+
     // 30 - WARIOWARE
     float32 -1172,  0783
-    float32  1172,  0783              
+    float32  1172,  0783
     float32 -1172,  0035
     float32  1172,  0035
-    
+
     // 31 - BATTLEFIELD
     float32 -1262,  0752
-    float32  1262,  0752              
+    float32  1262,  0752
     float32  0000,  1470
     float32  0000,  0035
-    
+
     // 32 - Flat Zone
     float32 -1568, -0844
-    float32 -0708, -0844             
+    float32 -0708, -0844
     float32  0138, -0844
     float32  1043, -0844
-    
+
     // 33 - Dr. Mario
     float32 -1637,  1040
-    float32  1661,  1040              
+    float32  1661,  1040
     float32 -1637,  0100
     float32  1661,  0100
-    
+
     // 34 - Cool Cool Mountain
     float32 -1546,  2206
-    float32  1789,  2102              
+    float32  1789,  2102
     float32 -1571,  0813
     float32  1315,  0805
-    
+
     // 35 - Dragon King
     float32 -1968,  1420
-    float32  1968,  1420              
+    float32  1968,  1420
     float32 -1968,  0035
     float32  1968,  0035
-    
+
     // 36 - Great Bay
     float32 -1013,  0511
-    float32  1190,  0511              
+    float32  1190,  0511
     float32 -2162, -0563
     float32  2083, -0545
-    
+
     // 37 - Fray's Stage
     float32 -1400,  0910
     float32  1400,  0910
     float32  0000,  1545
     float32  0000,  0005
-    
+
     // 38 - Tower of Heaven
     float32 -1495,  0851
     float32  1399,  0851
     float32  0000,  1550
     float32  0000,  0010
-    
+
     // 39 - Fountain of Dreams
     float32 -1400,  0910
     float32  1400,  0910
     float32  0000,  1545
     float32  0000,  0005
-    
+
     // 3A - Muda
     float32 -1250, -0450
     float32  1869,  1500
     float32  0210,  0675
     float32  0000,  1825
-    
+
     // 3B - Mementos
     float32 -1996,  0335
     float32  2324,  0025
     float32 -1581,  1080
     float32  0972,  0025
-    
+
     // 3C - Showdown
     float32 -2000,  0035
     float32  2000,  0035
     float32 -1000,  0035
     float32  1000,  0035
-    
+
     // 3D - Spiral Mountain
     float32 -2080,  0880
     float32  2080,  0880
     float32 -1161,  0035
     float32  1161,  0035
-    
+
     // 3E - N64
     float32 -3447,  1998
     float32  2564,  1953
     float32 -1732,  1125
     float32  0853,  1114
-    
+
     // 3F - Mute City DL
     float32 -1400,  0910
     float32  1400,  0910
     float32  0000,  1545
     float32  0000,  0005
-    
+
     // 40 - Mad Monster Mansion
     float32 -1847, -0294
     float32  1947, -0294
     float32 -1148,  0719
     float32  1300,  0719
-    
+
     // 41 - Super Mario Bros. DL
     float32 -1262,  0932
     float32  1262,  0932
     float32  0000,  1569
     float32  0000,  0035
-    
+
     // 42 - Super Mario Bros. O
     float32 -1831,  0035
     float32  1831,  0035
     float32 -0915,  0035
     float32  0915,  0035
-    
+
     // 43 - Bowser's Stadium
     float32 -2020,  0005
     float32  2020,  0005
     float32 -1010,  0005
     float32  1010,  0005
-    
+
     // 44 - Peach's Castle II
     float32 -2758,  0097
     float32  3423,  0097
     float32 -1489,  0097
     float32  1898,  0097
-    
+
     // 45 - Delfino
     float32 -0800,  0047
     float32  0800,  0047
     float32 -1600,  0047
     float32  1600,  0047
-    
+
     // 46 - Corneria
     float32 -3339,  1400
     float32  0885,  1995
     float32 -2042,  1212
     float32 -0320,  1200
-    
+
     // 47 - Kitchen
     float32 -1200,  2250
     float32  1200,  2250
     float32 -0600,  2250
     float32  0600,  2250
-    
+
     // 48 - Big Blue
     float32 -1711,  0402
     float32  1763,  0388
     float32 -3530,  0320
     float32  3675,  0428
-    
+
     // 49 - Onett
     float32 -2292,  2043
     float32  1792,  2413
     float32 -3144,  3017
     float32  1426,  3678
-    
+
     // 4A - Zebes Landing
     float32 -1400,  0910
     float32  1400,  0910
     float32  0000,  1545
     float32  0000,  0005
-    
+
     // 4B - Frosty Village
     float32 -2439,  2426
     float32  1626,  1324
     float32 -0672,  1156
     float32  2953,  0117
-    
+
     // 4C - SMASHVILLE
     float32 -1500,  0035
-    float32  1500,  0035              
+    float32  1500,  0035
     float32 -0800,  0035
     float32  0800,  0035
-    
+
     // 4D - BTT_DRM
     float32 -1657, -2638
     float32 -1657, -2638
     float32 -1657, -2638
     float32 -1657, -2638
-    
+
     // 4E - BTT_GND
     float32  1705,  0661
     float32  1705,  0661
     float32  1705,  0661
     float32  1705,  0661
-    
+
     // 4F - BTT_YL
     float32  0000,  0035
     float32  0000,  0035
     float32  0000,  0035
     float32  0000,  0035
-    
+
     // 50 - Great Bay SSS
     float32 -1013,  0511
     float32  1190,  0511
@@ -864,199 +864,199 @@ scope Spawn {
     float32  0000,  0035
     float32  0000,  0035
     float32  0000,  0035
-    
+
     // 52 - BTT_STAGE 1
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 53 - BTT_FALCO
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 54 - BTT_WARIO
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 55 - HYRULE TEMPLE
     float32 -2799,  0496
     float32  2846, -0006
     float32 -0647,  2086
     float32  0665, -0731
-    
+
     // 56 - BTT_LUCAS
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 57 - BTP_GND
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 58 - New Pork City
     float32 -1990,  0971
     float32  1990,  0971
     float32 -2575,  1772
     float32  2575,  1772
-    
+
     // 59 - Dark Samus BTP
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 5A - Smashketball
     float32 -3042,  0005
     float32  3042,  0005
     float32 -1615,  0005
     float32  1615,  0005
-	
+
     // 5B - BTP_DRM
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-	
+
     // 5C - Norfair
     float32 -1645,  0709
     float32  1000,  0954
     float32 -1105, -0213
     float32  1775,  0111
-	
+
 	// 5D - CORNERIA CITY
     float32 -1685,  1700
-    float32  1685,  1700              
+    float32  1685,  1700
     float32 -0740,  1100
     float32  0740,  1100
-	
+
 	// 5E - Congo Falls
     float32 -1000,  0915
-    float32  1000,  0915              
+    float32  1000,  0915
     float32 -1000,  0125
     float32  1000,  0125
-	
+
 	// 5F - Osohe
     float32 -3443,  1358
-    float32  3443,  1358              
+    float32  3443,  1358
     float32 -1778,  0023
     float32  1778,  0023
-	
+
 	// 60 - Yoshi's Story II
     float32  1594,  0900
-    float32 -1594,  0900              
+    float32 -1594,  0900
     float32  0000,  0035
     float32  0000,  1580
-	
+
 	// 61 - World 1-1
     float32 -1590, -1150
-    float32  1590, -1150 
-	float32 -0530, -1150              
-    float32  0530, -1150 
-	
+    float32  1590, -1150
+	float32 -0530, -1150
+    float32  0530, -1150
+
 	// 62 - Flat Zone II
     float32 -1980, -1685
-    float32  1980, -1685              
-    float32 -0660, -1685 
-    float32  0660, -1685 
-	
+    float32  1980, -1685
+    float32 -0660, -1685
+    float32  0660, -1685
+
 	// 63 - Gerudo Valley
     float32 -0484,  0915
-    float32  1310,  1135              
-    float32  1310,  0020 
-    float32 -1310,  0020 
-	
+    float32  1310,  1135
+    float32  1310,  0020
+    float32 -1310,  0020
+
 	// 64 - Young Link Board the Platforms
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 65 - Falco Board the Platforms
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 66 - Polygon Board the Platforms
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 67 - Hyrule Castle DL
     float32 -1400,  0910
     float32  1400,  0910
     float32  0000,  1545
     float32  0000,  0005
-    
+
     // 68 - Hyrule Castle O
     float32 -1831,  0035
     float32  1831,  0035
     float32 -0915,  0035
     float32  0915,  0035
-    
+
     // 69 - Congo Jungle DL
     float32 -1400,  0910
     float32  1400,  0910
     float32  0000,  1545
     float32  0000,  0005
-    
+
     // 6A - Congo Jungle O
     float32 -1831,  0035
     float32  1831,  0035
     float32 -0915,  0035
     float32  0915,  0035
-    
+
     // 6B - Peach's Castle DL
     float32 -1400,  0910
     float32  1400,  0910
     float32  0000,  1545
     float32  0000,  0005
-    
+
     // 6C - Peach's Castle O
     float32 -1831,  0035
     float32  1831,  0035
     float32 -0915,  0035
     float32  0915,  0035
-    
+
     // 6D - Wario Board the Platforms
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 6E - Fray's Stage - Night
     float32 -1400,  0910
     float32  1400,  0910
     float32  0000,  1545
     float32  0000,  0005
-	
+
 	// 6F - Goomba Road
     float32 -1400,  0005
     float32  1400,  0005
     float32 -1400,  1547
     float32  1400,  1547
-	
+
 	// 70 - Lucas Board the Platforms
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-	
+
 	// 71 - Sector Z DL
     float32 -1400,  2656
     float32  1400,  2659
     float32  0000,  3295
     float32  0000,  1756
-	
+
 	// 72 - Saffron City DL
     float32 -1400,  0910
     float32  1400,  0910
@@ -1074,247 +1074,247 @@ scope Spawn {
     float32  1400,  0910
     float32  0000,  1545
     float32  0000,  0005
-	
+
 	// 75 - Sector Z Omega
     float32 -1831,  1785
     float32  1831,  1785
     float32 -0915,  1785
     float32  0915,  1785
-	
+
 	// 76 - Saffron City Omega
     float32 -1831,  0035
     float32  1831,  0035
     float32 -0915,  0035
     float32  0915,  0035
-	
+
 	// 77 - Yoshi's Island Omega
     float32 -1831,  0035
     float32  1831,  0035
     float32 -0915,  0035
     float32  0915,  0035
-	
+
 	// 78 - Dream Land Omega
     float32 -1831,  0035
     float32  1831,  0035
     float32 -0915,  0035
     float32  0915,  0035
-	
+
 	// 79 - Planet Zebes Omega
     float32 -1831,  0035
     float32  1831,  0035
     float32 -0915,  0035
     float32  0915,  0035
-	
+
 	// 7A - Bowser Break the Targets
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-	
+
 	// 7B - Bowser Board the Platforms
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-	
+
 	// 7C - Bowser's Keep
     float32 -1470,  0550
     float32  1470,  0550
     float32 -2430,  1380
     float32  2430,  1380
-    
+
     // 7D - Rith Essa
     float32 -3353,  1190
     float32  3722,  1190
     float32 -1723,  0066
     float32  2113,  0043
-    
+
     // 7E - Venom
     float32 -1719,  1827
     float32  1719,  1827
     float32 -1719,  0283
     float32  1719,  0283
-    
+
     // 7F - Wolf Break the Targets
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 80 - Wolf Board the Platforms
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 81 - Conker Break the Targets
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 82 - Conker Board the Platforms
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 83 - Windy
     float32 -2510,  2170
     float32  1480,  0720
     float32 -1380,  2170
     float32  0000,  0720
-    
+
     // 84 - dataDyne
     float32 -0800, -0150
     float32  0800, -0150
     float32 -1700,  0660
     float32  1700,  0660
-    
+
     // 85 - Planet Clancer
     float32 -1500,  0905
     float32  1500,  0905
     float32 -0750,  0005
     float32  0750,  0005
-    
+
     // 86 - Jungle Japes
     float32 -2650,  0090
     float32  2650,  0090
     float32 -1035, -0240
     float32  1035, -0240
-    
+
     // 87 - Marth Break the Targets
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 88 - Gameboy Land
     float32 -1250, -0450
     float32  1869,  1500
     float32  0210,  0675
     float32  0000,  1825
-    
+
     // 89 - Mewtwo Break the Targets
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 8A - Marth Board the Platforms
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 8B - Allstar Rest Area
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 8C - Mewtwo Board the Platforms
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 8D - Castle Siege
     float32 -1100,  1580
     float32  1390,  1955
     float32 -1500,  0650
     float32  1000,  0940
-    
+
     // 8E - Yoshi's Island II
     float32 -1605,  0140
     float32  1605,  0140
     float32 -0600,  0100
     float32  0600,  0100
-    
+
     // 8F - Final Destination DL
     float32 -1400,  0910
     float32  1400,  0910
     float32  0000,  1545
     float32  0000,  0005
-    
+
     // 90 - Final Destination Tent
     float32 -1800,  0005
     float32  1800,  0005
     float32 -0900,  0005
     float32  0900,  0005
-    
+
     // 91 - Cool Cool Mountain Remix
     float32 -1400,  0930
     float32  1400,  0930
     float32 -1900,  2000
     float32  1900,  2000
-    
+
     // 92 - Duel Zone DL
     float32 -1400,  0910
     float32  1400,  0910
     float32  0000,  1545
     float32  0000,  0005
-    
+
     // 93 - Cool Cool Mountain DL
     float32 -1400,  0910
     float32  1400,  0910
     float32  0000,  1545
     float32  0000,  0005
-    
+
     // 94 - Meta Crystal DL
     float32 -1400,  0910
     float32  1400,  0910
     float32  0000,  1545
     float32  0000,  0005
-    
+
     // 95 - Dream Greens
     float32 -1231,  0909
     float32  1231,  0909
     float32 -3215,  0005
     float32  3215,  0005
-    
+
     // 96 - Peach's Castle Beta
     float32 -0159,  0540
     float32  0471,  0540
     float32  0159,  0540
     float32 -0471,  0540
-    
+
     // 97 - Hyrule Castle Remix
     float32 -1510,  1960
     float32  1510,  1960
     float32 -2150,  2875
     float32  2150,  2875
-    
+
     // 98 - Sector Z Remix
     float32  4350,  0810
     float32  7840,  0940
     float32  5200,  0810
     float32  6400,  0940
-    
+
     // 99 - Mute City
     float32 -1849,  2140
     float32  1819,  1721
     float32 -3289,  2140
     float32  3549,  1721
-    
+
     // 9A - Home Run Contest
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 9B - Mushroom Kingdom Remix
     float32 -2850,  0035
     float32  2850,  0035
     float32 -3550,  1540
     float32  3550,  1540
-    
+
     // 9C - Green Hill Zone
     float32 -1500,  0035
     float32  1500,  0035
     float32 -0750,  0035
     float32  0750,  0035
-    
+
     // 9D - Subcon
     float32 -0900,  0035
     float32  0900,  0035
@@ -1326,30 +1326,78 @@ scope Spawn {
     float32  2500,  0125
     float32 -3400,  0900
     float32  2500,  0900
-    
+
     // 9F - Casino Night
     float32 -0925,  0500
     float32  0925,  0500
     float32 -3118,  0150
     float32  3118,  0150
-    
+
     // A0 - Sonic Break the Targets
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // A1 - Sonic Board the Platforms
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // A2 - Metallic Madness
     float32 -1250,  0001
     float32  1250,  0001
     float32 -0500,  0900
     float32  0500,  0900
+
+    // A3 - Rainbow Road
+    float32 -1800,  0035
+    float32  1800,  0035
+    float32 -0900,  0035
+    float32  0900,  0035
+
+    // A4 - POKEMON STADIUM 2
+    float32 -1222,  0805
+    float32  1222,  0805
+    float32 -1222,  0035
+    float32  1222,  0035
+
+    // A5 - Norfair Remix
+    float32 -0900,  0071
+    float32  0900,  0071
+    float32 -2000,  0970
+    float32  2000,  0970
+
+    // A6 - Toad's Turnpike
+    float32 -0915, -0052
+    float32  1925, -0052
+    float32  0031, -0052
+    float32  0978, -0052
+
+    // A7 - Tal Tal Heights Remix
+    float32 -1825,  0884
+    float32  1825,  0884
+    float32  0000,  1520
+    float32  0000,  0010
+
+    // A8 - Sheik Board the Platforms
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+
+    // A9 - Winter Dream Land
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32  0000,  1545
+    float32  0000,  0005
+
+    // AA - Sheik Break the Targets
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
 
     neutral_table:
     // 00 - Peach's Castle
@@ -1363,28 +1411,28 @@ scope Spawn {
     float32  0296,  1739
     float32 -2094,  1708
     float32 -0898,  1593
-    
+
 
     // 02 - Kongo Jungle
     float32 -1739,  0002
     float32  1739,  0002
     float32 -0630, -0210
     float32  0630, -0210
-    
+
 
     // 03 - Planet Zebes
     float32 -2556,  0572
     float32  1745, -0262
     float32 -1137,  0011
     float32  0000,  0314
-    
+
 
     // 04 - Hyrule Castle
     float32 -2400,  1042
     float32  1500,  1042
     float32 -1110,  1042
     float32  0240,  1042
-    
+
 
     // 05 - Yoshi's Island
     float32  0629, -0096
@@ -1457,385 +1505,385 @@ scope Spawn {
     float32  1800,  0005
     float32 -0900,  0005
     float32  0900,  0005
-    
+
     // 11 - BTT_MARIO (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 12 - BTT_FOX (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 13 - BTT_DONKEY_KONG (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 14 - BTT_SAMUS (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 15 - BTT_LUIGI (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 16 - BTT_LINK (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 17 - BTT_YOSHI (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 18 - BTT_FALCON (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 19 - BTT_KIRBY (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 1A - BTT_PIKACHU (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 1B - BTT_JIGGLYPUFF (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 1C - BTT_NESS (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 1D - BTP_MARIO (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 1E - BTP_FOX (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 1F - BTP_DONKEY_KONG (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 20 - BTP_SAMUS (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 21 - BTP_LUIGI (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 22 - BTP_LINK (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 23 - BTP_YOSHI (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 24 - BTP_FALCON (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 25 - BTP_KIRBY (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 26 - BTP_PIKACHU (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 27 - BTP_JIGGLYPUFF (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 28 - BTP_NESS (placeholder)
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 29 - DEKU TREE
     float32 -1400,  0910
     float32  1400,  0910
     float32 -1400,  0005
     float32  1400,  0005
-    
+
     // 2A - FIRST DESTINATION
     float32 -1600,  0018
-    float32  1612,  0018              
+    float32  1612,  0018
     float32 -0422,  0018
     float32  0768,  0018
-    
+
     // 2B - GANONS TOWER
     float32 -2200,  1954
-    float32  1996,  1954              
+    float32  1996,  1954
     float32 -2200,  1954
-    float32  1996,  1954 
-    
+    float32  1996,  1954
+
     // 2C - KALOS POKEMON LEAGUE
     float32 -2371,  0921
-    float32  2371,  0921              
+    float32  2371,  0921
     float32 -1510,  0025
     float32  1510,  0025
-    
-    // 2D - POKEMON STADIUM 2
+
+    // 2D - POKEMON STADIUM
     float32 -1222,  0805
-    float32  1222,  0805              
+    float32  1222,  0805
     float32 -1222,  0035
     float32  1222,  0035
-    
-    // 2E - SKYLOFT
+
+    // 2E - TALTAL
     float32 -1825,  0884
-    float32  1825,  0884              
+    float32  1825,  0884
     float32 -1825,  0035
     float32  1825,  0035
-    
+
     // 2F - GLACIAL RIVER
     float32 -1647,  0130
-    float32  1647,  0130              
+    float32  1647,  0130
     float32 -0764,  0955
     float32  0764,  0955
-    
+
     // 30 - WARIOWARE
     float32 -1172,  0783
-    float32  1172,  0783              
+    float32  1172,  0783
     float32 -1172,  0035
     float32  1172,  0035
-    
+
     // 31 - BATTLEFIELD
     float32 -1262,  0752
-    float32  1262,  0752              
+    float32  1262,  0752
     float32 -1262,  0035
     float32  1262,  0035
-    
+
     // 32 - Flat Zone
     float32 -1568, -0844
-    float32 -0708, -0844             
+    float32 -0708, -0844
     float32  0138, -0844
     float32  1043, -0844
-    
+
     // 33 - Dr. Mario
     float32 -1637,  1040
-    float32  1661,  1040              
+    float32  1661,  1040
     float32 -1637,  0100
     float32  1661,  0100
-    
+
     // 34 - Cool Cool Mountain
     float32 -1546,  2206
-    float32  1789,  2102              
+    float32  1789,  2102
     float32 -1571,  0813
     float32  1315,  0805
-    
+
     // 35 - Dragon King
     float32 -1968,  1420
-    float32  1968,  1420              
+    float32  1968,  1420
     float32 -1968,  0035
     float32  1968,  0035
-    
+
     // 36 - Great Bay
     float32 -1013,  0511
-    float32  1190,  0511              
+    float32  1190,  0511
     float32 -2162, -0563
     float32  2083, -0545
-    
+
     // 37 - Fray's Stage
     float32 -1400,  0910
     float32  1400,  0910
     float32 -1400,  0005
     float32  1400,  0005
-    
+
     // 38 - Tower of Heaven
     float32 -1495,  0851
     float32  1399,  0851
     float32 -1495,  0010
     float32  1399,  0010
-    
+
     // 39 - Fountain of Dreams
     float32 -1400,  0910
     float32  1400,  0910
     float32 -1400,  0005
     float32  1400,  0005
-    
+
     // 3A - Muda
     float32 -1250, -0450
     float32  1869,  1500
     float32  0210,  0675
     float32  0000,  1825
-    
+
     // 3B - Mementos
     float32 -1996,  0335
     float32  2324,  0025
     float32 -1581,  1080
     float32  0972,  0025
-    
+
     // 3C - Showdown
     float32 -2000,  0035
     float32  2000,  0035
     float32 -1000,  0035
     float32  1000,  0035
-    
+
     // 3D - Spiral Mountain
     float32 -2080,  0880
     float32  2080,  0880
     float32 -1161,  0035
     float32  1161,  0035
-    
+
     // 3E - N64
     float32 -3447,  1998
     float32  2564,  1953
     float32 -1732,  1125
     float32  0853,  1114
-    
+
     // 3F - Mute City DL
     float32 -1400,  0910
     float32  1400,  0910
     float32 -1400,  0005
     float32  1400,  0005
-    
+
     // 40 - Mad Monster Mansion
     float32 -1847, -0294
     float32  1947, -0294
     float32 -1148,  0719
     float32  1300,  0719
-    
+
     // 41 - Super Mario Bros. DL
     float32 -1400,  0910
     float32  1400,  0910
     float32 -1400,  0005
     float32  1400,  0005
-    
+
     // 42 - Super Mario Bros. O
     float32 -1831,  0035
     float32  1831,  0035
     float32 -0915,  0035
     float32  0915,  0035
-    
+
     // 43 - Bowser's Stadium
     float32 -2020,  0005
     float32  2020,  0005
     float32 -1010,  0005
     float32  1010,  0005
-    
+
     // 44 - Peach's Castle II
     float32 -2758,  0097
     float32  3423,  0097
     float32 -1489,  0097
     float32  1898,  0097
-    
+
     // 45 - Delfino
     float32 -0800,  0047
     float32  0800,  0047
     float32 -1600,  0047
     float32  1600,  0047
-    
+
     // 46 - Corneria
     float32 -3339,  1400
     float32  0885,  1995
     float32 -2042,  1212
     float32 -0320,  1200
-    
+
     // 47 - Kitchen
     float32 -1200,  2250
     float32  1200,  2250
     float32 -0600,  2250
     float32  0600,  2250
-    
+
     // 48 - Big Blue
     float32 -1711,  0402
     float32  1763,  0388
     float32 -3530,  0320
     float32  3675,  0428
-    
+
     // 49 - Onett
     float32 -2292,  2043
     float32  1792,  2413
     float32 -3144,  3017
     float32  1426,  3678
-    
+
     // 4A - Zebes Landing
     float32 -1400,  0910
     float32  1400,  0910
     float32 -1400,  0005
     float32  1400,  0005
-    
+
     // 4B - Frosty Village
     float32 -2439,  2426
     float32  1626,  1324
     float32 -0672,  1156
     float32  2953,  0117
-    
+
     // 4C - SMASHVILLE
     float32 -1500,  0035
-    float32  1500,  0035              
+    float32  1500,  0035
     float32 -0800,  0035
     float32  0800,  0035
-    
+
     // 4D - BTT_DRM
     float32 -1657, -2638
     float32 -1657, -2638
     float32 -1657, -2638
     float32 -1657, -2638
-    
+
     // 4E - BTT_GND
     float32  1705,  0661
     float32  1705,  0661
     float32  1705,  0661
     float32  1705,  0661
-    
+
     // 4F - BTT_YL
     float32  0000,  0035
     float32  0000,  0035
     float32  0000,  0035
     float32  0000,  0035
-    
+
     // 50 - Great Bay SSS
     float32 -1013,  0511
     float32  1190,  0511
@@ -1847,457 +1895,457 @@ scope Spawn {
     float32  0000,  0035
     float32  0000,  0035
     float32  0000,  0035
-    
+
     // 52 - BTT_STAGE 1
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 53 - BTT_FALCO
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 54 - BTT_WARIO
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 55 - HYRULE TEMPLE
     float32 -2799,  0496
     float32  2846, -0006
     float32 -0647,  2086
     float32  0665, -0731
-    
+
     // 56 - BTT_LUCAS
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 57 - BTP_GND
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 58 - New Pork City
     float32 -1990,  0971
     float32  1990,  0971
     float32 -2575,  1772
     float32  2575,  1772
-        
+
     // 59 - Dark Samus BTP
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 5A - Smashketball
     float32 -3042,  0005
     float32  3042,  0005
     float32 -1615,  0005
     float32  1615,  0005
-	
+
 	// 5B - BTP_DRM
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-	
+
 	// 5C - Norfair
     float32 -1645,  0709
     float32  1000,  0954
     float32 -1105, -0213
     float32  1775,  0111
-	
+
 	// 5D - CORNERIA CITY
     float32 -1685,  1700
-    float32  1685,  1700              
+    float32  1685,  1700
     float32 -1685,  0990
     float32  1685,  0990
-	
+
 	// 5E - Congo Falls
     float32 -1000,  0915
-    float32  1000,  0915              
+    float32  1000,  0915
     float32 -1000,  0125
     float32  1000,  0125
-	
+
 	// 5F - Osohe
     float32 -3443,  1358
-    float32  3443,  1358              
+    float32  3443,  1358
     float32 -1778,  0023
     float32  1778,  0023
-	
+
 	// 60 - Yoshi's Story II
     float32 -1594,  0900
-    float32  1594,  0900              
+    float32  1594,  0900
     float32 -1594,  0000
     float32  1594,  0000
-	
+
 	// 61 - World 1-1
     float32 -1590, -1150
-    float32  1590, -1150 
-	float32 -0530, -1150              
-    float32  0530, -1150 
-	
+    float32  1590, -1150
+	float32 -0530, -1150
+    float32  0530, -1150
+
 	// 62 - Flat Zone II
     float32 -1980, -1685
-    float32  1980, -1685              
-    float32 -0660, -1685 
-    float32  0660, -1685 
-	
+    float32  1980, -1685
+    float32 -0660, -1685
+    float32  0660, -1685
+
 	// 63 - Gerudo Valley
     float32 -0484,  0915
-    float32  1310,  1135              
-    float32  1310,  0020 
-    float32 -1310,  0020 
-	
+    float32  1310,  1135
+    float32  1310,  0020
+    float32 -1310,  0020
+
 	// 64 - Young Link Board the Platforms
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 65 - Falco Board the Platforms
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 66 - Polygon Board the Platforms
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 67 - Hyrule Castle DL
     float32 -1400,  0910
     float32  1400,  0910
     float32 -1400,  0005
     float32  1400,  0005
-    
+
     // 68 - Hyrule Castle O
     float32 -1831,  0035
     float32  1831,  0035
     float32 -0915,  0035
     float32  0915,  0035
-    
+
     // 69 - Congo Jungle DL
     float32 -1400,  0910
     float32  1400,  0910
     float32 -1400,  0005
     float32  1400,  0005
-    
+
     // 6A - Congo Jungle O
     float32 -1831,  0035
     float32  1831,  0035
     float32 -0915,  0035
     float32  0915,  0035
-    
+
     // 6B - Peach's Castle DL
     float32 -1400,  0910
     float32  1400,  0910
     float32 -1400,  0005
     float32  1400,  0005
-    
+
     // 6C - Peach's Castle O
     float32 -1831,  0035
     float32  1831,  0035
     float32 -0915,  0035
     float32  0915,  0035
-    
+
     // 6D - Wario Board the Platforms
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 6E - Fray's Stage - Night
     float32 -1400,  0910
     float32  1400,  0910
     float32 -1400,  0005
     float32  1400,  0005
-	
+
 	// 6F - Goomba Road
     float32 -1400,  0005
     float32  1400,  0005
     float32 -1400,  1547
     float32  1400,  1547
-	
+
 	// 70 - Lucas Board the Platforms
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-	
+
 	// 71 - Sector Z DL
     float32 -1400,  2656
     float32  1400,  2659
     float32 -1400,  1756
     float32  1400,  1756
-	
+
 	// 72 - Saffron City DL
     float32 -1400,  0910
     float32  1400,  0910
     float32 -1400,  0005
     float32  1400,  0005
-	
+
 	// 73 - Yoshi's Island DL
     float32 -1400,  0910
     float32  1400,  0910
     float32 -1400,  0005
     float32  1400,  0005
-	
+
 	// 74 - Zebes DL
     float32 -1400,  0910
     float32  1400,  0910
     float32 -1400,  0005
     float32  1400,  0005
-	
+
 	// 75 - Sector Z O
     float32 -1831,  1756
     float32  1831,  1756
     float32 -0915,  1756
     float32  0915,  1756
-	
+
 	// 76 - Saffron City O
     float32 -1831,  0035
     float32  1831,  0035
     float32 -0915,  0035
     float32  0915,  0035
-	
+
 	// 77 - Yoshi's Island O
     float32 -1831,  0035
     float32  1831,  0035
     float32 -0915,  0035
     float32  0915,  0035
-	
+
 	// 78 - Dream Land O
     float32 -1831,  0035
     float32  1831,  0035
     float32 -0915,  0035
     float32  0915,  0035
-	
+
 	// 79 - Planet Zebes O
     float32 -1831,  0035
     float32  1831,  0035
     float32 -0915,  0035
     float32  0915,  0035
-	
+
 	// 7A - Bowser Break the Targets
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-	
+
 	// 7B - Bowser Board the Platforms
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-	
+
 	// 7C - Bowser's Keep
     float32 -1470,  0550
     float32  1470,  0550
     float32 -2430,  1380
     float32  2430,  1380
-    
+
     // 7D - Rith Essa
     float32 -3353,  1190
     float32  3722,  1190
     float32 -1723,  0066
     float32  2113,  0043
-    
+
     // 7E - Venom
     float32 -1719,  1827
     float32  1719,  1827
     float32 -1719,  0283
     float32  1719,  0283
-    
+
     // 7F - Wolf Break the Targets
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 80 - Wolf Board the Platforms
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 81 - Conker Break the Targets
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 82 - Conker Board the Platforms
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 83 - Windy
     float32 -2510,  2170
     float32  1480,  0720
     float32 -1380,  2170
     float32  0000,  0720
-    
+
     // 84 - dataDyne
     float32 -0800, -0150
     float32  0800, -0150
     float32 -1700,  0660
     float32  1700,  0660
-    
+
     // 85 - Planet Clancer
     float32 -1500,  0905
     float32  1500,  0905
     float32 -0750,  0005
     float32  0750,  0005
-    
+
     // 86 - Jungle Japes
     float32 -2650,  0090
     float32  2650,  0090
     float32 -1035, -0240
     float32  1035, -0240
-    
+
     // 87 - Marth Break the Targets
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 88 - Gameboy Land
     float32 -1250, -0450
     float32  1869,  1500
     float32  0210,  0675
     float32  0000,  1825
-    
+
     // 89 - Mewtwo Break the Targets
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 8A - Marth Board the Platforms
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 8B - Allstar Rest Area
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 8C - Mewtwo Board the Platforms
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 8D - Castle Siege
     float32 -1100,  1580
     float32  1390,  1955
     float32 -1500,  0650
     float32  1000,  0940
-    
+
     // 8E - Yoshi's Island II
     float32 -1605,  0140
     float32  1605,  0140
     float32 -0600,  0100
     float32  0600,  0100
-    
+
     // 8F - Final Destination DL
     float32 -1400,  0910
     float32  1400,  0910
     float32 -1400,  0005
     float32  1400,  0005
-    
+
     // 90 - Final Destination Tent
     float32 -1800,  0005
     float32  1800,  0005
     float32 -0900,  0005
     float32  0900,  0005
-    
+
     // 91 - Cool Cool Mountain Remix
     float32 -1400,  0930
     float32  1400,  0930
     float32 -1900,  2000
     float32  1900,  2000
-    
+
     // 92 - Duel Zone DL
     float32 -1400,  0910
     float32  1400,  0910
     float32 -1400,  0005
     float32  1400,  0005
-    
+
     // 93 - Cool Cool Mountain DL
     float32 -1400,  0910
     float32  1400,  0910
     float32 -1400,  0005
     float32  1400,  0005
-    
+
     // 94 - Meta Crystal DL
     float32 -1400,  0910
     float32  1400,  0910
     float32 -1400,  0005
     float32  1400,  0005
-    
+
     // 95 - Dream Greens
     float32 -1231,  0909
     float32  1231,  0909
     float32 -3215,  0005
     float32  3215,  0005
-    
+
     // 96 - Peach's Castle Beta
     float32 -0159,  0540
     float32  0471,  0540
     float32  0159,  0540
     float32 -0471,  0540
-    
+
     // 97 - Hyrule Castle Remix
     float32 -1510,  1960
     float32  1510,  1960
     float32 -2150,  2875
     float32  2150,  2875
-    
+
     // 98 - Sector Z Remix
     float32  4350,  0810
     float32  7840,  0940
     float32  5200,  0810
     float32  6400,  0940
-    
+
     // 99 - Mute City
     float32 -1849,  2140
     float32  1819,  1721
     float32 -3289,  2140
     float32  3549,  1721
-    
+
     // 9A - Home Run Contest
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // 9B - Mushroom Kingdom Remix
     float32 -2850,  0035
     float32  2850,  0035
     float32 -3550,  1540
     float32  3550,  1540
-    
+
     // 9C - Green Hill Zone
     float32 -1500,  0035
     float32  1500,  0035
     float32 -0750,  0035
     float32  0750,  0035
-    
+
     // 9D - Subcon
     float32 -0900,  0035
     float32  0900,  0035
@@ -2309,30 +2357,78 @@ scope Spawn {
     float32  2500,  0125
     float32 -3400,  0900
     float32  2500,  0900
-    
+
     // 9F - Casino Night
     float32 -0925,  0500
     float32  0925,  0500
     float32 -3118,  0150
     float32  3118,  0150
-    
+
     // A0 - Sonic Break the Targets
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // A1 - Sonic Board the Platforms
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // A2 - Metallic Madness
     float32 -1250,  0001
     float32  1250,  0001
     float32 -0500,  0900
     float32  0500,  0900
+
+    // A3 - Rainbow Road
+    float32 -1800,  0035
+    float32  1800,  0035
+    float32 -0900,  0035
+    float32  0900,  0035
+
+    // A4 - POKEMON STADIUM 2
+    float32 -1222,  0805
+    float32  1222,  0805
+    float32 -1222,  0035
+    float32  1222,  0035
+
+    // A5 - Norfair Remix
+    float32 -0900,  0071
+    float32  0900,  0071
+    float32 -2000,  0970
+    float32  2000,  0970
+
+    // A6 - Toad's Turnpike
+    float32 -0915, -0052
+    float32  1925, -0052
+    float32  0031, -0052
+    float32  0978, -0052
+
+    // A7 - Tal Tal Heights Remix
+    float32 -1825,  0884
+    float32  1825,  0884
+    float32  0000,  1520
+    float32  0000,  0010
+
+    // A8 - Sheik Board the Platforms
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+
+    // A9 - Winter Dream Land
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32 -1400,  0005
+    float32  1400,  0005
+
+    // AA - Sheik Break the Targets
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
 }
 
 } // __SPAWN__

@@ -158,7 +158,7 @@ scope Surface {
     
     add_surface(big_blue_surface_1, 4.0, OS.TRUE, 8, 4, 105, 5, 0, 125, 1, -1)
     add_surface(cool_cool_surface_1, 0.3, OS.FALSE, 0, 0, 0, 0, 0, 0, 0, 0)
-    add_surface(onett_car_1, 4.0, OS.TRUE, 8, 20, 45, 20, 0, 140, 0, 0x11F)
+    add_surface(onett_car_1, 4.0, OS.TRUE, 8, 20, 45, 20, 0, 140, 0, 0x11F)     // this should be replaced
     add_surface(big_blue_surface_2, 4.0, OS.TRUE, 8, 4, 90, 5, 0, 130, 1, -1)
     add_surface(corneria_surface_1, 4.0, OS.TRUE, 8, 60, 190, 20, 0, 130, 2, 0x3C)
     add_surface(corneria_surface_2, 4.0, OS.TRUE, 8, 30, 180, 20, 0, 130, 2, 0x16)
@@ -169,6 +169,7 @@ scope Surface {
     add_surface(casino_right_diagonal, 4.0, OS.TRUE, 20, 10, 225, 100, 0, 65, 0, 0x3D6)
     add_surface(casino_right_top, 4.0, OS.TRUE, 20, 10, 100, 80, 0, 65, 0, 0x3D6)
     add_surface(casino_right_side, 4.0, OS.TRUE, 20, 10, 180, 0, 0, 65, 0, 0x3D6)
+    add_surface(toadsturnpike_car, 4.0, OS.TRUE, 8, 20, 90, 100, 200, 0, 0, 0x11F)
     
     // write surfaces to ROM
     write_surfaces()

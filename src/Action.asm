@@ -1049,7 +1049,7 @@ scope Action {
         constant EggThrowAir(0x0DF)
         constant GroundPoundStart(0x0E0)
         constant GroundPoundLanding(0x0E1)
-        constant GrounPoundAir(0x0E2)
+        constant GroundPoundAir(0x0E2)
         constant GroundPoundDrop(0x0E3)
         constant EggLayUseMiss(0x0E4)
         constant EggLayGrabOut(0x0E5)
@@ -1065,7 +1065,7 @@ scope Action {
         string_0x0DF:; String.insert("EggThrowAir")
         string_0x0E0:; String.insert("GroundPoundStart")
         string_0x0E1:; String.insert("GroundPoundLanding")
-        string_0x0E2:; String.insert("GrounPoundAir")
+        string_0x0E2:; String.insert("GroundPoundAir")
         string_0x0E3:; String.insert("GroundPoundDrop")
         string_0x0E4:; String.insert("EggLayUseMiss")
         string_0x0E5:; String.insert("EggLayGrabOut")
@@ -1297,7 +1297,14 @@ scope Action {
         constant HomingEndAir(0x162)
         constant HomingRecoilGround(0x163)
         constant HomingRecoilAir(0x164)
-        constant HomingBounce(0x165)     
+        constant HomingBounce(0x165)
+        constant NeedleStormStartGround(0x166)
+        constant NeedleStormChargeGround(0x167)
+        constant NeedleStormShootGround(0x168)
+        constant NeedleStormStartAir(0x169)
+        constant NeedleStormChargeAir(0x16A)
+        constant NeedleStormShootAir(0x16B)
+        
 
         // strings!
         string_0x0DC:; String.insert("JabLoopStart")
@@ -1438,6 +1445,12 @@ scope Action {
         string_0x163:; String.insert("HomingRecoilGround")
         string_0x164:; String.insert("HomingRecoilAir")
         string_0x165:; String.insert("HomingBounce")
+        string_0x166:; String.insert("NeedleStormStartGround")
+        string_0x167:; String.insert("NeedleStormChargeGround")
+        string_0x168:; String.insert("NeedleStormShootGround")
+        string_0x169:; String.insert("NeedleStormStartAir")
+        string_0x16A:; String.insert("NeedleStormChargeAir")
+        string_0x16B:; String.insert("NeedleStormShootAir")
 
         action_string_table:
         dw string_0x0DC
@@ -1578,6 +1591,12 @@ scope Action {
         dw string_0x163
         dw string_0x164
         dw string_0x165
+        dw string_0x166
+        dw string_0x167
+        dw string_0x168
+        dw string_0x169
+        dw string_0x16A
+        dw string_0x16B
     }
 
     // @ Description

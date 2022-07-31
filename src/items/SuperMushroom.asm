@@ -5,6 +5,7 @@ constant SHOW_GFX_WHEN_SPAWNED(OS.TRUE)
 constant PICKUP_ITEM_MAIN(0)
 constant PICKUP_ITEM_INIT(0)
 constant DROP_ITEM(0)
+constant THROW_ITEM(0)
 constant PLAYER_COLLISION(collide_mushroom_)
 
 // @ Description
@@ -223,6 +224,8 @@ scope handle_active_mushroom_: {
     // 0x0054(a0) = state
     // 0x0058(a0) = address of shroom routine object pointer
     // 0x005C(a0) = player's match size state
+    // 0x0060(a0) = FGM flag
+    sw      r0, 0x0060(a0)              // initialize FGM flag
 
     lw      t3, 0x0040(a0)              // t3 = player struct
 
@@ -238,6 +241,8 @@ scope handle_active_mushroom_: {
     lw      t7, 0x0044(a0)              // t7 = this item ID
     lw      t8, 0x0044(t6)              // t6 = previous item ID
 
+    sw      r0, 0x0064(a0)              // use this as a flag to play FGM
+
     // if same item, don't do transition 1
     // if different item, set previous item to final transition and destroy this item
     lli     t4, STATE_MAINTAIN
@@ -247,7 +252,8 @@ scope handle_active_mushroom_: {
     sw      t6, 0x0000(t5)              // set shroom routine object (keep it as it was prior to this mushroom)
     lli     t8, STATE_TRANSITION_2
     lw      at, 0x0054(t6)              // at = state of previous
-    beq     at, t8, _pre_clear          // if already in transition 2, don't set it up for transition 2
+    beql    at, t8, _pre_clear          // if already in transition 2, don't set it up for transition 2
+    sw      t8, 0x0064(a0)              // set FGM flag to nonzero so we play the FGM
     lli     t8, GROW_DURATION + MAINTAIN_DURATION - 1
     lli     at, Item.PoisonMushroom.id  // at = Poison Mushroom ID
     bnel    t7, at, pc() + 8            // if poison, adjust start frame for transition 2
@@ -264,6 +270,7 @@ scope handle_active_mushroom_: {
     addiu   sp, sp, -0x0010             // allocate stack space
     sw      ra, 0x0004(sp)              // save ra
     sw      a0, 0x0008(sp)              // save a0
+    sw      t6, 0x000C(sp)              // save t6
     jal     Render.DESTROY_OBJECT_
     or      a0, t6, r0                  // a0 = previous shroom routine object
     lw      ra, 0x0004(sp)              // restore ra
@@ -276,6 +283,27 @@ scope handle_active_mushroom_: {
     lli     t4, STATE_MAINTAIN
     beq     t1, t4, _check_match_size   // if the state was updated to MAINTAIN, then this object is good, so continue
     nop                                 // if it wasn't, then we can stop processing
+
+    // If the previous item was already in transition 2, we need to play the sound for this item.
+    // We have a flag for that!
+    lw      t1, 0x0064(a0)              // t1 = FGM flag = non-zero if we should play
+    beqz    t1, _return_destroyed       // if FGM flag not set, skip
+    lw      t1, 0x0044(a0)              // t1 = item ID
+
+    addiu   sp, sp, -0x0010             // allocate stack space
+    sw      ra, 0x0004(sp)              // save ra
+
+    lli     a0, 0x00D4                  // a0 = mushroom grow sound effect
+    lli     at, Item.PoisonMushroom.id  // at = Poison Mushroom ID
+    beql    t1, at, pc() + 8            // if poison mushroom, change sound effect
+    lli     a0, 0x00D5                  // a0 = mushroom shrink sound effect
+    jal     FGM.play_                   // play FGM
+    nop
+
+    lw      ra, 0x0004(sp)              // restore ra
+    addiu   sp, sp, 0x0010              // deallocate stack space
+
+    _return_destroyed:
     jr      ra
     nop
 
@@ -335,6 +363,7 @@ scope handle_active_mushroom_: {
 
     // play sound effect
     lw      t1, 0x0044(a0)              // t1 = this item ID
+    sw      t1, 0x0060(a0)              // set FGM flag
     lli     a0, 0x00D4                  // a0 = mushroom grow sound effect
     lli     at, Item.PoisonMushroom.id  // at = Poison Mushroom ID
     beql    t1, at, pc() + 8            // if poison mushroom, change sound effect
@@ -491,12 +520,15 @@ scope handle_active_mushroom_: {
     lli     at, 0x0001                  // at = 1
     bne     t0, at, _begin_check        // skip if not on first frame of transition
     or      t9, a0, r0                  // t9 = a0 (save a0)
+    lw      t7, 0x0060(a0)              // t7 = FGM flag
+    bnez    t7, _do_rumble              // if already played the FGM, then don't play it again!
     or      t7, ra, r0                  // t7 = ra (save ra)
     jal     FGM.play_                   // play FGM
     or      a0, t8, r0                  // a0 = fgm_id
     or      a0, t9, r0                  // restore a0 (routine object)
     or      ra, t7, r0                  // restore ra (routine object)
 
+    _do_rumble:
     addiu   sp, sp, -0x0020             // allocate stack space
     sw      ra, 0x0004(sp)              // save registers
     sw      a0, 0x0008(sp)              // ~

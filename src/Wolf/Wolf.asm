@@ -591,7 +591,9 @@ scope Wolf {
 	entry_anim_struct_WOLF:
     dw  0x070A0000
     dw  Character.WOLF_file_8_ptr
-    OS.copy_segment(0xA9EFC, 0x10)
+    OS.copy_segment(0xA9EFC, 0x8)
+    dw  Size.arwing.update_routine_._update
+    OS.copy_segment(0xA9F08, 0x4)
 	dw	0x00002610
 	dw	0x00000000
 	dw	0x00000000

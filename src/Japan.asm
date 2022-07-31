@@ -30,7 +30,7 @@ scope Japan {
         
         lui     at, 0x40A0                  // original line 1
         mtc1    at, f16                     // original line 2
-        Toggles.guard(Toggles.entry_japanese_hitlag, japanese_hitlag_end_)
+        Toggles.single_player_guard(Toggles.entry_japanese_hitlag, japanese_hitlag_end_)
         lui     at, 0x4080                  // Japanese style, this adds less to the hitlag calculation thus decreasing hitlag
         mtc1    at, f16                     // original line 2
         
@@ -53,7 +53,7 @@ scope Japan {
         
         lui     at, 0x8019                  // original line 1
         lwc1    f0, 0xC0E0(at)              // original line 2
-        Toggles.guard(Toggles.entry_japanese_di, japanese_di_end_)
+        Toggles.single_player_guard(Toggles.entry_japanese_di, japanese_di_end_)
         lui     at, 0x3FC0                  // Japanese coding part 1
         mtc1    at, f0                      // Japanese coding part 2
         
@@ -74,7 +74,7 @@ scope Japan {
         
         
         lw		t7, 0x07C8(v0)              // original line 2
-        Toggles.guard(Toggles.entry_japanese_shieldstun, japanese_shieldstun_end_)
+        Toggles.single_player_guard(Toggles.entry_japanese_shieldstun, japanese_shieldstun_end_)
         lui     at, 0x3FE0                  // Japanese coding part 1
         mtc1    at, f8                      // Japanese coding part 2
         
@@ -100,7 +100,7 @@ scope Japan {
         
         lwc1    f4, 0x0060(v1)              // original line 1
         lwc1    f0, 0x0030(t6)              // original line 1
-        Toggles.guard(Toggles.entry_momentum_slide, momentum_slide_end_)
+        Toggles.single_player_guard(Toggles.entry_momentum_slide, momentum_slide_end_)
         j       0x8013F150
         nop
  

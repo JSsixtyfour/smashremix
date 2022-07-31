@@ -4,7 +4,7 @@ define __BONUS__()
 print "included Bonus.asm\n"
 
 scope Bonus {
-    constant NUM_BONUS_STAGES(26)
+    constant NUM_BONUS_STAGES(27)
 
     // @ Description
     // Sets up CSS for alternate Bonus modes
@@ -362,6 +362,30 @@ scope Bonus {
 
 
     // @ Description
+    // Disables automatic start after selecting character (in Remix Mode)
+    scope manual_remix_bonus_start_: {
+        OS.patch_start(0x0014CABC, 0x80136A8C)
+        jal     manual_remix_bonus_start_._check_mode
+        lui     t2, 0x8013                        // original line 1
+        OS.patch_end()
+
+        _check_mode:
+        li      t6, SinglePlayerModes.singleplayer_mode_flag
+        lw      t6, 0x0000(t6)                    // t6 = singleplayer mode flag
+        bnezl   t6, _return                       // if not Bonus 1/2, return
+        addiu   t6, t5, 0xFFFF                    // original line 2
+        li      t6, mode
+        lw      t6, 0x0000(t6)                    // t6 = mode (0 - Normal, 1 - Remix)
+        beqzl   t6, _return                       // if Remix not selected, start automatically
+        addiu   t6, t5, 0xFFFF                    // original line 2
+        lli     t6, 0x008C                        // t6 = 140
+
+        _return:
+        jr      ra
+        nop
+    }
+
+    // @ Description
     // Checks if arrows are pressed and updates mode/stage accordingly
     // a0 - cursor object
     scope handle_arrow_press_: {
@@ -650,6 +674,7 @@ scope Bonus {
     db Stages.id.BTT_MTWO
     db Stages.id.BTT_MARTH
     db Stages.id.BTT_SONIC
+    db Stages.id.BTT_SHEIK
 
     db Stages.id.BTT_STG1
     OS.align(4)
@@ -682,6 +707,7 @@ scope Bonus {
     db Stages.id.BTP_MTWO
     db Stages.id.BTP_MARTH
     db Stages.id.BTP_SONIC
+    db Stages.id.BTP_SHEIK
 
     db Stages.id.BTP_POLY
     OS.align(4)
@@ -714,6 +740,7 @@ scope Bonus {
     db Character.id.MTWO,       0x0
     db Character.id.MARTH,      0x0
     db Character.id.SONIC,      Character.id.SSONIC
+    db Character.id.SHEIK,      0x0
 
     db Character.id.NMARIO,     Character.id.PIANO
     OS.align(4)

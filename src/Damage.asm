@@ -97,6 +97,7 @@ scope Damage {
         sw      at, 0x0000(t6)              // set dark cross as current GFX id
     }
 
+
     // @ Description
     // Jump table for creating GFX on hit based on damage type.
     OS.align(16)
@@ -109,6 +110,7 @@ scope Damage {
         constant COIN(0x800E4014)
         constant SHADOW(create_shadow_gfx_)
         constant LASER(create_normal_gfx_)
+        constant DEKU_STUN(create_normal_gfx_)
         table:
         constant table_origin(origin())
         dw NORMAL                           // 0x0 - normal
@@ -144,6 +146,16 @@ scope Damage {
     }
 
     // @ Description
+    // Jump table routine for starting "laser" GFX Routine on hit
+    scope begin_deku_stun_gfx_routine_: {
+        lli     a1, GFXRoutine.id.DEKU_STUN // a1 = DEKU_STUN effect id
+        jal     0x800E9814                  // begin GFX routine
+        or      a2, r0, r0                  // a2 = 0
+        j       on_hit_routine.return       // return
+        nop
+    }
+
+    // @ Description
     // Jump table for applying GFX Routines on hit based on damage type.
     OS.align(16)
     scope on_hit_routine {
@@ -154,6 +166,7 @@ scope Damage {
         constant ICE(0x80140C20)
         constant SHADOW(begin_shadow_gfx_routine_)
         constant LASER(begin_laser_gfx_routine_)
+        constant DEKU_STUN(begin_deku_stun_gfx_routine_)
         table:
         constant table_origin(origin())
         dw NORMAL                           // 0x0 - normal
@@ -163,8 +176,13 @@ scope Damage {
         dw NORMAL                           // 0x4 - coin
         dw ICE                              // 0x5 - ice (mostly unfinished/removed)
         dw NORMAL                           // 0x6 - sleep
-        while pc() < (table + 0x40) {
-            dw NORMAL                       // 0x7-0xF - normal by default
+        dw NORMAL                           // 0x7 - 
+        dw NORMAL                           // 0x8 - 
+        dw NORMAL                           // 0x9 - 
+        dw DEKU_STUN                        // 0xA - deku stun
+
+        while pc() < (table + 0x18) {
+            dw NORMAL                       // 0xB-0xF - normal by default
         }
     }
 
@@ -192,6 +210,9 @@ scope Damage {
         nop
 
         _stun_check:
+        lli     at, Damage.id.DEKU_STUN     // at = id.Deku_Stun
+        beq     v1, at, _deku_stun_branch   // skip if damage type = DEKU_STUN
+        nop
         lli     at, Damage.id.STUN          // at = id.Stun
         bne     v1, at, _branch             // skip if damage type != STUN (modified original line 1)
         nop
@@ -213,6 +234,21 @@ scope Damage {
         j       _stun_return                // return
         nop
 
+        // if damage type = DEKU_STUN
+        _deku_stun_branch:
+        lw      t9, 0x0084(a0)              // ~
+        lw      t9, 0x0024(t9)              // t9 = current action id
+        lli     at, Action.Stun             // at = Stun action id
+        beql    at, t9, _deku_stun_branch_2 // skip if action id = Stun
+        addiu   at, r0, 0x0000              // at = boolean that skips
+
+        _deku_stun_branch_2:
+        // if current action != Stun
+        jal     deku_stun_initial_modified_ // initial subroutine for Stun action
+        lw      t9, 0x0084(a0)              // ~
+        j       _stun_return                // return
+        nop
+
         _branch:
         j       _branch_return              // return, taking original branch
         lw      t9, 0x07F4(v0)              // original line 2
@@ -231,6 +267,64 @@ scope Damage {
     }
 
     // @ Description
+    // Modified initial subroutine for stun action, sets argument 4 of the change action subroutine to 0.
+    // This prevents a bug where Yoshi would be invisible after being stunned out of roll, and potentially other issues.
+    scope deku_stun_initial_modified_: {
+        addiu   sp, sp,-0x0028              // ~
+        sw      ra, 0x0024(sp)              // ~
+        sw      s0, 0x0020(sp)              // ~
+        sw      a0, 0x0028(sp)              // ~
+        beqz    at, _end                    // skip action change if boolean was set to 0
+        lw      s0, 0x0084(a0)              // original logic
+
+        lw      at, 0x148(s0)               // at = kinetic state
+        beqz    at, _branch                 // branch if grounded
+        // this | grounded
+        addiu   a1, r0, 0x00A4              // action id = stun
+        // or | aerial
+        addiu   a1, r0, Action.ShieldBreakFall // action id = ShieldBreakFall
+        _branch:
+        addiu   a2, r0, 0x0000              // a2 = set starting frame
+        sw      r0, 0x0010(sp)              // argument 4 = 0 (idk what this is)
+        jal     0x800E6F24                  // change action
+        lui     a3, 0x0000                  // animation speed = 0
+
+        // I just kept having issues with gfx routine so I copied the return routine as a workaround.
+        addiu   t9, r0, 0x001E
+        bne     t7, at, branch_1
+        or      a0, s0, r0
+        addiu   t8, r0, 0x001E
+        b       branch_2
+        sw      t8, 0x0034 (s0)
+
+        branch_1:
+        sw      t9, 0x0034 (s0)
+
+        branch_2:
+        lw      t0, 0x002c (s0)
+        addiu   t1, r0, 0x0190
+        subu    a1, t1, t0
+        bgtz    a1, branch_3
+        nop
+        or      a1, r0, r0
+
+        branch_3:
+        jal     0x8014e3ec
+        addiu   a1, a1, 0x005a
+        lw      a0, 0x0028 (sp)
+        addiu   a1, r0, 0x006C       // argument = deku stun id
+        jal     0x800e9814
+        or      a2, r0, r0
+		
+        _end:
+        lw      ra, 0x0024 (sp)
+        lw      s0, 0x0020 (sp)
+        addiu   sp, sp, 0x28
+        jr      ra
+        nop
+    }
+
+    // @ Description
     // Patch which adds a check for the "stun" damage type to put the opponents into DamageElec actions.
     // This is only used if the character is already in the Stun action.
     // Modifies the routine which originally loads action ids for electric damage.
@@ -246,8 +340,12 @@ scope Damage {
         // at = damage.id.ELECTRIC
 
         beq     t0, at, _electric           // branch if damage type = ELECTRIC
+        nop
+        lli     at, Damage.id.DEKU_STUN     // at = id.DEKU_STUN
+        bne     t0, at, _deku_stun          // skip if damage type != DEKU_STUN (modified original line 1)
+        nop
         lli     at, Damage.id.STUN          // at = id.STUN
-        bne     t0, at, _branch             // skip if damage type != STUN (modified original line 1)
+        bne     t0, at, _stun               // skip if damage type != STUN (modified original line 1)
         nop
 
         _electric:
@@ -255,7 +353,11 @@ scope Damage {
         j       _return                     // return
         nop
 
-        _branch:
+        _stun:
+        j       _branch_return              // return, taking original branch
+        lw      t4, 0x00A0(sp)              // original line 2
+
+        _deku_stun:
         j       _branch_return              // return, taking original branch
         lw      t4, 0x00A0(sp)              // original line 2
     }
@@ -271,6 +373,7 @@ scope Damage {
     add_damage_type(SHADOW, on_hit_gfx.SHADOW, on_hit_routine.SHADOW)
     add_damage_type(STUN, on_hit_gfx.ELECTRIC, on_hit_routine.ELECTRIC)
     add_damage_type(LASER, on_hit_gfx.LASER, on_hit_routine.LASER)
+    add_damage_type(DEKU_STUN, on_hit_gfx.DEKU_STUN, on_hit_routine.DEKU_STUN)
 
     print "========================================================================== \n"
 

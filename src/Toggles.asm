@@ -40,6 +40,48 @@ scope Toggles {
     }
 
     // @ Description
+    // based on toggles.guard. uses default value if mode is 1p, btt, btp, rttf, hrc or any other single player mode.
+    // uses logical shift to find out if on a single player mode by looking at pointer @ Global.match_info
+    macro single_player_guard(entry_address, exit_address) {
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      at, 0x0004(sp)              // save at
+        sw      v0, 0x0008(sp)              // save v0
+
+        li      at, Global.match_info       // ~
+        lh      at, 0x0002(at)              // at = match_info ptr half byte
+        sll     at, at, 22                  // shift left by 22 (to cut value)
+        srl     at, at, 24                  // shift right by 24
+        li      v0, 0x005B                  // value will be < 5B if versus or training
+
+        bgt     at, v0, pc() + 28            // dont use toggle if single player
+        nop
+
+        // if here, use toggle
+        li      at, {entry_address}         // ~
+        lw      at, 0x0004(at)              // at = is_enabled
+        bnez    at, pc() + 24               // if (is_enabled), _continue
+        nop
+
+        // _end:
+        lw      at, 0x0004(sp)              // restore at
+        lw      v0, 0x0008(sp)              // restore v0
+        addiu   sp, sp, 0x0010              // deallocate stack space
+
+        // foor hook vs. function
+        if ({exit_address} == 0x00000000) {
+            jr      ra
+        } else {
+            j       {exit_address}
+        }
+        nop
+
+        // _continue:
+        lw      at, 0x0004(sp)              // restore at
+        lw      v0, 0x0008(sp)              // restore v0
+        addiu   sp, sp, 0x0010              // deallocate stack space
+    }
+
+    // @ Description
     // This patch disables functionality on the OPTION screen.
     scope disable_options_functionality_: {
         OS.patch_start(0x0012060C, 0x80132E5C)
@@ -121,13 +163,18 @@ scope Toggles {
     // TRUE = normal options, FALSE = custom toggles
     normal_options:
     db OS.TRUE
-    OS.align(4)
 
     // @ Description
-    // Strings for the settings submenu headers
-    string_remix_settings:; String.insert("Remix Settings")
-    string_stage_settings:; String.insert("Stage Settings")
-    string_music_settings:; String.insert("Music Settings")
+    // Keeps track of what menu we're on.
+    // 0 = Super Menu
+    // 1 = Remix Settings
+    // 2 = Music Settings
+    // 3 = Stage Settings
+    // 4 = Player Tags
+    menu_index:
+    db 0x0000
+
+    OS.align(4)
 
     // @ Description
     // Pointer to current submenu header string
@@ -342,6 +389,7 @@ scope Toggles {
         Render.load_file(0x4E, Render.file_pointer_1)                 // load option images
         Render.load_file(File.REMIX_MENU_BG, Render.file_pointer_2)   // load remix menu bg
         Render.load_file(0xC5, Render.file_pointer_3)                 // load button images into file_pointer_3
+        Render.load_file(File.CSS_IMAGES, Render.file_pointer_4)      // load CSS images into file_pointer_4
 
         Render.draw_rectangle(3, 0, 10, 10, 300, 220, 0x000000FF, OS.FALSE)
 
@@ -349,11 +397,11 @@ scope Toggles {
         Render.draw_rectangle(3, 12, 43, 24, 60, 16, 0x000000FF, OS.FALSE)
         Render.draw_string(3, 12, settings, Render.NOOP, 0x42320000, 0x41E40000, 0x5F5846FF, 0x3F600000, Render.alignment.LEFT)
         Render.draw_string_pointer(3, 12, page_title_pointer, Render.update_live_string_, 0x43900000, 0x41A80000, 0xF2C70DFF, 0x3FB00000, Render.alignment.RIGHT)
-        Render.draw_texture_at_offset(3, 12, Render.file_pointer_3, Render.file_c5_offsets.R, Render.NOOP, 0x43830000, 0x42180000, 0x848484FF, 0x303030FF, 0x3F700000)
-        Render.draw_texture_at_offset(3, 12, 0x801338B0, 0xDD90, Render.NOOP, 0x438C0000, 0x42240000, 0xFFAE00FF, 0x00000000, 0x3F2F0000)
-        Render.draw_texture_at_offset(3, 12, 0x801338B0, 0xDE30, Render.NOOP, 0x43700000, 0x42240000, 0xFFAE00FF, 0x00000000, 0x3F2F0000)
-        Render.draw_string(3, 12, slash, Render.NOOP, 0x43800000, 0x42180000, 0xFFFFFFFF, 0x3F600000, Render.alignment.LEFT)
-        Render.draw_texture_at_offset(3, 12, Render.file_pointer_3, Render.file_c5_offsets.Z, Render.NOOP, 0x43780000, 0x42180000, 0x848484FF, 0x303030FF, 0x3F480000)
+        Render.draw_texture_at_offset(3, 19, Render.file_pointer_3, Render.file_c5_offsets.R, Render.NOOP, 0x43830000, 0x42180000, 0x848484FF, 0x303030FF, 0x3F700000)
+        Render.draw_texture_at_offset(3, 19, 0x801338B0, 0xDD90, Render.NOOP, 0x438C0000, 0x42240000, 0xFFAE00FF, 0x00000000, 0x3F2F0000)
+        Render.draw_texture_at_offset(3, 19, 0x801338B0, 0xDE30, Render.NOOP, 0x43700000, 0x42240000, 0xFFAE00FF, 0x00000000, 0x3F2F0000)
+        Render.draw_string(3, 19, slash, Render.NOOP, 0x43800000, 0x42180000, 0xFFFFFFFF, 0x3F600000, Render.alignment.LEFT)
+        Render.draw_texture_at_offset(3, 19, Render.file_pointer_3, Render.file_c5_offsets.Z, Render.NOOP, 0x43780000, 0x42180000, 0x848484FF, 0x303030FF, 0x3F480000)
 
         Render.draw_texture_at_offset(3, 13, Render.file_pointer_2, 0x20718, Render.NOOP, 0x41200000, 0x41200000, 0xFFFFFFFF, 0x00000000, 0x3F800000)
         Render.draw_string(3, 13, current_profile, Render.NOOP, 0x432D0000, 0x434D0000, 0xFFFFFFFF, Render.FONTSIZE_DEFAULT, Render.alignment.RIGHT)
@@ -372,6 +420,90 @@ scope Toggles {
         Render.draw_texture_at_offset(3, 17, Render.file_pointer_3, Render.file_c5_offsets.A, Render.NOOP, 0x43100000, 0x42180000, 0x50A8FFFF, 0x0010FFFF, 0x3F700000)
         Render.draw_string(3, 17, load_profile, Render.NOOP, 0x431B0000, 0x42180000, 0xC0C0C0FF, 0x3F600000, Render.alignment.LEFT)
 
+        // edit legend
+        Render.draw_texture_at_offset(3, 18, Render.file_pointer_3, Render.file_c5_offsets.Z, Render.NOOP, 0x42FC0000, 0x42180000, 0x848484FF, 0x303030FF, 0x3F480000)
+        Render.draw_string(3, 18, cancel, Render.update_live_string_, 0x43060000, 0x42180000, 0xC0C0C0FF, 0x3F600000, Render.alignment.LEFT)
+        Render.draw_texture_at_offset(3, 18, Render.file_pointer_3, Render.file_c5_offsets.R, Render.NOOP, 0x433C0000, 0x42180000, 0x848484FF, 0x303030FF, 0x3F700000)
+        Render.draw_string(3, 18, change_case, Render.update_live_string_, 0x434C0000, 0x42180000, 0xC0C0C0FF, 0x3F600000, Render.alignment.LEFT)
+
+        li      t0, Render.display_order_room
+        lui     t1, 0x7000
+        sw      t1, 0x0000(t0)
+
+        Render.draw_rectangle(3, 18, 40, 60, 240, 120, 0x000000FF, OS.FALSE) // background
+        evaluate n(0)
+        while {n} <= 10 {
+            evaluate h(98)
+            evaluate y(82)
+            if ({n} == 0) || ({n} == 10) {
+                evaluate h(122)
+                evaluate y(58)
+            }
+            Render.draw_rectangle(3, 18, 38 + ({n} * 24), {y}, 2, {h}, 0xFFFFFFFF, OS.FALSE) // vertical line
+            if {n} <= 5 {
+                Render.draw_rectangle(3, 18, 38, 58 + ({n} * 24), 242, 2, 0xFFFFFFFF, OS.FALSE) // horizontal line
+            }
+            evaluate n({n} + 1)
+        }
+
+        Render.draw_rectangle(3, 18, 38, 82, 26, 26, 0xF2C70DFF, OS.FALSE)
+        li      t0, Menu.keyboard_struct
+        sw      v0, 0x0000(t0)              // save cursor rectangle 1
+        Render.draw_rectangle(3, 18, 40, 84, 22, 22, 0x000000FF, OS.FALSE)
+        li      t0, Menu.keyboard_struct
+        sw      v0, 0x0004(t0)              // save cursor rectangle 2
+        li      t0, Menu.keyboard_cursor_index
+        sw      r0, 0x0000(t0)              // reset cursor x and y
+
+        li      t0, Menu.keyboard_set
+        lw      t0, 0x0000(t0)              // t0 = keyboard set
+        li      t1, Menu.keyboard_sets
+        sll     t0, t0, 0x0002              // t0 = offset to keyboard set
+        addu    t1, t1, t0                  // t1 = keyboard set pointer address
+        lw      a2, 0x0000(t1)              // t0 = keyboard set
+
+        Render.draw_string(3, 18, 0xFFFFFFFF, Render.NOOP, 0x42240000, 0x42F40000, 0xFFFFFFFF, 0x3F800000, Render.alignment.LEFT, OS.TRUE)
+        li      t0, Menu.keyboard_struct + 0x0008
+        sw      v0, 0x0000(t0)              // save keyboard chars string object
+        sw      t0, 0x0054(v0)              // save reference to string object
+
+        jal     Menu.align_keyboard_chars_
+        or      a0, v0, r0                  // a0 = string object
+
+        // Space key
+        Render.draw_rectangle(3, 18, 38 + 6 * 24 + 5, 82 + 3 * 24 + 18, 16, 2, 0xFFFFFFFF, OS.FALSE)
+        Render.draw_rectangle(3, 18, 38 + 6 * 24 + 6, 82 + 3 * 24 + 18, 14, 1, 0x000000FF, OS.FALSE)
+
+        // Backspace key
+        Render.draw_texture_at_offset(3, 18, Render.file_pointer_3, Render.file_c5_offsets.B, Render.NOOP, 0x43530000, 0x431F8000, 0x00D040FF, 0x00D040FF, 0x3FA00000)
+        Render.draw_string(3, 18, Menu.string_del, Render.NOOP, 0x435A8000, 0x43230000, 0xFFFFFFFF, 0x3F400000, Render.alignment.CENTER, OS.TRUE)
+
+        // Keyboard Set key
+        Render.draw_texture_at_offset(3, 18, Render.file_pointer_3, Render.file_c5_offsets.B, Render.NOOP, 0x436B0000, 0x431F8000, 0xC0CC00FF, 0xC0CC00FF, 0x3FA00000)
+        Render.draw_string_pointer(3, 18, Menu.keyboard_set_button, Render.update_live_string_, 0x4372C000, 0x43230000, 0xFFFFFFFF, 0x3F400000, Render.alignment.CENTER, OS.TRUE)
+
+        // OK key
+        Render.draw_texture_at_offset(3, 18, Render.file_pointer_3, Render.file_c5_offsets.B, Render.NOOP, 0x43818000, 0x431F8000, 0xFF0000FF, 0xFF0000FF, 0x3FA00000)
+        Render.draw_string(3, 18, Menu.string_ok, Render.NOOP, 0x43858000, 0x43230000, 0xFFFFFFFF, 0x3F400000, Render.alignment.CENTER, OS.TRUE)
+
+        Render.draw_string(3, 18, Menu.keyboard_input_string, Render.update_live_string_, 0x42300000, 0x42810000, 0xFFFFFFFF, 0x3F800000, Render.alignment.LEFT, OS.TRUE)
+        li      t0, Menu.keyboard_struct + 0x000C
+        sw      v0, 0x0000(t0)              // save keyboard chars string object
+        sw      t0, 0x0054(v0)              // save reference to string object
+
+        lli     a1, 232                     // a1 = max width
+        jal     Render.apply_max_width_
+        or      a0, v0, r0                  // a0 = string object
+
+        li      t0, Render.display_order_room
+        lui     t1, Render.DISPLAY_ORDER_DEFAULT
+        sw      t1, 0x0000(t0)
+
+        Render.draw_texture_at_offset(3, 20, Render.file_pointer_3, Render.file_c5_offsets.A, Render.NOOP, 0x433F0000, 0x42180000, 0x50A8FFFF, 0x0010FFFF, 0x3F700000)
+        Render.draw_string(3, 20, edit, Render.NOOP, 0x434A0000, 0x42180000, 0xC0C0C0FF, 0x3F600000, Render.alignment.LEFT)
+        Render.draw_texture_at_offset(3, 20, Render.file_pointer_3, Render.file_c5_offsets.L, Render.NOOP, 0x42D80000, 0x42180000, 0x848484FF, 0x303030FF, 0x3F700000)
+        Render.draw_string(3, 20, clear_tag, Render.NOOP, 0x42F40000, 0x42180000, 0xC0C0C0FF, 0x3F600000, Render.alignment.LEFT)
+
         li      a0, info                    // a0 - info
         sw      r0, 0x0008(a0)              // clear cursor object reference on page load
         sw      r0, 0x000C(a0)              // reset cursor to top
@@ -379,9 +511,12 @@ scope Toggles {
         nop
         // ensure Profiles text is hidden when first opening menu
         lli     a0, 14                      // a0 = group
-        lli     a1, 0x0001                  // a1 = 1 (display off)
         jal     Render.toggle_group_display_
-        nop
+        lli     a1, 0x0001                  // a1 = 1 (display off)
+        // ensure edit legend is hidden when first opening menu
+        lli     a0, 18                      // a0 = group
+        jal     Render.toggle_group_display_
+        lli     a1, 0x0001                  // a1 = 1 (display off)
 
         Render.register_routine(run_)
 
@@ -401,10 +536,9 @@ scope Toggles {
         jal     Menu.update_                // check for updates
         nop
 
-        li      t0, info                    // t0 - address of info
-        lw      t1, 0x0000(t0)              // t1 - address of head
-        li      t2, head_super_menu         // t2 - address of head_super_menu
-        bne     t1, t2, _check_b            // if (not in super menu), skip
+        li      t0, menu_index              // t0 - address of menu index
+        lbu     t0, 0x0000(t0)              // t0 = menu index (0 if super menu)
+        bnez    t0, _check_b                // if (not in super menu), skip
         nop                                 //
 
         jal     get_current_profile_        // v0 - current profile
@@ -444,34 +578,46 @@ scope Toggles {
 
         // check for exit
         _check_b:
+        li      a0, info                    // a0 = address of info
+        jal     Menu.get_selected_entry_    // v0 = selected entry
+        nop
+        lli     t3, Menu.type.INPUT         // t3 = input type
+        lw      t1, 0x0000(v0)              // t1 = type
+        bne     t3, t1, _do_check_b         // if (type != input), check b
+        lw      t3, 0x0004(v0)              // t3 = edit mode (if input)
+        bnez    t3, _check_l                // if in edit mode, don't exit sub menu
+        nop
+
+        // if exit mode should be exited, the following logic avoids exiting the menu the same frame
+        li      t0, back_blocked
+        lw      t1, 0x0000(t0)              // t1 = 0 if back not blocked
+        lli     t2, 0x0000                  // t2 = 0
+        bgtzl   t1, pc() + 8                // if > 0, decrement
+        addiu   t2, t1, -0x0001             // t2 = t1 - 1
+        bnez    t1, _check_l                // if back blocked, skip checking for B
+        sw      t2, 0x0000(t0)              // update back_blocked for next frame
+
+        _do_check_b:
         lli     a0, Joypad.B                // a0 - button_mask
-        lli     a1, 000069                  // a1 - whatever you like!
-        lli     a2, Joypad.PRESSED          // a2 - type
+        lli     a2, Joypad.PRESSED          // a2 - types
         jal     Joypad.check_buttons_all_   // check if B pressed
         nop
-        beqz    v0, _end                    // nop
+        beqz    v0, _check_l                // nop
         nop
-        li      a0, info                    // a0 = address of info
-        lw      t1, 0x0000(a0)              // t1 = address of head
-        li      t2, head_super_menu         // t2 = address of head_super_menu
-        beq     t1, t2, _exit_super_menu    // if (in super menu), exit
-        nop                                 // else, exit sub menu
 
-        // restore cursor when returning from sub menu
-        li      t2, head_remix_settings     // t2 = head_remix_settings
-        beql    t1, t2, _exit_sub_menu      // if (returning from remix settings)
-        ori     t0, r0, 0x0001              // then set cursor accordingly
-        li      t2, head_music_settings     // t2 = head_music_settings
-        beql    t1, t2, _exit_sub_menu      // if (returning from music settings)
-        ori     t0, r0, 0x0002              // then set cursor accordingly
-        ori     t0, r0, 0x0003              // if (returning from random stage settings) then set cursor accordingly
+        li      a0, info                    // a0 = address of info
+
+        li      t1, menu_index              // t1 = menu_index
+        lbu     t0, 0x0000(t1)              // t0 = menu index
+        beqz    t0, _exit_super_menu        // if (in super menu), exit
+        sb      r0, 0x0000(t1)              // restore cursor when returning from sub menu
 
         _exit_sub_menu:
         jal     Menu.get_selected_entry_    // v0 = selected entry
         nop
         li      t1, info                    // t1 = address of info
         sw      t0, 0x000C(t1)              // restore cursor
-        jal     set_info_1_                 // bring up super menu
+        jal     show_super_menu_            // bring up super menu
         nop
         li      t0, reset_menu_music
         lw      t0, 0x0000(t0)              // t0 = reset menu music flag
@@ -481,6 +627,19 @@ scope Toggles {
         lli     v0, 0x0000                  // forces a reset
 
         b       _end                        // end menu execution
+        nop
+
+        _check_l:
+        lli     a0, Joypad.L                // a0 - button_mask
+        jal     Joypad.check_buttons_all_   // check if B pressed
+        lli     a2, Joypad.PRESSED          // a2 - types
+        beqz    v0, _end                    // if not pressed, skip
+        nop
+
+        jal     clear_tag_
+        nop
+
+        b       _end
         nop
 
         _exit_super_menu:
@@ -498,6 +657,7 @@ scope Toggles {
         lli     t3, 0x0001                  // t3 = display off
         lli     t4, 0x0001                  // t4 = display off
         lli     t5, 0x0001                  // t5 = display off
+        lli     t6, 0x0001                  // t6 = display off
         lw      t1, 0x0010(v0)              // t1 = a_function routine
         li      t2, play_menu_music_        // t2 = play_menu_music_
         beql    t1, t2, pc() + 8            // if on the menu music entry, display Play legend
@@ -511,6 +671,9 @@ scope Toggles {
         li      t2, load_sub_profile_       // t2 = load_sub_profile_
         beql    t1, t2, pc() + 8            // if on a load profile entry, display Load legend
         lli     t5, 0x0000                  // t4 = display on
+        li      t2, toggle_edit_mode_       // t2 = toggle_edit_mode_
+        beql    t1, t2, pc() + 8            // if on an editable entry, display edit/clear legend
+        lw      t6, 0x0004(v0)              // t4 = edit flag = display state
 
         // ensure play legend is hidden/shown accordingly
         lli     a0, 15                      // a0 = group
@@ -526,6 +689,11 @@ scope Toggles {
         lli     a0, 17                      // a0 = group
         jal     Render.toggle_group_display_
         or      a1, t5, r0                  // a1 = display
+
+        // ensure edit/clear legend is hidden/shown accordingly
+        lli     a0, 20                      // a0 = group
+        jal     Render.toggle_group_display_
+        or      a1, t6, r0                  // a1 = display
 
         OS.restore_registers()
         jr      ra
@@ -566,6 +734,14 @@ scope Toggles {
         jal     Menu.export_                // export data
         nop
         li      a0, block_stages            // ~
+        jal     SRAM.save_                  // save data
+        nop
+
+        li      a0, head_player_tags
+        li      a1, block_tags              // a1 - address of block
+        jal     Menu.export_                // export data
+        nop
+        li      a0, block_tags              // ~
         jal     SRAM.save_                  // save data
         nop
 
@@ -613,6 +789,14 @@ scope Toggles {
         jal     Menu.import_
         nop
 
+        li      a0, block_tags              // a0 - address of block (stages)
+        jal     SRAM.load_                  // load data
+        nop
+        li      a0, head_player_tags
+        li      a1, block_tags              // a1 - address of block
+        jal     Menu.import_
+        nop
+
         lw      a0, 0x0004(sp)              // ~
         lw      a1, 0x0008(sp)              // ~
         lw      a2, 0x000C(sp)              // ~
@@ -623,7 +807,7 @@ scope Toggles {
         nop
     }
 
-    macro set_info_head(address_of_head, hide_bg_image) {
+    macro set_info_head(address_of_head, menu_index) {
         // a0 = address of info()
         // v0 = selected entry
         addiu   sp, sp,-0x0010              // allocate stack space
@@ -631,17 +815,21 @@ scope Toggles {
         sw      t1, 0x0008(sp)              // save t1
         sw      ra, 0x000C(sp)              // save ra
 
+        li      t0, menu_index              // t0 = menu_index
+        lli     t1, {menu_index}            // t1 = menu index being opened
+        sb      t1, 0x0000(t0)              // save menu index
+
         li      t0, info                    // t0 = info
         li      t1, {address_of_head}       // t1 = address of head
         sw      t1, 0x0000(t0)              // update info->head
-        if {hide_bg_image} == OS.TRUE {
+        if {menu_index} > 0 {
             sw      r0, 0x000C(t0)          // update info.selection on sub menus
         }
         lw      a1, 0x0018(t0)              // a1 = 1st displayed currently
         sw      t1, 0x0018(t0)              // update info->1st displayed
         sw      t1, 0x001C(t0)              // update info->last displayed
         li      t0, page_title_pointer      // t0 = page_title pointer
-        if {hide_bg_image} == OS.TRUE {
+        if {menu_index} > 0 {
             addiu   t1, v0, 0x0028          // t1 = selected entry's title
             sw      t1, 0x0000(t0)          // set the page title
         } else {
@@ -653,7 +841,11 @@ scope Toggles {
 
         lli     a0, 13                      // a0 = group 13
         jal     Render.toggle_group_display_
-        lli     a1, {hide_bg_image}         // toggle the main menu elements
+        if {menu_index} > 0 {
+            lli     a1, OS.TRUE             // a1 = hide main menu elements
+        } else {
+            lli     a1, OS.FALSE            // a1 = show main menu elements
+        }
 
         lw      t0, 0x0004(sp)              // restore t0
         lw      t1, 0x0008(sp)              // restore t1
@@ -668,10 +860,11 @@ scope Toggles {
 
     // @ Description
     // Functions to change the menu currently displayed.
-    set_info_1_:; set_info_head(head_super_menu, OS.FALSE)
-    set_info_2_:; set_info_head(head_remix_settings, OS.TRUE)
-    set_info_3_:; set_info_head(head_music_settings, OS.TRUE)
-    set_info_4_:; set_info_head(head_stage_settings, OS.TRUE)
+    show_super_menu_:; set_info_head(head_super_menu, OS.FALSE)
+    show_remix_settings_:; set_info_head(head_remix_settings, 1)
+    show_music_settings_:; set_info_head(head_music_settings, 2)
+    show_stage_settings_:; set_info_head(head_stage_settings, 3)
+    show_player_tags_:; set_info_head(head_player_tags, 4)
 
     variable num_toggles(0)
 
@@ -684,7 +877,7 @@ scope Toggles {
         global define TOGGLE_{n}_DEFAULT_TE({default_te})
         global define TOGGLE_{n}_DEFAULT_NE({default_ne})
         global define TOGGLE_{n}_DEFAULT_JP({default_jp})
-        Menu.entry_bool({title}, {default_ce}, {next})
+        Menu.entry_bool_with_extra({title}, {default_ce}, {n}, {next})
     }
 
     // @ Description
@@ -761,6 +954,10 @@ scope Toggles {
     off:; db "OFF", 0x00
     normal:; db "NORMAL", 0x00
     default:; db "DEFAULT", 0x00
+    cancel:; db ": Cancel", 0x00
+    change_case:; db ": Change Case", 0x00
+    edit:; db ": Edit", 0x00
+    clear_tag:; db ": Clear Tag", 0x00
     OS.align(4)
 
     string_table_profile:
@@ -803,6 +1000,17 @@ scope Toggles {
     dw default
     dw model_poly_high
     dw model_poly_low
+
+    // @ Description
+    // Disable HUD strings
+    disable_hud_pause:; db "PAUSE", 0x00
+    disable_hud_all:; db "ALL", 0x00
+    OS.align(4)
+
+    string_table_disable_hud:
+    dw off
+    dw disable_hud_pause
+    dw disable_hud_all
 
     // @ Description
     // Default/Always/Never frequency strings (used multiple times)
@@ -1076,9 +1284,10 @@ scope Toggles {
     // Contains list of submenus.
     head_super_menu:
     Menu.entry("Load Profile:", Menu.type.U8, OS.FALSE, 0, 3, load_profile_, OS.NULL, string_table_profile, OS.NULL, entry_remix_settings)
-    entry_remix_settings:; Menu.entry_title("Remix Settings", set_info_2_, entry_music_settings)
-    entry_music_settings:; Menu.entry_title("Music Settings", set_info_3_, entry_stage_settings)
-    entry_stage_settings:; Menu.entry_title("Stage Settings", set_info_4_, entry_debug)
+    entry_remix_settings:; Menu.entry_title("Remix Settings", show_remix_settings_, entry_music_settings)
+    entry_music_settings:; Menu.entry_title("Music Settings", show_music_settings_, entry_stage_settings)
+    entry_stage_settings:; Menu.entry_title("Stage Settings", show_stage_settings_, entry_player_tags)
+    entry_player_tags:;    Menu.entry_title("Player Tags", show_player_tags_, entry_debug)
     entry_debug:;          Menu.entry_title_with_extra("Debug", view_screen_, 0x0003, entry_view_intro)
     entry_view_intro:;     Menu.entry_title_with_extra("View Intro", view_screen_, 0x001C, entry_view_credits)
     entry_view_credits:;   Menu.entry_title_with_extra("View Credits", view_credits_, 0x0038, OS.NULL)
@@ -1110,9 +1319,9 @@ scope Toggles {
     entry_japanese_sounds:;             entry("Japanese Sounds", Menu.type.U8, 0, 0, 0, 1, 0, 2, OS.NULL, string_table_frequency, OS.NULL, entry_momentum_slide)
     entry_momentum_slide:;              entry_bool("Momentum Slide", OS.FALSE, OS.FALSE, OS.FALSE, OS.TRUE, entry_japanese_shieldstun)
     entry_japanese_shieldstun:;         entry_bool("Japanese Shield Stun", OS.FALSE, OS.FALSE, OS.FALSE, OS.TRUE, entry_stereo_fix)
-	entry_stereo_fix:;                  entry_bool("Stereo Fix for Hit SFX", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, entry_variant_random)
-    entry_variant_random:;              entry_bool("Random Select With Variants", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_disable_pause_hud)
-    entry_disable_pause_hud:;           entry_bool("Disable VS Pause HUD", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_disable_aa)
+    entry_stereo_fix:;                  entry_bool("Stereo Fix for Hit SFX", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, entry_variant_random)
+    entry_variant_random:;              entry_bool("Random Select With Variants", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_disable_hud)
+    entry_disable_hud:;                 entry("Disable HUD", Menu.type.U8, 0, 0, 0, 0, 0, 2, OS.NULL, string_table_disable_hud, OS.NULL, entry_disable_aa)
     entry_disable_aa:;                  entry_bool("Disable Anti-Aliasing", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_full_results)
     entry_full_results:;                entry_bool("Always Show Full Results", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, entry_skip_training_start_cheer)
     entry_skip_training_start_cheer:;   entry_bool("Skip Training Start Cheer", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, OS.NULL)
@@ -1183,7 +1392,8 @@ scope Toggles {
     head_stage_settings:
     entry_sss_layout:;                          entry("Stage Select Layout", Menu.type.U8, sss.NORMAL, sss.TOURNAMENT, sss.NORMAL, sss.NORMAL, 0, 1, OS.NULL, string_table_sss_layout, OS.NULL, entry_hazard_mode)
     entry_hazard_mode:;                         entry("Hazard Mode", Menu.type.U8, hazard_mode.NORMAL, hazard_mode.NORMAL, hazard_mode.NORMAL, hazard_mode.NORMAL, 0, 3, OS.NULL, string_table_hazard_mode, OS.NULL, entry_japanese_hazards)
-    entry_japanese_hazards:;                    entry_bool("Japanese Whispy", OS.FALSE, OS.FALSE, OS.FALSE, OS.TRUE, entry_load_profile_stage)
+    entry_japanese_hazards:;                    entry_bool("Japanese Whispy", OS.FALSE, OS.FALSE, OS.FALSE, OS.TRUE, entry_camera_mode)
+    entry_camera_mode:;                         entry("Camera Mode", Menu.type.U8, Camera.type.NORMAL, Camera.type.NORMAL, Camera.type.NORMAL, Camera.type.NORMAL, 0, 3, OS.NULL, Camera.type_string_table, OS.NULL, entry_load_profile_stage)
     evaluate LOAD_PROFILE_STAGE_ENTRY_ORIGIN(origin())
     entry_load_profile_stage:;                  entry("Load Profile:", Menu.type.U8, 0, 1, 2, 0, 0, 2, load_sub_profile_, num_toggles, string_table_stage_profile, OS.NULL, entry_random_stage_title)
     entry_random_stage_title:;                  Menu.entry_title("Random Stage Toggles:", toggle_all_, entry_random_stage_congo_jungle)
@@ -1241,10 +1451,205 @@ scope Toggles {
     print "*******************************\n{num_remix_toggles}, {num_stage_toggles}, {num_music_toggles}\n"
 
     // @ Description
+    // Player Tags
+    head_player_tags:
+    evaluate MAX_TAGS(20)
+    evaluate n(0)
+    while {n} < {MAX_TAGS} {
+        evaluate m({n}+1)
+        if ({m} == {MAX_TAGS}) {
+            evaluate next(OS.NULL)
+        } else {
+            evaluate next(entry_player_tags_{m})
+        }
+        entry_player_tags_{n}:; Menu.entry_input(toggle_edit_mode_, {n}, {next})
+        evaluate n({n}+1)
+    }
+
+    // @ Description
+    // Frames to block B from triggering exiting submenu
+    back_blocked:
+    dw 0
+
+    // @ Description
+    // Toggles edit mode for inputs
+    scope toggle_edit_mode_: {
+        addiu   sp, sp, -0x0010             // allocate stack space
+        sw      ra, 0x0004(sp)              // ~
+
+        // v0 = menu item
+        lw      t1, 0x0004(v0)              // t1 = current edit mode flag
+        xori    t0, t1, 0x0001              // t0 = new edit mode (0 -> 1, 1 -> 0)
+        sw      t0, 0x0004(v0)              // set edit mode
+
+        // ensure edit legend is hidden/shown accordingly
+        lli     a0, 18                      // a0 = group
+        jal     Render.toggle_group_display_
+        or      a1, t1, r0                  // a1 = display
+
+        // ensure pagination legend is hidden/shown accordingly
+        lli     a0, 19                      // a0 = group
+        jal     Render.toggle_group_display_
+        or      a1, t0, r0                  // a1 = display
+
+        lli     t8, 0x0000                  // t8 = display on
+
+        li      t4, Menu.keyboard_struct
+        lw      t4, 0x000C(t4)              // t4 = keyboard tag string object
+        lw      t5, 0x0034(t4)              // t5 = string address
+
+        lli     t1, 0x000A                  // t1 = 10
+        li      t2, back_blocked
+        bnez    t0, _edit_mode              // if entering edit mode, go to _edit_mode
+        sw      t1, 0x0000(t2)              // block B from exiting submenu
+
+        // if here, we're exiting edit mode
+        li      t6, Menu.cancel_edit        // t6 = address of cancel_edit flag
+        lb      t2, 0x0000(t6)              // t2 = cancel_edit value
+        bnezl   t2, _cancel                 // if canceling, don't save
+        sb      r0, 0x0000(t6)              // clear cancel flag
+
+        lbu     t6, 0x0000(t5)              // t6 = first character
+        beqz    t6, _clear_tag              // if saving an empty string, clear the tag
+        addiu   t2, v0, 0x0028              // t2 = address of string
+        lw      t3, 0x0020(v0)              // t3 = label object
+        sw      t2, 0x0034(t3)              // update string address
+        addiu   t0, r0, -0x0001             // t0 = 0xFFFFFFFF = WHITE
+        sw      t0, 0x0040(t3)              // set color to white
+
+        // copy characters from menu entry
+        lw      t6, 0x0000(t5)              // t6 = first 4 chars
+        sw      t6, 0x0028(v0)              // save first 4 chars
+        lw      t6, 0x0004(t5)              // t6 = next 4 chars
+        sw      t6, 0x002C(v0)              // save next 4 chars
+        lw      t6, 0x0008(t5)              // t6 = next 4 chars
+        sw      t6, 0x0030(v0)              // save next 4 chars
+        lw      t6, 0x000C(t5)              // t6 = next 4 chars
+        sw      t6, 0x0034(v0)              // save next 4 chars
+        lw      t6, 0x0010(t5)              // t6 = last 4 chars
+        sw      t6, 0x0038(v0)              // save last 4 chars
+        sw      r0, 0x0030(t3)              // clear pointer to force redraw
+
+        jal     FGM.play_                   // play menu sound
+        lli     a0, FGM.menu.TOGGLE         // a0 - fgm_id
+
+        b       _end
+        nop
+
+        _clear_tag:
+        jal     clear_tag_
+        nop
+        b       _end
+        nop
+
+        _cancel:
+        jal     FGM.play_                   // play menu sound
+        lli     a0, FGM.menu.CONFIRM        // a0 - fgm_id
+        b       _end
+        nop
+
+        _edit_mode:
+        addiu   t2, v0, 0x0028              // t2 = address of string
+
+        // copy characters from menu entry
+        lw      t6, 0x0000(t2)              // t6 = first 4 chars
+        sw      t6, 0x0000(t5)              // save first 4 chars
+        lw      t6, 0x0004(t2)              // t6 = next 4 chars
+        sw      t6, 0x0004(t5)              // save next 4 chars
+        lw      t6, 0x0008(t2)              // t6 = next 4 chars
+        sw      t6, 0x0008(t5)              // save next 4 chars
+        lw      t6, 0x000C(t2)              // t6 = next 4 chars
+        sw      t6, 0x000C(t5)              // save next 4 chars
+        lw      t6, 0x0010(t2)              // t6 = last 4 chars
+        sw      t6, 0x0010(t5)              // save last 4 chars
+        sw      r0, 0x0030(t4)              // clear pointer to force redraw
+
+        lli     t1, 0x0000                  // t1 = 0 = char_index
+        _loop:
+        lbu     t6, 0x0000(t2)              // t6 = char
+        addiu   t2, t2, 0x0001              // t2 = next char address
+        bnezl   t6, _loop                   // if char is not null, keep looping
+        addiu   t1, t1, 0x0001              // t1 = char_index
+
+        li      t0, Menu.char_index
+        sb      t1, 0x0000(t0)              // reset char index to last char + 1
+
+        lli     t8, 0x0001                  // t8 = display off
+
+        _end:
+        li      t0, info                    // t0 = menu info
+        lw      t0, 0x0008(t0)              // t0 = cursor object
+        lw      t0, 0x0084(t0)              // t0 = underline object
+        sw      t8, 0x007C(t0)              // update display of underline object
+
+        lw      ra, 0x0004(sp)              // restore registers
+        jr      ra
+        addiu   sp, sp, 0x0010              // allocate stack space
+    }
+
+    // @ Description
+    // Clears a player tag
+    scope clear_tag_: {
+        addiu   sp, sp, -0x0010             // allocate stack space
+        sw      ra, 0x0004(sp)              // ~
+
+        li      a0, info                    // a0 = address of info
+        jal     Menu.get_selected_entry_    // v0 = selected entry
+        nop
+        lw      t1, 0x0010(v0)              // t1 = a_function routine
+        li      t2, toggle_edit_mode_       // t2 = toggle_edit_mode_
+        bne     t1, t2, _end                // if not on an editable entry, skip
+        lw      t1, 0x0004(v0)              // t1 = edit mode if editable entry
+        bnez    t1, _end                    // if in edit mode, don't allow clearing
+        addiu   t0, v0, 0x0028              // t0 = address of string
+
+        sw      r0, 0x0028(v0)              // clear string
+        sw      r0, 0x002C(v0)              // ~
+        sw      r0, 0x0030(v0)              // ~
+        sw      r0, 0x0034(v0)              // ~
+        sw      r0, 0x0038(v0)              // ~
+
+        // Clear player tag from port if selected
+        lli     t2, 0x0000                  // t2 = port
+        li      t4, PlayerTag.enable_for_port
+        li      t6, CharacterSelectDebugMenu.PlayerTag.string_table
+
+        _loop_port:
+        sll     t3, t2, 0x0002              // t3 = offset to port
+        addu    t1, t4, t3                  // t1 = address of port flag
+        lw      t5, 0x0000(t1)              // t5 = >=1 if enabled, 0 if not
+        beqz    t5, _next_port              // if not enabled, skip
+        sll     t5, t5, 0x0002              // t5 = offset to custom string pointer
+        addu    t5, t6, t5                  // t5 = address of custom string pointer
+        lw      t5, 0x0000(t5)              // t5 = custom string address
+        beql    t5, t0, _next_port          // if this one was selected, clear it
+        sw      r0, 0x0000(t1)              // clear port flag
+        _next_port:
+        sltiu   t5, t2, 0x0003              // t5 = 1 if we haven't gotten to last port yet
+        bnez    t5, _loop_port              // if more ports to check, keep looping
+        addiu   t2, t2, 0x0001              // t2 = next port
+
+        lw      t0, 0x0020(v0)              // t0 = string object
+        li      t1, 0x808080FF              // t1 = set color to gray when not set
+        sw      t1, 0x0040(t0)              // set color to gray
+        li      t1, Menu.string_not_set
+        sw      t1, 0x0034(t0)              // set string to Menu.string_not_set
+
+        jal     FGM.play_                   // play menu sound
+        lli     a0, FGM.menu.TOGGLE         // a0 - fgm_id
+
+        _end:
+        lw      ra, 0x0004(sp)              // restore registers
+        jr      ra
+        addiu   sp, sp, 0x0010              // allocate stack space
+    }
+
+    // @ Description
     // SRAM blocks for toggle saving.
     block_misc:; SRAM.block({num_remix_toggles} * 4)
     block_music:; SRAM.block({num_music_toggles} * 4)
     block_stages:; SRAM.block({num_music_toggles} * 4)
+    block_tags:; SRAM.block({MAX_TAGS} * 20) // 20 characters per tag
 
     profile_defaults_CE:; write_defaults_for(CE)
     profile_defaults_TE:; write_defaults_for(TE)
@@ -1474,6 +1879,12 @@ scope Toggles {
         beq     t4, t1, _skip                  // if (type == title), skip
         nop
 
+        // skip inputs
+        lli     t4, Menu.type.INPUT            // t4 = input type
+        lw      t1, 0x0000(t0)                 // t1 = type
+        beq     t4, t1, _skip                  // if (type == input), skip
+        nop
+
         lw      t1, 0x0000(t2)                 // t1 = default profile value
         sw      t1, 0x0004(t0)                 // store default value as current value
         addiu   t2, t2, 0x0004                 // increment ram_address
@@ -1539,6 +1950,12 @@ scope Toggles {
         lli     t3, Menu.type.TITLE            // t3 = title type
         lw      t1, 0x0000(t0)                 // t1 = type
         beq     t3, t1, _skip                  // if (type == title), skip
+        nop
+
+        // skip inputs when importing
+        lli     t3, Menu.type.INPUT            // t3 = input type
+        lw      t1, 0x0000(t0)                 // t1 = type
+        beq     t3, t1, _skip                  // if (type == input), skip
         nop
 
         lw      t1, 0x0000(t2)                 // t1 = default profile value

@@ -1149,9 +1149,7 @@ scope Stamina {
         bne         t9, a0, _normal
         addu        t9, t5, t7              // original line 1
 
-        lw          t9, 0x0078(t8)          // load player object
-        lw          t9, 0x0074(t8)          // load player struct
-        lbu         t9, 0x000D(t8)          // get port
+        lbu         t9, 0x000D(a3)          // get port
         sll         a0, t9, 0x3
         subu        a0, a0, t9
         sll         a0, a0, 0x2
@@ -1171,9 +1169,7 @@ scope Stamina {
         sw          v1, 0x006C(t9)          // original line 2
 
         _dead:
-        lw          t9, 0x0078(t8)          // load player object
-        lw          t9, 0x0074(t8)          // load player struct
-        lbu         t9, 0x000D(t8)          // get port
+        lbu         t9, 0x000D(a3)          // get port
         li          at, percent_port        // load address
         sll         t9, t9, 0x0002          // get offset
         addu        at, t9, at              // get address
@@ -1323,6 +1319,51 @@ scope Stamina {
         nop
     }
 
+    // @ Description
+    // Prevents crash when killed in egg lay in stamina
+    scope egg_crash_prevent: {
+        OS.patch_start(0xB6B74, 0x8013C134)
+        j           egg_crash_prevent
+        nop
+        _return:
+        OS.patch_end()
+
+        addiu       sp, sp, -0x0010
+        sw          t0, 0x0004(sp)
+        sw          t1, 0x0008(sp)
+        sw          t2, 0x000C(sp)
+
+        addiu       t0, r0, 0x0016              // screen id
+        li          t1, Global.current_screen   // ~
+        lbu         t1, 0x0000(t1)              // t1 = current screen
+        bnel        t0, t1, _end
+        sw          t6, 0x0B18(s0)          // original line 2
+
+
+        li          t0, VS_MODE
+        lbu         t0, 0x0000(t0)          // load mode
+        addiu       t1, r0, STAMINA_MODE    // stamina mode
+        bnel        t1, t0, _end
+        sw          t6, 0x0B18(s0)          // original line 2
+        
+        lw          t0, 0x0024(s0)          // load current action
+        addiu       t1, r0, Action.EggLay   // insert EggLay Action
+        bnel        t0, t1, _end            // if not in Eggay, proceed as normal
+        sw          t6, 0x0B18(s0)          // original line 2
+
+        _end:
+        lw          t0, 0x0004(sp)
+        lw          t1, 0x0008(sp)
+        lw          t2, 0x000C(sp)
+        addiu       sp, sp, 0x0010
+
+        jal         0x800D9444              // original line 1
+        nop
+        
+        j           _return
+        nop
+    }
+    
     // @ Description
     // Prevents armor from causing weirdness with final hits
     scope stamina_armor_fix_: {

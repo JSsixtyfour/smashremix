@@ -587,4 +587,5 @@ scope ResultsScreen {
     add_to_results_screen(Character.id.SONIC,    FGM.announcer.names.SONIC,                  SONIC,       Character.id.FOX,     170,     SONIC,        30,     1,         {MIDI.id.SONIC_VICTORY})
     add_to_results_screen(Character.id.SANDBAG,  FGM.announcer.names.MARTH,                  YOSHI,       Character.id.CAPTAIN, 175,     SANDBAG,      25,     1,         0x0B)
     add_to_results_screen(Character.id.SSONIC,   FGM.announcer.names.SSONIC,                 SONIC,       Character.id.FOX,     170,     SUPER SONIC,  20,     0.55,      {MIDI.id.SONIC_VICTORY})
+    add_to_results_screen(Character.id.SHEIK,    FGM.announcer.names.SHEIK,                  ZELDA,       Character.id.CAPTAIN, 165,     SHEIK,        30,     1,         0x15)
 }

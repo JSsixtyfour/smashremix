@@ -5,8 +5,8 @@ constant VALUE_TYPE(CharacterSelectDebugMenu.value_type.STRING)
 constant MIN_VALUE(0)
 constant MAX_VALUE(8)
 constant DEFAULT_VALUE(0)
-// bitmask: [vs] [1p] [training] [bonus1] [bonus2]
-constant APPLIES_TO(0b11111)
+// bitmask: [vs] [1p] [training] [bonus1] [bonus2] [allstar]
+constant APPLIES_TO(0b111111)
 // bitmask: [human] [cpu]
 constant APPLIES_TO_HUMAN_CPU(0b10)
 constant VALUE_ARRAY_POINTER(Joypad.taunt_mask_per_port)

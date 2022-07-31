@@ -11,7 +11,6 @@ include "OS.asm"
 include "String.asm"
 
 scope Menu {
-
     scope type {
         constant U8(0x0000)                 // 08 bit integer (unsigned)
         constant U16(0x0001)                // 16 bit integer (unsigned)
@@ -21,6 +20,7 @@ scope Menu {
         constant S32(0x0005)                // 32 bit integer (signed, not supported)
         constant BOOL(0x0006)               // bool
         constant TITLE(0x0007)              // has no value on the right
+        constant INPUT(0x0008)              // has no value on the right, has edit mode
     }
 
     // @ Description
@@ -63,7 +63,7 @@ scope Menu {
     macro entry(title, type, default, min, max, a_function, extra, string_table, copy_address, next) {
         define address(pc())
         dw {type}                           // 0x0000 - type (int, bool, etc.)
-        dw {default}                        // 0x0004 - current value
+        dw {default}                        // 0x0004 - current value (edit mode flag for type.INPUT)
         dw {min}                            // 0x0008 - minimum value
         dw {max}                            // 0x000C - maximum value
         dw {a_function}                     // 0x0010 - if (!null), function ran when A is pressed
@@ -72,8 +72,12 @@ scope Menu {
         dw {next}                           // 0x001C - if !(null), address of next entry
         dw 0x00000000                       // 0x0020 - will store reference to string object of label
         dw {extra}                          // 0x0024 - extra space useful for a_function
-        db {title}                          // 0x0028 - title
-        db 0x00
+        if {type} == Menu.type.INPUT {
+            fill {max}                      // 0x0028 - title
+        } else {
+            db {title}                      // 0x0028 - title
+            db 0x00
+        }
         OS.align(4)
 
         // @ Description
@@ -97,17 +101,155 @@ scope Menu {
         }
     }
 
+    // @ Description
+    // Aligns characters in a char set string with the keyboard layout
+    // @ Arguments
+    // a0 - char set string object
+    scope align_keyboard_chars_: {
+        addiu   sp, sp, -0x0030             // allocate stack space
+        sw      a0, 0x0004(sp)              // save registers
+        sw      a1, 0x0008(sp)              // ~
+        sw      a2, 0x000C(sp)              // ~
+        sw      at, 0x0010(sp)              // ~
+        sw      t0, 0x0014(sp)              // ~
+        sw      t1, 0x0018(sp)              // ~
+        sw      t2, 0x001C(sp)              // ~
+        sw      t8, 0x0020(sp)              // ~
+        sw      v0, 0x0024(sp)              // ~
+
+        or      v0, a0, r0                  // v0 = string object
+
+        lw      t0, 0x0074(v0)              // t0 = first char image struct
+        lw      a0, 0x0030(v0)              // a0 = first char address
+        li      a1, Render.character_offsets_custom
+        lli     t8, 0x0000                  // t8 = index
+        lui     at, 0x3F00                  // at = .5, fp
+        mtc1    at, f0                      // f0 = .5
+        lui     at, 0x41C0                  // at = 24, fp
+        mtc1    at, f4                      // f4 = 24 = width of each column / height of each row
+        lui     at, 0x4248                  // at = 50, fp
+        mtc1    at, f6                      // f6 = 50 = first column mid point
+        mtc1    at, f16                     // f16 = 50 = first column mid point
+        lui     at, 0x42B2                  // at = 89, fp
+        mtc1    at, f8                      // f6 = 89 = first row start
+
+        _keyboard_set_loop:
+        lbu     t1, 0x0000(a0)              // t1 = char
+        beqz    t1, _end_keyboard_setup     // if no more chars, end loop
+        addiu   t1, t1, -0x0020             // t1 = index in character_offsets_custom
+        sll     t1, t1, 0x0003              // t1 = offset in character_offsets_custom
+        addu    a2, a1, t1                  // a2 = address of width
+        lbu     t2, 0x0000(a2)              // t2 = width
+        mtc1    t2, f2                      // f2 = width, decimal
+        cvt.s.w f2, f2                      // f2 = width, fp
+        mul.s   f2, f2, f0                  // f2 = width/2
+        sub.s   f2, f6, f2                  // f2 = x to use
+        swc1    f2, 0x0058(t0)              // set x
+        swc1    f8, 0x005C(t0)              // set y
+        add.s   f6, f6, f4                  // f6 = next column mid point
+        lli     t2, 9
+        bne     t2, t8, _keyboard_next      // if not the last one, continue
+        addiu   t8, t8, 0x0001              // index++
+        mov.s   f6, f16                     // f6 = first column mid point
+        add.s   f8, f8, f4                  // f8 = next row start
+        lli     t8, 0x0000                  // reset index
+
+        _keyboard_next:
+        lw      t0, 0x0008(t0)              // t0 = next char image struct
+        bnez    t0, _keyboard_set_loop      // if there is another char image, keep looping
+        addiu   a0, a0, 0x0001              // a0 = next char address
+
+        _end_keyboard_setup:
+        lw      a0, 0x0004(sp)              // restore registers
+        lw      a1, 0x0008(sp)              // ~
+        lw      a2, 0x000C(sp)              // ~
+        lw      at, 0x0010(sp)              // ~
+        lw      t0, 0x0014(sp)              // ~
+        lw      t1, 0x0018(sp)              // ~
+        lw      t2, 0x001C(sp)              // ~
+        lw      t8, 0x0020(sp)              // ~
+        lw      v0, 0x0024(sp)              // ~
+        jr      ra
+        addiu   sp, sp, 0x0030              // deallocate stack space
+    }
+
+    // @ Description
+    // Holds the keyboard set index in keyboard_sets below
+    keyboard_set:
+    dw 0
+
+    // @ Description
+    // Holds address of keyboard set strings.
+    // Setting it up as lower, upper makes it so case is preserved when changing back to alphanumeric from symbol
+    keyboard_sets:
+    dw keyboard_set_lower, keyboard_set_upper
+    dw keyboard_set_symbol, keyboard_set_symbol
+
+    // @ Description
+    // Points to the string used for the change keyboard set button
+    keyboard_set_button:
+    dw string_sym
+
+    // @ Description
+    // Maps the keyboard set to the string used for the change keyboard set button
+    keyboard_set_buttons:
+    dw string_sym, string_sym
+    dw string_abc, string_abc
+
+    // @ Description
+    // Holds references to the rectangle objects used for keyboard cursor
+    keyboard_struct:
+    dw 0                    // 0x0000 - cursor outline rectangle
+    dw 0                    // 0x0004 - cursor inner rectangle
+    dw 0                    // 0x0008 - keyboard chars string object
+    dw 0                    // 0x000C - keyboard tag string object
+
+    // @ Description
+    // column, row of cursor
+    keyboard_cursor_index:
+    dh 0, 0
+
+    // @ Description
+    // Strings used to render the keyboard
+    keyboard_set_lower:; db "0123456789abcdefghijklmnopqrstuvwxyz", 0
+    keyboard_set_upper:; db "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", 0
+    keyboard_set_symbol:; db "!@#$%^&*()<>{}[]+-=_,.:;\s\d", 0x5C, "/?`|~", '~' + 1, '~' + 2, "??", 0
+    OS.align(4)
+
+    // @ Description
+    // This holds the string being edited
+    keyboard_input_string:
+    fill 24
+
+    // @ Description
+    // This keeps track of the cursor when editing
+    char_index:
+    db 0x0
+
+    // @ Description
+    // Flag used to check if canceling edit mode
+    cancel_edit:
+    db 0x0
+
     bool_0:; db "OFF", 0x00
     bool_1:; db "ON", 0x00
+    string_not_set:; db "-- Not Set --", 0x00
+    string_ok:; db "OK", 0x00
+    string_del:; db "DEL", 0x00
+    string_sym:; db "SYM", 0x00
+    string_abc:; db "ABC", 0x00
     OS.align(4)
 
     bool_string_table:
     dw bool_0
     dw bool_1
-    OS.align(4)
 
     macro entry_bool(title, default, next) {
         Menu.entry({title}, Menu.type.BOOL, {default}, 0, 1, OS.NULL, OS.NULL, Menu.bool_string_table, OS.NULL, {next})
+    }
+
+    macro entry_bool_with_extra(title, default, extra, next) {
+        Menu.entry({title}, Menu.type.BOOL, {default}, 0, 1, OS.NULL, {extra}, Menu.bool_string_table, OS.NULL, {next})
     }
 
     macro entry_title(title, a_function, next) {
@@ -116,6 +258,10 @@ scope Menu {
 
     macro entry_title_with_extra(title, a_function, extra, next) {
         Menu.entry({title}, Menu.type.TITLE, 0, 0, 0, {a_function}, {extra}, OS.NULL, OS.NULL, {next})
+    }
+
+    macro entry_input(a_function, extra, next) {
+        Menu.entry("", Menu.type.INPUT, 0, 0, 20, {a_function}, {extra}, OS.NULL, OS.NULL, {next})
     }
 
     // @ Description
@@ -132,7 +278,7 @@ scope Menu {
         lw      t0, 0x0020(v0)              // t0 = label object
         beqz    t0, _end                    // if not defined, skip
         nop
-        lw      t0, 0x0030(t0)              // t0 = value object
+        lw      t0, 0x006C(t0)              // t0 = value object
         beqz    t0, _end                    // if not defined, skip
         nop
         lw      t1, 0x004C(t0)              // t1 = string_type
@@ -195,11 +341,27 @@ scope Menu {
         cvt.s.w f0, f0                      // ~
         mfc1    s2, f0                      // s2 = uly
 
+        lw      s3, 0x002C(sp)              // s3 = color
         lw      a0, 0x0010(sp)              // a0 = room
         lw      a1, 0x0014(sp)              // a1 = group
+
         addiu   a2, s0, 0x0028              // a2 - address of string (title = entry + 0x0028)
+        lli     t0, Menu.type.INPUT         // t0 = input type
+        lw      t1, 0x0000(s0)              // t1 = type
+        bne     t0, t1, _draw_label         // if (type != input), then use title text
         lli     a3, 0x0000                  // a3 = routine (Render.NOOP)
-        lw      s3, 0x002C(sp)              // s3 = color
+
+        li      a3, Render.update_live_string_ // a3 = routine
+
+        lbu     t0, 0x0000(a2)              // t0 = first character
+        bnez    t0, _draw_label             // if there is a title defined, use it
+        nop
+
+        // if here, display a default string and gray it out
+        li      a2, string_not_set          // a2 = address of string to use when input not set
+        li      s3, 0x808080FF              // s3 = set color to gray when not set
+
+        _draw_label:
         or      s4, r0, t4                  // s4 = scale
         lli     s5, Render.alignment.LEFT
         lli     s6, Render.string_type.TEXT
@@ -208,12 +370,19 @@ scope Menu {
 
         lw      s0, 0x001C(sp)              // s0 = entry
         sw      v0, 0x0020(s0)              // save reference to label object
-        // 0x0030(v0) will be the value string object, if applicable
+        // 0x006C(v0) will be the value string object, if applicable
+        addiu   t0, s0, 0x0020              // t0 = address of reference to label object
+        sw      t0, 0x0054(v0)              // store address of reference to label object
 
         lli     t0, Menu.type.TITLE         // t0 = title type
         lw      t1, 0x0000(s0)              // t1 = type
         beql    t0, t1, _end                // if (type == title), end
-        sw      r0, 0x0030(v0)              // clear reference to value string object
+        sw      r0, 0x006C(v0)              // clear reference to value string object
+
+        lli     t0, Menu.type.INPUT         // t0 = input type
+        lw      t1, 0x0000(s0)              // t1 = type
+        beql    t0, t1, _end                // if (type == input), end
+        sw      r0, 0x006C(v0)              // clear reference to value string object
 
         lw      t0, 0x0014(s0)              // at = entry.string_table
         bnez    t0, _string                 // if (entry.string_table != null), skip
@@ -251,8 +420,8 @@ scope Menu {
         lw      t8, 0x0038(sp)              // t8 = blur
         lw      s0, 0x001C(sp)              // s0 = entry
         lw      t0, 0x0020(s0)              // t0 = reference to label object
-        sw      v0, 0x0030(t0)              // save reference to value object
-        addiu   t0, t0, 0x0030              // t0 = address of reference to value object
+        sw      v0, 0x006C(t0)              // save reference to value object
+        addiu   t0, t0, 0x006C              // t0 = address of reference to value object
         sw      t0, 0x0054(v0)              // store address of reference to value object
 
         _end:
@@ -295,9 +464,9 @@ scope Menu {
         nop
         lw      a1, 0x0008(sp)              // a1 = address of current entry
         lw      a1, 0x0020(a1)              // a1 = label object for this entry
-        lw      a0, 0x0030(a1)              // a0 = value object for this entry
+        lw      a0, 0x006C(a1)              // a0 = value object for this entry
         beqz    a0, _continue               // skip if no object
-        sw      r0, 0x0030(a1)              // clear value object reference
+        sw      r0, 0x006C(a1)              // clear value object reference
         jal     Render.DESTROY_OBJECT_
         nop
 
@@ -548,6 +717,311 @@ scope Menu {
         sw      a0, 0x0014(sp)              // ~
         sw      a1, 0x0018(sp)              // save registers
 
+        jal     get_selected_entry_         // v0 = selected entry
+        nop
+        sw      v0, 0x001C(sp)              // save selected entry
+        lw      t0, 0x0000(v0)              // t0 = type
+        lli     t1, Menu.type.INPUT
+        bne     t0, t1, _down               // if not an input, check normally
+        lw      t0, 0x0004(v0)              // t0 = edit mode flag if input
+
+        beqz    t0, _down                   // if not edit mode, check normally
+        nop
+
+        constant SELECT(Joypad.A)
+        constant CHANGE_SET(Joypad.CU | Joypad.CD | Joypad.CL | Joypad.CR)
+        constant CHANGE_CASE(Joypad.R)
+        constant BACKSPACE(Joypad.B)
+        constant SAVE(Joypad.START)
+        constant CANCEL(Joypad.Z)
+
+        jal     Joypad.check_stick_         // v0 = 0 if not pressed
+        lli     a0, Joypad.UP               // a0 = up
+        bnez    v0, _move_cursor_y          // if up was pushed, then change character
+        addiu   at, r0, -0x0001             // at = -1
+        lli     a0, Joypad.DU               // a0 = dpad up
+        li      a2, Joypad.PRESSED          // a2 = type
+        jal     Joypad.check_buttons_all_   // v0 = 0 if not pressed
+        lli     a1, 00001                   // a1 = any
+        bnez    v0, _move_cursor_y          // if up was pushed, then change character
+        addiu   at, r0, -0x0001             // at = -1
+
+        jal     Joypad.check_stick_         // v0 = 0 if not pressed
+        lli     a0, Joypad.DOWN             // a0 = down
+        bnez    v0, _move_cursor_y          // if down was pushed, then change character
+        addiu   at, r0, 0x0001              // at = +1
+        lli     a0, Joypad.DD               // a0 = dpad down
+        li      a2, Joypad.PRESSED          // a2 = type
+        jal     Joypad.check_buttons_all_   // v0 = 0 if not pressed
+        lli     a1, 00001                   // a1 = any
+        bnez    v0, _move_cursor_y          // if down was pushed, then change character
+        addiu   at, r0, 0x0001              // at = +1
+
+        jal     Joypad.check_stick_         // v0 = 0 if not pressed
+        lli     a0, Joypad.LEFT             // a0 = left
+        bnez    v0, _move_cursor_x          // if left was pushed, then change char index
+        addiu   at, r0, -0x0001             // at = -1
+        lli     a0, Joypad.DL               // a0 = dpad left
+        li      a2, Joypad.PRESSED          // a2 = type
+        jal     Joypad.check_buttons_all_   // v0 = 0 if not pressed
+        lli     a1, 00001                   // a1 = any
+        bnez    v0, _move_cursor_x          // if left was pushed, then change char index
+        addiu   at, r0, -0x0001             // at = -1
+
+        jal     Joypad.check_stick_         // v0 = 0 if not pressed
+        lli     a0, Joypad.RIGHT            // a0 = right
+        bnez    v0, _move_cursor_x          // if right was pushed, then change char index
+        addiu   at, r0, 0x0001              // at = +1
+        lli     a0, Joypad.DR               // a0 = dpad right
+        li      a2, Joypad.PRESSED          // a2 = type
+        jal     Joypad.check_buttons_all_   // v0 = 0 if not pressed
+        lli     a1, 00001                   // a1 = any
+        bnez    v0, _move_cursor_x          // if right was pushed, then change char index
+        addiu   at, r0, 0x0001              // at = +1
+
+        _check_buttons:
+        lli     a0, SELECT                  // a0 = SELECT button mask
+        li      a2, Joypad.PRESSED          // a2 = type
+        jal     Joypad.check_buttons_all_   // v0 = 0 if not pressed
+        lli     a1, 00001                   // a1 = any
+        bnez    v0, _select_char            // if pressed, select character
+        nop
+
+        lli     a0, BACKSPACE               // a0 = BACKSPACE button mask
+        li      a2, Joypad.PRESSED          // a2 = type
+        jal     Joypad.check_buttons_all_   // v0 = 0 if not pressed
+        lli     a1, 00001                   // a1 = any
+        bnez    v0, _delete_char            // if pressed, delete current character
+        lli     at, 0x0000                  // at = 0
+
+        lli     a0, CHANGE_SET              // a0 = CHANGE_SET button mask
+        li      a2, Joypad.PRESSED          // a2 = type
+        jal     Joypad.check_buttons_all_   // v0 = 0 if not pressed
+        lli     a1, 00001                   // a1 = any
+        bnez    v0, _change_set             // if pressed, jump to next keyboard set
+        lli     at, 0x0001                  // at = 1
+
+        lli     a0, CHANGE_CASE             // a0 = CHANGE_CASE button mask
+        li      a2, Joypad.PRESSED          // a2 = type
+        jal     Joypad.check_buttons_all_   // v0 = 0 if not pressed
+        lli     a1, 00001                   // a1 = any
+        bnez    v0, _change_case            // if pressed, change case (if on alphabet keyboard)
+        nop
+
+        lli     a0, SAVE                    // a0 = SAVE button mask
+        li      a2, Joypad.PRESSED          // a2 = type
+        jal     Joypad.check_buttons_all_   // v0 = 0 if not pressed
+        lli     a1, 00001                   // a1 = any
+        bnez    v0, _save                   // if pressed, save changes
+        nop
+
+        lli     a0, CANCEL                  // a0 = CANCEL button mask
+        li      a2, Joypad.PRESSED          // a2 = type
+        jal     Joypad.check_buttons_all_   // v0 = 0 if not pressed
+        lli     a1, 00001                   // a1 = any
+        bnez    v0, _cancel                 // if pressed, cancel changes
+        nop
+
+        b       _copy
+        nop
+
+        _move_cursor_y:
+        or      t3, r0, at                  // t3 = delta row
+        b       _move_cursor
+        lli     t2, 0                       // t2 = delta column
+
+        _move_cursor_x:
+        or      t2, r0, at                  // t2 = delta column
+        lli     t3, 0                       // t3 = delta row
+
+        _move_cursor:
+        li      t5, keyboard_cursor_index
+        lhu     t6, 0x0000(t5)              // t6 = cursor column
+        lhu     t7, 0x0002(t5)              // t7 = cursor row
+
+        addu    t6, t6, t2                  // t6 = new column
+        addu    t7, t7, t3                  // t7 = new row
+
+        bltzl   t6, pc() + 8                // if column < 0, wrap to 9
+        lli     t6, 9                       // t6 = 9
+
+        bltzl   t7, pc() + 8                // if row < 0, wrap to 3
+        lli     t7, 3                       // t7 = 3
+
+        lli     at, 10                      // at = 10 (max columns + 1)
+        beql    t6, at, pc() + 8            // if column > max, wrap to 0
+        lli     t6, 0                       // t6 = 0
+
+        lli     at, 4                       // at = 4 (max rows + 1)
+        beql    t7, at, pc() + 8            // if row > max, wrap to 0
+        lli     t7, 0                       // t6 = 0
+
+        sh      t6, 0x0000(t5)              // update cursor column
+        sh      t7, 0x0002(t5)              // update cursor row
+
+        lli     at, 24                      // at = 24 = width/height
+        multu   at, t6                      // mflo = x offset
+        lli     t4, 38                      // t4 = x start
+        mflo    t2                          // t2 = x offset
+
+        multu   at, t7                      // mflo = y offset
+        lli     t5, 82                      // t5 = y start
+        addu    t4, t4, t2                  // t4 = new x
+        mflo    t3                          // t3 = y offset
+        addu    t5, t5, t3                  // t4 = new y
+
+        li      t1, keyboard_struct
+        lw      t0, 0x0000(t1)              // t0 = yellow cursor square
+        lw      t1, 0x0004(t1)              // t1 = black cursor square
+
+        sw      t4, 0x0030(t0)              // update x, yellow square
+        addiu   t4, t4, 0x0002              // t4 = new x, black square
+        sw      t4, 0x0030(t1)              // update x, black square
+        sw      t5, 0x0034(t0)              // update y, yellow square
+        addiu   t5, t5, 0x0002              // t5 = new y, black square
+        sw      t5, 0x0034(t1)              // update y, black square
+
+        jal     FGM.play_                   // play menu sound
+        lli     a0, FGM.menu.SCROLL         // a0 - fgm_id
+
+        b       _check_buttons
+        nop
+
+        _change_case:
+        li      t8, Menu.keyboard_set
+        lw      t0, 0x0000(t8)              // t0 = keyboard set
+
+        sltiu   at, t0, 0x0002              // at = 1 if this is an alphanumeric keyboard
+        beqz    at, _copy                   // if not an alphanumeric keyboard, skip
+        xori    t1, t0, 0x0001              // t1 = new keyboard set (0 -> 1, 1 -> 0)
+
+        b       _update_keyboard_set
+        nop
+
+        _select_char:
+        li      t7, char_index
+        lbu     t0, 0x0000(t7)              // t0 = char index
+        li      t2, keyboard_struct
+        lw      a1, 0x000C(t2)              // a1 = string object
+        lw      t4, 0x0034(a1)              // t4 = first char address
+        addiu   t1, t4, 19                  // t1 = last char address
+        addu    v0, t4, t0                  // v0 = address of char
+        li      t5, keyboard_cursor_index
+        lhu     t6, 0x0002(t5)              // t6 = cursor row
+        lhu     t5, 0x0000(t5)              // t5 = cursor column
+        lli     t1, 10                      // t1 = 10
+        multu   t6, t1                      // t1 = 10 * row
+        mflo    t1                          // ~
+        li      t2, keyboard_set
+        lw      t2, 0x0000(t2)              // t2 = keyboard set
+        li      t3, keyboard_sets
+        addu    t1, t1, t5                  // t1 = index of char in char_set
+        lli     t4, 36
+        beql    t1, t4, _set_char           // if this square selected, use space
+        lli     t1, ' '                     // t1 = space
+        lli     t4, 37
+        beq     t1, t4, _delete_char        // if this square selected, delete previous char
+        lli     t4, 38
+        beq     t1, t4, _change_set         // if this square selected, change keyboard set
+        lli     t4, 39
+        beq     t1, t4, _save               // if this square selected, save
+        sll     t2, t2, 0x0002              // t2 = offset to keyboard set string address
+        addu    t3, t3, t2                  // t3 = address of keyboard set string address
+        lw      t3, 0x0000(t3)              // t3 = keyboard set string address
+        addu    t3, t3, t1                  // t3 = address of selected char
+        lbu     t1, 0x0000(t3)              // t1 = selected char
+
+        _set_char:
+        lli     t2, 20                      // t2 = max length
+        sltu    t2, t0, t2                  // t2 = 0 if at max length
+        beqzl   t2, _play_select_fgm        // if at max length, don't allow insert
+        lli     a0, FGM.menu.ILLEGAL        // a0 - fgm_id
+
+        sb      t1, 0x0000(v0)              // save char
+        addiu   t0, t0, 0x0001              // t0++
+        sb      t0, 0x0000(t7)              // save char index
+        lli     a0, FGM.menu.CONFIRM        // a0 - fgm_id
+        sw      r0, 0x0030(a1)              // clear pointer to force redraw
+
+        _play_select_fgm:
+        jal     FGM.play_                   // play menu sound
+        nop
+
+        b       _copy
+        nop
+
+        _delete_char:
+        li      t3, char_index
+        lbu     t0, 0x0000(t3)              // t0 = char index
+        beqzl   t0, _save                   // if trying to delete nothing, save
+        sb      r0, 0x0000(t3)              // reset char index
+        li      t2, keyboard_struct
+        lw      t2, 0x000C(t2)              // t2 = string object
+        lw      t4, 0x0034(t2)              // t4 = first char address
+        addu    v0, t4, t0                  // v0 = address of char + 1
+        sb      r0, 0xFFFF(v0)              // delete char
+        sw      r0, 0x0030(t2)              // clear pointer to force redraw
+        // here, we are deleting the previous char, which should move the cursor to the left unless it's already far left
+        addiu   at, t0, -0x0001             // at = previous char index
+        sb      at, 0x0000(t3)              // save char index
+        jal     FGM.play_                   // play menu sound
+        lli     a0, FGM.menu.CONFIRM        // a0 - fgm_id
+
+        b       _copy
+        nop
+
+        _cancel:
+        li      a0, cancel_edit             // a0 = address of cancel_edit flag
+        addiu   v0, r0, 0x0001              // v0 = 1
+        sb      v0, 0x0000(a0)              // set flag for canceling edit mode
+
+        _save:
+        lw      a0, 0x0014(sp)              // a0 - address of info()
+        lw      v0, 0x001C(sp)              // v0 = selected entry
+        lw      t0, 0x0010(v0)              // t0 = a_function address
+        jalr    t0                          // go to a_function address
+        nop
+        b       _copy
+        nop
+
+        _change_set:
+        li      t8, Menu.keyboard_set
+        lw      t0, 0x0000(t8)              // t0 = keyboard set
+
+        sltiu   at, t0, 0x0002              // at = 1 if this is an alphanumeric keyboard
+        addiu   t1, t0, 0x0002              // t1 = symbol set if alphanumeric
+        beqzl   at, pc() + 8                // if not an alphanumeric keyboard, set to alphanumeric
+        addiu   t1, t0, -0x0002             // t1 = symbol set if alphanumeric
+
+        _update_keyboard_set:
+        sw      t1, 0x0000(t8)              // update keyboard set
+
+        sll     t0, t1, 0x0002              // t0 = offset to keyboard set
+        li      t1, Menu.keyboard_sets
+        addu    t1, t1, t0                  // t1 = keyboard set pointer address
+        lw      a2, 0x0000(t1)              // t0 = keyboard set
+
+        li      t1, Menu.keyboard_set_buttons
+        addu    t1, t1, t0                  // t1 = keyboard set button string address pointer
+        lw      t1, 0x0000(t1)              // t1 = keyboard set button string address
+
+        li      t0, Menu.keyboard_set_button
+        sw      t1, 0x0000(t0)              // update string pointer for keyboard set button
+
+        li      t0, Menu.keyboard_struct
+        lw      a0, 0x0008(t0)              // a0 = keyboard chars string object
+        jal     Render.update_live_string_
+        sw      a2, 0x0034(a0)              // update pointer to string data
+        jal     Menu.align_keyboard_chars_
+        or      a0, v0, r0                  // a0 = keyboard chars string object
+
+        jal     FGM.play_                   // play menu sound
+        lli     a0, FGM.menu.SCROLL         // a0 - fgm_id
+
+        b       _copy
+        nop
+
+        // Non-Edit Mode checks
         _down:
         lli     a0, Joypad.DOWN             // a1 - enum left/right/down/up
         jal     Joypad.check_stick_         // v0 = boolean
@@ -665,6 +1139,10 @@ scope Menu {
         nop
 
         _right:
+        lw      v0, 0x001C(sp)              // v0 = selected entry
+        lli     t0, type.INPUT              // t0 = type.INPUT
+        lw      t1, 0x0000(v0)              // t1 = type of selected entry
+        beq     t0, t1, _r                  // if input, skip left/right checks
         lli     a0, Joypad.RIGHT            // a1 - enum left/right/down/up
         jal     Joypad.check_stick_         // v0 = boolean
         nop
@@ -684,9 +1162,7 @@ scope Menu {
         lli     a0, FGM.menu.TOGGLE         // a0 - fgm_id
         jal     FGM.play_                   // play menu sound
         nop
-        lw      a0, 0x0014(sp)              // a0 - address of info()
-        jal     get_selected_entry_         // v0 = selected entry
-        nop
+        lw      v0, 0x001C(sp)              // v0 = selected entry
         lw      t0, 0x0004(v0)              // t0 = entry.current_value
         lw      t1, 0x000C(v0)              // t1 = entry.max_value
         sltu    at, t0, t1                  // at = 1 if entry.current_value < entry.max_value
@@ -721,9 +1197,7 @@ scope Menu {
         lli     a0, FGM.menu.TOGGLE         // a0 - fgm_id
         jal     FGM.play_                   // play menu sound
         nop
-        lw      a0, 0x0014(sp)              // a0 - address of info()
-        jal     get_selected_entry_         // v0 = selected entry
-        nop
+        lw      v0, 0x001C(sp)              // v0 = selected entry
         lw      t0, 0x0004(v0)              // t0 = entry.current_value
         lw      t1, 0x0008(v0)              // t1 = entry.min_value
         sltu    at, t1, t0                  // at = 1 if entry.min_value < entry.curr_value
@@ -852,8 +1326,7 @@ scope Menu {
         beqz    v0, _copy                   // if (a was pressed (p1/p2/p3/p4) == false), skip
         nop
         lw      a0, 0x0014(sp)              // a0 - address of info()
-        jal     get_selected_entry_         // v0 = selected entry
-        nop
+        lw      v0, 0x001C(sp)              // v0 = selected entry
         lw      t0, 0x0010(v0)              // t0 = a_function address
         beqz    t0, _copy                   // if (a_function == null), skip
         nop
@@ -903,6 +1376,7 @@ scope Menu {
         _s32:
         _bool:
         _title:
+        _input:
         lw      t0, 0x0018(at)              // t0 = copy address
         beql    t0, r0, _loop               // if null, loop and at = entry->next
         lw      at, 0x001C(at)              // at = entry->next
@@ -931,6 +1405,7 @@ scope Menu {
         dw _s32
         dw _bool
         dw _title
+        dw _input
     }
 
     // @ Description
@@ -1049,14 +1524,33 @@ scope Menu {
         beq     t2, t1, _skip               // if (type == title), skip
         nop
 
+        lli     t2, Menu.type.INPUT         // t2 = input type
+        lw      t1, 0x0000(t0)              // t1 = type
+        beq     t2, t1, _export_input       // if (type == input), handle differently
         lw      t1, 0x0004(t0)              // t1 = entry.curr_value
+
         sw      t1, 0x0000(a1)              // export
         addiu   a1, a1, 0x0004              // increment ram_address
 
+        _next:
         _skip:
-        lw      t0, 0x001C(t0)              // t0 = entry->next
         b       _loop                       // check again
-        nop
+        lw      t0, 0x001C(t0)              // t0 = entry->next
+
+        _export_input:
+        // For inputs, we export the string, 20 characters.
+        lw      t1, 0x0028(t0)              // t1 = first 4 characters
+        sw      t1, 0x0000(a1)              // export
+        lw      t1, 0x002C(t0)              // t1 = next 4 characters
+        sw      t1, 0x0004(a1)              // export
+        lw      t1, 0x0030(t0)              // t1 = next 4 characters
+        sw      t1, 0x0008(a1)              // export
+        lw      t1, 0x0034(t0)              // t1 = next 4 characters
+        sw      t1, 0x000C(a1)              // export
+        lw      t1, 0x0038(t0)              // t1 = last 4 characters
+        sw      t1, 0x0010(a1)              // export
+        b       _next
+        addiu   a1, a1, 0x0014              // increment ram_address
 
         _end:
         lw      t0, 0x0004(sp)              // ~
@@ -1092,14 +1586,34 @@ scope Menu {
         beq     t2, t1, _skip               // if (type == title), skip
         nop
 
+        lli     t2, Menu.type.INPUT         // t2 = input type
+        lw      t1, 0x0000(t0)              // t1 = type
+        beq     t2, t1, _export_input       // if (type == input), handle differently
+        nop
+
         lw      t1, 0x0000(a1)              // t1 = value at ram_address
         sw      t1, 0x0004(t0)              // update curr_value
         addiu   a1, a1, 0x0004              // increment ram_address
 
+        _next:
         _skip:
-        lw      t0, 0x001C(t0)              // t0 = entry->next
         b       _loop                       // check again
-        nop
+        lw      t0, 0x001C(t0)              // t0 = entry->next
+
+        _export_input:
+        // For inputs, we export the string, 20 characters.
+        lw      t1, 0x0000(a1)              // t1 = first 4 characters
+        sw      t1, 0x0028(t0)              // update
+        lw      t1, 0x0004(a1)              // t1 = next 4 characters
+        sw      t1, 0x002C(t0)              // export
+        lw      t1, 0x0008(a1)              // t1 = next 4 characters
+        sw      t1, 0x0030(t0)              // export
+        lw      t1, 0x000C(a1)              // t1 = next 4 characters
+        sw      t1, 0x0034(t0)              // export
+        lw      t1, 0x0010(a1)              // t1 = last 4 characters
+        sw      t1, 0x0038(t0)              // export
+        b       _next
+        addiu   a1, a1, 0x0014              // increment ram_address
 
         _end:
         lw      t0, 0x0004(sp)              // ~

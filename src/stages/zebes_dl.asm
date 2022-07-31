@@ -4,7 +4,7 @@ constant NUM_SPRITE_INFO_ARRAYS(0x03)
 
 // @ Description
 // Not sure what the data is at this offset.
-constant STAGE_FILE_OFFSET(0x00006F30)
+constant STAGE_FILE_OFFSET(0x000075E0)
 
 // @ Description
 // Here, need to add a sprite info array for each sprite animation option

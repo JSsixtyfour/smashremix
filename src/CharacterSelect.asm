@@ -152,7 +152,7 @@ scope CharacterSelect {
     dw  0x12170                             // 0x05 - LINK
     dw  0xAEE0                              // 0x06 - YOSHI
     dw  0xCA90                              // 0x07 - CAPTAIN
-    dw  0x1FFE0                             // 0x08 - KIRBY
+    dw  0x3FFC0                             // 0x08 - KIRBY
     dw  0x9E30                              // 0x09 - PIKACHU
     dw  0x7FE0                              // 0x0A - JIGGLY
     dw  0xC5C0                              // 0x0B - NESS
@@ -206,6 +206,8 @@ scope CharacterSelect {
     dw  0x16320 + 0x22260 + 0x170E8 + 0x200 // 0x3B - SONIC
     dw  0x49F8 + 0x200                      // 0x3C - SANDBAG
     dw  0xC900 + 0x200                      // 0x3D - SUPER SONIC
+    dw  0x13C60 + 0x200                     // 0x3E - SHEIK
+
 
     // @ Description
     // Holds the ROM offset of an alternate req list, used by get_alternate_req_list_
@@ -307,6 +309,7 @@ scope CharacterSelect {
     add_alt_req_list(Character.id.SONIC, req/SONIC_MODEL)
     add_alt_req_list(Character.id.SANDBAG, req/SANDBAG_MODEL)
     add_alt_req_list(Character.id.SSONIC, req/SSONIC_MODEL)
+    add_alt_req_list(Character.id.SHEIK, req/SHEIK_MODEL)
     OS.align(4)
 
     // @ Description
@@ -2048,6 +2051,7 @@ scope CharacterSelect {
         constant MARTH(0x0001D4B8)
         constant SONIC(0x0001E578)
         constant SANDBAG(0x00017038)
+        constant SHEIK(0x000206F8)
         // j
         constant JMARIO(0x00001078)
         constant JFOX(0x00002138)
@@ -2320,6 +2324,7 @@ scope CharacterSelect {
         constant MEWTWO(0x00019F48)
         constant MARTH(0x0001A428)
         constant SONIC(0x0001B2C8)
+        constant SHEIK(0x0001BC88)
         constant SANDBAG(0x00019A68)
         constant SSONIC(0x0001B7A8)
         constant BLANK(0x0)
@@ -2393,7 +2398,7 @@ scope CharacterSelect {
         define slot_15(PIKACHU)
         define slot_16(JIGGLYPUFF)
         define slot_17(FALCO)
-        define slot_18(NONE)
+        define slot_18(SHEIK)
         // row 3
         define slot_19(DSAMUS)
         define slot_20(WARIO)
@@ -2743,6 +2748,11 @@ scope CharacterSelect {
     float32 1.3
     OS.patch_end()
 
+    // Set menu zoom size for Sheik
+    Character.table_patch_start(menu_zoom, Character.id.SHEIK, 0x4)
+    float32 0.9921875
+    OS.patch_end()
+
     // @ Description
     // Settings for the different CSS pages for easy access
     css_settings:
@@ -2814,6 +2824,14 @@ scope CharacterSelect {
         li      t0, portrait_x_position_pointer
         li      t1, portrait_x_position
         sw      t1, 0x0000(t0)
+
+        li      t2, Training.special_model_display
+        lw      t0, 0x0000(t2)              // t0 = Training's initialized special model display
+        li      t1, Toggles.entry_special_model
+        bgezl   t0, pc() + 8                // if value has been initialized, restore Toggles value
+        sw      t0, 0x0004(t1)              // restore value
+        addiu   t0, r0, -0x0001             // t0 = -1
+        sw      t0, 0x0000(t2)              // clear Training value
 
         addiu   sp, sp,-0x0030              // allocate stack space
         sw      ra, 0x0004(sp)              // ~
@@ -4524,6 +4542,7 @@ scope CharacterSelect {
     add_to_css(Character.id.SONIC,  FGM.announcer.names.SONIC,        	1.50,         0x00010004, SONIC,        name_texture.SONIC,          portrait_offsets.SONIC,          -1)
     add_to_css(Character.id.SANDBAG,FGM.announcer.names.FALCO,          1.50,         0x00010001, ZELDA,        name_texture.JPUFF,          portrait_offsets.SANDBAG,        -1)
     add_to_css(Character.id.SSONIC, FGM.announcer.names.SSONIC,        	1.50,         0x00010004, SONIC,        name_texture.SSONIC,         portrait_offsets.SSONIC,         8)
+    add_to_css(Character.id.SHEIK,  FGM.announcer.names.SHEIK,          1.50,         0x00010001, ZELDA,        name_texture.SHEIK,          portrait_offsets.SHEIK,          -1)
 }
 
 } // __CHARACTER_SELECT__
