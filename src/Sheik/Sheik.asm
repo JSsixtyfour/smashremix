@@ -425,7 +425,7 @@ Character.edit_action_parameters(SHEIK, Action.LandingAirX,             File.SHE
     Character.add_new_action_params(SHEIK,  DSP_Recoil,         -1,             File.SHEIK_DSP_RECOIL,      DSP_RECOIL,                 0x00000000)
 
     // Add Actions                  // Action Name      // Base Action  // Parameters                       // Staling ID   // Main ASM                 // Interrupt/Other ASM          // Movement/Physics ASM             // Collision ASM
-    Character.add_new_action(SHEIK, NSP_Shoot_Air,      -1,             ActionParams.NSP_Shoot_Air,         0x12,           SheikNSP.shoot_main_,       0,                              0x800D91EC,                         SheikNSP.air_shoot_collision_)
+    Character.add_new_action(SHEIK, NSP_Shoot_Air,      -1,             ActionParams.NSP_Shoot_Air,         0x12,           SheikNSP.shoot_main_,       0,                              0x800D91EC,                         0x800DE934)
     Character.add_new_action(SHEIK, DSP_Begin,          -1,             ActionParams.DSP_Begin,             0x13,           SheikDSP.main_,             0,                              SheikDSP.physics_,                  SheikDSP.air_collision_)
     Character.add_new_action(SHEIK, DSP_Attack,         -1,             ActionParams.DSP_Attack,            0x13,           0x800D94E8,                 0,                              SheikDSP.physics_,                  SheikDSP.attack_collision_)
     Character.add_new_action(SHEIK, DSP_Landing,        -1,             ActionParams.DSP_Landing,           0x13,           0x800D94C4,                 0,                              0x800D8CCC,                         0x800DDEE8)

@@ -110,8 +110,11 @@ scope spawn_custom_item_based_on_red_shell_: {
     addu    a3, a3, a1                  // a3 = address of item info array pointer
     lw      a1, 0x0000(a3)              // a1 = item info array pointer
     lw      a3, 0x0048(sp)              // original line 9
+    jal     0x8016E174                  // create item
+    sw      t6, 0x0010(sp)
+    beqz    v0, _end                    // skip if no item created
 
-    OS.copy_segment(0xF5C40, 0xE4)                // 8017B200
+    OS.copy_segment(0xF5C4C, 0xD8)      // copy part of red shell routine @ 8017B20C
 
     // overwrite values in item special struct. Create a branch if adding more.
     _blue_shell:
@@ -133,6 +136,7 @@ scope spawn_custom_item_based_on_red_shell_: {
     sw      v0, 0x011C(a0)               // damage type
 
     lw      v0, 0x0348(a0)               // restore v0(unsure if needed)
+    _end:
     OS.copy_segment(0xF5D24, 0x14)       // deallocate sp + return
 }
 

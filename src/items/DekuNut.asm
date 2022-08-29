@@ -171,9 +171,23 @@ scope prepickup_: {
 }
 
 scope drop_item_: {
-    sw      r0, 0x011C(v0)              // damage type = normal (prevents stunning players on item drop)
-    j       0x801745FC                  // jump to the item drop subroutine for tomato
-    nop
+// @ Description
+// Custom item drop routine with vanilla logic too
+scope drop_item_: {
+        addiu   sp, sp, -0x18
+        sw      ra, 0x0014(sp)
+        sw      v0, 0x0010(sp)
+
+        sw      r0, 0x011C(v0)              // damage type = normal
+        jal       0x801745FC                // item drop subroutine for tomato
+        nop
+        lw      v0, 0x0010(sp)
+        sw      r0, 0x140(v0)               // set kb to 0
+
+        lw      ra, 0x0014(sp)
+        jr      ra
+        addiu   sp, sp, 0x18
+    }
 }
 
 // @ Description
@@ -186,6 +200,8 @@ scope throw_initial_: {
     sw      a0, 0x0018 (sp)
     addiu   at, r0, 0x000A           // at = deku stun damage type
     sw      at, 0x011C(v0)          // overwrite damage type
+    addiu   at, r0, 0x100           // at = hurtbox kb
+    sh      at, 0x140(v0)           // overwrite kb
     li      a1, item_state_table
     lw      a0, 0x0018 (sp)
     jal     0x80172ec8              // change item state

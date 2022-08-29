@@ -483,6 +483,7 @@ scope Credits {
     add_name("epona", "", remix)
     add_name("Stew", "", remix)
     add_name("thetaiter", "", remix)
+    add_name("LesbianChemicalPlant", "", remix)
 
 
     add_title("Original Sequencing Musical Credits")

@@ -4367,7 +4367,7 @@ scope SinglePlayerModes: {
 
 // ALLSTAR
 
-// Total characters: 25
+// Total characters: 26
     // @ Description
     // Randomly generates a list of characters and stages for the matches
     // This only gets run after a player presses start on the 1p CSS screen
@@ -4402,7 +4402,7 @@ scope SinglePlayerModes: {
         li      t0, match_begin_flag
         sw      r0, 0x0000(t0)              // clear match begin flag
 
-        addiu   t0, r0, 0x0019              // slot countdown (currently 25 character slots to fill), UPDATE when new character added
+        addiu   t0, r0, 0x0019              // slot countdown (currently 26 character slots to fill), UPDATE when new character added
         addiu   t1, r0, 0x0018              // jump multiplier for match pool
         li      t5, match_pool              // load match pool address
         li      t7, allstar_character_order // load character slots address
@@ -4506,6 +4506,7 @@ scope SinglePlayerModes: {
     dw        0x00000000
 
     dw        0x00000000
+    dw        0x00000000
 
     OS.align(16)
     allstar_stage_order:                     // stage order for allstar run
@@ -4539,6 +4540,7 @@ scope SinglePlayerModes: {
     dw        0x00000000
     dw        0x00000000
 
+    dw        0x00000000
     dw        0x00000000
 
     OS.align(16)
@@ -5447,9 +5449,9 @@ scope SinglePlayerModes: {
 
     // @ Description
     // This establishes Rest Area functions such as portraits and heart spawns
-    constant DOUBLE_STAGE_AMOUNT(0x5)       // amount of character progress to have 1v2
-    constant TRIPLE_STAGE_AMOUNT(0xF)       // amount of character progress to have 1v3
-    constant FINAL_STAGE_AMOUNT(0x18)       // amount of character progress to have yoshi team style battle
+    constant DOUBLE_STAGE_AMOUNT(0x6)       // amount of character progress to have 1v2
+    constant TRIPLE_STAGE_AMOUNT(0x10)       // amount of character progress to have 1v3
+    constant FINAL_STAGE_AMOUNT(0x19)       // amount of character progress to have yoshi team style battle
 
     scope rest_area_routine: {
         lui     t7, 0x800A

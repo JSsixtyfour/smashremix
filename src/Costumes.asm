@@ -924,6 +924,7 @@ scope Costumes {
         db 0x05                             // Sandbag
         db 0x05                             // Super Sonic
         db 0x05                             // Classic Sonic
+        db 0x05                             // Sheik
         OS.align(4)
 
         functions:
@@ -1222,6 +1223,10 @@ scope Costumes {
         addiu   t5, t5, 0x0001                  // t5 = index of first extra costume
         sltu    at, t4, t5                      // at = 0 if this is a new costume, 1 if an original
         bnez    at, _original_check             // if an original costume, skip
+        lbu     at, 0x0000(t3)                  // at = number of extra costumes for this character
+        addu    at, t5, at                      // at = max costume_id + 1
+        sltu    at, t4, at                      // at = 1 if this is a valid costume, 0 if not
+        beqz    at, _original_check             // if not a valid costume, skip
         nop
 
         // get the unique ID for this "image"

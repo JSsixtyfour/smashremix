@@ -562,7 +562,7 @@ scope JigglypuffKirbyShared {
         beq     t0, at, _kirby
         nop
         addiu   at, r0, Character.id.JKIRBY     // JKIRBY ID
-        beq     at, a0, _kirby
+        beq     at, t0, _kirby
         nop
 
         _end:

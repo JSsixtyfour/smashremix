@@ -611,7 +611,7 @@ scope KirbyHats {
     // @ Description
     // Prevents kirby from having his power ID set to 0
     scope kirby_power_loss_prevent_: {
-        OS.patch_start(0xD7D84, 0x8015D344)
+        OS.patch_start(0xD18E4, 0x80156EA4)
         j       kirby_power_loss_prevent_
         lbu     a1, 0x000D(a0)              // amount of port loops
         _return:
@@ -628,7 +628,7 @@ scope KirbyHats {
         sw      r0, 0x0AE0(a0)              // original line 2, remove power
 
         _no_kirbyhat_selected:
-        jal     0x80156E60                  // original line 2
+        jal     0x80156E60                  // original line 1
         nop
         
         j       _return

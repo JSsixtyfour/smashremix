@@ -326,6 +326,199 @@ scope AI {
         nop
     }
 
+    // @ Description
+    // Improves cpu ability to not care about or dodge projectiles hook after M.MARIO/GDK id check
+    // Used for Franklin Badge cpus and GBOWSER
+    scope remix_ignore_projectiles_: {
+        OS.patch_start(0xB2224, 0x801377E4)
+        j     remix_ignore_projectiles_
+        nop
+        _return:
+        OS.patch_end()
+
+        // v0 = character id
+        // s0 = player struct
+        lli     at, Character.id.GBOWSER
+        beq     at, v0, _ignore_projectile  // ignore the projectile if GBOWSER
+        nop
+        // TODO: add a check for remix 1P giant so they are similar to giant DK
+
+        li      v0, Item.FranklinBadge.players_with_franklin_badge
+        lbu     at, 0x000D(s0)              // at = port
+        sll     at, at, 0x0002              // at = offset to player entry
+        addu    v0, v0, at                  // v0 = address of players badge
+        lw      v0, 0x0000(v0)              // v0 = entry in table
+
+        bnez    v0, _ignore_projectile      // ignore the projectile if cpu wearing badge
+        nop
+
+        // if here, proceed as normal
+        jal    0x80135B78                   // original line 1
+        sw     a2, 0x0034(sp)               // original line 2
+        j      _return
+        nop
+
+        _ignore_projectile:
+        j      0x80137804
+        nop
+
+    }
+
+    // @ Description
+    // Allows remix characters to initiate their reflect or absorb actions when a projectile is near
+    // easy when action ids are shared
+    scope remix_initiate_reflect_and_absorb_: {
+        OS.patch_start(0xB08D0, 0x80135E90)
+        j     remix_initiate_reflect_and_absorb_
+        nop
+        _return:
+        OS.patch_end()
+
+        // v0 = character id
+        // a2 = player struct
+
+        beq    v0, at, _ness_absorb       // modified og line 1
+        lli    at, Character.id.JFOX
+        beq    at, v0, _fox_reflect       // Fox branch if JFOX
+        lli    at, Character.id.FALCO
+        beq    at, v0, _fox_reflect       // Fox branch if FALCO
+        lli    at, Character.id.WOLF
+        beq    at, v0, _fox_reflect       // Fox branch if WOLF
+        lli    at, Character.id.JNESS
+        beq    at, v0, _ness_absorb       // Ness branch if JNESS
+        lli    at, Character.id.LUCAS
+        beq    at, v0, _ness_absorb       // Ness branch if LUCAS
+        lli    at, Character.id.PIANO
+        beq    at, v0, _ness_absorb       // Ness branch if PIANO
+        nop
+
+        // add character checks here as needed
+
+        _normal:
+        j      0x80135EA4                 // og line 1
+        nop
+
+        _fox_reflect:
+        j      0x80135E9C
+        lbu    t0, 0x0049(s1)             // original line
+
+        _ness_absorb:
+        j      0x80135E98
+        lbu    t0, 0x0049(s1)             // original line
+
+    }
+
+    // @ Description
+    // decide if a character should maintain their reflect or absorb actions.
+    // easy when action ids are shared
+    scope remix_reflect_and_absorb_check_: {
+        OS.patch_start(0xB2A98, 0x80138058)
+        j     remix_reflect_and_absorb_check_
+        nop
+        _return:
+        OS.patch_end()
+
+        // v0 = character id
+        // a2 = player struct
+
+        lli    at, Character.id.JFOX
+        beq    at, v0, _fox_reflect       // Fox branch if JFOX
+        lli    at, Character.id.FALCO
+        beq    at, v0, _fox_reflect       // Fox branch if FALCO
+        lli    at, Character.id.WOLF
+        beq    at, v0, _fox_reflect       // Fox branch if WOLF
+        lli    at, Character.id.JNESS
+        beq    at, v0, _ness_absorb       // Ness branch if JNESS
+        lli    at, Character.id.LUCAS
+        beq    at, v0, _ness_absorb       // Ness branch if LUCAS
+        lli    at, Character.id.PIANO
+        beq    at, v0, _piano_absorb      // Piano branch if PIANO
+        lw     v0, 0x0024(a0)             // v0 = current action id
+
+        // add more character checks here
+
+        _normal:
+        j      0x801380F8                 // og line 1
+        lw     ra, 0x0014(sp)             // og line 2
+
+        _fox_reflect:
+        j      0x80138064
+        lw     v0, 0x0024(a0)             // v0 = current action id
+
+        _ness_absorb:
+        j      0x8013808C
+        lw     v0, 0x0024(a0)             // v0 = current action id
+
+        _piano_absorb:
+        lw     v0, 0x0024(a0)             // v0 = current action id
+        slti   at, v0, 0x00E5             // original logic checks action
+        bnez   at, _piano_start_absorb
+        slti   at, v0, 0x00EE             // original logic
+        j      0x80138098                 // original logic checks action
+        nop
+
+        _piano_start_absorb:
+        j      0x801380A0
+        nop
+
+    }
+
+    // @ Description
+    // improves reflect and absorb behaviour for cpus
+    // easy when action ids are shared
+    scope remix_maintain_reflect_and_absorb_: {
+        OS.patch_start(0xB226C, 0x8013782C)
+        j     remix_maintain_reflect_and_absorb_
+        nop
+        _return:
+        OS.patch_end()
+
+        // v0 = character id
+        // a2 = player struct
+
+        lli    at, Character.id.JFOX
+        beq    at, v0, _fox_reflect       // Fox branch if JFOX
+        lli    at, Character.id.FALCO
+        beq    at, v0, _fox_reflect       // Fox branch if FALCO
+        lli    at, Character.id.WOLF
+        beq    at, v0, _fox_reflect       // Fox branch if WOLF
+        lli    at, Character.id.JNESS
+        beq    at, v0, _ness_absorb       // Ness branch if JNESS
+        lli    at, Character.id.LUCAS
+        beq    at, v0, _ness_absorb       // Ness branch if LUCAS
+        lli    at, Character.id.PIANO
+        beq    at, v0, _piano_absorb      // Piano branch if PIANO
+        nop
+
+        // add more character checks here
+
+        _normal:
+        j      0x80137884                 // og line 1
+        lw     v0, 0x0024(a2)             // og line 2
+
+        _fox_reflect:
+        j      0x80137838                 // take Fox branch (dsp)
+        lw     v0, 0x0024(a2)             // v0 = current action id
+
+        _ness_absorb:
+        j      0x80137860                 // take Ness branch (dsp)
+        // don't add any lines here
+        _piano_absorb:
+        lw     v0, 0x0024(a2)             // v0 = current action id
+        slti    at, v0, 0x00E5            // min absorb action
+        bnez    at, _piano_exit           // 
+        slti    at, v0, 0x00EE            // max absorb action
+        beqz    at, _piano_exit           // 
+        or      a0, a2, r0                // 
+        j       0x80137874                // return to normal routine
+        nop
+
+        _piano_exit:
+        j       0x80137884
+        nop
+
+    }
+
 }
 
 } // __AI__

@@ -505,6 +505,28 @@ scope TwelveCharBattle {
 
         _set_char:
         sb      t2, 0x0023(v1)              // set character
+        // let's make sure the costume is legal!
+        li      t1, Costumes.select_.num_costumes // t1 = num_costumes
+        addu    t1, t1, t2                  // t1 = address of character's original costume count
+        lbu     t1, 0x0000(t1)              // t1 = character's original costume count
+
+        sll     a1, t2, 0x0002              // a1 = offset in extra costume table
+        li      t3, Costumes.extra_costumes_table
+        addu    t3, t3, a1                  // t3 = character extra costume table address
+        lw      t3, 0x0000(t3)              // t3 = character extra costume table, or 0 if none defined
+        beqz    t3, _check_costume_id       // if no extra costumes, skip
+        addiu   t1, t1, 0x0001              // t5 = index of first extra costume or max costume_id + 1
+
+        lbu     a1, 0x0003(t3)              // a1 = costumes to skip
+        addu    t1, t1, a1                  // t1 = add skipped costumes to costume count
+        lbu     a1, 0x0000(t3)              // a1 = number of extra costumes for this character
+        addu    t1, t1, a1                  // t1 = max costume_id + 1
+
+        _check_costume_id:
+        lbu     a1, 0x0026(v1)              // a1 = costume_id
+        sltu    a1, a1, t1                  // a1 = 1 if valid costume, 0 otherwise
+        beqzl   a1, _check_valid_chars      // if not a valid costume, set costume_id to 0
+        sb      r0, 0x0026(v1)              // set costume_id to 0
 
         _check_valid_chars:
         // make sure 1P and 2P don't have invalid character IDs selected
@@ -3059,7 +3081,7 @@ scope TwelveCharBattle {
     add_team_parameters(File.SHEIK_TEAM_POSE,         0x80000000,             0)          // 0x3E - SHEIK
 
     // @ Description
-    // This prevents picking up the token of a character with stocks remaining after a match.
+    // This prevents picking up the token of a CPU character with stocks remaining after a match.
     scope prevent_token_pickup_: {
         OS.patch_start(0x13588C, 0x8013760C)
         j       prevent_token_pickup_
@@ -3069,6 +3091,7 @@ scope TwelveCharBattle {
 
         // a0 = port_id
         // a1 = token_id
+        multu   a1, a2                      // original line 2
 
         addiu   sp, sp,-0x0020              // allocate stack space
         sw      ra, 0x0004(sp)              // save registers
@@ -3076,6 +3099,9 @@ scope TwelveCharBattle {
         sw      v0, 0x000C(sp)              // ~
         sw      v1, 0x0010(sp)              // ~
         sw      t0, 0x0014(sp)              // ~
+
+        mflo    t6                          // t6 = offset to token css planel struct
+        sw      t6, 0x0018(sp)              // save offset to token css panel struct
 
         li      t0, twelve_cb_flag
         lw      t0, 0x0000(t0)              // t0 = 1 if 12cb mode
@@ -3092,7 +3118,15 @@ scope TwelveCharBattle {
         beqz    v0, _end                    // if there are no remaining stocks (they lost), allow selecting token
         nop
 
-        // otherwise, don't allow picking up the token
+        // otherwise, don't allow picking up the token if CPU
+        lw      t6, 0x0018(sp)              // t6 = offset to token css panel struct
+        li      t0, CharacterSelect.CSS_PLAYER_STRUCT
+        addu    t0, t0, t6                  // t0 = css panel struct for token being picked up
+        lbu     t6, 0x0022(t0)              // t6 = player type (0 if HMN, 1 if CPU)
+        beqz    t6, _end                    // if human, allow selecting token
+        nop
+
+
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      ra, 0x0008(sp)              // store ra
 
@@ -3121,61 +3155,6 @@ scope TwelveCharBattle {
         addiu   sp, sp, 0x0020              // deallocate stack space
 
         j       _return
-        multu   a1, a2                      // original line 2
-    }
-
-    // @ Description
-    // This prevents recalling the token when the character still has stocks remaining
-    scope prevent_token_recall_: {
-        OS.patch_start(0x136264, 0x80137FE4)
-        j       prevent_token_recall_
-        addiu   v0, r0, 0x0001              // original line 2
-        OS.patch_end()
-
-        addiu   sp, sp,-0x0020              // allocate stack space
-        sw      ra, 0x0004(sp)              // save registers
-        sw      a0, 0x0008(sp)              // ~
-        sw      v0, 0x000C(sp)              // ~
-        sw      v1, 0x0010(sp)              // ~
-        sw      t0, 0x0014(sp)              // ~
-
-        li      t0, twelve_cb_flag
-        lw      t0, 0x0000(t0)              // t0 = 1 if 12cb mode
-        beqz    t0, _end                    // if not 12cb mode, return normally
-        nop
-
-        li      t0, config.status
-        lw      t0, 0x0000(t0)              // t0 = battle status
-        beqz    t0, _end                    // if not started, return normally
-        nop
-
-        // a0 = port_id
-        jal     get_last_match_portrait_and_stocks_ // v0 = remaining stocks, v1 = portrait_id of last match
-        nop
-        beqz    v0, _end                    // if there are no remaining stocks (they lost), allow recalling token
-        nop
-
-        // otherwise, don't allow recalling the token
-        addiu   sp, sp,-0x0010              // allocate stack space
-        sw      ra, 0x0008(sp)              // store ra
-
-        jal     0x800269C0                  // original line 1 (play fgm)
-        lli     a0, FGM.menu.ILLEGAL        // on branch, a0 = FGM.menu.ILLEGLAL
-
-        lw      ra, 0x00008(sp)             // load ra
-        addiu   sp, sp, 0x0010              // deallocate stack space
-
-        sw      r0, 0x000C(sp)              // return false for v0
-
-        _end:
-        lw      ra, 0x0004(sp)              // restore registers
-        lw      a0, 0x0008(sp)              // ~
-        lw      v0, 0x000C(sp)              // ~
-        lw      v1, 0x0010(sp)              // ~
-        lw      t0, 0x0014(sp)              // ~
-        addiu   sp, sp, 0x0020              // deallocate stack space
-
-        jr      ra                          // original line 1
         nop
     }
 
