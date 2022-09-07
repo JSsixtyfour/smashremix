@@ -1375,11 +1375,14 @@ scope target_player_: {
     lw      v0, 0x0074(a0)              // v0 = item object
 
     beqz    s0, _apply_speed            // skip if no player found
-    or      s1, r0, r0                  // s1(i) = 0
+    nop
+    lw      at, 0x0074(s0)              // a1 = player location struct
+    beqz    at, _apply_speed            // failsafe, use current speed if no player coords
+    nop
+    or      a1, at, r0                  // if here, a1 = player location struct
 
     lwc1    f20, 0x0048(sp)             // f20 = 0
     addiu   s3, sp, 0x003c              // s3 = some pointer in sp
-    lw      a1, 0x0074(s0)              // a1 = player location struct
     addiu   s2, v0, 0x001c              // s2 = item object.x
 
     or      a0, s3, r0                  //

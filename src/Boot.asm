@@ -139,7 +139,7 @@ scope Boot {
         nop
     }
 
-    string_version:; String.insert("Smash Remix v1.2.1")
+    string_version:; String.insert("Smash Remix v1.2.2")
 
     // @ Description
     // Nintendo 64 logo cannot be skipped.

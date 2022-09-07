@@ -607,31 +607,36 @@ scope KirbyHats {
         j       _return
         lw      a0, 0x0084(a0)              // original line 2
     }
-    
+
     // @ Description
     // Prevents kirby from having his power ID set to 0
     scope kirby_power_loss_prevent_: {
-        OS.patch_start(0xD18E4, 0x80156EA4)
+        OS.patch_start(0xDE060, 0x80163620)
         j       kirby_power_loss_prevent_
-        lbu     a1, 0x000D(a0)              // amount of port loops
+        addiu   a0, r0, Character.id.KIRBY
         _return:
         OS.patch_end()
-
+        
+        lw      a2, 0x0008(t8)              // load character ID
+        beq     a0, a2, _check              // check if kirby
+        addiu   a0, r0, Character.id.JKIRBY // JKIRBY ID     
+        bnel    a0, a2, _no_kirbyhat_selected   // check if jkirby
+        sw      t7, 0x0ADC(t8)              // original line 2, remove power
+        
+        _check:
         li      a2, spawn_with_hat          // pointer to kirby hat settings
-
+        lbu     a0, 0x000D(t8)              // amount of port loops
+        
         _loop:
-        sll     a1, a1, 0x0002              // a1 = offset to port
-        addu    a1, a2, a1                  // a0 = address of spawn with hat id
-        lbu     a2, 0x0003(a1)              // at = hat_id
+        sll     a0, a0, 0x0002              // a1 = offset to port
+        addu    a0, a2, a0                  // a0 = address of spawn with hat id
+        lbu     a2, 0x0003(a0)              // at = hat_id
         
         beqzl   a2, _no_kirbyhat_selected   // if default, remove power, if have a hat selected, do not
-        sw      r0, 0x0AE0(a0)              // original line 2, remove power
-
-        _no_kirbyhat_selected:
-        jal     0x80156E60                  // original line 1
-        nop
+        sw      t7, 0x0ADC(t8)              // original line 1, remove power
         
+        _no_kirbyhat_selected:
         j       _return
-        nop
+        lw      a0, 0x0020(sp)              // original line 2
     }
 }

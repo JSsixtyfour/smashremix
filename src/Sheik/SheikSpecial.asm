@@ -1506,7 +1506,7 @@ scope SheikNSP {
         jal     0x800E6F24                  // change action
         sw      t6, 0x0024(sp)              // 0x0024(sp) = player struct
 
-
+        lw      t9, 0x0024(sp)              // 0x0024(sp) = player struct
         lw      t7, 0x0008(t9)              // t7 = current character ID
         lli     at, Character.id.KIRBY      // at = id.KIRBY
         beq     t7, at, _kirby              // branch if character = KIRBY
