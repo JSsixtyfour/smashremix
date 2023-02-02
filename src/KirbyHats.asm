@@ -6,7 +6,7 @@
 scope KirbyHats {
     // @ Description
     // Number of new "hats" added
-    variable new_hats(16)
+    variable new_hats(19)
 
     // @ Description
     // Used in add_hat to adjust offset
@@ -433,6 +433,12 @@ scope KirbyHats {
     add_hat(Character.kirby_hat_id.FOX, 0x1BD18, -1, -1, 0x1CD18, -1, -1)
     // Sheik hat_id: 0x1E
     add_hat(Character.kirby_hat_id.FALCON, 0x1E2C0, -1, -1, 0x1F5B8, -1, -1)
+    // Marina hat_id: 0x1F
+    add_hat(Character.kirby_hat_id.FALCON, 0x20D60, -1, -1, 0x21C08, -1, -1)
+    // Dedede hat_id: 0x20
+    add_hat(Character.kirby_hat_id.YOSHI, 0x22CF0, -1, -1, 0x23B98, -1, -1)
+    // Dedede (mouth open) hat_id: 0x21
+    add_hat(Character.kirby_hat_id.YOSHI_SWALLOW, 0x24840, -1, -1, 0x25238, -1, -1)
 
     spawn_with_table_:
     db 0x08                                   // NA = no hat
@@ -462,6 +468,8 @@ scope KirbyHats {
     db 0x3A                                   // 0x18 = Marth
     db 0x3B                                   // 0x19 = Sonic
     db 0x3E                                   // 0x1A = Sheik
+    db Character.id.MARINA                    // 0x1B = Marina
+    db Character.id.DEDEDE                    // 0x1C = Dedede
     OS.align(4)
 
     spawn_with_hat:
@@ -479,21 +487,23 @@ scope KirbyHats {
         li      v0, Global.current_screen   // t0 = address of current screen
         lbu     v0, 0x0000(v0)              // t0 = current screen
         lli     t5, 0x0011                  // t1 = 1p CSS
-        beq     t5, v0, _normal             // 
+        beq     t5, v0, _normal             //
         lli     t5, 0x0013                  // t1 = Bonus 1 CSS
-        beq     t5, v0, _normal             // 
+        beq     t5, v0, _normal             //
         lli     t5, 0x0014                  // t1 = Bonus 2 CSS
         beq     t5, v0, _normal             //
         lli     t5, 0x0014                  // t1 = Bonus 2 CSS
         beq     t5, v0, _normal             //
         lli     t5, 0x0035                  // t1 = Bonus Mode screen
         beq     t5, v0, _normal             //
+        lli     t5, 0x003D                  // t1 = CPU Battle Screen
+        beq     t5, v0, _normal             //
         nop
-        
+
         // v1 = player struct
         li      v0, spawn_with_table_
         li      t5, spawn_with_hat
-        
+
 
         sll     t8, t8, 0x0002              // t8 = offset to port
         addu    t5, t5, t8                  // t5 = address of spawn with hat id
@@ -616,25 +626,25 @@ scope KirbyHats {
         addiu   a0, r0, Character.id.KIRBY
         _return:
         OS.patch_end()
-        
+
         lw      a2, 0x0008(t8)              // load character ID
         beq     a0, a2, _check              // check if kirby
-        addiu   a0, r0, Character.id.JKIRBY // JKIRBY ID     
+        addiu   a0, r0, Character.id.JKIRBY // JKIRBY ID
         bnel    a0, a2, _no_kirbyhat_selected   // check if jkirby
         sw      t7, 0x0ADC(t8)              // original line 2, remove power
-        
+
         _check:
         li      a2, spawn_with_hat          // pointer to kirby hat settings
         lbu     a0, 0x000D(t8)              // amount of port loops
-        
+
         _loop:
         sll     a0, a0, 0x0002              // a1 = offset to port
         addu    a0, a2, a0                  // a0 = address of spawn with hat id
         lbu     a2, 0x0003(a0)              // at = hat_id
-        
+
         beqzl   a2, _no_kirbyhat_selected   // if default, remove power, if have a hat selected, do not
         sw      t7, 0x0ADC(t8)              // original line 1, remove power
-        
+
         _no_kirbyhat_selected:
         j       _return
         lw      a0, 0x0020(sp)              // original line 2

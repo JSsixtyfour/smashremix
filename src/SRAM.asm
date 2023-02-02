@@ -19,7 +19,7 @@ scope SRAM {
     //  - A new MIDI is added
     //  - A new toggle is added
     //  - The order of the toggles is changed
-    constant REVISION(0x0084)
+    constant REVISION(0x008B)
 
     // @ Description
     // Struct that holds information for a block of save data.
@@ -32,6 +32,9 @@ scope SRAM {
         // 16 byte align the next address - may not be necessary but let's do it anyway
         while (SRAM.address % 16) {
             SRAM.address = SRAM.address + 1
+        }
+        if (SRAM.address > 0x8000) {
+            print "\n***** SRAM WARNING! ******\nNot enough SRAM! (0x"; OS.print_hex(SRAM.address); print "... it's over 0x8000!)\n"
         }
     }
 

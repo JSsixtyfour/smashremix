@@ -17,8 +17,10 @@ scope Toggles {
     macro guard(entry_address, exit_address) {
         addiu   sp, sp,-0x0008              // allocate stack space
         sw      at, 0x0004(sp)              // save at
-        li      at, {entry_address}         // ~
-        lw      at, 0x0004(at)              // at = is_enabled
+
+        define toggleAddress(0x00000000)
+        evaluate toggleAddress({entry_address} + 0x04)
+        OS.read_word({toggleAddress}, at) // at = toggle value
         bnez    at, pc() + 24               // if (is_enabled), _continue
         nop
 
@@ -47,18 +49,18 @@ scope Toggles {
         sw      at, 0x0004(sp)              // save at
         sw      v0, 0x0008(sp)              // save v0
 
-        li      at, Global.match_info       // ~
-        lh      at, 0x0002(at)              // at = match_info ptr half byte
-        sll     at, at, 22                  // shift left by 22 (to cut value)
-        srl     at, at, 24                  // shift right by 24
-        li      v0, 0x005B                  // value will be < 5B if versus or training
-
-        bgt     at, v0, pc() + 28            // dont use toggle if single player
+        OS.read_word(Global.match_info, at)	// at = current match info struct
+		lbu     v0, 0x0000(at)
+        lli     at, Global.GAMEMODE.BONUS
+        beq     at, v0, pc() + 36          // dont use toggle if BONUS
+        lli     at, Global.GAMEMODE.CLASSIC
+        beq     at, v0, pc() + 28          // dont use toggle if 1P/RTTF
         nop
 
         // if here, use toggle
-        li      at, {entry_address}         // ~
-        lw      at, 0x0004(at)              // at = is_enabled
+        define toggleAddress(0x00000000)
+        evaluate toggleAddress({entry_address} + 0x04)
+        OS.read_word({toggleAddress}, at)   // at = toggle value
         bnez    at, pc() + 24               // if (is_enabled), _continue
         nop
 
@@ -623,8 +625,8 @@ scope Toggles {
         lw      t0, 0x0000(t0)              // t0 = reset menu music flag
         beqz    t0, _end                    // if we don't need to reset the menu music, skip
         nop
-        jal     play_menu_music_            // reset menu music
-        lli     v0, 0x0000                  // forces a reset
+        // jal     play_menu_music_            // reset menu music
+        // lli     v0, 0x0000                  // forces a reset
 
         b       _end                        // end menu execution
         nop
@@ -968,6 +970,28 @@ scope Toggles {
     dw profile_custom
 
     // @ Description
+    // Failed Z-Cancel strings
+	
+    _7:; db "7% Damage", 0x00
+    lava:; db "Lava Floor", 0x00
+    shield_break:; db "Shield-Break", 0x00
+    instant_ko:; db "Instant K.O.", 0x00
+	taunt:; db "Force Taunt", 0x00
+	bury:; db "Bury", 0x00
+	_random:; db "Random", 0x00
+    OS.align(4)
+
+    string_table_failed_z_cancel:
+    dw off
+	dw _7
+    dw lava
+	dw shield_break
+    dw instant_ko
+	dw taunt
+	dw bury
+	dw _random
+
+    // @ Description
     // FPS strings
     fps_overclocked:; db "OVERCLOCKED", 0x00
     OS.align(4)
@@ -1012,6 +1036,18 @@ scope Toggles {
     dw disable_hud_pause
     dw disable_hud_all
 
+    // @ Description
+    // Tripping strings
+    tripping_low:; db "LOW", 0x00
+    tripping_high:; db "HIGH", 0x00
+    tripping_brawl:; db ""BRAWL"", 0x00
+    OS.align(4)
+
+    string_table_tripping:
+    dw off
+    dw tripping_low
+    dw tripping_high
+    dw tripping_brawl
     // @ Description
     // Default/Always/Never frequency strings (used multiple times)
     frequency_always:; db "ALWAYS", 0x00
@@ -1070,6 +1106,26 @@ scope Toggles {
         constant HAZARDS_OFF(1)
         constant MOVEMENT_OFF(2)
         constant ALL_OFF(3)
+    }
+    
+    // @ Description
+    // Whispy strings
+    japanese:; db "JAPANESE", 0x00
+    super:; db "SUPER", 0x00
+    hyper:; db "HYPER", 0x00
+    OS.align(4)
+
+    string_table_whispy_mode:
+    dw normal
+    dw japanese
+    dw super
+    dw hyper
+
+    scope whispy_mode {
+        constant NORMAL(0)
+        constant JAPANESE(1)
+        constant SUPER(2)
+        constant HYPER(3)
     }
 
     // @ Description
@@ -1300,15 +1356,16 @@ scope Toggles {
     entry_css_panel_menu:;              entry_bool("CSS Panel Menu", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_practice_overlay)
     entry_practice_overlay:;            entry_bool("Color Overlays", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_cinematic_entry)
     entry_cinematic_entry:;             entry("Cinematic Entry", Menu.type.U8, 0, 0, 0, 0, 0, 2, OS.NULL, string_table_frequency, OS.NULL, entry_flash_on_z_cancel)
-    entry_flash_on_z_cancel:;           entry_bool("Flash On Z-Cancel", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_fps)
+    entry_flash_on_z_cancel:;           entry_bool("Flash On Z-Cancel", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_punish_on_failed_z_cancel)
+    entry_punish_on_failed_z_cancel:;   entry("Cruel Z-Cancel Mode", Menu.type.U8, OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, 0, 7, OS.NULL, string_table_failed_z_cancel, OS.NULL, entry_fps)
     entry_fps:;                         entry("FPS Display *BETA", Menu.type.U8, OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, 0, 2, OS.NULL, string_table_fps, OS.NULL, entry_model_display)
     entry_model_display:;               entry("Model Display", Menu.type.U8, 0, 0, 1, 0, 0, 2, OS.NULL, string_table_poly, OS.NULL, entry_special_model)
     entry_special_model:;               entry("Special Model Display", Menu.type.U8, OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, 0, 3, OS.NULL, string_table_model, OS.NULL, entry_advanced_hurtbox)
     entry_advanced_hurtbox:;            entry_bool("Advanced Hurtbox Display", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_hold_to_exit_training)
     entry_hold_to_exit_training:;       entry_bool("Hold To Exit Training", OS.FALSE, OS.TRUE, OS.FALSE, OS.FALSE, entry_improved_combo_meter)
     entry_improved_combo_meter:;        entry_bool("Improved Combo Meter", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_tech_chase_combo_meter)
-    entry_tech_chase_combo_meter:;      entry_bool("Tech Chase Combo Meter", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_vs_mode_combo_meter)
-    entry_vs_mode_combo_meter:;         entry_bool("VS Mode Combo Meter", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_1v1_combo_meter_swap)
+    entry_tech_chase_combo_meter:;      entry_bool("Tech Chase Combo Meter", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_combo_meter)
+    entry_combo_meter:;                 entry_bool("Combo Meter", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_1v1_combo_meter_swap)
     entry_1v1_combo_meter_swap:;        entry_bool("1v1 Combo Meter Swap", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_improved_ai)
     entry_improved_ai:;                 entry_bool("Improved AI", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_neutral_spawns)
     entry_neutral_spawns:;              entry_bool("Neutral Spawns", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, entry_salty_runback)
@@ -1324,7 +1381,8 @@ scope Toggles {
     entry_disable_hud:;                 entry("Disable HUD", Menu.type.U8, 0, 0, 0, 0, 0, 2, OS.NULL, string_table_disable_hud, OS.NULL, entry_disable_aa)
     entry_disable_aa:;                  entry_bool("Disable Anti-Aliasing", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_full_results)
     entry_full_results:;                entry_bool("Always Show Full Results", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, entry_skip_training_start_cheer)
-    entry_skip_training_start_cheer:;   entry_bool("Skip Training Start Cheer", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, OS.NULL)
+    entry_skip_training_start_cheer:;   entry_bool("Skip Training Start Cheer", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_tripping)
+    entry_tripping:;                    entry("Tripping", Menu.type.U8, 0, 0, 0, 0, 0, 3, OS.NULL, string_table_tripping, OS.NULL, OS.NULL)
     evaluate num_remix_toggles(num_toggles)
 
     // @ Description
@@ -1391,8 +1449,8 @@ scope Toggles {
     // Stage Toggles
     head_stage_settings:
     entry_sss_layout:;                          entry("Stage Select Layout", Menu.type.U8, sss.NORMAL, sss.TOURNAMENT, sss.NORMAL, sss.NORMAL, 0, 1, OS.NULL, string_table_sss_layout, OS.NULL, entry_hazard_mode)
-    entry_hazard_mode:;                         entry("Hazard Mode", Menu.type.U8, hazard_mode.NORMAL, hazard_mode.NORMAL, hazard_mode.NORMAL, hazard_mode.NORMAL, 0, 3, OS.NULL, string_table_hazard_mode, OS.NULL, entry_japanese_hazards)
-    entry_japanese_hazards:;                    entry_bool("Japanese Whispy", OS.FALSE, OS.FALSE, OS.FALSE, OS.TRUE, entry_camera_mode)
+    entry_hazard_mode:;                         entry("Hazard Mode", Menu.type.U8, hazard_mode.NORMAL, hazard_mode.NORMAL, hazard_mode.NORMAL, hazard_mode.NORMAL, 0, 3, OS.NULL, string_table_hazard_mode, OS.NULL, entry_whispy_mode)
+    entry_whispy_mode:;                         entry("Whispy Mode", Menu.type.U8, whispy_mode.NORMAL, whispy_mode.NORMAL, whispy_mode.NORMAL, whispy_mode.JAPANESE, 0, 3, OS.NULL, string_table_whispy_mode, OS.NULL, entry_camera_mode)
     entry_camera_mode:;                         entry("Camera Mode", Menu.type.U8, Camera.type.NORMAL, Camera.type.NORMAL, Camera.type.NORMAL, Camera.type.NORMAL, 0, 3, OS.NULL, Camera.type_string_table, OS.NULL, entry_load_profile_stage)
     evaluate LOAD_PROFILE_STAGE_ENTRY_ORIGIN(origin())
     entry_load_profile_stage:;                  entry("Load Profile:", Menu.type.U8, 0, 1, 2, 0, 0, 2, load_sub_profile_, num_toggles, string_table_stage_profile, OS.NULL, entry_random_stage_title)

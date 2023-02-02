@@ -2189,12 +2189,22 @@ scope Render {
         beq     a0, t1, _title              // if (first file loaded = 0xA7 Hole Image), jump to _title
         lli     t1, 0x004F                  // t1 = 0x4F
         beq     a0, t1, _end                // if (first file loaded = 0x4F Continue Image), skip to end (continue screen)
+        lli     t1, 0x0027                  // t1 = 0x27
+        // debug transitions load as screen 1 with files 0x27 - 0x33 loaded first, so if not those files, assume 1p
+        // note files 0x27 and 0x2F were not originally used in the transition table at 800D5D60 but they have been restored in Transitions.asm
+        blt     a0, t1, _1p                 // if (first file loaded < 0x28), skip to 1p
+        lli     t1, 0x0033                  // t1 = 0x33
+        ble     a0, t1, _end                // if (first file loaded between 0x28 and 0x33), skip to end (debug screen transition tests)
         nop
 
+        _1p:
         jal     BGM.setup_                  // load font file if necessary for music titles
         nop
 
         jal     InputDisplay.setup_
+        nop
+
+        jal     ComboMeter.setup_              // Setup the Combo Meter
         nop
 
         _end:
@@ -2212,12 +2222,14 @@ scope Render {
 		_multiman:
 		jal     SinglePlayerModes.setup_    // Setup the KO counter
         nop
+        jal     ComboMeter.setup_              // Setup the Combo Meter
+        nop
 
         b       _end
         nop
 
         _vs:
-        jal     VsCombo.setup_              // Setup the VS Combo Meter
+        jal     ComboMeter.setup_              // Setup the Combo Meter
         nop
 
         // Collect VS stats
@@ -2318,6 +2330,8 @@ scope Render {
         jal     InputDisplay.setup_
         nop
         jal     GFXRoutine.port_override.clear_gfx_override_table_
+        nop
+        jal     CharacterSelectDebugMenu.DpadFunctions.clear_settings_for_training_
         nop
 
         b       _end

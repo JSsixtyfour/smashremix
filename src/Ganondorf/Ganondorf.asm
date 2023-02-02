@@ -3,6 +3,12 @@
 // This file contains file inclusions, action edits, and assembly for Ganondorf.
 
 scope Ganondorf {
+
+	scope FACE: {
+		constant NORMAL(0xAC000000)
+		constant SHOCK(0xAC000006)
+	}
+
     // Insert Moveset files
     insert IDLE,"moveset/IDLE.bin"
     insert RUN,"moveset/RUN.bin"; Moveset.GO_TO(RUN)            // loops
@@ -49,12 +55,26 @@ scope Ganondorf {
 	insert ONEP,"moveset/ONEP.bin"
 	insert ENTRY_1,"moveset/ENTRY_1.bin"
 	insert ENTRY_2,"moveset/ENTRY_2.bin"
+    insert DOWN_STAND,"moveset/DOWN_STAND.bin"
+	
+	DOWN_BOUNCE:
+	dw FACE.SHOCK
+	Moveset.GO_TO(Moveset.shared.DOWN_BOUNCE)
+
+    // Insert AI attack options
+    constant CPU_ATTACKS_ORIGIN(origin())
+    insert CPU_ATTACKS,"AI/attack_options.bin"
+    OS.align(16)
 
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(GND,   Action.Idle,            -1,                         IDLE,                       -1)
     Character.edit_action_parameters(GND,   Action.Run,             -1,                         RUN,                        -1)
     Character.edit_action_parameters(GND,   Action.JumpAerialF,     -1,                         JUMP2,                      -1)
     Character.edit_action_parameters(GND,   Action.JumpAerialB,     -1,                         JUMP2,                      -1)
+    Character.edit_action_parameters(GND,   Action.DownBounceD,     -1,                         DOWN_BOUNCE,                -1)
+    Character.edit_action_parameters(GND,   Action.DownBounceU,     -1,                         DOWN_BOUNCE,                -1)
+    Character.edit_action_parameters(GND,   Action.DownStandD,      -1,                         DOWN_STAND,                 -1)
+    Character.edit_action_parameters(GND,   Action.DownStandU,      -1,                         DOWN_STAND,                 -1)
     Character.edit_action_parameters(GND,   Action.TechF,           -1,                         TECHROLL,                   -1)
     Character.edit_action_parameters(GND,   Action.TechB,           -1,                         TECHROLL,                   -1)
     Character.edit_action_parameters(GND,   Action.Tech,            -1,                         TECHSTAND,                  -1)
@@ -86,8 +106,8 @@ scope Ganondorf {
     Character.edit_action_parameters(GND,   Action.LandingAirF,     0,                          0x80000000,                 -1)
     Character.edit_action_parameters(GND,   0xE0,                   File.GND_ENTRY_1_LEFT,      ENTRY_1,                    0x40000000)
 	Character.edit_action_parameters(GND,   0xE1,                   File.GND_ENTRY_1_RIGHT,     ENTRY_1,                    0x40000000)
-	Character.edit_action_parameters(GND,   0xE2,                   File.GND_ENTRY_2_LEFT,     ENTRY_2,                         0x40000000)
-	Character.edit_action_parameters(GND,   0xE3,                   File.GND_ENTRY_2_RIGHT,      ENTRY_2,                         0x40000000)
+	Character.edit_action_parameters(GND,   0xE2,                   File.GND_ENTRY_2_LEFT,      ENTRY_2,                    0x40000000)
+	Character.edit_action_parameters(GND,   0xE3,                   File.GND_ENTRY_2_RIGHT,      ENTRY_2,                   0x40000000)
 	Character.edit_action_parameters(GND,   0xE4,                   -1,                         NSP_GROUND,                 -1)
     Character.edit_action_parameters(GND,   0xE5,                   -1,                         NSP_AIR,                    -1)
     Character.edit_action_parameters(GND,   0xE6,                   -1,                         DSP_GROUND,                 -1)
@@ -126,7 +146,7 @@ scope Ganondorf {
     Character.set_default_costumes(Character.id.GND, 0, 1, 2, 3, 5, 1, 4)
 
     // Shield colors for costume matching
-    Character.set_costume_shield_colors(GND, BLACK, BLUE, AZURE, PURPLE, GREEN, RED, NA, NA)
+    Character.set_costume_shield_colors(GND, BROWN, BLUE, AZURE, PURPLE, GREEN, RED, NA, NA)
 
     // Set Kirby star damage
     Character.table_patch_start(kirby_inhale_struct, 0x8, Character.id.GND, 0xC)
@@ -137,6 +157,32 @@ scope Ganondorf {
     Character.table_patch_start(kirby_inhale_struct, 0x2, Character.id.GND, 0xC)
     dh 0x11
     OS.patch_end()
+
+    // Set CPU behaviour
+    Character.table_patch_start(ai_behaviour, Character.id.GND, 0x4)
+    dw      CPU_ATTACKS
+    OS.patch_end()
+
+    // Edit cpu attack behaviours
+    // edit_attack_behavior(table, attack, override, start_hb, end_hb, min_x, max_x, min_y, max_y)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DAIR,   -1,  14,   24,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPA,   -1,  12,   31,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPG,   -1,  16,   38,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSMASH, -1,  16,   35,  -1, -1, -1, -1) // todo: coords
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DTILT,  -1,  8,    15,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FAIR,   -1,  7,    19,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FSMASH, -1,  24,   33,  -1, -1, -1, -1) // todo: coords
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FTILT,  -1,  10,   16,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, GRAB,   -1,  6,    6,   -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, JAB,    -1,  5,    8,   -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NAIR,   -1,  7,    17,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPA,   -1,  47,   52,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPG,   -1,  47,   52,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UAIR,   -1,  7,    17,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPA,   -1,  16,   51,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPG,   -1,  15,   55,  -1, -1, -1, -1) // todo: coords
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USMASH, -1,  19,   33,  -1, -1, -1, -1) // todo: coords
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UTILT,  -1,  34,   40,  -1, -1, -1, -1) // todo: coords
 
     // @ Description
     // Ganondorf's extra actions

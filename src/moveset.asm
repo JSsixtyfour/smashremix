@@ -83,6 +83,12 @@ scope Moveset {
     macro GO_TO_FILE(offset) {
         dh 0xDB00 ; dh {offset}
     }
+	
+	// adds an FGM/SFX moveset command
+	macro VOICE(fgm_id) {
+		dh 0x4800
+		dh {fgm_id}
+	}
     
     // @ Description
     // Shared moveset files
@@ -103,5 +109,9 @@ scope Moveset {
         insert STARROD_TILT,"moveset/STARROD_TILT.bin"
         insert STARROD_SMASH,"moveset/STARROD_SMASH.bin"
         insert STARROD_DASH,"moveset/STARROD_DASH.bin"
+		insert DOWN_BOUNCE,"moveset/DOWN_BOUNCE.bin"
+		insert CLIFF_CATCH,"moveset/CLIFF_CATCH.bin"
+		insert CLIFF_WAIT,"moveset/CLIFF_WAIT.bin"
+
     }
 }

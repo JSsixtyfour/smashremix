@@ -4,7 +4,7 @@ define __BONUS__()
 print "included Bonus.asm\n"
 
 scope Bonus {
-    constant NUM_BONUS_STAGES(27)
+    constant NUM_BONUS_STAGES(29)
 
     // @ Description
     // Sets up CSS for alternate Bonus modes
@@ -615,6 +615,12 @@ scope Bonus {
     string_mode_normal:; String.insert("NORMAL")
     string_mode_remix:; String.insert("REMIX")
     string_set_stage:; String.insert(": Set Stage")
+    string_level:; String.insert("LEVEL:")
+    string_level_very_easy:; String.insert("VERY EASY")
+    string_level_easy:; String.insert("EASY")
+    string_level_normal:; String.insert("NORMAL")
+    string_level_hard:; String.insert("HARD")
+    string_level_very_hard:; String.insert("VERY HARD")
 
     // Holds a reference to the custom stock icons file
     stock_icons_file:
@@ -641,6 +647,26 @@ scope Bonus {
     // Points to the selected mode's string
     mode_pointer:
     dw string_mode_normal
+
+    // The selected CPU level index
+    level:
+    dw 0x0
+
+	// Table which maps CPU level index to the level string
+    level_table:
+    dw string_level_very_easy
+    dw string_level_easy
+    dw string_level_normal
+    dw string_level_hard
+    dw string_level_very_hard
+
+    // Table which maps CPU level to the level string color
+    level_color_table:
+    dw 0x416FE4FF // blue
+    dw 0x8DBB5AFF // green
+    dw 0xE4BE41FF // yellow
+    dw 0xE47841FF // orange
+    dw 0xE44141FF // red
 
     // The selected stage index
     stage:
@@ -675,6 +701,8 @@ scope Bonus {
     db Stages.id.BTT_MARTH
     db Stages.id.BTT_SONIC
     db Stages.id.BTT_SHEIK
+    db Stages.id.BTT_MARINA
+    db Stages.id.BTT_DEDEDE
 
     db Stages.id.BTT_STG1
     OS.align(4)
@@ -708,6 +736,8 @@ scope Bonus {
     db Stages.id.BTP_MARTH
     db Stages.id.BTP_SONIC
     db Stages.id.BTP_SHEIK
+    db Stages.id.BTP_MARINA
+    db Stages.id.BTP_DEDEDE
 
     db Stages.id.BTP_POLY
     OS.align(4)
@@ -741,51 +771,33 @@ scope Bonus {
     db Character.id.MARTH,      0x0
     db Character.id.SONIC,      Character.id.SSONIC
     db Character.id.SHEIK,      0x0
+    db Character.id.MARINA,     0x0
+    db Character.id.DEDEDE,     0x0
 
     db Character.id.NMARIO,     Character.id.PIANO
     OS.align(4)
 
-    // Set up high score tables for Remix Bonus
+    // Set up high score table for Remix Bonus
     // Ordered by Stage index then Character ID.
-    // We create two tables to save SRAM space.
-    // Scores:
-    //  0x0000 - # Targets
-    //  0x0001 - # Platforms
-    // Times:
-    //  0x0000 - Targets Time
-    //  0x0004 - Platforms Time
+    // In SRAM, we need to conserve space. The max time possible is 0x00034BBF, so we can get away with using 3 bytes.
+    // 0x0000 - (byte) # Targets
+    // 0x0001 - (3 bytes) Targets Time
+    // 0x0004 - (byte) # Platforms
+    // 0x0005 - (3 bytes) Platforms Time
     constant REMIX_BONUS_HIGH_SCORE_TABLE_ORIGIN(origin() + 0x000C)
-    // Note that we have to align the high score count table, so that is addressed here
-    constant COUNT_TABLE_SIZE((NUM_BONUS_STAGES * Character.NUM_CHARACTERS * 0x2) + ((NUM_BONUS_STAGES * Character.NUM_CHARACTERS * 0x2) % 4))
-    constant TIME_TABLE_SIZE(NUM_BONUS_STAGES * Character.NUM_CHARACTERS * 0x8)
-    REMIX_BONUS_HIGH_SCORE_TABLE_BLOCK:; SRAM.block(COUNT_TABLE_SIZE + TIME_TABLE_SIZE)
+    REMIX_BONUS_HIGH_SCORE_TABLE_BLOCK:; SRAM.block(NUM_BONUS_STAGES * Character.NUM_CHARACTERS * 0x8)
 
-    // initialize high score tables
+    // initialize high score table
     pushvar origin, base
     origin REMIX_BONUS_HIGH_SCORE_TABLE_ORIGIN
 
-    remix_bonus_high_score_count_table:
+    remix_bonus_high_score_table:
     define s(0)
     while {s} < NUM_BONUS_STAGES {
         define c(0)
         while {c} < Character.NUM_CHARACTERS {
-            db 0                              // # Targets
-            db 0                              // # Platforms
-
-            evaluate c({c} + 1)
-        }
-
-        evaluate s({s} + 1)
-    }
-    OS.align(4)
-
-    remix_bonus_high_score_time_table:
-    define s(0)
-    while {s} < NUM_BONUS_STAGES {
-        define c(0)
-        while {c} < Character.NUM_CHARACTERS {
-            dw 0x00034BC0                     // Targets Time
-            dw 0x00034BC0                     // Platforms Time
+            dw 0x00034BC0                     // # Targets || Targets Time
+            dw 0x00034BC0                     // # Platforms || Platforms Time
 
             evaluate c({c} + 1)
         }

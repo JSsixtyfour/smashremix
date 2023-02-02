@@ -86,6 +86,14 @@ scope Practice {
         lw      t0, 0x07EC(v0)              // t0 = current knockback value
         bnez    t0, _hitstun                // branch if knockback != 0
         nop
+		
+        _check_reflect_absorb:
+        lh      t0, 0x018C(v0)              // v0 = current players flag
+        andi    t0, t0, 0x0480              // t0 != 0 if reflecting or absorbing
+        beqz    t0, _check_action			
+        lui     t0, 0x00FF                  // t0 = RGBA32 CYAN
+        b       _store
+        ori     t0, t0, 0xFFFF              // ~
         
         _check_action:
         lw      t1, 0x0024(v0)              // t1 = action
@@ -187,7 +195,7 @@ scope Practice {
     // @ Description
     // This function flashes when a z-cancel is successful [bit]
     scope flash_on_z_cancel_: {
-        constant Z_CACNEL_WINDOW(10)
+        constant Z_CANCEL_WINDOW(10)
 
         OS.patch_start(0x000CB528, 0x80150AE8)
         jal     flash_on_z_cancel_
@@ -208,7 +216,7 @@ scope Practice {
         nop                                 // original line 2
         lw      v1, 0x000C(sp)              // restore v1
         lw      t0, 0x0160(v1)              // t0 = frame pressed
-        slti    t1, t0, Z_CACNEL_WINDOW + 1 // ~
+        slti    t1, t0, Z_CANCEL_WINDOW + 1 // ~
         beqz    t1, _end                    // if within frame window, don't flash
         nop
   

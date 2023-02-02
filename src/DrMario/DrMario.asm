@@ -34,6 +34,11 @@ scope DrMario {
     BTHROW:; Moveset.THROW_DATA(BTHROWDATA); insert "moveset/BTHROW.bin"
     insert BTHROWDATA, "moveset/BTHROWDATA.bin"
 
+    // Insert AI attack options
+    constant CPU_ATTACKS_ORIGIN(origin())
+    insert CPU_ATTACKS,"AI/attack_options.bin"
+    OS.align(16)
+
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(DRM,   Action.Taunt,           File.DRM_TAUNT,             TAUNT,                      -1)
     Character.edit_action_parameters(DRM,   Action.Jab1,            -1,                         JAB_1,                      -1)
@@ -69,6 +74,17 @@ scope DrMario {
 
     Character.edit_menu_action_parameters(DRM,      0xE,                File.DRM_1P_CPU_POSE,       0x80000000,                 -1)
 
+     Character.table_patch_start(variants, Character.id.DRM, 0x4)
+    db      Character.id.NONE
+    db      Character.id.NDRM // set as POLYGON variant for DRM
+    db      Character.id.NONE
+    db      Character.id.NONE
+    OS.patch_end()
+    
+    Character.table_patch_start(variant_original, Character.id.NDRM, 0x4)
+    dw      Character.id.DRM // set Dr. Mario as original character (not Mario, who NDRM is a clone of)
+    OS.patch_end()
+    
     // Set crowd chant FGM.
     Character.table_patch_start(crowd_chant_fgm, Character.id.DRM, 0x2)
     dh  0x02EB
@@ -125,6 +141,32 @@ scope DrMario {
     Character.table_patch_start(action_string, Character.id.DRM, 0x4)
     dw  Action.action_string_table
     OS.patch_end()
+
+    // Set CPU behaviour
+    Character.table_patch_start(ai_behaviour, Character.id.DRM, 0x4)
+    dw      CPU_ATTACKS
+    OS.patch_end()
+
+    // Edit cpu attack behaviours
+    // edit_attack_behavior(table, attack, override, start_hb, end_hb, min_x, max_x, min_y, max_y)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DAIR,   -1,  8,  25,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPA,   -1,  1,   44,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPG,   -1,  1,   44,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSMASH, -1,  8,   29,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DTILT,  -1,  5,   11,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FAIR,   -1,  13,  18,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FSMASH, -1,  17,  21,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FTILT,  -1,  7,   18,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, GRAB,   -1,  6,   6,   -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, JAB,    -1,  2,   5,   -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NAIR,   -1,  3,   36,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPA,   -1,  -1,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPG,   -1,  -1,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UAIR,   -1,  2,   11,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPA,   -1,  6,   20,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPG,   -1,  6,   20,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USMASH, -1,  7,   15,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UTILT,  -1,  5,   16,  -1, -1, -1, -1)
 
     // Hardcoding for when Mario Clones use Pipes, ensures they face the correct way when entering
     // TEMP LOCATION

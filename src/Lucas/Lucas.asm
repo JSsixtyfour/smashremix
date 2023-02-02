@@ -53,6 +53,11 @@ scope Lucas {
     insert ENTRY,"moveset/ENTRY.bin"
 	insert PKVICTORY,"moveset/PKVICTORY.bin"
 
+    // Insert AI attack options
+    constant CPU_ATTACKS_ORIGIN(origin())
+    insert CPU_ATTACKS,"AI/attack_options.bin"
+	OS.align(16)
+
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(LUCAS, Action.Jab1,            File.LUCAS_JAB1,            JAB1,                       0x00000000)
     Character.edit_action_parameters(LUCAS, Action.Jab2,            File.LUCAS_JAB2,            JAB2,                       0x00000000)
@@ -149,6 +154,32 @@ scope Lucas {
 
     // Set default costumes
     Character.set_default_costumes(Character.id.LUCAS, 0, 1, 2, 4, 0, 2, 5)
+
+
+    Character.table_patch_start(variants, Character.id.LUCAS, 0x4)
+    db      Character.id.NONE
+    db      Character.id.NLUCAS // set as POLYGON variant for LUCAS
+    db      Character.id.NONE
+    db      Character.id.NONE
+    OS.patch_end()
+
+    Character.table_patch_start(variant_original, Character.id.NLUCAS, 0x4)
+    dw      Character.id.WARIO // set Wario as original character (not Ness, who NLUCAS is a clone of)
+    OS.patch_end()
+
+    // Set CPU behaviour
+    Character.table_patch_start(ai_behaviour, Character.id.LUCAS, 0x4)
+    dw      CPU_ATTACKS
+    OS.patch_end()
+
+    // Edit cpu attack behaviours
+    // Timing values are already set in Lucas's .bin file, just need to adjust floats
+    // edit_attack_behavior(table, attack, override, start_hb, end_hb, min_x, max_x, min_y, max_y)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPG,   -1,  1,  1,  -90,     270,     60,      410)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USMASH, -1, -1, -1,  -115,    115,     80,      1000)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, GRAB,   -1, -1, -1,  -1,      580.0,   -1,      -1)  // x max was 720.0
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FTILT,  -1, -1, -1,  -1,      520.0,   -1,      -1)  // x max was 580.0
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FAIR,   -1, -1, -1,  -457,    180,     -200,    200) // change coords
 
     // Shield colors for costume matching
     Character.set_costume_shield_colors(LUCAS, YELLOW, ORANGE, PINK, BROWN, BROWN, WHITE, NA, NA)
@@ -663,10 +694,10 @@ scope Lucas {
 
     dw      0x00000001
     dw      0x00000000
-    dw      0x43960000
-    dw      0x43430000
-    dw      0x43960000                      // changed for Lucas
-    dw      0x43D70000
-    dw      0x43D70000
-    dw      0x43D70000
+    float32 0
+    float32 300
+    float32 280                      // changed for Lucas
+    float32 380
+    float32 380
+    float32 380
 }

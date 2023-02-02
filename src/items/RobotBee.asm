@@ -5,8 +5,8 @@ constant SHOW_GFX_WHEN_SPAWNED(OS.FALSE)
 constant PICKUP_ITEM_MAIN(0)
 constant PICKUP_ITEM_INIT(0)
 constant DROP_ITEM(0)
-constant THROW_ITEM(0)
 constant PLAYER_COLLISION(0x00000000)
+constant THROW_ITEM(0)
 
 // @ Description
 // Offset to item in file.

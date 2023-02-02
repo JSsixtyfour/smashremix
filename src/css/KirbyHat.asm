@@ -3,7 +3,7 @@
 define LABEL("Kirby Hat")
 constant VALUE_TYPE(CharacterSelectDebugMenu.value_type.STRING)
 constant MIN_VALUE(0)
-constant MAX_VALUE(0x0000001A)
+constant MAX_VALUE(0x0000001C)
 constant DEFAULT_VALUE(0)
 // bitmask: [vs] [1p] [training] [bonus1] [bonus2] [allstar]
 constant APPLIES_TO(0b101000)
@@ -42,6 +42,8 @@ dw Training.string_mewtwo
 dw Training.string_marth
 dw Training.string_sonic
 dw Training.string_sheik
+dw Training.string_marina
+dw Training.string_dedede
 
 // @ Description
 // Value labels

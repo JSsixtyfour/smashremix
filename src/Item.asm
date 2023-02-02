@@ -10,11 +10,11 @@ print "included Item.asm\n"
 scope Item {
     // @ Description
     // Number of custom items
-    constant NUM_ITEMS(10)
+    constant NUM_ITEMS(18)
 
     // @ Description
     // Number of standard custom items
-    constant NUM_STANDARD_ITEMS(7)
+    constant NUM_STANDARD_ITEMS(8)
 
     // @ Description
     // Offsets to custom tables added to file 0xFE.
@@ -234,7 +234,7 @@ scope Item {
 		nop
         OS.patch_end()
 
-        // t2 = item ID		
+        // t2 = item ID
 
         sltiu   t6, t2, 0x002D                  // t6 = 0 if custom item ID
         bnez    t6, _normal                     // if a vanilla item, continue normally
@@ -244,10 +244,10 @@ scope Item {
         addiu   t2, t2, -0x002D                 // t2 = index in extended table
 		sll		t3, t2, 2						// original line 2
 		addu	v0, v0, t3						// v0 = pointer to throw routine
-		
+
 		j       _return
 		lw 		v0, 0x0000(v0)
-		
+
         _normal:
 		addu	v0, v0, t3						// v0 = pointer to throw routine
         j       _return_normal
@@ -325,11 +325,15 @@ scope Item {
         slti    at, a1, 0x0014                  // original line 2
 
         bnez    at, _display_item_image         // if a vanilla item ID < 14, display item image
+        sltiu   at, a1, Item.KlapTrap.id        // at = 0 if remix stage/character item
+
+        beqz    at, _no_image                   // if a item ID > KlapTap, don't display item image
         sltiu   at, a1, 0x002D                  // at = 1 if vanilla item, 0 if custom
 
         beqz    at, _display_item_image         // if a custom item ID, display item image
         nop
 
+		_no_image:
         j       0x8018EA48                      // jump here to not draw item image
         nop
 
@@ -432,7 +436,7 @@ scope Item {
         nop
 
         // if here, assign item as normal
-        _hold:                
+        _hold:
         j       0x80145EC0
         nop
 
@@ -475,7 +479,7 @@ scope Item {
         nop
 
         // jump back to routine as normal
-        _edible:            
+        _edible:
         j        _return
         nop
     }
@@ -998,7 +1002,7 @@ scope Item {
             nop
 
             jal     0x8039076C
-            addiu   a0, r0, 0x0010                      // check for R press
+            addiu   a0, r0, Joypad.R                    // check for R press
             beqz    v0, _return                         // if not pressed, skip
             lui     a1, 0x8013
             lw      a1, 0x33D8(a1)                      // a1 = row
@@ -1282,9 +1286,34 @@ scope Item {
     scope FranklinBadge {
         include "items/FranklinBadge.asm"
     }
+    scope Pitfall {
+        include "items/Pitfall.asm"
+    }
     scope Car {
         include "items/Car.asm"
     }
+    scope Gem {
+        include "items/Gem.asm"
+    }
+    scope Shuriken {
+        include "items/Shuriken.asm"
+    }
+    scope Boomerang {
+        include "items/Boomerang.asm"
+    }
+    scope ClanBomb {
+        include "items/ClanBomb.asm"
+    }
+    scope WaddleDee {
+        include "items/WaddleDee.asm"
+    }
+    scope WaddleDoo {
+        include "items/WaddleDoo.asm"
+    }
+    scope Gordo {
+        include "items/Gordo.asm"
+    }
+
 
     // Add items:
     // Standard Items
@@ -1295,11 +1324,20 @@ scope Item {
     add_item(Lightning)            // 0x31
     add_item(DekuNut)              // 0x32
     add_item(FranklinBadge)        // 0x33
+    add_item(Pitfall)              // 0x34
     // Stage Items
-    add_item(KlapTrap)             // 0x34
-    add_item(RobotBee)             // 0x35
-    add_item(Car)                  // 0x36
-    // Pokemon
+    add_item(KlapTrap)             // 1
+    add_item(RobotBee)             // 2
+    add_item(Car)                  // 3
+	// Pokemon
+    // Character Items
+    add_item(Gem)                  // 1
+    add_item(Shuriken)             // 2
+    add_item(Boomerang)            // 3
+    add_item(ClanBomb)             // 4
+	add_item(WaddleDee)            // 5
+	add_item(WaddleDoo)            // 6
+	add_item(Gordo)                // 7
 
     // @ Description
     // Active item clean up.
@@ -1438,9 +1476,10 @@ scope Item {
     dw Hazards.standard.POKEBALL                    // 0x0D = POKEBALL(0x0013)
     dw Item.BlueShell.id                            // 0x0E = BLUE_SHELL(0x0030)
     dw Item.DekuNut.id                              // 0x0F = DEKU_NUT(0x0032)
-    dw 0x0000FFFF                                   // 0x10 = random item, insert new entries above.
+    dw Item.Pitfall.id                              // 0x10 = PIT_FALL(0x0033)
+    dw 0x0000FFFF                                   // 0x11 = random item, insert new entries above.
 
-    constant start_with_random_entry(0x10)          // must update to same entry as random if adding new entries.
+    constant start_with_random_entry(0x11)          // must update to same entry as random if adding new entries.
 
     start_with_item:
     dw 0, 0, 0, 0
@@ -1647,9 +1686,10 @@ scope Item {
     dw Hazards.standard.POKEBALL                    // 0x0D = POKEBALL(0x0013)
     dw Item.BlueShell.id                            // 0x0E = BLUE_SHELL(0x0030)
     dw Item.DekuNut.id                              // 0x0F = DEKU_NUT(0x0032)
-    dw 0x0000FFFF                                   // 0x10 = random item
+    dw Item.Pitfall.id                              // 0x10 = PIT_FALL(0x0033)
+    dw 0x0000FFFF                                   // 0x11 = random item
 
-    constant taunt_item_random_entry(0x10)
+    constant taunt_item_random_entry(0x11)
 
     taunt_spawn_item:
     dw 0, 0, 0, 0
@@ -1708,9 +1748,8 @@ scope Item {
 
         _end:
         lw      ra, 0x0004(sp)                      // restore ra
-        addiu   sp, sp, 0x0030                      // deallocate stack space
         jr      ra
-        nop
+        addiu   sp, sp, 0x0030                      // deallocate stack space
     }
 
     // @ Description
@@ -1791,7 +1830,197 @@ scope Item {
         jr      ra
         nop
     }
+	
+	
+	// @ Description
+	// Hard-coded pointer to file 0xFB
+	constant info_struct(0x8018D040)
+	
+	scope Crate: {
+		// constant item_info_array()
+		// constant SPAWN_ITEM()
+		constant id(0x0)
+	}
+	
+	scope Barrel: {
+		// constant item_info_array()
+		// constant SPAWN_ITEM()
+		constant id(0x1)
+	}
 
+	scope Capsule: {
+		// constant item_info_array()
+		// constant SPAWN_ITEM()
+		constant id(0x2)
+	}
+
+	scope Egg: {
+		// constant item_info_array()
+		// constant SPAWN_ITEM()
+		constant id(0x3)
+	}
+
+	scope Tomato: {
+		constant item_info_array(0x80189730)
+		constant SPAWN_ITEM(0x80174624)
+		constant id(0x4)
+	}
+
+	scope Heart: {
+		constant item_info_array(0x801897D0)
+		constant SPAWN_ITEM(0x80174850)
+		constant id(0x5)
+	}
+
+	scope Star: {
+		constant item_info_array(0x80189870)
+		constant SPAWN_ITEM(0x80174A18)
+		constant id(0x6)
+	}
+	
+	scope BeamSword: {
+		constant item_info_array(0x801898B0)
+		constant SPAWN_ITEM(0x80174DA0)
+		constant id(0x7)
+	}
+	
+	scope HomeRunBat: {
+		constant item_info_array(0x80189990)
+		constant SPAWN_ITEM(0x801750B8)
+		constant id(0x8)
+	}
+	
+	scope Fan: {
+		constant item_info_array(0x80189490)
+		constant SPAWN_ITEM(0x80175460)
+		constant id(0x9)
+	}
+	
+	scope StarRod: {
+		constant item_info_array(0x8018A0F0)
+		constant SPAWN_ITEM(0x80178134)
+		constant id(0xA)
+	}
+
+	scope RayGun: {
+		constant item_info_array(0x80189B50)
+		constant SPAWN_ITEM(0x80175800)
+		constant id(0xB)
+	}
+
+	scope FireFlower: {
+		constant item_info_array(0x80189C60)
+		constant SPAWN_ITEM(0x80175D60)
+		constant id(0xC)
+	}
+
+	scope Hammer: {
+		constant item_info_array(0x80189D70)
+		constant SPAWN_ITEM(0x801763C8)
+		constant id(0xD)
+	}
+
+	scope MotionSensorBomb: {
+		constant item_info_array(0x80189E50)
+		constant SPAWN_ITEM(0x80176F60)
+		constant id(0xE)
+	}
+
+	scope Bobomb: {
+		constant item_info_array(0x80189F98)
+		constant SPAWN_ITEM(0x80177D9C)
+		constant id(0xF)
+	}
+
+	scope Bumper: {
+		constant item_info_array(0x8018A690)
+		constant SPAWN_ITEM(0x8017BF8C)
+		constant id(0x10)
+	}
+
+	scope GreenShell: {
+		constant item_info_array(0x8018A200)
+		constant SPAWN_ITEM(0x80178FDC)
+		constant id(0x11)
+	}
+
+	scope RedShell: {
+		constant item_info_array(0x8018A570)
+		constant SPAWN_ITEM(0x8017B1D8)
+		constant id(0x12)
+	}
+
+	scope Pokeball: {
+		constant item_info_array(0x8018A890)
+		constant SPAWN_ITEM(0x8017CE0C)
+		constant id(0x13)
+	}
+
+	scope PkFirePillar: {
+		//constant item_info_array()
+		constant id(0x14)
+	}
+
+	scope Bomb: {
+	// Links bomb
+	// constant item_info_array()
+		constant id(0x15)
+	}
+	
+	scope FloatingBumper: {
+		constant item_info_array(0x8018AA50)
+		constant id(0x16)
+	}
+	
+	// @ Description
+	// Offsets in item Special Struct
+	scope STRUCT: {
+		constant OBJECT(0x4)
+		constant OWNER(0x8)
+		constant ID(0xC)
+		constant OWNER_PORT(0x15)	// byte
+		constant PERCENT_DAMAGE(0x1C)
+		constant DIRECTION(0x24)
+		constant X_SPEED(0x2C)
+		constant Y_SPEED(0x30)
+		constant Z_SPEED(0x34)
+		constant ASYNC_TIMER(0x94)
+		scope HITBOX: {
+			constant ENABLED(0x10C)
+			constant DAMAGE(0x110)
+			constant DAMAGE_MULTIPLIER(0x118)
+			constant TYPE(0x11C)
+			constant X_OFFSET(0x120)
+			constant Y_OFFSET(0x124)
+			constant Z_OFFSET(0x128)
+			constant SIZE(0x138)
+			constant KNOCKBACK1(0x140)
+			constant KNOCKBACK2(0x144)
+			constant KNOCKBACK3(0x148)
+			constant ANGLE(0x13C)
+		}
+		scope HURTBOX: {
+			constant ENABLED(0x248)
+		}
+		constant DURATION(0x2C0)
+		
+		constant MAIN_ROUTINE(0x378)
+		scope COLLISION: {
+			constant CLIPPING(0x37C)
+			constant HURTBOX(0x380)
+			constant SHIELD(0x384)
+			constant SHIELD_EDGE(0x388)
+			constant HITBOX(0x38C)
+			constant REFLECTOR(0x390)
+			constant ABSORB(0x394)
+			constant BLAST_WALL(0x398)
+		}
+		
+		constant APPLY_DAMAGE(0x800E39B0)	// This routine is called when an item collides with a player
+
+	
+	}
+	
 }
 
 } // __ITEM__

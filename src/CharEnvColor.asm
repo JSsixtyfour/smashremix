@@ -182,6 +182,25 @@ scope CharEnvColor {
         hi_alpha:;   create_custom_display_list(RENDER_MODE_ALPHA, RENDER_MODE_ALPHA)
     }
 
+    scope custom_display_lists_struct_ylink: {
+        dw OS.FALSE     // 0x0000: initialized flag, high poly
+        dw hi_default   // 0x0004: pointer to default custom hi poly display list, or 0
+        dw hi_alpha     // 0x0008: pointer to alpha custom hi poly display list, or 0
+        dh 0x0914       // 0x000C: offset to part 0x07 in player struct
+        dh 0x0148       // 0x000E: offset to 1st set render mode command for high poly
+        dh 0x0220       // 0x0010: offset to 2nd set render mode command for high poly, or -1
+        dh 0xFFFF       // 0x0012: offset to 3rd set render mode command for high poly, or -1
+        dw OS.FALSE     // 0x0014: initialized flag, low poly
+        dw hi_default   // 0x0018: pointer to default custom lo poly display list, or 0
+        dw hi_alpha     // 0x001C: pointer to alpha custom lo poly display list, or 0
+        dh 0x0914       // 0x0020: offset to part 0x07 in player struct
+        dh 0x0118       // 0x0022: offset to 1st set render mode command for high poly
+        dh 0x01F0       // 0x0024: offset to 2nd set render mode command for high poly, or -1
+        dh 0xFFFF       // 0x0026: offset to 3rd set render mode command for high poly, or -1
+        hi_default:; create_custom_display_list(0xC4113878, RENDER_MODE_DEFAULT)
+        hi_alpha:;   create_custom_display_list(RENDER_MODE_ALPHA, RENDER_MODE_ALPHA)
+    }
+
     scope custom_display_lists_struct_dk_hat: {
         dw OS.FALSE     // 0x0000: initialized flag, high poly
         dw hi_default   // 0x0004: pointer to default custom hi poly display list, or 0
@@ -335,6 +354,9 @@ scope CharEnvColor {
         lli     t9, Character.id.SHEIK
         li      v0, custom_display_lists_struct_sheik
         beq     t2, t9, _fix                // skip to fixing SHEIK
+        lli     t9, Character.id.YLINK
+        li      v0, custom_display_lists_struct_ylink
+        beq     t2, t9, _fix                // skip to fixing YLINK
         lli     t9, Character.id.SSONIC
         li      v0, custom_display_lists_struct_ssonic_0
         beq     t2, t9, _fix_ssonic         // skip to fixing SSONIC
@@ -387,11 +409,13 @@ scope CharEnvColor {
         lw      t7, 0x0000(v0)              // t7 = initialized flag
         bnez    t7, _skip_init              // if already initialized, skip setup
         lli     t7, OS.TRUE                 // t7 = OS.TRUE
+        beq     t3, t8, _skip_init          // if display list is the default custom display list, skip (probably loaded a variant)
         sw      t7, 0x0000(v0)              // set initialized
         lw      t9, 0x0008(v0)              // t9 = alpha custom display list address
+        beq     t3, t9, _skip_init          // if display list is the alpha custom display list, skip (probably loaded a variant)
+        lui     t0, 0xDF00                  // t0 = DF000000 (end display list)
         sw      t3, 0x0004(t8)              // save original part display list start to default custom display list
         sw      t3, 0x0004(t9)              // save original part display list start to alpha custom display list
-        lui     t0, 0xDF00                  // t0 = DF000000 (end display list)
 
         lh      t4, 0x000E(v0)              // t4 = offset to 1st set render mode command
         addu    t4, t3, t4                  // t4 = 1st set render mode command address
@@ -458,7 +482,11 @@ scope CharEnvColor {
         nop
         li      a1, custom_display_lists_struct_sheik
         lli     a2, Character.id.SHEIK
-        beq     a0, a2, _clear              // if SHEIK, clear WARIO's custom display lists
+        beq     a0, a2, _clear              // if SHEIK, clear SHEIK's custom display lists
+        nop
+        li      a1, custom_display_lists_struct_ylink
+        lli     a2, Character.id.YLINK
+        beq     a0, a2, _clear              // if YLINK, clear YLINK's custom display lists
         nop
         li      a1, custom_display_lists_struct_ssonic_0
         lli     a2, Character.id.SSONIC

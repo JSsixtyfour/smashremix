@@ -8,7 +8,7 @@
 013B Fox Unknown
 013C Fox Laser Graphic
 015A Fox Reflector Graphic
-0161 Link Up/Down Special Graphic
+0161 Link Entry GFX and Up/Down Special Graphic
 00E2 Link Boomerang Hitbox
 0146 Link Boomerang Model
 0147 Link Shield Pose
@@ -354,7 +354,7 @@
 09A3 Yoshi's Story II Header
 09A4 Yoshi's Story II
 09A5 Yoshi's Story II BG
-09A6 Vs Combo Meter Textures
+09A6 Combo Meter Textures
 09A7 Lucas Entry Animation Right
 09A8 Lucas Entry Animation Left
 09A9 World 1-1 Header
@@ -1762,6 +1762,417 @@
 0F23 Sheik Roll F
 0F24 Sheik Roll B
 0F25 Sheik Uair Landing
+0F26 Glacial River Remix Header
+0F27 Glacial River Remix Stage
+0F28 Polygon Wario Main Character
+0F29 Polygon Wario Character
+0F2A Polygon Lucas Main Character
+0F2B Polygon Lucas Character
+0F2C Young Link Grab
+0F2D Young Link Grab Pull
+0F2E Marina Main
+0F2F Marina Character
+0F30 Marina Shield Pose
+0F31 Marina Idle
+0F32 Marina Walk1
+0F33 Marina Walk2
+0F34 Marina Walk3
+0F35 Marina WalkEnd
+0F36 Marina Dash
+0F37 Marina Run
+0F38 Marina RunBrake
+0F39 Marina Turn
+0F3A Marina TurnRun
+0F3B Marina JumpF
+0F3C Marina JumpB
+0F3D Marina JumpAerialF
+0F3E Marina JumpAerialB
+0F3F Marina Fall
+0F40 Marina FallAerial
+0F41 Marina Crouch
+0F42 Marina CrouchIdle
+0F43 Marina CrouchEnd
+0F44 Marina Landing
+0F45 Marina PlatDrop
+0F46 Marina Teeter
+0F47 Marina Teeterstart
+0F48 Marina DamageHigh1
+0F49 Marina DamageHigh2
+0F4A Marina DamageHigh3
+0F4B Marina DamageMid1
+0F4C Marina DamageMid2
+0F4D Marina DamageMid3
+0F4E Marina DamageLow1
+0F4F Marina DamageLow2
+0F50 Marina DamageLow3
+0F51 Marina DamageAir1
+0F52 Marina DamageAir2
+0F53 Marina DamageAir3
+0F54 Marina DamageElec
+0F55 Marina DamageFlyHigh
+0F56 Marina DamageFlyMid
+0F57 Marina DamageFlyLow
+0F58 Marina DamageFlyTop
+0F59 Marina DamageFlyRoll
+0F5A Marina Tumble
+0F5B Marina FallSpecial
+0F5C Marina EnterPipe
+0F5D Marina ExitPipe
+0F5E Marina ExitPipeWalk
+0F5F Marina CeilingBonk
+0F60 Marina DownBounceD
+0F61 Marina DownBounceU
+0F62 Marina DownStandD
+0F63 Marina DownStandU
+0F64 Marina TechF
+0F65 Marina TechB
+0F66 Marina DownForwardD
+0F67 Marina DownForwardU
+0F68 Marina DownBackD
+0F69 Marina DownBackU
+0F6A Marina DownAttackD
+0F6B Marina DownAttackU
+0F6C Marina Tech
+0F6D Marina ClangRecoil
+0F6E Marina CliffCatch
+0F6F Marina CliffWait
+0F70 Marina CliffQuick
+0F71 Marina CliffClimbQuick1
+0F72 Marina CliffClimbQuick2
+0F73 Marina CliffSlow
+0F74 Marina CliffClimbSlow1
+0F75 Marina CliffClimbSlow2
+0F76 Marina CliffAttackQuick1
+0F77 Marina CliffAttackQuick2
+0F78 Marina CliffAttackSlow1
+0F79 Marina CliffAttackSlow2
+0F7A Marina CliffEscapeQuick1
+0F7B Marina CliffEscapeQuick2
+0F7C Marina CliffEscapeSlow1
+0F7D Marina CliffEscapeSlow2
+0F7E Marina LightItemPickup
+0F7F Marina HeavyItemPickup
+0F80 Marina ItemDrop
+0F81 Marina ItemThrowDash
+0F82 Marina ItemThrowF
+0F83 Marina ItemThrowU
+0F84 Marina ItemThrowD
+0F85 Marina ItemThrowAirF
+0F86 Marina ItemThrowAirU
+0F87 Marina ItemThrowAirD
+0F88 Marina HeavyItemThrow
+0F89 Marina ItemNeutral
+0F8A Marina ItemTilt
+0F8B Marina ItemSmash
+0F8C Marina ItemDash
+0F8D Marina ItemShoot
+0F8E Marina ItemShootAir
+0F8F Marina HammerIdle
+0F90 Marina HammerMove
+0F91 Marina ShieldOn
+0F92 Marina ShieldOff
+0F93 Marina RollF
+0F94 Marina RollB
+0F95 Marina Stun
+0F96 Marina Grab
+0F97 Marina GrabPull
+0F98 Marina ThrowF
+0F99 Marina ThrowB
+0F9A Marina CapturePulled
+0F9B Marina ThrownDKPulled
+0F9C Marina ThrownMarioBros
+0F9D Marina ThrownDK
+0F9E Marina Thrown1
+0F9F Marina Thrown2
+0FA0 Marina Taunt
+0FA1 Marina Jab1
+0FA2 Marina Jab2
+0FA3 Marina DashAttack
+0FA4 Marina FTiltHigh
+0FA5 Marina FTiltMidHigh
+0FA6 Marina FTilt
+0FA7 Marina FTiltMidLow
+0FA8 Marina FTiltLow
+0FA9 Marina UTilt
+0FAA Marina DTilt
+0FAB Marina FSmashHigh
+0FAC Marina FSmash
+0FAD Marina FSmashLow
+0FAE Marina USmash
+0FAF Marina DSmash
+0FB0 Marina AttackAirN
+0FB1 Marina AttackAirF
+0FB2 Marina AttackAirB
+0FB3 Marina AttackAirU
+0FB4 Marina AttackAirD
+0FB5 Marina LandingAirF
+0FB6 Marina LandingAirB
+0FB7 Marina Jab Loop Start
+0FB8 Marina Jab Loop
+0FB9 Marina Jab Loop End
+0FBA Marina Action_0DF
+0FBB Marina Action_0E0
+0FBC Marina Neutral Special Ground
+0FBD Marina Neutral Special Ground Pull
+0FBE Marina Neutral Special Ground Throw
+0FBF Marina Neutral Special Ground Up Throw
+0FC0 Marina Neutral Special Ground Down Throw
+0FC1 Marina Neutral Special Air
+0FC2 Marina Neutral Special Air Pull
+0FC3 Marina Neutral Special Air Throw
+0FC4 Marina Neutral Special Air Up Throw
+0FC5 Marina Neutral Special Air Down Throw
+0FC6 Marina Cargo
+0FC7 Marina Cargo Turn
+0FC8 Marina Cargo JumpSquat
+0FC9 Marina Victory 1
+0FCA Marina Victory 2
+0FCB Marina Victory 3
+0FCC Marina Clap
+0FCD Marina ContinueFall
+0FCE Marina ContinueUp
+0FCF Marina 1P Pose
+0FD0 Marina Cargo Walk1
+0FD1 Marina Cargo Walk2
+0FD2 Marina Cargo Walk3
+0FD3 Marina Cargo Air
+0FD4 Marina Cargo Throw
+0FD5 Marina Cargo Throw Air
+0FD6 Marina Cargo Jump
+0FD7 Marina Cargo Shake
+0FD8 Marina Up Special Ground
+0FD9 Marina Up Special Air
+0FDA Marina Items Hitbox Info
+0FDB Marina Item Images
+0FDC Polygon Bowser Main Character
+0FDD Polygon Bowser Character
+0FDE Polygon Wolf Main Character
+0FDF Polygon Wolf Character
+0FE0 Polygon Dr. Mario Main Character
+0FE1 Marina Down Special Ground Begin
+0FE2 Marina Down Special Ground Wait
+0FE3 Marina Down Special Ground Absorb
+0FE4 Marina Down Special Ground End
+0FE5 Marina Down Special Ground Pull
+0FE6 Marina Down Special Ground Pull Fail
+0FE7 Marina Down Special Air Begin
+0FE8 Marina Down Special Air Wait
+0FE9 Marina Down Special Air Absorb
+0FEA Marina Down Special Air End
+0FEB Marina Down Special Air Pull
+0FEC Marina Down Special Air Pull Fail
+0FED Polygon Sonic Main Character
+0FEE Polygon Sonic Character
+0FEF Polygon Sheik Main Character
+0FF0 Polygon Sheik Character
+0FF1 Marina Break the Targets Header
+0FF2 Marina Break the Targets Stage
+0FF3 Dragon King Remix Header
+0FF4 Dragon King Remix Stage
+0FF5 Dragon King Remix BG
+0FF6 Marina Board the Platforms Header
+0FF7 Marina Board the Platforms Stage
+0FF8 Marina CPU Pose
+0FF9 Marina Down Special Ground Stow
+0FFA Marina Down Special Stow
+0FFB Young Link Up/Down Special Graphic
+0FFC Marina Team Pose
+0FFD Dedede Main
+0FFE Dedede Character
+0FFF Dedede Stars
+1000 Waddle Dee Info
+1001 Waddle Dee graphic
+1002 Dedede Idle
+1003 Dedede Dash
+1004 Dedede Run
+1005 Dedede Run Brake
+1006 Dedede Turn
+1007 Dedede Turn Run
+1008 Dedede Jump F
+1009 Dedede Jump B
+100A Dedede Jump Aerial F
+100B Dedede Jump Aerial B
+100C Dedede Fall
+100D Dedede Fall Aerial
+100E Dedede Jump Squat
+100F Dedede Up Special Begin
+1010 Dedede Up Special Loop
+1011 Dedede Up Special Land
+1012 Dedede Up Special Cancel
+1013 Dedede Special Fall
+1014 Dedede Special Fall Landing
+1015 Dedede Item Shoot
+1016 Dedede Item Shoot Air
+1017 Dedede Down Special Begin
+1018 Dedede Down Special Loop
+1019 Dedede Down Special End
+101A Dedede Neutral Special Begin
+101B Dedede Neutral Special Loop
+101C Dedede Neutral Special Inhale
+101D Dedede Neutral Special Inhaled Idle
+101E Dedede Neutral Special Inhaled Walk
+101F Dedede Neutral Special Spit
+1020 Dedede Neutral Special End
+1021 Dedede Hammer Idle
+1022 Dedede Hammer Move
+1023 Dedede Crouch
+1024 Dedede Crouch Idle
+1025 Dedede Crouch End
+1026 Dedede Jab 1
+1027 Dedede Jab 2
+1028 Dedede Jab 3
+1029 Dedede Dash Attack
+102A Dedede Up Tilt
+102B Dedede Forward Air
+102C Dedede Neutral Air
+102D Dedede Down Air
+102E Dedede Down Smash
+102F Dedede Catch
+1030 Dedede Catch Pull
+1031 Dedede Forward Throw
+1032 Dedede Down Tilt
+1033 Dedede Up Smash
+1034 Dedede Up Air
+1035 Dedede Back Throw
+1036 Dedede Back Air
+1037 Dedede Puppet Fall
+1038 Dedede Puppet Up
+1039 Dedede Forward Tilt
+103A Dedede Forward Smash
+103B Dedede Taunt
+103C Dedede Shield Pose
+103D Dedede Shield On
+103E Dedede Shield Off
+103F Dedede Shield Drop
+1040 Dedede Roll Forward
+1041 Dedede Roll Backward
+1042 Dedede Victory 1
+1043 Polygon Marina Main
+1044 Polygon Marina Character
+1045 Marina Ending Image 1
+1046 Marina Ending Image 2
+1047 Dedede Walk 1
+1048 Dedede Walk 2
+1049 Dedede Walk 3
+104A Dedede Cliff Quick
+104B Dedede Cliff Climb Quick 1
+104C Dedede Cliff Climb Quick 2
+104D Dedede Cliff Slow
+104E Dedede Cliff Climb Slow 1
+104F Dedede Cliff Climb Slow 2
+1050 Dedede Cliff Quick Attack 1
+1051 Dedede Cliff Quick Attack 2
+1052 Dedede Cliff Slow Attack 1
+1053 Dedede Cliff Slow Attack 2
+1054 Dedede Cliff Quick Escape 1
+1055 Dedede Cliff Quick Escape 2
+1056 Dedede Cliff Slow Escape 1
+1057 Dedede Cliff Slow Escape 2
+1058 Dedede DamageHigh1
+1059 Dedede DamageHigh2
+105A Dedede DamageHigh3
+105B Dedede DamageMid1
+105C Dedede DamageMid2
+105D Dedede DamageMid3
+105E Dedede DamageLow1
+105F Dedede DamageLow2
+1060 Dedede DamageLow3
+1061 Dedede DamageAir1
+1062 Dedede DamageAir2
+1063 Dedede DamageAir3
+1064 Dedede DamageFlyHigh
+1065 Dedede DamageFlyMid
+1066 Dedede DamageFlyLow
+1067 Dedede DamageFlyTop
+1068 Dedede DamageFlyRoll
+1069 Dedede Tumble
+106A Dedede DamageElec
+106B Dedede DownBounceD
+106C Dedede DownBounceU
+106D Dedede DownStandD
+106E Dedede DownStandU
+106F Dedede TechF
+1070 Dedede TechB
+1071 Dedede DownForwardD
+1072 Dedede DownForwardU
+1073 Dedede DownBackD
+1074 Dedede DownBackU
+1075 Dedede DownAttackD
+1076 Dedede DownAttackU
+1077 Dedede Tech
+1078 Dedede Break the Targets Header
+1079 Dedede Break the Targets Stage
+107A Dedede Up Special Ceiling Bonk
+107B Dedede Up Air Landing
+107C Dedede Neutral/Forward Air Landing
+107D Dedede Back Air Landing
+107E Dedede Down Air Landing
+107F Dedede Pipe Enter
+1080 Dedede Pipe Exit
+1081 Dedede Pipe Exit Walk
+1082 Kirby Marina Neutral Special Ground
+1083 Kirby Marina Neutral Special Ground Pull
+1084 Kirby Marina Neutral Special Ground Throw
+1085 Kirby Marina Neutral Special Ground Up Throw
+1086 Kirby Marina Neutral Special Ground Down Throw
+1087 Kirby Marina Neutral Special Air
+1088 Kirby Marina Neutral Special Air Pull
+1089 Kirby Marina Neutral Special Air Throw
+108A Kirby Marina Neutral Special Air Up Throw
+108B Kirby Marina Neutral Special Air Down Throw
+108C Dedede 1P Pose
+108D Dedede CPU Pose
+108E Dedede Cliff Catch
+108F Dedede Cliff Wait
+1090 Dedede ItemThrowDash
+1091 Dedede ItemThrowF
+1092 Dedede ItemThrowU
+1093 Dedede ItemThrowD
+1094 Dedede ItemThrowAirF
+1095 Dedede ItemThrowAirU
+1096 Dedede ItemThrowAirD
+1097 Draculas Castle Header
+1098 Draculas Castle Stage
+1099 Draculas Castle BG
+109A Dedede CapturePulled
+109B Dedede ThrownDKPulled
+109C Dedede ThrownMarioBros
+109D Dedede ThrownDK
+109E Dedede Thrown1
+109F Dedede Thrown2
+10A0 Dedede HeavyItemPickup
+10A1 Dedede HeavyItemThrow
+10A2 Dedede Teeter
+10A3 Dedede TeeterStart
+10A4 Reverse Castle Header
+10A5 Reverse Castle Stage
+10A6 Dedede ItemNeutral
+10A7 Dedede ItemTilt
+10A8 Dedede ItemSmash
+10A9 Dedede ItemDash
+10AA Dedede ItemDrop
+10AB Dedede LightItemPickup
+10AC Dedede CeilingBonk
+10AD Kirby Dedede NSP Inhaled Walk
+10AE King Dedede Platforms Header
+10AF King Dedede Platforms Stage
+10B0 Dedede Starring Left
+10B1 Dedede Starring Right
+10B2 Marina Entry GFX
+10B3 Marina Entry
+10B4 DK ThrownMarina
+10B5 C.Falcon ThrownMarina
+10B6 Dedede ClangRecoil
+10B7 Dedede Stun
+10B8 Dedede Clap
+10B9 Dedede Team Pose
+10BA Mt. Dedede Header
+10BB Mt. Dedede Stage
+10BC Mt. Dedede BG
+10BD Dedede Victory 2
+10BE Dedede Ending Image 1
+10BF Dedede Ending Image 2
+10C0 Dedede Victory 3
 
 0611 CAPTAIN DeadU
 0611 CAPTAIN ScreenKO
@@ -4310,3 +4721,10 @@
 0031 RotScale Transition
 0032 Curtain Transition
 0033 Camera Transition
+0016 CSS Shadow
+0053 Moveset GFX 1
+0054 Moveset GFX 2
+0055 Moveset GFX 3
+00A3 Shield GFX
+00C5 Pause Menu GFX
+00C6 How to Play GFX

@@ -101,6 +101,12 @@ scope Combo {
         dh Action.Thrown3
         dh Action.Tornado
         dh Action.Barrel
+        dh Action.Stun                      // added for deku stun
+        dh Action.ShieldBreakFall           // ~
+        dh Action.StunLandD                 // ~
+        dh Action.StunLandU                 // ~
+        dh Action.StunStartD                // ~
+        dh Action.StunStartU                // ~
         dh 0x0000                           // end table
 
 

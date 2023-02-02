@@ -62,6 +62,12 @@ scope Practice_1P {
         li      t6, SinglePlayerModes.STAGE_FLAG // load current stage ID address
         lb      t6, 0x0000(t6)              // load stage ID
 
+        // this fixes a bug that occurs if you retry after Master Hand is defeated but before the screen transitions
+        // where all the sfx no longer play
+        lli     a1, FGM.ORIGINAL_FGM_COUNT + FGM.new_fgm_count // a1 = total fgm count
+        lui     at, 0x800A
+        sh      a1, 0xEDF8(at)              // ensure FGM count has the correct value
+
         set_practice_stage:
         sb      t6, 0x0017(s2)              // save stage ID
         addiu   at, r0, 0x0001              // at = 1 (active)

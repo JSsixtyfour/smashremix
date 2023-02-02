@@ -123,7 +123,7 @@ scope ConkerUSP {
         sw      ra, 0x0014(sp)              // ~
         lw      a0, 0x0084(a0)              // a0 = player struct
         sw      a0, 0x0018(sp)              // store ra, a0
-        
+
 
         lw      t0, 0x0180(a0)              // t0 = temp variable 2
         beq     t0, r0, _end                // skip if temp variable 2 = 0
@@ -994,12 +994,11 @@ scope ConkerDSP {
         addiu   t7, r0, 0x0014
         sw      t7, 0x0B20(v0)          // save 14 to free space in character struct, this is used as a power level of throw
         sw      r0, 0x0B28(v0)
-        li      t6, 0x80163850
         lw      t7, 0x0ADC(v0)
         addiu   a1, r0, 0x00EC          // place in grenade available action
         addiu   a2, r0, 0x0000
         beq     t7, r0, _grenade_available      // branch if theres an active grenade
-        sw      t6, 0x0A0C(v0)
+        nop
 
         addiu   a1, r0, 0x00EF          // place in grenade unavailable command
         addiu   a2, r0, 0x0000
@@ -1039,12 +1038,11 @@ scope ConkerDSP {
         addiu   t7, r0, 0x0014
         sw      t7, 0x0B20(v0)          // save 14 to free space in character struct, this is used as a power level of throw
         sw      r0, 0x0B28(v0)
-        li      t6, 0x80163850
         lw      t7, 0x0ADC(v0)
         addiu   a1, r0, 0x00F1          // place in grenade available action
         addiu   a2, r0, 0x0000
         beq     t7, r0, _grenade_available      // branch if theres an active grenade
-        sw      t6, 0x0A0C(v0)
+        nop
 
         addiu   a1, r0, 0x00F5          // place in grenade unavailable command
         addiu   a2, r0, 0x0000
@@ -1172,6 +1170,7 @@ scope ConkerDSP {
         li      s1, grenade_attributes.struct   // s1 = grenade_attributes.struct
 
         // item is created
+        sw      v0, 0x0040(sp)                  // 0x0040(sp) = item object
         lw      v1, 0x0084(v0)                  // v1 = item special struct
         sw      v1, 0x002C(sp)                  // 0x002C(sp) = item special struct
         lw      a0, 0x0074(v0)                  // a0 = item first joint (joint 0)
@@ -1215,6 +1214,8 @@ scope ConkerDSP {
         lw      v1, 0x002C(sp)                  // v1 = item special struct
         sw      a0, 0x0008(v1)                  // set player as projectile owner
         lw      t6, 0x0084(a0)                  // t6 = player struct
+        lbu     at, 0x000C(t6)                  // load player team
+        sb      at, 0x0014(v1)                  // save player's team to item to prevent damage when team attack is off
         lbu     at, 0x000D(t6)                  // at = player port
         sb      at, 0x0015(v1)                  // store player port for combo ownership
         sw      v1, 0x0ADC(t6)                  // save object address to free space in player struct
@@ -1240,6 +1241,15 @@ scope ConkerDSP {
         sw      r0, 0x01D4(v1)                  // hitbox collision flag = FALSE
         li      t1, grenade_blast_zone_         // load grenade blast zone routine
         sw      t1, 0x0398(v1)                  // save routine to part of item special struct that carries unique blast wall destruction routines
+
+		sw      r0, 0x0100(v1)                  // remove possible reference to character ID use by Bomb
+
+        lw      a1, 0x0038(sp)					// ~
+        lw      a1, 0x0084(a1)                  // ~
+        addiu   a2, a1, 0x0078                  // a2 = unknown
+        lw      a1, 0x0078(a1)                  // a1 = player x/y/z coordinates
+        jal     0x800DF058                      // check clipping
+        lw      a0, 0x0040(sp)                  // a0 = item object
 
         _end:
         or      v0, s0, r0                      // v0 = item object
@@ -1706,7 +1716,7 @@ scope ConkerDSP {
         // Copy beginning of subroutine 0x801737B8
         OS.copy_segment(0xEE0F4, 0x88)
         beql    v0, r0, _end                    // modify branch
-        lhu     t6, 0x0056(s0)                  // ~
+        lhu     t5, 0x0056(s0)                  // ~
         jal     0x800DD59C                      // ~
         or      a0, s0, r0                      // ~
         lhu     t0, 0x005A(s0)                  // ~
@@ -2064,8 +2074,9 @@ scope ConkerDSP {
     // @ Description
     // this routine gets run by whenever a projectile crosses the blast zone. The purpose here is to restock Conker's grenades
     scope grenade_blast_zone_: {
-        lw      at, 0x01C4(a2)          // load player struct from item special struct
-        j       0x8016F8B0              // jump to address that bomb/grenade normally goes to
-        sw      r0, 0x0ADC(at)          // clear out player struct free space so another grenade can be thrown
+        lw      t0, 0x0084(a0)          // t0 = item special struct
+        lw      t1, 0x01C4(t0)          // load player struct from item special struct
+        jr      ra                      // return
+        sw      r0, 0x0ADC(t1)          // clear out player struct free space so another grenade can be thrown
     }
 }

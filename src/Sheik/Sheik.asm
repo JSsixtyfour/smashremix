@@ -64,12 +64,18 @@ scope Sheik {
     insert ASLEEP, "moveset/ASLEEP.bin"; Moveset.GO_TO(ASLEEP)                      // loops
     insert ROLL_F,"moveset/ROLL_F.bin"
     insert ROLL_B,"moveset/ROLL_B.bin"
+    insert DOWN_STAND,"moveset/DOWN_STAND.bin"
 
     insert JAB_LOOP_START,"moveset/JAB_LOOP_START.bin"
     JAB_LOOP:
     insert JAB_SUBROUTINE,"moveset/JAB_SUBROUTINE.bin"
     Moveset.GO_TO(JAB_LOOP)              // go to beginning
     insert JAB_LOOP_END,"moveset/JAB_LOOP_END.bin"
+
+    // Insert AI attack options
+    constant CPU_ATTACKS_ORIGIN(origin())
+    insert CPU_ATTACKS,"AI/attack_options.bin"
+	OS.align(16)
 
     // Action name constants.
     scope Action {
@@ -226,10 +232,10 @@ Character.edit_action_parameters(SHEIK, Action.TeeterStart,             File.SHE
  //Character.edit_action_parameters(SHEIK, Action.CeilingBonk,             File.SHEIK_CEILING_BONK,            -1,                         -1)
 Character.edit_action_parameters(SHEIK, Action.DownBounceD,             File.SHEIK_DOWN_BOUNCE_D,           -1,                         -1)
 Character.edit_action_parameters(SHEIK, Action.DownBounceU,             File.SHEIK_DOWN_BOUNCE_U,           -1,                         -1)
-Character.edit_action_parameters(SHEIK, Action.DownStandD,              File.SHEIK_DOWN_STAND_D,            -1,                         -1)
-Character.edit_action_parameters(SHEIK, Action.DownStandU,              File.SHEIK_DOWN_STAND_U,            -1,                         -1)
-Character.edit_action_parameters(SHEIK, Action.TechF,                   -1,                  TECHROLL,                  -1)
-Character.edit_action_parameters(SHEIK, Action.TechB,                   -1,                  TECHROLL,                  -1)
+Character.edit_action_parameters(SHEIK, Action.DownStandD,              File.SHEIK_DOWN_STAND_D,            DOWN_STAND,                 -1)
+Character.edit_action_parameters(SHEIK, Action.DownStandU,              File.SHEIK_DOWN_STAND_U,            DOWN_STAND,                 -1)
+Character.edit_action_parameters(SHEIK, Action.TechF,                   -1,                                 TECHROLL,                   -1)
+Character.edit_action_parameters(SHEIK, Action.TechB,                   -1,                                 TECHROLL,                   -1)
 Character.edit_action_parameters(SHEIK, Action.DownForwardD,            File.SHEIK_DOWN_FORWARD_D,          -1,                         -1)
 Character.edit_action_parameters(SHEIK, Action.DownForwardU,            File.SHEIK_DOWN_FORWARD_U,          -1,                         -1)
 Character.edit_action_parameters(SHEIK, Action.DownBackD,               File.SHEIK_DOWN_BACK_D,             -1,                         -1)
@@ -501,6 +507,38 @@ Character.edit_action_parameters(SHEIK, Action.LandingAirX,             File.SHE
 
     // Set default costume shield colors
     Character.set_costume_shield_colors(SHEIK, BLUE, RED, GREEN, PURPLE, BLACK, WHITE, NA, NA)
+    
+    Character.table_patch_start(variants, Character.id.SHEIK, 0x4)
+    db      Character.id.NONE
+    db      Character.id.NSHEIK // set as POLYGON variant for SHEIK
+    db      Character.id.NONE
+    db      Character.id.NONE
+    OS.patch_end()
+    
+    Character.table_patch_start(variant_original, Character.id.NSHEIK, 0x4)
+    dw      Character.id.SHEIK // set Sheik as original character (not Captain Falcon, who NSHEIK is a clone of)
+    OS.patch_end()
+
+    // Set CPU behaviour
+    Character.table_patch_start(ai_behaviour, Character.id.SHEIK, 0x4)
+    dw      CPU_ATTACKS
+    OS.patch_end()
+	
+	// Set CPU SD prevent routine
+    Character.table_patch_start(ai_attack_prevent, Character.id.SHEIK, 0x4)
+    dw    	AI.PREVENT_ATTACK.ROUTINE.NONE
+    OS.patch_end()
+	
+	// Set CPU NSP long range behaviour
+    Character.table_patch_start(ai_long_range, Character.id.SHEIK, 0x4)
+    dw    	AI.LONG_RANGE.ROUTINE.NSP_SHOOT
+    OS.patch_end()
+
+    // Edit cpu attack behaviours
+    // edit_attack_behavior(table, attack, override, start_hb, end_hb, min_x, max_x, min_y, max_y)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPA,   -1,  -1,  -1,  500, 1500, 200, 445)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPG,   -1,  -1,  -1,  500, 1500, 200, 445)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPG,   -1,  -1,  -1,  -150, 150, 125, 325)
 
     // an associated moveset command: b0bc0000 removes the white flicker, this is identical to Samus
     // @ Description

@@ -496,15 +496,15 @@ scope Hazards {
         lw      a0, 0x0000(a0)              // a0 = match info struct
         lbu     t6, 0x0001(a0)              // a0 = stage_id
         addiu   a0, t6, -Stages.id.ONETT    // a0 = 0 if on Onett
-        beqzl   t6, _check_mode             // if on Onett, treat as hazard toggle instead of movement toggle
-        andi    a1, a1, 0x0001              // a1 = 1 if hazard_mode is 1 or 3, 0 otherwise
-        
-        addiu   a0, t6, -Stages.id.TALTAL   // a0 = 0 if on Onett
         beqzl   a0, _check_mode             // if on Onett, treat as hazard toggle instead of movement toggle
         andi    a1, a1, 0x0001              // a1 = 1 if hazard_mode is 1 or 3, 0 otherwise
-        
-        addiu   a0, t6, -Stages.id.TALTAL_REMIX    // a0 = 0 if on Onett
-        beqzl   a0, _check_mode             // if on Onett, treat as hazard toggle instead of movement toggle
+
+        addiu   a0, t6, -Stages.id.TALTAL   // a0 = 0 if on Tal Tal
+        beqzl   a0, _check_mode             // if on Tal Tal, treat as hazard toggle instead of movement toggle
+        andi    a1, a1, 0x0001              // a1 = 1 if hazard_mode is 1 or 3, 0 otherwise
+
+        addiu   a0, t6, -Stages.id.TALTAL_REMIX    // a0 = 0 if on Tal Tal Remix
+        beqzl   a0, _check_mode             // if on Tal Tal Remix, treat as hazard toggle instead of movement toggle
         andi    a1, a1, 0x0001              // a1 = 1 if hazard_mode is 1 or 3, 0 otherwise
 
         srl     a1, a1, 0x0001              // a1 = 1 if hazard_mode is 2 or 3, 0 otherwise
@@ -860,7 +860,7 @@ scope Hazards {
         li      t6, norfair_lava_levels     // t6 = norfair_lava_levels
         b       _loop_setup
         nop
-        
+
         _norfair_remix:
         li      t6, norfair_remix_lava_levels // t6 = norfair_remix_lava_levels
         b       _loop_setup
@@ -914,14 +914,14 @@ scope Hazards {
     dw 0xc2c80000
     dw 0x43480000
     dw 0xC5160000
-    
+
     norfair_remix_lava_levels:
     dw 0xc2c80000       // slightly below main plat
     dw 0xC5160000       // very low
     dw 0x43480000       // first platform coverage
     dw 0xC5160000       // very low
     dw 0xC4160000       // below main plat
-    dw 0x44960000       // second platform coverage    
+    dw 0x44960000       // second platform coverage
     dw 0xC5160000       // very low
     dw 0x43480000       // first platform coverage
     dw 0xC4160000       // below main plat
@@ -1032,6 +1032,8 @@ scope Hazards {
         lw      a1, 0x0030(a0)              // a1 = bomb object struct
         beqz    a1, _timer                  // if there is no object at 0x0030, decrement timer
         nop
+        lw      t0, 0x0074(a1)              // t0 = position struct = 0 if destroyed
+        beqz    t0, _timer                  // if destroyed (likely Marina absorbed), then decrement timer
         lw      t0, 0x0080(a1)              // t0 = 1 if explosion has started
         lli     t1, RESPAWN_TIME            // t1 = RESPAWN_TIME to act as timer value
         beqzl   t0, _end                    // if the bomb is not yet exploded, skip
@@ -1481,18 +1483,27 @@ scope Hazards {
     scope klaptrap_room_: {
         OS.patch_start(0xE8C1C, 0x8016E1DC)
         j       klaptrap_room_
-        lli     t8, Stages.id.BTP_MTWO      // t0 = Stages.id.BTP_MTWO
+        lli     t8, Stages.id.BTT_MARINA      // t0 = Stages.id.BTP_MARINA
         _return:
         OS.patch_end()
 
         li      t6, Global.match_info
         lw      t6, 0x0000(t6)              // t6 = match info
         lbu     t6, 0x0001(t6)              // t6 = current stage ID
+
+        beql    t6, t8, _rolling_bombs      // if Marina's Break the Targets, branch
+        lw      t6, 0x0000(t0)              // load item id
+
+        lli     t8, Stages.id.BTP_MTWO      // t0 = Stages.id.BTP_MTWO
         bne     t6, t8, _klaptrap_check     // if current stage is not Mewtwo's Board the Platforms, then do klaptrap check
         lw      t6, 0x0000(t0)              // load item id
+
+        _rolling_bombs:
         lli     t8, stage.RTTF_BOMB         // load RTTF Bomb ID
         bne     t6, t8, _klaptrap_check     // if not RTTF Bomb, branch to klaptrap check
         nop
+
+
         li      t6, 0x8013141C              // load location of RTTF Ram address when in Mewtwo BTP
         j       _return
         addiu   a2, r0, 0x000B              // original line 1
@@ -1500,7 +1511,7 @@ scope Hazards {
         _klaptrap_check:
         lli     t8, Item.Car.id
         beq     t6, t8, _end
-        addiu   a2, r0, 0x0014
+        addiu   a2, r0, 0x0012
         lli     t8, Item.RobotBee.id
         beq     t6, t8, _bee
         lli     t8, Item.KlapTrap.id
@@ -1978,13 +1989,7 @@ scope Hazards {
         addiu   t3, r0, 0x002E
         beq     t2, t3, _end
         nop
-        // NEED A WAY TO HAVE THIS ONLY FUNCTION WHEN MAIN THEME PLAYS
-        //addiu   t4, r0, 0x00A2
-        //slt     t5, t2, t4
-        //bnez    t5, _end
-        //addiu   t4, r0, 0x00A6
-        //slt     t5, t4, t2
-        //bnez    t5, _end
+
         addiu   a0, r0, r0              // needs to be 0 for some reason
         sw      a1, 0x0000(t1)          // save song to stage song (it will play after star or
         jal     BGM.play_               // play music
@@ -2004,7 +2009,7 @@ scope Hazards {
     // @ Description
     // Adds rolling bombs to mewtwos board the platforms
     scope mtwo_btp_setup: {
-        OS.patch_start(0x11228C, 0x8018DB24)
+        OS.patch_start(0x11228C, 0x8018DB4C)
         jal     mtwo_btp_setup
         lli     v1, Stages.id.BTP_MTWO         // t0 = Stages.id.BTP_MTWO
         return:
@@ -2047,6 +2052,8 @@ scope Hazards {
 
         // targets use same spots as bombs for ram address, maybe modify code to use other address, it needs 0x0, 0x4, and 0x14
 
+        // targets seem to use, in 801313f0 space, 0x4, 0xC, and 0x70
+
         _normal:
         lw      a1, 0x0080(t6)              // original line 1
         jr      ra
@@ -2054,10 +2061,69 @@ scope Hazards {
     }
 
     // @ Description
+    // Adds rolling bombs to marina's break the targets
+    scope marina_btt_setup: {
+        OS.patch_start(0x111AE0, 0x8018D3A0)
+        jal     marina_btt_setup
+        lli     t7, Stages.id.BTT_MARINA    // t0 = Stages.id.BTT_MARINA
+        return:
+        OS.patch_end()
+
+        li      t1, Global.match_info
+        lw      t1, 0x0000(t1)              // a1 = match info
+        lbu     t1, 0x0001(t1)              // a1 = current stage ID
+        bne     t1, t7, _normal             // if current stage is not Marina's Break the Targets, then do normal functions
+        nop
+
+        _bombs:
+        addiu   sp, sp, -0x0020
+        sw      ra, 0x0014(sp)
+        sw      t6, 0x0004(sp)
+        // the code below is to replace a jal to   0x8010B4D0
+        // it establishes stage free space to work with bombs
+        // needed to be moved to accomodate targets
+        lui     t8, 0x8013
+        lw      t8, 0x1300(t8)             // load hardcoded stage pointer
+        lui     t7, 0x0000
+        lui     t9, 0x0000
+        lw      t6, 0x0080(t8)
+        lui     t1, 0x8013
+        addiu   t7, t7, 0x0000
+        addiu   t9, t9, 0x0000
+        addiu   t1, t1, 0x13F0              // load to stage free space
+        subu    t0, t8, t9
+        subu    t8, t6, t7
+        sw      t8, 0x0028(t1)              // save RTF bomb relevant pointer
+        sw      t0, 0x002C(t1)              // save RTF bomb relevant pointer
+        li      t0, 0x457d2000              // floating point for bomb spawn point X (4050)
+        sw      t0, 0x0030(t1)              // save X address
+        li      t0, 0x45bb8000              // floating point for bomb spawn point Y (6000)
+        sw      t0, 0x0034(t1)              // save Y address
+
+        jal     0x8010B660                  // setups up bomb spawning object
+        sw      r0, 0x0038(t1)              // save Z address in the interest of caution
+
+        lui     t6, 0x8013                  // overwriting the time until first bomb spawned
+        lli     at, 0x0001                  // at = 1 frame
+        sw      at, 0x01404(t6)             // overwrite timer (default is 0xB4)
+
+        lw      t6, 0x0004(sp)
+        lw      ra, 0x0014(sp)
+        addiu   sp, sp, 0x0020
+
+        // to add more of these to future stages, you'll need to copy and paste the additional portion of the header
+
+        _normal:
+        lbu     t7, 0x0001(t6)              // original line 1
+        jr      ra
+        mtc1    r0, f20                     // original line 2
+    }
+
+    // @ Description
     // Changes how bombs position are set
-    scope mtwo_btp_bomb_position: {
+    scope rolling_bomb_position: {
         OS.patch_start(0x86E1C, 0x8010B61C)
-        j       mtwo_btp_bomb_position
+        j       rolling_bomb_position
         lli     a0, Stages.id.BTP_MTWO         // t0 = Stages.id.BTP_MTWO
         return:
         OS.patch_end()
@@ -2065,10 +2131,15 @@ scope Hazards {
         li      a1, Global.match_info
         lw      a1, 0x0000(a1)              // a1 = match info
         lbu     a1, 0x0001(a1)              // a1 = current stage ID
-        bnel    a1, a0, _normal             // if current stage is not Mewtwo's Board the Platforms, then do normal functions
+
+        beq     a0, a1, _special            // if current stage is Mewtwo's Board the Platforms, then do special functions
+        lli     a0, Stages.id.BTT_MARINA    // t0 = Stages.id.BTT_MARINA
+
+        bnel    a1, a0, _normal             // if current stage is not Marina's Break the Targets, then do not do special functions
         addiu   a2, a2, 0x13F8              // original line 1
 
-        addiu   a2, a2, 0x1420              // x and y as done in m2 btp
+        _special:
+        addiu   a2, a2, 0x1420              // x and y as done in bonuses
 
         // targets use same spots as bombs for ram address, maybe modify code to use other address, it needs 0x0, 0x4, and 0x14
 
@@ -2079,9 +2150,9 @@ scope Hazards {
 
     // @ Description
     // Changes how bombs explosions are loaded
-    scope mtwo_btp_bomb_explosion_1: {
+    scope rolling_bomb_explosion_1: {
         OS.patch_start(0xFF614, 0x80184BD4)
-        j       mtwo_btp_bomb_explosion_1
+        j       rolling_bomb_explosion_1
         lli     at, Stages.id.BTP_MTWO         // t0 = Stages.id.BTP_MTWO
         return:
         OS.patch_end()
@@ -2089,9 +2160,16 @@ scope Hazards {
         li      t7, Global.match_info
         lw      t7, 0x0000(t7)              // t7 = match info
         lbu     t7, 0x0001(t7)              // t7 = current stage ID
-        bne     t7, at, _normal             // if current stage is not Mewtwo's Board the Platforms, then do normal functions
+
+        beql    t7, at, _special            // if current stage is Mewtwo's Board the Platforms, then do special functions
         lui     at, 0xC1C0                  // original line 1
 
+        lli     at, Stages.id.BTT_MARINA    // t0 = Stages.id.BTT_MARINA
+
+        bne     t7, at, _normal             // if current stage is not Marina's Break the Targets, then do normal functions
+        lui     at, 0xC1C0                  // original line 1
+
+        _special:
         li      t7, 0x8013141C              // load in new address for pointer
         j       return
         nop
@@ -2105,9 +2183,9 @@ scope Hazards {
 
     // @ Description
     // Changes how bombs explosions are loaded
-    scope mtwo_btp_bomb_explosion_2: {
+    scope rolling_bomb_explosion_2: {
         OS.patch_start(0xFFC98, 0x80185258)
-        j       mtwo_btp_bomb_explosion_2
+        j       rolling_bomb_explosion_2
         lli     t8, Stages.id.BTP_MTWO         // t0 = Stages.id.BTP_MTWO
         return:
         OS.patch_end()
@@ -2115,9 +2193,15 @@ scope Hazards {
         li      t9, Global.match_info
         lw      t9, 0x0000(t9)              // t7 = match info
         lbu     t9, 0x0001(t9)              // t7 = current stage ID
-        bne     t9, t8, _normal             // if current stage is not Mewtwo's Board the Platforms, then do normal functions
+
+        beql    t9, t8, _normal             // if current stage is Mewtwo's Board the Platforms, then do special functions
         lui     t9, 0x0000                  // original line 2
 
+        lli     t8, Stages.id.BTT_MARINA    // t0 = Stages.id.BTT_MARINA
+        bne     t9, t8, _normal             // if current stage is not Marina's Break the Targets, then do normal functions
+        lui     t9, 0x0000                  // original line 2
+
+        _special:
         li      t7, 0x8013141C              // load in new address for pointer
         j       return
         nop
@@ -2131,9 +2215,9 @@ scope Hazards {
 
     // @ Description
     // Changes how bombs explosions are loaded
-    scope mtwo_btp_bomb_explosion_3: {
+    scope rolling_bomb_explosion_3: {
         OS.patch_start(0xFFA44, 0x80185004)
-        j       mtwo_btp_bomb_explosion_3
+        j       rolling_bomb_explosion_3
         lli     a1, Stages.id.BTP_MTWO         // t0 = Stages.id.BTP_MTWO
         return:
         OS.patch_end()
@@ -2141,9 +2225,17 @@ scope Hazards {
         li      t1, Global.match_info
         lw      t1, 0x0000(t1)              // t7 = match info
         lbu     t1, 0x0001(t1)              // t7 = current stage ID
-        bne     t1, a1, _normal             // if current stage is not Mewtwo's Board the Platforms, then do normal functions
+
+        beql    t1, a1, _special            // if current stage is Mewtwo's Board the Platforms, then do special functions
         lui     t1, 0x0000                  // original line 2
 
+
+        lli     a1, Stages.id.BTT_MARINA    // t0 = Stages.id.BTT_MARINA
+
+        bne     t1, a1, _normal             // if current stage is not Marina's Break the Targets, then do normal functions
+        lui     t1, 0x0000                  // original line 2
+
+        _special:
         li      t9, 0x8013141C              // load in new address for pointer
         j       return
         nop
@@ -2155,23 +2247,175 @@ scope Hazards {
         lw      t9, 0xB5A4(t9)              // original line 1
     }
 
+    // @ Description
+    // Toggle for Whispy Downtime Counter initially
+    scope dreamland_downtime_initially_: {
+        OS.patch_start(0x81E6C, 0x8010666C)
+        jal     dreamland_downtime_initially_
+        nop
+        return_:
+        OS.patch_end()
+
+        li      t4, Global.current_screen   // ~
+        lbu     t4, 0x0000(t4)              // t4 = screen_id
+        ori     a0, r0, 0x0001              // ~
+        beql    a0, t4, _end                // if screen_id = 1P, do as normal
+        addiu   t4, v0, 0x03C0              // original line 1, adds set amount to variable downtime period
+
+        li      t4, Toggles.entry_whispy_mode
+        lw      t4, 0x0004(t4)              // t7 = 3 if Hyper Mode
+        addiu   a0, r0, 0x0003              // Hyper mode id
+        bnel    a0, t4, _end                // if toggle not turned on to Hyper mode, do as normal
+        addiu   t4, v0, 0x03C0              // original line 1, adds set amount to variable downtime period
+
+        // hyper mode
+        addiu   t4, r0, 0x0100              // set 100 frames before first blow
+
+        _end:
+        jr      ra
+        sh      t4, 0x0020(s0)              // original line 2, save to hardcoded timer location
+    }
+
+    // @ Description
+    // Toggle for Whispy Downtime Counter
+    scope dreamland_downtime_: {
+        OS.patch_start(0x81610, 0x80105E10)
+        jal     dreamland_downtime_
+        addiu   v1, v1, 0x13F0              // original line 1
+        return_:
+        OS.patch_end()
+
+        li      t7, Global.current_screen   // ~
+        lbu     t7, 0x0000(t7)              // t7 = screen_id
+        ori     t8, r0, 0x0001              // ~
+        beql    t8, t7, _end                // if screen_id = 1P, do as normal
+        addiu   t7, v0, 0x03C0              // original line 2, adds set amount to variable downtime period
+
+        li      t7, Toggles.entry_whispy_mode
+        lw      t7, 0x0004(t7)              // t7 = 3 if Hyper Mode
+        addiu   t8, r0, 0x0003              // Hyper mode id
+        bnel    t7, t8, _end                // if toggle not turned on to Hyper mode, do as normal
+        addiu   t7, v0, 0x03C0              // original line 2, adds set amount to variable downtime period
+
+        // hyper mode
+        addiu   t7, r0, 0x0025              // set 25 frames between blows
+
+        _end:
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // Toggle for the Dreamland wind speed multiplier to use the value in different modes.
+    scope dreamland_wind_speed_multiplier_: {
+        OS.patch_start(0x81274, 0x80105A74)
+        jal     dreamland_wind_speed_multiplier_
+        lwc1    f6, 0x0AA0(at)              // original line 1 (f6 = U wind speed multiplier)
+        return_:
+        OS.patch_end()
+
+        addiu   sp, sp, -0x10
+        sw      t1, 0x0004(sp)
+
+        li      at, Toggles.entry_whispy_mode
+        lw      at, 0x0004(at)              // at = whispy_mode
+
+        beqz    at, _end                    // at = 0 if we should use U wind
+        addiu   t1, r0, Toggles.whispy_mode.JAPANESE
+
+        beq     at, t1, _japanese           // at = 1 if we should use J wind
+        nop
+
+        li      t1, Global.current_screen   // ~
+        lbu     t1, 0x0000(t1)              // t1 = screen_id
+        ori     at, r0, 0x0001              // ~
+        beq     at, t1, _end                // if screen_id = 1P, then use U value
+        addiu   t1, r0, Toggles.whispy_mode.SUPER
+
+        beq     at, t1, _super              // if at = 3 go to super, or if not, with no remaining options, hyper mode
+        nop
+
+        // hyper mode
+        li      at, 0x3A1D4952              // hyper mode floating point multiplier
+        beq     r0, r0, _end_alt
+        nop
+
+        _japanese:
+        li      at, 0x399D4952              // japanese whispy floating point multiplier
+        beq     r0, r0, _end_alt
+        nop
+
+        _super:
+        li      at, 0x3A1D4952              // super mode floating point multiplier
+
+
+        _end_alt:
+        mtc1    at, f6                      // f6 = J wind speed multiplier
+
+        _end:
+        lw      t1, 0x0004(sp)
+        addiu   sp, sp, 0x10
+        jr      ra
+        mul.s   f8, f2, f6                  // original line 2
+    }
+
+    // @ Description
+    // Toggle for the Dreamland wind speed max to determine maximum speeed
+    scope dreamland_wind_speed_max_: {
+        OS.patch_start(0x81250, 0x80105A50)
+        jal     dreamland_wind_speed_max_
+        lui     at, 0x40C0                  // original line 1, max speed=6
+        return_:
+        OS.patch_end()
+
+        addiu   sp, sp, -0x10
+        sw      t1, 0x0004(sp)
+        sw      t2, 0x0008(sp)
+
+        li      t1, Toggles.entry_whispy_mode
+        lw      t1, 0x0004(t1)              // t1 = 0 or 1 use standard max
+
+        beqz    t1, _end                    // if toggle not turned on, then use U value
+        addiu   t2, r0, Toggles.whispy_mode.JAPANESE
+
+        // japanese mode
+        beq     t2, t1, _end
+        addiu   t1, r0, Toggles.whispy_mode.SUPER
+
+        // super mode
+        beq     t2, t1, _end                // go to super, or if not, with no remaining options, hyper mode
+        lui     at, 0x41a0                  // super mode = 20
+
+        // hyper mode
+        lui     at, 0x41f0                  // hyper mode max = 30
+
+        _end:
+        lw      t2, 0x0008(sp)
+        lw      t1, 0x0004(sp)
+        addiu   sp, sp, 0x10
+        jr      ra
+        mtc1    at, f4                      // original line 2, move speed to floating point register
+    }
+
      // @ Description
-     // Changes wind parameters for Dream Greens
-     scope dream_greens_wind: {
+     // Changes wind parameters for Dream Greens and super/hyper modes
+     scope dream_land_wind_parameters: {
         OS.patch_start(0x811A0, 0x801059A0)
-        j       dream_greens_wind
+        j       dream_land_wind_parameters
         lwc1    f30, 0x0A94(at)             // original line 1
+        nop
         return:
         OS.patch_end()
 
+        lwc1    f28, 0x0A98(at)             // original line 3, loads max left
         addiu   v1, r0, Stages.id.DREAM_LAND_SR         // v1 = Dream Greens
         li      at, Global.match_info
         lw      at, 0x0000(at)              // at = match info
         lbu     at, 0x0001(at)              // at = current stage ID
-        bne     v1, at, _normal             // if current stage is not Dream Greens, then do normal settings
+        bne     v1, at, _toggle_check       // if current stage is not Dream Greens, then do normal settings
         lui     at, 0x8013                  // original line 2
 
-
+        // parameters for dream greens
         li      v1, 0x456e3000              // load in new max right
         mtc1    v1, f30
         li      v1, 0xc56e3000              // load in new max left
@@ -2185,7 +2429,41 @@ scope Hazards {
         j       0x801059C8                  // skip loading f28 normally
         mtc1    v1, f26
 
-        _normal:
+        _toggle_check:
+        addiu   sp, sp, -0x10
+        sw      t1, 0x0004(sp)
+        sw      t2, 0x0008(sp)
+        swc1    f2, 0x000C(sp)
+
+        li      t1, Global.current_screen   // ~
+        lbu     t1, 0x0000(t1)              // t1 = screen_id
+        ori     t2, r0, 0x0001              // ~
+        beq     t2, t1, _end                // if screen_id = 1P, use standard max
+        nop
+        li      t1, Toggles.entry_whispy_mode
+        lw      t1, 0x0004(t1)              // t1 = 0 or 1 use standard max
+        addiu   t2, r0, Toggles.whispy_mode.SUPER
+        beql    t1, t2, _multiply                // if super modify parameters
+        lui     t1, 0x3F8C
+        addiu   t2, r0, Toggles.whispy_mode.HYPER
+        bne     t1, t2, _end                // if not hyper, do normal parameters
+        nop
+
+        // hyper mode
+        lui     t1, 0x3f99
+
+        _multiply:
+        mtc1    t1, f2
+        mul.s   f30, f2, f30
+        mul.s   f28, f2, f28
+        mul.s   f24, f2, f24
+
+        _end:
+        lwc1    f2, 0x000C(sp)
+        lw      t2, 0x0008(sp)
+        lw      t1, 0x0004(sp)
+        addiu   sp, sp, 0x10
+
         j       return
         nop
      }
@@ -3557,19 +3835,19 @@ scope Hazards {
     scope bee_factory_: {
         addiu   sp, sp, -0x0028
         sw      ra, 0x001C(sp)
-        
+
         li      t6, Global.current_screen   // ~
         lbu     t6, 0x0000(t6)              // t0 = screen_id
         ori     t5, r0, 0x0036              // ~
         beq     t5, t6, _skip_check         // skip if screen_id = training mode
         nop
-        
+
         li      t6, Global.match_info       // ~
         lw      t6, 0x0000(t6)              // t6 = match info struct
         lw      t6, 0x0018(t6)              // t6 = time elapsed
         beqz    t6, _end                    // if match hasn't started, don't begin
         nop
-        
+
         _skip_check:
         li      t5, 0x801313F0
         lw      t6, 0x0008(t5)              // load timer
@@ -3605,23 +3883,23 @@ scope Hazards {
         sw      v0, 0x0020(t5)              // save direction ID
         jal     Global.get_random_int_      // get random integer
         addiu   a0, r0, 0x0002              // decimal 2 possible integers
-    
+
         sw      v0, 0x0020(t5)              // save direction ID
-    
+
         lw      t1, 0x0000(t5)              // load Robot Bee file ram address
-        bnez    v0, _movement   
+        bnez    v0, _movement
         addiu   t2, r0, 0x0908              // load in offset of animation track 1
         addiu   t2, r0, 0x3598              // load in offset of animation track 1
-    
-        _movement:  
-        lw      a0, 0x0024(sp)  
+
+        _movement:
+        lw      a0, 0x0024(sp)
         addiu   a2, r0, 0x0000              // clear out a2
         lw      a0, 0x0074(a0)              // Load Top Joint
         jal     0x8000BD1C                  // animation track 1 set up
         addu    a1, t1, t2                  // place animation track address in a1
-    
-        li      t5, 0x801313F0  
-    
+
+        li      t5, 0x801313F0
+
         lw      t3, 0x0000(t5)              // load Robot Bee file ram address
         addiu   t4, r0, 0x09B4              // offset to track 2
         lw      a0, 0x0080(a0)              // unknown, probably for image swapping
@@ -4202,61 +4480,61 @@ scope Hazards {
     OS.copy_segment(0x103904, 0x0C)         // empty
 
     OS.align(16)
-    
+
 //    // @ Description
 //    // This establishes Crateria hazard object in which Acid Rain is tied to
 //    scope crateria_setup: {
 //        addiu   sp, sp,-0x0060              // allocate stack space
 //        sw      ra, 0x0024(sp)              // ~
 //        sw      s0, 0x0028(sp)              // store ra, s0
-//    
+//
 //        // _check_hazard:
 //        li      t0, Toggles.entry_hazard_mode
 //        lw      t0, 0x0004(t0)              // t0 = hazard_mode (hazards disabled when t0 = 1 or 3)
 //        andi    t0, t0, 0x0001              // t0 = 1 if hazard_mode is 1 or 3, 0 otherwise
 //        bnez    t0, _end                    // if hazard_mode enabled, skip original
 //        nop
-//    
+//
 //        li      t0, 0x80131300              // load hardcoded place for stage header + 14
 //        sw      r0, 0x0060(t0)              // clear timer
 //        sw      r0, 0x005C(t0)              // clear timer
 //        lw      t0, 0x0000(t0)              // load stage header + 14
 //        lw      t1, 0x00CC(t0)              // load pointer to Acid hitbox file
 //        lw      t0, 0x0080(t0)              // load pointer to Acid Graphic file
-//        
-//    
+//
+//
 //        li      s0, 0x801313F0              // load hardcoded space used by hazards, generally for pointers
 //        sw      t0, 0x0000(s0)              // save pointer to Acid Rain Grapih file
 //        sw      t1, 0x0004(s0)              // save pointer to Acid Rain hitbox file
-//       
+//
 //        sw      at, 0x0058(s0)              // set initial state timer to 360 frames
-//    
+//
 //        li      t3, acidrain_hitbox_pointer
 //        sw      t1, 0x0000(t3)              // save pointer to pointer spot
 //        li      t2, acidrain_projectile_struct
 //        sw      t3, 0x0008(t2)              // save pointer to acid rain hitbox file
 //        li      t2, acidrain_properties_struct
 //        sw      t3, 0x0024(t2)              // save pointer to acid rain hitbox file
-//        
+//
 //        sw      s0, 0x0020(sp)              // hardcoded space used by hazards, generally for pointers
-//    
-//    
+//
+//
 //        li      a1, acidrain_cloud_         // Acid Rain routine
 //        addiu   a2, r0, 0x0001              // group
 //        addiu   a0, r0, 0x03F2              // object id
-//    
+//
 //        jal     Render.CREATE_OBJECT_       // create object
 //        lui     a3, 0x8000                  // unknown
-//    
+//
 //        sw      v0, 0x0050(sp)              // save object address
-//        
+//
 //        _end:
 //        lw      ra, 0x0024(sp)              // ~
 //        lw      s0, 0x0028(sp)              // load ra, s0
 //        jr      ra                          // return
 //        addiu   sp, sp, 0x0060              // deallocate stack space
 //    }
-//    
+//
 //    // @ Description
 //    // This routine produces rain at random intervals across the stage
 //    // a0 = Acid Rain Cloud object
@@ -4265,7 +4543,7 @@ scope Hazards {
 //        sw      ra, 0x0014(sp)
 //        sw      a0, 0x0000(sp)
 //        sw      s0, 0x0004(sp)
-//    
+//
 //        li      t0, 0x801313F0          // load hardcoded stage struct
 //        sw      t0, 0x0050(sp)          // save hardcoded
 //        lw      t6, 0x0060(t0)          // load timer
@@ -4273,19 +4551,19 @@ scope Hazards {
 //        addiu   t2, t6, 0x0001          // add 1 to timer
 //        sw      t2, 0x0060(t0)          // update timer
 //        addiu   t1, r0, 0x0400          // rain end timer
-//        
-//        
-//        
+//
+//
+//
 //        beql    t1, t6, _end            // check if rain should end
 //        sw      r0, 0x0060(t0)          // restart timer
 //        addiu   t4, r0, r0
 //        slti    t4, t6, 0x001E
 //        bnez    t4, _end                // if not past minimum time for rain, don't rain
 //        lw      t5, 0x005C(t0)          // load rain loop
-//        
+//
 //        addiu   t3, r0, 0x0020          // 0x20 drops per frame
 //        sw      t3, 0x0018(sp)
-//        
+//
 //        li      t0, 0x80131460          // a0 = global ptr to camera object
 //        lw      t0, 0x0000(t0)          // a0 = global camera object
 //        addiu   t2, r0, 0x0002          // t2 = 2
@@ -4303,32 +4581,32 @@ scope Hazards {
 //        addiu   t2, r0, 0x0004          // set mode to 4
 //        beq     r0, r0, _rain_sfx
 //        sw      t2, 0x108(t0)           // set mode to 4. (default is 4)
-//        
+//
 //        _sfx:
 //        jal     0x800269C0              // play fgm
 //        addiu   a0, r0, 0x00E8          // sets the fgm id
 //        li      t1, 0xFFFFFFFF          // t1 = white
 //        li      t0, 0x80131460          // a0 = global ptr to camera object
 //        lw      t0, 0x0000(t0)          // a0 = global camera object
-//        beq     r0, r0, _play_rain        
+//        beq     r0, r0, _play_rain
 //        _set_color:
 //        sw      t1, 0x010C(t0)          // t1 = overwrite global camera draw colour
-//        
+//
 //        _rain_sfx:
 //        lw      t0, 0x0050(sp)          // load hardcoded stage struct
 //        lw      t5, 0x005C(t0)          // load rain time
 //        addiu   t3, r0, 0x0060          // set to 60
-//        
+//
 //        beql    t5, t3, _rain_loop      // clear timer if 60 frames
 //        sw      r0, 0x005C(t0)
 //        addiu   t2, t5, 0x0001
 //        bnez    t5, _rain_loop
 //        sw      t2, 0x005C(t0)          // update timer
-//        
+//
 //        _play_rain:
 //        jal     0x800269C0              // play fgm
 //        addiu   a0, r0, 0x0400          // sets the fgm id to rain
-//        
+//
 //        _rain_loop:
 //        jal     acidrain_stage_setting_
 //        lw      a0, 0x0000(sp)          // load acid rain Object Struct
@@ -4336,18 +4614,18 @@ scope Hazards {
 //        addiu   t3, t3, 0xFFFF          // subtract 1
 //        bne     t3, r0, _rain_loop
 //        sw      t3, 0x0018(sp)          // save updated rain amount
-//         
-//        
+//
+//
 //        _end:
 //        lw      ra, 0x0014(sp)          // load ra
 //        lw      a0, 0x0000(sp)          // load great fox object
 //        lw      s0, 0x0004(sp)
 //        addiu   sp, sp, 0x0068
-//    
+//
 //        jr      ra
 //        nop
 //    }
-//    
+//
 //    // @ Description
 //    // Subroutine which sets up the initial properties for the projectile.
 //    scope acidrain_stage_setting_: {
@@ -4358,7 +4636,7 @@ scope Hazards {
 //        li      s0, acidrain_properties_struct      // s0 = projectile properties struct address
 //        li      a1, acidrain_projectile_struct      // a1 = main projectile struct address
 //        addiu   a3, r0, 0x0001                      // I believe this makes the projectile hit all players
-//    
+//
 //        jal     Global.get_random_int_              // get random integer
 //        addiu   a0, r0, 0x1F40                      // decimal 8000 possible spawn points
 //        addiu   t1, r0, -4000                       // load -4000
@@ -4372,23 +4650,23 @@ scope Hazards {
 //        addiu   a2, sp, 0x0020                      // a2 = coordinates to create projectile at
 //        jal     0x801655C8                          // This is a generic routine that does much of the work for defining all projectiles
 //        sw      a2, 0x0030(sp)                      // save spawn address
-//        
+//
 //        bnez    v0, _destroyed_projectile_check_branch
 //        or      v1, v0, r0
 //        beq     r0, r0, _end
 //        or      v0, r0, r0
-//    
+//
 //        _destroyed_projectile_check_branch:
 //        lw      a0, 0x0084(v1)      // item special struct loaded in
-//    
+//
 //        addiu   t7, r0, 0x0028      // load in duration
 //        sw      t7, 0x0268(a0)      // save duration
-//    
+//
 //        _x_speed:
 //        sw      r0, 0x0020(a0)      // save x speed
 //        lui     at, 0xc2c8
 //        sw      at, 0x0024(a0)      // save y speed
-//    
+//
 //        lwc1    f12, 0x0020(a0)     // f12 = x speed
 //        lwc1    f14, 0x0024(a0)     // f14 = y speed
 //        jal     0x8001863C          // f0 = atan2f(f12, f12) = rotation angle
@@ -4396,14 +4674,14 @@ scope Hazards {
 //        lw      t7, 0x0034(sp)      // t7 = projectile object
 //        lw      t8, 0x0074(t7)      // t8 = projectile position struct
 //        swc1    f0, 0x0038(t8)      // update rotation angle
-//    
+//
 //        jal     0x80103320
 //        lw      a0, 0x0030(sp)
-//    
+//
 //        lw      v0, 0x0028(sp)
-//    
-//    
-//        
+//
+//
+//
 //        _end:
 //        lw      ra, 0x001C(sp)
 //        lw      s0, 0x0018(sp)
@@ -4411,7 +4689,7 @@ scope Hazards {
 //        jr      ra
 //        nop
 //    }
-//    
+//
 //    // @ Description
 //    // Main subroutine for the Acid Rain projectile.
 //    scope acidrain_main_: {
@@ -4419,7 +4697,7 @@ scope Hazards {
 //        jr      ra
 //        or      v0, r0, r0
 //    }
-//    
+//
 //    // @ Description
 //    // This subroutine sets up the splash effect for the rain.
 //    // a0 = projectile object
@@ -4428,7 +4706,7 @@ scope Hazards {
 //        addiu   sp, sp, 0xFFE8              // allocate stack space
 //        sw      ra, 0x0014(sp)              // ~
 //        sw      a0, 0x0018(sp)              // store ra, a0
-//    
+//
 //        jal     0x801005C8                  // create explosion graphic?
 //        addiu   a0, a0, 0x001C              // a0 = projectile x/y/z
 //        lw      a0, 0x0018(sp)              // a0 = projectile object
@@ -4445,7 +4723,7 @@ scope Hazards {
 //        jr      ra                          // return
 //        or      v0, r0, r0                  // v0 = 0
 //    }
-//    
+//
 //    // @ Description
 //    // This subroutine destroys the rain and creates an splash gfx
 //    scope acidrain_destruction_: {
@@ -4460,40 +4738,40 @@ scope Hazards {
 //        jr      ra                          // return
 //        lli     v0, OS.TRUE                 // return TRUE (destroys projectile)
 //    }
-//    
+//
 //    // @ Description
 //    // This subroutine destroys the rain and creates an splash gfx when colliding with clipping
 //    scope acidrain_collision_: {
 //        addiu   sp, sp,-0x0020              // allocate stack space
 //        sw      ra, 0x0014(sp)              // store ra
-//        
+//
 //        jal     0x80167C04
 //        sw      a0, 0x0018(sp)              // save projectile object
-//        
+//
 //        beq     v0, r0, _end
 //        lw      t6, 0x0018(sp)              // load projectile object
-//        
+//
 //        lw      a0, 0x0074(t6)
 //        lui     a1, 0x3F80
-//        
+//
 //        jal     0x800FF648
 //        addiu   a0, a0, 0x001C
-//        
+//
 //        beq     r0, r0, _end
-//        addiu   v0, r0, 0x0001       
-//        
+//        addiu   v0, r0, 0x0001
+//
 //        or      v0, r0, r0                  // return FALSE (prolong projectile)
-//        
+//
 //        _end:
 //        lw      ra, 0x0014(sp)              // load ra
 //        addiu   sp, sp, 0x0020              // deallocate stack space
 //        jr      ra                          // return
 //        nop
 //    }
-//    
+//
 //    acidrain_hitbox_pointer:
 //    dw  0x00000000
-//    
+//
 //    OS.align(16)
 //    acidrain_projectile_struct:
 //    constant ACIDRAIN_ID(0x1006)
@@ -4511,7 +4789,7 @@ scope Hazards {
 //    dw acidrain_destruction_                // This function runs when the projectile collides with Fox's reflector (default 0x80168748)
 //    dw acidrain_destruction_                // This function runs when the projectile collides with Ness's psi magnet
 //    OS.copy_segment(0x103904, 0x0C)         // empty
-//    
+//
 //    OS.align(16)
 //    acidrain_properties_struct:
 //    dw 999                                  // 0x0000 - duration (int)
@@ -4526,7 +4804,7 @@ scope Hazards {
 //    dw 0x00000000                           // 0x0024   projectile data pointer
 //    dw 0x00000000                           // 0x0028   unknown (default 0)
 //    dw 0x00000000                           // 0x002C   palette index (0 = mario, 1 = luigi)
-//    
+//
 //    // Applies damage during rain
 //    // Normally an attack must have knockback in order to do damage, with the exclusion of armor, which has the unfortunate consequence of slowing the player
 //    scope acidrain_damage: {
@@ -4535,24 +4813,24 @@ scope Hazards {
 //       lw       a3, 0x000C(s4)          // original line 1, loads projectile ID
 //       _return:
 //       OS.patch_end()
-//        
+//
 //        // player struct in a0
 //        addiu   a2, r0, ACIDRAIN_ID
 //        bne     a2, a3, _end
 //        nop
-//        
+//
 //        OS.save_registers()
-//    
+//
 //        jal     0x800EA248              // jump to damage application routine
-//        addiu   a1, r0, 0x0001          // set to 1 damage per drop  
-//    
+//        addiu   a1, r0, 0x0001          // set to 1 damage per drop
+//
 //        OS.restore_registers()
-//        
+//
 //        _end:
 //        j       _return
 //        lw      a2, 0x0000(s2)          // original line 2
 //    }
-    
+
     // @ Description
     // This establishes Rainbow Road hazard object in which Chain Chomp is tied to
     scope rainbow_road_setup: {
@@ -4570,14 +4848,14 @@ scope Hazards {
         lw      t0, 0x0000(t0)              // load stage header + 14
         lw      t1, 0x00AC(t0)              // load pointer to Chain Chomp Hitbox file
         lw      t0, 0x0080(t0)              // load pointer to Chain Chomp file
-        
+
         li      t3, chainchomp_hitbox_pointer
         sw      t1, 0x0000(t3)              // save pointer to pointer spot
         li      t2, chainchomp_projectile_struct
         sw      t3, 0x0008(t2)              // save pointer to chain chomp hitbox file
         li      t2, chainchomp_properties_struct
         sw      t3, 0x0024(t2)              // save pointer to chain chomp hitbox file
-        
+
         li      s0, 0x801313F0              // load hardcoded space used by hazards, generally for pointers
         sw      t0, 0x0000(s0)              // save pointer to chain chomp file
         sw      r0, 0x0058(s0)              // set initial state timer to 0 frames
@@ -4595,7 +4873,6 @@ scope Hazards {
         sw      s0, 0x0020(sp)              // hardcoded space used by hazards, generally for pointers
         sw      r0, 0x0024(s0)              // clear chomp
 
-
         li      a1, chain_chomp_main_       // Chain Chomp routine
         addiu   a2, r0, 0x0001              // group
         addiu   a0, r0, 0x03F2              // object id
@@ -4605,13 +4882,11 @@ scope Hazards {
 
         sw      v0, 0x0058(sp)              // save object address
         sw      v0, 0x0010(s0)              // save object address to stage information struct
-      
-        
-        
+
         lw      v0, 0x0058(sp)              // load chain chomps object
         addiu   t6, r0, 0x0001
         sw      t6, 0x007C(v0)              // make invisible
-        
+
         addiu   t6, r0, 0xFFFF
         or      s0, v0, r0
         sw      t6, 0x0010(sp)
@@ -4651,19 +4926,24 @@ scope Hazards {
         addiu   a3, r0, 0x0005
 
         _sfx:
+        li      t0, Toggles.entry_hazard_mode
+        lw      t0, 0x0004(t0)              // t0 = hazard_mode (movement disabled when t0 = 2 or 3)
+        lli     t1, 0x0001                  // t1 = 1
+        bgt     t0, t1, _end                // if movement disabled, skip sfx
+        addiu   a0, r0, 0x03F2              // object id
         li      a1, sfx_main_               // SFX routine
         addiu   a2, r0, 0x0001              // group
-        addiu   a0, r0, 0x03F2              // object id
 
         jal     Render.CREATE_OBJECT_       // create object
-        lui     a3, 0x8000                  // unknown
+        lui     a3, 0x8000                  // order
 
+        _end:
         lw      ra, 0x0024(sp)              // ~
         lw      s0, 0x0028(sp)              // load ra, s0
         jr      ra                          // return
         addiu   sp, sp, 0x0060              // deallocate stack space
     }
-    
+
     // @ Description
     // Main function for Chain Chomp.
     scope chain_chomp_main_: {
@@ -4681,41 +4961,41 @@ scope Hazards {
         slt     t2, t1, t3                  // first scene begins
         bnez    t2, _end                    // scene 1 check
         sw      t1, 0x0058(s0)              // save new time
-        
+
         beql    t9, t3, _refresh_1
         sw      r0, 0x0024(s0)              // clear chomp
-        
+
         _refresh_1:
         addiu   t3, t3, 0x1F4               // end scene 1 amount
         slt     t2, t3, t9                  // first scene ends
-        
+
         bnez    t2, _scene2_check           // end scene 1 check
         addiu   t3, r0, 0x10A4
-        
+
         lw      t7, 0x0024(s0)              // load chomp flag
         bnez    t7, _end                    // if chomp has spawn, skip
         nop
-        
+
         jal     Global.get_random_int_      // get random integer
         addiu   a0, r0, 0x032A              // decimal 810 possible integers
-        
+
         addiu   t4, r0, 0x100
-        
+
         bne     t4, v0, _end
         addiu   t5, r0, 0x0001
-        
+
         sw      t5, 0x0024(s0)              // save chomp flag
-        
+
         ori     t2, r0, 0x9518              // animation offset, UPDATE ON REIMPORT, whispy mouth at 801063D0
         beq     r0, r0, _animation
         ori     t3, r0, 0x9558              // animation offset, UPDATE ON REIMPORT, whispy mouth at 801063D0
-        
-        
-        
+
+
+
         _scene2_check:
         beql    t9, t3, _refresh_2
         sw      r0, 0x0024(s0)              // clear chomp
-        
+
         _refresh_2:
         slt     t2, t9, t3                  // second scene begins
         bnez    t2, _end                    // scene 2 check
@@ -4723,29 +5003,29 @@ scope Hazards {
         slt     t2, t3, t9                  // second scene ends
         bnez    t2, _scene3_check           // end scene 2 check
         addiu   t3, r0, 0x1B6C
-        
+
         lw      t7, 0x0024(s0)              // load chomp flag
         bnez    t7, _end                    // if chomp has spawned, skip
         nop
-        
+
         jal     Global.get_random_int_      // get random integer
         addiu   a0, r0, 0x032A              // decimal 810 possible integers
-        
+
         addiu   t4, r0, 0x100
-        
+
         bne     t4, v0, _end
         addiu   t5, r0, 0x0002
-        
+
         sw      t5, 0x0024(s0)              // save chomp flag
 
         ori     t2, r0, 0xE658              // animation offset, UPDATE ON REIMPORT, whispy mouth at 801063D0
         beq     r0, r0, _animation
         ori     t3, r0, 0xE6A4              // animation offset, UPDATE ON REIMPORT, whispy mouth at 801063D0
-        
+
         _scene3_check:
         beql    t9, t3, _refresh_3
         sw      r0, 0x0024(s0)              // clear chomp
-        
+
         _refresh_3:
         slt     t2, t9, t3                  // third scene begins
         bnez    t2, _end                    // scene 3 check
@@ -4753,30 +5033,30 @@ scope Hazards {
         slt     t2, t3, t9                  // third scene ends
         bnez    t2, _scene5_check           // end scene 3 check
         addiu   t3, r0, 0x30FC
-        
+
         lw      t7, 0x0024(s0)              // load chomp flag
         bnez    t7, _end                    // if chomp has spawn, skip
         nop
-        
-        
+
+
         jal     Global.get_random_int_      // get random integer
         addiu   a0, r0, 0x032A              // decimal 810 possible integers
-        
+
         addiu   t4, r0, 0x100
         bne     t4, v0, _end
         addiu   t5, r0, 0x0003
-        
+
         sw      t5, 0x0024(s0)              // save chomp flag
-        
-        li     t2, 0x00015AB8              // animation offset, UPDATE ON REIMPORT, whispy mouth at 801063D0       
+
+        li     t2, 0x00015AB8              // animation offset, UPDATE ON REIMPORT, whispy mouth at 801063D0
         li     t3, 0x00015B04              // animation offset, UPDATE ON REIMPORT, whispy mouth at 801063D0
         beq    r0, r0, _animation
         nop
-        
+
         _scene5_check:
         beql    t9, t3, _refresh_5
         sw      r0, 0x0024(s0)              // clear chomp
-        
+
         _refresh_5:
         slt     t2, t9, t3                  // fifth scene begins
         bnez    t2, _end                    // scene 5 check
@@ -4784,24 +5064,24 @@ scope Hazards {
         slt     t2, t3, t9                  // fifth scene ends
         bnez    t2, _end                    // end scene 5 check
         addiu   t3, r0, 0x30FC
-        
+
         lw      t7, 0x0024(s0)              // load chomp flag
         bnez    t7, _end                    // if chomp has spawn, skip
         nop
-         
+
         jal     Global.get_random_int_      // get random integer
-        addiu   a0, r0, 0x032A              // 
-        
+        addiu   a0, r0, 0x032A              //
+
         addiu   t4, r0, 0x100
-        
+
         bne     t4, v0, _end
         addiu   t5, r0, 0x0004
-        
+
         sw      t5, 0x0024(s0)              // save chomp flag
         li      t2, 0x0001EDA4              // animation offset, UPDATE ON REIMPORT, whispy mouth at 801063D0
         li      t3, 0x0001EDF0              // animation offset, UPDATE ON REIMPORT, whispy mouth at 801063D0
-        
-        
+
+
         _animation:
         lw      a0, 0x0028(sp)              // ~
         lw      t0, 0x0000(s0)              // loaded cannon file address
@@ -4812,12 +5092,12 @@ scope Hazards {
         sw      r0, 0x007C(a0)              // make visible
         jal     0x8000DF34                  // apply animation part 2
         lw      a0, 0x0010(s0)              // load object address
-        
-        
-        
+
+
+
         jal     chainchomp_hitbox_stage_setting_
         lw      a0, 0x0010(s0)              // load object address
-        
+
         jal     0x800269C0                  // play fgm
         addiu   a0, r0, 0x0401              // fgm id = 0x401 (chain chomp)
 
@@ -4826,7 +5106,7 @@ scope Hazards {
         addiu   t0, r0, 0x35E8              // total duration of animations for rainbow road
         beql    t9, t0, _clear_timer        //
         sw      r0, 0x0058(s0)              // clear timer out
-        
+
         _clear_timer:
         lw      ra, 0x0024(sp)              // ~
         lw      s0, 0x002C(sp)              // ~
@@ -4835,7 +5115,7 @@ scope Hazards {
         jr      ra                          // return
         nop
     }
-    
+
     // @ Description
     // Main function for Sounds in Rainbox Road.
     scope sfx_main_: {
@@ -4844,7 +5124,7 @@ scope Hazards {
         sw      a0, 0x0028(sp)              // ~
         sw      s0, 0x002C(sp)              // ~
         sw      s1, 0x0030(sp)              // store ra, a0, s0, s1
-        
+
         li      s0, 0x801313F0              // s0 = stage data
         lw      t1, 0x005C(s0)              // load sfx timer
         addiu   t2, t1, 0x0001
@@ -4852,9 +5132,9 @@ scope Hazards {
         sw      t2, 0x005C(s0)              // save sfx timer
         beq     t5, t1, _sound
         addiu   a0, r0, 0x0402              // MK64 Noise
-        
+
         addiu   t6, r0, 0x0004              // loop times
-        
+
         _sound_2_loop:
         addiu   t5, t5, 0x003C              // new sound played every 60 frames
         beq     t1, t5, _sound
@@ -4862,18 +5142,18 @@ scope Hazards {
         bnez    t6, _sound_2_loop
         addiu   t6, t6, 0xFFFF
         addiu   t5, t5, 0x003C
-        
+
         addiu   a0, r0, 0x0404              // MK64 Noise
         beql    t1, t5, _sound
         sw      r0, 0x005C(s0)
-        
+
         beq     r0, r0, _end
         nop
-        
-        _sound:        
+
+        _sound:
         jal     0x800269C0                  // play fgm
         nop
-      
+
         _end:
         lw      ra, 0x0024(sp)              // ~
         lw      a0, 0x0028(sp)              // ~
@@ -4883,7 +5163,7 @@ scope Hazards {
         jr      ra                          // return
         nop
     }
-   
+
     // @ Description
     // Subroutine which sets up the initial properties for the projectile.
     scope chainchomp_hitbox_stage_setting_: {
@@ -4894,33 +5174,33 @@ scope Hazards {
         li      s0, chainchomp_properties_struct    // s0 = projectile properties struct address
         li      a1, chainchomp_projectile_struct    // a1 = main projectile struct address
         addiu   a3, r0, 0x0001                      // I believe this makes the projectile hit all players
-    
+
         li      t0, 0x801313F0                      // load hardcoded space used by hazards, generally for pointers
         lw      t1, 0x0010(t0)                      // load chain chomp object
         lw      t2, 0x0074(t1)                      // load top joint
-        
+
         lw      t3, 0x001C(t2)
         sw      t3, 0x0020(sp)                      // save hitbox x spawn point
-        
+
         lw      t3, 0x0020(t2)
         sw      t3, 0x0024(sp)                      // save hitbox y spawn position
-        
+
         lw      t3, 0x0024(t2)
         sw      r0, 0x0028(sp)                      // save hitbox z spawn position
-        
-        
+
+
         addiu   a2, sp, 0x0020                      // a2 = coordinates to create projectile at
         jal     0x801655C8                          // This is a generic routine that does much of the work for defining all projectiles
         sw      a2, 0x0030(sp)                      // save spawn address
-        
+
         bnez    v0, _destroyed_projectile_check_branch
         or      v1, v0, r0
         beq     r0, r0, _end
         or      v0, r0, r0
-    
+
         _destroyed_projectile_check_branch:
         lw      a0, 0x0084(v1)      // projectile struct loaded in
-    
+
         // Camera tracking in case we want it. Looks jank in certain situations
         // addiu   at, r0, 0x0080      // at = bit flag for camera tracking
         // sb      at, 0x026C(a0)      // influence camera flag = true
@@ -4929,9 +5209,9 @@ scope Hazards {
         addiu   t7, r0, 0x0546      // load in duration
         sw      t7, 0x0268(a0)      // save duration
         sw      r0, 0x029C(a0)      // clear free space
-        li      t7, 0x801313F0      
+        li      t7, 0x801313F0
         sw      a0, 0x0014(t7)      // save projectile to hardcoded stage struct
-       
+
         addiu   t7, r0, 0x0019      // 25 damage
         sw      t7, 0x0104(a0)
         lw      v0, 0x0028(sp)
@@ -4943,14 +5223,14 @@ scope Hazards {
         jr      ra
         nop
     }
-    
+
     // @ Description
     // Main subroutine for the Chain Chomp Hitbox.
     scope chainchomp_hitbox_main_: {
         // a0 = projectile object
         // a2 = active projective struct
         addiu   sp, sp,-0x0010      // allocate stack space
-        sw      ra, 0x0004(sp)        
+        sw      ra, 0x0004(sp)
         li      t7, 0x801313F0      // load hardcoded stage struct
         lw      t8, 0x0010(t7)      // load chain chomp object
         sw      t8, 0x0008(sp)
@@ -4963,55 +5243,55 @@ scope Hazards {
         sw      t0, 0x001C(t3)      // load x position
         sw      t1, 0x0020(t3)      // load y position
         sw      t2, 0x0024(t3)      // load z position
-        
+
         addiu   t5, a2, 0x214       // hitbox area address
         addiu   t7, a2, 0x029C      // hitbox counters address
         addiu   t6, r0, 0x0003      // loops
-        
+
         _loop:
         lbu     t4, 0x0000(t7)      // hitbox counter
         beqzl   t4, _next           // clear hitbox if counter is done
         sw      r0, 0x0000(t5)
         addiu   t4, t4, 0xFFFF
         sb      t4, 0x0000(t7)      // update counter amount
-        
+
         _next:
         addiu   t6, t6, 0xFFFF      // update loop
         addiu   t5, t5, 0x8         // update hitbox area
         bnez    t6, _loop
         addiu   t7, t7, 0x1         // update counter address
-                
+
         lbu     t5, 0x000E(a0)      // load frame count
         slti    t7, t5, 0x000F
         beqz    t7, _duration
         nop
-        
+
         jal     Global.get_random_int_  // get random integer
         addiu   a0, r0, 0x0050          // decimal 80 possible integers
-        
+
         addiu   t7, r0, 0x0002          // magic number
-        
+
         bne     v0, t7, _duration
         nop
-        
+
         jal     0x800269C0              // play fgm
         addiu   a0, r0, 0x0401          // fgm id = 0x401 (chain chomp)
-        
+
         _duration:
         lw      t8, 0x000C(sp)
         lw      t7, 0x0268(t8)          // load duration
         beqzl   t7, _end
         ori     v0, r0, 0x0001          // destroy
         or      v0, r0, r0              // continue
-        addiu   t7, t7, 0xFFFF  
+        addiu   t7, t7, 0xFFFF
         sw      t7, 0x0268(t8)          // save updated duration
         _end:
-        lw      ra, 0x0004(sp)   
+        lw      ra, 0x0004(sp)
         addiu   sp, sp,0x0010           // allocate stack space
         jr      ra
         nop
     }
-    
+
     // @ Description
     // Main subroutine for the Chain Chomp Hitbox.
     scope chainchomp_hitbox_connect_: {
@@ -5019,7 +5299,7 @@ scope Hazards {
         // a2 = active projective struct
         //lw      t1, 0x0000(sp)          // load player object
         //addiu   sp, sp,-0x0010          // allocate stack space
-        //sw      ra, 0x0004(sp)        
+        //sw      ra, 0x0004(sp)
         //lw      t2, 0x0084(t1)          // load player struct
         //lbu     t3, 0x000D(t2)          // load port
         //addiu   t3, t3, 0xFFFF          // subtract 1 to get true port
@@ -5027,16 +5307,16 @@ scope Hazards {
         //addiu   t5, t5, 0x029C          //
         //addu    t5, t5, t3              // add port
         //addiu   at, r0, 0x0019          // refresh period timer
-        
+
         //sb      at, 0x0000(t5)          // save counter
 
         _end:
-        //lw      ra, 0x0004(sp)   
+        //lw      ra, 0x0004(sp)
         //addiu   sp, sp,0x0010           // allocate stack space
         jr      ra
         addiu   v0, r0, r0
     }
-    
+
     // @ Description
     // allows chain chomp hitbox to refresh by setting counter
     scope chain_chomp_projectile_counter: {
@@ -5045,49 +5325,49 @@ scope Hazards {
         addiu   t9, s2, 0x29C               // counter address
         _return:
         OS.patch_end()
-        
+
         addiu   sp, sp,-0x0010              // allocate stack space
-        sw      t8, 0x0004(sp)              
+        sw      t8, 0x0004(sp)
         sw      t6, 0x000C(sp)
-        
+
         _restart:
         beql    t5, r0, _0x801666BC         // original line 1
         addiu   at, r0, 0x0020              // original line 2
 
         addiu   t9, t9, 0x0001              // advance to next part of counter
-        
+
         addiu   v1, v1, 0x0008
         slti    at, v1, 0x0020
         bnez    at, _0x8016669C
         addiu   t0, t0, 0x0008              // advance hitbox monitor spot
-        
-        lw      t8, 0x0004(sp)              
+
+        lw      t8, 0x0004(sp)
         lw      t6, 0x000C(sp)
         addiu   sp, sp, 0x0010              // allocate stack space
         j       0x801666B8
         nop
-        
+
         _0x801666BC:
         lw      t8, 0x000C(s2)              // load projectile ID
         ori     t6, r0, CHAINCHOMP_ID       // place chain chomp ID in
         bne     t8, t6, _normal             // if not chain chomp don't do extra stuff
         addiu   t8, r0, 0x0019              // refresh period timer
         sb      t8, 0x0000(t9)              // save counter amount
-        
+
         _normal:
-        lw      t8, 0x0004(sp)              
+        lw      t8, 0x0004(sp)
         lw      t6, 0x000C(sp)
         addiu   sp, sp, 0x0010              // allocate stack space
         j       0x801666BC
         nop
-        
+
         _0x8016669C:
         lw      t8, 0x0004(sp)
         lw      t6, 0x000C(sp)
         j       _restart
         lw      t5, 0x0114(t0)
     }
-    
+
     // @ Description
     // Prevents Chain Chomp Projectile From being destroyed for being past blast
     scope blast_zone_destroy_prevent: {
@@ -5098,19 +5378,19 @@ scope Hazards {
         OS.patch_end()
 
         c.lt.s  f2, f16                     // original lines 2
-        
+
         addiu   sp, sp,-0x0010              // allocate stack space
-        sw      t0, 0x0004(sp)              
+        sw      t0, 0x0004(sp)
         sw      t1, 0x0008(sp)
-        
+
         lw      t0, 0x000C(a2)              // load projectile ID
         ori     t1, CHAINCHOMP_ID           // place chain chomp ID in
         bne     t0, t1, _end                // go through normal checks if not chain chomp
-        lw      t0, 0x0004(sp)              
-        
+        lw      t0, 0x0004(sp)
+
         lw      t1, 0x0008(sp)
         addiu   sp, sp, 0x0010              // deallocate stack space
-        
+
         j       0x80166530                  // keep projectile alive regardless
         lw      v0, 0x027C(a2)
 
@@ -5120,7 +5400,7 @@ scope Hazards {
         j       _return
         nop
     }
-    
+
     // @ Description
     // Adds additional sound for 3 on stoplight
     scope stoplight_3: {
@@ -5132,7 +5412,7 @@ scope Hazards {
 
         jal     0x800269C0                  // original line 1
         addiu   s2, r0, 0x0006              // original line 2
-        
+
         addiu   v0, r0, Stages.id.TOADSTURNPIKE
         li      t6, Global.match_info
         lw      t6, 0x0000(t6)              // t6 = match info
@@ -5141,17 +5421,17 @@ scope Hazards {
         addiu   v0, r0, Stages.id.RAINBOWROAD
         bne     v0, t6, _end
         nop
-        
+
         _mk64:
         jal     0x800269C0                  // original line 1
         addiu   a0, r0, 0x0405              // original line 2
-        
+
 
         _end:
         j       _return
         nop
     }
-    
+
     // @ Description
     // Adds additional sound for 2 on stoplight
     scope stoplight_2: {
@@ -5163,7 +5443,7 @@ scope Hazards {
 
         jal     0x800269C0                  // original line 1
         addiu   s2, r0, 0x0007              // original line 2
-        
+
         addiu   v0, r0, Stages.id.TOADSTURNPIKE
         li      t6, Global.match_info
         lw      t6, 0x0000(t6)              // t6 = match info
@@ -5172,17 +5452,17 @@ scope Hazards {
         addiu   v0, r0, Stages.id.RAINBOWROAD
         bne     v0, t6, _end
         nop
-        
+
         _mk64:
         jal     0x800269C0                  // original line 1
         addiu   a0, r0, 0x0405              // original line 2
-        
+
 
         _end:
         j       _return
         nop
     }
-    
+
     // @ Description
     // Adds additional sound for 3 on stoplight
     scope stoplight_1: {
@@ -5194,7 +5474,7 @@ scope Hazards {
 
         jal     0x800269C0                  // original line 1
         addiu   s2, r0, 0x0008              // original line 2
-        
+
         addiu   v0, r0, Stages.id.TOADSTURNPIKE
         li      t6, Global.match_info
         lw      t6, 0x0000(t6)              // t6 = match info
@@ -5203,17 +5483,17 @@ scope Hazards {
         addiu   v0, r0, Stages.id.RAINBOWROAD
         bne     v0, t6, _end
         nop
-        
+
         _mk64:
         jal     0x800269C0                  // original line 1
         addiu   a0, r0, 0x0405              // original line 2
-        
+
 
         _end:
         j       _return
         nop
     }
-    
+
     // @ Description
     // Adds additional sound for Go on stoplight
     scope stoplight_go: {
@@ -5225,7 +5505,7 @@ scope Hazards {
 
         jal     0x800269C0                  // original line 1
         addiu   a0, r0, 0x01EA              // original line 2, GO FGM
-        
+
         addiu   v0, r0, Stages.id.TOADSTURNPIKE
         li      t6, Global.match_info
         lw      t6, 0x0000(t6)              // t6 = match info
@@ -5234,20 +5514,20 @@ scope Hazards {
         addiu   v0, r0, Stages.id.RAINBOWROAD
         bne     v0, t6, _end
         nop
-        
+
         _mk64:
         jal     0x800269C0                  // play fgm
         addiu   a0, r0, 0x0406              // MK64 Noise
-        
+
 
         _end:
         j       _return
         nop
     }
-               
+
     chainchomp_hitbox_pointer:
     dw  0x00000000
-    
+
     OS.align(16)
     chainchomp_projectile_struct:
     constant CHAINCHOMP_ID(0x1007)
@@ -5265,7 +5545,7 @@ scope Hazards {
     dw 0x00000000                           // This function runs when the projectile collides with Fox's reflector (default 0x80168748)
     dw 0x00000000                           // This function runs when the projectile collides with Ness's psi magnet
     OS.copy_segment(0x103904, 0x0C)         // empty
-    
+
     OS.align(16)
     chainchomp_properties_struct:
     dw 999                                  // 0x0000 - duration (int)
@@ -5498,7 +5778,7 @@ scope Hazards {
         addiu   sp, sp, 0x0020                      // deallocate sp
 
     }
-    
+
     // @ Description
     // This establishes car hazard object
     scope onett_setup: {
@@ -5559,7 +5839,7 @@ scope Hazards {
 
         sw      v1, 0x0024(sp)
         sw      a2, 0x0018(sp)              // save item special struct to stack
-        
+
         li      t1, Global.current_screen   // ~
         lbu     t1, 0x0000(t1)              // t0 = screen_id
         ori     t2, r0, 0x0036              // ~
@@ -5621,7 +5901,7 @@ scope Hazards {
         sw      r0, 0x0008(t5)          // restart timer
         lui     t6, 0xc316
         sw      t6, 0x002C(a2)          // save speed
-        
+
         _end:
         lw      ra, 0x001C(sp)
         addiu   sp, sp, 0x0028
@@ -5668,7 +5948,7 @@ scope Hazards {
         sw      t2, 0x0040(t9)
         sw      t2, 0x0044(t9)
         sw      t2, 0x0048(t9)                  // reduce scale to 0.75
-        
+
         addiu   t2, r0, 0x00B4                  // unknown flag used by pirhana
         sh      t2, 0x033E(v1)                  // save flag
         lw      t4, 0x0000(a2)
@@ -5677,7 +5957,7 @@ scope Hazards {
         sw      t4, 0x0020(t9)                  // set initial y
         lw      t4, 0x0008(a2)
         sw      t4, 0x0024(t9)                  // set initial z
-   
+
         lbu     t9, 0x0158(v1)                  // ~
         ori     t9, t9, 0x0010                  // ~
         sb      t9, 0x0158(v1)                  // enable unknown bitflag
@@ -5688,7 +5968,7 @@ scope Hazards {
         sw      t4, 0x0110(v1)                  // save hitbox damage
         addiu   t4, r0, 0x0010                  // horizontal hit
         sw      t4, 0x013C(v1)                  // save hitbox angle to location
-        lui     t4, 0xc42f                      
+        lui     t4, 0xc42f
         sw      t4, 0x0124(v1)                  // save to hitbox y offset
         lui      t4, 0xc496
         sw      t4, 0x0128(v1)                  // save to hitbox z offset so it can hit players
@@ -5737,5 +6017,202 @@ scope Hazards {
         j       0x8016F8C0                      // jump to address that bomb/grenade normally goes to
         sw      r0, 0x0038(s0)                  // make car invisible
     }
+
+    // @ Description
+    // This establishes Pirate Land hazard object in which cannon is tied to
+    scope great_bay_setup: {
+        addiu   sp, sp,-0x0060              // allocate stack space
+        sw      ra, 0x0024(sp)              // ~
+        sw      s0, 0x0028(sp)              // store ra, s0
+
+        li      s0, 0x801313F0              // load hardcoded space used by hazards, generally for pointers
+        sw      r0, 0x0060(s0)              // clear under_water flags and frenzy turns
+
+        sw      s0, 0x0020(sp)              // hardcoded space used by hazards, generally for pointers
+
+        li      a1, great_bay_water_        // great bay water routine
+        addiu   a2, r0, 0x0001              // group
+        addiu   a0, r0, 0x03F2              // object id
+
+        jal     Render.CREATE_OBJECT_       // create object
+        lui     a3, 0x8000                  // unknown
+
+        sw      v0, 0x0050(sp)              // save object address
+        addiu   t6, r0, 0xFFFF
+        or      s0, v0, r0
+        sw      t6, 0x0010(sp)
+        or      a0, v0, r0
+        lw      a1, 0x0030(sp)
+        addiu   a2, r0, 0x0004
+
+        //jal     Render.DISPLAY_INIT_        // initliaze object for display
+        //lui     a3, 0x8000
+
+        lui     t7, 0x8013
+        lw      t7, 0x13F0(t7)
+        lw      t8, 0x0028(sp)
+        or      a0, s0, r0
+        or      a2, r0, r0
+        addiu   a3, r0, 0x001C
+        sw      r0, 0x0010(sp)
+        sw      r0, 0x0014(sp)
+
+        lw      ra, 0x0024(sp)              // ~
+        lw      s0, 0x0028(sp)              // load ra, s0
+        jr      ra                          // return
+        addiu   sp, sp, 0x0060              // deallocate stack space
+    }
+
+    // @ Description
+    // Main function for Great Bay's water. Based on Pirate Land's water.
+    scope great_bay_water_: {
+        constant WATER_Y(0xC48D)            // current setting - float: -1128
+        constant SPLASH_Y(0xC44F)           // current setting - float: -828
+        constant RIGHT_X(0x4550)            // current setting - float: 3328
+        constant LEFT_X(0xC580)             // current setting
+
+        addiu   sp, sp, -0x0050             // allocate stack space
+        sw      ra, 0x0024(sp)              // ~
+        sw      s0, 0x0028(sp)              // ~
+        sw      s1, 0x002C(sp)              // store ra, s0, s1
+        or      s0, r0, r0                  // current port = 0
+        lli     s1, 0x0003                  // final iteration = 0x3
+
+        _loop:
+        jal     Character.port_to_struct_   // v0 = player struct for current port
+        or      a0, s0, r0                  // a0 = current port
+        beqz    v0, _loop_end               // skip if no struct found for current port
+        nop
+
+        // if the player is present
+        sw      v0, 0x003C(sp)              // 0x003C(sp) = px struct
+
+        lw      t6, 0x0008(v0)              // t6 = character id
+        lli     at, Character.id.FOX        // at = id.FOX
+        beq     at, t6, _fire_fox_check     // perform action check if character = FOX
+        lli     at, Character.id.JFOX       // at = id.JFOX
+        beq     at, t6, _fire_fox_check     // perform action check if character = FOX
+        lli     at, Character.id.FALCO      // at = id.FALCO
+        bne     at, t6, _check_intro        // skip action check if character != FALCO
+
+        _fire_fox_check:
+        lw      t6, 0x0024(v0)              // t6 = action id
+        lli     at, Action.FOX.FireFoxAir   // same as FALCO.Action.FireBirdAir
+        beq     t6, at, _loop_end           // skip if Fox/Falco are doing their up special
+        nop
+
+        _check_intro:
+        li      t6, Global.current_screen   // ~
+        lbu     t6, 0x0000(t6)              // t6 = screen_id
+        ori     at, r0, 0x0036              // ~
+        beq     at, t6, _check_y            // skip if screen_id = training mode
+        nop
+
+        li      t6, Global.match_info       // ~
+        lw      t6, 0x0000(t6)              // t6 = match info struct
+        lw      t6, 0x0018(t6)              // t6 = time elapsed
+        beqz    t6, _loop_end               // skip if time elapsed = 0
+        nop
+
+        _check_y:
+        lw      v0, 0x0078(v0)              // v0 = px x/y/z coordinates
+        li      t8, 0x801313F0              // t8 = stage data
+        addu    t8, t8, s0                  // t8 = stage data + port offset
+        lwc1    f2, 0x0004(v0)              // f2 = px y position
+        lui     at, WATER_Y                 // ~
+        mtc1    at, f4                      // f4 = WATER_Y
+        c.le.s  f2, f4                      // compare player location to beginning of water
+        nop
+        bc1fl   _loop_end                   // skip if player is above water...
+        sb      r0, 0x005C(t8)              // ...and set px_under_water to FALSE
+
+        lbu     t0, 0x005C(t8)              // t0 = px_under_water
+        bnez    t0, _water_physics          // branch if px_under_water != FALSE
+        lli     at, OS.TRUE                 // ~
+
+        // if the player has just gone under the water
+        sb      at, 0x005C(t8)              // px_under_water = TRUE
+        lw      at, 0x0000(v0)              // at = px x
+        sw      at, 0x0030(sp)              // 0x0030(sp) = px x
+        lui     at, SPLASH_Y                // ~
+        sw      at, 0x0034(sp)              // 0x0034(sp) = SPLASH_Y
+        sw      r0, 0x0038(sp)              // 0x0038(sp) = 0
+        addiu   a0, sp, 0x0030              // a0 = coordinates to create gfx at
+        jal     0x801001A8                  // create "splash" gfx
+        addiu   a1, r0, 0x0001              // a1 = 1
+        addiu   a0, sp, 0x0030              // a0 = coordinates to create gfx at
+        jal     0x801001A8                  // create "splash" gfx
+        addiu   a1, r0,-0x0001              // a1 = -1
+        jal     0x800269C0                  // play fgm
+        addiu   a0, r0, 0x03D1              // fgm id = 0x3D1 (Splash)
+
+        _water_physics:
+        lw      v0, 0x003C(sp)              // v0 = px struct
+        lbu     at, 0x018D(v0)              // at = bit field
+        andi    at, at, 0x0007              // at = bit field & mask(0b01111111), this disables the fast fall flag
+        sb      at, 0x018D(v0)              // store updated bit field
+        lui     at, 0xC1A0                  // ~
+        mtc1    at, f2                      // f2 = -20.0
+        lui     at, 0x3F70                  // ~
+        mtc1    at, f4                      // f4 = 0.9375
+        lui     at, 0x3F60                  // ~
+        mtc1    at, f6                      // f6 = 0.875
+        lwc1    f8, 0x0048(v0)              // f8 = x velocity
+        lwc1    f10, 0x004C(v0)             // f10 = y velocity
+        mul.s   f8, f8, f4                  // f8 = x velocity * 0.9375
+        mul.s   f10, f10, f6                // f10 = y velocity * 0.875
+        c.le.s  f2, f10                     // ~
+        swc1    f8, 0x0048(v0)              // store updated x velocity
+        bc1fl   _water_knockback            // if y velocity =< -20...
+        swc1    f10, 0x004C(v0)             // ...store updated y velocity
+
+        _water_knockback:
+        lui     at, 0x3F7B                  // ~
+        mtc1    at, f6                      // f6 = 0.980469
+        lwc1    f8, 0x0054(v0)              // f8 = x kb velocity
+        lwc1    f10, 0x0058(v0)             // f10 = y kb velocity
+        mul.s   f8, f8, f6                  // f8 = x velocity * 0.980469
+        mul.s   f10, f10, f6                // f10 = y velocity * 0.980469
+        swc1    f8, 0x0054(v0)              // store updated kb x velocity
+        swc1    f10, 0x0058(v0)             // store updated kb y velocity
+        c.le.s  f2, f10                     // ~
+        mul.s   f10, f10, f4                // f10 = y velocity * 0.9375
+        bc1fl   _loop_end                   // if y velocity =< -20...
+        swc1    f10, 0x0058(v0)             // ...store updated kb y velocity
+
+        _loop_end:
+        bne     s0, s1, _loop               // loop if final iteration has not been reached
+        addiu   s0, s0, 0x0001              // iterate current port
+
+        lw      ra, 0x0024(sp)              // ~
+        lw      s0, 0x0028(sp)              // ~
+        lw      s1, 0x002C(sp)              // load ra, s0, s1
+        jr      ra                          // return
+        addiu   sp, sp, 0x0050              // deallocate stack space
+    }
+
+	// @ Description
+    // Sets the lighting for Draculas Castle
+    scope draculas_castle_setup_: {
+        addiu   sp, sp, -0x0010             // allocate sp
+        sw      ra, 0x0008(sp)
+        li      a0, 0xFFA8C4FF				// colour to use (kinda pink)
+		jal		set_player_env_colour_
+		nop
+        lw      ra, 0x0008(sp)
+        jr      ra
+        addiu   sp, sp, 0x0010              // deallocate sp
+
+    }
+
+
+	// @ Description
+	// Set all global player env lighting colour
+	// a0 = colour to use (RRGGBBAA)
+	scope set_player_env_colour_: {
+		lui		v0, 0x8013
+		jr		ra
+		sw		a0, 0x1388(v0)				// overwrite colour
+	}
 
 } // __HAZARDS__

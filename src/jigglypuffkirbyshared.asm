@@ -4,6 +4,10 @@
 
 scope JigglypuffKirbyShared {
 
+
+	constant kirby_jump_multiplier_table(0x80188578)// NA, NA, 60.0, 52.0, 47.0, 40.0
+	constant puff_jump_multiplier_table(0x80188588)	// NA, NA, 60.0, 40.0, 20.0, 0.0		
+
     // character ID check add for when Jigglypuff Clones are doing 2+ jumps. This is the first of the double jump routines
     scope jump_fix_1: {
         OS.patch_start(0xBA9A8, 0x8013FF68)
@@ -13,6 +17,8 @@ scope JigglypuffKirbyShared {
         OS.patch_end()
 
         beq     v0, at, _puff_jump_1       // modified original line 2
+        addiu   at, r0, Character.id.DEDEDE   // Dedede ID
+        beq     v0, at, _kirby_jump_1
         addiu   at, r0, Character.id.JPUFF    // JPuff ID
         beq     v0, at, _puff_jump_1
         addiu   at, r0, Character.id.EPUFF    // EPuff ID
@@ -40,8 +46,10 @@ scope JigglypuffKirbyShared {
         _return:
         OS.patch_end()
 
-        addiu   at, r0, 0x000A                  // Puff ID
+		// at = Character.id.PUFF
         beq     v0, at, _puff_jump_2            // modified original line 2
+        addiu   at, r0, Character.id.DEDEDE     // Dedede ID
+        beq     v0, at, _dedede_jump_2
         addiu   at, r0, Character.id.JPUFF      // JPuff ID
         beq     v0, at, _puff_jump_2
         addiu   at, r0, Character.id.EPUFF   // EPuff ID
@@ -53,12 +61,26 @@ scope JigglypuffKirbyShared {
         nop
 
         _puff_jump_2:
+		constant puff_jump_decay(0x42A0)	// 80.0	
         j       0x801400A0                  // routine for puff jumps
         nop
 
         _kirby_jump_2:
-        j       0x80140070                  // routine for puff jumps
+		constant kirby_jump_decay(0x42A0)	// 80.0
+        j       0x80140070                  // routine for kirby jumps
         nop
+		
+        _dedede_jump_2:
+		mtc1	t4, f4						// move t4 to float
+		lui		at, Dedede.jump_decay       // at - Dededes jump decay
+		mtc1	at, f8						// move at to float
+		cvt.s.w	f6, f4						// convert f6
+		li		at, Dedede.jump_multiplier_table // at = Dededes jump multipler table
+		sll		t5, v1, 2					// t5 = offset to current jump multipler
+		addu	at, at, t5					// at = current index
+		lwc1	f16, 0x0000(at)				// f16 = jump multipler for this jump
+        j       0x80140090                  // goto the rest of the kirby extra jump routine
+		nop
     }
 
     // character ID check add for when Jigglypuff Clones are jumping/in the air.
@@ -70,6 +92,8 @@ scope JigglypuffKirbyShared {
         OS.patch_end()
 
         beq     v1, at, _puff_jump_3            // modified original line 1
+        addiu   at, r0, Character.id.DEDEDE     // Dedede ID
+        beq     v1, at, _puff_jump_3
         addiu   at, r0, Character.id.JPUFF      // JPuff ID
         beq     v1, at, _puff_jump_3
         addiu   at, r0, Character.id.EPUFF   // EPuff ID
@@ -94,6 +118,8 @@ scope JigglypuffKirbyShared {
         OS.patch_end()
 
         beq     v0, at, _puff_jump_4            // modified original line 1
+        addiu   at, r0, Character.id.DEDEDE     // Dedede ID
+        beq     v0, at, _kirby_jump_4
         addiu   at, r0, Character.id.JPUFF      // JPuff ID
         beq     v0, at, _puff_jump_4
         addiu   at, r0, Character.id.EPUFF   // EPuff ID
@@ -122,6 +148,8 @@ scope JigglypuffKirbyShared {
         OS.patch_end()
 
         beq     v1, at, _puff_jump_5            // modified original line 1
+        addiu   at, r0, Character.id.DEDEDE     // Dedede ID
+        beq     v1, at, _kirby_jump_5
         addiu   at, r0, Character.id.JPUFF      // JPuff ID
         beq     v1, at, _puff_jump_5
         addiu   at, r0, Character.id.EPUFF      // EPuff ID
@@ -496,14 +524,20 @@ scope JigglypuffKirbyShared {
         _return:
         OS.patch_end()
 
-        beq     v1, at, _end
+        beq     v1, at, _kirby
         addiu   at, r0, Character.id.JKIRBY     // JKIRBY ID
-        beq     v1, at, _end
+        beq     v1, at, _kirby
+        addiu   at, r0, Character.id.DEDEDE     // DEDEDE ID
+        beq     v1, at, _kirby
         nop
         j       0x80136C2C                  // modified line 1
+        or      v0, r0, r0                  // original line 2
+		
+        _dedede:
+        j       _return
         or      v0, v1, r0                  // original line 2
 
-        _end:
+        _kirby:
         j       _return
         or      v0, v1, r0                  // original line 2
     }
@@ -516,14 +550,16 @@ scope JigglypuffKirbyShared {
         _return:
         OS.patch_end()
 
-        beq     v0, at, _end
+        beq     v0, at, _kirby
         addiu   at, r0, Character.id.JKIRBY     // JKIRBY ID
-        beq     v0, at, _end
+        beq     v0, at, _kirby
+        addiu   at, r0, Character.id.DEDEDE     // DEDEDE ID
+        beq     v0, at, _kirby
         nop
         j       0x80138F18                  // modified line 1
         or      v1, v0, r0                  // original line 2
 
-        _end:
+        _kirby:
         j       _return
         or      v1, v0, r0                  // original line 2
     }
@@ -540,13 +576,46 @@ scope JigglypuffKirbyShared {
         nop
         addiu   at, r0, Character.id.JKIRBY     // JKIRBY ID
         beq     at, a0, _kirby
+        addiu   at, r0, Character.id.DEDEDE     // DEDEDE ID
+        beq     at, a0, _dedede
         nop
 
         _end:
         j       0x80137160                  // modified line 1
         addiu   at, r0, 0x000B              // original line 2
+		
+		_dedede:
+		lw		v0, 0x0024(a2)					// v0 = current action
+		addiu	at, r0, Dedede.Action.NSP_IDLE_GROUND
+		beq		at, v0, _dedede_spit
+		addiu	at, r0, Dedede.Action.NSP_FALL
+		beq		at, v0, _dedede_spit
+		nop
+        j       0x80137160                  // modified line 1
+        addiu   at, r0, 0x000B              // original line 2
+
+        _dedede_spit:
+        or		a0, a2, r0
+        jal		0x80132758
+        lli		a1, AI.ROUTINE.NSP          // press B
+        j		0x80137768
+        or		v0, r0, r0
+        
+        _dedede_hat:
+        lw		v0, 0x0024(a2)              // v0 = current action
+        addiu	at, r0, Kirby.Action.DEDEDE_NSP_IDLE_GROUND
+        beq		at, v0, _dedede_spit
+        addiu	at, r0, Kirby.Action.DEDEDE_NSP_FALL
+        beq		at, v0, _dedede_spit
+        nop
+        j       0x80137160                  // modified line 1
+        addiu   at, r0, 0x000B              // original line 2
 
         _kirby:
+        lb		at, 0x0980(a2)              // at = current hat ID
+        sltiu	at, at, 0x0020              // v0 = dededes hat id
+        beqz	at, _dedede_hat             // branch if dedede hat
+        nop
         j       _return
         nop
     }
@@ -562,6 +631,8 @@ scope JigglypuffKirbyShared {
         beq     t0, at, _kirby
         nop
         addiu   at, r0, Character.id.JKIRBY     // JKIRBY ID
+        beq     at, t0, _kirby
+        addiu   at, r0, Character.id.DEDEDE     // DEDEDE ID
         beq     at, t0, _kirby
         nop
 
@@ -699,6 +770,77 @@ scope JigglypuffKirbyShared {
         _end:
         j       _return                         // return
         nop
+    }
+	
+    // @ Description
+    // Allows characters with slow/short aerial hops to make contact with the ledge better during recovering
+    scope multi_jump_recovery_fix_: {
+        OS.patch_start(0xAFBD8, 0x80135198)
+        j     multi_jump_recovery_fix_
+        nop
+        _return:
+        OS.patch_end()
+
+        // v0 = character id
+        // at = Jiggly character id
+        beq      v0, at, _puff_kirby       // skip if PUFF
+        addiu    at, r0, Character.id.JPUFF
+        beq      t6, at, _puff_kirby       // skip if JPN PUFF
+        addiu    at, r0, Character.id.MARINA
+        beq      v0, at, _puff_kirby       // skip if MARINA
+        addiu    at, r0, Character.id.DEDEDE
+        beq      v0, at, _dedede           // skip if DEDEDE
+        addiu    at, r0, Character.id.EPUFF
+        beq      t6, at, _puff_kirby       // skip if E PUFF
+        addiu    at, r0, Character.id.JKIRBY
+        beq      t6, at, _puff_kirby       // skip if J KIRBY
+        nop
+
+        _normal:
+        j       0x80135368                 // skip puff/kirby branch
+        or      a0, s0, r0                 // og line 2 (delay slot)
+		
+		_dedede:
+		lw		v0, 0x0024(s0)             // v0 = current action
+		lli 	at, Dedede.Action.USP_MOVE        // at = USP_MOVE action ID
+		bne		at, v0, _puff_kirby		   // continue normally if not already doing an up special
+		nop
+		j		0x80135B68                 // exit function if already doing USP
+		lw		ra, 0x0024(sp)
+
+        _puff_kirby:
+        j       _return                    // take puff or kirbys branch
+        nop
+
+    }
+	
+    // @ Description
+    // May prevent puff copies from doing an up special to an opponent while they are aerial
+    // Hooks into check for vanilla puff
+    scope remix_skip_offensive_usp_air_: {
+        OS.patch_start(0xAE9B0, 0x80133F70)
+        j     remix_skip_offensive_usp_air_
+        nop
+        OS.patch_end()
+
+        // t6 = character id
+        addiu    at, r0, Character.id.JIGGLYPUFF // original line 1
+        beq      t6, at, _puff              // no usp if vanilla PUFF
+        addiu    at, r0, Character.id.JPUFF
+        beq      t6, at, _puff              // no usp if JPN PUFF
+        addiu    at, r0, Character.id.EPUFF
+        beq      t6, at, _puff              // no usp if E PUFF
+        nop
+
+        _usp_possible_attack:
+        j       0x80133FB4                  // normal branch for other characters
+        nop
+
+        _puff:
+        addiu   at, r0, 0x000D              // original logic, flag for Puff USP?
+        j       0x80133F84                  // branch seems to prevent the cpu from using the attack
+        lbu     t7, 0x0002(v1)              // original logic. affects next attack
+
     }
 
     OS.align(16)

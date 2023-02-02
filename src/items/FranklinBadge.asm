@@ -51,7 +51,7 @@ dw 0, 0, 0, 0                           // 0x90 - 0x9C - ?
 
 // @ Description
 // Duration of Franklin Badge item
-constant BADGE_DURATION(20*60)          // duration = 20 seconds
+constant BADGE_DURATION(30*60)          // duration = 30 seconds
 constant GFX_ROUTINE(0x70)              // gfx routine index
 
 // @ Description
@@ -128,8 +128,8 @@ scope handle_active_franklin_badge_: {
     lw      a1, 0x0040(a0)          // a1 = item owner struct
 
     lw      v0, 0x0024(a1)          // v0 = players current action
-    addiu   at, r0, Action.Revive1  // at = Revive action id
-    beq     v0, at, _destroy_badge  // destroy badge if player is reviving
+    addiu   at, r0, Action.Idle     // at = Action.Idle
+    blt     v0, at, _destroy_badge  // destroy badge if player is dead
     addiu   t2, r0, 0x0001          // t2 = 1 (clear reflect flag on destroy)
 
     lw      at, 0x003C(a0)          // at = pointer to custom reflect hitbox
@@ -137,9 +137,24 @@ scope handle_active_franklin_badge_: {
     beq     at, t8, _maintain_badge // branch if reflect hitbox is still badges hb
     addiu   t2, r0, 0x0000          // t2 = 0 (dont clear reflect flag on destroy)
 
-    // if here, player is probably reflecting or absorbing
-    lw      v0, 0x018C(a1)          // v0 = current players reflect/absorb flag
-    bnez    v0, subtract_timer      // don't maintain franklin badge if player is still reflecting
+	_absorb_check:
+    lh      v0, 0x018C(a1)          // v0 = current players reflect/absorb flag
+	addiu	t0, r0, 0x0880
+	beq		v0, t0, subtract_timer	// branch if absorbing
+	nop
+
+	_ness_check:
+	addiu	t0, r0, 0x0C80			// t0 = Ness's shield-break flag
+	bne		v0, t0, _check_if_active// branch if shield break flag is not on
+	nop
+	addiu	t0, r0, 0x0880
+	sh		t0, 0x018C(a1)			// ~
+	b		subtract_timer			// don't maintain badge
+    addiu   t2, r0, 0x0001          // t2 = 1 (clear reflect flag on destroy)
+
+	_check_if_active:
+	andi	t0, v0, 0x0400			// see if reflect/absorb flag is even enabled
+	bnez	t0, subtract_timer		// maintain badge if not reflecting/absorbing
     addiu   t2, r0, 0x0001          // t2 = 1 (clear reflect flag on destroy)
 
     _maintain_badge:
@@ -147,32 +162,31 @@ scope handle_active_franklin_badge_: {
     lw      at, 0x0038(a0)          // at = fox's reflect flag
     lw      v0, 0x018C(a1)          // v0 = current players flag
     or      v0, at, v0              // v0 and at = new, combined flag
-    sw      v0, 0x018C(a1)          // save spefical flag to player struct
+    sw      v0, 0x018C(a1)          // save special flag to player struct
 
     subtract_timer:
     lh      v0, 0x004C(a0)          // v0 = timer value
     addiu   t8, v0, 0xffff          // timer -= 1
-    sh      t8, 0x004C(a0)          // save timer
     addiu   at, r0, 0x0001
     bne     v0, at, _end            // don't destroy if timer value not 1
-    nop
+    sh      t8, 0x004C(a0)          // save timer
 
     _destroy_badge:
     lw      at, 0x0048(a0)          // at = pointer to players index in franklin badge array
     sw      r0, 0x0000(at)          // remove player from franklin badge array
 
-    addiu   at, r0, Action.Revive1  // at = Revive action id
-    beq     v0, at, _destroy_branch_1 // don't touch player flag if they are dead
+    lw      v0, 0x0024(a1)          // v0 = players current action
+    addiu   at, r0, Action.Idle     // at = Action.Idle
+    blt     v0, at, _destroy_branch_1 // destroy if player is dead
     nop
 
     bnez    t2, _destroy_branch_1   // clear reflect flag if t2 != 0
     nop
 
-    // remove reflect flag to prevent crash when badge gets removed between actions (temporary fix)
-    li      at, 0xFBFFFFFF          // at = bitmask for fox reflect
-    lw      v0, 0x018C(a1)          // a0 = current players flag
-    and     v0, at, v0              // v0 = players current flag with reflect flag removed
-    sw      v0, 0x018C(a1)          // overwrite flag in player struct
+    // remove reflect flag
+    lh      v0, 0x018C(a1)          // v0 = current players reflect flag
+    andi    v0, at, 0xFFFB          // remove reflect flag
+    sh      v0, 0x018C(a1)          // overwrite players flag
 
     // remove player gfx, based on star
     _destroy_branch_1:
@@ -184,9 +198,8 @@ scope handle_active_franklin_badge_: {
     lw      t1, 0x0000(t0)              // t1 = current players override gfx routine
     bne     at, t1, _destroy_branch_2   // branch if franklin badge gfx routine is not here
     lw      a0, 0x0004(a1)              // a0 = player object
-    sw      r0, 0x0000(t0)              // remove franklin badge gfx override flag
     jal     0x800E98D4                  // run players default gfx routine
-    nop
+    sw      r0, 0x0000(t0)              // remove franklin badge gfx override flag
 
     _destroy_branch_2:
     jal     Render.DESTROY_OBJECT_
@@ -195,9 +208,8 @@ scope handle_active_franklin_badge_: {
     _end:
     lw      s1, 0x0004(sp)          //
     lw      ra, 0x0014(sp)          // restore registers
-    addiu   sp, sp, 0x24            // deallocate sp
     jr      ra                      // return
-    nop                             // ~
+    addiu   sp, sp, 0x24            // deallocate sp
 }
 
 // @ Description
@@ -261,42 +273,153 @@ scope reflect_gfx_: {
     _end:
     lw       ra, 0x0014(sp)
     addiu    sp, sp, 0x18
-    or       v0, v1, r0
     jr       ra
-    nop
-
+    or       v0, v1, r0
 }
 
 // @ Description
-// Clears the timer and routine for active lightning.
+// keep the reflect flag on action change
+// basically we modify t7 and t5 before they are written
+scope keep_on_action_change_: {
+	OS.patch_start(0x628EC, 0x800E70EC)
+	j		keep_on_action_change_
+	lbu     t7, 0x000D(s1)              // t7 = port
+	_return:
+	OS.patch_end()
+	
+	// Check if this player has a franklin badge
+    li      t5, players_with_franklin_badge
+    sll     t7, t7, 0x0002              // t7 = offset to player entry
+    addu    t5, t5, t7                  // t5 = address of players badge
+    lw      t7, 0x0000(t5)              // get current value
+
+	beqz	t7, _normal
+	andi	t5, t4, 0xFFFB				// original line 1
+
+	// If player has a Franklin badge, then don't clear reflect flag
+
+	lw		at, 0x0850(s1)				// at = current reflect/absorb struct
+	li		t7, reflect_hitbox_struct
+	beql	at, t7, _normal				// branch if reflect/absorb struct = Franklin Badge
+	andi	t5, t4, 0xFFFF				// don't clear reflect flag
+
+	_normal:
+	j		_return
+	andi	t7, t6, 0xFF7F				// original line 2
+	
+}
+
+// @ Description
+// Clears the pointers for Franklin Badge users
 scope clear_active_franklin_badges_: {
     li      t8, players_with_franklin_badge      // t8 = array to clear
     sw      r0, 0x0000(t8)              // clear ptrs
     sw      r0, 0x0004(t8)              // ~
     sw      r0, 0x0008(t8)              // ~
-    sw      r0, 0x000C(t8)              // ~
     jr      ra
-    nop
+    sw      r0, 0x000C(t8)              // ~
+}
+
+// @ Description
+// Skip hurtbox collision checks for players with a Franklin Badge 1
+scope grant_projectile_immunity_: {
+	OS.patch_start(0x60CF4, 0x800E54F4)
+	j	grant_projectile_immunity_
+	nop
+	_return:
+	OS.patch_end()
+	
+	// t6 = projectile damage enabled
+	// s7 = player struct
+	
+	bnez	t6, _check_franklin_badge	// based on og line 1
+	lbu     t2, 0x000D(s7)              // t2 = port
+	
+	// if here, immune
+	or		s1, s7, r0					// og line 2
+	_projectile_immune:
+	j		0x800E558C					// skip collision check (player immune)
+	lw		v0, 0x0050(t1)
+	
+	_check_franklin_badge:
+    li      at, players_with_franklin_badge
+    sll     t2, t2, 0x0002              // t2 = offset to player entry
+    addu    at, at, t2                  // at = address of players badge
+    lw      t2, 0x0000(at)              // t2 = current badge ptr
+	bnez	t2, _projectile_immune		// grant immunity if wearing a Franklin Badge
+	or		s1, s7, r0					// og line 2
+	
+	_check_collision:
+	j		0x800E5504 + 0x4
+	lw		t2, 0x05BC(s1)				// original branch line 1
+	
+}
+
+// @ Description
+// Skip hurtbox collision checks for players with a Franklin Badge 2
+scope grant_item_immunity_: {
+	OS.patch_start(0x61348, 0x800E5B48)
+	j		grant_item_immunity_
+	nop
+	_return:
+	OS.patch_end()
+	
+	// 0xB4(sp) = item object
+	// t9 = projectile damage enabled
+	// s7 = player struct
+	
+	bnez	t9, _check_item_based_on_star// based on og line 1
+	lbu     t7, 0x000D(s7)              // t7 = port
+	
+	// if here, immune
+	or		s1, s7, r0					// og line 2
+	_item_immune:
+	j		0x800E5BE0					// skip collision check (player immune)
+	lw		v0, 0x0054(t8)
+	
+	_check_item_based_on_star:
+	lw		at, 0x00B4(sp)				// at = item object
+	lw		at, 0x0084(at)				// at = item struct
+	lw		s1, 0x000C(at)				// s1 = item id
+	addiu	at, r0, Item.SuperMushroom.id
+	beq		at, s1, _check_collision_0
+	addiu	at, r0, Item.PoisonMushroom.id
+	beq		at, s1, _check_collision_0
+	addiu	at, r0, Item.Star.id
+	beq		at, s1, _check_collision_0
+	nop
+	
+	_check_franklin_badge:
+    li      at, players_with_franklin_badge
+    sll     t7, t7, 0x0002              // t7 = offset to player entry
+    addu    at, at, t7                  // at = address of players badge
+    lw      t7, 0x0000(at)              // t7 = current badge ptr
+	bnez	t7, _item_immune			// grant immunity if wearing a Franklin Badge
+	_check_collision_0:
+	or		s1, s7, r0					// og line 2
+	_check_collision:
+	j		0x800E5B58 + 0x4
+	lw		t7, 0x05BC(s1)				// original branch line 1
+	
+	
 }
 
 // @ Description
 // stores player struct
 players_with_franklin_badge:
-dw 0
-dw 0
-dw 0
-dw 0
+dw 0, 0, 0, 0
+
 // Based on Falcos reflect hitbox written to 0x850 of player struct
 reflect_hitbox_struct:
 dh 0x0000                         // index to custom reflect routine table. Reflect.custom_reflect_table
 dh Reflect.reflect_type.CUSTOM            // reflect type. Custom value of 4.  ( fox = 0, ??? = 1, bat = 2 )
 dw 0x00000004                     // ?
-dw 0x00000000                     // ?
-dw 0x42700000                     // ?
-dw 0x00000000                     // ?
-dw 0x43AF0000                     // x scale?
-dw 0x43AF0000                     // y scale?
-dw 0x43AF0000                     // z scale?
-dw 0x18000000                     // hp value maybe
+dw 0x00000000                     // x offset (local)
+dw 0x42700000                     // y offset (local)
+dw 0x00000000                     // z offset (local)
+dw 0x43AF0000                     // x size = 512 (local)
+dw 0x43AF0000                     // y size = 512 (local)
+dw 0x43AF0000                     // z size = 512 (local)
+dw 0x18000000                     // ? hp value
 
 

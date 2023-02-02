@@ -103,6 +103,16 @@ scope Global {
     // Pointer to match setting. For versus, (0x0000(this) == 0x800A4D08) which is the address of
     // the above vs scope.
     constant match_info(0x800A50E8)
+	scope GAMEMODE: {
+		// byte 0x00 of match_info
+		constant DEMO(0x00)
+		constant VS(0x01)
+		constant BONUS(0x02)
+		constant HOWTOPLAY(0x03)
+		constant INTRO(0x04)
+		constant CLASSIC(0x05)
+		constant TRAINING(0x07)
+	}
 
 
     // @ Description
@@ -133,6 +143,19 @@ scope Global {
     // player struct list head
     constant p_struct_head(0x80130D84)
     constant P_STRUCT_LENGTH(0x0B50)
+	
+	// @ Description
+    // hard-coded pointers and routine for dealing with clipping at runtime
+    scope stage_clipping: {
+		// pointers
+        constant objects(0x80131304)
+        constant info(0x8013136C)			// Entry size = 0x0A
+		constant coordinates(0x80131370)	// Entry size = 0x14
+		
+		// routines
+		constant disable_clipping(0x800FC604) // disables clipping, where a0 = the index.
+    }
+
 }
 
 } // __GLOBAL__

@@ -47,6 +47,10 @@ scope BGM {
         jr      ra                          // return
         lw      v1, 0x0040(t9)              // original line 2
     }
+	
+	default_track:
+	dw	0
+	
 
     // @ Description
     // This function replaces the stage's default bgm_id with alternate ids defined for the stage, sometimes.
@@ -72,6 +76,25 @@ scope BGM {
         lui     a0, 0x8013
         lw      a0, 0x1300(a0)              // a0 = stage file
         lw      a1, 0x007C(a0)              // a1 = default stage bgm_id
+	
+        // check if there is an override
+		// TODO: Make sure this works
+        // li      t0, Global.match_info       // ~
+        // lw      t0, 0x0000(t0)              // t0 = match_info
+        // lbu     t0, 0x0001(t0)              // t0 = current stage id
+        // sll		t0, t0, 1					// t0 = offset in music override table
+        // li		at, Stages.default_music_track_table
+        // addu 	t0, t0, at					// t0 = stages entry in music override table
+        // lh		t0, 0x0000(t0)				// t0 = stages override
+        // beqz    t0, _set_default_track		// branch if no override value
+        // nop
+        // addiu   t0, t0, -1					// correct track id
+        // move	a1, t0						// replace a1 with override value
+        // sw      t0, 0x007C(a0)              // set default bgm_id
+	
+        // _set_default_track:
+        li		at, default_track			// at = address we use to store stages default track
+        sw		a1, 0x0000(at)				// save default track id
 
         // check for held buttons to force alternate music: CU - Default, CL - Occasional, CR - Rare
         addu    t0, r0, a1                  // t0 = bgm_id
@@ -102,7 +125,7 @@ scope BGM {
         nop
         addu    a1, t0, r0                  // a1 = bgm_id
         bnez    v0, _get_bgm_id             // if CR pressed,
-        ori     a0, r0, 0x0002              // then use the Occasional song
+        ori     a0, r0, 0x0002              // then use the Rare song
 
         // check for salty song preservation
         li      t0, Toggles.entry_preserve_salty_song
@@ -255,8 +278,14 @@ scope BGM {
     // @ Description
     // This function replaces the stage's default bgm_id with a random id from the table.
     scope random_music_: {
+        // check for pause dpad music randomization (toggle is disregarded here)
+        li      t2, Pause.dpad_song_cycle_timer   // t2 = dpad_song_cycle_timer
+        lw      t2, 0x0000(t2)              // t2 = 0 if true
+        beqz    t2, _build_random_list      // branch accordingly (sneak past guard)
+        nop
         Toggles.guard(Toggles.entry_random_music, 0x00000000)
 
+        _build_random_list:
         addiu   sp, sp,-0x0020              // allocate stack space
         sw      a0, 0x0004(sp)              // save registers
         sw      t0, 0x0008(sp)              // ~
@@ -296,6 +325,10 @@ scope BGM {
             evaluate n({n}+1)
         }
 
+        li      t0, Pause.dpad_song_cycle_timer   // t0 = dpad_song_cycle_timer
+        lw      t0, 0x0000(t0)              // t0 = 0 if true
+        beqz    t0, _end                    // if we are doing pause dpad music randomization, skip to end
+        nop
         beqz    v1, _end                    // if there were no valid entries in the random table, then use default bgm_id
         nop
 
@@ -863,6 +896,10 @@ scope BGM {
 
     current_track:
     dw -1
+	
+	// @ Description
+	// Location where current track is written in vanilla.
+	constant vanilla_current_track(0x8013139C)
 
 }
 

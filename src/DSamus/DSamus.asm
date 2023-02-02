@@ -38,6 +38,10 @@ scope DSamus {
     insert CLAP, "moveset/CLAP.bin"
     insert TAUNT, "moveset/TAUNT.bin"
 
+    // Insert AI attack options
+    constant CPU_ATTACKS_ORIGIN(origin())
+    insert CPU_ATTACKS,"AI/attack_options.bin"
+    OS.align(16)
 
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(DSAMUS, Action.Dash,           File.DSAMUS_DASH,           -1,                         -1)
@@ -106,7 +110,33 @@ scope DSamus {
     Character.set_default_costumes(Character.id.DSAMUS, 0, 1, 2, 4, 5, 1, 3)
 
     // Shield colors for costume matching
-    Character.set_costume_shield_colors(DSAMUS, BLACK, CYAN, ORANGE, WHITE, RED, RED, NA, NA)
+    Character.set_costume_shield_colors(DSAMUS, BLUE, YELLOW, ORANGE, GREEN, MAGENTA, RED, NA, NA)
+
+    // Set CPU behaviour
+    Character.table_patch_start(ai_behaviour, Character.id.DSAMUS, 0x4)
+    dw      CPU_ATTACKS
+    OS.patch_end()
+
+    // Edit cpu attack behaviours
+    // edit_attack_behavior(table, attack, override, start_hb, end_hb, min_x, max_x, min_y, max_y)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DAIR,   -1,  -1,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPA,   -1,  -1,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPG,   -1,  -1,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSMASH, -1,  25,  33,  -1, -1, -10, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DTILT,  -1,  10,  14,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FAIR,   -1,  5,   6,   -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FSMASH, -1,  10,  13,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FTILT,  -1,  6,   9,   -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, GRAB,   -1,  -1,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, JAB,    -1,  -1,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NAIR,   -1,  3,   25,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPA,   -1,  -1,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPG,   -1,  -1,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UAIR,   -1,  6,   26,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPA,   -1,  -1,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPG,   -1,  -1,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USMASH, -1,  14,  22,  -1, -1, -25, 1250)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UTILT,  -1,  -1,  -1,  -1, -1, -1, -1)
 
     // Prevents Dark Samus from losing a jump after using air down special
     scope bomb_loss_prevention: {

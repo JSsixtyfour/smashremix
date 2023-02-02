@@ -45,6 +45,24 @@ scope Kirby {
     insert SHEIK_NSP_BEGIN,"moveset/SHEIK_NSP_BEGIN.bin"
     insert SHEIK_NSP_CHARGE,"moveset/SHEIK_NSP_CHARGE.bin"
     insert SHEIK_NSP_SHOOT,"moveset/SHEIK_NSP_SHOOT.bin"
+    insert MARINA_NSP,"moveset/MARINA_NSP.bin"
+    MARINA_NSP_PULL:; Moveset.THROW_DATA(Marina.GRAB_RELEASE_DATA); insert "moveset/MARINA_NSP_PULL.bin"
+    MARINA_NSPG_THROW:; Moveset.THROW_DATA(Marina.NSPG_THROW_DATA); insert "moveset/MARINA_NSPG_THROW.bin"
+    MARINA_NSPG_THROWU:; Moveset.THROW_DATA(Marina.NSPG_THROWU_DATA); insert "moveset/MARINA_NSPG_THROWU.bin"
+    MARINA_NSPG_THROWD:; Moveset.THROW_DATA(Marina.NSPG_THROWD_DATA); insert "moveset/MARINA_NSPG_THROWD.bin"
+    MARINA_NSPA_THROW:; Moveset.THROW_DATA(Marina.NSPA_THROW_DATA); insert "moveset/MARINA_NSPA_THROW.bin"
+    MARINA_NSPA_THROWU:; Moveset.THROW_DATA(Marina.NSPA_THROWU_DATA); insert "moveset/MARINA_NSPA_THROWU.bin"
+    MARINA_NSPA_THROWD:; Moveset.THROW_DATA(Marina.NSPA_THROWD_DATA); insert "moveset/MARINA_NSPA_THROWD.bin"
+    insert DEDEDE_NSP_SUBROUTINE,"moveset/DEDEDE_NSP_SUBROUTINE.bin"
+    insert DEDEDE_NSP_BEGIN,"moveset/DEDEDE_NSP_BEGIN.bin"; Moveset.SUBROUTINE(DEDEDE_NSP_SUBROUTINE); dw 0x00000000
+    insert DEDEDE_NSP_INHALE_THROW_DATA,"moveset/DEDEDE_NSP_INHALE_THROW_DATA.bin"
+    DEDEDE_NSP_INHALE:; Moveset.THROW_DATA(DEDEDE_NSP_INHALE_THROW_DATA); insert "moveset/DEDEDE_NSP_INHALE.bin"
+    insert DEDEDE_NSP_SWALLOW,"moveset/DEDEDE_NSP_SWALLOW.bin"
+    DEDEDE_NSP_SPIT:
+    dw      0x08000007      // after 7 frames
+    Moveset.SUBROUTINE(DEDEDE_NSP_SUBROUTINE)
+    insert DEDEDE_NSP_SPIT_2,"moveset/DEDEDE_NSP_SPIT_2.bin"
+    insert DEDEDE_NSP_PULL,"moveset/DEDEDE_NSP_PULL.bin"
 
     // Add Action Parameters                // Action Name       // Base Action // Animation                    // Moveset Data         // Flags
     Character.add_new_action_params(KIRBY,  GND_NSP_Ground,             0x127,  -1,                             GND_NSP_GROUND,         -1)
@@ -102,14 +120,41 @@ scope Kirby {
     Character.add_new_action_params(KIRBY,  SONIC_NSP_Ground_Recoil,    -1,     File.KIRBY_SONIC_NSPG_END_B,    0x80000000,             0)
     Character.add_new_action_params(KIRBY,  SONIC_NSP_Air_Recoil,       -1,     File.KIRBY_SONIC_NSPA_END_B,    0x80000000,             0)
     Character.add_new_action_params(KIRBY,  SONIC_NSP_Bounce,           -1,     File.KIRBY_SONIC_NSPA_END_F,    SONIC_NSP_BOUNCE,       0)
-    
     Character.add_new_action_params(KIRBY,  SHEIK_NSP_Ground_Begin,     -1,     File.KIRBY_SHEIK_NSPG_START,    SHEIK_NSP_BEGIN,             0)
     Character.add_new_action_params(KIRBY,  SHEIK_NSP_Ground_Charge,    -1,     File.KIRBY_SHEIK_NSPG_CHARGE,   SHEIK_NSP_CHARGE,            0)
     Character.add_new_action_params(KIRBY,  SHEIK_NSP_Ground_Shoot,     -1,     File.KIRBY_SHEIK_NSPG_SHOOT,    SHEIK_NSP_SHOOT,             0)
     Character.add_new_action_params(KIRBY,  SHEIK_NSP_Air_Begin,        -1,     File.KIRBY_SHEIK_NSPA_START,    SHEIK_NSP_BEGIN,             0)
     Character.add_new_action_params(KIRBY,  SHEIK_NSP_Air_Charge,       -1,     File.KIRBY_SHEIK_NSPA_CHARGE,   SHEIK_NSP_CHARGE,            0)
     Character.add_new_action_params(KIRBY,  SHEIK_NSP_Air_Shoot,        -1,     File.KIRBY_SHEIK_NSPA_SHOOT,    SHEIK_NSP_SHOOT,             0)
-
+    Character.add_new_action_params(KIRBY, 	DEDEDE_NSP_BEGIN_GROUND,   	-1,		File.KIRBY_NSP_BEGIN,           DEDEDE_NSP_BEGIN,       0x1C000000)
+    Character.add_new_action_params(KIRBY, 	DEDEDE_NSP_LOOP_GROUND,    	-1,		File.KIRBY_NSP_LOOP,            DEDEDE_NSP_INHALE,    	0x1C000000)
+    Character.add_new_action_params(KIRBY, 	DEDEDE_NSP_PULL_GROUND,    	-1,		File.KIRBY_NSP_LOOP,            DEDEDE_NSP_PULL,    	0x1C000000)
+    Character.add_new_action_params(KIRBY, 	DEDEDE_NSP_SWALLOW_GROUND, 	-1,		File.KIRBY_NSP_SWALLOW,         DEDEDE_NSP_SWALLOW,   	0x1C000000)
+    Character.add_new_action_params(KIRBY, 	DEDEDE_NSP_IDLE_GROUND,    	-1,		File.KIRBY_NSP_IDLE,   	        DEDEDE_NSP_SWALLOW,   	0x0C000000)
+    Character.add_new_action_params(KIRBY, 	DEDEDE_NSP_SPIT_GROUND,    	-1,		File.KIRBY_NSP_SPIT,            DEDEDE_NSP_SPIT,      	0x4C000000)
+    Character.add_new_action_params(KIRBY, 	DEDEDE_NSP_TURN_GROUND,    	-1,		File.KIRBY_NSP_TURN,            0x80000000,             0x00000000)
+    Character.add_new_action_params(KIRBY, 	DEDEDE_NSP_END_GROUND,      -1,		File.KIRBY_NSP_END,             0x80000000,             0x1C000000)
+    Character.add_new_action_params(KIRBY, 	DEDEDE_NSP_BEGIN_AIR,       -1,		File.KIRBY_NSP_BEGIN,           DEDEDE_NSP_BEGIN,       0x1C000000)
+    Character.add_new_action_params(KIRBY, 	DEDEDE_NSP_LOOP_AIR,        -1,		File.KIRBY_NSP_LOOP,            DEDEDE_NSP_INHALE,      0x1C000000)
+    Character.add_new_action_params(KIRBY, 	DEDEDE_NSP_PULL_AIR,        -1,		File.KIRBY_NSP_LOOP,            DEDEDE_NSP_PULL,        0x1C000000)
+    Character.add_new_action_params(KIRBY, 	DEDEDE_NSP_SWALLOW_AIR,     -1,		File.KIRBY_NSP_SWALLOW,         DEDEDE_NSP_SWALLOW,     0x1C000000)
+    Character.add_new_action_params(KIRBY, 	DEDEDE_NSP_FALL,            -1,		File.KIRBY_NSP_IDLE, 	        DEDEDE_NSP_SWALLOW,     0x0C000000)
+    Character.add_new_action_params(KIRBY, 	DEDEDE_NSP_SPIT_AIR,        -1,		File.KIRBY_NSP_SPIT,            DEDEDE_NSP_SPIT,        0x4C000000)
+    Character.add_new_action_params(KIRBY, 	DEDEDE_NSP_TURN_AIR,        -1,		File.KIRBY_NSP_TURN, 	        0x80000000,             0x00000000)
+    Character.add_new_action_params(KIRBY, 	DEDEDE_NSP_END_AIR,         -1,		File.KIRBY_NSP_END,             0x80000000,             0x1C000000)
+    Character.add_new_action_params(KIRBY, 	DEDEDE_NSP_WALK_1,          -1,		File.KIRBY_DEDEDE_NSP_INHALED_WALK,	0x80000000,         0)
+    Character.add_new_action_params(KIRBY, 	DEDEDE_NSP_WALK_2,          -1,		File.KIRBY_DEDEDE_NSP_INHALED_WALK,	0x80000000,         0)
+    Character.add_new_action_params(KIRBY, 	DEDEDE_NSP_WALK_3,          -1,		File.KIRBY_DEDEDE_NSP_INHALED_WALK,	0x80000000,         0)
+    Character.add_new_action_params(KIRBY,  MARINA_NSPG,                -1,     File.KIRBY_MARINA_NSPG,         MARINA_NSP,             0x10000000)
+    Character.add_new_action_params(KIRBY,  MARINA_NSPGPull,            -1,     File.KIRBY_MARINA_NSPG_PULL,    MARINA_NSP_PULL,        0x10000000)
+    Character.add_new_action_params(KIRBY,  MARINA_NSPGThrow,           -1,     File.KIRBY_MARINA_NSPG_THROW,   MARINA_NSPG_THROW,      0x10000000)
+    Character.add_new_action_params(KIRBY,  MARINA_NSPGThrowU,          -1,     File.KIRBY_MARINA_NSPG_THROW_U, MARINA_NSPG_THROWU,     0x10000000)
+    Character.add_new_action_params(KIRBY,  MARINA_NSPGThrowD,          -1,     File.KIRBY_MARINA_NSPG_THROW_D, MARINA_NSPG_THROWD,     0x10000000)
+    Character.add_new_action_params(KIRBY,  MARINA_NSPA,                -1,     File.KIRBY_MARINA_NSPA,         MARINA_NSP,             0x10000000)
+    Character.add_new_action_params(KIRBY,  MARINA_NSPAPull,            -1,     File.KIRBY_MARINA_NSPA_PULL,    MARINA_NSP_PULL,        0x10000000)
+    Character.add_new_action_params(KIRBY,  MARINA_NSPAThrow,           -1,     File.KIRBY_MARINA_NSPA_THROW,   MARINA_NSPA_THROW,      0x10000000)
+    Character.add_new_action_params(KIRBY,  MARINA_NSPAThrowU,          -1,     File.KIRBY_MARINA_NSPA_THROW_U, MARINA_NSPA_THROWU,     0x10000000)
+    Character.add_new_action_params(KIRBY,  MARINA_NSPAThrowD,          -1,     File.KIRBY_MARINA_NSPA_THROW_D, MARINA_NSPA_THROWD,     0x10000000)
 
     // Add Actions                  // Action Name       // Base Action //Parameters                       // Staling ID    // Main ASM                 // Interrupt/Other ASM              // Movement/Physics ASM     // Collision ASM
     Character.add_new_action(KIRBY, GND_NSP_Ground,             0x127,  ActionParams.GND_NSP_Ground,            -1,         -1,                         -1,                                 -1,                         -1)
@@ -167,12 +212,41 @@ scope Kirby {
     Character.add_new_action(KIRBY, SONIC_NSP_Ground_Recoil,    -1,     ActionParams.SONIC_NSP_Ground_Recoil,   0x12,       0x800D94C4,                 0,                                  0x800D8BB4,                 SonicNSP.ground_recoil_collision_)
     Character.add_new_action(KIRBY, SONIC_NSP_Air_Recoil,       -1,     ActionParams.SONIC_NSP_Air_Recoil,      0x12,       0x800D94E8,                 0,                                  0x800D91EC,                 SonicNSP.air_recoil_collision_)
     Character.add_new_action(KIRBY, SONIC_NSP_Bounce,           -1,     ActionParams.SONIC_NSP_Bounce,          0x12,       0x800D94E8,                 0,                                  0x800D91EC,                 0x800DE99C)
-    Character.add_new_action(KIRBY, SHEIK_NSP_Ground_Begin,     -1,     ActionParams.SHEIK_NSP_Ground_Begin,    0x12,       SheikNSP.begin_main_,       0x8015D464,                         0x800D8BB4,                 SheikNSP.kirby_ground_begin_collision_) 
+    Character.add_new_action(KIRBY, SHEIK_NSP_Ground_Begin,     -1,     ActionParams.SHEIK_NSP_Ground_Begin,    0x12,       SheikNSP.begin_main_,       0x8015D464,                         0x800D8BB4,                 SheikNSP.kirby_ground_begin_collision_)
     Character.add_new_action(KIRBY, SHEIK_NSP_Ground_Charge,    -1,     ActionParams.SHEIK_NSP_Ground_Charge,   0x12,       SheikNSP.charge_main_,      SheikNSP.ground_charge_interrupt_,  0x800D8BB4,                 SheikNSP.kirby_ground_charge_collision_)
-    Character.add_new_action(KIRBY, SHEIK_NSP_Ground_Shoot,     -1,     ActionParams.SHEIK_NSP_Ground_Shoot,    0x12,       SheikNSP.shoot_main_,       0,                                  0x800D8BB4,                 SheikNSP.kirby_ground_shoot_collision_) 
-    Character.add_new_action(KIRBY, SHEIK_NSP_Air_Begin,        -1,     ActionParams.SHEIK_NSP_Air_Begin,       0x12,       SheikNSP.begin_main_,       0x8015D464,                         0x800D90E0,                 SheikNSP.air_begin_collision_)    
-    Character.add_new_action(KIRBY, SHEIK_NSP_Air_Charge,       -1,     ActionParams.SHEIK_NSP_Air_Charge,      0x12,       SheikNSP.charge_main_,      SheikNSP.air_charge_interrupt_,     0x800D91EC,                 SheikNSP.air_charge_collision_)   
-    Character.add_new_action(KIRBY, SHEIK_NSP_Air_Shoot,        -1,     ActionParams.SHEIK_NSP_Air_Shoot,       0x12,       SheikNSP.shoot_main_,       0,                                  0x800D91EC,                 SheikNSP.air_shoot_collision_) 
+    Character.add_new_action(KIRBY, SHEIK_NSP_Ground_Shoot,     -1,     ActionParams.SHEIK_NSP_Ground_Shoot,    0x12,       SheikNSP.shoot_main_,       0,                                  0x800D8BB4,                 SheikNSP.kirby_ground_shoot_collision_)
+    Character.add_new_action(KIRBY, SHEIK_NSP_Air_Begin,        -1,     ActionParams.SHEIK_NSP_Air_Begin,       0x12,       SheikNSP.begin_main_,       0x8015D464,                         0x800D90E0,                 SheikNSP.air_begin_collision_)
+    Character.add_new_action(KIRBY, SHEIK_NSP_Air_Charge,       -1,     ActionParams.SHEIK_NSP_Air_Charge,      0x12,       SheikNSP.charge_main_,      SheikNSP.air_charge_interrupt_,     0x800D91EC,                 SheikNSP.air_charge_collision_)
+    Character.add_new_action(KIRBY, SHEIK_NSP_Air_Shoot,        -1,     ActionParams.SHEIK_NSP_Air_Shoot,       0x12,       SheikNSP.shoot_main_,       0,                                  0x800D91EC,                 SheikNSP.air_shoot_collision_)
+	Character.add_new_action(KIRBY, DEDEDE_NSP_BEGIN_GROUND,    -1,     ActionParams.DEDEDE_NSP_BEGIN_GROUND,	0x12,		DededeNSP.ground_begin_main_,	0,                               	0x800D8BB4, 			0x80162750)
+    Character.add_new_action(KIRBY, DEDEDE_NSP_LOOP_GROUND,     -1,     ActionParams.DEDEDE_NSP_LOOP_GROUND,	0x12,		0x8016201C,                 	0x80162468,                      	0x800D8BB4, 			DededeNSP.inhale_loop_ground_to_air_check_)
+    Character.add_new_action(KIRBY, DEDEDE_NSP_PULL_GROUND,     -1,     ActionParams.DEDEDE_NSP_PULL_GROUND,	0x12,		0x80162078,                 	0,                               	0x800D8BB4, 			0x801627BC)
+    Character.add_new_action(KIRBY, DEDEDE_NSP_SWALLOW_GROUND,  -1,     ActionParams.DEDEDE_NSP_SWALLOW_GROUND,	0x12,		0x80162214,                 	0,                               	0x800D8BB4, 			0x801627E0)
+    Character.add_new_action(KIRBY, DEDEDE_NSP_IDLE_GROUND,     -1,     ActionParams.DEDEDE_NSP_IDLE_GROUND,    0x12,		0,                   			DededeNSP.ground_idle_interrupt_,	0x800D8BB4, 			0x80162828)
+    Character.add_new_action(KIRBY, DEDEDE_NSP_SPIT_GROUND,     -1,     ActionParams.DEDEDE_NSP_SPIT_GROUND,	0x12,		DededeNSP.ground_spit_main_,	0,                               	0x800D8C14, 			0x80162804)
+    Character.add_new_action(KIRBY, DEDEDE_NSP_TURN_GROUND,     -1,     ActionParams.DEDEDE_NSP_TURN_GROUND,	0x12,		0x801621CC,                 	0,                               	0x800D8BB4, 			0x8016284C)
+    Character.add_new_action(KIRBY, DEDEDE_NSP_END_GROUND,      -1,     ActionParams.DEDEDE_NSP_END_GROUND,  	0x12,		0x800D94C4,            			0,                               	0x800D8BB4, 			0x80162798)
+    Character.add_new_action(KIRBY, DEDEDE_NSP_BEGIN_AIR,       -1,     ActionParams.DEDEDE_NSP_BEGIN_AIR,   	0x12,		DededeNSP.air_begin_main_,  	0,                       			0x800D91EC, 			0x80162894)
+    Character.add_new_action(KIRBY, DEDEDE_NSP_LOOP_AIR,        -1,     ActionParams.DEDEDE_NSP_LOOP_AIR,    	0x12,		0x8016201C,            			0x80162498,                      	0x800D91EC, 			DededeNSP.inhale_loop_air_to_ground_check_)
+    Character.add_new_action(KIRBY, DEDEDE_NSP_PULL_AIR,        -1,     ActionParams.DEDEDE_NSP_PULL_AIR,    	0x12,		0x80162078,            			0,                               	0x800D91EC, 			0x80162900)
+    Character.add_new_action(KIRBY, DEDEDE_NSP_SWALLOW_AIR,     -1,     ActionParams.DEDEDE_NSP_SWALLOW_AIR, 	0x12,		0x80162214,            			0,                               	0x800D91EC, 			0x80162924)
+    Character.add_new_action(KIRBY, DEDEDE_NSP_FALL,            -1,     ActionParams.DEDEDE_NSP_FALL,        	0x12,		0,            					DededeNSP.air_fall_interrupt_,   	0x800D91EC, 			0x8016296C)
+    Character.add_new_action(KIRBY, DEDEDE_NSP_SPIT_AIR,        -1,     ActionParams.DEDEDE_NSP_SPIT_AIR,    	0x12,		DededeNSP.air_spit_main_, 		0,	                              	0x800D93E4, 			0x80162948)
+    Character.add_new_action(KIRBY, DEDEDE_NSP_TURN_AIR,        -1,     ActionParams.DEDEDE_NSP_TURN_AIR,    	0x12,		0x801621F0,            			0,                               	0x800D91EC, 			0x80162990)
+    Character.add_new_action(KIRBY, DEDEDE_NSP_END_AIR,         -1,     ActionParams.DEDEDE_NSP_END_AIR,     	0x12,		0x800D94E8,            			0,                               	0x800D91EC, 			0x801628DC)
+    Character.add_new_action(KIRBY, DEDEDE_NSP_WALK_1,          -1,     ActionParams.DEDEDE_NSP_WALK_1,      	0x12,		0,            			 		DededeNSP.ground_walk_interrupt_, 	0x8013E548, 			DededeNSP.ground_walk_collision_)
+    Character.add_new_action(KIRBY, DEDEDE_NSP_WALK_2,          -1,     ActionParams.DEDEDE_NSP_WALK_2,      	0x12,		0,            			 		DededeNSP.ground_walk_interrupt_, 	0x8013E548, 			DededeNSP.ground_walk_collision_)
+    Character.add_new_action(KIRBY, DEDEDE_NSP_WALK_3,          -1,     ActionParams.DEDEDE_NSP_WALK_3,      	0x12,		0,            			 		DededeNSP.ground_walk_interrupt_, 	0x8013E548, 			DededeNSP.ground_walk_collision_)
+    Character.add_new_action(KIRBY, MARINA_NSPG,                -1,     ActionParams.MARINA_NSPG,               0x12,       0x800D94C4,                     0,                              MarinaNSP.ground_physics_,    MarinaNSP.ground_collision_)
+    Character.add_new_action(KIRBY, MARINA_NSPGPull,            -1,     ActionParams.MARINA_NSPGPull,           0x12,       MarinaNSP.ground_pull_main_,    0,                              0x800D8BB4,                   MarinaNSP.grab_ground_collision_)
+    Character.add_new_action(KIRBY, MARINA_NSPGThrow,           -1,     ActionParams.MARINA_NSPGThrow,          0x12,       0x8014A0C0,                     MarinaNSP.throw_turn_,          0x800D8BB4,                   0x80149B78)
+    Character.add_new_action(KIRBY, MARINA_NSPGThrowU,          -1,     ActionParams.MARINA_NSPGThrowU,         0x12,       0x8014A0C0,                     0,                              0x800D8BB4,                   0x80149B78)
+    Character.add_new_action(KIRBY, MARINA_NSPGThrowD,          -1,     ActionParams.MARINA_NSPGThrowD,         0x12,       0x8014A0C0,                     0,                              0x800D8BB4,                   0x80149B78)
+    Character.add_new_action(KIRBY, MARINA_NSPA,                -1,     ActionParams.MARINA_NSPA,               0x12,       0x800D94E8,                     0,                              MarinaNSP.air_physics_,       MarinaNSP.air_collision_)
+    Character.add_new_action(KIRBY, MARINA_NSPAPull,            -1,     ActionParams.MARINA_NSPAPull,           0x12,       MarinaNSP.air_pull_main_,       0,                              0x800D91EC,                   MarinaNSP.grab_air_collision_)
+    Character.add_new_action(KIRBY, MARINA_NSPAThrow,           -1,     ActionParams.MARINA_NSPAThrow,          0x12,       0x8014A0C0,                     MarinaNSP.throw_turn_,          MarinaNSP.throw_air_physics_, MarinaNSP.throw_air_collision_)
+    Character.add_new_action(KIRBY, MARINA_NSPAThrowU,          -1,     ActionParams.MARINA_NSPAThrowU,         0x12,       0x8014A0C0,                     0,                              MarinaNSP.throw_air_physics_, MarinaNSP.throw_air_collision_)
+    Character.add_new_action(KIRBY, MARINA_NSPAThrowD,          -1,     ActionParams.MARINA_NSPAThrowD,         0x12,       0x8014A0C0,                     0,                              MarinaNSP.throw_air_physics_, MarinaNSP.throw_air_collision_)
 
 
     Character.table_patch_start(kirby_ground_nsp, Character.id.WARIO, 0x4)
@@ -217,12 +291,26 @@ scope Kirby {
     Character.table_patch_start(kirby_air_nsp, Character.id.SONIC, 0x4)
     dw      SonicNSP.begin_initial_
     OS.patch_end()
-    
+
     Character.table_patch_start(kirby_ground_nsp, Character.id.SHEIK, 0x4)
     dw      SheikNSP.ground_begin_initial_
     OS.patch_end()
     Character.table_patch_start(kirby_air_nsp, Character.id.SHEIK, 0x4)
     dw      SheikNSP.air_begin_initial_
+    OS.patch_end()
+
+    Character.table_patch_start(kirby_ground_nsp, Character.id.DEDEDE, 0x4)
+    dw      DededeNSP.ground_begin_initial_
+    OS.patch_end()
+    Character.table_patch_start(kirby_air_nsp, Character.id.DEDEDE, 0x4)
+    dw      DededeNSP.air_begin_initial_
+    OS.patch_end()
+
+    Character.table_patch_start(kirby_ground_nsp, Character.id.MARINA, 0x4)
+    dw      MarinaNSP.ground_initial_
+    OS.patch_end()
+    Character.table_patch_start(kirby_air_nsp, Character.id.MARINA, 0x4)
+    dw      MarinaNSP.air_initial_
     OS.patch_end()
 
     //TODO: maybe move this asm to the shared file?

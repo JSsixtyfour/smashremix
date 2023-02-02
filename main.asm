@@ -28,7 +28,6 @@ include "src/Moveset.asm"
 include "src/Command.asm"
 include "src/Timeouts.asm"
 include "src/GFX.asm"
-include "src/AI.asm"
 include "src/BGM.asm"
 include "src/Camera.asm"
 include "src/Color.asm"
@@ -54,7 +53,7 @@ include "src/Cheats.asm"
 include "src/TimedStock.asm"
 include "src/Shield.asm"
 include "src/Training.asm"
-include "src/VsCombo.asm"
+include "src/ComboMeter.asm"
 include "src/VsStats.asm"
 include "src/Widescreen.asm"
 include "src/AA.asm"
@@ -83,8 +82,12 @@ include "src/Practice_1P.asm"
 include "src/SinglePlayerEnemy.asm"
 include "src/PlayerTag.asm"
 include "src/Reflect.asm"
+include "src/Transitions.asm"
+include "src/ZCancel.asm"
+include "src/Tripping.asm"
 // CHARACTER
 include "src/Character.asm"
+include "src/AI.asm"
 include "src/CharacterSelect.asm"
 include "src/CharacterSelectDebugMenu.asm"
 include "src/Costumes.asm"
@@ -104,6 +107,7 @@ include "src/Falco/Falco.asm"
 // GANONDORF
 include "src/Ganondorf/Ganondorf.asm"
 // YOUNG LINK
+include "src/YoungLink/YoungLinkSpecial.asm"
 include "src/YoungLink/YoungLink.asm"
 // DR MARIO
 include "src/DrMario/DrMario.asm"
@@ -175,6 +179,28 @@ include "src/SSonic/SSonic.asm"
 // SHEIK
 include "src/Sheik/SheikSpecial.asm"
 include "src/Sheik/Sheik.asm"
+// NWARIO
+include "src/NWario/NWario.asm"
+// NLUCAS
+include "src/NLucas/NLucas.asm"
+// MARINA
+include "src/Marina/MarinaSpecial.asm"
+include "src/Marina/Marina.asm"
+// NBOWSER
+include "src/NBowser/NBowser.asm"
+// NWOLF
+include "src/NWolf/NWolf.asm"
+// NDRM
+include "src/NDrMario/NDrMario.asm"
+// NSONIC
+include "src/NSonic/NSonic.asm"
+// NSHEIK
+include "src/NSheik/NSheik.asm"
+// DEDEDE
+include "src/Dedede/DededeSpecial.asm"
+include "src/Dedede/Dedede.asm"
+// NMARINA
+include "src/NMarina/NMarina.asm"
 
 // KIRBY
 include "src/Kirby/Kirby.asm"
@@ -191,7 +217,7 @@ fill MIDI.largest_midi  // Allocate as much space as we need!
 
 OS.align(16)
 file_table:  // This is where we move the file table to in order to load more files
-fill 0x480
+fill 0x580
 
 custom_heap: // This is where we move the heap to when we need to increase its size
 

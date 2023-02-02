@@ -274,6 +274,7 @@ scope YoshiShared {
     }
 	
 	// Hardcoding for Yoshi Clones to recover as a CPU.
+	// A good place for other characters to recover a certain way
     scope yoshi_cpu_fix_1: {
         OS.patch_start(0xAFFCC, 0x8013558C)
         j       yoshi_cpu_fix_1                     
@@ -282,17 +283,25 @@ scope YoshiShared {
         OS.patch_end()
         
         beq     v0, at, _yoshi_recover_1             	// modified original line 1 part 2
+        addiu   at, r0, Character.id.MARINA       	// marina ID
+        beq     at, v0, _marina_jump_check
         addiu   at, r0, Character.id.JYOSHI       	// j yoshi ID
         beq     at, v0, _yoshi_recover_1
         nop
+		
+		_USP:
         j       _return
         addiu  at, r0, 0x000A                 // original line 2
-        
-        _yoshi_recover_1:
+
+        _marina_jump_check:
+		lb		at, 0x0148(s0)				  // get current # jumps
+		addiu	v0, r0, 0x0006				  // v0 = max # of Marina's jumps
+		beq     at, v0, _USP				  // do up special if no more jumps
+		addiu 	v0, r0, Character.id.MARINA	  // restore v0 (unsure if needed)
+        _yoshi_recover_1:					  // no up special
         j       0x80135628                    // modified original line 1 part 2               
         addiu  at, r0, 0x000A                 // original line 2
-        j       _return
-        nop
+		
     }
     
     
@@ -344,6 +353,9 @@ scope YoshiShared {
         addiu   t1, r0, Character.id.JYOSHI     // JYOSHI ID
         li      a1, downspecial_struct_jyoshi     // JYOSHI File Pointer placed in correct location
         beq     t1, t2, _end
+        addiu   t1, r0, Character.id.DEDEDE     // DEDEDE ID
+        li      a1, downspecial_struct_dedede   // DEDEDE File Pointer placed in correct location
+        beq     t1, t2, _end
         nop
         
         lui     a1, 0x8019                 // original line 1 
@@ -371,6 +383,13 @@ scope YoshiShared {
     dw 0x00000000
     dw 0x00000006
     dw Character.JYOSHI_file_1_ptr
+    OS.copy_segment(0x103D6C, 0x40)
+    
+    OS.align(16)
+    downspecial_struct_dedede:
+    dw 0x00000000
+    dw 0x00000006
+    dw Character.DEDEDE_file_7_ptr
     OS.copy_segment(0x103D6C, 0x40)
 
     }

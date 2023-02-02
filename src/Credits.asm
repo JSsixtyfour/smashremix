@@ -303,10 +303,13 @@ scope Credits {
     add_title("Developer")
     add_name("MarioReincarnate", "Let's just say you owe him|lunch", remix)
     add_name("Cyjorg", "Stage Engine", remix)
-    add_name("halofactory", "The secret of 2401|lies within", remix)
+    add_name("Halofactory", "That's the way she goes.", remix)
 
     add_title("Lead Artist")
     add_name("Sope", "Character Modeling|Character Artwork|Stage Modeling|Smash Remix Logo", remix)
+    
+    add_title("Lead Musician")
+    add_name("Pringles", "You didn't see 60 bucks|lyin' around, did ya bud?", remix)
 
     add_title("Animation and Model Import Specialist")
     add_name("Subdrag", "Living Legend|Creator of GE Editor", remix)
@@ -330,8 +333,8 @@ scope Credits {
     add_name("Garret Atwood", "Turtle - Great Bay", remix)
     add_name("Adrian Garcia", "Dark Samus Textures", remix)
     add_name("M-1", "Wolf Model, Gerudo Valley", remix)
-    add_name("TheQuickSlash", "Stage Modeller|\dDork\d -sope|oFTo", remix)
-    add_name("halofactory", "Sheik Model|Smashville v2", remix)
+    add_name("TheQuickSlash", "Stage Modeller|\dDork\d -sope|oFTo | https://youtu.be/ | widZEAJc0QM", remix)
+    add_name("Halofactory", "Sheik Model|Smashville v2", remix)
 
     add_title("Artists")
     add_name("Sope", "Character Models, VFX,|Character Artwork", remix)
@@ -343,7 +346,7 @@ scope Credits {
     add_name("Pik", "Remix 1p Victory Image", remix)
     add_name("Gael Romo", "", remix)
     add_name("TheQuickSlash", "Sonic Victory Image", remix)
-    add_name("halofactory", "Sheik Portrait", remix)
+    add_name("Halofactory", "Sheik Portrait", remix)
 
     add_title("Animators")
     add_name("Sope", "Character and Stage|Animations", remix)
@@ -359,7 +362,8 @@ scope Credits {
     add_name("PrufStudent", "Character Animations", remix)
     add_name("Zeozen", "Character Animations", remix)
     add_name("M-1", "Character Animations", remix)
-    add_name("halofactory", "Character Animations", remix)
+    add_name("Halofactory", "Character Animations", remix)
+    add_name("TheQuickSlash", "Character Animations", remix)
 
     add_title("Musicians")
     add_name("TT", "Music Porter and Arranger", remix)
@@ -374,8 +378,11 @@ scope Credits {
     add_name("PurpleFreezer", "Arranger", remix)
     add_name("Pun", "Music Porter and Arranger", remix)
     add_name("Fray", "All-Star Rest Area and|Mewtwo Victory Theme|Arrangement, Various|Track Mixing", remix)
-    add_name("TheQuickSlash", "Sonic 2 Special Stage,|Sonic CD Special Stage|Arrangements", remix)
+    add_name("TheQuickSlash", "Sonic 2 Special Stage,|Sonic CD Special Stage|Arrangements,|Bein' Friends", remix)
     add_name("supa", "", remix)
+    add_name("Pringles", "Three twenties,|or something?", remix)
+    add_name("TheMrIron2", "", remix)
+    add_name("Unforseen Uplink", "", remix)
 
     add_title("Stage Designers")
     add_name("BridGurrr", "Ganon's Tower, Deku Tree,|First Destination", remix)
@@ -391,6 +398,7 @@ scope Credits {
     add_name("Retro64", "Dr. Mario, Kitchen Island,|Onett, New Pork City,|Bowser's Keep, Windy,|Casino Night Zone", remix)
     add_name("TheQuickSlash", "dataDyne, Castle Siege", remix)
     add_name("ownsoldier", "Rith Essa", remix)
+    add_name("Halofactory", "Dracula's Castle,|Reverse Castle", remix)
 
     add_title("Voice Artists")
     add_name("Zarkpudd", "Narration", remix)
@@ -400,7 +408,7 @@ scope Credits {
     add_name("Qapples", "", remix)
     add_name("smb123w64gb", "", remix)
     add_name("FaxMeAppleJuice", "Regional Variant Porting", remix)
-    add_name("goombapatrol", "Menu Coding Support,|1P Practice Mode,|Miscellaneous Coding", remix)
+    add_name("goombapatrol", "Menu Coding Support,|1P Practice Mode,|Dpad map,|Miscellaneous Coding", remix)
 
     add_title("Consultants")
     add_name("Madao", "Moveset Consultant", remix)
@@ -412,6 +420,7 @@ scope Credits {
     add_name("M-1", "Animation and Modeling|Consultant", remix)
     add_name("Kaki", "Stage Consultant - Tent|Final Destination", remix)
     add_name("Katakiri", "Stage Consultant - Green|Hill Zone", remix)
+    add_name("Aqua Midi", "Instrument Consultant", remix)
 
     add_title("Playtesters")
     add_name("Abnormal Adept", "", remix)
@@ -438,7 +447,7 @@ scope Credits {
     add_name("thelordoflight", "", remix)
     add_name("JODO", "", remix)
     add_name("farcry15", "Hardware Testing", remix)
-    add_name("mimimax", "", remix)
+    add_name("Mimimax", "", remix)
     add_name("kyleglor", "", remix)
     add_name("Revan", "", remix)
     add_name("Big Red", "", remix)
@@ -484,6 +493,26 @@ scope Credits {
     add_name("Stew", "", remix)
     add_name("thetaiter", "", remix)
     add_name("LesbianChemicalPlant", "", remix)
+    add_name("Bedoop!", "", remix)
+    add_name("CMM1215", "", remix)
+    add_name("Djzach", "", remix)
+    add_name("Exile", "", remix)
+    add_name("FrankBlack22", "", remix)
+    add_name("Freean", "", remix)
+    add_name("Gibrani", "", remix)
+    add_name("Huntsman", "", remix)
+    add_name("Indefa", "", remix)
+    add_name("MultiVolt", "", remix)
+    add_name("Policombo", "", remix)
+    add_name("Raihem/MayRai", "", remix)
+    add_name("Roman", "", remix)
+    add_name("ShyGuyGH", "", remix)
+    add_name("The Ranger", "", remix)
+    add_name("Tylan 64", "", remix)
+    add_name("Toad", "", remix)
+    add_name("Wiseacre", "", remix)
+    add_name("MissingNo.", "", remix)
+    add_name("Pringles", "Nobody wants to |admit they ate |nine cans of |ravioli.", remix)
 
 
     add_title("Original Sequencing Musical Credits")
@@ -530,12 +559,15 @@ scope Credits {
     add_name("William Borges", "Casino Night Zone", none)
     add_name("Blue Warrior", "Green Hill Zone", none)
     add_name("isabellechiming", "Onett", none)
+    add_name("Venatus", "The Days When My Mother|Was There", none)
 
     add_title("Video Team")
     add_name("Fray", "Trailer Editing, Footage|Capturing, Marth Cinematic", remix)
     add_name("Darkhorse", "Trailer Directing, Trailer|Editing, Graphics", remix)
     add_name("sope", "Graphics, Cinematic|Animation", remix)
     add_name("Dshaynie", "Cinematic Animation", remix)
+    add_name("TheQuickSlash", "Cinematic Animation", remix)
+    add_name("Retro64", "Trailer Directing, Trailer|Editing, Graphics", remix)
 
     // The strings and tables for the Remix credits will be in an external file...
     // This constant will help with that.

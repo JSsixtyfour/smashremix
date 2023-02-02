@@ -702,6 +702,7 @@ scope HRC {
     // @ Description
     // Animates the background image.
     // The background image is the same image twice, so we stretch it to allow scrolling.
+    // This also is used to animate Big Blue's background
     scope animate_background_image_: {
         OS.patch_start(0x8000C, 0x8010480C)
         nop
@@ -714,16 +715,46 @@ scope HRC {
         lli     at, SinglePlayerModes.HRC_ID
         li      t6, SinglePlayerModes.singleplayer_mode_flag
         lw      t6, 0x0000(t6)              // t6 = singleplayer_mode_flag
-        bne     t6, at, _end                // if not HRC, skip
-        lli     at, 0x0001                  // at = 1
+        beq     t6, at, _hrc                // if HRC, do scroll
+        lli     at, 0x0016                  // at = vs screen_id
+        OS.read_byte(Global.current_screen, t6) // t6 = screen_id
+        bne     at, t6, _end                // if not VS, skip
+        lli     at, Stages.id.BLUE          // at = Big Blue stage_id
+        OS.read_byte(Global.vs.stage, t6)   // t6 = stage_id
+        bne     t6, at, _end                // if not Big Blue, skip
+        lw      t6, 0x0004(v0)              // t6 = background object
 
+        lw      at, 0x0084(t6)              // at = special struct of background object
+        bnez    at, _blue                   // if not 0, then we've initialized already so skip initializing
+        lli     at, 0x0001                  // at = 1 = initialized
+        sw      at, 0x0084(t6)              // mark initialized
+        li      at, 0xBF17FDFF              // at = scroll speed
+        sw      at, 0x0044(t6)              // set scroll speed
+        lw      at, 0x0058(v0)              // at = initial background X
+        sw      at, 0x0040(t6)              // set initial background X
+        li      at, 0x400EF007              // at = original X scale doubled = 2.2334
+        sw      at, 0x0048(t6)              // save initial background X scale
+        lw      at, 0x001C(v0)              // at = initial background Y scale
+        sw      at, 0x004C(t6)              // save initial background Y scale
+        lui     at, 0x4100                  // at = Y position to use
+        sw      at, 0x0050(t6)              // save Y position
+
+        _blue:
+        lw      at, 0x004C(t6)              // at = Y scale
+        sw      at, 0x001C(v0)              // update Y scale so the image doesn't stretch with zoom
+        lwc1    f10, 0x0050(t6)             // f10 = Y position
+
+        _hrc:
+        lli     at, 0x0001                  // at = 1
         lw      t6, 0x0004(v0)              // t6 = background object
         lwc1    f18, 0x0040(t6)             // f18 = current X position
         lwc1    f6, 0x0044(t6)              // f6 = current scroll speed
 
         li      t7, Global.match_info
         lw      t7, 0x0000(t7)              // t7 = match info
-        lbu     t7, 0x0011(t7)              // t7 = 1 if not paused
+        lbu     t7, 0x0011(t7)              // t7 = 0 or 1 if not paused
+        beqzl   t7, pc() + 8                // if we're not paused, animate clouds
+        add.s   f18, f18, f6                // f18 = new X position
         beql    t7, at, pc() + 8            // if we're not paused, animate clouds
         add.s   f18, f18, f6                // f18 = new X position
 
@@ -736,8 +767,8 @@ scope HRC {
         add.s   f18, f18, f8                // f18 = updated X position after warping the image
         swc1    f18, 0x0040(t6)             // set X position
 
-        li        at, 0x400EF007            // at = original X scale doubled = 2.2334
-        sw        at, 0x0018(v0)            // update X scale so the image is correct width
+        lw      at, 0x0048(t6)              // at = X scale
+        sw      at, 0x0018(v0)              // update X scale so the image is correct width
 
         _end:
         swc1    f18, 0x0058(v0)             // original line 1 and 3 - set X position of background image

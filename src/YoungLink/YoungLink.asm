@@ -36,6 +36,12 @@ scope YoungLink {
     insert VICTORY_POSE_2,"moveset/VICTORY_POSE_2.bin"
     insert POSE_1P, "moveset/POSE_1P.bin"
     insert VICTORY_POSE_1,"moveset/VICTORY_POSE_1.bin"
+    insert GRAB_PULL,"moveset/GRAB_PULL.bin"
+
+    // Insert AI attack options
+    constant CPU_ATTACKS_ORIGIN(origin())
+    insert CPU_ATTACKS,"AI/attack_options.bin"
+    OS.align(16)
 
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(YLINK, Action.JumpF,            -1,                        JUMP,                       -1)
@@ -47,6 +53,8 @@ scope YoungLink {
     Character.edit_action_parameters(YLINK, Action.CliffAttackSlow2, -1,                        EDGEATTACKS,                -1)
     Character.edit_action_parameters(YLINK, Action.Sleep,            -1,                        ASLEEP,                     -1)
     Character.edit_action_parameters(YLINK, Action.Grab,             -1,                        GRAB,                       -1)
+    Character.edit_action_parameters(YLINK, Action.Grab,            File.YLINK_GRAB,            GRAB,                       0x10000000)
+    Character.edit_action_parameters(YLINK, Action.GrabPull,        File.YLINK_GRAB_PULL,       GRAB_PULL,                  0x10000000)
     Character.edit_action_parameters(YLINK, Action.Teeter,           -1,                        TEETERING,                  -1)
     Character.edit_action_parameters(YLINK, Action.Taunt,           File.YLINK_TAUNT,           TAUNT,                      -1)
     Character.edit_action_parameters(YLINK, Action.Jab1,            -1,                         JAB_1,                      -1)
@@ -76,32 +84,8 @@ scope YoungLink {
     Character.edit_menu_action_parameters(YLINK, 0xD,               -1,                         POSE_1P,                    -1)
     Character.edit_menu_action_parameters(YLINK, 0xE,               File.YLINK_1P_CPU_POSE,     0x80000000,                 -1)
 
-    // @ Description
-    // Subroutine for Young Link's up special, allows a direction change with the command 58000002
-    scope up_special_direction_: {
-        // 0x180 in player struct = temp variable 2
-        lw      a1, 0x0084(a0)              // a1 = player struct
-        addiu   sp, sp,-0x0010              // allocate stack space
-        sw      t0, 0x0004(sp)              // ~
-        sw      t1, 0x0008(sp)              // ~
-        sw      ra, 0x000C(sp)              // store t0, t1, ra
-        lw      t0, 0x0180(a1)              // t0 = temp variable 2
-        ori     t1, r0, 0x0002              // t1 = 0x2
-        bne     t1, t0, _end                // skip if temp variable 2 != 2
-        nop
-        jal     0x80160370                  // turn subroutine (copied from captain falcon)
-        nop
-        _end:
-        lw      t0, 0x0004(sp)              // ~
-        lw      t1, 0x0008(sp)              // ~
-        lw      ra, 0x000C(sp)              // load t0, t1, ra
-        addiu   sp, sp, 0x0010              // deallocate stack space
-        jr      ra                          // return
-        nop
-    }
-
     // Modify Actions            // Action          // Staling ID   // Main ASM                 // Interrupt/Other ASM          // Movement/Physics ASM         // Collision ASM
-    Character.edit_action(YLINK, 0xE4,              -1,             -1,                         up_special_direction_,          -1,                             -1)
+    Character.edit_action(YLINK, 0xE4,              -1,             -1,                         YoungLinkUSP.direction_,        -1,                             -1)
 
     // Set menu zoom size.
     Character.table_patch_start(menu_zoom, Character.id.YLINK, 0x4)
@@ -123,9 +107,9 @@ scope YoungLink {
     // Young Link's extra actions
     scope Action {
         constant Jab3(0x0DC)
-        //constant JabLoopStart(0x0DD)
-        //constant JabLoop(0x0DE)
-        //constant JabLoopEnd(0x0DF)
+        constant JabLoopStart(0x0DD)
+        constant JabLoop(0x0DE)
+        constant JabLoopEnd(0x0DF)
         constant Appear1(0x0E0)
         constant Appear2(0x0E1)
         constant UpSpecial(0x0E2)
@@ -161,9 +145,9 @@ scope YoungLink {
 
         action_string_table:
         dw Action.COMMON.string_jab3
-        dw 0
-        dw 0
-        dw 0
+        dw Action.COMMON.string_jabloopstart
+        dw Action.COMMON.string_jabloop
+        dw Action.COMMON.string_jabloopend
         dw Action.COMMON.string_appear1
         dw Action.COMMON.string_appear2
         dw Action.LINK.string_0x0E2
@@ -183,6 +167,32 @@ scope YoungLink {
     Character.table_patch_start(action_string, Character.id.YLINK, 0x4)
     dw  Action.action_string_table
     OS.patch_end()
+
+    // Set CPU behaviour
+    Character.table_patch_start(ai_behaviour, Character.id.YLINK, 0x4)
+    dw      CPU_ATTACKS
+    OS.patch_end()
+
+    // Edit cpu attack behaviours
+    // edit_attack_behavior(table, attack, override, start_hb, end_hb, min_x, max_x, min_y, max_y)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPA,   -1,  -1,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPG,   -1,  -1,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSMASH, -1,  9,   22,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DTILT,  -1,  7,   14,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FAIR,   -1,  9,   16,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DAIR,   -1,  5,   63,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FSMASH, -1,  14,  21,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FTILT,  -1,  6,   9,   -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, GRAB,   -1,  6,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, JAB,    -1,  5,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NAIR,   -1,  4,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPA,   -1,  18,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPG,   -1,  18,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UAIR,   -1,  5,   48,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPA,   -1,  5,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPG,   -1,  5,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USMASH, -1,  9,   26,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UTILT,  -1,  8,  16,  -1, -1, -1, -1)
 
     up_special_landing_fsm:
     float32 0.33                // 25 frames of landing lag

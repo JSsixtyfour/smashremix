@@ -75,6 +75,11 @@ scope Mewtwo {
     insert VICTORY_2,"moveset/VICTORY_2.bin"
     insert VICTORY_3,"moveset/VICTORY_3.bin"
 
+    // Insert AI attack options
+    constant CPU_ATTACKS_ORIGIN(origin())
+    insert CPU_ATTACKS,"AI/attack_options.bin"
+    OS.align(16)
+
     // Modify Action Parameters             // Action                   // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(MTWO,  Action.DeadU,               File.MTWO_TUMBLE,           -1,                         0x00000000)
     Character.edit_action_parameters(MTWO,  Action.ScreenKO,            File.MTWO_TUMBLE,           -1,                         0x00000000)
@@ -396,6 +401,42 @@ scope Mewtwo {
     Character.table_patch_start(initial_script, Character.id.MTWO, 0x4)
     dw      0x800D7DEC                      // use samus jump
     OS.patch_end()
+
+    // Set CPU behaviour
+    Character.table_patch_start(ai_behaviour, Character.id.MTWO, 0x4)
+    dw      CPU_ATTACKS
+    OS.patch_end()
+	
+	// Set CPU SD prevent routine
+    Character.table_patch_start(ai_attack_prevent, Character.id.MTWO, 0x4)
+    dw    	AI.PREVENT_ATTACK.ROUTINE.NONE
+    OS.patch_end()
+	
+	// Set CPU NSP long range behaviour
+    Character.table_patch_start(ai_long_range, Character.id.MTWO, 0x4)
+    dw    	AI.LONG_RANGE.ROUTINE.NSP_SHOOT
+    OS.patch_end()
+
+    // Edit cpu attack behaviours
+    // edit_attack_behavior(table, attack, override, start_hb, end_hb, min_x, max_x, min_y, max_y)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DAIR,   -1,  8,   15,  -1,  -1,   -1,  -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPA,   -1,  15,  20,  50,  100,  60,  200)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPG,   -1,  15,  20,  50,  100,  60,  200)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSMASH, -1,  14,  21,  -20, -1,   -1,  -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DTILT,  -1,  5,   9,   -1,  -1,   -1,  -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FAIR,   -1,  6,   12,  -1,  -1,   -1,  -1)  // shared with bair
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FSMASH, -1,  18,  25,  -1,  -1,   -1,  -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FTILT,  -1,  6,   9,   -1,  -1,   -1,  -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, GRAB,   -1,  -1,  -1,  -1,  -1,   -1,  -1)  // todo: check range
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, JAB,    -1,  4,   6,   -1,  -1,   -1,  -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NAIR,   -1,  5,   32,  -1,  -1,   -1,  -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPA,   -1,  10,  15,  500, 1500, 200, 445) // copied from Samus
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPG,   -1,  9,   14,  500, 1500, 200, 445) // copied from Samus
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UAIR,   -1,  6,   13,  -1,  -1,   -1,  -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPA,   0x0D, 0,   0,   0,   0,    0,   0)   // prevent up special
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPG,   0x0D, 0,   0,   0,   0,    0,   0)   // prevent up special
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USMASH, -1,  10,  41,  -1,  -1,   -1,  -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UTILT,  -1,  6,   13,  -1,  -1,   -1,  -1)
 
     // @ Description
     // Bowser's extra actions

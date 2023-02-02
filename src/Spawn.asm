@@ -692,10 +692,10 @@ scope Spawn {
     float32  1315,  0805
 
     // 35 - Dragon King
-    float32 -1968,  1420
-    float32  1968,  1420
-    float32 -1968,  0035
-    float32  1968,  0035
+    float32 -0650,  0035
+    float32  0650,  0035
+    float32 -0450,  0035
+    float32  0450,  0035
 
     // 36 - Great Bay
     float32 -1013,  0511
@@ -806,10 +806,10 @@ scope Spawn {
     float32  0600,  2250
 
     // 48 - Big Blue
-    float32 -1711,  0402
-    float32  1763,  0388
-    float32 -3530,  0320
-    float32  3675,  0428
+    float32 -1700,  2410
+    float32  1834,  2102
+    float32 -0238,  2150
+    float32  0825,  2228
 
     // 49 - Onett
     float32 -2292,  2043
@@ -1398,6 +1398,60 @@ scope Spawn {
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
+    
+    // AB - GLACIAL RIVER REMIX
+    float32 -1647,  0130
+    float32  1647,  0130
+    float32 -0764,  0955
+    float32  0764,  0955
+    
+    // AC - Marina Break the Targets
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // AD - Dragon King Remix
+    float32 -0650,  0035
+    float32  0650,  0035
+    float32 -0450,  0035
+    float32  0450,  0035
+    
+    // AE - Marina Board the Platforms
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // AF - Dedede Break the Targets
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+	
+    // B0 - Draculas Castle
+    float32  -1738, 1413
+    float32  -337,  1413
+    float32  -3327, 2379
+    float32  3062,  1386
+	
+    // B1 - Reverse Castle
+    float32  0159, 3642
+    float32  1914, 3449
+    float32  -830, 2267
+    float32  0962, 1420
+    
+    // B2 - Dedede Board the Platforms
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // B3 - Mt. Dedede
+    float32 -0900,  0380
+    float32 -2950,  1720
+    float32  0900,  0380
+    float32  2950,  1720
 
     neutral_table:
     // 00 - Peach's Castle
@@ -1723,10 +1777,10 @@ scope Spawn {
     float32  1315,  0805
 
     // 35 - Dragon King
-    float32 -1968,  1420
-    float32  1968,  1420
-    float32 -1968,  0035
-    float32  1968,  0035
+    float32 -1740,  1355
+    float32  1740,  1355
+    float32 -1740,  0035
+    float32  1740,  0035
 
     // 36 - Great Bay
     float32 -1013,  0511
@@ -1837,10 +1891,10 @@ scope Spawn {
     float32  0600,  2250
 
     // 48 - Big Blue
-    float32 -1711,  0402
-    float32  1763,  0388
-    float32 -3530,  0320
-    float32  3675,  0428
+    float32 -1700,  2410
+    float32  1834,  2102
+    float32 -0238,  2150
+    float32  0825,  2228
 
     // 49 - Onett
     float32 -2292,  2043
@@ -2429,6 +2483,60 @@ scope Spawn {
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
+    
+    // AB - GLACIAL RIVER REMIX
+    float32 -1647,  0130
+    float32  1647,  0130
+    float32 -0764,  0955
+    float32  0764,  0955
+    
+    // AC - Marina Break the Targets
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // AD - Dragon King Remix
+    float32 -1740,  1355
+    float32  1740,  1355
+    float32 -2950,  2425
+    float32  2950,  2425
+    
+    // AE - Marina Board the Platforms
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // AF - Dedede Break the Targets
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+
+    // B0 - Draculas Castle
+    float32  -1738, 1413
+    float32  -337,  1413
+    float32  -3327, 2379
+    float32  3062,  1386
+	
+    // B1 - Reverse Castle
+    float32  159, 3642
+    float32  1914,  3449
+    float32  -830, 2267
+    float32  962,  1420
+    
+    // B2 - Dedede Board the Platforms
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // B3 - Mt. Dedede
+    float32 -0900,  0380
+    float32 -2950,  1720
+    float32  0900,  0380
+    float32  2950,  1720
 }
 
 } // __SPAWN__

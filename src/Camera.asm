@@ -53,43 +53,30 @@ scope Camera {
         // v0 = stage id
 
         addiu   at, r0, Stages.id.MK_REMIX
-        beq     at, v0, _end
-        ori     t0, r0, 3                           // t0 = MKingdom camera routine
-
+        beq     at, v0, mkingdom_camera
         addiu   at, r0, Stages.id.SUBCON
-        beql    at, v0, _end
-        ori     t0, r0, 3                           // t0 = MKingdom camera routine
-
+        beq     at, v0, mkingdom_camera
         addiu   at, r0, Stages.id.SECTOR_Z_REMIX
-        beql    at, v0, _end
-        ori     t0, r0, 3                           // t0 = MKingdom camera routine
-
+        beq     at, v0, mkingdom_camera
         addiu   at, r0, Stages.id.ONETT
-        beql    at, v0, _end
-        ori     t0, r0, 3                           // t0 = MKingdom camera routine
-
+        beq     at, v0, mkingdom_camera
         addiu   at, r0, Stages.id.BLUE
-        beql    at, v0, _end
-        ori     t0, r0, 3                           // t0 = MKingdom camera routine
-
+        beq     at, v0, mkingdom_camera
         addiu   at, r0, Stages.id.MUTE
-        beql    at, v0, _end
-        ori     t0, r0, 3                           // t0 = MKingdom camera routine
-
+        beq     at, v0, mkingdom_camera
         addiu   at, r0, Stages.id.HTEMPLE
-        beql    at, v0, _end
-        ori     t0, r0, 3                           // t0 = MKingdom camera routine
-
-        addiu   at, r0, Stages.id.TOADSTURNPIKE
-        beql    at, v0, _end
-        ori     t0, r0, 3                           // t0 = MKingdom camera routine
-
+        beq     at, v0, mkingdom_camera
+        addiu   at, r0, Stages.id.DRAGONKING_REMIX
+        beq     at, v0, mkingdom_camera
         addiu   at, r0, Stages.id.DRAGONKING
-        beql    at, v0, _end
-        ori     t0, r0, 3                           // t0 = MKingdom camera routine
-
-        // if here, use default camera index (0)
-        addiu   t0, r0, 0                           // t0 = 0
+        beq     at, v0, mkingdom_camera
+        addiu   at, r0, Stages.id.TOADSTURNPIKE
+        bnel    at, v0, _end
+		addiu   t0, r0, 0                           // if here, use default camera index (0)
+		
+		mkingdom_camera:
+		ori     t0, r0, 3                           // t0 = MKingdom camera routine
+		
         _end:
         j       0x8010DAC0                          // original line 1
         sw      t0, 0x0004(s0)                      // kinda original line 2, set match camera to default vs cam
@@ -112,8 +99,7 @@ scope Camera {
         sw      r0, 0x0004(t9)                      // clear custom y offset variable
         sw      r0, 0x0008(t9)                      // clear custom z offset variable
 
-        li      t9, Toggles.entry_camera_mode       // t9 = toggle address
-        lw      t9, 0x0004(t9)                      // t9 = camera mode boolean
+        OS.read_word(Toggles.entry_camera_mode + 0x4, t9) // t9 = camera mode boolean
         beqz    t9, _end                            // branch to end if cam = NORMAL
         nop
         addiu   t0, r0, type.BONUS                  // at = type.BONUS
@@ -426,9 +412,7 @@ scope Camera {
     // based on the default routine that sets gameplay camera. 0x8010CECC (small routine)
     // original routine gets the camera
     scope get_custom_camera_: {
-        li     t9, _custom_cam              // t9 = custom camera ptr
-        lw     t9, 0x0000(t9)               // t9 = custom camera routine
-
+        OS.read_word(_custom_cam, t9)       // t9 = custom camera
         j      0x8010CED4                   // jump to original routine
         nop
 
@@ -450,8 +434,7 @@ scope Camera {
         OS.patch_end()
 
         // t6 should be safe
-        li      t6, Toggles.entry_camera_mode
-        lw      t6, 0x0004(t6)              // t6 = cam type toggle value
+        OS.read_word(Toggles.entry_camera_mode + 0x4, t6) // t6 = am type toggle value
         addiu   at, r0, type.FIXED          // at = camera type.fixed
         beq     t6, at, _skip_cutscene      // branch if fixed_camera enabled
         nop
@@ -478,14 +461,14 @@ scope Camera {
         lli     a0, 0x0003                  // original line 2
 
         // check if fixed camera toggle is enabled
-        li      a0, Toggles.entry_camera_mode
-        lw      a0, 0x0004(a0)              // a0 = fixed cam boolean
+        OS.read_word(Toggles.entry_camera_mode + 0x4, a0) // a0 = Cam type toggle value
         addiu   at, r0, type.FIXED          // at = camera type.fixed
-        beql    a0, at, _disabled           // branch if fixed_camera enabled
+        beq     a0, at, _disabled           // branch if fixed_camera enabled
+        addiu   at, r0, type.SCENE          // at = camera type.scene
+        beq     a0, at, _disabled           // branch if fixed_camera enabled
         nop
 
-        li      a0, Toggles.entry_cinematic_entry
-        lw      a0, 0x0004(a0)              // a0 = 1 if always, 2 if never, 0 if default
+        OS.read_word(Toggles.entry_cinematic_entry + 0x4, a0) // a0 = 1 if always, 2 if never, 0 if default
         beqz    a0, _return                 // if set to default, use v0 returned from get_random_int_
         addiu   a0, a0, -0x0001             // a0 = 0 if always, 1 if never
         beqzl   a0, _return                 // if set to always, set v0 to 2
@@ -511,10 +494,9 @@ scope Camera {
         OS.patch_end()
 
         // check fixed camera toggle
-        li      a0, Toggles.entry_camera_mode
-        lw      a0, 0x0004(a0)                  // a0 = camera type toggle value
+        OS.read_word(Toggles.entry_camera_mode + 0x4, a0) // a0 = Cam type toggle value
         addiu   at, r0, type.FIXED              // at = camera type.fixed
-        beql    a0, at, _end                    // branch to end if fixed camera mode is on
+        beq     a0, at, _end                    // branch to end if fixed camera mode is on
         nop
 
         _normal:
@@ -607,24 +589,21 @@ scope Camera {
     dw  0x00000000                                  // x offset
     dw  0x00000000                                  // y offset
     dw  0x00000000                                  // z offset
+	
+	constant max_zoom_offset(0xC480)
 
     // @ Description
-    // hook allows us to add additional button checks for pause camera (works in vs styled matches)
-    scope pause_camera_extra_controls_: {
-        OS.patch_start(0x0008FB28, 0x80114328)
-        j      pause_camera_extra_controls_
-        nop
-        pause_camera_extra_controls_return_:
-        OS.patch_end()
-
-        lh      a0, 0x0000(a1)                  // a0 = input flag (checking for A/B)
+    // pause.asm runs this routine so we can move the camera around in pause
+	// a1 = buttons pressed ptr
+	scope extended_movement_: {	
+	    lh      a0, 0x0000(a1)                  // a0 = input flag (checking for A/B)
         sll     at, a0, 16                      // shift
         srl     at, at, 30                      // shift
         beqz    at, _check_pan                  // branch if not pressing A or B
         nop
 
         // if here, A or B pressed
-        li      a0, camera_pan_offsets_         // a0 = camera offset array
+        li      a0, Camera.camera_pan_offsets_  // a0 = camera offset array
         srl     at, at, 1                       // shift
         beqz    at, _apply_zoom                 // branch if not pressing B
         lui     v1, 0x3D4C                      // v1 = -speed for camera
@@ -659,7 +638,7 @@ scope Camera {
         lui     v1, 0x4200                      // v1 = +speed for camera
 
         apply_y_speed:
-        li      a0, camera_pan_offsets_         // a0 = camera offset array
+        li      a0, Camera.camera_pan_offsets_  // a0 = camera offset array
         lwc1    f6, 0x0004(a0)                  // f6 = current y offset
         mtc1    v1, f12                         // f12 = y speed
         add.s   f6, f6, f12                     // f6 = new y offset
@@ -682,7 +661,7 @@ scope Camera {
         lui     v1, 0xc200                      // v1 = +speed for camera
 
         apply_x_speed:
-        li      a0, camera_pan_offsets_         // a0 = camera offset array
+        li      a0, Camera.camera_pan_offsets_  // a0 = camera offset array
         lwc1    f6, 0x0000(a0)                  // f6 = current x offset
         mtc1    v1, f12                         // f12 = x speed
         add.s   f6, f6, f12                     // f6 = new x offset
@@ -691,29 +670,35 @@ scope Camera {
 
         _check_AB:
         lh      a0, 0x0000(a1)                  // a0 = players current AB input
-        beqz    a0, _continue                   // skip if not button pressed
+        beqz    a0, _end                        // skip if not button pressed
 
         andi    at, a0, Joypad.B                // check if B held
         bnezl   at, apply_z_distance            // branch if player pressing B
         lui     v1, 0x42A0                      // v1 = - camera distance
 
         andi    at, a0, Joypad.A
-        beqz    at, _continue                   // branch if player not pressing A
+        beqz    at, _end                        // branch if player not pressing A
         lui     v1, 0xC2A0                      // v1 = + camera distance
 
         apply_z_distance:
-        li      a0, camera_pan_offsets_         // a0 = camera offset array
+        li      a0, Camera.camera_pan_offsets_  // a0 = camera offset array
         lwc1    f6, 0x0008(a0)                  // f6 = current z offset
         mtc1    v1, f12                         // move camera distance value to float
         add.s   f6, f6, f12                     // f6 = amount to change z by + current z distance offset
         nop
-        swc1    f6, 0x0008(a0)                  // save new camera distance to array
+		lui		v1, max_zoom_offset				// clamp zoom value
+        mtc1    v1, f12                         // move to float
+		c.le.s	f6, f12
+		nop
+		bc1tl	_end
+        swc1    f12, 0x0008(a0)                 // save clamped camera distance
+        swc1    f6, 0x0008(a0)                  // or save new camera distance
 
-        _continue:
-        lb     v0, 0x0008(a1)                   // original line 1
-        j      pause_camera_extra_controls_return_// return to original routine
-        lb     a0, 0x0009(a1)                   // original line 2
-    }
+		_end:
+		jr		ra
+		nop
+		
+	}
 
     // @ Description
     // routine runs once when game is unpaused. Disables hud from drawing if camera mode = SCENE or entry_disable_hud = ALL
@@ -733,8 +718,7 @@ scope Camera {
 
         // v0 = TRUE
         // check if hud should be disabled
-        li      a0, Toggles.entry_disable_hud
-        lw      a0, 0x0004(a0)                      // a0 = entry_disable_hud (0 if OFF, 1 if PAUSE, 2 if ALL)
+        OS.read_word(Toggles.entry_disable_hud + 0x4, a0) // a0 = entry_disable_hud (0 if OFF, 1 if PAUSE, 2 if ALL)
         andi    a0, a0, 0x0002                      // a0 = 1 if entry_disable_hud = 2
         bnez    a0, _disable_hud                    // branch if ALL hud disabled
         nop
@@ -766,8 +750,7 @@ scope Camera {
         nop
         OS.patch_end()
 
-        li      t0, Toggles.entry_disable_hud
-        lw      t0, 0x0004(t0)                  // t0 = entry_disable_hud (0 if OFF, 1 if PAUSE, 2 if ALL)
+        OS.read_word(Toggles.entry_disable_hud + 0x4, t0) // t0 = entry_disable_hud (0 if OFF, 1 if PAUSE, 2 if ALL)
         andi    t0, t0, 0x0002                  // t0 = 1 if entry_disable_hud = 2
         beqz    t0, _end                        // branch if not ALL hud disabled
         nop
@@ -826,8 +809,7 @@ scope Camera {
         ori     t2, r0, Stages.id.HRC       // t2 = id.HRC
         beq     t0, t2, _frozen             // use frozen camera if stage = HRC
         nop
-        li      t1, Toggles.entry_hazard_mode
-        lw      t1, 0x0004(t1)              // t1 = hazard_mode (hazards disabled when t1 = 1 or 3)
+        OS.read_word(Toggles.entry_hazard_mode + 0x4, t1) // t1 = 1 if hazard_mode is 1 or 3, 0 otherwise
         andi    t1, t1, 0x0001              // t1 = 1 if hazard_mode is 1 or 3, 0 otherwise
         bnez    t1, _normal                 // if hazard_mode enabled, skip frozen camera for flat zones
         nop
@@ -1213,8 +1195,7 @@ scope Camera {
         // t5 = TRUE or FALSE for analog stick hud variable
 
         // check fixed camera toggle
-        li      t6, Toggles.entry_camera_mode
-        lw      t6, 0x0004(t6)                      // t6 = fixed cam boolean
+        OS.read_word(Toggles.entry_camera_mode + 0x4, t6) // t6 = fixed cam boolean
         addiu   t7, r0, type.FIXED                  // t7 = camera type.fixed
         beq     t6, t7, _disable_control            // if fixed camera, branch to disable the control
         nop

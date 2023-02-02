@@ -52,6 +52,10 @@ scope Wolf {
     insert JUMPAIR, "moveset/JUMPAIR.bin"
     insert CLAP, "moveset/CLAP.bin"
 
+    // Insert AI attack options
+    constant CPU_ATTACKS_ORIGIN(origin())
+    insert CPU_ATTACKS,"AI/attack_options.bin"
+    OS.align(16)
 
     // Modify Action Parameters             // Action                   // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(WOLF,  Action.Idle,                File.WOLF_IDLE,         	IDLE,               	-1)
@@ -250,10 +254,21 @@ scope Wolf {
     Character.edit_menu_action_parameters(WOLF,    0xD,               File.WOLF_1P_HMN,             0x80000000,                 -1)
     Character.edit_menu_action_parameters(WOLF,    0xE,               File.WOLF_1P_CPU,             ONEP_CPU,                   -1)
 
+    Character.table_patch_start(variants, Character.id.WOLF, 0x4)
+    db      Character.id.NONE
+    db      Character.id.NWOLF // set as POLYGON variant for WOLF
+    db      Character.id.NONE
+    db      Character.id.NONE
+    OS.patch_end()
+
 
     // Set crowd chant FGM.
     Character.table_patch_start(crowd_chant_fgm, Character.id.WOLF, 0x2)
     dh  0x03C3
+    OS.patch_end()
+    
+    Character.table_patch_start(variant_original, Character.id.NWOLF, 0x4)
+    dw      Character.id.WOLF // set Wolf as original character (not Fox, who NWOLF is a clone of)
     OS.patch_end()
 
 	Character.table_patch_start(air_usp, Character.id.WOLF, 0x4)
@@ -365,6 +380,37 @@ scope Wolf {
 
     // Shield colors for costume matching
     Character.set_costume_shield_colors(WOLF, BROWN, PINK, AZURE, TURQUOISE, BLACK, PURPLE, NA, NA)
+
+    // Set CPU behaviour
+    Character.table_patch_start(ai_behaviour, Character.id.WOLF, 0x4)
+    dw      CPU_ATTACKS
+    OS.patch_end()
+	
+	// Set CPU SD prevent routine
+    Character.table_patch_start(ai_attack_prevent, Character.id.WOLF, 0x4)
+    dw    	AI.PREVENT_ATTACK.ROUTINE.WOLF_USP
+    OS.patch_end()
+
+    // Edit cpu attack behaviours
+    // edit_attack_behavior(table, attack, override, start_hb, end_hb, min_x, max_x, min_y, max_y)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPG,   -1,  19,  27,  1100, 1500, 900, 1000) // todo: confirm coords
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPA,   -1,  19,  27,  1100, 1500, 900, 1000) // todo: confirm coords
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPG,   -1,  -1,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPA,   -1,  -1,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPG,   -1,  -1,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPA,   -1,  -1,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, JAB,    -1,  3,   4,   -1, -1, -1, -1) // todo: coords
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FSMASH, -1,  12,  17,  -1, -1, -1, -1) // todo: coords
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USMASH, -1,  9,   18,  -1, -1, -1, -1) // todo: coords
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSMASH, -1,  8,   17,  -1, -1, -1, -1) // todo: coords
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FTILT,  -1,  7,   8,   -1, -1, -1, -1) // todo: coords
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UTILT,  -1,  5,   12,  -1, -1, -1, -1) // todo: coords
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DTILT,  -1,  4,   7,   -1, -1, -1, -1) // todo: coords
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, GRAB,   -1,  6,   6,   -1, -1, -1, -1) // todo: coords
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NAIR,   -1,  4,   35,  -1, -1, -1, -1) // todo: coords
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UAIR,   -1,  5,   10,  -1, -1, -1, -1) // todo: coords
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DAIR,   -1,  7,   18,  -1, -1, -1, -1) // todo: coords
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, BAIR,   -1,  9,   18,  -1, -1, -1, -1) // shared with fair. todo: coords
 
 	// @ Description
     // This adds a check to the reflection routine that looks to see if wolf is reflecting, if so it doubles speed

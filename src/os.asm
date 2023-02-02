@@ -45,7 +45,7 @@ scope OS {
     fill    {length}, 0x00
     pullvar base, origin
     }
-    
+
     macro save_registers() {
         addiu   sp, sp,-0x0070              // allocate stack space
         sw      at, 0x0004(sp)              // ~
@@ -108,6 +108,154 @@ scope OS {
         addiu   sp, sp, 0x0070              // deallocate stack space
     }
 
+    // loads upper portion of a word
+    // good when working with delay slots
+    macro UPPER(register, address) {
+        define firstHalf(0x0000)
+        define secondHalf(0x0000)
+        define firstHalfUnsigned(0x00000000)
+        evaluate firstHalf({address} >> 16)
+        evaluate firstHalfUnsigned({firstHalf} << 16)
+        evaluate secondHalf({address} - {firstHalfUnsigned})
+        if ({secondHalf} > 0x7FFF) {
+            evaluate firstHalf({firstHalf} + 0x0001) // modify address if value is negative
+        }
+        lui    {register}, {firstHalf}      // register = first half of address
+
+    }
+
+    // Prepare a register to read from a table
+    // Sets the first half-word of the table into target register
+    // If not reading from a table, use OS.read_word/half/byte
+    //
+    // Example:
+    // define _table(Item.FranklinBadge.players_with_franklin_badge)
+    // OS.lui_table({_table}, v0)
+    // lbu     at, 0x000D(s0)
+    // sll     at, at, 0x0002
+    // addu    v0, v0, at
+    // OS.table_read_word({_table}, v0, v0)
+    macro lui_table(table_address, register) {
+        define firstHalf(0x0000)
+        define secondHalf(0x0000)
+        define firstHalfUnsigned(0x00000000)
+        evaluate firstHalf({table_address} >> 16)
+        evaluate firstHalfUnsigned({firstHalf} << 16)
+        evaluate secondHalf({table_address} - {firstHalfUnsigned})
+
+        if ({secondHalf} > 0x7FFF) {
+            evaluate firstHalf({firstHalf} + 0x0001) // modify address if value is negative
+        }
+        lui    {register}, {firstHalf}      // register = first half of address
+
+    }
+
+    // Reads a word from a table and puts into the output register
+    // Use OS.lui_table() first before attempting to read
+    macro table_read_word(table_address, table_register, output_register) {
+        define firstHalf(0x0000)
+        define secondHalf(0x0000)
+        define firstHalfUnsigned(0x00000000)
+        evaluate firstHalf({table_address} >> 16)
+        evaluate firstHalfUnsigned({firstHalf} << 16)
+        evaluate secondHalf({table_address} - {firstHalfUnsigned})
+
+        if ({secondHalf} > 0x7FFF) {
+            evaluate firstHalf({firstHalf} + 0x0001) // modify address if value is negative
+        }
+        lw      {output_register}, {secondHalf}({table_register})  // output
+
+    }
+
+    // Reads a half-word from a table and puts into the output register
+    // Use OS.lui_table() first before attempting to read
+    macro table_read_half(table_address, table_register, output_register) {
+        define firstHalf(0x0000)
+        define secondHalf(0x0000)
+        define firstHalfUnsigned(0x00000000)
+        evaluate firstHalf({table_address} >> 16)
+        evaluate firstHalfUnsigned({firstHalf} << 16)
+        evaluate secondHalf({table_address} - {firstHalfUnsigned})
+
+        if ({secondHalf} > 0x7FFF) {
+            evaluate firstHalf({firstHalf} + 0x0001) // modify address if value is negative
+        }
+        lh      {output_register}, {secondHalf}({table_register})  // output
+
+    }
+
+    // Reads a byte from a table and puts into the output register
+    // Use OS.lui_table() first before attempting to read
+    macro table_read_byte(table_address, table_register, output_register) {
+        define firstHalf(0x0000)
+        define secondHalf(0x0000)
+        define firstHalfUnsigned(0x00000000)
+        evaluate firstHalf({table_address} >> 16)
+        evaluate firstHalfUnsigned({firstHalf} << 16)
+        evaluate secondHalf({table_address} - {firstHalfUnsigned})
+
+        if ({secondHalf} > 0x7FFF) {
+            evaluate firstHalf({firstHalf} + 0x0001) // modify address if value is negative
+        }
+        lb      {output_register}, {secondHalf}({table_register})  // output
+
+    }
+
+    // Reads a word from a given address
+    // label - RAM address to read from
+    // register - register to load value into
+    macro read_word(label, register) {
+        define firstHalf(0x0000)
+        define secondHalf(0x0000)
+        define firstHalfUnsigned(0x00000000)
+        evaluate firstHalf({label} >> 16)
+        evaluate firstHalfUnsigned({firstHalf} << 16)
+        evaluate secondHalf({label} - {firstHalfUnsigned})
+
+        if ({secondHalf} > 0x7FFF) {
+            evaluate firstHalf({firstHalf} + 0x0001) // modify address if value is negative
+        }
+        lui    {register}, {firstHalf}      // register = first half of address
+        lw     {register}, {secondHalf}({register}) // register = value from address
+
+    }
+
+    // Reads a half-word from a given address
+    // label - RAM address to read from
+    // register - register to load value into
+    macro read_half(label, register) {
+        define firstHalf(0x0000)
+        define secondHalf(0x0000)
+        define firstHalfUnsigned(0x00000000)
+        evaluate firstHalf({label} >> 16)
+        evaluate firstHalfUnsigned({firstHalf} << 16)
+        evaluate secondHalf({label} - {firstHalfUnsigned})
+
+        if ({secondHalf} > 0x7FFF) {
+            evaluate firstHalf({firstHalf} + 0x0001) // modify address if value is negative
+        }
+        lui    {register}, {firstHalf}      // register = first half of address
+        lh     {register}, {secondHalf}({register}) // register = value from address
+    }
+
+    // Reads a byte
+    // label - RAM address to read from
+    // register - register to load value into
+    macro read_byte(label, register) {
+        define firstHalf(0x0000)
+        define secondHalf(0x0000)
+        define firstHalfUnsigned(0x00000000)
+        evaluate firstHalf({label} >> 16)
+        evaluate firstHalfUnsigned({firstHalf} << 16)
+        evaluate secondHalf({label} - {firstHalfUnsigned})
+
+        if ({secondHalf} > 0x7FFF) {
+            evaluate firstHalf({firstHalf} + 0x0001) // modify address if value is negative
+        }
+        lui    {register}, {firstHalf}      // register = first half of address
+        lb     {register}, {secondHalf}({register}) // register = value from address
+    }
+
     // @ Description
     // This function takes a float and returns an integer. v0 is not conserved.
     // @ Arguments
@@ -123,7 +271,7 @@ scope OS {
         cvt.w.s f0, f0                      // convert float to int
         mfc1    v0, f0                      // move int to v0
 
-        lw       t0, 0x0004(sp)              // ~
+        lw      t0, 0x0004(sp)              // ~
         lwc1    f0, 0x0008(sp)              // save registers
         addiu   sp, sp, 0x0010              // deallocate stack space
 

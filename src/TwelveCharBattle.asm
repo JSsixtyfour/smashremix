@@ -209,6 +209,7 @@ scope TwelveCharBattle {
     // @ Description
     // CHARACTER SELECT SCREEN LAYOUT
     constant NUM_SLOTS(24)
+    constant NUM_PRESETS(4)
     scope layout {
         scope u {
             // row 1
@@ -297,6 +298,64 @@ scope TwelveCharBattle {
             define slot_23(MTWO)
             define slot_24(MARTH)
         }
+        scope pv {
+            // row 1
+            define slot_1(NLUIGI)
+            define slot_2(NMARIO)
+            define slot_3(NDONKEY)
+            define slot_4(NLINK)
+            define slot_5(NLUIGI)
+            define slot_6(NMARIO)
+            define slot_7(NDONKEY)
+            define slot_8(NLINK)
+            // row 2
+            define slot_9(NSAMUS)
+            define slot_10(NCAPTAIN)
+            define slot_11(NNESS)
+            define slot_12(NYOSHI)
+            define slot_13(NSAMUS)
+            define slot_14(NCAPTAIN)
+            define slot_15(NNESS)
+            define slot_16(NYOSHI)
+            // row 3
+            define slot_17(NKIRBY)
+            define slot_18(NFOX)
+            define slot_19(NPIKACHU)
+            define slot_20(NJIGGLY)
+            define slot_21(NKIRBY)
+            define slot_22(NFOX)
+            define slot_23(NPIKACHU)
+            define slot_24(NJIGGLY)
+        }
+        // scope pr {
+            // // row 1
+            // define slot_1(NDRM)
+            // define slot_2(GND)
+            // define slot_3(YLINK)
+            // define slot_4(FALCO)
+            // define slot_5(NDRM)
+            // define slot_6(GND)
+            // define slot_7(YLINK)
+            // define slot_8(FALCO)
+            // // row 2
+            // define slot_9(DSAMUS)
+            // define slot_10(NWARIO)
+            // define slot_11(NLUCAS)
+            // define slot_12(NBOWSER)
+            // define slot_13(DSAMUS)
+            // define slot_14(NWARIO)
+            // define slot_15(NLUCAS)
+            // define slot_16(NBOWSER)
+            // // row 3
+            // define slot_17(NWOLF)
+            // define slot_18(CONKER)
+            // define slot_19(MTWO)
+            // define slot_20(MARTH)
+            // define slot_21(NWOLF)
+            // define slot_22(CONKER)
+            // define slot_23(MTWO)
+            // define slot_24(MARTH)
+        // }
     }
 
     // @ Description
@@ -388,7 +447,9 @@ scope TwelveCharBattle {
 
     create_portrait_tables(u)       // create vanilla character set tables
     create_portrait_tables(j)       // create japanese character set tables
+    create_portrait_tables(pv)      // create polygon vanilla character set tables
     create_portrait_tables(r)       // create remix character set tables
+    // create_portrait_tables(pr)      // create polygon remix character set tables
     create_portrait_tables(p1, u)   // create p1's custom character set tables
     create_portrait_tables(p2, u)   // create p2's custom character set tables
 
@@ -396,7 +457,9 @@ scope TwelveCharBattle {
     // id table     // portrait offset table     // portrait id table     // custom preset cycle index
     dw id_table_u;  dw portrait_offset_table_u;  dw portrait_id_table_u;  dw 0x0
     dw id_table_j;  dw portrait_offset_table_j;  dw portrait_id_table_j;  dw 0x0
+    dw id_table_pv;  dw portrait_offset_table_pv;  dw portrait_id_table_pv;  dw 0x0
     dw id_table_r;  dw portrait_offset_table_r;  dw portrait_id_table_r;  dw 0x0
+    // dw id_table_pr;  dw portrait_offset_table_pr;  dw portrait_id_table_pr;  dw 0x0
     dw id_table_p1; dw portrait_offset_table_p1; dw portrait_id_table_p1; dw 0x0
     dw id_table_p2; dw portrait_offset_table_p2; dw portrait_id_table_p2; dw 0x0
 
@@ -459,6 +522,10 @@ scope TwelveCharBattle {
         nop
 
         _port_1_or_2:
+        lbu     t0, 0x0022(v1)              // t0 = 0 if HMN, 1 if CPU, 2 if N/A
+        lli     t1, 0x0002                  // t1 = N/A
+        beq     t0, t1, _end                // if N/A, just skip
+        nop
         li      t0, config
         lw      t1, 0x0000(t0)              // t1 = battle status
         beqz    t1, _check_valid_chars      // if 12cb not started, then skip past defeated check
@@ -987,8 +1054,10 @@ scope TwelveCharBattle {
 
         // a0 = player index (port 0 - 3)
         // a1 = (int) xpos
-        // v1 = (int) ypos - START_Y
+        // v1 = (int) ypos
         // a3 = CSS player struct most of the time, but sometimes it's not, so don't use it
+
+        addiu   v1, v1, -START_Y            // v1 = ypos - START_Y
 
         li      a3, CharacterSelect.CSS_PLAYER_STRUCT
         bnezl   a0, pc() + 8                // if not p1, set t1 to p2's CSS player struct
@@ -1097,7 +1166,7 @@ scope TwelveCharBattle {
         lw      t1, 0x0000(t1)              // t2 = p2 character set index
 
         li      t2, character_set_table
-        sltiu   at, t1, 0x0003              // at = 0 if custom
+        sltiu   at, t1, NUM_PRESETS         // at = 0 if custom
         beqzl   at, _custom                 // if they are using custom, adjust to correct custom tables and branch to custom logic
         addu    t1, t1, a1                  // t1 = t1 + 1 if p2
 
@@ -1189,7 +1258,7 @@ scope TwelveCharBattle {
         lw      t1, 0x0000(t1)              // t2 = p2 character set index
 
         li      t2, character_set_table
-        sltiu   at, t1, 0x0003              // at = 0 if custom
+        sltiu   at, t1, NUM_PRESETS         // at = 0 if custom
         beqzl   at, _custom                 // if they are using custom, adjust to correct custom tables and branch to custom logic
         addu    t1, t1, a1                  // t1 = t1 + 1 if p2
 
@@ -1362,7 +1431,7 @@ scope TwelveCharBattle {
         lw      t1, 0x0000(t1)              // t2 = p2 character set index
 
         li      t2, character_set_table
-        sltiu   at, t1, 0x0003              // at = 0 if custom
+        sltiu   at, t1, NUM_PRESETS         // at = 0 if custom
         beqzl   at, pc() + 8                // if they are using custom, adjust to correct custom tables
         addu    t1, t1, a0                  // t1 = t1 + 1 if p2
 
@@ -1418,7 +1487,7 @@ scope TwelveCharBattle {
         lw      t1, 0x0000(t1)              // t2 = p2 character set index
 
         li      t2, character_set_table
-        sltiu   at, t1, 0x0003              // at = 0 if custom
+        sltiu   at, t1, NUM_PRESETS         // at = 0 if custom
         beqzl   at, pc() + 8                // if they are using custom, adjust to correct custom tables
         addu    t1, t1, a0                  // t1 = t1 + 1 if p2
 
@@ -1510,6 +1579,7 @@ scope TwelveCharBattle {
         lli     t3, 0x0017              // t3 = 23
 
         addu    t2, t2, t3              // t2 = adjusted x position
+        addiu   t2, t2, PORTRAIT_WIDTH - CharacterSelect.PORTRAIT_WIDTH + START_X - CharacterSelect.START_X + START_VISUAL - CharacterSelect.START_VISUAL
 
         _end:
         jr      ra
@@ -2210,7 +2280,7 @@ scope TwelveCharBattle {
 
         lw      t2, 0x0000(t1)              // t2 = character_set_index
         addu    t2, t2, a1                  // character_set_index++, maybe
-        sltiu   at, t2, 0x0004              // at = 0 if past last item in table
+        sltiu   at, t2, NUM_PRESETS + 1     // at = 0 if past last item in table
         beqzl   at, pc() + 8                // if past last item in table, set to first index
         lli     t2, 0x0000                  // t2 = 0
         sw      t2, 0x0000(t1)              // update character_set_index
@@ -2222,7 +2292,7 @@ scope TwelveCharBattle {
 
         // update portraits
         li      t0, character_set_table
-        lli     at, 3 * 4                   // at = custom character set * 4
+        lli     at, NUM_PRESETS * 4         // at = custom character set * 4
         bne     at, t2, _get_portrait_offset // if not custom character set, then skip
         nop                                 // otherwise, check if p2 and adjust up if so
         bnezl   a0, _get_portrait_offset    // if p2, then adjust offset
@@ -2307,9 +2377,8 @@ scope TwelveCharBattle {
         mfc1    a1, f0                      // a1 = (int) xpos
         lwc1    f0, 0x005C(t2)              // f0 = (float) ypos
         trunc.w.s f0, f0                    // f0 = (int) ypos
-        mfc1    v1, f0                      // v1 = (int) ypos
         jal     get_character_id_           // v0 = character_id
-        addiu   v1, v1, -START_Y            // v1 = (int) ypos - START_Y
+        mfc1    v1, f0                      // v1 = (int) ypos
         lli     at, Character.id.NONE
         bne     at, v0, _update_panel       // if a valid character is selected, update panel
         nop                                 // otherwise we'll get a random one
@@ -2392,6 +2461,14 @@ scope TwelveCharBattle {
         nop                                 // otherwise just skip ahead
         jal     0x80137004                  // clean up CP panel
         lw      a0, 0x0008(sp)              // a0 = panel index
+
+        OS.read_byte(Global.vs.handicap, a0) // a0 = 0 if handicap off
+        beqz    a0, _finish                 // if handicap is off, skip
+        nop
+        jal     0x80137004                  // fix Handicap display
+        lw      a0, 0x0008(sp)              // a0 = port
+
+        _finish:
         lw      a0, 0x0008(sp)              // a0 = panel index
         lw      a2, 0x0010(sp)              // a2 = play announcer?
         beqz    a2, _end                    // skip playing announcer if necessary
@@ -2868,6 +2945,23 @@ scope TwelveCharBattle {
     dw 0xAC100001                           // Set Texture Form
     dw 0xD0000000                           // FSM = 0.0
     dw 0x00000000                           // End
+    // Moveset commands for defeated Sheik.
+    defeated_moveset_marina:
+    dw 0xAC000001                           // Set Texture Form
+    dw 0xAC100001                           // Set Texture Form
+    dw 0xD0000000                           // FSM = 0.0
+    dw 0x00000000                           // End
+    // Moveset commands for defeated Dedede.
+    defeated_moveset_dedede:
+    dw 0xAC100001                           // Set Texture Form
+    dw 0xAC000002                           // Set Texture Form
+    dw 0xD0000000                           // FSM = 0.0
+    dw 0x00000000                           // End
+    // Moveset commands for defeated Sheik.
+    defeated_moveset_sheik:
+    dw 0xAC000002                           // Set Texture Form
+    dw 0xD0000000                           // FSM = 0.0
+    dw 0x00000000                           // End
 
     // @ Description
     // Array of menu action parameter overrides for defeated characters. Uses DownStandU animation.
@@ -2935,7 +3029,20 @@ scope TwelveCharBattle {
     add_defeat_parameters(0x2B1,                        defeated_moveset_sonic,     0)          // 0x3B - SONIC
     add_defeat_parameters(0x617,                        defeated_moveset_captain,   0)          // 0x3C - SANDBAG
     add_defeat_parameters(0x2B1,                        defeated_moveset_sonic,     0)          // 0x3D - SSONIC
-    add_defeat_parameters(0x617,                        defeated_moveset_captain,   0)          // 0x3E - SHEIK
+    add_defeat_parameters(0x617,                        defeated_moveset_sheik,     0)          // 0x3E - SHEIK
+    add_defeat_parameters(File.MARINA_DOWN_STND_U,      defeated_moveset_marina,    0)          // 0x3F - MARINA
+    add_defeat_parameters(0x617,                        defeated_moveset_dedede,    0)          // 0x40 - DEDEDE
+    // ADD NEW CHARACTERS HERE
+
+    // REMIX POLYGONS
+    add_defeat_parameters(0x222,                        defeated_moveset_mario,     0)          // - NWARIO
+    add_defeat_parameters(0x6AF,                        defeated_moveset_ness,      0)          // - NLUCAS
+    add_defeat_parameters(File.BOWSER_DOWN_STAND_U,     defeated_moveset_yoshi,     0)          // - NBOWSER
+    add_defeat_parameters(0x2B1,                        defeated_moveset_fox_link,  0)          // - NWOLF
+    add_defeat_parameters(0x222,                        defeated_moveset,           0)          // - NDRM
+    add_defeat_parameters(0x2B1,                        defeated_moveset_sonic,     0)          // - NSONIC
+    add_defeat_parameters(0x617,                        defeated_moveset_captain,   0)          // - NSHEIK
+    add_defeat_parameters(File.MARINA_DOWN_STND_U,      defeated_moveset,           0)          // - NMARINA
 
     // REMIX 1p
 
@@ -3079,6 +3186,19 @@ scope TwelveCharBattle {
     add_team_parameters(0x617,                        team_moveset_captain,   0)          // 0x3C - SANDBAG
     add_team_parameters(File.SONIC_TEAM_POSE,         0x80000000,             0)          // 0x3D - SSONIC
     add_team_parameters(File.SHEIK_TEAM_POSE,         0x80000000,             0)          // 0x3E - SHEIK
+    add_team_parameters(File.MARINA_TEAM_POSE,        0x80000000,             0)          // 0x3F - MARINA
+    add_team_parameters(File.DEDEDE_TEAM_POSE,        0x80000000,             0)          // 0x40 - DEDEDE
+    // ADD NEW CHARACTERS HERE
+
+	// REMIX POLYGONS
+    add_team_parameters(File.WARIO_TEAM_POSE,         0x80000000,             0)          // - NWARIO
+    add_team_parameters(File.LUCAS_TEAM_POSE,         0x80000000,             0)          // - NLUCAS
+    add_team_parameters(File.BOWSER_TEAM_POSE,        0x80000000,             0)          // - NBOWSER
+    add_team_parameters(File.WOLF_TEAM_POSE,          0x80000000,             0)          // - NWOLF
+    add_team_parameters(File.DRM_TEAM_POSE,           0x80000000,             0)          // - NDRM
+    add_team_parameters(File.SONIC_TEAM_POSE,         0x80000000,             0)          // - NSONIC
+    add_team_parameters(File.SHEIK_TEAM_POSE,         0x80000000,             0)          // - NSHEIK
+    add_team_parameters(File.MARINA_TEAM_POSE,        0x80000000,             0)          // - NMARINA
 
     // @ Description
     // This prevents picking up the token of a CPU character with stocks remaining after a match.
@@ -3851,7 +3971,7 @@ scope TwelveCharBattle {
         bnezl   t2, pc() + 8                // if p2, set t0 to p2's character set
         or      t0, r0, t1                  // t0 = character set address
         lw      t0, 0x0000(t0)              // t0 = character set
-        lli     t1, 0x0003                  // t1 = custom character set
+        lli     t1, NUM_PRESETS             // t1 = custom character set
         bne     t0, t1, _end                // if not on the custom character set, skip
         addu    t0, t0, t2                  // t0 = character set index, adjusted for p2 if necessary
 
@@ -3994,7 +4114,7 @@ scope TwelveCharBattle {
         lw      t5, 0x0004(t5)              // t5 = preset portrait_offset_table
         lli     t7, NUM_SLOTS               // t7 = loop index
         addiu   t6, t6, 0x0001              // t6++ = next preset character set table index
-        lli     v0, 0x0003                  // v0 = max preset character set table index + 1
+        lli     v0, NUM_PRESETS             // v0 = max preset character set table index + 1
         beql    t6, v0, pc() + 8            // if next preset character set table index is out of bounds, reset to 0
         lli     t6, 0x0000                  // t6 = 0
         sw      t6, 0x000C(t0)              // save updated preset character set table index
@@ -4170,6 +4290,31 @@ scope TwelveCharBattle {
     }
 
     // @ Description
+    // Prevents CPU selection of invalid character by other port changing from human to CPU while hovering over an invalid portrait.
+    scope prevent_invalid_cpu_: {
+        //OS.patch_start(0x1340F0, 0x80135E70)
+        jal     prevent_invalid_cpu_
+        addiu   at, r0, 0x001C              // original line 2
+        //OS.patch_end()
+
+        // t8 is current char_id
+        li      a0, twelve_cb_flag
+        lw      a0, 0x0000(a0)              // a0 = 1 if 12cb mode
+        beqz    a0, _end                    // skip if not 12cb mode
+        nop
+        li      t0, config.status
+        lw      t0, 0x0000(t0)              // t0 = battle status
+        beqz    t0, _end                    // if NOT_STARTED, skip
+        nop
+
+        or      at, t8, r0                  // set at to current char_id so we branch to get a random char_id, which we handle elsewhere
+
+        _end:
+        jr      ra
+        addiu   a3, r0, 0x0001              // original line 1
+    }
+
+    // @ Description
     // This adds/updates UI in the panels for custom character sets to explain how to change portraits.
     scope draw_custom_portrait_indicators_: {
         // a0 = control object
@@ -4199,7 +4344,7 @@ scope TwelveCharBattle {
         lw      t3, 0x0000(s3)              // t3 = character set
         bnezl   t1, pc() + 8                // if p2, update character set to p2
         lw      t3, 0x0000(s4)              // t3 = character set
-        sltiu   t3, t3, 0x0003              // t3 = 1 if character set is not custom
+        sltiu   t3, t3, NUM_PRESETS         // t3 = 1 if character set is not custom
         bnez    t3, _check_destroy          // skip if character set is not custom
         nop
 
@@ -4694,7 +4839,9 @@ scope TwelveCharBattle {
     string_character_set:;  String.insert("Character Set")
     string_character_set_default:; String.insert("Default")
     string_character_set_japanese:; String.insert("Japanese")
+    string_character_set_polygon_vanilla:; String.insert("Polygon")
     string_character_set_remix:; String.insert("Remix")
+    // string_character_set_polygon_remix:; String.insert("Polygon R")
     string_character_set_custom:; String.insert("Custom")
     string_best_character:; String.insert("Best Character")
     string_tkos:; String.insert("TKOs")
@@ -4720,7 +4867,9 @@ scope TwelveCharBattle {
     character_set_string_table:
     dw string_character_set_default
     dw string_character_set_japanese
+    dw string_character_set_polygon_vanilla
     dw string_character_set_remix
+    // dw string_character_set_polygon_remix
     dw string_character_set_custom
 
     // @ Description

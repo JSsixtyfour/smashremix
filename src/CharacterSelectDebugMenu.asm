@@ -2367,6 +2367,10 @@ scope CharacterSelectDebugMenu {
     scope KirbyHat {
         include "css/KirbyHat.asm"
     }
+    scope DpadFunctions {
+        include "css/DpadFunctions.asm"
+    }
+
 
     // Add Menu Items
     add_menu_item(Shield)
@@ -2385,6 +2389,7 @@ scope CharacterSelectDebugMenu {
     add_menu_item(TauntButton)
     add_menu_item(Practice_1P)
     add_menu_item(KirbyHat)
+    add_menu_item(DpadFunctions)
 
     // Write Menu Items
     write_menu_items()

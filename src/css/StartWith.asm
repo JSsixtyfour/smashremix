@@ -37,6 +37,7 @@ dw string_pokeball
 //dw string_poison_mushroom
 dw string_blue_shell
 dw string_deku_nut
+dw string_pit_fall
 dw string_random
 
 // @ Description
@@ -64,6 +65,7 @@ string_super_mushroom:; String.insert("S Shroom")
 string_poison_mushroom:; String.insert("Ps Shroom")
 string_blue_shell:; String.insert("Blu Shell")
 string_deku_nut:; String.insert("Deku Nut")
+string_pit_fall:; String.insert("Pitfall")
 
 // @ Description
 // Runs before 1p modes to ensure settings aren't applied.

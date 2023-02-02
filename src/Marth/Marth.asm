@@ -3,6 +3,21 @@
 // This file contains file inclusions, action edits, and assembly for Marth.
 
 scope Marth {
+
+	// Image commands used by moveset files
+	scope EYES: {
+		constant OPEN(0xAC000000)
+		constant DAMAGE(0xAC000001)
+	}
+	scope MOUTH: {
+		constant NORMAL(0xAC100000)
+		constant DAMAGE(0xAC100001)
+	}
+	
+    DOWN_BOUNCE:
+	dw EYES.DAMAGE; dw MOUTH.DAMAGE;
+	Moveset.GO_TO(Moveset.shared.DOWN_BOUNCE)
+
     // Insert Moveset files
     insert BLINK,"moveset/BLINK.bin"
     IDLE:
@@ -17,6 +32,7 @@ scope Marth {
     insert TEETER,"moveset/TEETER.bin"
     insert TEETER_START,"moveset/TEETER_START.bin"
 
+    insert DOWN_STAND,"moveset/DOWN_STAND.bin"
     insert DAMAGED_FACE,"moveset/DAMAGED_FACE.bin"
     DMG_1:; Moveset.SUBROUTINE(DAMAGED_FACE); dw 0
     DMG_2:; Moveset.SUBROUTINE(DAMAGED_FACE); Moveset.GO_TO_FILE(0x270); dw 0
@@ -97,6 +113,11 @@ scope Marth {
     VICTORY_1:; Moveset.CONCURRENT_STREAM(SELECT); insert "moveset/VICTORY_1.bin"
     insert VICTORY_2,"moveset/VICTORY_2.bin"
     insert VICTORY_3,"moveset/VICTORY_3.bin"
+
+    // Insert AI attack options
+    constant CPU_ATTACKS_ORIGIN(origin())
+    insert CPU_ATTACKS,"AI/attack_options.bin"
+    OS.align(16)
 
     // @ Description
     // Marth's extra actions
@@ -238,10 +259,10 @@ scope Marth {
     Character.edit_action_parameters(MARTH, Action.ExitPipe,                File.MARTH_EXIT_PIPE,               -1,                         -1)
     Character.edit_action_parameters(MARTH, Action.ExitPipeWalk,            File.MARTH_EXIT_PIPE_WALK,          -1,                         -1)
     Character.edit_action_parameters(MARTH, Action.CeilingBonk,             File.MARTH_CEILING_BONK,            -1,                         -1)
-    Character.edit_action_parameters(MARTH, Action.DownBounceD,             File.MARTH_DOWN_BOUNCE_D,           -1,                         -1)
-    Character.edit_action_parameters(MARTH, Action.DownBounceU,             File.MARTH_DOWN_BOUNCE_U,           -1,                         -1)
-    Character.edit_action_parameters(MARTH, Action.DownStandD,              File.MARTH_DOWN_STAND_D,            -1,                         -1)
-    Character.edit_action_parameters(MARTH, Action.DownStandU,              File.MARTH_DOWN_STAND_U,            -1,                         -1)
+    Character.edit_action_parameters(MARTH, Action.DownBounceD,             File.MARTH_DOWN_BOUNCE_D,           DOWN_BOUNCE,                -1)
+    Character.edit_action_parameters(MARTH, Action.DownBounceU,             File.MARTH_DOWN_BOUNCE_U,           DOWN_BOUNCE,                -1)
+    Character.edit_action_parameters(MARTH, Action.DownStandD,              File.MARTH_DOWN_STAND_D,            DOWN_STAND,                 -1)
+    Character.edit_action_parameters(MARTH, Action.DownStandU,              File.MARTH_DOWN_STAND_U,            DOWN_STAND,                 -1)
     Character.edit_action_parameters(MARTH, Action.TechF,                   File.MARTH_TECH_F,                  TECH_ROLL,                  -1)
     Character.edit_action_parameters(MARTH, Action.TechB,                   File.MARTH_TECH_B,                  TECH_ROLL,                  -1)
     Character.edit_action_parameters(MARTH, Action.DownForwardD,            File.MARTH_DOWN_FORWARD_D,          -1,                         -1)
@@ -505,6 +526,37 @@ scope Marth {
     dw marth_entry_routine_
     OS.patch_end()
 
+    // Set CPU behaviour
+    Character.table_patch_start(ai_behaviour, Character.id.MARTH, 0x4)
+    dw      CPU_ATTACKS
+    OS.patch_end()
+
+	// Set CPU SD prevent routine
+    Character.table_patch_start(ai_attack_prevent, Character.id.MARTH, 0x4)
+    dw    	AI.PREVENT_ATTACK.ROUTINE.NONE
+    OS.patch_end()
+
+    // Edit cpu attack behaviours
+    // edit_attack_behavior(table, attack, override, start_hb, end_hb, min_x, max_x, min_y, max_y)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DAIR,   -1,  6,   16,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPA,   -1,  1,   1,  -50, 50, 10, 100)  // todo: ?
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPG,   -1,  1,   1,  -50, 50, 10, 100)  // todo: ?
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSMASH, -1,  6,   24,  -630, 630, -100, 250)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DTILT,  -1,  6,   9,   -95, 680, -220, 260)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, BAIR,   -1,  5,   9,   -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FSMASH, -1,  14,  17,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FTILT,  -1,  7,   10,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, GRAB,   -1,  6,   6,   170, 420, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, JAB,    -1,  4,   8,   -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NAIR,   -1,  5,   21,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPA,   -1,  6,   9,   -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPG,   -1,  6,   9,   -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UAIR,   -1,  5,   10,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPA,   -1,  8,   16,  150, 570, 223, 423)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPG,   -1,  8,   16,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USMASH, -1,  12,  17,  -1, -1, -1, 995)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UTILT,  -1,  5,   12,  -350, 350, -85, 800)
+
     // @ Description
     // Entry routine for Marth. Sets the correct facing direction and then jumps to Link's entry routine.
     scope marth_entry_routine_: {
@@ -515,94 +567,6 @@ scope Marth {
 
         _end:
         j       0x8013DCCC                  // jump to Link's entry routine to load entry object
-        nop
-    }
-
-    entry_anim_struct_1_MARTH:
-    dw  0x040A0000
-    dw  Character.MARTH_file_8_ptr
-    OS.copy_segment(0xA9CEC, 0x10)
-	dw	0x00000110					        // Marth entry alters these
-	dw  0x00000218
-    dw  0x00000344
-    dw  0x000003A0
-
-    entry_anim_struct_2_MARTH:
-    dw  0x040A0000
-    dw  Character.MARTH_file_8_ptr
-    OS.copy_segment(0xA9D14, 0x10)
-	dw	0x00000638					        // Marth entry alters these
-	dw  0x00000740
-    dw  0x0000076C
-    dw  0x000007B4
-
-    // @ Description
-    // loads a different animation struct when Marth uses his entry animation.
-    scope get_entry_anim_struct_1: {
-        OS.patch_start(0x7E2E8, 0x80102AE8)
-        j       get_entry_anim_struct_1
-        sw      a0, 0x0018(sp)              // original line 1
-        _return:
-        OS.patch_end()
-
-        // s0 = player struct
-        sw      ra, 0x0014(sp)              // original line 2
-        addiu   sp, sp,-0x0010              // allocate stack space
-        sw      t0, 0x0004(sp)              // ~
-        sw      t1, 0x0008(sp)              // store t0, t1
-        lw      t0, 0x0008(s0)              // t0 = character id
-        ori     t1, r0, Character.id.MARTH  // t1 = id.MARTH
-        li      a0, entry_anim_struct_1_MARTH       // a0 = entry_anim_struct
-        beq     t0, t1, _marth              // branch if Marth
-        lw      t0, 0x0004(sp)              // ~
-
-        // normal path
-        lw      t1, 0x0008(sp)              // load t0, t1
-        addiu   sp, sp, 0x0010              // deallocate stack space
-        j       _return
-        nop
-
-		_marth:
-        lw      t1, 0x0008(sp)              // load t0, t1
-        addiu   sp, sp, 0x0010              // deallocate stack space
-        jal     0x800FDAFC                  // original line 2
-        nop
-        j       0x80102AFC                  // return
-        nop
-    }
-
-    // @ Description
-    // loads a different animation struct when Marth uses his entry animation.
-    scope get_entry_anim_struct_2: {
-        OS.patch_start(0x7E344, 0x80102B44)
-        j       get_entry_anim_struct_2
-        sw      a0, 0x0018(sp)              // original line 1
-        _return:
-        OS.patch_end()
-
-        // s0 = player struct
-        sw      ra, 0x0014(sp)              // original line 2
-        addiu   sp, sp,-0x0010              // allocate stack space
-        sw      t0, 0x0004(sp)              // ~
-        sw      t1, 0x0008(sp)              // store t0, t1
-        lw      t0, 0x0008(s0)              // t0 = character id
-        ori     t1, r0, Character.id.MARTH  // t1 = id.MARTH
-        li      a0, entry_anim_struct_2_MARTH       // a0 = entry_anim_struct
-        beq     t0, t1, _marth              // branch if Marth
-        lw      t0, 0x0004(sp)              // ~
-
-        // normal path
-        lw      t1, 0x0008(sp)              // load t0, t1
-        addiu   sp, sp, 0x0010              // deallocate stack space
-        j       _return
-        nop
-
-		_marth:
-        lw      t1, 0x0008(sp)              // load t0, t1
-        addiu   sp, sp, 0x0010              // deallocate stack space
-        jal     0x800FDAFC                  // original line 2
-        nop
-        j       0x80102B58                  // return
         nop
     }
 }

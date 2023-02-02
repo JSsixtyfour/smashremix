@@ -1304,7 +1304,35 @@ scope Action {
         constant NeedleStormStartAir(0x169)
         constant NeedleStormChargeAir(0x16A)
         constant NeedleStormShootAir(0x16B)
-        
+        constant DededeInhaleStart(0x16C)
+        constant DededeInhale(0x16D)
+        constant DededeInhalePull(0x16E)
+        constant DededeInhaleSwallow(0x16F)
+        constant DededeInhaleIdle(0x170)
+        constant DededeInhaleSpit(0x171)
+        constant DededeInhaleTurn(0x172)
+        constant DededeInhaleEnd(0x173)
+        constant DededeInhaleStartAir(0x174)
+        constant DededeInhaleAir(0x175)
+        constant DededeInhalePullAir(0x176)
+        constant DededeInhaleSwallowAir(0x177)
+        constant DededeInhaleFall(0x178)
+        constant DededeInhaleSpitAir(0x179)
+        constant DededeInhaleTurnAir(0x17A)
+        constant DededeInhaleEndAir(0x17B)
+        constant DededeSwallowWalk1(0x17C)
+        constant DededeSwallowWalk2(0x17D)
+        constant DededeSwallowWalk3(0x17E)
+        constant MarinaNSPG(0x17F)
+        constant MarinaNSPGPull(0x180)
+        constant MarinaNSPGThrow(0x181)
+        constant MarinaNSPGThrowU(0x182)
+        constant MarinaNSPGThrowD(0x183)
+        constant MarinaNSPA(0x184)
+        constant MarinaNSPAPull(0x185)
+        constant MarinaNSPAThrow(0x186)
+        constant MarinaNSPAThrowU(0x187)
+        constant MarinaNSPAThrowD(0x188)
 
         // strings!
         string_0x0DC:; String.insert("JabLoopStart")
@@ -1451,6 +1479,36 @@ scope Action {
         string_0x169:; String.insert("NeedleStormStartAir")
         string_0x16A:; String.insert("NeedleStormChargeAir")
         string_0x16B:; String.insert("NeedleStormShootAir")
+        string_0x16C:; String.insert("InhaleBeginG")
+        string_0x16D:; String.insert("InhaleLoopG")
+        string_0x16E:; String.insert("InhalePullG")
+        string_0x16F:; String.insert("InhaleSwallowG")
+        string_0x170:; String.insert("InhaleIdleG")
+        string_0x171:; String.insert("InhaleSpitG")
+        string_0x172:; String.insert("InhaleTurnG")
+        string_0x173:; String.insert("InhaleEndG")
+        string_0x174:; String.insert("InhaleBeginA")
+        string_0x175:; String.insert("InhaleLoopA")
+        string_0x176:; String.insert("InhalePullA")
+        string_0x177:; String.insert("InhaleSwallowA")
+        string_0x178:; String.insert("InhaleFall")
+        string_0x179:; String.insert("InhaleSpitA")
+        string_0x17A:; String.insert("InhaleTurnA")
+        string_0x17B:; String.insert("InhaleEndA")
+        string_0x17C:; String.insert("DededeWalk1")
+        string_0x17D:; String.insert("DededeWalk2")
+        string_0x17E:; String.insert("DededeWalk3")
+        string_0x17F:; String.insert("JetSnatchG")
+        string_0x180:; String.insert("JetSnatchPullG")
+        string_0x181:; String.insert("JetSnatchThrowG")
+        string_0x182:; String.insert("JetSnatchThrowUG")
+        string_0x183:; String.insert("JetSnatchThrowDG")
+        string_0x184:; String.insert("JetSnatchA")
+        string_0x185:; String.insert("JetSnatchPullA")
+        string_0x186:; String.insert("JetSnatchThrowA")
+        string_0x187:; String.insert("JetSnatchThrowUA")
+        string_0x188:; String.insert("JetSnatchThrowDA")
+
 
         action_string_table:
         dw string_0x0DC
@@ -1516,7 +1574,7 @@ scope Action {
         dw string_0x118
         dw string_0x119
         dw string_0x11A
-        dw 0 // dw string_0x11B
+        dw string_0x11B
         dw string_0x11C
         dw string_0x11D
         dw string_0x11E
@@ -1597,6 +1655,34 @@ scope Action {
         dw string_0x169
         dw string_0x16A
         dw string_0x16B
+        dw string_0x16C
+		dw string_0x16D
+		dw string_0x16E
+		dw string_0x16F
+		dw string_0x170
+		dw string_0x171
+		dw string_0x172
+		dw string_0x173
+		dw string_0x174
+		dw string_0x175
+		dw string_0x176
+		dw string_0x177
+		dw string_0x178
+		dw string_0x179
+		dw string_0x17A
+		dw string_0x17B
+		dw string_0x17C
+		dw string_0x17D
+		dw string_0x17E
+        dw string_0x17F
+        dw string_0x181
+        dw string_0x182
+        dw string_0x183
+        dw string_0x184
+        dw string_0x185
+        dw string_0x186
+        dw string_0x187
+        dw string_0x188
     }
 
     // @ Description
@@ -1808,4 +1894,15 @@ scope Action {
         dw string_0x0F3
         dw string_0x0F4
     }
+
+	// @ Description
+	// Basic action change routine
+	macro change(action_id) {
+		lli     a1, {action_id}             // a1(action id) = action_id
+		or      a2, r0, r0                  // a2(starting frame) = 0
+		lui     a3, 0x3F80                  // a3(frame speed multiplier) = 1.0
+		jal     0x800E6F24                  // change action
+		sw      r0, 0x0010(sp)              // argument 4 = 0
+	}
+
 }

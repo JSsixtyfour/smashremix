@@ -82,6 +82,11 @@ scope Wario {
     insert ENTRY,"moveset/ENTRY.bin"
     insert POSE_1P, "moveset/POSE_1P.bin"
 
+    // Insert AI attack options
+    constant CPU_ATTACKS_ORIGIN(origin())
+    insert CPU_ATTACKS,"AI/attack_options.bin"
+    OS.align(16)
+
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(WARIO, Action.Entry,           File.WARIO_IDLE,            IDLE,                       -1)
     Character.edit_action_parameters(WARIO, Action.ReviveWait,      File.WARIO_IDLE,            IDLE,                       -1)
@@ -215,6 +220,17 @@ scope Wario {
     dw Character.grounded_script.DISABLED   // skips grounded script
     OS.patch_end()
 
+    Character.table_patch_start(variants, Character.id.WARIO, 0x4)
+    db      Character.id.NONE
+    db      Character.id.NWARIO // set as POLYGON variant for WARIO
+    db      Character.id.NONE
+    db      Character.id.NONE
+    OS.patch_end()
+    
+    Character.table_patch_start(variant_original, Character.id.NWARIO, 0x4)
+    dw      Character.id.WARIO // set Wario as original character (not Mario, who NWARIO is a clone of)
+    OS.patch_end()
+    
     // Set crowd chant FGM.
     Character.table_patch_start(crowd_chant_fgm, Character.id.WARIO, 0x2)
     dh 0x303
@@ -235,6 +251,37 @@ scope Wario {
     Character.table_patch_start(kirby_inhale_struct, 0x2, Character.id.WARIO, 0xC)
     dh 0xF
     OS.patch_end()
+
+    // Set CPU behaviour
+    Character.table_patch_start(ai_behaviour, Character.id.WARIO, 0x4)
+    dw      CPU_ATTACKS
+    OS.patch_end()
+	
+	// Set CPU NSP long range behaviour
+    Character.table_patch_start(ai_long_range, Character.id.WARIO, 0x4)
+    dw    	AI.LONG_RANGE.ROUTINE.NONE
+    OS.patch_end()
+
+    // Edit cpu attack behaviours
+    // edit_attack_behavior(table, attack, override, start_hb, end_hb, min_x, max_x, min_y, max_y)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DAIR,   -1,  6,   37,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPA,   -1,  26,  63,  -230, 230, -54, 406)  // copied Yoshi dspa coords
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPG,   -1,  26,  63,  630, 1085, -25, 1755) // copied Yoshi dspg coords
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSMASH, -1,  22,  28,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DTILT,  -1,  5,   12,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, BAIR,   -1,  10,  29,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FSMASH, -1,  12,  25,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FTILT,  -1,  10,  11,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, GRAB,   -1,  6,   6,   -1, -1, -1, -1) // todo: check range
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, JAB,    -1,  5,   8,   -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NAIR,   -1,  5,   32,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPA,   -1,  11,  36,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPG,   -1,  11,  36,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UAIR,   -1,  8,   29,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPA,   -1,  6,   41,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPG,   -1,  6,   41,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USMASH, -1,  14,  19,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UTILT,  -1,  7,   20,  -1, -1, -1, -1)
 
     // @ Description
     // Wario's extra actions
@@ -600,6 +647,8 @@ scope Wario {
         lw      t7, 0x0008(a2)              // a2 = grabbing player character id
         ori     a3, r0, Character.id.PIANO  // a3 = id.PIANO
         beq     t7, a3, _piano              // branch if id = PIANO
+        ori     a3, r0, Character.id.MARINA // a3 = id.MARINA
+        beq     t7, a3, _marina             // branch if id = MARINA
         ori     a3, r0, Character.id.WARIO  // a3 = id.WARIO
         beq     t7, a3, _end                // branch if id = WARIO
         nop
@@ -608,6 +657,16 @@ scope Wario {
         sw      ra, 0x0014(sp)              // original line 2
         j       _return                     // return (and continue subroutine)
         nop
+        
+        _marina:
+        lli     a3, Action.ThrowF           // a3 = ThrowF
+        lw      t7, 0x0024(a2)              // t7 = grabbing player action
+        beq     a3, t7, _end                // end if action = ThrowF
+        nop
+        addiu   sp, sp, 0xFFD8              // original line 1
+        j       _return                     // return (and continue subroutine)
+        sw      ra, 0x0014(sp)              // original line 2
+
 
         _piano:
         lli     a3, Action.GrabWait         // a3 = GrabWait

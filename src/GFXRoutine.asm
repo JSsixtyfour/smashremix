@@ -201,6 +201,7 @@ scope GFXRoutine {
     SHEIK_SHOOT:; OVERLAY(0xFFFFFF49); WAIT(0x1); CLEAR_OVERLAY(); WAIT(0x2); END();
     insert FRANKLIN_BADGE, "gfx/routines/FRANKLIN_BADGE.bin"; GO_TO(FRANKLIN_BADGE)
     SHEIK_USP_END:; OVERLAY(0xDE240A80); WAIT(1); CLEAR_OVERLAY(); WAIT(1); OVERLAY(0xDE240A80); WAIT(1); CLEAR_OVERLAY(); WAIT(1); OVERLAY(0xDE240A80); WAIT(1); CLEAR_OVERLAY(); END();
+    insert MARINA_CHARGE, "gfx/routines/MARINA_CHARGE.bin"; GO_TO(MARINA_CHARGE)
 
     // name - gfx routine effect name, used for display only
     // filename - file containing gfx routine commands
@@ -238,6 +239,7 @@ scope GFXRoutine {
     add_gfx_routine(SHEIK_SHOOT, SHEIK_SHOOT, 60, OS.TRUE)
     add_gfx_routine(FRANKLIN_BADGE, FRANKLIN_BADGE, 100, OS.FALSE)
     add_gfx_routine(SHEIK_USP_END, SHEIK_USP_END, 60, OS.FALSE)
+    add_gfx_routine(MARINA_CHARGE, MARINA_CHARGE, 10, OS.FALSE)
 
     // write gfx routines to ROM
     write_gfx_routines()
@@ -320,18 +322,16 @@ scope GFXRoutine {
         scope extend_gfx_check_: {
             OS.patch_start(0x652E4, 0x800E9AE4)
             j       extend_gfx_check_
-            nop
+            lw      a3, 0x001C(sp)          // a3 = player struct
             _return:
             OS.patch_end()
 
-            lw      a3, 0x001C(sp)          // a3 = player struct
-
-            li      at, override_table      // load gfx routine override table
-            lbu     t1, 0x000D(a3)          // t1 = player port
-            sll     t1, t1, 0x0002          // t1 = port offset
-            addu    at, at, t1              // at = entry in table
-            lw      a1, 0x0000(at)          // a1 = override value
-
+            define _table(override_table)
+            OS.lui_table({_table}, at)      // v0 = first half of table address
+            lbu     t1, 0x000D(a3)          // t1 = port
+            sll     t1, t1, 0x0002          // t1 = offset to player entry
+            addu    at, at, t1              // at = offset of player
+            OS.table_read_word({_table}, at, a1) // v0 = players entry in table
             beqz    a1, _end                // end if no override value
             nop
 
@@ -365,9 +365,8 @@ scope GFXRoutine {
             sw      r0, 0x000C(t8)          // ~
 
             lw      ra, 0x0004(sp)          // restore ra
-            addiu   sp, sp, 0x0030          // deallocate stack space
             jr      ra
-            nop
+            addiu   sp, sp, 0x0030          // deallocate stack space
         }
     }
 }

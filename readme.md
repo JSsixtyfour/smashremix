@@ -14,12 +14,14 @@ You must place your legally acquired patched ROM in the 'roms' folder for this t
 (Note: Smash Remix requires the the 8 MB expansion pak to be enabled.)
 ## Gameplay
 ### AI Improvements
-Computer controlled players have recieved a variety of improvements.
+Computer controlled players have received a variety of improvements.
 - They attempt to recover more than once.
 - They randomly tech (30% left, 30% right, 30% in place, 10% missed).
 - They Z-Cancel (95% success rate).
+- CPU Level 10 added.
 
 #### Toggle Name: _Improved AI_
+
 
 ### Combo Meter Improvements
 - "Improved Combo Meter" prevents the combo meter from resetting when the character is grabbed or bounces off of a wall.
@@ -27,18 +29,21 @@ Computer controlled players have recieved a variety of improvements.
 
 #### Toggle Names: _Improved Combo Meter_, _Tech Chase Combo Meter_
 
-### Vs Mode Combo Meter
-- Displays a combo meter above players being combo'd in Vs mode.
+### Combo Meter Display
+- Displays a combo meter above players being comboed outside Training mode.
 - Combo meter color corresponds with attacking player's port or team.
 - In 1v1 matches, the "1v1 Combo Meter Swap" toggle will display the combo meter above the player performing the combo.
 
-#### Toggle Names: _VS Mode Combo Meter_, _1v1 Combo Meter Swap_
+#### Toggle Names: _Combo Meter_, _1v1 Combo Meter Swap_
 
 ### Expanded Character Select Screen
-- The character select screen is now expanded to 27 slots including 14 custom characters.
+- The character select screen is now expanded to 30 slots including 16 custom characters.
 - Metal Mario, Giant DK, and polygon versions of the original cast are available via d-pad up or down.
 - Japanese versions of the original cast are available via d-pad left.
 - European versions of some of the original cast are available via d-pad right.
+- Giga Bowser, Mad Piano, and Super Sonic are available via d-pad up.
+- Polygon versions of some of the remix cast are available via d-pad down.
+- Note: Press L to select a random character on the VS CSS and 12CB CSS.
 
 ### Character Select Debug Menu
 A menu for modifying certain character attributes is available on each panel.
@@ -84,6 +89,9 @@ A menu for modifying certain character attributes is available on each panel.
 - Activates 1p Practice mode and allows stage selection (for 1p and Remix 1p).
 - Scores are disabled while this is active.
 - Can reset stage while mode is activated (press L while paused, during GameEnd, or at Score Screen).
+##### Dpad map
+- Available mappings are: 'Smash', 'Tilt', 'Special', or 'Movement'
+- Note: When using 'Movement', Shield is mapped to L and Taunt is mapped to Z
 
 #### Toggle Name: _CSS Panel Menu_
 
@@ -99,6 +107,11 @@ A menu for modifying certain character attributes is available on each panel.
 - Note: Stage hazards cannot be changed when using the TOURNAMENT stage select layout.
 
 #### Toggle Name: _Hazard Mode_
+
+### Whispy Mode
+- Available Whispy wind speeds are: 'Normal', 'Japanese', 'Super', or 'Hyper'
+
+#### Toggle Name: _Whispy Mode_
 
 ### Stage Select Layout
 - Choose between NORMAL and TOURNAMENT stage select layouts. In the TOURNAMENT layout, the stages available align with the Smash Remix Tour ruleset.
@@ -135,7 +148,7 @@ A menu for modifying certain character attributes is available on each panel.
 
 ### 12-Character Battle Mode
 - New VS mode for easily tracking 12cbs.
-- Features 3 preset character sets (Default, Japanese, Remix) and allows for a custom character set per player.
+- Features 4 preset character sets (Default, Japanese, Polygon, Remix) and allows for a custom character set per player.
 - Best character for each player is tracked as the number of TKOs the opposing player experiences against your character.
 - Only ports 1 and 2 work with this mode.
 
@@ -155,7 +168,7 @@ A menu for modifying certain character attributes is available on each panel.
  - Player shrinks into tiny form and deals less damage.
  - Lasts 10 seconds.
 #### Spiny Shell
- - Throwable. Similar to Red/Green Shells. While active, it will go towards the player who in first place.
+ - Throwable. Similar to Red/Green Shells. While active, it will go towards the player who is in first place.
 #### Lightning
  - Shrinks the players opponents into tiny form.
  - Lasts 10 seconds.
@@ -164,6 +177,13 @@ A menu for modifying certain character attributes is available on each panel.
 #### Franklin Badge
  - Player becomes immune to projectiles. Projectiles that hit the player will be reflected back.
  - Lasts 20 seconds.
+#### Pitfall
+ - Throwable. Can be planted, similar to a proximity mine. When stepped on, buries a player in the ground.
+
+### Tripping
+- If enabled, characters will randomly trip when dashing or running.
+
+#### Toggle Name: Tripping
 
 ## Customization
 ### Costume Selection Improvements
@@ -261,6 +281,11 @@ When Special Model Display is Hitbox or Hitbox+, these changes are applied:
 
 #### Toggle Name: _Flash On Z-Cancel_
 
+### Cruel Z-Cancel Mode
+- Punishes the player in various ways for missing Z-cancels
+
+#### Toggle Name: _Cruel Z-Cancel Mode_
+
 ## Quality of Life
 ## New Music Added
 - Dozens of new music tracks featuring some new instruments added.
@@ -268,6 +293,11 @@ When Special Model Display is Hitbox or Hitbox+, these changes are applied:
 ### Improved Pause Camera
 - Allows the camera to be zoomed, moved and rotated freely while the game is paused.
 - A and B to zoom, C buttons to move.
+
+### Cycle Music Tracks
+- Players can change music tracks during a match with d-pad while the game is paused.
+    - D-Pad Right cycles through the stage's music tracks.
+    - D-Pad Down picks a random music track.
 
 ### Crash Debugger
 - When a game crash occurs, attempts to display a screen with detailed information on what went wrong.
@@ -332,7 +362,7 @@ When Special Model Display is Hitbox or Hitbox+, these changes are applied:
 - Normal: No change.
 - Bonus: Force the camera to follow and track players.
 - Fixed: Force the camera to show the entire stage.
-- Scene: Camera remains frozen at the last pause position, HUD is disabled.
+- Scene: Camera remains frozen at the last pause position, HUD is disabled, cinematic entry is disabled.
 
 #### Toggle Name: _Camera Mode_
 
@@ -399,11 +429,6 @@ When Special Model Display is Hitbox or Hitbox+, these changes are applied:
 
 #### Toggle Name: _Japanese Shield Stun_
 
-### Japanese Whispy
-- Use the Japanese version's wind speed for Whispy.
-
-#### Toggle Name: _Japanese Whispy_
-
 ## Single Player Modes
 
 ### Bonus 3 (Race to the Finish)
@@ -452,6 +477,7 @@ CSS Panel Menu             | On                 | Off               | On        
 Color Overlays             | Off                | Off               | Off               | Off
 Cinematic Camera           | Default            | Default           | Default           | Default
 Flash On Z-Cancel          | Off                | Off               | Off               | Off
+Cruel Z-Cancel Mode        | Off                | Off               | Off               | Off
 FPS Display *BETA          | Off                | Off               | Off               | Off
 Model Display              | Default            | Default           | High Poly         | Default
 Special Model Display      | Off                | Off               | Off               | Off
@@ -459,7 +485,7 @@ Advanced Hurtbox Display   | Off                | Off               | Off       
 Hold To Exit Training      | Off                | On                | Off               | Off
 Improved Combo Meter       | On                 | Off               | On                | On
 Tech Chase Combo Meter     | On                 | Off               | On                | On
-VS Mode Combo Meter        | On                 | Off               | On                | On
+Combo Meter                | On                 | Off               | On                | On
 1v1 Combo Meter Swap       | Off                | Off               | Off               | Off
 Improved AI                | On                 | Off               | On                | On
 Neutral Spawns             | On                 | On                | On                | On
@@ -476,6 +502,7 @@ Disable HUD                | Off                | Off               | Off       
 Disable Anti-Aliasing      | Off                | Off               | Off               | Off
 Always Show Full Results   | On                 | On                | On                | On
 Skip Training Start Cheer  | Off                | Off               | Off               | Off
+Tripping                   | Off                | Off               | Off               | Off
 
 #### Music Settings
 Toggle                          | Community          | Tournament        | Netplay           | Japanese
@@ -492,7 +519,7 @@ Toggle                          | Community          | Tournament        | Netpl
 --------------------------------|--------------------|-------------------|-------------------|-------------------
 Stage Select Layout             | NORMAL             | TOURNAMENT        | NORMAL            | NORMAL
 Hazard Mode                     | NORMAL             | NORMAL            | NORMAL            | NORMAL
-Japanese Whispy                 | Off                | Off               | Off               | On
+Whispy Mode                     | Off                | Off               | Off               | JAPANESE
 Camera Mode                     | NORMAL             | NORMAL            | NORMAL            | NORMAL
 _Random Toggles for All Stages_ | [Community]        | [Tournament]      | [Semi-Competitive]| [Community]
 

@@ -35,6 +35,11 @@ scope GameEnd {
         nop
 
         _salty_runback:
+        // reset pause dpad cycle initial delay
+        li      t1, Pause.dpad_song_cycle_timer   // t1 = dpad_song_cycle_timer
+        addiu   t6, r0, 0x0002
+        sw      t6, 0x0000(t1)              // save updated timer
+
         lli     t6, 0x0018                  // original line 1
         sb      t6, 0x0000(v0)              // original line 2
 

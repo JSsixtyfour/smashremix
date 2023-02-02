@@ -15,6 +15,8 @@ constant DEATH_TIMER(0x3C0)                     // = 16 seconds
 constant KNOCKBACK_ANGLE(90)                    // = 90 DEGREES
 constant HURTBOX_FGM(0x02B7)                    // = none
 constant HURTBOX_DAMAGE(30)                     // = 30 damage
+constant BASE_KNOCKBACK(100)
+constant KNOCKBACK_GROWTH(100)					
 
 // @ Description
 // Offset to item in file 0xFB.
@@ -35,15 +37,18 @@ dw aerial_main_                                 // 0x14 - spawn behavior
 dw idle_ground_collision_                       // 0x18 - ground collision
 dw 0                                            // 0x1C - ?
 dw 0, 0, 0, 0                                   // 0x20 - 0x2C - ?
-dw aerial_collide_with_hurtbox_                 // 0x30
+dw idle_hurtbox_collision_                      // 0x30
 
 // change item state @ 0x80172ec8
 // STATE 0 - IDLE
 dw 0                                            // 0x34
 dw resting_main_                                // 0x38 - resting/pickup main
 dw 0                                            // 0x3C
-dw 0, 0, 0, 0                                   // 0x40 - 0x4C - ?
-dw aerial_collide_with_hurtbox_                 // 0x50
+dw 0
+dw 0, 0, 0                                      // 0x40 - 0x4C - ?
+dw idle_hurtbox_collision_                      // 0x50
+
+// state 1 - grounded
 dw aerial_main_                                 // 0x54
 dw idle_ground_collision_                       // 0x58 - ground collision
 dw 0                                            // 0x5C
@@ -54,24 +59,24 @@ dw 0                                            // 0x70
 dw 0, 0, 0, 0, 0, 0, 0, 0                       // 0x74 - 0x90
 
 // STATE 3 - THROWN
-dw aerial_main_                                 // 0x94
+dw aerial_main_                                 // 0x94 - main
 dw air_to_ground_check_                         // 0x98
 dw collide_with_player_                         // 0x9C
 dw 0x8017B2F8                                   // 0xA0 - collide with shield
 dw 0x801733E4                                   // 0xA4 - glance with shield
 dw 0x8017B2F8                                   // 0xA8 - collide with shield
 dw 0x8017B31C                                   // 0xAC - collide with reflector
-dw aerial_collide_with_hurtbox_                 // 0xB0
-dw aerial_main_                                 // 0xB4
+dw idle_hurtbox_collision_                      // 0xB0
+
+// STATE 4
+dw aerial_main_                                 // 0xB4 - main
 dw air_to_ground_check_                         // 0xB8 - collision check main 
 dw collide_with_player_                         // 0xBC - collision main
 dw 0x8017B2F8                                   // 0xC0 - collide with shield 
-
-// STATE 4
 dw 0x801733E4                                   // 0xC4 - aerial glance with shield(using r.shell)
 dw 0x8017B2F8                                   // 0xC8
 dw 0x8017B31C                                   // 0xCC - aerial collide with reflector(using r.shell)
-dw aerial_collide_with_hurtbox_                 // 0xD0
+dw idle_hurtbox_collision_                      // 0xD0
 
 // STATE 5 - ACTIVE GROUNDED
 dw grounded_active_                             // 0xD4 - grounded subroutine (r.shell uses 0x8017AD7C)
@@ -84,14 +89,14 @@ dw 0x8017B31C                                   // 0xEC - collide with reflector
 dw grounded_collide_with_hurtbox_               // 0xF0 - collide with hitbox
 
 // STATE 6 - AIR-TO-GROUND 
-dw aerial_main_                                 // 0xF4 - physics(using r.shell)
+dw aerial_main_                                 // 0xF4 - main
 dw air_to_ground_check_                         // 0xF8 - aerial collision check main(using r.shell)
 dw collide_with_player_                         // 0xFC - collision main collide with hurtbox
 dw collide_with_player_                         // 0x100 - collision main(using r.shell)
 dw 0                                            // 0x104 -
 dw 0                                            // 0x108
 dw 0x8017B31C                                   // 0x10C - collide with reflector(using r.shell)
-dw aerial_collide_with_hurtbox_                 // 0x110
+dw idle_hurtbox_collision_                      // 0x110
 dw 0                                            // 0x114
 dw 0                                            // 0x118
 dw 0                                            // 0x11C
@@ -127,10 +132,13 @@ scope spawn_custom_item_based_on_red_shell_: {
     sh      v0, 0x156(a0)                // save fgm value
     addiu   v0, r0, BlueShell.KNOCKBACK_ANGLE// v0 = knockback angle
     sw      v0, 0x013C(a0)               // save knockback angle
-    addiu   v0, r0, 0xFFFF               // v0 = -1
-    sw      v0, 0x0180(a0)               // save to 0x180(red shell custom variable space)
+    sw      r0, 0x0180(a0)               // set 0x180 to 0
     addiu   v0, r0, BlueShell.DEATH_TIMER // v0 = death timer(16 seconds) while active(default = 8 seconds)
-    sw      v0, 0x02C0(a0)               // save death timer
+    sw      v0, 0x02C0(a0)               // save death timer	
+    lli     at, BASE_KNOCKBACK           // at = base knockback
+    sw      at, 0x0148(a0)               // overwrite bkb
+    lli     at, KNOCKBACK_GROWTH        // at = knockback growth
+    sw      at, 0x0140(a0)               // overwrite
 
     addiu   v0, r0, 0x0003               // v0 = electric damage type
     sw      v0, 0x011C(a0)               // damage type
@@ -602,7 +610,7 @@ scope collide_with_player_: {
     lw      v1, 0x0084(a0)
     or      a1, a0, r0
     addiu   t9, r0, 0x0001           // t9 = 1
-    lbu     t6, 0x0355(v1)           // load shells "hp" value
+    lbu     t6, 0x0355(v1)           // load shells "hp" value?
     addiu   a0, r0, 0x0004
     addiu   t7, t6, 0xffff
     andi    t8, t7, 0x00ff
@@ -770,7 +778,6 @@ scope set_grounded: {
 
     jal     0x8017afec            // animate red shell
     sw      a0, 0x0018(sp)        // store a0
-
     li      a1, STATE_TABLE       // a1 = item info array offset
     lw      a0, 0x0018(sp)        // a0 = item special struct
     jal     0x80172ec8            // change item state
@@ -880,7 +887,10 @@ scope grounded_active_: {
     jal     target_player_               // subroutine determines what direction shell goes. default is 0x8017A534
     lw      a0, 0x0020(sp)
     
-    lw      v0, 0x02c0(v1)               // check death flag
+    lw      a0, 0x0020(sp)				// a0 = item object
+    lw      v1, 0x0084(a0)				// v1 = item struct
+    lw      v0, 0x02C0(v1)               // check death flag
+
     //li    a0, 0x00F0
     //blt   v0, a0, _edge_detect_skip    // skip edge detect function if shell has a few seconds left
     //nop
@@ -906,8 +916,8 @@ scope grounded_active_: {
     addiu   sp, sp, 0x20
     jr      ra
     nop
-}
-
+	}
+			
 // @ Description
 // based on red shells grounded gfx routine 0x8017a610, calls smoke gfx @ 0x800FF048
 scope grounded_gfx_: {
@@ -918,7 +928,10 @@ scope grounded_gfx_: {
     lbu     v1, 0x0351(v0)           // v1 = gfx timer
     bnezl   v1, _end                 // branch if timer != 0
     addiu   t1, v1, 0xffff
-    lw      t7, 0x001c(a3)
+
+	// every 8 frames, create smoke and remove owner  
+	sw      r0, 0x0008(v0)			// remove owner	
+	lw      t7, 0x001c(a3)
     addiu   a0, sp, 0x001c
     lui     a2, 0x4f80
     sw      t7, 0x0000(a0)
@@ -1243,22 +1256,24 @@ scope grounded_collide_with_hurtbox_: {
     _end:
     or             v0, r0, r0
     lw             ra, 0x0014(sp)
-    addiu          sp, sp, 0x18
     jr             ra
-    nop
+    addiu          sp, sp, 0x18
 
 }
 
 
 // @ Description
 // runs if shell hits another shell based on @ 0x8017A9D0
-scope aerial_collide_with_hurtbox_: {
+// a0 = item object, a1 = 
+scope idle_hurtbox_collision_: {
     addiu   sp, sp, -0x20
     sw      ra, 0x0014(sp)
+    sw      s0, 0x0008(sp)          // store s0
     lw      v0, 0x0084(a0)
     lui     at, 0x4120
     mtc1    at, f8
     lw      t6, 0x0298(v0)
+	
     lw      t7, 0x02a4(v0)
     mtc1    r0, f2
     mtc1    t6, f4
@@ -1312,7 +1327,8 @@ scope aerial_collide_with_hurtbox_: {
 
     _grounded:
     jal     set_grounded
-    nop     
+    nop
+
     b       _end2
     lw      ra, 0x0014(sp)
     swc1    f2, 0x002c(v0)
@@ -1322,24 +1338,28 @@ scope aerial_collide_with_hurtbox_: {
     lw      ra, 0x0014(sp)
 
     _end2:
+    lw      a0, 0x0020(sp)			// restore item object
+	lw      a0, 0x0084(a0)			// a0 = item struct
+	
+	// update player owner
+	lw      at, 0x02A8(a0)			// at = player who hit the shell
+	sw      at, 0x0008(a0)			// write player owner
+	
+	// set gfx counter to 0x10
+	lli     at, 0x10				// 16 frames until it can damage owner
+	sb      at, 0x0351(a0)			// overwrite gfx counter (is normally 8)
 
-    // before ending, be sure player in 1st ptr is updated
-    sw      a0, 0x0010(sp)          // store registers
-    sw      s0, 0x0008(sp)          // ~
-    sw      ra, 0x0004(sp)          // ~
-
-    move    a0, v1                  // a0 = item struct
+    // now that shell is active, check and see who is in first place
     lui     s0, 0x8004
     jal     get_player_in_first_
     lw      s0, 0x66fc(s0)          // s0 = player 1 ptr
-    lw      a0, 0x0010(sp)          // load registers
-    lw      s0, 0x0008(sp)          // ~
-    lw      ra, 0x0004(sp)          // ~
 
+    lw      a0, 0x0020(sp)          // restore registers
+    lw      s0, 0x0008(sp)          // ~
+    lw      ra, 0x0014(sp)          // ~
     addiu   sp, sp, 0x20
-    or      v0, r0, r0
     jr      ra
-    nop
+    or      v0, r0, r0
 }
 
 // @ Description    
@@ -1353,13 +1373,14 @@ scope target_player_: {
     sw      s3, 0x0028(sp)              // store registers
     sw      s2, 0x0024(sp)              // ~
     sw      s1, 0x0020(sp)              // ~
+    sw      r0, 0x005c(sp)				// clear this space
 
     beqz    s0, _apply_speed            // skip if no valid player
     or      s1, r0, r0                  // s1(i) = 0
-
-    // v1 = shell timer
-    // v0 = shell special struct
-    addiu   at, r0, 0x0008              // at = 8 (shell timer default value)
+	
+	lw      v0, 0x0084(a0)				// v0 = item struct
+	lb      v1, 0x0351(v0)				// v1 = shell gfx timer
+    addiu   at, r0, 0x0007              // at = 7
     bnel    at, v1, _end_target_loop    // run check only 1/8 frames
     lw      s0, 0x180(v0)               // s0 = last known player ptr
 
@@ -1408,10 +1429,13 @@ scope target_player_: {
     swc1    f20, 0x0048(sp)
 
     _apply_speed:
-    lw      a0, 0x0068(sp)
+	lw      a1, 0x005c(sp)
+	beqz    a1, _end					// skip adding speed if no player is found
+	nop
     jal     0x8017a3a0                 // apply speed
+    lw      a0, 0x0068(sp)
 
-    lw      a1, 0x005c(sp)
+	_end:
     lw      ra, 0x002c(sp)
     ldc1    f20, 0x0010(sp)
     lw      s0, 0x001c(sp)

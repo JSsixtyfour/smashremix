@@ -1370,6 +1370,9 @@ scope Training {
         li      t0, bgm_name_object
         sw      v0, 0x0000(t0)              // save reference to bgm name object
         sw      t0, 0x0054(v0)              // store address of reference to bgm name object
+        lli     a1, 162                     // a1 = max width
+        jal     Render.apply_max_width_     // apply max width
+        or      a0, v0, r0                  // a0 = bgm name object
 
         // Action & Frame strings
         // Create a room to use for these strings that shows up behind the pause menu
@@ -1985,7 +1988,7 @@ scope Training {
     // @ Description
     // This holds each player's shield status as a single byte
     player_shield_status:
-    dw      0x00000000
+    db      0, 0, 0, 0
 
     // @ Description
     // Forces CPUs to shield until hit and they can perform a move again
@@ -2011,6 +2014,7 @@ scope Training {
         addiu   v1, v1, -0x0036             // v1 = 0 if training
         bnez    v1, _original               // skip if screen_id != training mode
         nop
+
         li      v1, entry_shield_break_mode
         lw      v1, 0x0004(v1)              // v1 = shield break mode
         beqz    v1, _original               // skip if shield break mode off
@@ -2033,10 +2037,30 @@ scope Training {
         lli     t7, OOS_FRAME_1             // t7 = OOS_FRAME_1
         beql    at, t7, pc() + 8            // if already in OOS_FRAME_1, set to OOS_FRAME_2
         lli     t7, OOS_FRAME_2             // t7 = OOS_FRAME_2
+
+        // for NAir and DSP, we'll wait until jumpsquat is over before advancing to "frame 2"
+        lli     at, 0x0006                  // at = OOS index for dsp
+        li      a3, entry_oos_option
+        lw      a3, 0x0004(a3)              // a3 = OOS option
+        beq     a3, at, pc() + 12           // if dsp, continue checking action
+        lli     at, 0x0007                  // at = OOS index for nair
+        bne     a3, at, _oos_input          // if not nair, skip checking action
+        lw      at, 0x0024(a2)              // at = current action
+        lli     a3, Action.ShieldJumpSquat  // a3 = ShieldJumpSquat
+        bne     at, a3, _oos_input          // if no longer in jumpsquat, move to frame 2
+        lw      at, 0x09C8(a2)              // at = player attributes
+        lwc1    f4, 0x0034(at)              // f4 = jumpsquat frames, floating point
+        trunc.w.s f4, f4                    // f4 = jumpsquat frames, decimal
+        mfc1    a3, f4                      // a3 = jumpsquat frames
+        lw      at, 0x001C(a2)              // at = current frame
+        bnel    at, a3, pc() + 8            // if not in last frame of jumpsquat, pretend we're still in frame 1
+        lli     t7, OOS_FRAME_1             // t7 = OOS_FRAME_1
+
+        _oos_input:
         sb      t7, 0x0000(t3)              // update shield status to OOS_FRAME_1/2
-        li      t7, entry_oos_option
-        lw      t7, 0x0004(t7)              // t7 = OOS option
-        sll     t7, t7, 0x0002              // t7 = offset to button mask/stick value
+        li      a3, entry_oos_option
+        lw      a3, 0x0004(a3)              // a3 = OOS option
+        sll     t7, a3, 0x0002              // t7 = offset to button mask/stick value
         lbu     at, 0x0000(t3)              // at = shield status (OOS_FRAME_1 or OOS_FRAME_2)
         li      a3, oos_inputs_frame_1
         beql    at, v1, pc() + 8            // if shield status is OOS_FRAME_2, then use frame 2 table
@@ -2096,7 +2120,6 @@ scope Training {
         _force_shield:
         lli     a3, Joypad.Z                // force CPU to shield
 
-
         _original:
         sh      a3, 0x0000(v0)              // original line 1
 
@@ -2107,6 +2130,27 @@ scope Training {
         jr      ra
         lb      v1, 0x0006(v0)              // original line 2
     }
+
+	// @ Description
+	// Fixes a crash if there are less than two players in Sector Z
+	scope fix_sector_z_crashes_: {
+		OS.patch_start(0x82FFC, 0x801077FC)
+		j		fix_sector_z_crashes_
+		nop
+		_return:
+		OS.patch_end()
+
+		bnezl	a0, _normal
+		lw		v0, 0x0084(a0)			// original line 1
+
+		_exit:
+		j		0x80107900				// skip to end
+		lw		ra, 0x001C(sp)
+
+		_normal:
+		j		_return
+		addiu	at, t0, 0xFFFF			// original line 2
+	}
 
     // @ Description
     // Hooks to avoid crashes due to Pokemon opponent targeting when no other ports loaded
@@ -2223,6 +2267,7 @@ scope Training {
     oos_upsmash:; db "Up Smash", 0x00
     oos_usp:; db "Up Special", 0x00
     oos_dsp:; db "Down Special", 0x00
+    oos_nair:; db "Neutral Air", 0x00
     oos_shield_drop:; db "Shield Drop", 0x00
     oos_shield_drop_dsp:; db "S. Drop DSP", 0x00
     oos_shield_drop_nair:; db "S. Drop NAir", 0x00
@@ -2241,10 +2286,12 @@ scope Training {
     dw oos_grab
     dw oos_upsmash
     dw oos_usp
+    dw oos_dsp
+    dw oos_nair
     dw oos_shield_drop
     dw oos_shield_drop_dsp
     dw oos_shield_drop_nair
-    constant OOS_MAX(8)
+    constant OOS_MAX(10)
 
     // @ Description
     // Holds button masks and stick values for the first 2 frames after shied stun ends in shield break mode
@@ -2256,6 +2303,8 @@ scope Training {
     dh Joypad.Z | Joypad.A, 0x0000      // grab
     dh Joypad.Z,            0x0035      // usmash (enter jumpsquat first)
     dh Joypad.Z,            0x0035      // usp (enter jumpsquat first)
+    dh Joypad.Z,            0x0035      // dsp (enter jumpsquat first)
+    dh Joypad.Z,            0x0035      // nair (enter jumpsquat first)
     dh Joypad.Z,            0x00B0      // shield drop
     dh Joypad.Z,            0x00B0      // shield drop dsp
     dh Joypad.Z,            0x00B0      // shield drop nair
@@ -2268,6 +2317,8 @@ scope Training {
     dh Joypad.Z | Joypad.A, 0x0000      // grab
     dh Joypad.A,            0x0050      // usmash
     dh Joypad.B,            0x0050      // usp
+    dh Joypad.B,            0x00B0      // dsp
+    dh Joypad.A,            0x0000      // nair
     dh Joypad.Z,            0x00B0      // shield drop
     dh Joypad.B,            0x00B0      // shield drop dsp
     dh Joypad.A,            0x0000      // shield drop nair
@@ -2300,6 +2351,14 @@ scope Training {
     string_npikachu:; char_0x17:; db "Poly Pikachu", 0x00
     string_npuff:; char_0x18:; db "Poly Puff", 0x00
     string_nness:; char_0x19:; db "Poly Ness", 0x00
+    string_nwario:; char_Px02:; db "Poly Wario", 0x00
+    string_nlucas:; char_Px03:; db "Poly Lucas", 0x00
+    string_nbowser:; char_Px04:; db "Poly Bowser", 0x00
+    string_nwolf:; char_Px05:; db "Poly Wolf", 0x00
+    string_ndrmario:; char_Px01:; db "Poly Dr. Mario", 0x00
+    string_nsonic:; char_Px06:; db "Poly Sonic", 0x00
+    string_nsheik:; char_Px07:; db "Poly Sheik", 0x00
+    string_nmarina:; char_Px08:; db "Poly Marina", 0x00
     string_gdk:; char_0x1A:; db "Giant DK", 0x00
     //char_0x1B:; db "NONE", 0x00
     //char_0x1C:; db "NONE", 0x00
@@ -2337,6 +2396,8 @@ scope Training {
     string_sandbag:; char_0x3C:; db "Sandbag", 0x00
     string_ssonic:; char_0x3D:; db "Super Sonic", 0x00
     string_sheik:; char_0x3E:; db "Sheik", 0x00
+    string_marina:; char_0x3F:; db "Marina", 0x00
+    string_dedede:; char_0x40:; db "Dedede", 0x00
     OS.align(4)
 
     string_table_char:
@@ -2366,7 +2427,9 @@ scope Training {
     dw char_0x39            // MEWTWO
     dw char_0x3A            // MARTH
     dw char_0x3B            // SONIC
-    dw char_0x3E            // SONIC
+    dw char_0x3E            // SHEIK
+    dw char_0x3F            // MARINA
+    dw char_0x40            // DEDEDE
 
     dw char_0x2A            // J MARIO
     dw char_0x29            // J FOX
@@ -2404,6 +2467,14 @@ scope Training {
     dw char_0x17            // POLYGON PIKACHU
     dw char_0x18            // POLYGON JIGGLYPUFF
     dw char_0x19            // POLYGON NESS
+    dw char_Px01            // POLYGON DRM
+    dw char_Px02            // POLYGON WARIO
+    dw char_Px03            // POLYGON LUCAS
+    dw char_Px04            // POLYGON BOWSER
+    dw char_Px05            // POLYGON WOLF
+    dw char_Px06            // POLYGON SONIC
+    dw char_Px07            // POLYGON SHEIK
+    dw char_Px08            // POLYGON MARINA
 
     // @ Description
     // Training character id is really the order they are displayed in
@@ -2438,10 +2509,12 @@ scope Training {
         constant MARTH(0x17)
         constant SONIC(0x18)
         constant SHEIK(0x19)
+        constant MARINA(0x1A)
+        constant DEDEDE(0x1B)
 
         // Increment JMARIO after adding more characters above
         // j characters
-        constant JMARIO(0x1A)
+        constant JMARIO(0x1C)
         constant JFOX(JMARIO + 0x01)
         constant JDK(JMARIO + 0x02)
         constant JSAMUS(JMARIO + 0x03)
@@ -2477,6 +2550,14 @@ scope Training {
         constant NPIKACHU(JMARIO + 0x1F)
         constant NJIGGLY(JMARIO + 0x20)
         constant NNESS(JMARIO + 0x21)
+        constant NDRM(JMARIO + 0x22)
+        constant NWARIO(JMARIO + 0x23)
+        constant NLUCAS(JMARIO + 0x24)
+        constant NBOWSER(JMARIO + 0x25)
+        constant NWOLF(JMARIO + 0x26)
+        constant NSONIC(JMARIO + 0x27)
+        constant NSHEIK(JMARIO + 0x28)
+        constant NMARINA(JMARIO + 0x29)
     }
 
 
@@ -2508,6 +2589,8 @@ scope Training {
     db Character.id.MARTH
     db Character.id.SONIC
     db Character.id.SHEIK
+    db Character.id.MARINA
+    db Character.id.DEDEDE
 
     db Character.id.JMARIO
     db Character.id.JFOX
@@ -2545,6 +2628,14 @@ scope Training {
     db Character.id.NPIKACHU
     db Character.id.NJIGGLY
     db Character.id.NNESS
+    db Character.id.NDRM
+    db Character.id.NWARIO
+    db Character.id.NLUCAS
+    db Character.id.NBOWSER
+    db Character.id.NWOLF
+    db Character.id.NSONIC
+    db Character.id.NSHEIK
+    db Character.id.NMARINA
 
     char_id_to_entry_id:
     db id.MARIO
@@ -2610,6 +2701,19 @@ scope Training {
     db id.SANDBAG
     db id.SSONIC
     db id.SHEIK
+    db id.MARINA
+    db id.DEDEDE
+	// ADD NEW CHARACTERS Here
+
+	// REMIX POLYGONS
+    db id.NWARIO
+    db id.NLUCAS
+    db id.NBOWSER
+    db id.NWOLF
+    db id.NDRM
+    db id.NSONIC
+    db id.NSHEIK
+    db id.NMARINA
 
     // @ Description
     // Spawn Position Strings

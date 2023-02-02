@@ -48,4 +48,11 @@ add_to_music_profile(staff, FLYINGBATTERY)
 add_to_music_profile(staff, SMB2OVERWORLD)
 add_to_music_profile(staff, RAINBOWROAD)
 add_to_music_profile(staff, LINKS_AWAKENING_MEDLEY)
+add_to_music_profile(staff, DRACULAS_CASTLE)
+add_to_music_profile(staff, IRON_BLUE_INTENTION)
+add_to_music_profile(staff, BLOODY_TEARS)
+add_to_music_profile(staff, FD_BRAWL)
+add_to_music_profile(staff, GERUDO_VALLEY)
+add_to_music_profile(staff, MK_REVENGE)
+
 

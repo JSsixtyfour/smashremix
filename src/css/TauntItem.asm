@@ -37,6 +37,7 @@ dw StartWith.string_pokeball
 //dw StartWith.string_poison_mushroom
 dw StartWith.string_blue_shell
 dw StartWith.string_deku_nut
+dw StartWith.string_pit_fall
 dw StartWith.string_random
 
 // @ Description

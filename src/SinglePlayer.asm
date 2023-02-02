@@ -73,16 +73,16 @@ scope SinglePlayer {
         addu    at, at, a0                  // at = default stage_id address
         lbu     at, 0x0000(at)              // at = default stage_id
         beq     v0, at, _normal             // if the selected stage_id is the default one, get from normal tables
-        lli     at, Character.NUM_CHARACTERS * 0x02
+        lli     at, Character.NUM_CHARACTERS * 0x08
         multu   at, t8
         mflo    t8                          // t8 = offset to stage's high score table
-        li      at, Bonus.remix_bonus_high_score_count_table
+        li      at, Bonus.remix_bonus_high_score_table
         addu    at, at, t8                  // at = high score table start
-        sll     t8, a0, 0x0001              // t8 = offset to character's high score struct
+        sll     t8, a0, 0x0003              // t8 = offset to character's high score struct
         addu    at, at, t8                  // at = address of high score struct
         lbu     v0, 0x0000(at)              // v0 = # of targets
         bnel    t6, r0, _return             // if (t6 = 1) then get platforms instead:
-        lbu     v0, 0x0001(at)              // v0 = # of platforms
+        lbu     v0, 0x0004(at)              // v0 = # of platforms
         b       _return
         nop
     }
@@ -140,16 +140,16 @@ scope SinglePlayer {
         addu    t7, t7, a0                  // t7 = default stage_id address
         lbu     t7, 0x0000(t7)              // t7 = default stage_id
         beq     v0, t7, _normal             // if the selected stage_id is the default one, get from normal tables
-        lli     t7, Character.NUM_CHARACTERS * 0x02
+        lli     t7, Character.NUM_CHARACTERS * 0x08
         multu   t7, t8
         mflo    t8                          // t8 = offset to stage's high score table
-        li      t7, Bonus.remix_bonus_high_score_count_table
+        li      t7, Bonus.remix_bonus_high_score_table
         addu    t7, t7, t8                  // t7 = high score table start
-        sll     t8, a0, 0x0001              // t8 = offset to character's high score struct
+        sll     t8, a0, 0x0003              // t8 = offset to character's high score struct
         addu    t7, t7, t8                  // t7 = address of high score struct
         lbu     v0, 0x0000(t7)              // v0 = # of targets
         bnel    t6, r0, _return             // if (t6 = 1) then get platforms instead:
-        lbu     v0, 0x0001(t7)              // v0 = # of platforms
+        lbu     v0, 0x0004(t7)              // v0 = # of platforms
         b       _return
         nop
     }
@@ -210,15 +210,16 @@ scope SinglePlayer {
         lli     t7, Character.NUM_CHARACTERS * 0x08
         multu   t7, t8
         mflo    t8                          // t8 = offset to stage's high score table
-        li      t7, Bonus.remix_bonus_high_score_time_table
+        li      t7, Bonus.remix_bonus_high_score_table
         addu    t7, t7, t8                  // t7 = high score table start
         sll     t8, a0, 0x0003              // t8 = offset to character's high score struct
         addu    t7, t7, t8                  // t7 = address of high score struct
         lw      v1, 0x0000(t7)              // v1 = targets completion frame count
-        bnel    t6, r0, _return             // if (t6 = 1) then get platforms instead:
+        bnel    t6, r0, pc() + 8            // if (t6 = 1) then get platforms instead:
         lw      v1, 0x0004(t7)              // v1 = platforms completion frame count
+        sll     v1, v1, 0x0008              // shift left to chop off first byte
         b       _return
-        nop
+        srl     v1, v1, 0x0008              // v1 = frame count
     }
 
     // @ Description
@@ -292,12 +293,12 @@ scope SinglePlayer {
         lw      a1, 0x0008(sp)              // ~
         addiu   sp, sp, 0x0010              // deallocate stack space
 
-        lli     at, Character.NUM_CHARACTERS * 0x02
+        lli     at, Character.NUM_CHARACTERS * 0x08
         multu   at, v0
         mflo    t8                          // t8 = offset to stage's high score table
-        li      at, Bonus.remix_bonus_high_score_count_table
+        li      at, Bonus.remix_bonus_high_score_table
         addu    at, at, t8                  // at = high score table start
-        sll     t8, a1, 0x0001              // t8 = offset to character's high score struct
+        sll     t8, a1, 0x0003              // t8 = offset to character's high score struct
         b       _update
         addu    t8, at, t8                  // t8 = address of # of targets
     }
@@ -373,21 +374,28 @@ scope SinglePlayer {
         lw      a1, 0x0008(sp)              // ~
         addiu   sp, sp, 0x0010              // deallocate stack space
 
-        lli     t4, Character.NUM_CHARACTERS * 0x02
+        lli     t4, Character.NUM_CHARACTERS * 0x08
         multu   t4, v0
         mflo    t2                          // t2 = offset to stage's high score table
-        li      t4, Bonus.remix_bonus_high_score_count_table
-        addu    t4, t4, t2                  // t4 = high score table start
-        srl     t3, t1, 0x0004              // t3 = offset to character's high score struct
-        addu    t4, t4, t3                  // t4 = address of high score struct
-        addiu   t3, r0, 0x000A              // original line 4
-        sb      t3, 0x0000(t4)              // store target count (modified original line 5)
-        li      t4, Bonus.remix_bonus_high_score_time_table
-        sll     t2, t2, 0x0002              // t2 = offset to stages high score table
+        li      t4, Bonus.remix_bonus_high_score_table
         addu    t4, t4, t2                  // t4 = high score table start
         srl     t3, t1, 0x0002              // t3 = offset to character's high score struct
-        b       _update
-        addu    t2, t4, t3                  // t2 = address of targets frame count
+        addu    t2, t4, t3                  // t2 = address of high score struct
+        addiu   t3, r0, 0x000A              // original line 4
+        sb      t3, 0x0000(t2)              // store target count (modified original line 5)
+
+        lw      v1, 0x0018(a0)              // original line 6
+        lw      t4, 0x0000(t2)              // original line 7 (modified)
+        sll     t4, t4, 0x0008              // shift left to chop off first byte
+        srl     t4, t4, 0x0008              // t4 = frame count
+        sltu    at, v1, t4                  // original line 8
+        beql    at, r0, _j_0x8018EA74       // original line 9 (modified to use jump)
+        lw      ra, 0x0014(sp)              // original line 10
+        sw      v1, 0x0000(t2)              // store new high score in extended table
+        jal     0x800D45F4                  // original line 11
+        sb      t3, 0x0000(t2)              // store target count again!
+        beq     r0, r0, _j_0x8018EA74       // return (modified line 13)
+        lw      ra, 0x0014(sp)              // original line 14
     }
 
     // @ Description
@@ -454,20 +462,25 @@ scope SinglePlayer {
         lw      a1, 0x0008(sp)              // ~
         addiu   sp, sp, 0x0010              // deallocate stack space
 
-        lli     t4, Character.NUM_CHARACTERS * 0x02
+        lli     t4, Character.NUM_CHARACTERS * 0x08
         multu   t4, v0
         mflo    t2                          // t2 = offset to stage's high score table
-        li      t4, Bonus.remix_bonus_high_score_count_table
+        li      t4, Bonus.remix_bonus_high_score_table
         addu    t4, t4, t2                  // t4 = high score table start
-        sll     t3, t0, 0x0001              // t3 = offset to character's high score struct
-        addu    t4, t4, t3                  // t4 = address of high score struct
-        lbu     t3, 0x0000(t4)              // t3 = target count (modified original line 5)
-        li      t4, Bonus.remix_bonus_high_score_time_table
-        sll     t2, t2, 0x0002              // t2 = offset to stages high score table
-        addu    t4, t4, t2                  // t4 = high score table start
-        sll     t2, t0, 0x0003              // t2 = offset to character's high score struct
-        b       _update
-        addu    v0, t4, t2                  // v0 = address of best time
+        sll     t3, t0, 0x0003              // t3 = offset to character's high score struct
+        addu    v0, t4, t3                  // v0 = address of high score struct
+        lbu     t3, 0x0000(v0)              // t3 = target count (modified original line 5)
+
+        addiu   at, r0, 0x000A              // original line 6
+        lui     t4, 0x800A                  // original line 7
+        bne     t3, at, _j_0x8018D5A8       // original line 8 (modified to use jump)
+        nop                                 // original line 9
+
+        lw      t4, 0x50E8(t4)              // original line 10
+        lw      t6, 0x0000(v0)              // t6 = current best time (modified original line 11)
+        sll     t6, t6, 0x0008              // shift left to chop off first byte
+        j       0x8018D588                  // return
+        srl     t6, t6, 0x0008              // t6 = frame count
     }
 
     // @ Description
@@ -539,15 +552,15 @@ scope SinglePlayer {
         lw      a1, 0x0008(sp)              // ~
         addiu   sp, sp, 0x0010              // deallocate stack space
 
-        lli     at, Character.NUM_CHARACTERS * 0x02
+        lli     at, Character.NUM_CHARACTERS * 0x08
         multu   at, v0
         mflo    t5                          // t5 = offset to stage's high score table
-        li      at, Bonus.remix_bonus_high_score_count_table
+        li      at, Bonus.remix_bonus_high_score_table
         addu    at, at, t5                  // at = high score table start
-        sll     t5, a1, 0x0001              // t5 = offset to character's high score struct
+        sll     t5, a1, 0x0003              // t5 = offset to character's high score struct
         addu    at, at, t5                  // at = address of high score struct
         b       _update
-        addiu   t5, at, 0x0001              // t5 = address of # of platforms
+        addiu   t5, at, 0x0004              // t5 = address of # of platforms
     }
 
     // @ Description
@@ -621,22 +634,29 @@ scope SinglePlayer {
         lw      a1, 0x0008(sp)              // ~
         addiu   sp, sp, 0x0010              // deallocate stack space
 
-        lli     at, Character.NUM_CHARACTERS * 0x02
+        lli     at, Character.NUM_CHARACTERS * 0x08
         multu   at, v0
         mflo    t9                          // t9 = offset to stage's high score table
-        li      at, Bonus.remix_bonus_high_score_count_table
-        addu    at, at, t9                  // at = high score table start
-        srl     t0, t8, 0x0004              // t0 = offset to character's high score struct
-        addu    at, at, t0                  // at = address of high score struct
-        addiu   t0, r0, 0x000A              // original line 4
-        sb      t0, 0x0001(at)              // store platform count (modified original line 5)
-        li      at, Bonus.remix_bonus_high_score_time_table
-        sll     t9, t9, 0x0002              // t9 = offset to stages high score table
+        li      at, Bonus.remix_bonus_high_score_table
         addu    at, at, t9                  // at = high score table start
         srl     t0, t8, 0x0002              // t0 = offset to character's high score struct
-        addu    at, at, t0                  // at = address of high score struct
-        b       _update
-        addiu   t9, at, 0x0004              // t9 = address of platforms frame count
+        addu    t9, at, t0                  // t9 = address of high score struct
+        addiu   t0, r0, 0x000A              // original line 4
+        sb      t0, 0x0004(t9)              // store platform count (modified original line 5)
+
+        lw      v1, 0x0018(a0)              // original line 6
+        lw      t1, 0x0004(t9)              // original line 7 (modified)
+        sll     t1, t1, 0x0008              // shift left to chop off first byte
+        srl     t1, t1, 0x0008              // t1 = frame count
+        sltu    at, v1, t1                  // original line 8
+        beql    at, r0, _j_0x8018EA74       // original line 9 (modified to use jump)
+        lw      ra, 0x0014(sp)              // original line 10
+
+        sw      v1, 0x0004(t9)              // store new high score in extended table
+        jal     0x800D45F4                  // original line 11
+        sb      t0, 0x0004(t9)              // store platform count again!
+        beq     r0, r0, _j_0x8018EA74       // return (modified line 13)
+        lw      ra, 0x0014(sp)              // original line 14
     }
 
     // @ Description
@@ -675,7 +695,7 @@ scope SinglePlayer {
         nop                                 // original line 9
 
         lw      t6, 0x50E8(t6)              // original line 10
-        lw      t8, 0x0018(v0)              // t8 = current best time (modified original line 11)
+        lw      t8, 0x0000(v0)              // t8 = current best time (modified original line 11)
         j       0x8018D9EC                  // return
         nop
 
@@ -703,21 +723,26 @@ scope SinglePlayer {
         lw      a1, 0x0008(sp)              // ~
         addiu   sp, sp, 0x0010              // deallocate stack space
 
-        lli     t4, Character.NUM_CHARACTERS * 0x02
+        lli     t4, Character.NUM_CHARACTERS * 0x08
         multu   t4, v0
         mflo    at                          // at = offset to stage's high score table
-        li      t4, Bonus.remix_bonus_high_score_count_table
+        li      t4, Bonus.remix_bonus_high_score_table
         addu    t4, t4, at                  // t4 = high score table start
-        sll     t5, t2, 0x0001              // t5 = offset to character's high score struct
+        sll     t5, t2, 0x0003              // t5 = offset to character's high score struct
         addu    t4, t4, t5                  // t4 = address of high score struct
-        lbu     t5, 0x0001(t4)              // t5 = platform count (modified original line 5)
-        li      t4, Bonus.remix_bonus_high_score_time_table
-        sll     at, at, 0x0002              // at = offset to stages high score table
-        addu    t4, t4, at                  // t4 = high score table start
-        sll     at, t2, 0x0003              // at = offset to character's high score struct
-        addu    t4, t4, at                  // t4 = address of high score struct
-        b       _update
+        lbu     t5, 0x0004(t4)              // t5 = platform count (modified original line 5)
         addiu   v0, t4, 0x0004              // v0 = address of best time
+
+        addiu   at, r0, 0x000A              // original line 6
+        lui     t6, 0x800A                  // original line 7
+        bne     t5, at, _j_0x8018DA0C       // original line 8 (modified to use jump)
+        nop                                 // original line 9
+
+        lw      t6, 0x50E8(t6)              // original line 10
+        lw      t8, 0x0000(v0)              // t8 = current best time (modified original line 11)
+        sll     t8, t8, 0x0008              // shift left to chop off first byte
+        j       0x8018D9EC                  // return
+        srl     t8, t8, 0x0008              // t8 = frame count
     }
 
     // @ Description
@@ -1118,15 +1143,14 @@ scope SinglePlayer {
         _extend_high_score_1p_difficulty_return:
         OS.patch_end()
 
+        // t4 is character ID
+
         li      t5, SinglePlayerModes.singleplayer_mode_flag // v0 = Single Player Mode Flag
         lw     	t5, 0x0000(t5)              // t5 = 4 if Remix 1p
         addiu	t6, r0, 0x0004              // Remix 1p Flag
         beq     t5, t6, _remix_1p
-        // t4 is character ID
-        slti    t5, t4, Character.id.BOSS   // if (it's not an original character) then use extended table
         addiu	t6, r0, 0x0005              // Allstar Flag
         beq     t5, t6, _allstar
-        // t4 is character ID
         slti    t5, t4, Character.id.BOSS   // if (it's not an original character) then use extended table
         bnez    t5, _original               // otherwise use original table
         nop                                 // ~
@@ -1257,50 +1281,14 @@ scope SinglePlayer {
     // @ Description
     // Modifies the tally loop for 1P to include new characters
     scope extend_1p_tally_: {
-        OS.patch_start(0x13CD90, 0x80134B90)
-        j       extend_1p_tally_._high_score
-        nop
-        _extend_1p_tally_high_score_return:
-        OS.patch_end()
-        OS.patch_start(0x13CEE4, 0x80134CE4)
-        j       extend_1p_tally_._bonus
-        nop
-        _extend_1p_tally_bonus_return:
-        OS.patch_end()
-
-        _high_score:
-        addiu   a0, r0, 0x000C                   // a0 = 12
-        bne     a0, s0, _original_check_hs       // if (we are finished with new characters) then jump to original path
-        nop                                      // otherwise set to new characters and loop some more:
+        // score
+        OS.patch_start(0x13CD80, 0x80134B80)
         addiu   s2, r0, Character.NUM_CHARACTERS // end at last character
-        addiu   s0, r0, Character.id.BOSS        // start after original cast
-        _j_80134B84:
-        j       0x80134B84                       // jump to loop start
-        nop
-
-        _original_check_hs:
-        bne     s0, s2, _j_80134B84              // original line 1
-        addu    s1, s1, v0                       // original line 2
-
-        j       _extend_1p_tally_high_score_return
-        nop
-
-        _bonus:
-        addiu   a0, r0, 0x000C                   // a0 = 12
-        bne     a0, s0, _original_check_bonus   // if (we are finished with new characters) then jump to original path
-        nop                                      // otherwise set to new characters and loop some more:
+        OS.patch_end()
+        // bonus count
+        OS.patch_start(0x13CED4, 0x80134CD4)
         addiu   s2, r0, Character.NUM_CHARACTERS // end at last character
-        addiu   s0, r0, Character.id.BOSS        // start after original cast
-        _j_80134CD8:
-        j       0x80134CD8                       // jump to loop start
-        nop
-
-        _original_check_bonus:
-        bne     s0, s2, _j_80134CD8              // original line 1
-        addu    s1, s1, v0                       // original line 2
-
-        j       _extend_1p_tally_bonus_return
-        nop
+        OS.patch_end()
     }
 
     // @ Description
@@ -1535,6 +1523,8 @@ scope SinglePlayer {
         constant NJIGGLY(0x00003548)
         constant NNESS(0x00003728)
         constant GDONKEY(0x00005738)          // file 0xB
+
+		// remix characters
         constant GND(0x000012C8)
         constant FALCO(0x00001448)
         constant YLINK(0x00001688)
@@ -1552,6 +1542,26 @@ scope SinglePlayer {
         constant SONIC(0x000066E8)
         constant SSONIC(0x00006918)
         constant SHEIK(0x00006A38)
+        constant MARINA(0x00006D38)
+        constant DEDEDE(0x00009248)
+
+		// remix polygons
+        constant NWARIO(0x00006F78)
+        constant NLUCAS(0x000071B8)
+        constant NBOWSER(0x000073F8)
+        constant NWOLF(0x00008358)
+        constant NDRM(0x000085E8)
+        constant NSONIC(0x00007638)
+        constant NSHEIK(0x00007878)
+        constant NCONKER(0x00007AB8)
+        constant NFALCO(0x00007CF8)
+        constant NMARINA(0x00007F38)
+        constant NMARTH(0x00008178)
+        constant NGND(0x00008888)
+        constant NMTWO(0x00008B28)
+        constant NYLINK(0x00008DC8)
+        constant NDSAMUS(0x000090C8)
+        constant UNUSED48W(0x000093B8)
         // TODO: update J names
         constant JSAMUS(0x00004268)
         constant JNESS(0x00004688)
@@ -1693,6 +1703,14 @@ scope SinglePlayer {
         constant NPIKACHU(POLYGON + PIKACHU)
         constant NJIGGLY(POLYGON + JIGGLYPUFF)
         constant NNESS(POLYGON + NESS)
+        constant NWARIO(POLYGON + WARIO)
+        constant NLUCAS(POLYGON + LUCAS)
+        constant NBOWSER(POLYGON + BOWSER)
+        constant NWOLF(POLYGON + WOLF)
+        constant NDRM(POLYGON + DRM)
+        constant NSONIC(POLYGON + SONIC)
+        constant NSHEIK(POLYGON + SHEIK)
+        constant NMARINA(POLYGON + MARINA)
         constant GDONKEY(0x00000024 + DONKEY_KONG)
         constant GND(0x00000046)
         constant FALCO(0x00000032)
@@ -1711,6 +1729,8 @@ scope SinglePlayer {
         constant SONIC(0x0000002C)
         constant SSONIC(0x00000014 + SONIC)
         constant SHEIK(0x00000032)
+        constant MARINA(0x00000032)
+        constant DEDEDE(0x00000054)
         // TODO: make sure these are good
         constant JSAMUS(0x00000032)
         constant JNESS(0x00000032)
@@ -1879,10 +1899,12 @@ scope SinglePlayer {
         // check human character_id to see if it's GDK or a polygon
         li      t7, 0x80135CC8                 // t7 = address of human character_id
         lw      t7, 0x0000(t7)                 // t7 = human character_id
+        sltiu   t6, t7, Character.id.NWARIO    // t6 = 1 if not a remix polygon character
+        beqz    t6, _polygons                  // if a remix polygon character, check CPU to see if it's a polygon
         sltiu   t6, t7, Character.id.NMARIO    // t6 = 1 if not a polygon character
         bnez    t6, _original                  // skip if not GDK or a polygon character
         sltiu   t6, t7, Character.id.NNESS+1   // t6 = 1 if a polygon character
-        bnez    t6, _polygons                  // if a polygon character, check CPU to see if it's a polygon
+        bnez    t6, _polygons                  // if an original polygon character, check CPU to see if it's a polygon
         lli     t6, Character.id.GDONKEY       // t6 = Character.id.GDONKEY
         bne     t6, t7, _original              // if not GDK, skip
         nop
@@ -1962,6 +1984,9 @@ scope SinglePlayer {
 
         // check if human is a polygon
         lbu     t7, 0x0003(t9)                 // t7 = character_id of human
+
+        sltiu   t5, t7, Character.id.NWARIO    // t5 = 1 if not a remix polygon character
+        beqz    t5, _polygon                   // if a Remix Polygon Character, do color checks
         sltiu   t5, t7, Character.id.NMARIO    // t5 = 1 if not a polygon character
         bnezl   t5, _return                    // if not a polygon character, then use original costume
         sb      r0, 0x0026(t8)                 // original line 1
@@ -1970,6 +1995,7 @@ scope SinglePlayer {
         sb      r0, 0x0026(t8)                 // original line 1
 
         // check if on polygon team or RTTF stage
+        _polygon:
         li      t9, Global.match_info          // t9 = address of match info
         lw      t9, 0x0000(t9)                 // t9 = match info start
         lbu     t7, 0x0001(t9)                 // t7 = stage_id
@@ -2057,6 +2083,20 @@ scope SinglePlayer {
     dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // SANDBAG
     dh File.SONIC_VICTORY_IMAGE_BOTTOM                      // SUPER SONIC (using Sonic)
     dh File.SHEIK_VICTORY_IMAGE_BOTTOM                      // SHEIK
+    dh File.MARINA_VICTORY_IMAGE_BOTTOM                     // MARINA
+    dh File.DEDEDE_VICTORY_IMAGE_BOTTOM                     // DEDEDE
+    // ADD NEW CHARACTERS HERE
+
+    // ADD FOR REMIX POLYGONS HERE
+    dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // NWARIO
+    dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // NLUCAS
+    dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // NBOWSER
+    dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // NWOLF
+    dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // NDRM
+    dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // NSONIC
+    dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // NSHEIK
+    dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // NMARINA
+
 
     OS.align(4)
 
@@ -2409,6 +2449,18 @@ scope SinglePlayer {
     add_to_single_player(Character.id.SONIC,   name_texture.SONIC,   name_delay.SONIC)
     add_to_single_player(Character.id.SSONIC,  name_texture.SSONIC,  name_delay.SSONIC)
     add_to_single_player(Character.id.SHEIK,   name_texture.SHEIK,   name_delay.SHEIK)
+    add_to_single_player(Character.id.MARINA,  name_texture.MARINA,  name_delay.MARINA)
+    add_to_single_player(Character.id.DEDEDE,  name_texture.DEDEDE,  name_delay.DEDEDE)
+
+	// REMIX POLYGONS    character id          name texture          name delay
+    add_to_single_player(Character.id.NWARIO,  name_texture.NWARIO,  name_delay.NWARIO)
+    add_to_single_player(Character.id.NLUCAS,  name_texture.NLUCAS,  name_delay.NLUCAS)
+    add_to_single_player(Character.id.NBOWSER, name_texture.NBOWSER, name_delay.NBOWSER)
+    add_to_single_player(Character.id.NWOLF,   name_texture.NWOLF,   name_delay.NWOLF)
+    add_to_single_player(Character.id.NDRM,    name_texture.NDRM,    name_delay.NDRM)
+    add_to_single_player(Character.id.NSONIC,  name_texture.NSONIC,  name_delay.NSONIC)
+    add_to_single_player(Character.id.NSHEIK,  name_texture.NSHEIK,  name_delay.NSHEIK)
+    add_to_single_player(Character.id.NMARINA, name_texture.NMARINA, name_delay.NMARINA)
 
     // J CHARS           character id          name texture          name delay
     add_to_single_player(Character.id.JSAMUS,  name_texture.JSAMUS,  name_delay.JSAMUS)

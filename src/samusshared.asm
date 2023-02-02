@@ -19,7 +19,7 @@ scope SamusShared {
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t1, 0x0004(sp)              // ~
         sw      t2, 0x0008(sp)              // store t0, t1
-        lw      t1, 0x008C(sp)              // pull struct
+        lw      t1, 0x0084(a0)              // pull struct from player object
         lw      t1, 0x0008(t1)              // current character ID
         ori     t2, r0, Character.id.DSAMUS // t2 = id.DSAMUS
         li      a1, bomb_anim_struct        // a1 = instructions
@@ -141,6 +141,8 @@ scope SamusShared {
         beq     v1, at, _mewtwo             // if MTWO, take Mewtwo branch
         lli     at, Character.id.SHEIK      // at = SHEIK
         beq     v1, at, _sheik              // if SHEIK, take Mewtwo branch
+        lli     at, Character.id.DEDEDE     // at = DEDEDE
+        beq     v1, at, _dedede             // if DEDEDE, take Mewtwo branch
         nop
 
         jr      ra
@@ -149,6 +151,17 @@ scope SamusShared {
         j_0x800E99D4:
         j       0x800E99D4
         nop
+        
+        _dedede:
+        lw      t0, 0x0AE4(a3)              // ~
+        addiu   at, r0, 0x0002              // ~
+        lw      a0, 0x0020(sp)              // ~
+        bne     t0, at, j_0x800E99FC        // original logic, skips if charge level != 7
+        lli     a1, GFXRoutine.id.SHEIK_CHARGE // a1 = SHEIK_CHARGE id
+        
+        // return to Samus branch with alternate GFX Routine ID
+        j       0x800E99E8                  
+        nop 
         
         _sheik:
         lw      t0, 0x0AE0(a3)              // ~

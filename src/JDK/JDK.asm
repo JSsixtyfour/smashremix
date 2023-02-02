@@ -62,6 +62,7 @@ scope JDK {
 
     // coding for JDK's unique cargo hold, which requires a higher base amount of inputs to escape
     // J version has a number of 0x41A0 and the U version has 0x4160
+    // also used by Marina
     scope jdk_cargo_: {
         OS.patch_start(0xC8FD4, 0x8014E594)
         j       jdk_cargo_
@@ -75,8 +76,12 @@ scope JDK {
         sw      t1, 0x0004(sp)              // store t2, t1
         sw      t2, 0x0008(sp)              // store t2, t1
         lw      t1, 0x0008(s1)              // load player ID
-        addiu   t2, r0, Character.id.JDK        // load JDK ID
-        beq     t1, t2, _jdkcargo                // jump to JDK cargo if JDK
+        addiu   t2, r0, Character.id.JDK    // load JDK ID
+        beq     t1, t2, _jdkcargo           // jump to JDK cargo if JDK
+        addiu   t2, r0, Character.id.MARINA // load MARINA ID
+        beq     t1, t2, _marinacargo        // jump to MARINA cargo if MARINA
+        addiu   t2, r0, Character.id.NMARINA // load NMARINA ID
+        beq     t1, t2, _marinacargo        // jump to MARINA cargo if MARINA
         nop
         lw      t1, 0x0004(sp)              // ~
         lw      t2, 0x0008(sp)              // load t0, t1
@@ -86,6 +91,15 @@ scope JDK {
 
 
         _jdkcargo:
+        lui     at, 0x41A0
+        mtc1    at, f16                     // original line 2
+        lw      t1, 0x0004(sp)              // ~
+        lw      t2, 0x0008(sp)              // load t0, t1
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        j       _return                     // return
+        nop
+
+        _marinacargo:
         lui     at, 0x41A0
         mtc1    at, f16                     // original line 2
         lw      t1, 0x0004(sp)              // ~

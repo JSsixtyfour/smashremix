@@ -593,6 +593,23 @@ scope Menu {
         lw      t4, 0x003C(sp)              // t4 = scale
         jal     draw_entry_
         lw      t5, 0x0040(sp)              // t5 = blur
+
+        lw      a0, 0x0020(s0)              // a0 = label object
+        lw      t0, 0x006C(a0)              // t0 = value object if not 0
+        sw      t0, 0x004C(sp)              // save value object reference
+        lw      at, 0x0010(sp)              // at = address of Menu.info()
+        lw      t0, 0x0014(at)              // t0 = width
+        sll     a1, t0, 0x0003              // a1 = width * 8
+        jal     Render.apply_max_width_     // apply max width
+        subu    a1, a1, t0                  // a1 = 7/8 width = max width
+
+        lw      t0, 0x004C(sp)              // t0 = value object
+        beqz    t0, _next                   // if no value object, skip
+        sw      t0, 0x006C(v0)              // save value object
+        addiu   t1, v0, 0x006C              // t1 = address of reference to value object
+        sw      t1, 0x0054(t0)              // save reference to value object in label object
+
+        _next:
         lw      s0, 0x001C(s0)              // s0 = entry->next
         bnez    s0, _loop                   // if (entry->next != NULL), loop
         nop

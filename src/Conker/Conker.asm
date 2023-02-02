@@ -69,6 +69,11 @@ scope Conker {
     insert WALK1,"moveset/WALK1.bin"
     insert SFALL,"moveset/SFALL.bin"
 
+    // Insert AI attack options
+    constant CPU_ATTACKS_ORIGIN(origin())
+    insert CPU_ATTACKS,"AI/attack_options.bin"
+    OS.align(16)
+
     // Modify Action Parameters             // Action                   // Animation                    // Moveset Data             // Flags
     Character.edit_action_parameters(CONKER, Action.Teeter,             -1,                             TEETERING,                  -1)
     Character.edit_action_parameters(CONKER, Action.ShieldBreak,        -1,                             SHIELD_BREAK,               -1)
@@ -299,6 +304,37 @@ scope Conker {
 
     // Shield colors for costume matching
     Character.set_costume_shield_colors(CONKER, AZURE, PINK, RED, GREEN, BLACK, WHITE, NA, NA)
+
+    // Set CPU behaviour
+    Character.table_patch_start(ai_behaviour, Character.id.CONKER, 0x4)
+    dw      CPU_ATTACKS
+    OS.patch_end()
+
+    // Edit cpu attack behaviours
+    // edit_attack_behavior(table, attack, override, start_hb, end_hb, min_x, max_x, min_y, max_y)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, BAIR,   -1,  12,   16,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DAIR,   -1,  8,   23,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPA,   -1,  20,  134, -10, 500, -500, 500)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPG,   -1,  20,  134, -10, 500, -500, 500)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSMASH, -1,  9,   16,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DTILT,  -1,  6,   9,   -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FSMASH, -1,  9,   14,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FTILT,  -1,  7,   14,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, GRAB,   -1,  -1,  -1,  -1, -1, -1, -1) // todo: check range
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, JAB,    -1,  2,   3,   -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NAIR,   -1,  4,   31,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPA,   -1,  19,  47,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPG,   -1,  19,  47,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UAIR,   -1,  5,   13,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPA,   -1,  3,   59,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPG,   -1,  3,   59,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USMASH, -1,  9,   30,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UTILT,  -1,  6,   13,  -1, -1, -1, -1)
+
+	// Prevents Conker from using grenade when it can't be used
+    Character.table_patch_start(ai_attack_prevent, Character.id.CONKER, 0x4)
+    dw	AI.PREVENT_ATTACK.ROUTINE.CONKER_GRENADE
+    OS.patch_end()
 
     // @ Description
     // Conker's extra actions

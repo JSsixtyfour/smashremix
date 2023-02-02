@@ -12,7 +12,7 @@ include "Joypad.asm"
 include "OS.asm"
 include "String.asm"
 include "Toggles.asm"
-include "VsCombo.asm"
+include "ComboMeter.asm"
 
 scope VsStats {
     // @ Description
@@ -661,19 +661,19 @@ scope VsStats {
 
         _combo_stats_on_check:
         // If combo meter is off, skip to _end and don't draw combo stats section
-        Toggles.guard(Toggles.entry_vs_mode_combo_meter, _combo_stats_off)
+        Toggles.guard(Toggles.entry_combo_meter, _combo_stats_off)
 
         addiu   a2, a2, 5                   // adjust y for cleaner spacing
         draw_header(combo_stats)
         addiu   a2, a2, -1                  // adjust y for better underline
         draw_underline(68)
         draw_header(max_combo_hits_vs)
-        draw_row(p1, 8, VsCombo.combo_struct_p1, 0x0024, 0x0038, 0, 0)
-        draw_row(p2, 8, VsCombo.combo_struct_p1, 0x0028, 0x0038, 1, 1)
-        draw_row(p3, 8, VsCombo.combo_struct_p1, 0x002C, 0x0038, 2, 2)
-        draw_row(p4, 8, VsCombo.combo_struct_p1, 0x0030, 0x0038, 3, 3)
-        draw_row(max_combo_hits_taken, 0, VsCombo.combo_struct_p1, 0x0004, 0x0038, -1, -1)
-        draw_row(max_combo_damage_taken, 0, VsCombo.combo_struct_p1, 0x0008, 0x0038, -1, -1)
+        draw_row(p1, 8, ComboMeter.combo_struct_p1, 0x0024, 0x0038, 0, 0)
+        draw_row(p2, 8, ComboMeter.combo_struct_p1, 0x0028, 0x0038, 1, 1)
+        draw_row(p3, 8, ComboMeter.combo_struct_p1, 0x002C, 0x0038, 2, 2)
+        draw_row(p4, 8, ComboMeter.combo_struct_p1, 0x0030, 0x0038, 3, 3)
+        draw_row(max_combo_hits_taken, 0, ComboMeter.combo_struct_p1, 0x0004, 0x0038, -1, -1)
+        draw_row(max_combo_damage_taken, 0, ComboMeter.combo_struct_p1, 0x0008, 0x0038, -1, -1)
 
         _end:
         lli     a0, 0x0E                    // a0 = group of menu stats

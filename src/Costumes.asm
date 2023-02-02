@@ -925,6 +925,17 @@ scope Costumes {
         db 0x05                             // Super Sonic
         db 0x05                             // Classic Sonic
         db 0x05                             // Sheik
+        db 0x05                             // Marina
+        db 0x05                             // Dedede
+        
+        // Polygons
+        db 0x05                             // Polygon Wario
+        db 0x05                             // Polygon Lucas
+        db 0x05                             // Polygon Bowser
+        db 0x05                             // Polygon Wolf
+        db 0x05                             // Polygon Dr. Mario
+        db 0x05                             // Polygon Sonic
+        db 0x05                             // Polygon Sheik
         OS.align(4)
 
         functions:

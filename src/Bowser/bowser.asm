@@ -66,6 +66,11 @@ scope Bowser {
 	insert DASH, "moveset/DASH.bin"
 	insert TURN, "moveset/TURN.bin"
 
+    // Insert AI attack options
+    constant CPU_ATTACKS_ORIGIN(origin())
+    insert CPU_ATTACKS,"AI/attack_options.bin"
+    OS.align(16)
+
     // Modify Action Parameters                 // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(BOWSER,    Action.Entry,      		File.BOWSER_IDLE,   		 -1,                        -1)
 	Character.edit_action_parameters(BOWSER,    Action.ReviveWait,      File.BOWSER_IDLE,   		 -1,                        -1)
@@ -199,8 +204,8 @@ scope Bowser {
 	Character.edit_action_parameters(BOWSER,    Action.CapturePulled,   File.BOWSER_EGG_LAY_PULLED,  -1,                    	 -1)
     Character.edit_action_parameters(BOWSER,    Action.EggLay,    		File.BOWSER_IDLE, 		     -1,                         -1)
 	Character.edit_action_parameters(BOWSER,    Action.EggLayPulled,    File.BOWSER_EGG_LAY_PULLED,  -1,                         -1)
-    Character.edit_action_parameters(BOWSER,    Action.ThrownDKPulled,  -1,                          -1,                         -1)
-    Character.edit_action_parameters(BOWSER,    Action.ThrownDK,        -1,                          -1,                         -1)
+    Character.edit_action_parameters(BOWSER,    Action.ThrownDKPulled,  File.BOWSER_THROWN_DK_PULLED,  -1,                         -1)
+    Character.edit_action_parameters(BOWSER,    Action.ThrownDK,        File.BOWSER_THROWN_DK,  -1,                         -1)
     Character.edit_action_parameters(BOWSER,    Action.Thrown1,         File.BOWSER_THROWN_1,        -1,                         -1)
     Character.edit_action_parameters(BOWSER,    Action.Thrown2,         File.BOWSER_THROWN_2,        -1,                         -1)
 
@@ -329,7 +334,10 @@ scope Bowser {
     Character.edit_menu_action_parameters(BOWSER,    0xA,               File.BOWSER_CONTINUE_UP,    -1,                            -1)
 
 	Character.table_patch_start(variants, Character.id.BOWSER, 0x4)
-    db      Character.id.GBOWSER // set as SPECIAL variant for Bowser
+    db      Character.id.GBOWSER // set as BOSS variant for Bowser
+    db      Character.id.NBOWSER // set as POLYGON variant for BOWSER
+    db      Character.id.NONE
+    db      Character.id.NONE
     OS.patch_end()
 
     Character.table_patch_start(air_usp, Character.id.BOWSER, 0x4)
@@ -447,6 +455,37 @@ scope Bowser {
     // Shield colors for costume matching
     Character.set_costume_shield_colors(BOWSER, GREEN, RED, BLUE, BLACK, ORANGE, YELLOW, NA, NA)
 
+    // Set CPU behaviour
+    Character.table_patch_start(ai_behaviour, Character.id.BOWSER, 0x4)
+    dw      CPU_ATTACKS
+    OS.patch_end()
+	
+	// Set CPU SD prevent routine
+    Character.table_patch_start(ai_attack_prevent, Character.id.BOWSER, 0x4)
+    dw    	AI.PREVENT_ATTACK.ROUTINE.BOWSER_USP_DSP	// no risky down or up specials
+    OS.patch_end()
+
+    // Edit cpu attack behaviours
+    // edit_attack_behavior(table, attack, override, start_hb, end_hb, min_x, max_x, min_y, max_y)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, BAIR,   -1,  10,  21,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DAIR,   -1,  8,   44,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPA,   -1,  24,  35,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPG,   -1,  8,   48,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSMASH, -1,  8,   39,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DTILT,  -1,  6,   22,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FSMASH, -1,  26,  32,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FTILT,  -1,  12,  15,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, GRAB,   -1,  -1,  -1,  -1, -1, -1, -1) // todo: check range
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, JAB,    -1,  6,   9,   -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NAIR,   -1,  4,   31,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPA,   -1,  20,  80,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPG,   -1,  20,  80,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UAIR,   -1,  7,   32,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPA,   0x0D, 6,   50,  -1, -1, -1, -1) // don't want to use Yoshis USP logic
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPG,   0x0D, 5,   49,  -1, -1, -1, -1) // don't want to use Yoshis USP logic
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USMASH, -1,  15,  24,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UTILT,  -1,  8,   17,  -1, -1, -1, -1)
+
     // @ Description
     // Sets Bowser's Jab 3 action.
     scope set_jab_3_action_: {
@@ -471,8 +510,11 @@ scope Bowser {
         lli     a1, Character.id.BOWSER     // a1 = bowser id
         beq     at, a1, _end                // skip if character id == BOWSER
         nop
-		lli     a1, Character.id.GBOWSER     // a1 = bowser id
+		lli     a1, Character.id.GBOWSER    // a1 = gbowser id
         beq     at, a1, _end                // skip if character id == GIGA BOWSER
+        nop
+        lli     a1, Character.id.NBOWSER    // a1 = nbowser id
+        beq     at, a1, _end                // skip if character id == POLYGON BOWSER
         nop
         // this original function is what changes the action from ThrownMarioBros
         jal     0x8014ACB4                  // original line 1

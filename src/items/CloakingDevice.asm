@@ -5,8 +5,8 @@ constant SHOW_GFX_WHEN_SPAWNED(OS.TRUE)
 constant PICKUP_ITEM_MAIN(pickup_cloaking_device_)
 constant PICKUP_ITEM_INIT(0)
 constant DROP_ITEM(0x801745FC) // same as Maxim Tomato
-constant THROW_ITEM(0)
 constant PLAYER_COLLISION(0)
+constant THROW_ITEM(0)
 
 // @ Description
 // Offset to item in file 0xFB.

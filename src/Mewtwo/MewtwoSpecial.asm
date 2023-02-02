@@ -539,9 +539,10 @@ scope MewtwoNSP {
         lw      ra, 0x0014(sp)              // load ra
         
         _check_cancel:
-        // now check if Z has been pressed
-        andi    at, v0, Joypad.Z            // at = 0x2000 if (Z_PRESSED); else at = 0
-        beql    at, r0, _end                // end if Z is not pressed
+        // now check if Shield button has been pressed
+        lhu     at, 0x01B8(a1)              // at = shield press bitmask
+        and     at, at, v0                  // at != 0 if shield pressed; else at = 0
+        beql    at, r0, _end                // end if shield is not pressed
         lw      ra, 0x0014(sp)              // load ra
         
         // if we're here, Z has been pressed, so transition to fall

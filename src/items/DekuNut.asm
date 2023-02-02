@@ -170,24 +170,24 @@ scope prepickup_: {
     nop
 }
 
-scope drop_item_: {
 // @ Description
 // Custom item drop routine with vanilla logic too
 scope drop_item_: {
-        addiu   sp, sp, -0x18
-        sw      ra, 0x0014(sp)
-        sw      v0, 0x0010(sp)
+    addiu   sp, sp, -0x18
+    sw      ra, 0x0014(sp)
+    sw      v0, 0x0010(sp)
 
-        sw      r0, 0x011C(v0)              // damage type = normal
-        jal       0x801745FC                // item drop subroutine for tomato
-        nop
-        lw      v0, 0x0010(sp)
-        sw      r0, 0x140(v0)               // set kb to 0
+    sw      r0, 0x011C(v0)              // damage type = normal
 
-        lw      ra, 0x0014(sp)
-        jr      ra
-        addiu   sp, sp, 0x18
-    }
+    jal       0x801745FC                // item drop subroutine for tomato
+    nop
+    lw      v0, 0x0010(sp)
+
+    sw      r0, 0x140(v0)               // set kb to 0
+
+    lw      ra, 0x0014(sp)
+    jr      ra
+    addiu   sp, sp, 0x18
 }
 
 // @ Description

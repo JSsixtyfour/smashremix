@@ -158,7 +158,7 @@ scope Surface {
     
     add_surface(big_blue_surface_1, 4.0, OS.TRUE, 8, 4, 105, 5, 0, 125, 1, -1)
     add_surface(cool_cool_surface_1, 0.3, OS.FALSE, 0, 0, 0, 0, 0, 0, 0, 0)
-    add_surface(onett_car_1, 4.0, OS.TRUE, 8, 20, 45, 20, 0, 140, 0, 0x11F)     // this should be replaced
+    add_surface(failed_z_cancel, 4.0, OS.TRUE, 0x00010008, 7, 90, 0, 0, 0x20, 0, 0x0038) // unused bit as override flag
     add_surface(big_blue_surface_2, 4.0, OS.TRUE, 8, 4, 90, 5, 0, 130, 1, -1)
     add_surface(corneria_surface_1, 4.0, OS.TRUE, 8, 60, 190, 20, 0, 130, 2, 0x3C)
     add_surface(corneria_surface_2, 4.0, OS.TRUE, 8, 30, 180, 20, 0, 130, 2, 0x16)
@@ -170,6 +170,8 @@ scope Surface {
     add_surface(casino_right_top, 4.0, OS.TRUE, 20, 10, 100, 80, 0, 65, 0, 0x3D6)
     add_surface(casino_right_side, 4.0, OS.TRUE, 20, 10, 180, 0, 0, 65, 0, 0x3D6)
     add_surface(toadsturnpike_car, 4.0, OS.TRUE, 8, 20, 90, 100, 200, 0, 0, 0x11F)
+    add_surface(failed_z_cancel_lava, 4.0, OS.TRUE, 0x00010005, 0xA, 90, 0x64, 0xC8, 0, 1, 0x11E) // unused bit as override flag
+
     
     // write surfaces to ROM
     write_surfaces()
@@ -228,7 +230,7 @@ scope Surface {
         OS.patch_start(0x61474, 0x800E5C74)
         // t0 = surface id - 7
         bltzl   t0, _end                    // skip if surface id < 7
-        or      v0, r0, r0                  // v0 = 0 (disable knockback)
+        or      v0, r0, r0                  // v0 = 0 (disable knockback)		
         sll     t0, t0, 0x2                 // t0 = offset ((surface id - 7) * 0x4)
         li      at, knockback_table         // at = knockback_table
         addu    at, at, t0                  // at = knockback_table + offset
@@ -237,6 +239,9 @@ scope Surface {
         or      v0, r0, r0                  // v0 = 0 (disable knockback)
         
         _struct:
+		lh      at, 0x0000(t0)              // at = remix cruel surface flag
+		bnez    at, _enable                 // use this surface if it is cruel
+		
         li      at, Global.current_screen   // at = pointer to current screen
         lbu     at, 0x0000(at)              // at = current screen_id
         lli     v0, 0x0016                  // v0 = vs screen_id
@@ -308,5 +313,43 @@ scope Surface {
         li      t7, zebes_acid_struct       // t7 = zebes_acid_struct
         OS.patch_end()
     }
+	
+	// Collision Masks
+	constant CEILING(0x0400)
+	constant GROUND(0x0800)
+	constant WALL(0x0021)
+	constant WALL_RIGHT(0x0001)
+	constant WALL_LEFT(0x0020)
+    constant CLIFF(0x3000)
+    constant CLIFF_RIGHT(0x1000)
+    constant CLIFF_LEFT(0x2000)
+	
+	// @ Description
+	// Returns flag of clipping.
+	// A0 = clipping ID
+	scope get_clipping_flag_: {
+		// first, get offset to flag
+		lui		at, 0x8013
+		lw		t7, 0x1378(at)				// t7 = clipping struct 0
+		sll		t3, a0, 2
+		addu	a1, t7, t3
+		lhu		v0, 0x0000(a1)
+		sll		a0, v0, 1					// a0 = offset
+		
+		// then we get the clipping id
+		lw		t1, 0x1374(at)				// t1 = clipping struct 1
+		lw		t8, 0x1370(at)				// t8 = clipping struct 2
+		addu	t2, t1, a0					// t2 = struct + offset
+		lhu		t7, 0x0000(t2)				// t7 = another offset
+
+		sll		at, t7, 3
+		sll		t3, t7, 1
+		subu	t3, at, t3
+		addu	t4, t8, t3					// t4 = t8 + t3
+
+		jr      ra                          // return
+		lhu		v0, 0x0004(t4)				// v0 = clipping flag
+	}
+
 }
 }

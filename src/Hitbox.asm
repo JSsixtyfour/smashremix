@@ -13,7 +13,7 @@ include "Toggles.asm"
 include "OS.asm"
 
 scope Hitbox {
-    
+
     // @ Description
     // this is a hook into the function which loads the character's hitbox display state
     // by default the value (at 0x0B4C(s8)) will always be 0
@@ -23,20 +23,20 @@ scope Hitbox {
     // (all other values?) = hitbox display
     scope hitbox_mode_: {
         constant FIRST_ITEM_PTR(0x80046700)
-    
+
         OS.patch_start(0x0006E3FC, 0x800F2BFC)
         j       hitbox_mode_
         nop
         _hitbox_mode_return:
         OS.patch_end()
-        
+
         swc1    f10, 0x0000(v0)             // original line 1
         lli     v1, 0x0000                  // v1 = no hitbox display
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // ~
         sw      t2, 0x000C(sp)              // store t0 - t2
-        
+
         li      t0, Toggles.entry_special_model
         lw      t0, 0x0004(t0)              // t0 = 1 if hitbox_mode, 2 if hitbox+model, 3 if ECB
         lli     t1, 0x0001                  // t1 = 1
@@ -46,10 +46,10 @@ scope Hitbox {
         lli     t1, 0x0003                  // t1 = 3
         beql    t0, t1, _update_player      // if (ecb_mode), set v1
         lli     v1, 0x0003                  // v1 = ecb display
-        
+
         _update_player:
         sw      v1, 0x0B4C(s8)              // save hitbox display state
-        
+
         or      t2, v1, r0                  // t2 = v1
         lli     t1, 0x0002                  // t1 = 2
         beql    t0, t1, _update_item        // if (hitbox+model), set t2 for items
@@ -58,7 +58,7 @@ scope Hitbox {
         _update_item:
         li      t0, FIRST_ITEM_PTR          // t0 = FIRST_ITEM_PTR
         lw      t0, 0x0000(t0)              // t0 = address of first item object
-        
+
         _loop:
         // t0 = object struct address
         beqz    t0, _exit_loop              // if t0 = NULL, exit loop
@@ -69,17 +69,17 @@ scope Hitbox {
         _loop_end:
         b       _loop                       // loop
         lw      t0, 0x0004(t0)              // t0 = next object struct
-        
+
         _exit_loop:
         lw      t0, 0x0004(sp)              // restore registers
         lw      t1, 0x0008(sp)              // ~
         lw      t2, 0x000C(sp)              // ~
         addiu   sp, sp, 0x0010              // deallocate stack space
-        
+
         j       _hitbox_mode_return
         nop
     }
-    
+
     // @ Description
     // this is a hook into the function which loads the display state for projectiles
     scope projectile_: {
@@ -90,11 +90,11 @@ scope Hitbox {
         OS.patch_end()
         or      s0, a0, r0                  // original line 1
         lli     v1, 0x0000                  // v1 = no hitbox display
-        
+
         addiu   sp, sp, -0x0010             // allocate stack space
         sw      t0, 0x0004(sp)              // save registers
         sw      t1, 0x0008(sp)              // ~
-        
+
         li      t0, Toggles.entry_special_model
         lw      t0, 0x0004(t0)              // t0 = 1 if hitbox_mode
         lli     t1, 0x0001                  // t1 = 1
@@ -107,10 +107,10 @@ scope Hitbox {
         lli     t1, 0x0003                  // t1 = 3
         beql    t0, t1, _update_projectile  // if (ecb_mode), set v1
         lli     v1, 0x0003                  // v1 = ecb display
-        
+
         _update_projectile:
         sw      v1, 0x02BC(v0)              // save projectile display state
-        
+
         end:
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // ~
@@ -132,6 +132,15 @@ scope Hitbox {
         nop
 
         lw      t3, 0x0094(sp)              // t3 = player struct
+        lh      t6, 0x018C(t3)              // t6 = current players flag
+        andi    t6, t6, 0x0480              // t6 != 0 if reflecting or absorbing
+        beqz    t6, _check_armor
+		nop
+        lui     t5, 0x00FF                  // t0 = RGBA32 CYAN
+        b       _end
+        ori     t5, t5, 0xFFFF              // ~
+
+		_check_armor:
         lw      t3, 0x07E8(t3)              // t3 = non-zero if in armor frames
         li      t6, 0x606060FF              // t6 = dark gray for armor frames, if needed
         bnezl   t3, _end                    // if in armor frames, change color and skip grab immunity check
@@ -217,6 +226,155 @@ scope Hitbox {
 
         jr      ra
         addiu   at, r0, 0x0002              // original line 2
+    }
+
+    // @ Description
+    // Adds reflect/absorb hitboxes.
+    scope add_reflect_absorb_hitboxes: {
+        OS.patch_start(0x6EB58, 0x800F3358)
+        jal     add_reflect_absorb_hitboxes
+        lui     s5, 0x8004                  // original line 1
+        OS.patch_end()
+
+        // li      t4, Toggles.entry_special_model
+        // lw      t4, 0x0004(t4)              // t4 = 1 if hitbox_mode, 2 if hitbox+model, 3 if ECB
+
+        // s6 = player object
+        lw      t3, 0x0084(s6)              // t3 = player struct
+        lw      t0, 0x0850(t3)              // t0 = reflect/absorb struct
+        beqz    t0, _end                    // skip if empty
+        lw      t1, 0x018C(t3)              // t1 = flags
+        lui     t2, 0x0480                  // t2 = reflect/absorb active flag
+        and     t1, t1, t2                  // t1 = 0 if not active
+        beqz    t1, _end                    // skip if not active
+        lui     t1, 0x8004                  // t1 = 0x80040000
+
+        lw      t2, 0x65B0(t1)              // t2 = end of current display list
+
+        // first, we set up the matrix based on the joint the hurtbox should be attached to
+        lw      at, 0x0004(t0)              // at = index of joint to use, starting at 0x08E8 in player struct
+        sll     at, at, 0x0002              // at = offset of joint
+        addu    at, t3, at                  // at = player struct addjusted for offset to joing
+        lw      at, 0x08E8(at)              // at = address of joint
+
+        lw      t4, 0x0074(s6)              // t4 = top joint
+        lui     t5, 0xDA38                  // t5 = top part of G_MTX command
+        lli     t7, 0x0000                  // t7 = default to pushing the first matrix
+
+        _loop:
+        or      t8, t5, t7                  // t8 = top part of G_MTX command
+        sw      t8, 0x0000(t2)              // save G_MTX command first word
+        lw      t6, 0x0058(t4)              // t6 = render struct for joint
+        addiu   t6, t6, 0x0008              // t6 = translation matrix for joint
+        sw      t6, 0x0004(t2)              // save G_MTX command second word
+        addiu   t2, t2, 0x0008              // t2 = end of display list, updated
+        lli     t7, 0x0001                  // t7 = don't push after the first matrix
+        bne     at, t4, _loop               // if this isn't the target joint, get the next one and add another G_MTX command
+        lw      t4, 0x0010(t4)              // t4 = next joint
+
+        lli     t4, 0x0001                  // t4 = bottom half of G_MTX first word (tells it to push matrix)
+
+        // Now we need to use the reflect/absorb struct to finish the matrix setup
+        sw      t5, 0x0000(t2)              // save G_MTX command first word, offset matrix
+        sw      t5, 0x0008(t2)              // save G_MTX command first word, scale matrix
+        sh      t4, 0x000A(t2)              // update the last G_MTX command
+
+        li      t4, 0x800465D8              // t4 = some sort of struct for allocation
+        lw      a0, 0x000C(t4)              // a0 = current free space address
+        addiu   t6, a0, 0x0040              // t6 = free space after 0x8001B9C4
+        addiu   t7, t6, 0x0040              // t7 = free space after 0x8001B780
+        sw      t7, 0x000C(t4)              // update free space address
+
+        sw      a0, 0x0004(t2)              // save G_MTX command second word, offset matrix
+        sw      t6, 0x000C(t2)              // save G_MTX command second word, scale matrix
+        addiu   t2, t2, 0x0010              // t2 = new end of display list
+        sw      t2, 0x65B0(t1)              // save end of display list
+
+        addiu   sp, sp, -0x0040             // allocate stack space
+        sw      ra, 0x0014(sp)              // save registers
+        sw      t0, 0x0018(sp)              // ~
+        sw      t2, 0x001C(sp)              // ~
+        sw      t6, 0x0020(sp)              // ~
+
+        lw      a1, 0x0008(t0)              // a1 = X
+        lw      a2, 0x000C(t0)              // a2 = Y
+        jal     0x8001B9C4                  // create matrix
+        lw      a3, 0x0010(t0)              // a3 = Z
+
+        lw      a0, 0x0020(sp)              // a0 = free space address
+        lui     at, 0x4170                  // at = scale adjuster
+        mtc1    at, f0                      // f0 = scale adjuster
+        lw      t0, 0x0018(sp)              // t0 = reflect/absorb struct
+        lwc1    f16, 0x001C(t0)             // f16 = Z scale
+        div.s   f18, f16, f0                // f18 = Z scale, adjusted
+        lwc1    f8, 0x0018(t0)              // f8 = Y scale
+        div.s   f10, f8, f0                 // f10 = Y scale, adjusted
+        lwc1    f4, 0x0014(t0)              // f4 = X scale
+        div.s   f6, f4, f0                  // f6 = X scale, adjusted
+        mfc1    a3, f18                     // a3 = Z scale
+        mfc1    a2, f10                     // a2 = Y scale
+        mfc1    a1, f6                      // a1 = X scale
+        jal     0x8001B780                  // create scale matrix
+        nop
+
+        lw      ra, 0x0014(sp)              // restore registers
+        lw      t2, 0x001C(sp)              // ~
+        addiu   sp, sp, 0x0040              // restore stack space
+
+        lui     t5, 0xE700                  // t5 = G_RDPPIPESYNC
+        sw      t5, 0x0000(t2)              // save G_RDPPIPESYNC command
+        sw      r0, 0x0004(t2)              // ~
+
+        lui     t5, 0xF900                  // t5 = G_SETBLENDCOLOR
+        sw      t5, 0x0008(t2)              // save G_SETBLENDCOLOR command
+        lli     t5, 0x00E0                  // t5 = alpha
+        sw      t5, 0x000C(t2)              // save alpha
+
+        lui     t5, 0xFA00                  // t5 = G_SETPRIMCOLOR
+        sw      t5, 0x0010(t2)              // save G_SETPRIMCOLOR command
+        li      t5, 0xFF8040FF              // t5 = reflect color
+        li      t4, 0xFF4080FF              // t4 = absorb color
+        lw      t3, 0x0084(s6)              // t3 = player struct
+        lw      t1, 0x018C(t3)              // t1 = flags
+        lui     t6, 0x0080                  // t6 = absorb active flag
+        and     t1, t1, t6                  // t1 = 0 if not absorb
+        bnezl   t1, pc() + 8                // if absorb, adjust color
+        or      t5, r0, t4                  // t5 = absorb color
+
+        // hacky fix for Reflect.asm making absorb powers
+        lw      t1, 0x0850(t3)              // t1 = absorb/reflect struct
+        li      t6, MarinaDSP.absorb_struct // t6 = Marina's absorb struct
+        beql    t1, t6, _save_color         // if Marina's absorb struct, then use absorb color
+        or      t5, r0, t4                  // t5 = absorb color
+        li      t6, DededeNSP.absorb_struct // t6 = Dedede's absorb struct
+        beql    t1, t6, _save_color         // if Dedede's absorb struct, then use absorb color
+        or      t5, r0, t4                  // t5 = absorb color
+
+        _save_color:
+        sw      t5, 0x0014(t2)              // save color
+
+        lui     t5, 0xFB00                  // t5 = G_SETENVCOLOR
+        sw      t5, 0x0018(t2)              // save G_SETENVCOLOR command
+        addiu   t5, r0, -0x0001             // t5 = white
+        sw      t5, 0x001C(t2)              // save white
+
+        lui     t5, 0xDE00                  // t5 = G_DL
+        sw      t5, 0x0020(t2)              // save G_DL command
+        li      t5, 0x8012C310              // t5 = transparent hitbox display list
+        sw      t5, 0x0024(t2)              // save display list
+
+        li      t5, 0xD8380002              // t5 = G_POPMTX
+        sw      t5, 0x0028(t2)              // save G_POPMTX command
+        lli     t5, 0x0080                  // t5 = pop 2 matrixes (2 * 0x40)
+        sw      t5, 0x002C(t2)              // save num matrixes to pop
+
+        addiu   t2, t2, 0x0030              // t2 = end of display list
+        lui     t1, 0x8004
+        sw      t2, 0x65B0(t1)              // save end of display list
+
+        _end:
+        jr      ra
+        addiu   s5, s5, 0x65D8              // original line 2
     }
 
     // @ Description

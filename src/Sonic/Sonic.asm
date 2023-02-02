@@ -107,6 +107,11 @@ scope Sonic {
     insert SPPOSE,"moveset/SPPOSE.bin"
     insert VICTORY1,"moveset/VICTORY1.bin"
 
+    // Insert AI attack options
+    constant CPU_ATTACKS_ORIGIN(origin())
+    insert CPU_ATTACKS,"AI/attack_options.bin"
+    OS.align(16)
+
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(SONIC, Action.Idle,            File.SONIC_IDLE,            IDLE,                       -1)
     Character.edit_action_parameters(SONIC, 0x06,                   File.SONIC_IDLE,            IDLE,                       -1)
@@ -301,6 +306,9 @@ scope Sonic {
 
     Character.table_patch_start(variants, Character.id.SONIC, 0x4)
     db      Character.id.SSONIC // set as SPECIAL variant for SONIC
+    db      Character.id.NSONIC // set as POLYGON variant for SONIC
+    db      Character.id.NONE
+    db      Character.id.NONE
     OS.patch_end()
 
     // Set menu zoom size.
@@ -357,6 +365,42 @@ scope Sonic {
     Character.table_patch_start(entry_script, Character.id.SONIC, 0x4)
     dw 0x8013DCAC                         // routine typically used by DK to load Barrel, now used for Tails
     OS.patch_end()
+
+    // Set CPU behaviour
+    Character.table_patch_start(ai_behaviour, Character.id.SONIC, 0x4)
+    dw      CPU_ATTACKS
+    OS.patch_end()
+	
+	// Set CPU NSP long range behaviour
+    Character.table_patch_start(ai_long_range, Character.id.SONIC, 0x4)
+    dw    	AI.LONG_RANGE.ROUTINE.NONE
+    OS.patch_end()
+
+    // Edit cpu attack behaviours
+    // edit_attack_behavior(table, attack, override, start_hb, end_hb, min_x, max_x, min_y, max_y)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DAIR,   -1,  4,  41,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPA,   -1,  18, 18+47, 50, 1500, -400, 200)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPG,   -1,  18, 18+47, 50, 1500, -400, 200)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSMASH, -1,  8,  20,    -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DTILT,  -1,  5,  10,    -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FAIR,   -1,  7,  14,    -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FSMASH, -1,  17, 22,    -1, 720.0, -1, -1) // less range than Fox
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FTILT,  -1,  7,  12,    -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, GRAB,   -1,  -1, -1,    -1, -1, -1, -1)    // todo: check range
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, JAB,    -1,  3,  7,     -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NAIR,   -1,  4,  27,    -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPA,   -1,  21, 21+21, -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPG,   -1,  21, 21+21, -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UAIR,   -1,  4,  14,    -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPA,   -1,  6,  60,    -60, 60, -200, 40)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPG,   -1,  0, 0,    0, 0, 0, 0)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USMASH, -1,  6,  21,    -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UTILT,  -1,  6,  11,    -1, -1, -1, -1)
+
+    // Edit cpu attack behaviours
+    // edit_attack_behavior(behavior_table_origin, attack_name, new_attack, start_hb_frame, end_hb_frame, min_x,   max_x,   min_y,   max_y)
+
+
 
     // @ Description
     // Sonic's extra actions

@@ -54,6 +54,13 @@ scope FGM {
         nop
     }
 
+    // @ Description
+    // Plays a sound effect
+    macro play(sfx) {
+        jal     0x800269C0
+        addiu   a0, r0, {sfx}
+    }
+
     // Extended Sound Effects
 
     print "=============================== SOUND FILES ==============================\n"
@@ -1106,7 +1113,65 @@ scope FGM {
     add_sound(sounds/misc/honk, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound(Sheik/sounds/TEETER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound(Sheik/sounds/SHIELD_BREAK, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
-
+	add_sound(Marina/sounds/ANNOUNCER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 40, -1)
+	add_sound(Marina/sounds/SHAKE, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+	add_sound(Marina/sounds/HOI, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+	add_sound(Marina/sounds/TAUNT, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+	add_sound(Marina/sounds/YAHOO, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+	add_sound(Marina/sounds/HO, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+	add_sound(Marina/sounds/YAH, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+	add_sound(Marina/sounds/YAAAH, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+	add_sound(Marina/sounds/TORIYA, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+	add_sound(Marina/sounds/PAIN, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+	add_sound(Marina/sounds/KO, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+	add_sound(Marina/sounds/STARKO, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+	add_sound(Marina/sounds/SIGH, SAMPLE_RATE_16000, FGM_TYPE_SLEEP, 0, 0x120)
+	add_sound(Marina/sounds/THRUSTER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+	add_sound(Marina/sounds/STUNLOOP, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(NBowser/sounds/ANNOUNCER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 40, -1)
+    add_sound(NDrMario/sounds/ANNOUNCER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 40, -1)
+    add_sound(NLucas/sounds/ANNOUNCER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 40, -1)
+    add_sound(NSheik/sounds/ANNOUNCER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 40, -1)
+    add_sound(NSonic/sounds/ANNOUNCER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 40, -1)
+    add_sound(NWario/sounds/ANNOUNCER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 40, -1)
+    add_sound(NWolf/sounds/ANNOUNCER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 40, -1)
+    add_sound(Dedede/sounds/USP_INITIAL, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Dedede/sounds/USP_LAND, SAMPLE_RATE_32000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(sounds/misc/Pitfall_Jump, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Dedede/sounds/CROWD_CHANT, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(sounds/misc/pitfall_vanish, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Dedede/sounds/USP_LAND_VOICE, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Dedede/sounds/STUN, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Marina/sounds/SHAKE_SHAKE, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Dedede/sounds/JUMP_1, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Dedede/sounds/JUMP_2, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Dedede/sounds/WADDLE_JUMP, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1) // REPLACE THIS
+    add_sound(Dedede/sounds/WADDLE_JUMP, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1) // REPLACE THIS
+    add_sound(Dedede/sounds/USP_BONK, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Dedede/sounds/VOICE_HEAVY_GET, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Dedede/sounds/VOICE_HURT, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Dedede/sounds/VOICE_KO, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Dedede/sounds/VOICE_LAUGH, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Dedede/sounds/VOICE_SLEEP, SAMPLE_RATE_16000, FGM_TYPE_SLEEP, 0, 0x120)
+    add_sound(Dedede/sounds/VOICE_STAR_KO, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Dedede/sounds/VOICE_TEETER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Dedede/sounds/VOICE_USP_RISE, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Dedede/sounds/WADDLE_JUMP, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Dedede/sounds/WADDLE_STEP_L, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Dedede/sounds/WADDLE_STEP_R, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Dedede/sounds/WADDLE_THROW, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Dedede/sounds/VOICE_ATTACK_1, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Dedede/sounds/VOICE_ATTACK_2, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Dedede/sounds/VOICE_ATTACK_3, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Dedede/sounds/ANNOUNCER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 40, -1)
+    add_sound(NMarina/sounds/ANNOUNCER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 40, -1)
+    add_sound(Marina/sounds/VICTORY, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(1p/sounds/TINY_TEAM, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(YoungLink/sounds/BOMBCHU, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(sounds/misc/tripstart, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Marina/sounds/SFX_POP, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Marina/sounds/SFX_SHAKE, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
+    add_sound(Marina/sounds/SFX_ENTRY, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     // This is always last
     write_sounds()
 
@@ -1135,6 +1200,12 @@ scope FGM {
 
     // hit sounds
     scope hit {
+        constant ELECTRIC_S(0x16)
+        constant ELECTRIC_M(0x17)
+        constant ELECTRIC_L(0x18)
+        constant FIRE_S(0x19)
+        constant FIRE_M(0x1A)
+        constant FIRE_L(0x1B)
         constant PUNCH_S(0x28)
         constant PUNCH_M(0x26)
         constant PUNCH_L(0x25)
@@ -1148,6 +1219,8 @@ scope FGM {
         constant J_KICK_M(0x8F)
         constant J_KICK_L(0x8E)
     }
+
+	constant NONE(0x2B7)
 
     // character select screen
     scope announcer {
@@ -1204,6 +1277,16 @@ scope FGM {
             constant SONIC(980)
             constant SSONIC(1022)
             constant SHEIK(1033)
+            constant MARINA(1055)
+            constant NBOWSER(1070)
+            constant NDR_MARIO(1071)
+            constant NLUCAS(1072)
+            constant NSHEIK(1073)
+            constant NSONIC(1074)
+            constant NWARIO(1075)
+            constant NWOLF(1076)
+            constant DEDEDE(1105)
+            constant NMARINA(1106)
         }
 
         scope css {
