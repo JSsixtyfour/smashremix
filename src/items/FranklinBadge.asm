@@ -51,8 +51,8 @@ dw 0, 0, 0, 0                           // 0x90 - 0x9C - ?
 
 // @ Description
 // Duration of Franklin Badge item
-constant BADGE_DURATION(30*60)          // duration = 30 seconds
-constant GFX_ROUTINE(0x70)              // gfx routine index
+constant BADGE_DURATION(24*60)          // duration = 24 seconds
+constant GFX_ROUTINE(0x70)              // custom gfx routine index
 
 // @ Description
 // Main item pickup routine for cloaking device.
@@ -185,7 +185,7 @@ scope handle_active_franklin_badge_: {
 
     // remove reflect flag
     lh      v0, 0x018C(a1)          // v0 = current players reflect flag
-    andi    v0, at, 0xFFFB          // remove reflect flag
+    andi    v0, v0, 0xFBFF          // remove reflect flag
     sh      v0, 0x018C(a1)          // overwrite players flag
 
     // remove player gfx, based on star

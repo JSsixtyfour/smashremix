@@ -1675,6 +1675,7 @@ scope Action {
 		dw string_0x17D
 		dw string_0x17E
         dw string_0x17F
+        dw string_0x180
         dw string_0x181
         dw string_0x182
         dw string_0x183

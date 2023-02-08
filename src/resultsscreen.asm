@@ -289,6 +289,54 @@ scope ResultsScreen {
     }
 
     // @ Description
+    // Checks for winning player's input to pick a victory animation
+    // Also skip Kirby character check and use all 3 animations, instead of just 2
+    scope victory_animations_: {
+        OS.patch_start(0x152628, 0x80133488)
+        b       0x801334A8                  // original line 1 was: 'bne a0, at, 0x801334A8' (branch if not kirby)
+        OS.patch_end()
+
+        OS.patch_start(0x152650, 0x801334B0)
+        j       pick_victory_animation_
+        nop
+        _return:
+        OS.patch_end()
+
+        // a1 = winning player's port (0-3)
+        // v0 = currently selected random animation
+        // a0 is safe to edit
+        pick_victory_animation_:
+        // Check if the winning player is holding a C-button and override random int if so (borrowed from Joypad.check_buttons_)
+        lli     a0, 000010                  // ~
+        mult    a1, a0                      // ~
+        mflo    a0                          // a0 = offset
+        li      t1, Joypad.struct           // t1 = Joypad.struct
+        addu    t1, t1, a0                  // t1 = struct + offset
+        lhu     t1, 0x0000(t1)              // t1 = button mask
+
+        andi    a0, t1, 0x000F              // a0 = 0 if no c button pressed
+        beqz    a0, _end                    // branch accordingly
+        nop
+
+        andi    a0, t1, Joypad.CR           // a0 = 1 if CR pressed
+        bnezl   a0, _end                    // branch accordingly
+        addiu   v0, r0, 0x0002              // v0 = 2 (victory animation 3)
+
+        andi    a0, t1, Joypad.CL           // a0 = 1 if CL pressed
+        bnezl   a0, _end                    // branch accordingly
+        addiu   v0, r0, 0x0001              // v0 = 1 (victory animation 2)
+
+        // if we're here, CU or CD were pressed
+        or      v0, r0, r0                  // v0 = 0 (victory animation 1)
+
+        _end:
+        sll     t1, v0, 2                   // original line 1
+        addu    v0, sp, t1                  // original line 2
+        j       _return                     // return
+        nop
+    }
+
+    // @ Description
     // Logo offsets in file 0x23
     scope series_logo: {
         constant MARIO_BROS(0x0990)

@@ -191,14 +191,16 @@ scope CharEnvColor {
         dh 0x0220       // 0x0010: offset to 2nd set render mode command for high poly, or -1
         dh 0xFFFF       // 0x0012: offset to 3rd set render mode command for high poly, or -1
         dw OS.FALSE     // 0x0014: initialized flag, low poly
-        dw hi_default   // 0x0018: pointer to default custom lo poly display list, or 0
-        dw hi_alpha     // 0x001C: pointer to alpha custom lo poly display list, or 0
+        dw lo_default   // 0x0018: pointer to default custom lo poly display list, or 0
+        dw lo_alpha     // 0x001C: pointer to alpha custom lo poly display list, or 0
         dh 0x0914       // 0x0020: offset to part 0x07 in player struct
         dh 0x0118       // 0x0022: offset to 1st set render mode command for high poly
         dh 0x01F0       // 0x0024: offset to 2nd set render mode command for high poly, or -1
         dh 0xFFFF       // 0x0026: offset to 3rd set render mode command for high poly, or -1
         hi_default:; create_custom_display_list(0xC4113878, RENDER_MODE_DEFAULT)
         hi_alpha:;   create_custom_display_list(RENDER_MODE_ALPHA, RENDER_MODE_ALPHA)
+        lo_default:; create_custom_display_list(0xC4113878, RENDER_MODE_DEFAULT)
+        lo_alpha:;   create_custom_display_list(RENDER_MODE_ALPHA, RENDER_MODE_ALPHA)
     }
 
     scope custom_display_lists_struct_dk_hat: {
@@ -356,7 +358,7 @@ scope CharEnvColor {
         beq     t2, t9, _fix                // skip to fixing SHEIK
         lli     t9, Character.id.YLINK
         li      v0, custom_display_lists_struct_ylink
-        beq     t2, t9, _fix                // skip to fixing YLINK
+        beq     t2, t9, _fix_ylink          // skip to fixing YLINK
         lli     t9, Character.id.SSONIC
         li      v0, custom_display_lists_struct_ssonic_0
         beq     t2, t9, _fix_ssonic         // skip to fixing SSONIC
@@ -375,6 +377,14 @@ scope CharEnvColor {
         nop                                 // otherwise, get other struct
         li      v0, custom_display_lists_struct_ssonic_1
         b       _fix
+        nop
+
+        _fix_ylink:
+        // Check which part is being displayed
+        lbu     t2, 0x098B(s8)              // t2 = link sword part_id
+        beqz    t2, _fix                    // if 0, then already have correct v0
+        nop                                 // otherwise, don't fix
+        b       _return
         nop
 
         _fix_kirby:

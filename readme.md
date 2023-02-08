@@ -551,8 +551,9 @@ These stages are set to On in the Tournament profile:
 - Duel Zone DL
 - Meta Crysal DL
 - Green Hill Zone
-- Pokemon Stadium
+- Pokemon Stadium 2
 - Winter Dream Land
+- Glacial River Remix
 
 These stages are set to On in the Semi-Competitive profile:
 - Congo Jungle
@@ -604,10 +605,9 @@ These stages are set to On in the Semi-Competitive profile:
 - Hyrule Castle SR
 - Mute City
 - Green Hill Zone
-- Subcon
 - Pirate Land
 - Casino Night Zone
 - Metallic Madness
 - Pokemon Stadium 2
 - Norfair Remix
-- Winter Dream Land
+- Glacial River Remix

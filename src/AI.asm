@@ -1917,6 +1917,9 @@ scope AI {
 			nop
 
 			_pk_thunder:
+            // Adding these temporary lines to prevent SD related to PK Thunder
+            b       _no_input                   // temporary line 1
+            nop                                 // temporary line 2
 			b       _set_input
 			addiu	a1, r0, ROUTINE.USP			// For Ness clones and Lucas
 

@@ -512,9 +512,9 @@ Character.edit_action_parameters(DEDEDE, Action.LandingAirX,            File.DED
 
     Character.edit_menu_action_parameters(DEDEDE, 0x0,           File.DEDEDE_IDLE,              IDLE,                       -1)
     Character.edit_menu_action_parameters(DEDEDE, 0x1,           File.DEDEDE_VICTORY_1,         0x80000000,                 -1)
-    Character.edit_menu_action_parameters(DEDEDE, 0x2,           File.DEDEDE_VICTORY_1,         0x80000000,                 -1)
+    Character.edit_menu_action_parameters(DEDEDE, 0x2,           File.DEDEDE_VICTORY_3,         VICTORY_3,                  -1)
     Character.edit_menu_action_parameters(DEDEDE, 0x3,           File.DEDEDE_VICTORY_2,         VICTORY_2,                  -1)
-    Character.edit_menu_action_parameters(DEDEDE, 0x4,           File.DEDEDE_VICTORY_3,         VICTORY_3,                  -1)
+    Character.edit_menu_action_parameters(DEDEDE, 0x4,           File.DEDEDE_VICTORY_1,         0x80000000,                 -1)
     Character.edit_menu_action_parameters(DEDEDE, 0x5,           File.DEDEDE_CLAP,              CLAP,                       -1)
     Character.edit_menu_action_parameters(DEDEDE, 0xD,           File.DEDEDE_1P_POSE,           0x80000000,                 -1)
     Character.edit_menu_action_parameters(DEDEDE, 0xE,           File.DEDEDE_CPU_POSE,          0x80000000,                 -1)
