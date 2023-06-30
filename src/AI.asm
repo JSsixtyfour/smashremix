@@ -13,17 +13,91 @@ include "OS.asm"
 scope AI {
 
     // @ Description
-    // All Computers Are Level 9 By Default [Mada0]
-    pushvar origin, base
-    origin 0x42D38
-    db     0x09
-    origin 0x42DAC
-    db     0x09
-    origin 0x42E20
-    db     0x09
-    origin 0x42E94
-    db     0x09
-    pullvar base, origin
+    // Override CPU Level Toggle
+    scope override_vs_cpu_level_0: {
+        OS.patch_start(0x1390BC, 0x8013AE3C)
+        j       override_vs_cpu_level_0
+        lbu     t4, 0x0021(v1)     // og line 2
+        _return:
+        OS.patch_end()
+        
+        OS.read_word(Toggles.entry_default_cpu_level + 0x4, t3) // t3 = cpu lvl override
+        
+        beqz    t3, _original       // original logic if no override value is set
+        nop
+
+        _override:
+        j       _return
+        nop
+
+        _original:
+        j       _return
+        lbu     t3, 0x0020(v1)      // og line 1 (t3 = cpu level)
+
+    }
+
+    // @ Description
+    // Override CPU Level Toggle
+    scope override_vs_cpu_level_1: {
+        OS.patch_start(0x138FBC, 0x8013AD3C)
+        j       override_vs_cpu_level_1
+        lbu     t5, 0x0021(v1)     // og line 2
+        _return:
+        OS.patch_end()
+        
+        OS.read_word(Toggles.entry_default_cpu_level + 0x4, t4) // t4 = cpu override
+        
+        beqz    t4, _original       // original logic if no override value is set
+        nop
+
+        _override:
+        j       _return
+        nop
+
+        _original:
+        j       _return
+        lbu     t4, 0x0020(v1)      // og line 1 (t4 = cpu level)
+
+    }
+
+    // @ Description
+    // CPUs won't evade opponents while they are invulnerable. (super star, respawn)
+    scope evade_fix_: {
+        OS.patch_start(0xAD640, 0x80132C00)
+        j      evade_fix_
+        nop
+        _return:
+        OS.patch_end()
+        
+        // automatic improved AI if remix 1P
+        addiu   t6, r0, 0x4                 // t6 = remix 1P mode
+        OS.read_word(SinglePlayerModes.singleplayer_mode_flag, at) // at = Mode Flag Address
+        beq     at, v1, _invulnerable_check // if Remix 1p, automatic advanced ai
+        nop
+        // Check improved AI toggle
+        OS.read_word(Toggles.entry_improved_ai + 0x4, at)   // at = improved AI toggle
+        beqz    at, _original
+        nop
+        
+        _invulnerable_check:
+        lw      at, 0x05B0(a0)              // at = super star timer
+        slti    at, at, 112                 // t0 = 0 if > 112 frames left
+        beqz    at, _skip_evade_check       // branch if this player is invulnerable from super star
+        lw      at, 0x05A4(a0)              // at = respawn timer
+        slti    at, at, 20                  // t0 = 0 if > 20 frames left
+        beqz    at, _skip_evade_check       // branch if this player is invulnerable from respawning
+
+        _original:
+        lui     at, 0x8019
+        j       _return
+        lwc1    f24, 0xBB90(at)
+
+        _skip_evade_check:
+        j       0x80132CE8                  // skip to end of evasion routine
+        nop
+
+    
+    }
 
     // @ Description
     // This removes the up b check allowing the CPU to recover multiple times [bit].
@@ -41,25 +115,25 @@ scope AI {
         nop
 
         _guard:
-		// Fix if Remix 1P
+        // Fix if Remix 1P
         addiu   v1, r0, 0x0004
         OS.read_word(SinglePlayerModes.singleplayer_mode_flag, at) // at = Mode Flag Address
         beq     at, v1, _fix_recovery       // if Remix 1p, automatic advanced ai
         nop
 
-		_check_level_10:
-		lbu		v1, 0x0013(s0)				// v1 = cpu level
-		slti	v1, v1, 10					// t6 = 0 if 10 or greater
-		beqz	v1, _fix_recovery			// improved recovery if level 10
+        _check_level_10:
+        lbu     v1, 0x0013(s0)              // v1 = cpu level
+        slti    v1, v1, 10                  // t6 = 0 if 10 or greater
+        beqz    v1, _fix_recovery           // improved recovery if level 10
 
-		// No fix if Vanilla 1P
+        // No fix if Vanilla 1P
         OS.read_word(Global.match_info, at)	// at = current match info struct
-		lbu		v1, 0x0000(at)			//
+        lbu		v1, 0x0000(at)			//
         lli     at, Global.GAMEMODE.CLASSIC
         beq     at, v1, _original         	// dont use toggle if 1P/RTTF
-		nop
+        nop
 
-		// Fix if improved AI is on
+        // Fix if improved AI is on
         Toggles.guard(Toggles.entry_improved_ai, _original)
 
         // if here, improved AI is on, so we skip the up b check
@@ -71,6 +145,76 @@ scope AI {
         j       0x80135628                  // jump to 0x80135628
         nop
     }
+    
+    
+    // @ Description
+    // Allows pikachu remix variants to recover properly.
+    // Runs every frame while in the recovery state (off stage)
+    scope fix_remix_recovery: {
+        OS.patch_start(0xB298C, 0x80137F4C)
+        j       fix_remix_recovery
+        lw      t6, 0x0008(a0)      // t6 = character ID (og line 1)
+        OS.patch_end()
+        
+        // at = Charater.ID.PIKACHU
+        // t6 = characters ID
+        beq     t6, at, _pikachu
+        addiu   at, r0, Character.id.JPIKA
+        beq     t6, at, _pikachu
+        addiu   at, r0, Character.id.EPIKA
+        beq     t6, at, _pikachu
+        addiu   at, r0, Character.id.SHEIK
+        beq     t6, at, _sheik
+        addiu   at, r0, Character.id.PEPPY
+        beq     t6, at, _peppy
+        addiu   at, r0, Character.id.MTWO
+        beq     t6, at, _mewtwo
+        nop
+        
+        _normal:
+        j       0x80137FBC
+        nop
+
+        _sheik:
+        lw      v0, 0x0024(a0)              // v0 = current action ID
+        addiu   at, r0, 0x00EE              // at = Sheiks Aerial Charge action
+        bne     at, v0, _normal
+        nop
+        // if here, cancel NSP
+        jal     0x80132564                  // execute AI command
+        addiu   a1, r0, 0x0C                // arg1 = command = PRESS Z
+        j       0x80137FBC + 0x4            // return to end of routine
+        nop
+
+        _peppy:
+        lw      v0, 0x0024(a0)              // v0 = current action ID
+        addiu   at, r0, 0x00F2                // at = Peppy's Aerial Charge action
+        bne     at, v0, _normal
+        nop
+        // if here, cancel NSP
+        jal     0x80132564                  // execute AI command
+        addiu   a1, r0, 0x0C                // arg1 = command = PRESS Z
+        j       0x80137FBC + 0x4            // return to end of routine
+        nop
+        
+        _mewtwo:
+        lw      v0, 0x0024(a0)              // v0 = current action ID
+        addiu   at, r0, 0x00E2              // at = Mewtwos Aerial Charge action
+        bne     at, v0, _normal
+        nop
+        // if here, cancel NSP
+        jal     0x80132564                  // execute AI command
+        addiu   a1, r0, 0x0C                // arg1 = command = PRESS Z
+        j       0x80137FBC + 0x4            // return to end of routine
+        nop
+        
+        
+        _pikachu:
+        j       0x80137F58 + 0x4
+        addiu   at, r0, 0x00EB
+    }
+    
+
 
     // @ Description
     // Chance to execute various rolls / 100
@@ -344,42 +488,43 @@ scope AI {
         lli     at, Global.GAMEMODE.CLASSIC
         beq     t2, at, _end         		// dont use toggle if vanilla 1P/RTTF
 
-		// Some characters have extra hitboxes if they don't z cancel.
+        // Some characters have extra hitboxes if they don't z cancel.
         lw      t1, 0x0008(v1)              // get character ID
-        addiu   at, Character.id.KIRBY
-        beq     t1, at, _kirby
-        addiu   at, Character.id.JKIRBY
-        beq     t1, at, _kirby
-        addiu   at, Character.id.NKIRBY
-        beq     t1, at, _kirby
-        addiu   at, Character.id.PIKACHU
-        beq     t1, at, _fair_check
-        addiu   at, Character.id.JPIKA
-        beq     t1, at, _fair_check
-        addiu   at, Character.id.EPIKA
-        beq     t1, at, _fair_check
-        addiu   at, Character.id.NPIKACHU
-        beq     t1, at, _fair_check
-        addiu   at, Character.id.DSAMUS
-        beq     t1, at, _nair_check
-        addiu   at, Character.id.MTWO
-        beq     t1, at, _nair_check
-        //addiu   at, Character.id.NMTWO
-        //beq     t1, at, _nair_check
-        //addiu   at, Character.id.NDSAMUS
-        //beq     t1, at, _nair_check
-        addiu   at, Character.id.JIGGLYPUFF
-        beq     t1, at, _dair_check
-        addiu   at, Character.id.NJIGGLY
-        beq     t1, at, _dair_check
-        addiu   at, Character.id.EPUFF
-        beq     t1, at, _dair_check
-        addiu   at, Character.id.JPUFF
-        beq     t1, at, _dair_check
-        addiu   at, Character.id.NBOWSER
-        beq     t1, at, _dair_check
-        addiu   at, Character.id.BOWSER
-        bne     t1, at, _rng
+        // addiu   at, Character.id.KIRBY
+        // beq     t1, at, _kirby
+        // addiu   at, Character.id.JKIRBY
+        // beq     t1, at, _kirby
+        // addiu   at, Character.id.NKIRBY
+        // beq     t1, at, _kirby
+        // addiu   at, Character.id.PIKACHU
+        // beq     t1, at, _fair_check
+        // addiu   at, Character.id.JPIKA
+        // beq     t1, at, _fair_check
+        // addiu   at, Character.id.EPIKA
+        // beq     t1, at, _fair_check
+        // addiu   at, Character.id.NPIKACHU
+        // beq     t1, at, _fair_check
+        // addiu   at, Character.id.DSAMUS
+        // beq     t1, at, _nair_check
+        // addiu   at, Character.id.MTWO
+        // beq     t1, at, _nair_check
+        // //addiu   at, Character.id.NMTWO
+        // //beq     t1, at, _nair_check
+        // //addiu   at, Character.id.NDSAMUS
+        // //beq     t1, at, _nair_check
+        // addiu   at, Character.id.JIGGLYPUFF
+        // beq     t1, at, _dair_check
+        // addiu   at, Character.id.NJIGGLY
+        // beq     t1, at, _dair_check
+        // addiu   at, Character.id.EPUFF
+        // beq     t1, at, _dair_check
+        // addiu   at, Character.id.JPUFF
+        // beq     t1, at, _dair_check
+        // addiu   at, Character.id.NBOWSER
+        // beq     t1, at, _dair_check
+        // addiu   at, Character.id.BOWSER
+        // bne     t1, at, _rng
+        b       _rng
         lli     a0, 100                      // ~
 
         _dair_check: // bowser and puff
@@ -453,16 +598,19 @@ scope AI {
         OS.patch_end()
 
         // v0 = character id
-		// a0 = player struct
+        // a0 = player struct
         // a1 = samus's character id
 
-		// lbu 	t0, 0x0013(a0)				// t0 = cpu level
-		// slti	t0, t0, 10					// t0 = 0 if 10 or greater
-		// beqz    t0, _level_ten		    	// for level 10, skip if shielding (avoids shield-drop issues)
-		// nop
-		_character_id_check:
+        lbu     t0, 0x0013(a0)              // t0 = cpu level
+        slti    t0, t0, 10                  // t0 = 0 if 10 or greater
+        beqz    t0, _level_ten              // for level 10, skip if shielding (avoids shield-drop issues)
+        nop
+
+        _character_id_check:
         lli     at, Character.id.SHEIK
         beq     at, v0, _check_needle
+        lli     at, Character.id.PEPPY
+        beq     at, v0, _check_revolver
         // check if DSAMUS or MEWTWO
         lli     at, Character.id.MTWO
         beq     at, v0, _check_charge_shot
@@ -500,6 +648,27 @@ scope AI {
         beq     v0, at, _end                // end if shooting
         addiu   at, r0, Sheik.Action.NSPA_SHOOT
         beq     v0, at, _end                // end if shooting
+        addiu   at, r0, Sheik.Action.NSPA_CHARGE
+        beq     v0, at, _end                // end if shooting
+        addiu   at, r0, Action.JumpSquat
+        beq     v0, at, _end                // end if in a jumpsquat
+        nop
+        
+        // don't add any lines here
+        _check_revolver:
+        lw      v0, 0x0024(a0)              // v0 = current action id
+        addiu   at, r0, Peppy.Action.NSPG_BEGIN
+        beq     v0, at, _end_0x80136BF8     // end if beginning nsp
+        addiu   at, r0, Peppy.Action.NSPA_BEGIN
+        beq     v0, at, _end_0x80136BF8     // ~
+        addiu   at, r0, Peppy.Action.NSPG_CHARGE
+        beq     v0, at, _end_0x80136BF8     // end to keep charging
+        addiu   at, r0, Peppy.Action.NSPG_SHOOT
+        beq     v0, at, _end                // end if shooting
+        addiu   at, r0, Peppy.Action.NSPA_SHOOT
+        beq     v0, at, _end                // end if shooting
+        addiu   at, r0, Peppy.Action.NSPA_CHARGE
+        beq     v0, at, _end                // end if shooting
         addiu   at, r0, Action.JumpSquat
         beq     v0, at, _end                // end if in a jumpsquat
         nop
@@ -512,8 +681,8 @@ scope AI {
         j       0x80136B3C                  // go to original routine for Samus B press?
         nop
 
-		_level_ten:
-		// na
+        _level_ten:
+        // na
 
         _end_0x80136BF8:
         j      0x80136BF8
@@ -536,6 +705,8 @@ scope AI {
         beq      v0, at, _sheik_check           // branch if opponent is Ness
         addiu    at, r0, Character.id.FOX
         beq      v0, at, _fox_or_ness_opponent  // branch if opponent is Fox
+        addiu    at, r0, Character.id.SLIPPY
+        beq      v0, at, _fox_or_ness_opponent  // branch if opponent is Slippy
         addiu    at, r0, Character.id.LUCAS
         beq      v0, at, _sheik_check           // branch if opponent is Lucas
         addiu    at, r0, Character.id.WOLF
@@ -590,7 +761,19 @@ scope AI {
         or       a0, v0, r0                     // a0 = own character ID
 
         _kirby:
-        lw       a0, 0x0ADC(s0)                 // a0 = own kirby hat ID
+        lw       a0, 0x0ADC(s0)                 // a0 = kirby hat ID
+        lw       v0, 0x0024(s0)                 // v0 = current action
+        addiu    at, r0, 0x0003                 // at = ID.Samus / Hat ID for Samus
+        beq      a0, at, _samus_action_check    // branch if SAMUS
+        addiu    at, r0, 0x1E                   // SHEIK hat id
+        beq      a0, at, _sheik_action_check    // branch if SHEIK
+        addiu    at, r0, 0x1B                   // MEWTWO hat id
+        beq      a0, at, _mewtwo_action_check   // branch if MEWTWO
+        addiu    at, r0, 0x13                   // DSAMUS hat id
+        beq      a0, at, _dsamus_action_check   // branch if DSAMUS
+        nop
+        j        0x80138CB8                     // if here, no charge attack
+        sltiu    at, a0, 0x000E
 
         _charge_shot_check:
         lw       v0, 0x0024(s0)                 // v0 = current action
@@ -718,9 +901,10 @@ scope AI {
     // @ Description
     // Hook to routine that performs id check for fox. Extended to check for clones
     // best when action ids are shared
-    scope fox_usp_check_: {
+    // seems to run every aerial frame
+    scope usp_check_: {
         OS.patch_start(0xACB80, 0x80132140)
-        j     fox_usp_check_
+        j     usp_check_
         nop
         _return:
         OS.patch_end()
@@ -730,9 +914,13 @@ scope AI {
         beq      t9, at, _fox      // branch to Fox usp action check
         addiu    at, r0, Character.id.JFOX
         beq      t9, at, _fox      // branch to Fox usp action check
+        addiu    at, r0, Character.id.PEPPY
+        beq      t9, at, _fox      // branch to Goemon usp action check
+        addiu    at, r0, Character.id.GOEMON
+        beq      t9, at, _goemon   // branch to Fox usp action check
         addiu    at, r0, Character.id.FALCO
         beq      t9, at, _fox      // branch to Fox usp action check
-		nop
+        nop
 
         _normal:
         j        0x80132174        // skip fox branch
@@ -740,9 +928,77 @@ scope AI {
 
         _fox:
         j       _return + 0x4     // original - take fox branch
-        lw		v0, 0x0024(a0)     // v0 = current action
+        lw      v0, 0x0024(a0)     // v0 = current action
+        
+        _goemon:
+        lw      v0, 0x0024(a0)     // v0 = current action
+        addiu   at, r0, 0xDF      // MagicCloudRide
+        beq     at, v0, _goemon_usp
+        addiu   at, r0, 0xE0      // MagicCloudAttack
+        beq     at, v0, _goemon_usp
+        addiu   at, r0, 0xE1      // MagicCloudJump
+        beq     at, v0, _goemon_usp
+        addiu   at, r0, 0xE2      // MagicCloudEscape
+        beq     at, v0, _goemon_usp
+        nop
+        b       _normal
+        nop
+
+        _goemon_usp:
+        j       0x801321A4
+        lbu     v0, 0x0003(t0)
 
     }
+
+    // fixed Goemons recovery so he always points upwards
+    // this hook checks ever frame for goemon cpus
+    scope recovery_stick_y_fix: {
+        OS.patch_start(0xACF7C, 0x8013253C)
+        j       recovery_stick_y_fix
+        lw      v0, 0x0008(a0)    // v0 = character id
+        _return:
+        OS.patch_end()
+
+        addiu   at, r0, Character.id.GOEMON    // at = Goemon
+        bne     at, v0, _continue
+
+        lw      v0, 0x0024(a0)    // v0 = current action
+        addiu   at, r0, 0xDF      // MagicCloudRide
+        beq     at, v0, _goemon_usp
+        addiu   at, r0, 0xE0      // MagicCloudAttack
+        beq     at, v0, _goemon_usp
+        addiu   at, r0, 0xE2      // MagicCloudEscape
+        beq     at, v0, _cloud_escape
+        nop
+
+        b       _continue
+        nop
+
+        _goemon_usp:
+        addiu   v0, r0, 0x50                // v0 =  stick Y
+        sb      v0, 0x01C9(a0)              // save stick y
+
+        // end goemon usp
+        lw      v0, 0xEC(a0)                // v0 = clipping id cpu is above (0xFFFF if none)
+        addiu   at, r0, 0xFFFF
+        beq     at, v0, _continue           // branch if still recovering
+        nop
+        addiu   v0, r0, 0x20                // v0 =  Press Z flag
+        sb      v0, 0x01C6(a0)              // save flag
+
+        b       _continue
+        nop
+
+        _cloud_escape:
+        sb      r0, 0x01C6(a0)              // remove z press if already escaping
+
+        _continue:
+        lw      t8, 0x0044(sp)              // og line 1
+        j       _return
+        lbu     t9, 0x0007(t8)              // og line 2
+    }
+
+
 
 	// CONTROLLER COMMANDS
 	// 0xAxyy - yy = Stick X
@@ -1225,8 +1481,29 @@ scope AI {
 		}
 	}
 
+    // @ Description
+    // Location of vanilla cpus attack arrays
+    scope ATTACK_ARRAY_ORIGIN {
+        constant MARIO(0x1010C4)
+        constant FOX(0x1012F4)
+        constant DK(0x101524)
+        constant SAMUS(0x101754)
+        constant LUIGI(0x101984)
+        constant LINK(0x101BB4)
+        constant YOSHI(0x101DE4)
+        constant CAPTAIN_FALCON(0x102014)
+        constant FALCON(0x102014)
+        constant CAPTAIN(0x102014)
+        constant KIRBY(0x102244)
+        constant PIKACHU(0x102474)
+        constant JIGGLYPUFF(0x1026A4)
+        constant PUFF(0x1026A4)
+        constant JIGGLY(0x1026A4)
+        constant NESS(0x1028D4)
+    }
+
     // AI behavior Table
-    scope ATTACK_TABLE: {
+    scope ATTACK_TABLE {
         scope JAB: {
             constant INPUT(0x00000013)
             constant OFFSET(0x0000)
@@ -1363,26 +1640,133 @@ scope AI {
         pullvar base, origin
     }
 
-    // MISC CHECKS
-    // NESS 0x80133854
-    // DK 0x80135C04
-    // METAL MARIO 0x80132AA4
-    // GDK 0x80133428,
-    // 0x80133608, (related to behaviour table)
-    // 0x801336B8, (related to behaviour table)
-    // 0x8013839C,
+    // @ Description
+    // Location of vanilla cpus attack arrays
+    macro copy_attack_behaviour(attack, attack_table_origin) {
+        OS.copy_segment({attack_table_origin} + AI.ATTACK_TABLE.{attack}.OFFSET, 0x1C)
+    }
+    
+    // @ Description
+    // Location of vanilla cpus attack arrays
+    macro add_attack_behaviour(attack_name, hitbox_start_frame, min_x, max_x, min_y, max_y) {
+        dw AI.ATTACK_TABLE.{attack_name}.INPUT
+        dw {hitbox_start_frame}
+        dw 0 // unused?
+        float32 {min_x}
+        float32 {max_x}
+        float32 {min_y}
+        float32 {max_y}
+    }
+    
+    macro END_ATTACKS() {
+        dw 0xFFFFFFFF, 0, 0, 0, 0, 0, 0
+    }
 
-	// LINK? 8013CD08
 
-	// fox laser shoot 80135374, 80135ABC (jal 0x80132758), 80138EAC (jal 0x80132778)
+    // @ Description
+    // Custom table for AI to use to finish off opponents
+    scope heavy_attack_arrays {
+        mario:
+            copy_attack_behaviour(FSMASH, ATTACK_ARRAY_ORIGIN.MARIO)
+            copy_attack_behaviour(DSMASH, ATTACK_ARRAY_ORIGIN.MARIO)
+            copy_attack_behaviour(USMASH, ATTACK_ARRAY_ORIGIN.MARIO)
+            END_ATTACKS();
+            copy_attack_behaviour(FAIR, ATTACK_ARRAY_ORIGIN.MARIO)
+            END_ATTACKS();
+        
+        luigi:
+            copy_attack_behaviour(FSMASH, ATTACK_ARRAY_ORIGIN.LUIGI)
+            copy_attack_behaviour(DSMASH, ATTACK_ARRAY_ORIGIN.LUIGI)
+            copy_attack_behaviour(USMASH, ATTACK_ARRAY_ORIGIN.LUIGI)
+            END_ATTACKS();
 
+            copy_attack_behaviour(FAIR, ATTACK_ARRAY_ORIGIN.LUIGI)
+            END_ATTACKS();
 
-	// 0x80132EC8 loops through each entry in attack behaviour struct to see if the cpu should attack
+        samus:
+            copy_attack_behaviour(FSMASH, ATTACK_ARRAY_ORIGIN.SAMUS)
+            copy_attack_behaviour(DSMASH, ATTACK_ARRAY_ORIGIN.SAMUS)
+            copy_attack_behaviour(NSPG, ATTACK_ARRAY_ORIGIN.SAMUS)
+            END_ATTACKS();
 
+            copy_attack_behaviour(BAIR, ATTACK_ARRAY_ORIGIN.SAMUS)
+            END_ATTACKS();
 
-	// related to off-ledge
-	// TRACK OPPONENT PLAYER IF OFF STAGE 0x80132A98
-	// Manage off-stage AI 0x80134B30
+        dk:
+            copy_attack_behaviour(NSPG, ATTACK_ARRAY_ORIGIN.DK)
+            copy_attack_behaviour(FSMASH, ATTACK_ARRAY_ORIGIN.DK)
+            END_ATTACKS();
+
+            copy_attack_behaviour(FAIR, ATTACK_ARRAY_ORIGIN.DK)
+            END_ATTACKS();
+            
+        kirby:
+            copy_attack_behaviour(FSMASH, ATTACK_ARRAY_ORIGIN.YOSHI)
+            END_ATTACKS();
+
+            copy_attack_behaviour(NAIR, ATTACK_ARRAY_ORIGIN.YOSHI)
+            END_ATTACKS();
+
+        yoshi:
+            copy_attack_behaviour(FSMASH, ATTACK_ARRAY_ORIGIN.YOSHI)
+            copy_attack_behaviour(USMASH, ATTACK_ARRAY_ORIGIN.YOSHI)
+            END_ATTACKS();
+
+            copy_attack_behaviour(UAIR, ATTACK_ARRAY_ORIGIN.YOSHI)
+            END_ATTACKS();
+
+        link:
+            copy_attack_behaviour(USMASH, ATTACK_ARRAY_ORIGIN.LINK)
+            copy_attack_behaviour(FSMASH, ATTACK_ARRAY_ORIGIN.LINK)
+            END_ATTACKS();
+
+            copy_attack_behaviour(FAIR, ATTACK_ARRAY_ORIGIN.LINK)
+            END_ATTACKS();
+
+        fox:
+            copy_attack_behaviour(FSMASH, ATTACK_ARRAY_ORIGIN.FOX)
+            copy_attack_behaviour(USMASH, ATTACK_ARRAY_ORIGIN.FOX)
+            END_ATTACKS();
+
+            copy_attack_behaviour(FAIR, ATTACK_ARRAY_ORIGIN.FOX)
+            END_ATTACKS();
+            
+        pikachu:
+            copy_attack_behaviour(FSMASH, ATTACK_ARRAY_ORIGIN.PIKACHU)
+            END_ATTACKS();
+
+            copy_attack_behaviour(BAIR, ATTACK_ARRAY_ORIGIN.PIKACHU)
+            END_ATTACKS();
+
+        captain_falcon:
+            copy_attack_behaviour(FSMASH, ATTACK_ARRAY_ORIGIN.FALCON)
+            copy_attack_behaviour(NSPG, ATTACK_ARRAY_ORIGIN.FALCON)
+            copy_attack_behaviour(USMASH, ATTACK_ARRAY_ORIGIN.FALCON)
+            END_ATTACKS();
+
+            copy_attack_behaviour(NSPA, ATTACK_ARRAY_ORIGIN.FALCON)
+            END_ATTACKS();
+    
+        jigglypuff:
+            add_attack_behaviour(DSPG, 1, -200, 200, -100, 300)
+            copy_attack_behaviour(FSMASH, ATTACK_ARRAY_ORIGIN.PUFF)
+            copy_attack_behaviour(DSMASH, ATTACK_ARRAY_ORIGIN.PUFF)
+            copy_attack_behaviour(USMASH, ATTACK_ARRAY_ORIGIN.PUFF)
+            END_ATTACKS();
+
+            copy_attack_behaviour(NAIR, ATTACK_ARRAY_ORIGIN.PUFF)
+            add_attack_behaviour(DSPA, 1, -200, 200, -100, 300)
+            END_ATTACKS();
+            
+        ness:
+            copy_attack_behaviour(FSMASH, ATTACK_ARRAY_ORIGIN.NESS)
+            END_ATTACKS();
+
+            copy_attack_behaviour(NAIR, ATTACK_ARRAY_ORIGIN.NESS)
+            copy_attack_behaviour(FAIR, ATTACK_ARRAY_ORIGIN.NESS)
+            copy_attack_behaviour(UAIR, ATTACK_ARRAY_ORIGIN.NESS)
+            END_ATTACKS();
+        }
 
     // @ Description
     // Jumps used by character jump table at 0x801334E4
@@ -1402,20 +1786,25 @@ scope AI {
             scope FALCO_NSP: {
                 // t1 = current cpu attack input
                 addiu   at, r0, ATTACK_TABLE.NSPG.INPUT
-                beq     t1, at, _prevent_sd
+                beq     t1, at, _check_dsp_aerial
                 addiu   at, r0, ATTACK_TABLE.USPG.INPUT
-                beq    t1, at, _check_usp
+                beq     t1, at, _check_usp
                 nop
 
                 _allow_attack:
-                j   	0x80133520                      // jump to original routine
+                j       0x80133520                      // jump to original routine
                 nop
 
-				_check_usp:
-				j		FOX_USP							// LVL 10 Fox USP check
-				nop
+                _check_usp:
+                j       FOX_USP                         // LVL 10 Fox USP check
+                nop
+                
+                _check_dsp_aerial:
+                lw      at, 0x0014C(s0)                 // get aerial flag
+                beqz    at, _allow_attack               // allow attack if grounded (NSP is safe while grounded)
+                nop
 
-				_prevent_sd:
+                _prevent_sd:
                 j       0x80133520                      // jump to original routine
                 addiu   t2, r0, 0x0001
 
@@ -1443,7 +1832,7 @@ scope AI {
 
 			// @ Description
 			// Prevents Wolf SD with USP
-            scope WOLF_USP: {
+            scope USP: {
                 // t1 = current cpu attack command
                 addiu   at, r0, ATTACK_TABLE.USPG.INPUT
                 bne     t1, at, _allow_attack
@@ -1454,6 +1843,23 @@ scope AI {
                 addiu   t2, r0, 0x0001
 
 				_allow_attack:
+                j   0x80133520                          // jump to original routine
+                nop
+            }
+
+            // @ Description
+            // Prevents Sonic SD with his DSP
+            scope SONIC_DSP: {
+                // t1 = current cpu attack command
+                addiu   at, r0, ATTACK_TABLE.DSPG.INPUT
+                bne     t1, at, _allow_attack
+                nop
+
+                // _prevent_sd:
+                j       0x80133520                      // jump to original routine
+                addiu   t2, r0, 0x0001
+
+                _allow_attack:
                 j   0x80133520                          // jump to original routine
                 nop
             }
@@ -1513,6 +1919,8 @@ scope AI {
 
 				_lvl_10_dsp:
 				lw		at, 0x01FC(s0)				// get target player object
+                beqz    at, _allow_attack           // skip if no target player (somehow)
+                nop
 				lw		v0, 0x0084(at)				// v0 = target player struct
 				lh      t6, 0x05BA(v0)				// t6 = targets tangibility flag
 				addiu	at, r0, 0x0003
@@ -1834,10 +2242,47 @@ scope AI {
 		}
 	}
 
-	// @ Description
-	// Level 10 stuff
-	// Allows the game to not break when an AI is set to Level 10
-	scope level_ten: {
+    // @ Description
+    // Level 10 stuff
+    // General LVL 10 AI hooks
+    scope level_ten: {
+    
+        // @ Description
+        // Hook where jab subroutine checks if player has input a grab during frame 1-2 of jab
+        scope auto_jab_grab_: {
+            OS.patch_start(0xC48BC, 0x80149E7C)
+            j       auto_jab_grab_
+            lb      t3, 0x0013(a0)                  // t3 = cpu level
+            OS.patch_end()
+            
+            slti    t3, t3, 10                      // t3 = 0 if level 10 or above
+            bnez    t3, _normal
+            nop
+            
+            // level 10
+            lw      t3, 0x001C(a0)                  // t3 = current frame
+            slti    t3, t3, 3                       // t3 = 0 if 3 or greater
+            
+            bnez    t3, _normal
+            nop
+            
+            // if here, auto grab
+            j       0x80149E94
+            nop
+
+            _normal:
+            // a0 = player struct
+            beqz    t9, _original_end               // modified original line 1
+            nop
+            
+            j       0x80149E88
+            lw      t1, 0x0100(t0)                  // do normal routine
+            
+            _original_end:
+            j           0x80149EA8                  // jump to end of grab interrupt
+            lw          ra, 0x0014(sp)              // load ra
+        
+        }
 
 		// Run away from opponents who are coming off the respawn plat
 		// However, vanilla AI doesn't seem too great at evading.
@@ -1986,11 +2431,29 @@ scope AI {
 			b       _end
 			addiu   a1, r0, 0x37          	// double jump cancel
 
-			_fox:
-			jal     Global.get_random_int_  // v0 = (random value)
-			lli     a0, 10             		// 1 in 10 chance to not shine
-			beqz	v0, _continue
-			lw		a0, 0x0048(sp)			// restore player struct
+            _fox:
+            lw      t0, 0x01FC(a0)          // get opponent struct
+            beqz    t0, _shine_check        // skip opponent action check if no opponent
+            nop
+            lw      t0, 0x0084(t0)          // ~
+            lw      t0, 0x0024(t0)          // t0 = opponents action
+            addiu   at, r0, Action.Shield   // at = action.shield
+            beq     t0, at, _shine          // ~
+            addiu   at, r0, Action.ShieldStun // ~
+            beq     t0, at, _shine          // always shine if opponent is shielding
+            addiu   at, r0, Action.ShieldOn // ~
+            beq     t0, at, _shine          // always shine if opponent is shielding
+            slti    at, t0, Action.ShieldBreak  // at = 0 if Action.Shieldbreak or greater
+            bnez    at, _shine_check        // branch if not shield broken
+            slti    at, t0, Action.Sleep    // at = 0 if Action.Grab or greater
+            bnezl   at, _end                // just fsmash if they are shield broken
+            addiu   a1, r0, ROUTINE.SMASH_FORWARD // a1 = F SMASH id
+
+            _shine_check:
+            jal     Global.get_random_int_  // v0 = (random value)
+            lli     a0, 10             		// 1 in 10 chance to not shine
+            beqz    v0, _continue
+            lw      a0, 0x0048(sp)			// restore player struct
 
 			_shine:
 			addiu   at, r0, 0x2E          // at = rolling forwards command
@@ -2005,6 +2468,7 @@ scope AI {
 
 			b       _end
 			addiu   a1, r0, ROUTINE.MULTI_SHINE // custom
+            
 
 			b       _continue
 			nop
@@ -2045,6 +2509,8 @@ scope AI {
 
 			_puff:
 			lw		at, 0x01FC(a0)			// get target player
+            beqz    at, _continue           // branch if no opponent (somehow)
+            nop
 			lw		v0, 0x0084(at)			// v0 = target player struct
 			lh      t6, 0x05BA(v0)			// t6 = tangibility flag
 			addiu	at, r0, 0x0003
@@ -2139,6 +2605,15 @@ scope AI {
 		// LUCAS
 		Character.table_patch_start(close_quarter_combat, Character.id.LUCAS, 0x4)
 		dw     stop_roll_spam_._lucas; OS.patch_end()
+        // SLIPPY
+        Character.table_patch_start(close_quarter_combat, Character.id.SLIPPY, 0x4)
+        dw     stop_roll_spam_._fox; OS.patch_end()
+        // PIANO
+        Character.table_patch_start(close_quarter_combat, Character.id.PIANO, 0x4)
+        dw     stop_roll_spam_._end; OS.patch_end()
+        // GBOWSER
+        Character.table_patch_start(close_quarter_combat, Character.id.GBOWSER, 0x4)
+        dw     stop_roll_spam_._end; OS.patch_end()
 
 
 		// @ Description
@@ -2209,11 +2684,21 @@ scope AI {
 			// These patches will allow LVL 10 fox to not rely on his up special
 			// JIGGLYPUFF
 			Character.table_patch_start(ai_attack_prevent, Character.id.FOX, 0x4)
-			dw    	PREVENT_ATTACK.ROUTINE.FOX_USP
+			dw      PREVENT_ATTACK.ROUTINE.FOX_USP
 			OS.patch_end()
 
 			// JFOX
 			Character.table_patch_start(ai_attack_prevent, Character.id.JFOX, 0x4)
+			dw    	PREVENT_ATTACK.ROUTINE.FOX_USP
+			OS.patch_end()
+            
+			// SLIPPY
+			Character.table_patch_start(ai_attack_prevent, Character.id.SLIPPY, 0x4)
+			dw    	PREVENT_ATTACK.ROUTINE.FOX_USP
+			OS.patch_end()
+
+			// FALCO
+			Character.table_patch_start(ai_attack_prevent, Character.id.FALCO, 0x4)
 			dw    	PREVENT_ATTACK.ROUTINE.FOX_USP
 			OS.patch_end()
 
@@ -2687,8 +3172,29 @@ scope AI {
 			// 80139EB0 - ?
 			// 8013A964 - ?
 		}
+        
+    // MISC CHECKS
+    // NESS 0x80133854
+    // DK 0x80135C04
+    // METAL MARIO 0x80132AA4
+    // GDK 0x80133428,
+    // 0x80133608, (related to behaviour table)
+    // 0x801336B8, (related to behaviour table)
+    // 0x8013839C,
 
-	}
+    // LINK? 8013CD08
+
+    // fox laser shoot 80135374, 80135ABC (jal 0x80132758), 80138EAC (jal 0x80132778)
+
+
+    // 0x80132EC8 loops through each entry in attack behaviour struct to see if the cpu should attack
+
+
+    // related to off-ledge
+    // TRACK OPPONENT PLAYER IF OFF STAGE 0x80132A98
+    // Manage off-stage AI 0x80134B30
+
+    }
 
 
 } // __AI__

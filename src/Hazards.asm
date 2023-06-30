@@ -469,6 +469,23 @@ scope Hazards {
     }
 
     // @ Description
+    // Toggle for restoring Yoshi's Island cloud animations that are present but unused in vanilla
+    scope yoshis_island_cloud_anims_: {
+        OS.patch_start(0x842F4, 0x80108AF4)
+        jal     yoshis_island_cloud_anims_
+        addiu   a3, r0, 0x0012              // original line 1 - a3 = render routine index
+        OS.patch_end()
+
+        OS.read_word(Toggles.entry_yi_clouds + 0x4, a2) // a2 = 1 if on, 0 if off
+        bnezl   a2, _end                    // if on, set a3 to 0x1C
+        lli     a3, 0x001C                  // a3 = render routine index which applies scaling
+
+        _end:
+        jr      ra
+        or      a2, r0, r0                  // original line 1
+    }
+
+    // @ Description
     // This disables platform movement when hazard mode is on
     scope platform_movement_: {
         OS.patch_start(0x00080DA8, 0x801055A8)
@@ -5402,10 +5419,10 @@ scope Hazards {
     }
 
     // @ Description
-    // Adds additional sound for 3 on stoplight
-    scope stoplight_3: {
+    // Adds additional sound for 1 on stoplight
+    scope stoplight_1: {
         OS.patch_start(0x8DBE8, 0x801123E8)
-        j       stoplight_3
+        j       stoplight_1
         nop
         _return:
         OS.patch_end()
@@ -5444,6 +5461,9 @@ scope Hazards {
         jal     0x800269C0                  // original line 1
         addiu   s2, r0, 0x0007              // original line 2
 
+        jal     PokemonAnnouncer.opening_comment
+        nop
+
         addiu   v0, r0, Stages.id.TOADSTURNPIKE
         li      t6, Global.match_info
         lw      t6, 0x0000(t6)              // t6 = match info
@@ -5465,9 +5485,9 @@ scope Hazards {
 
     // @ Description
     // Adds additional sound for 3 on stoplight
-    scope stoplight_1: {
+    scope stoplight_3: {
         OS.patch_start(0x8DC10, 0x80112410)
-        j       stoplight_1
+        j       stoplight_3
         nop
         _return:
         OS.patch_end()
@@ -5862,8 +5882,8 @@ scope Hazards {
         beqz    at, _pre_honk           // branch if the car hasn't honked yet
         nop
         sw      t7, 0x0008(t5)          // save updated timer
-        slti    t8, t6, 0x000A          // wait 10 frames
-        beqzl   t8, _spawn              // if 10 or greater, spawn
+        slti    t8, t6, 0x0023          // wait 35 frames
+        beqzl   t8, _spawn              // if 35 or greater, spawn
         sw      r0, 0x0000(t4)          // reset car_honked flag
         b       _end
         nop
@@ -5885,7 +5905,7 @@ scope Hazards {
 
         _honk:
         jal     0x800269C0              // play fgm
-        addiu   a0, r0, 0x041C          // fgm id = 0x1
+        addiu   a0, r0, 0x041C          // fgm id (car honk)
         li      t4, car_honked          // t4 = address of car_honked flag
         addiu   at, r0, 0x0001          // at = 1
         sw      at, 0x0000(t4)          // car_honked flag = true
@@ -5901,6 +5921,8 @@ scope Hazards {
         sw      r0, 0x0008(t5)          // restart timer
         lui     t6, 0xc316
         sw      t6, 0x002C(a2)          // save speed
+        jal     0x800269C0              // play fgm
+        addiu   a0, r0, 0x0481          // fgm id (car moving)
 
         _end:
         lw      ra, 0x001C(sp)
@@ -6214,5 +6236,212 @@ scope Hazards {
 		jr		ra
 		sw		a0, 0x1388(v0)				// overwrite colour
 	}
+
+
+    // @ Description
+    // This establishes water in wave race stage
+    scope twilight_city_setup: {
+        addiu   sp, sp,-0x0060              // allocate stack space
+        sw      ra, 0x0024(sp)              // ~
+        sw      s0, 0x0028(sp)              // store ra, s0
+
+        li      s0, 0x801313F0              // load hardcoded space used by hazards, generally for pointers
+        sw      r0, 0x0060(s0)              // clear under_water flags and frenzy turns
+
+        sw      s0, 0x0020(sp)              // hardcoded space used by hazards, generally for pointers
+
+        li      a1, twilight_city_water_    // water routine
+        addiu   a2, r0, 0x0001              // group
+        addiu   a0, r0, 0x03F2              // object id
+
+        jal     Render.CREATE_OBJECT_       // create object
+        lui     a3, 0x8000                  // unknown
+
+        sw      v0, 0x0050(sp)              // save object address
+        addiu   t6, r0, 0xFFFF
+        or      s0, v0, r0
+        sw      t6, 0x0010(sp)
+        or      a0, v0, r0
+        lw      a1, 0x0030(sp)
+        addiu   a2, r0, 0x0004
+
+        //jal     Render.DISPLAY_INIT_        // initliaze object for display
+        //lui     a3, 0x8000
+
+        lui     t7, 0x8013
+        lw      t7, 0x13F0(t7)
+        lw      t8, 0x0028(sp)
+        or      a0, s0, r0
+        or      a2, r0, r0
+        addiu   a3, r0, 0x001C
+        sw      r0, 0x0010(sp)
+        sw      r0, 0x0014(sp)
+
+        lw      ra, 0x0024(sp)              // ~
+        lw      s0, 0x0028(sp)              // load ra, s0
+        jr      ra                          // return
+        addiu   sp, sp, 0x0060              // deallocate stack space
+    }
+
+    // @ Description
+    // Main function for twilight_city_water_. Based on great bays water.
+    scope twilight_city_water_: {
+        constant CYCLE_TIME(240)            // 240 frames
+        constant WATER_Y(0)                 // y = 0
+        constant WATER_TOP_Y(0x4396)        // top y = 300
+        constant WAVE_AMPLITUDE(0x4416)     // wave height = 600 UNITS
+        constant WAVE_LENGTH(0x44FA)        // wave length = 2000 UNITS
+        constant SPLASH_Y(0xC44F)           // current setting - float: -828
+        constant RIGHT_X(0x4550)            // current setting - float: 3328
+        constant LEFT_X(0xC580)             // current setting
+
+        addiu   sp, sp, -0x0060             // allocate stack space
+        sw      ra, 0x0024(sp)              // ~
+        sw      s0, 0x0028(sp)              // ~
+        sw      s1, 0x002C(sp)              // store ra, s0, s1
+        or      s0, r0, r0                  // current port = 0
+        lli     s1, 0x0003                  // final iteration = 0x3
+
+        _check_intro:
+        li      t6, Global.current_screen   // ~
+        lbu     t6, 0x0000(t6)              // t6 = screen_id
+        ori     at, r0, 0x0036              // ~
+        beq     at, t6, _loop               // skip if screen_id = training mode
+        nop
+
+        li      t6, Global.match_info       // ~
+        lw      t6, 0x0000(t6)              // t6 = match info struct
+        lw      t6, 0x0018(t6)              // t6 = time elapsed
+        beqz    t6, _loop_end               // skip if time elapsed = 0
+        nop
+
+        _loop:
+        jal     Character.port_to_struct_   // v0 = player struct for current port
+        or      a0, s0, r0                  // a0 = current port
+        beqz    v0, _loop_end               // skip if no struct found for current port
+        nop
+
+        // if the player is present
+        sw      v0, 0x003C(sp)              // 0x003C(sp) = px struct
+
+        lw      t6, 0x0008(v0)              // t6 = character id
+        lli     at, Character.id.FOX        // at = id.FOX
+        beq     at, t6, _fire_fox_check     // perform action check if character = FOX
+        lli     at, Character.id.JFOX       // at = id.JFOX
+        beq     at, t6, _fire_fox_check     // perform action check if character = FOX
+        lli     at, Character.id.FALCO      // at = id.FALCO
+        bne     at, t6, _check_y            // skip action check if character != FALCO
+
+        _fire_fox_check:
+        lw      t6, 0x0024(v0)              // t6 = action id
+        lli     at, Action.FOX.FireFoxAir   // same as FALCO.Action.FireBirdAir
+        beq     t6, at, _loop_end           // skip if Fox/Falco are doing their up special
+        nop
+
+        _check_y:
+        lw      v0, 0x0078(v0)              // v0 = px x/y/z coordinates
+        sw      v0, 0x005C(sp)              // store player coords ptr
+        li      t8, 0x801313F0              // t8 = stage data
+        addu    t8, t8, s0                  // t8 = stage data + port offset
+        lwc1    f2, 0x0004(v0)              // f2 = px y position
+        lui     at, WATER_TOP_Y             // ~
+        mtc1    at, f4                      // f4 = WATER_Y
+        c.le.s  f2, f4                      // compare player location to beginning of water
+        swc1    f2, 0x0058(sp)              // save player y
+        bc1fl   _loop_end                   // skip if player is above water...
+        sb      r0, 0x005C(t8)              // ...and set px_under_water to FALSE
+
+        _check_wave:
+        // get current x offset
+        OS.read_word(0x80131304, at)        // at = ptr top stage objects
+        lw      at, 0x001C(at)              // at = wave object
+        lw      at, 0x001C(at)              // at = wave x offset
+        mtc1    at, f6                      // f6 = ~
+        lui     at, WAVE_LENGTH             // ~
+        mtc1    at, f4                      // f4 = FREQUENCY
+        lw      v0, 0x005C(sp)              // restore player coords ptr
+        lw      at, 0x0000(v0)              // at = player x
+        mtc1    at, f2                      // f2 = px
+        lui     at, WAVE_LENGTH
+        mtc1    at, f8
+        add.s   f2, f2, f8
+        mul.s   f4, f4, f2                  // f4 = FREQUENCY * 2π/60 = ω/60
+        jal     0x800303F0                  // f0 = sin(f12)
+        mul.s   f12, f4, f6                 // f12 = ω/60 * frame = ωt
+        lui     at, WAVE_AMPLITUDE          // ~
+        mtc1    at, f4                      // f4 = AMPLITUDE
+        mul.s   f4, f4, f0                  // f4 = AMPLITUDE * sin(ωt)
+        lwc1    f2, 0x0058(sp)              // f2 = player y
+        c.le.s  f2, f4                      // compare player location to the wave
+        nop
+        bc1fl   _loop_end                   // skip if player is above water...
+        sb      r0, 0x005C(t8)              // ...and set px_under_water to FALSE
+
+        lbu     t0, 0x005C(t8)              // t0 = px_under_water
+        bnez    t0, _water_physics          // branch if px_under_water != FALSE
+        lli     at, OS.TRUE                 // ~
+
+        // if the player has just gone under the water
+        sb      at, 0x005C(t8)              // px_under_water = TRUE
+        lw      v0, 0x005C(sp)              // restore player coords ptr
+        lw      at, 0x0000(v0)              // at = player x
+        sw      at, 0x0030(sp)              // 0x0030(sp) = px x
+        lw      at, 0x0004(v0)              // at = player y
+        sw      at, 0x0034(sp)              // 0x0034(sp) = SPLASH_Y
+        sw      r0, 0x0038(sp)              // 0x0038(sp) = 0
+        addiu   a0, sp, 0x0030              // a0 = coordinates to create gfx at
+        jal     0x801001A8                  // create "splash" gfx
+        addiu   a1, r0, 0x0001              // a1 = 1
+        addiu   a0, sp, 0x0030              // a0 = coordinates to create gfx at
+        jal     0x801001A8                  // create "splash" gfx
+        addiu   a1, r0,-0x0001              // a1 = -1
+        jal     0x800269C0                  // play fgm
+        addiu   a0, r0, 0x03D1              // fgm id = 0x3D1 (Splash)
+
+        _water_physics:
+        lw      v0, 0x003C(sp)              // v0 = px struct
+        lbu     at, 0x018D(v0)              // at = bit field
+        andi    at, at, 0x0007              // at = bit field & mask(0b01111111), this disables the fast fall flag
+        sb      at, 0x018D(v0)              // store updated bit field
+        lui     at, 0xC1A0                  // ~
+        mtc1    at, f2                      // f2 = -20.0
+        lui     at, 0x3F70                  // ~
+        mtc1    at, f4                      // f4 = 0.9375
+        lui     at, 0x3F60                  // ~
+        mtc1    at, f6                      // f6 = 0.875
+        lwc1    f8, 0x0048(v0)              // f8 = x velocity
+        lwc1    f10, 0x004C(v0)             // f10 = y velocity
+        mul.s   f8, f8, f4                  // f8 = x velocity * 0.9375
+        mul.s   f10, f10, f6                // f10 = y velocity * 0.875
+        c.le.s  f2, f10                     // ~
+        swc1    f8, 0x0048(v0)              // store updated x velocity
+        bc1fl   _water_knockback            // if y velocity =< -20...
+        swc1    f10, 0x004C(v0)             // ...store updated y velocity
+
+        _water_knockback:
+        lui     at, 0x3F7B                  // ~
+        mtc1    at, f6                      // f6 = 0.980469
+        lwc1    f8, 0x0054(v0)              // f8 = x kb velocity
+        lwc1    f10, 0x0058(v0)             // f10 = y kb velocity
+        mul.s   f8, f8, f6                  // f8 = x velocity * 0.980469
+        mul.s   f10, f10, f6                // f10 = y velocity * 0.980469
+        swc1    f8, 0x0054(v0)              // store updated kb x velocity
+        swc1    f10, 0x0058(v0)             // store updated kb y velocity
+        c.le.s  f2, f10                     // ~
+        mul.s   f10, f10, f4                // f10 = y velocity * 0.9375
+        bc1fl   _loop_end                   // if y velocity =< -20...
+        swc1    f10, 0x0058(v0)             // ...store updated kb y velocity
+
+        _loop_end:
+        bne     s0, s1, _loop               // loop if final iteration has not been reached
+        addiu   s0, s0, 0x0001              // iterate current port
+
+        lw      ra, 0x0024(sp)              // ~
+        lw      s0, 0x0028(sp)              // ~
+        lw      s1, 0x002C(sp)              // load ra, s0, s1
+        jr      ra                          // return
+        addiu   sp, sp, 0x0060              // deallocate stack space
+    }
+
 
 } // __HAZARDS__

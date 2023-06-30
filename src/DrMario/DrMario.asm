@@ -80,11 +80,11 @@ scope DrMario {
     db      Character.id.NONE
     db      Character.id.NONE
     OS.patch_end()
-    
+
     Character.table_patch_start(variant_original, Character.id.NDRM, 0x4)
     dw      Character.id.DRM // set Dr. Mario as original character (not Mario, who NDRM is a clone of)
     OS.patch_end()
-    
+
     // Set crowd chant FGM.
     Character.table_patch_start(crowd_chant_fgm, Character.id.DRM, 0x2)
     dh  0x02EB

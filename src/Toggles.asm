@@ -708,51 +708,43 @@ scope Toggles {
     // @ Description
     // Save toggles to SRAM
     scope save_: {
-        addiu   sp, sp,-0x0018              // allocate stack space
+        addiu   sp, sp,-0x0020              // allocate stack space
         sw      a0, 0x0004(sp)              // ~
         sw      a1, 0x0008(sp)              // ~
         sw      a2, 0x000C(sp)              // ~
         sw      t0, 0x0010(sp)              // ~
         sw      ra, 0x0014(sp)              // save registers
 
-        li      a0, head_remix_settings     // a0 - address of head
-        li      a1, block_misc              // a1 - address of block
-        jal     Menu.export_                // export data
-        nop
-        li      a0, block_misc              // ~
-        jal     SRAM.save_                  // save data
-        nop
+        li      t0, 0                       // t0 = 0 (offset)
 
-        li      a0, head_music_settings     // a0 - address of head
-        li      a1, block_music             // a1 - address of block
+        _loop:
+        sw      t0, 0x0018(sp)              // save offset
+        li      a0, block_head_table
+        addu    a0, a0, t0                  // a0 = address of head pointer
+        lw      a0, 0x0000(a0)              // a0 - address of head
+        beqz    a0, _end                    // if no more, end
+        li      a1, sram_block_table
+        addu    a1, a1, t0                  // a1 = address of block poiner
         jal     Menu.export_                // export data
-        nop
-        li      a0, block_music             // ~
-        jal     SRAM.save_                  // save data
-        nop
+        lw      a1, 0x0000(a1)              // a1 - address of block
 
-        li      a0, head_stage_settings
-        li      a1, block_stages            // a1 - address of block
-        jal     Menu.export_                // export data
-        nop
-        li      a0, block_stages            // ~
+        lw      t0, 0x0018(sp)              // t0 = offset
+        li      a0, sram_block_table
+        addu    a0, a0, t0                  // a0 = address of block poiner
         jal     SRAM.save_                  // save data
-        nop
+        lw      a0, 0x0000(a0)              // a0 - address of block
 
-        li      a0, head_player_tags
-        li      a1, block_tags              // a1 - address of block
-        jal     Menu.export_                // export data
-        nop
-        li      a0, block_tags              // ~
-        jal     SRAM.save_                  // save data
-        nop
+        lw      t0, 0x0018(sp)              // t0 = offset
+        b       _loop                       // do loop
+        addiu   t0, t0, 0x0004              // t0 = offset for next index
 
+        _end:
         lw      a0, 0x0004(sp)              // ~
         lw      a1, 0x0008(sp)              // ~
         lw      a2, 0x000C(sp)              // ~
         lw      t0, 0x0010(sp)              // ~
         lw      ra, 0x0014(sp)              // save registers
-        addiu   sp, sp, 0x0018              // deallocate stack space
+        addiu   sp, sp, 0x0020              // deallocate stack space
         jr      ra                          // return
         nop
     }
@@ -760,51 +752,45 @@ scope Toggles {
     // @ Description
     // Loads toggles from SRAM
     scope load_: {
-        addiu   sp, sp,-0x0018              // allocate stack space
+        addiu   sp, sp,-0x0020              // allocate stack space
         sw      a0, 0x0004(sp)              // ~
         sw      a1, 0x0008(sp)              // ~
         sw      a2, 0x000C(sp)              // ~
         sw      t0, 0x0010(sp)              // ~
         sw      ra, 0x0014(sp)              // save registers
 
-        li      a0, block_misc              // a0 - address of block (misc)
+        li      t0, 0                       // t0 = 0 (offset)
+
+        _loop:
+        sw      t0, 0x0018(sp)              // save offset
+        li      a0, sram_block_table
+        addu    a0, a0, t0                  // a0 = address of block poiner
+        lw      a0, 0x0000(a0)              // a0 - address of block
+        beqz    a0, _end                    // if no more, end
+        nop
         jal     SRAM.load_                  // load data
         nop
-        li      a0, head_remix_settings     // a0 - address of head
-        li      a1, block_misc              // a1 - address of block
-        jal     Menu.import_
-        nop
 
-        li      a0, block_music             // a0 - address of block (music)
-        jal     SRAM.load_                  // load data
-        nop
-        li      a0, head_music_settings     // a0 - address of head
-        li      a1, block_music             // a1 - address of block
-        jal     Menu.import_
-        nop
+        lw      t0, 0x0018(sp)              // t0 = offset
+        li      a0, block_head_table
+        addu    a0, a0, t0                  // a0 = address of head pointer
+        lw      a0, 0x0000(a0)              // a0 - address of head
+        li      a1, sram_block_table
+        addu    a1, a1, t0                  // a1 = address of block poiner
+        jal     Menu.import_                // export data
+        lw      a1, 0x0000(a1)              // a1 - address of block
 
-        li      a0, block_stages            // a0 - address of block (stages)
-        jal     SRAM.load_                  // load data
-        nop
-        li      a0, head_stage_settings
-        li      a1, block_stages            // a1 - address of block
-        jal     Menu.import_
-        nop
+        lw      t0, 0x0018(sp)              // t0 = offset
+        b       _loop                       // do loop
+        addiu   t0, t0, 0x0004              // t0 = offset for next index
 
-        li      a0, block_tags              // a0 - address of block (stages)
-        jal     SRAM.load_                  // load data
-        nop
-        li      a0, head_player_tags
-        li      a1, block_tags              // a1 - address of block
-        jal     Menu.import_
-        nop
-
+        _end:
         lw      a0, 0x0004(sp)              // ~
         lw      a1, 0x0008(sp)              // ~
         lw      a2, 0x000C(sp)              // ~
         lw      t0, 0x0010(sp)              // ~
         lw      ra, 0x0014(sp)              // save registers
-        addiu   sp, sp, 0x0018              // deallocate stack space
+        addiu   sp, sp, 0x0020              // deallocate stack space
         jr      ra                          // return
         nop
     }
@@ -864,11 +850,51 @@ scope Toggles {
     // Functions to change the menu currently displayed.
     show_super_menu_:; set_info_head(head_super_menu, OS.FALSE)
     show_remix_settings_:; set_info_head(head_remix_settings, 1)
-    show_music_settings_:; set_info_head(head_music_settings, 2)
-    show_stage_settings_:; set_info_head(head_stage_settings, 3)
-    show_player_tags_:; set_info_head(head_player_tags, 4)
+    show_gameplay_settings_:; set_info_head(head_gameplay_settings, 2)
+    show_music_settings_:; set_info_head(head_music_settings, 3)
+    show_stage_settings_:; set_info_head(head_stage_settings, 4)
+    show_player_tags_:; set_info_head(head_player_tags, 5)
 
     variable num_toggles(0)
+    variable block_size(0)
+
+    // @ Description
+    // This updates the current block size, making sure to not stretch values across words
+    macro update_block_size(entry_size) {
+        evaluate before(block_size/32)
+        global variable block_size(block_size + {entry_size})
+        evaluate after(block_size/32)
+
+        if {before} != {after} {
+            global variable block_size(((block_size/32) * 32) + {entry_size})
+        }
+    }
+
+    // @ Description
+    // This updates the current block size, making sure to not stretch values across words
+    macro update_block_size_based_on_max(max) {
+         if {max} <= 1 {
+            update_block_size(1)
+        } else if {max} <= 3 {
+            update_block_size(2)
+        } else if {max} <= 7 {
+            update_block_size(3)
+        } else if {max} <= 15 {
+            update_block_size(4)
+        } else if {max} <= 31 {
+            update_block_size(5)
+        } else if {max} <= 64 {
+            update_block_size(6)
+        } else if {max} <= 127 {
+            update_block_size(7)
+        } else if {max} <= 255 {
+            update_block_size(8)
+        } else if {max} <= 511 {
+            update_block_size(9)
+        } else if {max} <= 1023 {
+            update_block_size(10)
+        }
+    }
 
     // @ Description
     // Wrapper for Menu.entry_bool()
@@ -879,6 +905,7 @@ scope Toggles {
         global define TOGGLE_{n}_DEFAULT_TE({default_te})
         global define TOGGLE_{n}_DEFAULT_NE({default_ne})
         global define TOGGLE_{n}_DEFAULT_JP({default_jp})
+        update_block_size(1)
         Menu.entry_bool_with_extra({title}, {default_ce}, {n}, {next})
     }
 
@@ -891,6 +918,7 @@ scope Toggles {
         global define TOGGLE_{n}_DEFAULT_TE({default_te})
         global define TOGGLE_{n}_DEFAULT_NE({default_ne})
         global define TOGGLE_{n}_DEFAULT_JP({default_jp})
+        update_block_size_based_on_max(1)
         Menu.entry({title}, Menu.type.BOOL, {default_ce}, 0, 1, {a_function}, {extra}, Menu.bool_string_table, OS.NULL, {next})
     }
 
@@ -903,6 +931,7 @@ scope Toggles {
         global define TOGGLE_{n}_DEFAULT_TE({default_te})
         global define TOGGLE_{n}_DEFAULT_NE({default_ne})
         global define TOGGLE_{n}_DEFAULT_JP({default_jp})
+        update_block_size_based_on_max({max})
         Menu.entry({title}, {type}, {default_ce}, {min}, {max}, {a_function}, OS.NULL, {string_table}, {copy_address}, {next})
     }
 
@@ -915,6 +944,7 @@ scope Toggles {
         global define TOGGLE_{n}_DEFAULT_TE({default_te})
         global define TOGGLE_{n}_DEFAULT_NE({default_ne})
         global define TOGGLE_{n}_DEFAULT_JP({default_jp})
+        update_block_size({max})
         Menu.entry({title}, {type}, {default_ce}, {min}, {max}, {a_function}, {extra}, {string_table}, {copy_address}, {next})
     }
 
@@ -971,7 +1001,6 @@ scope Toggles {
 
     // @ Description
     // Failed Z-Cancel strings
-	
     _7:; db "7% Damage", 0x00
     lava:; db "Lava Floor", 0x00
     shield_break:; db "Shield-Break", 0x00
@@ -990,6 +1019,19 @@ scope Toggles {
 	dw taunt
 	dw bury
 	dw _random
+
+    // @ Description
+    // Air Dodge Strings
+    _melee:; db "Melee", 0x00
+    _ultimate:; db "Ultimate", 0x00
+    _air_dash:; db "Air Dash", 0x00
+    OS.align(4)
+
+    string_table_air_dodge:
+    dw off
+    dw _melee
+    dw _ultimate
+    dw _air_dash
 
     // @ Description
     // FPS strings
@@ -1063,7 +1105,9 @@ scope Toggles {
     // Menu Music strings
     menu_music_64:; db "64", 0x00
     menu_music_melee:; db "MELEE", 0x00
+    menu_music_menu2:; db "MELEE MENU 2", 0x00
     menu_music_brawl:; db "BRAWL", 0x00
+    menu_music_goldeneye:; db "Q WATCH", 0x00
     menu_music_off:; db "OFF", 0x00
     OS.align(4)
 
@@ -1071,7 +1115,9 @@ scope Toggles {
     dw default
     dw menu_music_64
     dw menu_music_melee
+    dw menu_music_menu2
     dw menu_music_brawl
+    dw menu_music_goldeneye
     dw menu_music_off
 
     // @ Description
@@ -1107,7 +1153,7 @@ scope Toggles {
         constant MOVEMENT_OFF(2)
         constant ALL_OFF(3)
     }
-    
+
     // @ Description
     // Whispy strings
     japanese:; db "JAPANESE", 0x00
@@ -1129,6 +1175,68 @@ scope Toggles {
     }
 
     // @ Description
+    // Defaullt CPU level strings
+    num_1:; db "1", 0x00
+    num_2:; db "2", 0x00
+    num_3:; db "3", 0x00
+    num_4:; db "4", 0x00
+    num_5:; db "5", 0x00
+    num_6:; db "6", 0x00
+    num_7:; db "7", 0x00
+    num_8:; db "8", 0x00
+    num_9:; db "9", 0x00
+    num_10:; db "10", 0x00
+    OS.align(4)
+
+    string_table_cpu_levels:
+    dw default
+    dw num_1
+    dw num_2
+    dw num_3
+    dw num_4
+    dw num_5
+    dw num_6
+    dw num_7
+    dw num_8
+    dw num_9
+    dw num_10
+
+    // @ Description
+    // Pokemon Stadium Announcer strings
+    announcer_mode_pokemon:; db "STADIUM", 0x00
+    announcer_mode_all:; db "ALL STAGES", 0x00
+    announcer_mode_off:; db "OFF", 0x00
+    OS.align(4)
+
+    string_table_announcer_mode:
+    dw announcer_mode_pokemon
+    dw announcer_mode_all
+    dw announcer_mode_off
+
+    scope announcer_mode {
+        constant POKEMON(0)
+        constant ALL(1)
+        constant OFF(2)
+    }
+
+    // @ Description
+    // Hitlag strings
+    melee:; db "MELEE", 0x00
+    OS.align(4)
+
+    string_table_hitlag:
+    dw normal
+    dw japanese
+    dw melee
+
+    // @ Description
+    // Hitstun strings
+
+    string_table_hitstun:
+    dw normal
+    dw melee
+
+    // @ Description
     // Allows A button to play selected menu music preference
     scope play_menu_music_: {
         addiu   sp, sp,-0x0014              // allocate stack space
@@ -1138,7 +1246,7 @@ scope Toggles {
         sw      ra, 0x0010(sp)              // save registers
 
         li      t0, Toggles.entry_menu_music
-        lw      t0, 0x0004(t0)              // t0 = 0 if DEFAULT, 1 if 64, 2 if MELEE, 3 if BRAWL, 4 if OFF
+        lw      t0, 0x0004(t0)              // t0 = 0 if DEFAULT, 1 if 64, 2 if MELEE, 3 if MENU 2, 4 if BRAWL, 5 if OFF
 
         lli     t1, 0x0001                  // t1 = 1 (64)
         beql    t1, t0, _play               // if 64, then use 64 BGM
@@ -1146,10 +1254,16 @@ scope Toggles {
         lli     t1, 0x0002                  // t1 = 2 (MELEE)
         beql    t1, t0, _play               // if MELEE, then use MELEE BGM
         addiu   a1, r0, BGM.menu.MAIN_MELEE
-        lli     t1, 0x0003                  // t1 = 3 (BRAWL)
+        lli     t1, 0x0003                  // t1 = 3 (MENU2)
+        beql    t1, t0, _play               // if MENU2, then use MENU2 BGM
+        addiu   a1, r0, BGM.menu.MAIN_MENU2
+        lli     t1, 0x0004                  // t1 = 4 (BRAWL)
         beql    t1, t0, _play               // if BRAWL, then use BRAWL BGM
         addiu   a1, r0, BGM.menu.MAIN_BRAWL
-        lli     t1, 0x0004                  // t1 = 4 (OFF)
+        lli     t1, 0x0005                  // t1 = 4 (GOLDENEYE)
+        beql    t1, t0, _play               // if GOLDENEYE, then use GOLDENEYE BGM
+        addiu   a1, r0, BGM.menu.MAIN_GOLDENEYE
+        lli     t1, 0x0006                  // t1 = 5 (OFF)
         beq     t0, t1, _stop               // if OFF, then stop music
         nop
 
@@ -1339,8 +1453,9 @@ scope Toggles {
     // @ Description
     // Contains list of submenus.
     head_super_menu:
-    Menu.entry("Load Profile:", Menu.type.U8, OS.FALSE, 0, 3, load_profile_, OS.NULL, string_table_profile, OS.NULL, entry_remix_settings)
-    entry_remix_settings:; Menu.entry_title("Remix Settings", show_remix_settings_, entry_music_settings)
+    Menu.entry("Load Profile:", Menu.type.INT, OS.FALSE, 0, 3, load_profile_, OS.NULL, string_table_profile, OS.NULL, entry_remix_settings)
+    entry_remix_settings:; Menu.entry_title("Remix Settings", show_remix_settings_, entry_gameplay_settings)
+    entry_gameplay_settings:; Menu.entry_title("Gameplay Settings", show_gameplay_settings_, entry_music_settings)
     entry_music_settings:; Menu.entry_title("Music Settings", show_music_settings_, entry_stage_settings)
     entry_stage_settings:; Menu.entry_title("Stage Settings", show_stage_settings_, entry_player_tags)
     entry_player_tags:;    Menu.entry_title("Player Tags", show_player_tags_, entry_debug)
@@ -1355,35 +1470,58 @@ scope Toggles {
     entry_hold_to_pause:;               entry_bool("Hold To Pause", OS.FALSE, OS.TRUE, OS.TRUE, OS.FALSE, entry_css_panel_menu)
     entry_css_panel_menu:;              entry_bool("CSS Panel Menu", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_practice_overlay)
     entry_practice_overlay:;            entry_bool("Color Overlays", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_cinematic_entry)
-    entry_cinematic_entry:;             entry("Cinematic Entry", Menu.type.U8, 0, 0, 0, 0, 0, 2, OS.NULL, string_table_frequency, OS.NULL, entry_flash_on_z_cancel)
-    entry_flash_on_z_cancel:;           entry_bool("Flash On Z-Cancel", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_punish_on_failed_z_cancel)
-    entry_punish_on_failed_z_cancel:;   entry("Cruel Z-Cancel Mode", Menu.type.U8, OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, 0, 7, OS.NULL, string_table_failed_z_cancel, OS.NULL, entry_fps)
-    entry_fps:;                         entry("FPS Display *BETA", Menu.type.U8, OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, 0, 2, OS.NULL, string_table_fps, OS.NULL, entry_model_display)
-    entry_model_display:;               entry("Model Display", Menu.type.U8, 0, 0, 1, 0, 0, 2, OS.NULL, string_table_poly, OS.NULL, entry_special_model)
-    entry_special_model:;               entry("Special Model Display", Menu.type.U8, OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, 0, 3, OS.NULL, string_table_model, OS.NULL, entry_advanced_hurtbox)
+    entry_cinematic_entry:;             entry("Cinematic Entry", Menu.type.INT, 0, 0, 0, 0, 0, 2, OS.NULL, string_table_frequency, OS.NULL, entry_flash_on_z_cancel)
+    entry_flash_on_z_cancel:;           entry_bool("Flash On Z-Cancel", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_fps)
+    entry_fps:;                         entry("FPS Display *BETA", Menu.type.INT, OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, 0, 2, OS.NULL, string_table_fps, OS.NULL, entry_model_display)
+    entry_model_display:;               entry("Model Display", Menu.type.INT, 0, 0, 1, 0, 0, 2, OS.NULL, string_table_poly, OS.NULL, entry_special_model)
+    entry_special_model:;               entry("Special Model Display", Menu.type.INT, OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, 0, 3, OS.NULL, string_table_model, OS.NULL, entry_advanced_hurtbox)
     entry_advanced_hurtbox:;            entry_bool("Advanced Hurtbox Display", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_hold_to_exit_training)
     entry_hold_to_exit_training:;       entry_bool("Hold To Exit Training", OS.FALSE, OS.TRUE, OS.FALSE, OS.FALSE, entry_improved_combo_meter)
     entry_improved_combo_meter:;        entry_bool("Improved Combo Meter", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_tech_chase_combo_meter)
     entry_tech_chase_combo_meter:;      entry_bool("Tech Chase Combo Meter", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_combo_meter)
     entry_combo_meter:;                 entry_bool("Combo Meter", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_1v1_combo_meter_swap)
-    entry_1v1_combo_meter_swap:;        entry_bool("1v1 Combo Meter Swap", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_improved_ai)
-    entry_improved_ai:;                 entry_bool("Improved AI", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_neutral_spawns)
+    entry_1v1_combo_meter_swap:;        entry_bool("1v1 Combo Meter Swap", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_neutral_spawns)
     entry_neutral_spawns:;              entry_bool("Neutral Spawns", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, entry_salty_runback)
     entry_salty_runback:;               entry_bool("Salty Runback", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_widescreen)
-    entry_widescreen:;                  entry_bool("Widescreen", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_japanese_hitlag)
-    entry_japanese_hitlag:;             entry_bool("Japanese Hitlag", OS.FALSE, OS.FALSE, OS.FALSE, OS.TRUE, entry_japanese_di)
-    entry_japanese_di:;                 entry_bool("Japanese DI", OS.FALSE, OS.FALSE, OS.FALSE, OS.TRUE, entry_japanese_sounds)
-    entry_japanese_sounds:;             entry("Japanese Sounds", Menu.type.U8, 0, 0, 0, 1, 0, 2, OS.NULL, string_table_frequency, OS.NULL, entry_momentum_slide)
-    entry_momentum_slide:;              entry_bool("Momentum Slide", OS.FALSE, OS.FALSE, OS.FALSE, OS.TRUE, entry_japanese_shieldstun)
-    entry_japanese_shieldstun:;         entry_bool("Japanese Shield Stun", OS.FALSE, OS.FALSE, OS.FALSE, OS.TRUE, entry_stereo_fix)
+    entry_widescreen:;                  entry_bool("Widescreen", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_stereo_fix)
     entry_stereo_fix:;                  entry_bool("Stereo Fix for Hit SFX", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, entry_variant_random)
     entry_variant_random:;              entry_bool("Random Select With Variants", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_disable_hud)
-    entry_disable_hud:;                 entry("Disable HUD", Menu.type.U8, 0, 0, 0, 0, 0, 2, OS.NULL, string_table_disable_hud, OS.NULL, entry_disable_aa)
+    entry_disable_hud:;                 entry("Disable HUD", Menu.type.INT, 0, 0, 0, 0, 0, 2, OS.NULL, string_table_disable_hud, OS.NULL, entry_disable_aa)
     entry_disable_aa:;                  entry_bool("Disable Anti-Aliasing", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_full_results)
     entry_full_results:;                entry_bool("Always Show Full Results", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, entry_skip_training_start_cheer)
-    entry_skip_training_start_cheer:;   entry_bool("Skip Training Start Cheer", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_tripping)
-    entry_tripping:;                    entry("Tripping", Menu.type.U8, 0, 0, 0, 0, 0, 3, OS.NULL, string_table_tripping, OS.NULL, OS.NULL)
+    entry_skip_training_start_cheer:;   entry_bool("Skip Training Start Cheer", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_default_cpu_level)
+    entry_default_cpu_level:;           entry("Default CPU LVL (V.S.)", Menu.type.INT, 0, 10, 0, 0, 0, 10, OS.NULL, string_table_cpu_levels, OS.NULL, entry_puff_sing_anim)
+    entry_puff_sing_anim:;              entry_bool("Jigglypuff Sing GFX Anims", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, OS.NULL)
+
     evaluate num_remix_toggles(num_toggles)
+    evaluate remix_toggles_block_size(block_size)
+    global variable block_size(0)
+
+    // @ Description
+    // Gameplay Toggles
+    head_gameplay_settings:
+    entry_hitstun:;                     entry("Hitstun", Menu.type.INT, OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, 0, 1, OS.NULL, string_table_hitstun, OS.NULL, entry_hitlag)
+    entry_hitlag:;                      entry("Hitlag", Menu.type.INT, OS.FALSE, OS.FALSE, OS.FALSE, OS.TRUE, 0, 2, OS.NULL, string_table_hitlag, OS.NULL, entry_japanese_di)
+    entry_japanese_di:;                 entry_bool("Japanese DI", OS.FALSE, OS.FALSE, OS.FALSE, OS.TRUE, entry_japanese_sounds)
+    entry_japanese_sounds:;             entry("Japanese Sounds", Menu.type.INT, 0, 0, 0, 1, 0, 2, OS.NULL, string_table_frequency, OS.NULL, entry_momentum_slide)
+    entry_momentum_slide:;              entry_bool("Momentum Slide", OS.FALSE, OS.FALSE, OS.FALSE, OS.TRUE, entry_japanese_shieldstun)
+    entry_japanese_shieldstun:;         entry_bool("Japanese Shield Stun", OS.FALSE, OS.FALSE, OS.FALSE, OS.TRUE, entry_punish_on_failed_z_cancel)
+    entry_punish_on_failed_z_cancel:;   entry("Punish Failed Z-Cancel", Menu.type.INT, OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, 0, 7, OS.NULL, string_table_failed_z_cancel, OS.NULL, entry_improved_ai)
+    entry_improved_ai:;                 entry_bool("Improved AI", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_tripping)
+    entry_tripping:;                    entry("Tripping", Menu.type.INT, 0, 0, 0, 0, 0, 3, OS.NULL, string_table_tripping, OS.NULL, entry_footstool)
+    entry_footstool:;                   entry_bool("Footstool Jumping", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_air_dodge)
+    entry_air_dodge:;                   entry("Air Dodging", Menu.type.INT, 0, 0, 0, 0, 0, 3, OS.NULL, string_table_air_dodge, OS.NULL, entry_jab_lock)
+    entry_jab_lock:;                    entry_bool("Jab Locking", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_ledge_jump)
+    entry_ledge_jump:;                  entry_bool("Edge C-Jumping", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_perfect_shield)
+    entry_perfect_shield:;              entry_bool("Perfect Shielding", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_spot_dodge)
+    entry_spot_dodge:;                  entry_bool("Spot Dodging", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_fast_fall_aerials)
+    entry_fast_fall_aerials:;           entry_bool("Fast Fall Aerials", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_ledge_trump)
+    entry_ledge_trump:;                 entry_bool("Ledge Trumping", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_wall_teching)
+    entry_wall_teching:;                entry_bool("Wall Teching", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, OS.NULL)
+
+    evaluate num_gameplay_toggles(num_toggles)
+    evaluate gameplay_toggles_block_size(block_size)
+    global variable block_size(0)
 
     // @ Description
     // Random Music Toggles
@@ -1391,10 +1529,10 @@ scope Toggles {
     entry_play_music:;                      entry_bool("Play Music", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, entry_random_music)
     entry_random_music:;                    entry_bool("Random Music", OS.FALSE, OS.FALSE, OS.TRUE, OS.FALSE, entry_preserve_salty_song)
     entry_preserve_salty_song:;             entry_bool("Salty Runback Preserves Song", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_menu_music)
-    entry_menu_music:;                      entry("Menu Music", Menu.type.U8, 0, 0, 1, 0, 0, 4, play_menu_music_, string_table_menu_music, OS.NULL, entry_show_music_title)
+    entry_menu_music:;                      entry("Menu Music", Menu.type.INT, 0, 0, 1, 0, 0, 6, play_menu_music_, string_table_menu_music, OS.NULL, entry_show_music_title)
     entry_show_music_title:;                entry_bool("Music Title at Match Start", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_load_profile_music)
     evaluate LOAD_PROFILE_MUSIC_ENTRY_ORIGIN(origin())
-    entry_load_profile_music:;              entry("Load Profile:", Menu.type.U8, 0, 0, 0, 0, 0, 0, load_sub_profile_, num_toggles, string_table_music_profile, OS.NULL, entry_random_music_title)
+    entry_load_profile_music:;              entry("Load Profile:", Menu.type.INT, 0, 0, 0, 0, 0, 0, load_sub_profile_, num_toggles, string_table_music_profile, OS.NULL, entry_random_music_title)
     entry_random_music_title:;              Menu.entry_title("Random Music Toggles:", toggle_all_, entry_random_music_bonus)
     evaluate first_music_toggle(num_toggles)
     entry_random_music_bonus:;              entry_bool_with_a("Bonus", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, preview_bgm_, BGM.menu.BONUS, entry_random_music_congo_jungle)
@@ -1443,17 +1581,21 @@ scope Toggles {
         evaluate n({n}+1)
     }
     evaluate last_music_toggle(num_toggles)
-    evaluate num_music_toggles(num_toggles - {num_remix_toggles})
+    evaluate num_music_toggles(num_toggles - {num_remix_toggles} - {num_gameplay_toggles})
+    evaluate music_toggles_block_size(block_size)
+    global variable block_size(0)
 
     // @ Description
     // Stage Toggles
     head_stage_settings:
-    entry_sss_layout:;                          entry("Stage Select Layout", Menu.type.U8, sss.NORMAL, sss.TOURNAMENT, sss.NORMAL, sss.NORMAL, 0, 1, OS.NULL, string_table_sss_layout, OS.NULL, entry_hazard_mode)
-    entry_hazard_mode:;                         entry("Hazard Mode", Menu.type.U8, hazard_mode.NORMAL, hazard_mode.NORMAL, hazard_mode.NORMAL, hazard_mode.NORMAL, 0, 3, OS.NULL, string_table_hazard_mode, OS.NULL, entry_whispy_mode)
-    entry_whispy_mode:;                         entry("Whispy Mode", Menu.type.U8, whispy_mode.NORMAL, whispy_mode.NORMAL, whispy_mode.NORMAL, whispy_mode.JAPANESE, 0, 3, OS.NULL, string_table_whispy_mode, OS.NULL, entry_camera_mode)
-    entry_camera_mode:;                         entry("Camera Mode", Menu.type.U8, Camera.type.NORMAL, Camera.type.NORMAL, Camera.type.NORMAL, Camera.type.NORMAL, 0, 3, OS.NULL, Camera.type_string_table, OS.NULL, entry_load_profile_stage)
+    entry_sss_layout:;                          entry("Stage Select Layout", Menu.type.INT, sss.NORMAL, sss.TOURNAMENT, sss.NORMAL, sss.NORMAL, 0, 1, OS.NULL, string_table_sss_layout, OS.NULL, entry_hazard_mode)
+    entry_hazard_mode:;                         entry("Hazard Mode", Menu.type.INT, hazard_mode.NORMAL, hazard_mode.NORMAL, hazard_mode.NORMAL, hazard_mode.NORMAL, 0, 3, OS.NULL, string_table_hazard_mode, OS.NULL, entry_whispy_mode)
+    entry_whispy_mode:;                         entry("Whispy Mode", Menu.type.INT, whispy_mode.NORMAL, whispy_mode.NORMAL, whispy_mode.NORMAL, whispy_mode.JAPANESE, 0, 3, OS.NULL, string_table_whispy_mode, OS.NULL, entry_announcer_mode)
+    entry_announcer_mode:;                      entry("Pokemon Announcer", Menu.type.INT, announcer_mode.POKEMON, announcer_mode.OFF, announcer_mode.POKEMON, announcer_mode.OFF, 0, 2, OS.NULL, string_table_announcer_mode, OS.NULL, entry_camera_mode)
+    entry_camera_mode:;                         entry("Camera Mode", Menu.type.INT, Camera.type.NORMAL, Camera.type.NORMAL, Camera.type.NORMAL, Camera.type.NORMAL, 0, 3, OS.NULL, Camera.type_string_table, OS.NULL, entry_yi_clouds)
+    entry_yi_clouds:;                           entry_bool("Yoshi's Island Cloud Anims", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_load_profile_stage)
     evaluate LOAD_PROFILE_STAGE_ENTRY_ORIGIN(origin())
-    entry_load_profile_stage:;                  entry("Load Profile:", Menu.type.U8, 0, 1, 2, 0, 0, 2, load_sub_profile_, num_toggles, string_table_stage_profile, OS.NULL, entry_random_stage_title)
+    entry_load_profile_stage:;                  entry("Load Profile:", Menu.type.INT, 0, 1, 2, 0, 0, 2, load_sub_profile_, num_toggles, string_table_stage_profile, OS.NULL, entry_random_stage_title)
     entry_random_stage_title:;                  Menu.entry_title("Random Stage Toggles:", toggle_all_, entry_random_stage_congo_jungle)
     evaluate first_stage_toggle(num_toggles)
     entry_random_stage_congo_jungle:;           entry_bool("Congo Jungle", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_random_stage_dream_land)
@@ -1504,9 +1646,11 @@ scope Toggles {
     }
     map 0, 0, 256 // restore string mappings
     evaluate last_stage_toggle(num_toggles)
-    evaluate num_stage_toggles(num_toggles - {num_remix_toggles} - {num_music_toggles})
+    evaluate num_stage_toggles(num_toggles - {num_remix_toggles} - {num_gameplay_toggles} - {num_music_toggles})
+    evaluate stage_toggles_block_size(block_size)
+    global variable block_size(0)
 
-    print "*******************************\n{num_remix_toggles}, {num_stage_toggles}, {num_music_toggles}\n"
+    print "*******************************\n{num_remix_toggles}, {num_gameplay_toggles}, {num_stage_toggles}, {num_music_toggles}\n"
 
     // @ Description
     // Player Tags
@@ -1704,10 +1848,27 @@ scope Toggles {
 
     // @ Description
     // SRAM blocks for toggle saving.
-    block_misc:; SRAM.block({num_remix_toggles} * 4)
-    block_music:; SRAM.block({num_music_toggles} * 4)
-    block_stages:; SRAM.block({num_music_toggles} * 4)
+    block_remix:; SRAM.block((({remix_toggles_block_size} / 32) + 1) * 4)
+    block_gameplay:; SRAM.block((({gameplay_toggles_block_size} / 32) + 1) * 4)
+    block_music:; SRAM.block((({music_toggles_block_size} / 32) + 1) * 4)
+    block_stages:; SRAM.block((({stage_toggles_block_size} / 32) + 1) * 4)
     block_tags:; SRAM.block({MAX_TAGS} * 20) // 20 characters per tag
+
+    sram_block_table:
+    dw block_remix
+    dw block_gameplay
+    dw block_music
+    dw block_stages
+    dw block_tags
+    dw 0 // leave blank to end
+
+    block_head_table:
+    dw head_remix_settings
+    dw head_gameplay_settings
+    dw head_music_settings
+    dw head_stage_settings
+    dw head_player_tags
+    dw 0 // leave blank for last
 
     profile_defaults_CE:; write_defaults_for(CE)
     profile_defaults_TE:; write_defaults_for(TE)
@@ -1859,6 +2020,7 @@ scope Toggles {
     include "/music/profiles/intobattle.asm"
     include "/music/profiles/positivevibes.asm"
     include "/music/profiles/slappers.asm"
+    include "/music/profiles/freshjams.asm"
     include "/music/profiles/staff.asm"
 
     // Include stage profiles here
@@ -1905,10 +2067,17 @@ scope Toggles {
         evaluate n({n} + 1)
     }
 
+    profile_head_table:
+    dw head_remix_settings
+    dw head_gameplay_settings
+    dw head_music_settings
+    dw head_stage_settings
+    dw 0 // leave blank for last
+
     // @ Description
     // This function will load toggle settings based on the selected profile
     scope load_profile_: {
-        addiu   sp, sp,-0x001C                 // allocate stack space
+        addiu   sp, sp,-0x0020                 // allocate stack space
         sw      ra, 0x0004(sp)                 // ~
         sw      t0, 0x0008(sp)                 // ~
         sw      t1, 0x000C(sp)                 // ~
@@ -1922,10 +2091,11 @@ scope Toggles {
         sll     t2, t0, 0x0002                 // t2 = offset to profile defaults
         addu    t1, t1, t2                     // t1 = address of profile defaults
         lw      t2, 0x0000(t1)                 // t2 = address of profile defaults
-        li      t0, head_remix_settings        // t0 = first remix setting entry address
+        li      t3, profile_head_table         // t3 = address of first head pointer
+        lw      t0, 0x0000(t3)                 // t0 = first remix setting entry address
 
         _begin:
-        addu    t3, r0, t0                     // t3 = head
+        addiu   t3, t3, 0x0004                 // t3 = address of next head pointer
 
         _loop:
         beqz    t0, _next                      // if (entry = null), go to next
@@ -1953,13 +2123,8 @@ scope Toggles {
         nop
 
         _next:
-        li      t1, head_remix_settings        // t1 = first remix setting entry address
-        li      t0, head_music_settings        // t0 = first music setting entry address
-        beq     t3, t1, _begin                 // if (finished the remix block) then do the music block next
-        nop                                    // ~
-        or      t1, r0, t0                     // t1 = first music setting entry address
-        li      t0, head_stage_settings        // t0 = first stage setting entry address
-        beq     t3, t1, _begin                 // if (finished the music block) then do the random stage block next
+        lw      t0, 0x0000(t3)                 // t0 = next head entry address
+        bnez    t0, _begin                     // if more blocks, do loop
         nop                                    // ~
 
         _end:
@@ -1969,7 +2134,7 @@ scope Toggles {
         lw      t2, 0x0010(sp)                 // ~
         lw      t3, 0x0014(sp)                 // ~
         lw      t4, 0x0018(sp)                 // restore registers
-        addiu   sp, sp, 0x001C                 // deallocate stack sapce
+        addiu   sp, sp, 0x0020                 // deallocate stack sapce
         jr      ra                             // return
         nop
     }
@@ -1995,10 +2160,11 @@ scope Toggles {
         li      t2, profiles
         addu    t2, t2, t5                     // t2 = address of defaults pointer
         lw      t2, 0x0000(t2)                 // t2 = defaults
-        li      t0, head_remix_settings        // t0 = first remix setting entry address
+        li      t4, profile_head_table         // t4 = address of first head pointer
+        lw      t0, 0x0000(t4)                 // t0 = first remix setting entry address
 
         _begin:
-        addu    t4, r0, t0                     // t4 = head
+        addiu   t4, t4, 0x0004                 // t4 = next head pointer address
 
         _loop:
         beqz    t0, _next                      // if (entry = null), go to next
@@ -2028,16 +2194,9 @@ scope Toggles {
         nop
 
         _next:
-        or      t3, r0, t0                     // save t0
-        li      t1, head_remix_settings        // t1 = first remix setting entry address
-        li      t0, head_music_settings        // t0 = first music setting entry address
-        beq     t4, t1, _begin                 // if (finished the remix block) then do the music block next
-        nop                                    // ~
-        or      t1, r0, t0                     // t1 = first music setting entry address
-        li      t0, head_stage_settings        // t0 = first stage setting entry address
-        beq     t4, t1, _begin                 // if (finished the music block) then do the random stage block next
-        nop                                    // ~
-        or      t0, r0, t3                     // restore t0
+        lw      t3, 0x0000(t4)                 // t3 = next head entry address
+        bnezl   t3, _begin                     // if more blocks, do loop
+        or      t0, r0, t3                     // t0 = next head entry address
 
         _next_profile:
         beqz    t0, _end                       // if (entry = null), then we have the correct profile in v0
@@ -2059,6 +2218,12 @@ scope Toggles {
         addiu   sp, sp, 0x0020                 // deallocate stack sapce
         jr      ra                             // return
         nop
+    }
+
+    // @ Description
+    // Reads the value of a given toggle
+    macro read(toggle_name, output_register) {
+            OS.read_word(Toggles.{toggle_name} + 0x4, {output_register})
     }
 }
 

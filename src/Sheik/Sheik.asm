@@ -3,7 +3,35 @@
 // This file contains file inclusions, action edits, and assembly for Sheik.
 
 scope Sheik {
+
+
+    scope MODEL {
+        scope FACE {
+            constant NORMAL(0xAC000000)
+            constant CLOSED(0xAC000006)
+        }
+        scope RIGHT_HAND {
+            constant NORMAL(0xA0800000)
+            constant POINT(0xA0800001)
+            constant OPEN(0xA0800002)
+        }
+        scope LEFT_HAND {
+            constant NORMAL(0xA0500000)
+            constant POINT(0xA0500001)
+            constant OPEN(0xA0500002)
+            constant HARP(0xA0500003)
+        }
+    }
+
     // Insert Moveset files
+    insert BLINK,"moveset/BLINK.bin"; Moveset.GO_TO(BLINK)            // loops
+
+    IDLE:
+    Moveset.SUBROUTINE(BLINK)                   // blink
+    dw 0x0400005A; Moveset.SUBROUTINE(BLINK)    // wait 90 frames then blink
+    dw 0x0400000A; Moveset.SUBROUTINE(BLINK)    // wait 10 frames then blink
+    dw 0x04000050; Moveset.GO_TO(IDLE)          // loop
+
     insert USP_BEGIN,"moveset/USP_BEGIN.bin"
     insert USP_MOVE,"moveset/USP_MOVE.bin"
     insert USP_END,"moveset/USP_END.bin"
@@ -41,7 +69,6 @@ scope Sheik {
     insert TECH,"moveset/TECH.bin"
     insert TECHROLL,"moveset/TECHROLL.bin"
     insert ENTRY,"moveset/ENTRY.bin"
-    insert CSS,"moveset/CSS.bin"
     insert VICTORY_1,"moveset/VICTORY_1.bin"
     insert VICTORY_2,"moveset/VICTORY_2.bin"
     insert VICTORY_3,"moveset/VICTORY_3.bin"
@@ -66,6 +93,10 @@ scope Sheik {
     insert ROLL_B,"moveset/ROLL_B.bin"
     insert DOWN_STAND,"moveset/DOWN_STAND.bin"
 
+    DOWN_BOUNCE:
+    dw MODEL.FACE.CLOSED
+    Moveset.GO_TO(Moveset.shared.DOWN_BOUNCE)
+
     insert JAB_LOOP_START,"moveset/JAB_LOOP_START.bin"
     JAB_LOOP:
     insert JAB_SUBROUTINE,"moveset/JAB_SUBROUTINE.bin"
@@ -75,7 +106,7 @@ scope Sheik {
     // Insert AI attack options
     constant CPU_ATTACKS_ORIGIN(origin())
     insert CPU_ATTACKS,"AI/attack_options.bin"
-	OS.align(16)
+    OS.align(16)
 
     // Action name constants.
     scope Action {
@@ -172,12 +203,12 @@ scope Sheik {
     // Modify Action Parameters             // Action                       // Animation                        // Moveset Data             // Flags
 Character.edit_action_parameters(SHEIK, Action.DeadU,                   File.SHEIK_TUMBLE,                  -1,                         -1)
 Character.edit_action_parameters(SHEIK, Action.ScreenKO,                File.SHEIK_TUMBLE,                  -1,                         -1)
-Character.edit_action_parameters(SHEIK, Action.Entry,                   File.SHEIK_IDLE,                    -1,                         -1)
-Character.edit_action_parameters(SHEIK, 0x006,                          File.SHEIK_IDLE,                    -1,                         -1)
+Character.edit_action_parameters(SHEIK, Action.Entry,                   File.SHEIK_IDLE,                    IDLE,                         -1)
+Character.edit_action_parameters(SHEIK, 0x006,                          File.SHEIK_IDLE,                    IDLE,                         -1)
 Character.edit_action_parameters(SHEIK, Action.Revive1,                 File.SHEIK_DOWN_BOUNCE_D,           -1,                         -1)
 Character.edit_action_parameters(SHEIK, Action.Revive2,                 File.SHEIK_DOWN_STAND_D,            -1,                         -1)
-Character.edit_action_parameters(SHEIK, Action.ReviveWait,              File.SHEIK_IDLE,                    -1,                         -1)
-Character.edit_action_parameters(SHEIK, Action.Idle,                    File.SHEIK_IDLE,                    -1,                         -1)
+Character.edit_action_parameters(SHEIK, Action.ReviveWait,              File.SHEIK_IDLE,                    IDLE,                         -1)
+Character.edit_action_parameters(SHEIK, Action.Idle,                    File.SHEIK_IDLE,                    IDLE,                         -1)
 Character.edit_action_parameters(SHEIK, Action.Walk1,                   File.SHEIK_WALK_1,                  -1,                         -1)
 Character.edit_action_parameters(SHEIK, Action.Walk2,                   File.SHEIK_WALK_2,                  -1,                         -1)
 Character.edit_action_parameters(SHEIK, Action.Walk3,                   File.SHEIK_WALK_3,                  -1,                         -1)
@@ -230,8 +261,8 @@ Character.edit_action_parameters(SHEIK, Action.TeeterStart,             File.SHE
  Character.edit_action_parameters(SHEIK, Action.ExitPipe,                File.SHEIK_EXIT_PIPE,               -1,                         -1)
  Character.edit_action_parameters(SHEIK, Action.ExitPipeWalk,            File.SHEIK_EXIT_PIPE_WALK,          -1,                         -1)
  //Character.edit_action_parameters(SHEIK, Action.CeilingBonk,             File.SHEIK_CEILING_BONK,            -1,                         -1)
-Character.edit_action_parameters(SHEIK, Action.DownBounceD,             File.SHEIK_DOWN_BOUNCE_D,           -1,                         -1)
-Character.edit_action_parameters(SHEIK, Action.DownBounceU,             File.SHEIK_DOWN_BOUNCE_U,           -1,                         -1)
+Character.edit_action_parameters(SHEIK, Action.DownBounceD,             File.SHEIK_DOWN_BOUNCE_D,           DOWN_BOUNCE,                         -1)
+Character.edit_action_parameters(SHEIK, Action.DownBounceU,             File.SHEIK_DOWN_BOUNCE_U,           DOWN_BOUNCE,                         -1)
 Character.edit_action_parameters(SHEIK, Action.DownStandD,              File.SHEIK_DOWN_STAND_D,            DOWN_STAND,                 -1)
 Character.edit_action_parameters(SHEIK, Action.DownStandU,              File.SHEIK_DOWN_STAND_U,            DOWN_STAND,                 -1)
 Character.edit_action_parameters(SHEIK, Action.TechF,                   -1,                                 TECHROLL,                   -1)
@@ -413,7 +444,7 @@ Character.edit_action_parameters(SHEIK, Action.LandingAirX,             File.SHE
     // Modify Menu Action Parameters             // Action      // Animation                // Moveset Data             // Flags
 
     Character.edit_menu_action_parameters(SHEIK, 0x0,           File.SHEIK_IDLE,            -1,                         -1)
-    Character.edit_menu_action_parameters(SHEIK, 0x1,           File.SHEIK_VICTORY_1,       CSS,                        -1)
+    Character.edit_menu_action_parameters(SHEIK, 0x1,           File.SHEIK_VICTORY_3,       VICTORY_3,                  -1)
     Character.edit_menu_action_parameters(SHEIK, 0x2,           File.SHEIK_VICTORY_1,       VICTORY_1,                  -1)
     Character.edit_menu_action_parameters(SHEIK, 0x3,           File.SHEIK_VICTORY_2,       VICTORY_2,                  -1)
     Character.edit_menu_action_parameters(SHEIK, 0x4,           File.SHEIK_VICTORY_3,       VICTORY_3,                  -1)
@@ -422,7 +453,7 @@ Character.edit_action_parameters(SHEIK, Action.LandingAirX,             File.SHE
     Character.edit_menu_action_parameters(SHEIK, 0xE,           File.SHEIK_1P_CPU,          CPU,                        -1)
     Character.edit_menu_action_parameters(SHEIK, 0x9,           File.SHEIK_PUPPET_FALL,     -1,                         -1)
     Character.edit_menu_action_parameters(SHEIK, 0xA,           File.SHEIK_PUPPET_UP,       -1,                         -1)
-	
+
     // Add Action Parameters                // Action Name      // Base Action  // Animation                // Moveset Data             // Flags
     Character.add_new_action_params(SHEIK,  NSP_Shoot_Air,      -1,             File.SHEIK_NSPA_SHOOT,      NSP_SHOOT,                  0x00000000)
     Character.add_new_action_params(SHEIK,  DSP_Begin,          -1,             File.SHEIK_DSP_BEGIN,       DSP_BEGIN,                  0x00000000)
@@ -493,6 +524,7 @@ Character.edit_action_parameters(SHEIK, Action.LandingAirX,             File.SHE
     dw      charge_gfx_routine_
     OS.patch_end()
 
+    // For spawning, clears out charges of nsp
     Character.table_patch_start(initial_script, Character.id.SHEIK, 0x4)
     dw      0x800D7DEC                      // use samus jump
     OS.patch_end()
@@ -507,14 +539,14 @@ Character.edit_action_parameters(SHEIK, Action.LandingAirX,             File.SHE
 
     // Set default costume shield colors
     Character.set_costume_shield_colors(SHEIK, BLUE, RED, GREEN, PURPLE, BLACK, WHITE, NA, NA)
-    
+
     Character.table_patch_start(variants, Character.id.SHEIK, 0x4)
     db      Character.id.NONE
     db      Character.id.NSHEIK // set as POLYGON variant for SHEIK
     db      Character.id.NONE
     db      Character.id.NONE
     OS.patch_end()
-    
+
     Character.table_patch_start(variant_original, Character.id.NSHEIK, 0x4)
     dw      Character.id.SHEIK // set Sheik as original character (not Captain Falcon, who NSHEIK is a clone of)
     OS.patch_end()
@@ -523,22 +555,26 @@ Character.edit_action_parameters(SHEIK, Action.LandingAirX,             File.SHE
     Character.table_patch_start(ai_behaviour, Character.id.SHEIK, 0x4)
     dw      CPU_ATTACKS
     OS.patch_end()
-	
+
 	// Set CPU SD prevent routine
     Character.table_patch_start(ai_attack_prevent, Character.id.SHEIK, 0x4)
     dw    	AI.PREVENT_ATTACK.ROUTINE.NONE
     OS.patch_end()
-	
+
 	// Set CPU NSP long range behaviour
     Character.table_patch_start(ai_long_range, Character.id.SHEIK, 0x4)
     dw    	AI.LONG_RANGE.ROUTINE.NSP_SHOOT
     OS.patch_end()
 
     // Edit cpu attack behaviours
+    // Most of Sheiks attacks were manually updated with hex-edits.
     // edit_attack_behavior(table, attack, override, start_hb, end_hb, min_x, max_x, min_y, max_y)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPA,   -1,  -1,  -1,  500, 1500, 200, 445)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPA,   -1,  -1,  -1,  250, 500, -500, -250)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPG,   -1,  -1,  -1,  500, 1500, 200, 445)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPG,   -1,  -1,  -1,  -150, 150, 125, 325)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPA,   -1,   0,   0,    0,    0,   0,   0) // no attack with Up Special
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPG,   -1,  -1,  -1,    0,    0,   0,   0) // no attack with Up Special
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPG,   -1,  -1,  -1,  180, 850, 100, 400)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPA,   -1,  -1,  -1,  180, 850, 100, 400)
 
     // an associated moveset command: b0bc0000 removes the white flicker, this is identical to Samus
     // @ Description

@@ -10,7 +10,7 @@ constant APPLIES_TO(0b110111)
 // bitmask: [human] [cpu]
 constant APPLIES_TO_HUMAN_CPU(0b10)
 constant VALUE_ARRAY_POINTER(DpadFunctions.dpad_macro_table)
-constant ONCHANGE_HANDLER(0)
+constant ONCHANGE_HANDLER(onchange_handler)
 
 // @ Description
 // Holds pointers to value labels
@@ -28,6 +28,41 @@ string_smash:; String.insert("Smash")
 string_tilt:; String.insert("Tilt")
 string_special:; String.insert("Special")
 string_move:; String.insert("Movement")
+
+// @ Description
+// Runs when the menu item value changes
+// @ Arguments
+// a0 - menu item
+// a1 - port index
+// a2 - new value
+scope onchange_handler: {
+    // // Update the Taunt button text as an indicator of the 'L <-> Z' button map when using Dpad Movement
+    // // Note: this will ultimately be entry 'Z' not 'CR', code is WIP (need to refresh 'Taunt Btn')
+
+    // li      t5, Joypad.taunt_mask_per_port
+    // sll     t7, a1, 0x0002          // t7 = offset
+    // addu    t5, t5, t7              // t5 = address of taunt mask index
+    // lw      t7, 0x0000(t5)          // t7 = taunt mask index
+
+    // addiu   t6, r0, 4               // t6 = 4 (Movement)
+    // beq     a2, t6, _movement_on_check_taunt_btn // branch if using Dpad Movement
+    // nop
+    
+    // addiu   t6, r0, 4               // t6 = 4 ('CR')
+    // beql    t7, t6, _end            // if taunt mask is 'CR', set it to 'L'
+    // sw      r0, 0x0000(t5)          // update taunt mask index
+    // b       _end                    // otherwise, don't change it
+    // nop
+
+    // _movement_on_check_taunt_btn:
+    // addiu   t6, r0, 4               // t6 = 4 ('CR')
+    // beqzl   t7, _end                // if taunt mask is 'L', set it to 'CR'
+    // sw      t6, 0x0000(t5)          // update taunt mask index
+
+    _end:
+    jr      ra
+    nop
+}
 
 // @ Description
 // Hook into routine that writes Joypad bitmask to player struct (non-cpu players)
@@ -272,16 +307,24 @@ scope dpad_macro_check_: {
     bnez    t9, _dpad_move_full     // use full horizontal stick range if tapped twice
     nop
 
+    // Check if they press A button (allows Fsmash on Idle or frame 1 of Walk2)
+    andi    at, a3, 0x8000          // at = 1 if A pressed
+    bnez    at, _dpad_move_full     // branch accordingly
+    nop
+
     // This lets us reach Walk3 while holding down dpad (when not tapping twice)
     lw      at, 0x0024(a2)          // get current action id
     slti    t9, at, 0x00DC          // t9 = 1 if action is less than 0x00DC (non-character-specific)
     beqz    t9, _dpad_move_full     // branch if using special moves etc
     nop
+    lli     t9, Action.Shield       // t9 = Action.Shield
+    beq     at, t9, _dpad_move_full // branch if the player is shielding (so they can roll)
+    nop
     lli     t9, Action.Walk2        // t9 = Action.Walk2
     bne     at, t9, _dpad_move_partial// if the player is not walking, abort
     lw      at, 0x001C(a2)          // get current frame of current action
-    addiu   t9, r0, 0x0002
-    ble     at, t9, _dpad_move_partial// if frame of Walk2 is not greater than 2, abort
+    slti    t9, at, 0x0003          // t9 = 1 if frame is less than 3 (non-character-specific)
+    bnez    t9, _dpad_move_partial  // if frame of Walk2 is not greater than 2, abort
     nop
     // If we're here, we need to sync timer with stick
     li      t9, dpad_move_timer     // t9 = dpad movement timer

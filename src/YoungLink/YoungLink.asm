@@ -8,6 +8,7 @@ scope YoungLink {
     insert JUMP2, "moveset/JUMP2.bin"
     insert GRAB_RELEASE_DATA,"moveset/GRAB_RELEASE_DATA.bin"
     GRAB:; Moveset.THROW_DATA(GRAB_RELEASE_DATA); insert "moveset/GRAB.bin"
+    insert STUN, "moveset/STUN.bin"; Moveset.GO_TO(STUN)                            // loops
     insert ASLEEP, "moveset/ASLEEP.bin"; Moveset.GO_TO(ASLEEP)   // loops
     insert TEETERING, "moveset/TEETERING.bin"
     insert EDGEATTACKF, "moveset/EDGEATTACKF.bin"
@@ -51,6 +52,7 @@ scope YoungLink {
     Character.edit_action_parameters(YLINK, Action.Tech,             -1,                        TECHSTAND,                  -1)
     Character.edit_action_parameters(YLINK, Action.CliffAttackQuick2,-1,                        EDGEATTACKF,                -1)
     Character.edit_action_parameters(YLINK, Action.CliffAttackSlow2, -1,                        EDGEATTACKS,                -1)
+    Character.edit_action_parameters(YLINK, Action.Stun,             -1,                        STUN,                       -1)
     Character.edit_action_parameters(YLINK, Action.Sleep,            -1,                        ASLEEP,                     -1)
     Character.edit_action_parameters(YLINK, Action.Grab,             -1,                        GRAB,                       -1)
     Character.edit_action_parameters(YLINK, Action.Grab,            File.YLINK_GRAB,            GRAB,                       0x10000000)

@@ -1532,6 +1532,7 @@ scope MewtwoUSP {
         addiu   sp, sp,-0x0040              // allocate stack space
         sw      ra, 0x001C(sp)              // ~
         sw      a0, 0x0020(sp)              // ~
+        jal     PokemonAnnouncer.teleport_announcement_
         sw      s0, 0x0024(sp)              // store a0, s0, ra
         lw      s0, 0x0084(a0)              // s0 = player struct
         lb      v0, 0x01C2(s0)              // v0 = stick_x
@@ -2024,6 +2025,7 @@ scope MewtwoDSP {
     scope ground_initial_: {
         addiu   sp, sp,-0x0020              // allocate stack space
         sw      ra, 0x001C(sp)              // ~
+        jal     PokemonAnnouncer.disable_announcement_
         sw      a0, 0x0020(sp)              // store a0, ra
         lli     a1, 0x00E5                  // a1(action id) = 0x00E5(grounded down special)
         or      a2, r0, r0                  // a2(starting frame) = 0
@@ -2043,6 +2045,7 @@ scope MewtwoDSP {
     scope air_initial_: {
         addiu   sp, sp,-0x0020              // allocate stack space
         sw      ra, 0x001C(sp)              // ~
+        jal     PokemonAnnouncer.disable_announcement_
         sw      a0, 0x0020(sp)              // store a0, ra
         lli     a1, 0x00E6                  // a1(action id) = 0x00E6(aerial down special)
         or      a2, r0, r0                  // a2(starting frame) = 0

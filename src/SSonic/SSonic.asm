@@ -293,6 +293,11 @@ scope SSonic {
     dw      CPU_ATTACKS
     OS.patch_end()
 
+    // Set CPU SD prevent routine
+    Character.table_patch_start(ai_attack_prevent, Character.id.SSONIC, 0x4)
+    dw      AI.PREVENT_ATTACK.ROUTINE.SONIC_DSP
+    OS.patch_end()
+
 	// Set CPU NSP long range behaviour
     Character.table_patch_start(ai_long_range, Character.id.SSONIC, 0x4)
     dw    	AI.LONG_RANGE.ROUTINE.NONE
@@ -301,24 +306,24 @@ scope SSonic {
     // Edit cpu attack behaviours
     // edit_attack_behavior(table, attack, override, start_hb, end_hb, min_x, max_x, min_y, max_y)
     // Copied from Sonics with no changes.
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DAIR,   -1,  4,  41,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DAIR,   -1,  3,  41,  -1, -1, -1, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPA,   -1,  18, 18+47, 50, 1500, -400, 200)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPG,   -1,  18, 18+47, 50, 1500, -400, 200)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSMASH, -1,  8,  20,    -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DTILT,  -1,  5,  10,    -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FAIR,   -1,  7,  14,    -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FSMASH, -1,  17, 22,    -1, 720.0, -1, -1) // less range than Fox
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FTILT,  -1,  7,  12,    -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, GRAB,   -1,  -1, -1,    -1, -1, -1, -1)    // todo: check range
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, JAB,    -1,  3,  7,     -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NAIR,   -1,  4,  27,    -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSMASH, -1,  6,  20,    -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DTILT,  -1,  4,  10,    -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, BAIR,   -1,  4,  14,    -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FSMASH, -1,  12, 22,    -1, 720.0, -1, -1) // less range than Fox
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FTILT,  -1,  5,  12,    -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, GRAB,   -1,  6, -1,    -1, -1, -1, -1)    // todo: check range
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, JAB,    -1,  2,  7,     -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NAIR,   -1,  3,  27,    -1, -1, -1, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPA,   -1,  21, 21+21, -1, -1, -1, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPG,   -1,  21, 21+21, -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UAIR,   -1,  4,  14,    -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UAIR,   -1,  3,  14,    -1, -1, -1, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPA,   -1,  6,  60,    -60, 60, -200, 40)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPG,   -1,  0, 0,    0, 0, 0, 0)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USMASH, -1,  6,  21,    -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UTILT,  -1,  6,  11,    -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USMASH, -1,  4,  21,    -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UTILT,  -1,  4,  11,    -1, -1, -1, -1)
 
     Character.table_patch_start(ground_usp, Character.id.SSONIC, 0x4)
     dw      SonicUSP.ground_initial_

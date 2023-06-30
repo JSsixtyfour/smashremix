@@ -143,6 +143,8 @@ scope SamusShared {
         beq     v1, at, _sheik              // if SHEIK, take Mewtwo branch
         lli     at, Character.id.DEDEDE     // at = DEDEDE
         beq     v1, at, _dedede             // if DEDEDE, take Mewtwo branch
+        lli     at, Character.id.PEPPY      // at = PEPPY
+        beq     v1, at, _peppy              
         nop
 
         jr      ra
@@ -152,12 +154,23 @@ scope SamusShared {
         j       0x800E99D4
         nop
         
+        _peppy:
+        lw      t0, 0x0AE0(a3)              // ~
+        addiu   at, r0, 0x0006              // ~
+        lw      a0, 0x0020(sp)              // ~
+        bne     t0, at, j_0x800E99FC        // original logic, skips if charge level != 7
+        lli     a1, GFXRoutine.id.SHEIK_CHARGE // a1 = SHEIK_CHARGE id
+        
+        // return to Samus branch with alternate GFX Routine ID
+        j       0x800E99E8                  
+        nop 
+        
         _dedede:
         lw      t0, 0x0AE4(a3)              // ~
         addiu   at, r0, 0x0002              // ~
         lw      a0, 0x0020(sp)              // ~
         bne     t0, at, j_0x800E99FC        // original logic, skips if charge level != 7
-        lli     a1, GFXRoutine.id.SHEIK_CHARGE // a1 = SHEIK_CHARGE id
+        lli     a1, GFXRoutine.id.DEDEDE_CHARGE // a1 = DEDEDE_CHARGE id
         
         // return to Samus branch with alternate GFX Routine ID
         j       0x800E99E8                  
@@ -212,6 +225,8 @@ scope SamusShared {
         beq     v0, at, j_0x80161EE4        // if MARTH, take Samus branch (Marth uses 0xAE0 as well)
         lli     at, Character.id.SHEIK      // at = SHEIK
         beq     v0, at, j_0x80161EE4        // if SHEIK, take Samus branch (Sheik uses 0xAE0 as well)
+        lli     at, Character.id.PEPPY      // at = PEPPY                  
+        beq     v0, at, j_0x80161EE4        // if PEPPY, take Samus branch (Peppy uses 0xAE0 as well)
         nop
 
         j       _kirby_power_change_return

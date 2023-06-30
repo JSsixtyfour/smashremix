@@ -408,6 +408,40 @@ scope Command {
     }
     
     // @ Description
+    // Plays a special sfx if the player is holding L
+    // CC00AAAA
+    // 0000BBBB
+    // AAAA = original sfx
+    // BBBB = alternate sfx if L is down
+    scope L_voice_sfx: {
+        constant COMMAND_LENGTH(0x8)
+        addiu   sp, sp,-0x20              // allocate stack space
+        sw      ra, 0x0008(sp)              // store ra
+        sw      v0, 0x000C(sp)              // store v0
+
+        lw      v0, 0x000C(sp)              // v0 = command address
+        lh      t7, 0x0002(v0)              // t7 = fgm
+        // check if L down
+        lh      t0, 0x01BA(s2)              // t0 = taunt button mask
+        lh      t1, 0x01BC(s2)              // t1 = buttons held
+        and     t1, t1, t0                  // t1 != 0 if taunt held
+        beqz    t1, _voice_fx
+        nop
+        lh      t7, 0x0006(v0)              // t7 = alt fgm
+
+        _voice_fx:
+        or      a0, r0, s2                  // a0 = player struct
+        jal     0x800E80F0                  // play voice fx
+        or      a1, r0, t7                  // a1 = FGM id
+
+        _end:
+        lw      ra, 0x0008(sp)              // load ra
+        addiu   sp, sp, 0x20                // deallocate stack space
+        jr      ra                          // return
+        ori     t8, r0, COMMAND_LENGTH      // set command length
+    }
+    
+    // @ Description
     // sets the character's kinetic (aerial/grounded) state
     // CC0000XX
     // 0x00 = on ground
@@ -1019,7 +1053,7 @@ scope Command {
     dw      set_env_color_                  // 0xD9 SET ENV COLOR
     dw      switch_direction_               // 0xDA SWITCH DIRECTION
     dw      jump_to_moveset_file_           // 0xDB GO TO MOVESET FILE
-    dw      OS.NULL                         // 0xDC
+    dw      L_voice_sfx                     // 0xDC
     dw      OS.NULL                         // 0xDD
     dw      OS.NULL                         // 0xDE
     dw      OS.NULL                         // 0xDF
@@ -1069,7 +1103,7 @@ scope Command {
     dw      skip_size_8_                    // 0xD9 SET ENV COLOR (SKIPPED)
     dw      OS.NULL                         // 0xDA SWITCH DIRECTION (SKIPPED)
     dw      jump_to_moveset_file_           // 0xDB GO TO MOVESET FILE
-    dw      OS.NULL                         // 0xDC
+    dw      skip_size_8_                    // 0xDC
     dw      OS.NULL                         // 0xDD
     dw      OS.NULL                         // 0xDE
     dw      OS.NULL                         // 0xDF

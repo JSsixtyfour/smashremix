@@ -236,6 +236,7 @@ scope Bowser {
     Character.edit_action_parameters(BOWSER,    Action.DSmash,          -1,                         DSMASH,                     -1)
 
     Character.edit_action_parameters(BOWSER,    Action.GrabPull,        File.BOWSER_PULL,           GRAB_PULL,                  0x10000000)
+    Character.edit_action_parameters(BOWSER,    Action.ThrowF,          File.BOWSER_IDLE,           0x80000000,                 0x00000000)
     Character.edit_action_parameters(BOWSER,    Action.ThrowB,          File.BOWSER_BTHROW,         BTHROW,                     0x10000000)
 	Character.edit_action_parameters(BOWSER,    Action.ThrownMarioBros, File.BOWSER_THROWN_MARIO,   -1,                         -1)
 
@@ -327,6 +328,7 @@ scope Bowser {
 	Character.edit_menu_action_parameters(BOWSER,    0x1,               File.BOWSER_DANCE,          VICTORY2,                      -1)
 	Character.edit_menu_action_parameters(BOWSER,    0x2,               File.BOWSER_CSS,            CSS,                           -1)
     Character.edit_menu_action_parameters(BOWSER,    0x3,               File.BOWSER_LAUGH,          VICTORY1,                      -1)
+    Character.edit_menu_action_parameters(BOWSER,    0x4,               File.BOWSER_LAUGH,          VICTORY1,                      -1)
 	Character.edit_menu_action_parameters(BOWSER,    0x5,               File.BOWSER_CLAP,           CLAP,                          -1)
     Character.edit_menu_action_parameters(BOWSER,    0xE,               File.BOWSER_1P_CPU,         0x80000000,                    -1)
     Character.edit_menu_action_parameters(BOWSER,    0xD,               File.BOWSER_1P,             -1,                            -1)
@@ -459,7 +461,7 @@ scope Bowser {
     Character.table_patch_start(ai_behaviour, Character.id.BOWSER, 0x4)
     dw      CPU_ATTACKS
     OS.patch_end()
-	
+
 	// Set CPU SD prevent routine
     Character.table_patch_start(ai_attack_prevent, Character.id.BOWSER, 0x4)
     dw    	AI.PREVENT_ATTACK.ROUTINE.BOWSER_USP_DSP	// no risky down or up specials
@@ -569,7 +571,7 @@ scope Bowser {
         _kirby:
         lw      at, 0x0ADC(s1)          // load Kirby Power
         ori     t0, r0, Character.id.BOWSER
-        
+
         bne     at, t0, _end
         lhu     at, 0x0AE0(s1)          // load player struct free space used for timer and ammo
 

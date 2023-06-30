@@ -179,6 +179,9 @@ scope CaptainShared {
         beq     t0, t1, _end                // end if character id = MTWO
         nop
 
+        jal     PokemonAnnouncer.firepunch_announcement_
+        nop
+
         ori     t1, r0, Character.id.JFALCON // t1 = id.JFALCON
         li      a0, punch_anim_struct_JFALCON // a0 = punch_anim_struct
         beq     t0, t1, _end                // end if character id = JFALCON

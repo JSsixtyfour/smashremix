@@ -267,6 +267,8 @@ scope JigglypuffKirbyShared {
         _return:
         OS.patch_end()
 
+        
+
         beq     v0, at, _kirbyfthrow_1          // modified original line 1
         addiu   at, r0, Character.id.JKIRBY     // JKIRBY ID
         beq     v0, at, _kirbyfthrow_1
@@ -281,6 +283,12 @@ scope JigglypuffKirbyShared {
         nop
 
         _kirbyfthrow_1:
+        addiu   sp, sp, -0x0010
+        sw      ra, 0x0004(sp)
+        jal     PokemonAnnouncer.seismic_toss_announcement_
+        nop
+        lw      ra, 0x0004(sp)
+        addiu   sp, sp, 0x0010
         j       0x8014A24C                  // routine for kirby fthrow
         nop                                 // original line 1
     }

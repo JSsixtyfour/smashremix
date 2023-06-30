@@ -902,6 +902,10 @@ scope WolfUSP {
         lw      t6, 0x017C(v1)              // load moveset variable
         bnez    t6, skip_graphics           // don't redo graphics routine after completion
         nop
+        
+        jal     PokemonAnnouncer.slash_announcement_
+        nop
+        
         jal     0x80101F84                  // falcon punch animation struct routine
         sw      v1, 0x0020(sp)              // save player struct        
         lw      v1, 0x0020(sp)              // load player struct     

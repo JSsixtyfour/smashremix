@@ -12,15 +12,20 @@ include "String.asm"
 
 scope Menu {
     scope type {
-        constant U8(0x0000)                 // 08 bit integer (unsigned)
-        constant U16(0x0001)                // 16 bit integer (unsigned)
-        constant U32(0x0002)                // 32 bit integer (unsigned)
-        constant S8(0x0003)                 // 08 bit integer (signed, not supported)
-        constant S16(0x0004)                // 16 bit integer (signed, not supported)
-        constant S32(0x0005)                // 32 bit integer (signed, not supported)
-        constant BOOL(0x0006)               // bool
-        constant TITLE(0x0007)              // has no value on the right
-        constant INPUT(0x0008)              // has no value on the right, has edit mode
+        constant TITLE(0x0000)              // has no value on the right
+        constant MAX1(0x0001)               // 01 bit integer
+        constant BOOL(MAX1)                 // bool (01 bit integer)
+        constant MAX3(0x0002)               // 02 bit integer
+        constant MAX7(0x0003)               // 03 bit integer
+        constant MAX15(0x0004)              // 04 bit integer
+        constant MAX31(0x0005)              // 05 bit integer
+        constant MAX63(0x0006)              // 06 bit integer
+        constant MAX127(0x0007)             // 07 bit integer
+        constant MAX255(0x0008)             // 08 bit integer
+        constant MAX511(0x0009)             // 09 bit integer
+        constant MAX1023(0x000A)            // 10 bit integer
+        constant INPUT(0x000B)              // has no value on the right, has edit mode
+        constant INT(0x000C)                // generic integer (size determined when saved to SRAM)
     }
 
     // @ Description
@@ -62,7 +67,31 @@ scope Menu {
     // Struct for menu entries
     macro entry(title, type, default, min, max, a_function, extra, string_table, copy_address, next) {
         define address(pc())
-        dw {type}                           // 0x0000 - type (int, bool, etc.)
+        if {type} == Menu.type.INT {
+            if {max} <= 1 {
+                dw Menu.type.MAX1           // 0x0000 - type (int, bool, etc.)
+            } else if {max} <= 3 {
+                dw Menu.type.MAX3           // 0x0000 - type (int, bool, etc.)
+            } else if {max} <= 7 {
+                dw Menu.type.MAX7           // 0x0000 - type (int, bool, etc.)
+            } else if {max} <= 15 {
+                dw Menu.type.MAX15          // 0x0000 - type (int, bool, etc.)
+            } else if {max} <= 31 {
+                dw Menu.type.MAX31          // 0x0000 - type (int, bool, etc.)
+            } else if {max} <= 64 {
+                dw Menu.type.MAX63          // 0x0000 - type (int, bool, etc.)
+            } else if {max} <= 127 {
+                dw Menu.type.MAX127         // 0x0000 - type (int, bool, etc.)
+            } else if {max} <= 255 {
+                dw Menu.type.MAX255         // 0x0000 - type (int, bool, etc.)
+            } else if {max} <= 511 {
+                dw Menu.type.MAX511         // 0x0000 - type (int, bool, etc.)
+            } else if {max} <= 1023 {
+                dw Menu.type.MAX1023        // 0x0000 - type (int, bool, etc.)
+            }
+        } else {
+            dw {type}                       // 0x0000 - type (int, bool, etc.)
+        }
         dw {default}                        // 0x0004 - current value (edit mode flag for type.INPUT)
         dw {min}                            // 0x0008 - minimum value
         dw {max}                            // 0x000C - maximum value
@@ -79,26 +108,6 @@ scope Menu {
             db 0x00
         }
         OS.align(4)
-
-        // @ Description
-        // signed integers are not supproted yet!
-        if {type} >= Menu.type.S8 {
-            if {type} <= Menu.type.S32 {
-                if {string_address} != OS.NULL {
-                    warning "signed integers are not supported (yet)"
-                }
-            }
-        }
-
-        // @ Description
-        // warning for strings with a negative index
-        if {type} >= Menu.type.S8 {
-            if {type} <= Menu.type.S32 {
-                if {string_address} != OS.NULL {
-                    warning "string index may be less than 0"
-                }
-            }
-        }
     }
 
     // @ Description
@@ -543,9 +552,15 @@ scope Menu {
         sh      a2, 0x002A(sp)              // save uly
         sh      a3, 0x002C(sp)              // save urx
         lhu     t0, 0x0030(at)              // t0 = row_height
+        mtc1    t0, f0                      // f0 = row_height
+        cvt.s.w f0, f0                      // f0 = row_height, fp
+        lwc1    f2, 0x002C(at)              // f2 = scale
+        mul.s   f0, f0, f2                  // f0 = row_height * scale
+        trunc.w.s f0, f0                    // f0 = ~, decimal
+        mfc1    t0, f0                      // t0 = ~, decimal
         lhu     t1, 0x0032(at)              // t1 = max_per_page
         multu   t0, t1
-        mflo    t0                          // t0 = row_height * max_per_page
+        mflo    t0                          // t0 = row_height * scale * max_per_page
         addu    t0, t0, a2                  // t0 = max height
         sh      t0, 0x002E(sp)              // save max height
         lhu     t0, 0x0010(at)              // t0 = room
@@ -556,8 +571,7 @@ scope Menu {
         sw      t2, 0x0034(sp)              // save label color
         lw      t3, 0x0028(at)              // t3 = value color
         sw      t3, 0x0038(sp)              // save value color
-        lw      t4, 0x002C(at)              // t4 = scale
-        sw      t4, 0x003C(sp)              // save scale
+        swc1    f2, 0x003C(sp)              // save scale
         lhu     t5, 0x0034(at)              // t5 = blur
         sw      t5, 0x0040(sp)              // save blur
 
@@ -1069,7 +1083,6 @@ scope Menu {
         lw      t1, 0x0000(t0)              // t1 = selection
         sltu    at, t1, v0                  // ~
         beqz    at, _wrap_down              // if (selection == (num_entries - 1), wrap
-        nop
         addiu   t1, t1, 0x0001              // t1 = selection++
         div     t1, a0                      // divide to get remainder
         mfhi    a1                          // a1 = t1 % 18
@@ -1094,6 +1107,7 @@ scope Menu {
         nop
 
         _update_down_page_top:
+        addiu   t1, t1, -0x0001             // t1 = selection
         div     t1, a0                      // ~
         mflo    t1                          // t1 = t1 / 18 no remainder
         mult    t1, a0                      // ~
@@ -1369,8 +1383,8 @@ scope Menu {
         jr      t1                          // jump to function
         nop
 
-        _u8:
-        _s8:
+        _byte:
+        _bool:
         lw      t0, 0x0018(at)              // t0 = copy address
         beql    t0, r0, _loop               // if null, loop and at = entry->next
         lw      at, 0x001C(at)              // at = entry->next
@@ -1379,8 +1393,7 @@ scope Menu {
         b       _loop
         lw      at, 0x001C(at)              // at = entry->next
 
-        _u16:
-        _s16:
+        _hw:
         lw      t0, 0x0018(at)              // t0 = copy address
         beql    t0, r0, _loop               // if null, loop and at = entry->next
         lw      at, 0x001C(at)              // at = entry->next
@@ -1389,9 +1402,7 @@ scope Menu {
         b       _loop
         lw      at, 0x001C(at)              // at = entry->next
 
-        _u32:
-        _s32:
-        _bool:
+        _word:
         _title:
         _input:
         lw      t0, 0x0018(at)              // t0 = copy address
@@ -1414,15 +1425,19 @@ scope Menu {
         nop
 
         type_table:
-        dw _u8
-        dw _u16
-        dw _u32
-        dw _s8
-        dw _s16
-        dw _s32
-        dw _bool
         dw _title
+        dw _byte
+        dw _byte
+        dw _byte
+        dw _byte
+        dw _byte
+        dw _byte
+        dw _byte
+        dw _byte
+        dw _hw
+        dw _hw
         dw _input
+        dw _word
     }
 
     // @ Description
@@ -1522,14 +1537,16 @@ scope Menu {
     // a0 - address of head
     // a1 - address of block
     scope export_: {
-        addiu   sp, sp,-0x0014              // allocate stack space
+        addiu   sp, sp,-0x0020              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // ~
         sw      t2, 0x000C(sp)              // ~
-        sw      a1, 0x0010(sp)              // save registers
+        sw      a1, 0x0010(sp)              // ~
+        sw      t3, 0x0014(sp)              // save registers
 
         move    t0, a0                      // t0 = first entry
         addiu   a1, a1, 0x000C              // a1 = address of SRAM block data
+        lli     t3, 0x0000                  // t3 = bits to shift left in word
 
         _loop:
         beqz    t0, _end                    // if (entry = null), end
@@ -1542,12 +1559,33 @@ scope Menu {
         nop
 
         lli     t2, Menu.type.INPUT         // t2 = input type
-        lw      t1, 0x0000(t0)              // t1 = type
         beq     t2, t1, _export_input       // if (type == input), handle differently
-        lw      t1, 0x0004(t0)              // t1 = entry.curr_value
+        addu    t2, t1, t3                  // t2 = highest bit used for this value
 
-        sw      t1, 0x0000(a1)              // export
+        sltiu   t2, t2, 32                  // t2 = 0 if we need to start a new word
+        bnez    t2, _save_value             // if we don't need to start a new word, skip
+        nop
+
+        lli     t3, 0x0000                  // reset bit position
         addiu   a1, a1, 0x0004              // increment ram_address
+
+        _save_value:
+        lli     t2, 32                      // t2 = max number of bits to shift in word - 1
+        subu    t1, t2, t1                  // t1 = number of bits to shift right
+        addiu   t2, r0, -0x0001             // t2 = -1 = all bits are 1
+        srlv    t2, t2, t1                  // t2 = bit mask, unshifted
+        sllv    t1, t2, t3                  // t1 = bit mask to clear out exported value, almost
+        addiu   t2, r0, -0x0001             // t2 = -1 = all bits are 1
+        xor     t1, t1, t2                  // t1 = bit mask to clear out exported value
+        lw      t2, 0x0000(a1)              // t2 = exported values in current word block
+        and     t2, t2, t1                  // t2 = exported values in current word block, cleared out for bits t3 through t3 - t1
+
+        lw      t1, 0x0004(t0)              // t1 = entry.curr_value
+        sllv    t1, t1, t3                  // t1 = entry.curr_value adjusted to current exported bit block
+        or      t1, t2, t1                  // t1 = exported values updated
+        sw      t1, 0x0000(a1)              // export
+        lw      t1, 0x0000(t0)              // t1 = type
+        addu    t3, t3, t1                  // t3 = next bit position in word
 
         _next:
         _skip:
@@ -1573,8 +1611,9 @@ scope Menu {
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // ~
         lw      t2, 0x000C(sp)              // ~
-        lw      a1, 0x0010(sp)              // restore registers
-        addiu   sp, sp, 0x0014              // deallocate stack space
+        lw      a1, 0x0010(sp)              // ~
+        lw      t3, 0x0014(sp)              // restore registers
+        addiu   sp, sp, 0x0020              // deallocate stack space
         jr      ra
         nop
     }
@@ -1584,14 +1623,16 @@ scope Menu {
     // a0 - address of head
     // a1 - address of block
     scope import_: {
-        addiu   sp, sp,-0x0014              // allocate stack space
+        addiu   sp, sp,-0x0020              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // ~
         sw      t2, 0x000C(sp)              // ~
-        sw      a1, 0x0010(sp)              // save registers
+        sw      a1, 0x0010(sp)              // ~
+        sw      t3, 0x0014(sp)              // save registers
 
         move    t0, a0                      // t0 = first entry
         addiu   a1, a1, 0x000C              // a1 = address of SRAM block data
+        lli     t3, 0x0000                  // t3 = bit position in word
 
         _loop:
         beqz    t0, _end                    // if (entry = null), end
@@ -1604,21 +1645,36 @@ scope Menu {
         nop
 
         lli     t2, Menu.type.INPUT         // t2 = input type
-        lw      t1, 0x0000(t0)              // t1 = type
-        beq     t2, t1, _export_input       // if (type == input), handle differently
+        beq     t2, t1, _import_input       // if (type == input), handle differently
+        addu    t2, t1, t3                  // t2 = highest bit used for this value
+
+        sltiu   t2, t2, 32                  // t2 = 0 if we need to start a new word
+        bnez    t2, _read_value             // if we don't need to start a new word, skip
         nop
 
-        lw      t1, 0x0000(a1)              // t1 = value at ram_address
-        sw      t1, 0x0004(t0)              // update curr_value
+        lli     t3, 0x0000                  // reset bit position
         addiu   a1, a1, 0x0004              // increment ram_address
+
+        _read_value:
+        lw      t1, 0x0000(t0)              // t1 = type
+        lli     t2, 32
+        subu    t2, t2, t1                  // t2 = number of bits to shift left
+        lw      t1, 0x0000(a1)              // t1 = value at ram_address
+        srlv    t1, t1, t3                  // t1 = value, shifted right
+        sllv    t1, t1, t2                  // t1 = value, shift all the way left
+        srlv    t1, t1, t2                  // t1 = value to import
+        sw      t1, 0x0004(t0)              // update curr_value
+
+        lw      t1, 0x0000(t0)              // t1 = type
+        addu    t3, t3, t1                  // t3 = next bit position in word
 
         _next:
         _skip:
         b       _loop                       // check again
         lw      t0, 0x001C(t0)              // t0 = entry->next
 
-        _export_input:
-        // For inputs, we export the string, 20 characters.
+        _import_input:
+        // For inputs, we import the string, 20 characters.
         lw      t1, 0x0000(a1)              // t1 = first 4 characters
         sw      t1, 0x0028(t0)              // update
         lw      t1, 0x0004(a1)              // t1 = next 4 characters
@@ -1636,8 +1692,9 @@ scope Menu {
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // ~
         lw      t2, 0x000C(sp)              // ~
-        lw      a1, 0x0010(sp)              // restore registers
-        addiu   sp, sp, 0x0014              // deallocate stack space
+        lw      a1, 0x0010(sp)              // ~
+        lw      t3, 0x0014(sp)              // restore registers
+        addiu   sp, sp, 0x0020              // deallocate stack space
         jr      ra
         nop
     }

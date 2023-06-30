@@ -13,7 +13,7 @@ scope Marth {
 		constant NORMAL(0xAC100000)
 		constant DAMAGE(0xAC100001)
 	}
-	
+
     DOWN_BOUNCE:
 	dw EYES.DAMAGE; dw MOUTH.DAMAGE;
 	Moveset.GO_TO(Moveset.shared.DOWN_BOUNCE)

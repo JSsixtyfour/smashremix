@@ -111,30 +111,22 @@ scope Shield {
         lbu     t2, 0x0000(t2)              // t2 = teams
         beqz    t2, _cpu                    // if (!teams), skip
         nop
+        li      t8, table_team
+        b       _get_from_table             // ~
         lbu     t1, 0x000C(t0)              // t1 = team
-
-        // team 0 = red, team 1 = blue, team 2 green
-        // green is in not in table[2], it's in table[3]
-        // 0 = 0b00, 1 = 0b01, 2 = 0b10
-        // *shift team right 1*
-        // (0 >> 1) = 0b00, (1 >> 1) = 0b00, (2 >> 1) = 0b01
-        // so t1 + (t1 >> 1) = team color
-
-        srl     t2, t1, 0x0001              // t2 = (t1 >> 1)
-        add     t1, t1, t2                  // t2 = correct team color
-        b       _human_or_team              // ~
-        nop
 
         _cpu:
         lbu     t0, 0x0023(t0)              // t6 = type (player = 0, cpu = 1)
-        bne     t0, r0, _return             // branch to human/cpu
+        bnez    t0, _return                 // if cpu, use cpu color
         ori     t8, r0, 0x00C0              // cpu shield = 0x000000C0
 
-        _human_or_team:
+        _human:
+        li      t8, table_ffa               // ~
+
+        _get_from_table:
         sll     t1, t1, 0x0002              // ~
-        li      t8, table_default           // ~
         add     t8, t8, t1                  // ~
-        lw      t8, 0x0000(t8)              // t8 = table_default[player_or_team]
+        lw      t8, 0x0000(t8)              // t8 = table[player_or_team]
 
         _return:
         lw      t0, 0x0004(sp)              // ~
@@ -144,11 +136,16 @@ scope Shield {
         j       _color_fix_return           // return
         ori     t8, t8, 0x00C0              // set alpha channel
 
-        table_default:
+        table_ffa:
         dw (0xFFFFFF00 & Color.high.RED)    // p1
         dw (0xFFFFFF00 & Color.high.BLUE)   // p2
         dw (0xFFFFFF00 & Color.high.YELLOW) // p3
         dw (0xFFFFFF00 & Color.high.GREEN)  // p4
+
+        table_team:
+        dw (0xFFFFFF00 & Color.high.RED)    // red
+        dw (0xFFFFFF00 & Color.high.BLUE)   // blue
+        dw (0xFFFFFF00 & Color.high.GREEN)  // green
 
         table_custom:
         dw 0                                // Default

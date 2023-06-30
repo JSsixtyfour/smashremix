@@ -19,11 +19,12 @@ scope SRAM {
     //  - A new MIDI is added
     //  - A new toggle is added
     //  - The order of the toggles is changed
-    constant REVISION(0x008B)
+    constant REVISION(0x009E)
 
     // @ Description
     // Struct that holds information for a block of save data.
     macro block(size) {
+        print "\nBlocking SRAM - size: 0x"; OS.print_hex({size}); print "\n"
         dw SRAM.address
         dw pc() + 8
         dw {size}

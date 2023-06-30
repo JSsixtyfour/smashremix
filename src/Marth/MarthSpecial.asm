@@ -918,6 +918,10 @@ scope MarthDSP {
         addiu   sp, sp,-0x0020              // allocate stack space
         sw      ra, 0x001C(sp)              // ~
         sw      a0, 0x0020(sp)              // store a0, ra
+        
+        jal     PokemonAnnouncer.counter_announcement_
+        nop
+        
         lli     a1, Marth.Action.DSP_Ground_Attack // a1(action id) = DSP_Ground_Attack
         or      a2, r0, r0                  // a2(starting frame) = 0
         lui     a3, 0x3F80                  // a3(frame speed multiplier) = 1.0
@@ -937,6 +941,10 @@ scope MarthDSP {
         addiu   sp, sp,-0x0020              // allocate stack space
         sw      ra, 0x001C(sp)              // ~
         sw      a0, 0x0020(sp)              // store a0, ra
+        
+        jal     PokemonAnnouncer.counter_announcement_
+        nop
+        
         lli     a1, Marth.Action.DSP_Air_Attack // a1(action id) = DSP_Air_Attack
         or      a2, r0, r0                  // a2(starting frame) = 0
         lui     a3, 0x3F80                  // a3(frame speed multiplier) = 1.0

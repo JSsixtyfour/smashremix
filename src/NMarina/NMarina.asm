@@ -398,11 +398,6 @@ scope NMarina {
     dw      0x800D7DEC                      // use samus jump
     OS.patch_end()
 
-    // Set Kirby hat_id
-    Character.table_patch_start(kirby_inhale_struct, 0x2, Character.id.NMARINA, 0xC)
-    dh 0x08
-    OS.patch_end()
-
     // Remove grounded script.
     Character.table_patch_start(grounded_script, Character.id.NMARINA, 0x4)
     dw Character.grounded_script.DISABLED   // skips grounded script

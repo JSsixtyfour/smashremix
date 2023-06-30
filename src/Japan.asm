@@ -20,21 +20,30 @@ scope Japan {
     // The hitlag percentage is identical for the American and Japanese versions, it is present at 
     // 8012FF50. However, the calculation changes very slightly in a way that increases hitlag in the
     // US Version, thus allowing for greater DI
-    scope japanese_hitlag_: {
+    scope hitlag_: {
         OS.patch_start(0x000659D0, 0x800EA1D0)
-        j       japanese_hitlag_
+        j       hitlag_
         nop
-        japanese_hitlag_end_:
+        hitlag_end_:
         OS.patch_end()
         
         
-        lui     at, 0x40A0                  // original line 1
-        mtc1    at, f16                     // original line 2
-        Toggles.single_player_guard(Toggles.entry_japanese_hitlag, japanese_hitlag_end_)
-        lui     at, 0x4080                  // Japanese style, this adds less to the hitlag calculation thus decreasing hitlag
-        mtc1    at, f16                     // original line 2
+        lui     at, 0x40A0                  // original line 1 (5 fp)
+        mtc1    at, f16                     // original line 2, move to floating point register (f16)
+        Toggles.single_player_guard(Toggles.entry_hitlag, hitlag_end_)
+        li      at, Toggles.entry_hitlag       // ~
+        lw      at, 0x0004(at)              // at = 2 if melee mode
         
-        j      japanese_hitlag_end_          // return
+        addiu   t7, r0, 0x0002
+        beql    at, t7, _end
+        lui     at, 0x4040                  // Melee style (3 fp), this adds less to the hitlag calculation thus decreasing hitlag
+        
+        lui     at, 0x4080                  // Japanese style (4 fp), this adds less to the hitlag calculation thus decreasing hitlag
+        
+        _end:
+        mtc1    at, f16                     // original line 2, move to floating point register (f16)
+        
+        j      hitlag_end_         // return
         nop
     }
     

@@ -620,10 +620,10 @@ scope Spawn {
     float32  0000,  0000
 
     // 29 - DEKU TREE
-    float32 -1400,  0910
-    float32  1400,  0910
-    float32  0000,  1545
-    float32  0000,  0005
+    dw 0xC4142124, 0x42F28475
+    dw 0x44876690, 0xC30E8E34
+    dw 0xC5057791, 0x44B10000
+    dw 0x4445FBBA, 0x44C3093B
 
     // 2A - FIRST DESTINATION
     float32 -1600,  0018
@@ -680,10 +680,10 @@ scope Spawn {
     float32  1043, -0844
 
     // 33 - Dr. Mario
-    float32 -1637,  1040
-    float32  1661,  1040
-    float32 -1637,  0100
-    float32  1661,  0100
+    float32 -1640,  1040
+    float32  1640,  1040
+    float32 -1640,  0100
+    float32  1640,  0100
 
     // 34 - Cool Cool Mountain
     float32 -1546,  2206
@@ -782,10 +782,10 @@ scope Spawn {
     float32  1010,  0005
 
     // 44 - Peach's Castle II
-    float32 -2758,  0097
-    float32  3423,  0097
-    float32 -1489,  0097
-    float32  1898,  0097
+    float32 -2600,  1080
+    float32  2600,  1080
+    float32 -1545,  0298
+    float32  1545,  0298
 
     // 45 - Delfino
     float32 -0800,  0047
@@ -818,10 +818,10 @@ scope Spawn {
     float32  1426,  3678
 
     // 4A - Zebes Landing
-    float32 -1400,  0910
-    float32  1400,  0910
-    float32  0000,  1545
-    float32  0000,  0005
+    float32 -2654,  0041
+    float32  1124,  0033
+    float32 -2153,  1121
+    float32  -578,  1215
 
     // 4B - Frosty Village
     float32 -2439,  2426
@@ -1398,60 +1398,108 @@ scope Spawn {
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // AB - GLACIAL RIVER REMIX
     float32 -1647,  0130
     float32  1647,  0130
     float32 -0764,  0955
     float32  0764,  0955
-    
+
     // AC - Marina Break the Targets
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // AD - Dragon King Remix
     float32 -0650,  0035
     float32  0650,  0035
     float32 -0450,  0035
     float32  0450,  0035
-    
+
     // AE - Marina Board the Platforms
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // AF - Dedede Break the Targets
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-	
+
     // B0 - Draculas Castle
     float32  -1738, 1413
     float32  -337,  1413
     float32  -3327, 2379
     float32  3062,  1386
-	
+
     // B1 - Reverse Castle
     float32  0159, 3642
     float32  1914, 3449
     float32  -830, 2267
     float32  0962, 1420
-    
+
     // B2 - Dedede Board the Platforms
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // B3 - Mt. Dedede
     float32 -0900,  0380
     float32 -2950,  1720
     float32  0900,  0380
     float32  2950,  1720
+
+    // B4 - Edo Town
+    float32 -1000,  1170
+    float32  1000,  1170
+    float32 -1000,  0330
+    float32  1000,  0330
+
+    // B5 - Deku Tree DL
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32  0000,  1545
+    float32  0000,  0005
+
+    // B6 - Crateria DL
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32  0000,  1545
+    float32  0000,  0005
+
+    // B7 - Goemon Break the Targets
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+
+    // B8 - First Destination Remix
+    float32 -1253,  0945
+    float32  1425,  1304
+    float32  1837,  0031
+    float32  0274,  0003
+
+    // B9 - Goemon Board the Platforms
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+
+    // BA - Twilight City
+    float32 -1460,  0634
+    float32  1460,  0634
+    float32  -2407, 0634
+    float32  2407,  0634
+
+    // BB - Melrode
+    float32 -1767,  0832
+    float32  1767,  0832
+    float32 -0568,  1421
+    float32  0568,  1421
 
     neutral_table:
     // 00 - Peach's Castle
@@ -1705,10 +1753,10 @@ scope Spawn {
     float32  0000,  0000
 
     // 29 - DEKU TREE
-    float32 -1400,  0910
-    float32  1400,  0910
-    float32 -1400,  0005
-    float32  1400,  0005
+    dw 0xC4142124, 0x42F28475
+    dw 0x44876690, 0xC30E8E34
+    dw 0xC5057791, 0x44B10000
+    dw 0x4445FBBA, 0x44C3093B
 
     // 2A - FIRST DESTINATION
     float32 -1600,  0018
@@ -1765,10 +1813,10 @@ scope Spawn {
     float32  1043, -0844
 
     // 33 - Dr. Mario
-    float32 -1637,  1040
-    float32  1661,  1040
-    float32 -1637,  0100
-    float32  1661,  0100
+    float32 -1640,  1040
+    float32  1640,  1040
+    float32 -1640,  0100
+    float32  1640,  0100
 
     // 34 - Cool Cool Mountain
     float32 -1546,  2206
@@ -1867,10 +1915,10 @@ scope Spawn {
     float32  1010,  0005
 
     // 44 - Peach's Castle II
-    float32 -2758,  0097
-    float32  3423,  0097
-    float32 -1489,  0097
-    float32  1898,  0097
+    float32 -2600,  1080
+    float32  2600,  1080
+    float32 -1545,  0298
+    float32  1545,  0298
 
     // 45 - Delfino
     float32 -0800,  0047
@@ -1903,10 +1951,10 @@ scope Spawn {
     float32  1426,  3678
 
     // 4A - Zebes Landing
-    float32 -1400,  0910
-    float32  1400,  0910
-    float32 -1400,  0005
-    float32  1400,  0005
+    float32 -2654,  0041
+    float32  1124,  0033
+    float32 -2153,  1121
+    float32  -578,  1215
 
     // 4B - Frosty Village
     float32 -2439,  2426
@@ -2483,31 +2531,31 @@ scope Spawn {
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // AB - GLACIAL RIVER REMIX
     float32 -1647,  0130
     float32  1647,  0130
     float32 -0764,  0955
     float32  0764,  0955
-    
+
     // AC - Marina Break the Targets
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // AD - Dragon King Remix
     float32 -1740,  1355
     float32  1740,  1355
     float32 -2950,  2425
     float32  2950,  2425
-    
+
     // AE - Marina Board the Platforms
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // AF - Dedede Break the Targets
     float32  0000,  0000
     float32  0000,  0000
@@ -2519,24 +2567,73 @@ scope Spawn {
     float32  -337,  1413
     float32  -3327, 2379
     float32  3062,  1386
-	
+
     // B1 - Reverse Castle
     float32  159, 3642
     float32  1914,  3449
     float32  -830, 2267
     float32  962,  1420
-    
+
     // B2 - Dedede Board the Platforms
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
     float32  0000,  0000
-    
+
     // B3 - Mt. Dedede
     float32 -0900,  0380
     float32 -2950,  1720
     float32  0900,  0380
     float32  2950,  1720
+
+    // B4 - Edo Town
+    float32 -1000,  1170
+    float32  1000,  1170
+    float32 -1000,  0330
+    float32  1000,  0330
+
+    // B5 - Deku Tree DL
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32  0000,  1545
+    float32  0000,  0005
+
+    // B6 - Crateria DL
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32  0000,  1545
+    float32  0000,  0005
+
+    // B7 - BTT_GOEMON
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+
+    // B8 - First Destination Remix
+    float32 -1253,  0945
+    float32  1425,  1304
+    float32  1837,  0031
+    float32  0274,  0003
+
+    // B9 - Goemon Board the Platforms
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+
+    // BA - Twilight City
+    float32 -1460,  0634
+    float32  1460,  0634
+    float32  -2407, 0634
+    float32  2407,  0634
+
+    // BB - Melrode
+    float32 -1767,  0832
+    float32  1767,  0832
+    float32 -0568,  1421
+    float32  0568,  1421
+
 }
 
 } // __SPAWN__

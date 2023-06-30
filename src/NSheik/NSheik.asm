@@ -29,6 +29,8 @@ scope NSheik {
         constant DSP_RECOIL(0xF3)
 
     }
+    
+    insert CSS,"moveset/VICTORY_3.bin"
 
     // Modify Action Parameters             // Action                       // Animation                        // Moveset Data             // Flags
 Character.edit_action_parameters(NSHEIK, Action.DeadU,                   File.SHEIK_TUMBLE,                  -1,                         -1)
@@ -229,10 +231,10 @@ Character.edit_action_parameters(NSHEIK, Action.LandingAirX,             File.SH
     // Modify Menu Action Parameters             // Action      // Animation                // Moveset Data             // Flags
 
     Character.edit_menu_action_parameters(NSHEIK, 0x0,           File.SHEIK_IDLE,            -1,                         -1)
-    Character.edit_menu_action_parameters(NSHEIK, 0x1,           File.SHEIK_VICTORY_1,       Sheik.CSS,                        -1)
-    Character.edit_menu_action_parameters(NSHEIK, 0x2,           File.SHEIK_VICTORY_1,       Sheik.VICTORY_1,                  -1)
-    Character.edit_menu_action_parameters(NSHEIK, 0x3,           File.SHEIK_VICTORY_2,       Sheik.VICTORY_2,                  -1)
-    Character.edit_menu_action_parameters(NSHEIK, 0x4,           File.SHEIK_VICTORY_3,       Sheik.VICTORY_3,                  -1)
+    Character.edit_menu_action_parameters(NSHEIK, 0x1,           File.SHEIK_VICTORY_3,       CSS,                        -1)
+    Character.edit_menu_action_parameters(NSHEIK, 0x2,           File.SHEIK_VICTORY_1,       0x80000000,                 -1)
+    Character.edit_menu_action_parameters(NSHEIK, 0x3,           File.SHEIK_VICTORY_2,       0x80000000,                 -1)
+    Character.edit_menu_action_parameters(NSHEIK, 0x4,           File.SHEIK_VICTORY_3,       CSS,                        -1)
     Character.edit_menu_action_parameters(NSHEIK, 0x5,           File.SHEIK_CLAP,            -1,                         -1)
     Character.edit_menu_action_parameters(NSHEIK, 0xD,           File.SHEIK_1P,              Sheik.ONEP,                       -1)
     Character.edit_menu_action_parameters(NSHEIK, 0xE,           File.SHEIK_1P_CPU,          Sheik.CPU,                        -1)
@@ -279,16 +281,6 @@ Character.edit_action_parameters(NSHEIK, Action.LandingAirX,             File.SH
     dw      SheikNSP.air_begin_initial_
     OS.patch_end()
 
-    // Set crowd chant FGM.
-    Character.table_patch_start(crowd_chant_fgm, Character.id.NSHEIK, 0x2)
-    dh  0x2B7
-    OS.patch_end()
-
-    // Set Kirby hat_id
-    Character.table_patch_start(kirby_inhale_struct, 0x2, Character.id.NSHEIK, 0xC)
-    dh 0x08
-    OS.patch_end()
-
     // Set rapid jab begin action.
     Character.table_patch_start(rapid_jab_begin_action, Character.id.NSHEIK, 0x4)
     dw 0x8014F13C
@@ -304,34 +296,16 @@ Character.edit_action_parameters(NSHEIK, Action.LandingAirX,             File.SH
     dw 0x8014F490
     OS.patch_end()
 
-    // Patches for full charge Neutral B effect removal.
-    Character.table_patch_start(gfx_routine_end, Character.id.NSHEIK, 0x4)
-    dw      Sheik.charge_gfx_routine_
-    OS.patch_end()
-
     Character.table_patch_start(initial_script, Character.id.NSHEIK, 0x4)
     dw      0x800D7DEC                      // use samus jump
     OS.patch_end()
 
-    // Remove entry script.
-    Character.table_patch_start(entry_script, Character.id.NSHEIK, 0x4)
-    dw 0x8013DD68                           // skips entry script
-    OS.patch_end()
+    // Handles common things for Polygons
+    Character.polygon_setup(NSHEIK, SHEIK)
 
-    // Set default costumes
-    Character.set_default_costumes(Character.id.NSHEIK, 0, 1, 4, 5, 1, 3, 2)
-
-    // Shield colors for costume matching
-    Character.set_costume_shield_colors(NSHEIK, PURPLE, RED, GREEN, BLUE, BLACK, WHITE, NA, NA)
-
-    // Set CPU behaviour
-    Character.table_patch_start(ai_behaviour, Character.id.NSHEIK, 0x4)
-    dw      Sheik.CPU_ATTACKS
-    OS.patch_end()
-
-	// Set CPU SD prevent routine
+    // Set CPU SD prevent routine
     Character.table_patch_start(ai_attack_prevent, Character.id.NSHEIK, 0x4)
-    dw    	AI.PREVENT_ATTACK.ROUTINE.NONE
+    dw      AI.PREVENT_ATTACK.ROUTINE.NONE
     OS.patch_end()
 
 }

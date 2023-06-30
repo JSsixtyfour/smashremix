@@ -285,16 +285,6 @@ scope NBowser {
     dw      BowserNSP.air_initial_
     OS.patch_end()
 
-	// Removes Entry Script
-    Character.table_patch_start(entry_script, Character.id.NBOWSER, 0x4)
-    dw 0x8013DD68                           // skips entry script
-    OS.patch_end()
-
-    // Set crowd chant FGM.
-    Character.table_patch_start(crowd_chant_fgm, Character.id.NBOWSER, 0x2)
-    dh  0x0363
-    OS.patch_end()
-
     // Set menu zoom size.
     Character.table_patch_start(menu_zoom, Character.id.NBOWSER, 0x4)
     float32 1.2
@@ -303,11 +293,6 @@ scope NBowser {
 	// Set Kirby star damage
     Character.table_patch_start(kirby_inhale_struct, 0x8, Character.id.NBOWSER, 0xC)
     dw Character.kirby_inhale_struct.star_damage.DK
-    OS.patch_end()
-
-    // Set Kirby hat_id
-    Character.table_patch_start(kirby_inhale_struct, 0x2, Character.id.NBOWSER, 0xC)
-    dh 0x8
     OS.patch_end()
 
 	// Set Yoshi Egg Size override ID, these values are just copied from DK
@@ -340,65 +325,9 @@ scope NBowser {
         j       0x8014EC30                  // return
         sw      t7, 0x0020(sp)              // store action id
     }
-    
-    // @ Description
-    // NBowser's extra actions
-    scope Action {
-        constant Appear1(0x0DC)
-        constant Appear2(0x0DD)
-        constant WhirlingFortress(0x0DE)
-        constant WhirlingFortressAir(0x0DF)
-        constant BowserBomb(0x0E0)
-        constant BowserBombLanding(0x0E1)
-        constant BowserBombAir(0x0E2)
-        constant BowserBombDrop(0x0E3)
-        constant FireBreath(0x0E4)
-        constant BowserForwardThrow1(0x0E5)
-        constant BowserForwardThrow2(0x0E6)
-        constant FireBreathAir(0x0E7)
-        constant BowserForwardThrow3(0x0E8)
-        constant Jab3(0x0E9)
 
-        // strings!
-        string_0x0DE:; String.insert("WhirlingFortress")
-        string_0x0DF:; String.insert("WhirlingFortressAir")
-        string_0x0E0:; String.insert("BowserBomb")
-        string_0x0E1:; String.insert("BowserBombLanding")
-        string_0x0E2:; String.insert("BowserBombAir")
-        string_0x0E3:; String.insert("BowserBombDrop")
-        string_0x0E4:; String.insert("FireBreath")
-        string_0x0E5:; String.insert("BowserForwardThrow1")
-        string_0x0E6:; String.insert("BowserForwardThrow2")
-        string_0x0E7:; String.insert("FireBreathAir")
-        string_0x0E8:; String.insert("BowserForwardThrow3")
-
-        action_string_table:
-        dw Action.COMMON.string_appear1
-        dw Action.COMMON.string_appear2
-        dw string_0x0DE
-        dw string_0x0DF
-        dw string_0x0E0
-        dw string_0x0E1
-        dw string_0x0E2
-        dw string_0x0E3
-        dw string_0x0E4
-        dw string_0x0E5
-        dw string_0x0E6
-        dw string_0x0E7
-        dw string_0x0E8
-        dw Action.COMMON.string_jab3
-    }
-
-    // Set action strings
-    Character.table_patch_start(action_string, Character.id.NBOWSER, 0x4)
-    dw  Action.action_string_table
-    OS.patch_end()
-    
-    // Set default costumes
-    Character.set_default_costumes(Character.id.NBOWSER, 0, 1, 4, 5, 1, 3, 2)
-
-    // Shield colors for costume matching
-    Character.set_costume_shield_colors(NBOWSER, PURPLE, RED, GREEN, BLUE, BLACK, WHITE, NA, NA)
+    // Handles common things for Polygons
+    Character.polygon_setup(NBOWSER, BOWSER)
 
     // Set CPU behaviour
     Character.table_patch_start(ai_behaviour, Character.id.NBOWSER, 0x4)

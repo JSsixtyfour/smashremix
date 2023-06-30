@@ -31,7 +31,6 @@ scope Wolf {
 	insert DOWNATTACKU,"moveset/DOWNATTACKU.bin"
 	insert DOWNATTACKD,"moveset/DOWNATTACKD.bin"
 	insert GRAB,"moveset/GRAB.bin"
-    insert VICTORY,"moveset/VICTORY.bin"
     insert IDLE,"moveset/IDLE.bin"
 	insert DSP_LOOP,"moveset/DSP_LOOP.bin"
     insert TAUNT,"moveset/TAUNT.bin"
@@ -266,7 +265,7 @@ scope Wolf {
     Character.table_patch_start(crowd_chant_fgm, Character.id.WOLF, 0x2)
     dh  0x03C3
     OS.patch_end()
-    
+
     Character.table_patch_start(variant_original, Character.id.NWOLF, 0x4)
     dw      Character.id.WOLF // set Wolf as original character (not Fox, who NWOLF is a clone of)
     OS.patch_end()
@@ -385,16 +384,16 @@ scope Wolf {
     Character.table_patch_start(ai_behaviour, Character.id.WOLF, 0x4)
     dw      CPU_ATTACKS
     OS.patch_end()
-	
-	// Set CPU SD prevent routine
+
+    // Set CPU SD prevent routine
     Character.table_patch_start(ai_attack_prevent, Character.id.WOLF, 0x4)
-    dw    	AI.PREVENT_ATTACK.ROUTINE.WOLF_USP
+    dw    	AI.PREVENT_ATTACK.ROUTINE.USP
     OS.patch_end()
 
     // Edit cpu attack behaviours
     // edit_attack_behavior(table, attack, override, start_hb, end_hb, min_x, max_x, min_y, max_y)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPG,   -1,  19,  27,  1100, 1500, 900, 1000) // todo: confirm coords
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPA,   -1,  19,  27,  1100, 1500, 900, 1000) // todo: confirm coords
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPG,   -1,  0,  27,  1100, 1500, 900, 1000) // removed to prevent SD in 1P
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPA,   -1,  0,  27,  1100, 1500, 900, 1000) // removed to prevent SD in 1P
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPG,   -1,  -1,  -1,  -1, -1, -1, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPA,   -1,  -1,  -1,  -1, -1, -1, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPG,   -1,  -1,  -1,  -1, -1, -1, -1)
@@ -412,8 +411,9 @@ scope Wolf {
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DAIR,   -1,  7,   18,  -1, -1, -1, -1) // todo: coords
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, BAIR,   -1,  9,   18,  -1, -1, -1, -1) // shared with fair. todo: coords
 
-	// @ Description
+    // @ Description
     // This adds a check to the reflection routine that looks to see if wolf is reflecting, if so it doubles speed
+    // for slippy, speed is set to 0.4
     scope wolf_reflect_speed: {
         OS.patch_start(0xE181C, 0x80166DDC)
         j       wolf_reflect_speed
@@ -430,16 +430,20 @@ scope Wolf {
         lw      t0, 0x0008(v1)              // t0 = projectile owner object struct
         lw      t0, 0x0084(t0)              // t0 = projectile owner player struct
 
-		lw		t0, 0x0008(t0)				// load player id from reflecting player's player struct
+        lw        t0, 0x0008(t0)                // load player id from reflecting player's player struct
 
-		lli     t1, Character.id.WOLF       // t1 = id.WOLF
+        lli     t1, Character.id.SLIPPY     // t1 = id.SLIPPY
+        beql    t0, t1, _multipier          // if Slippy Toad, branch
+        lui     at, 0x3ED0                  // load multiplier 0.4
+        lli     t1, Character.id.WOLF       // t1 = id.WOLF
         bne     t0, t1, _end                // if not Wolf, skip
         nop
 
+        lui     at, 0x4000                  // load multiplier 2.0
+        _multipier:
         lwc1    f2, 0x0020(v1)              // load reflecting projectiles horizontal speed
-        lui     at, 0x4000                  // load number 2.0
         mtc1    at, f4                      // move to floating point
-        mul.s   f2, f2, f4                  // multiply current projectile speed by 2
+        mul.s   f2, f2, f4                  // multiply current projectile speed
         swc1    f2, 0x0020(v1)              // save product to active projectile horizontal speed
 
         _end:
@@ -468,12 +472,21 @@ scope Wolf {
         beq     t6, t0, _wolf               // if Wolf, jump
         nop
 
+        lli     t0, Character.id.SLIPPY       // t1 = id.SLIPPY
+        beq     t6, t0, _slippy               // if Slippy, jump
+        nop
+
 		li		a0, 0x8012E0EC				// modified original line 2
 		beq		r0, r0, _end
 		nop
 
+        _slippy:
+        li      a0, slippy_reflect_graphic_struct
+        b       _end
+        nop
+
 		_wolf:
-		li		a0, reflect_graphic_struct
+		li		a0, wolf_reflect_graphic_struct
 
         _end:
         jal		0x800FDB1C					// original line 1
@@ -484,11 +497,11 @@ scope Wolf {
 
 	// this struct needs updated whenever Reflector File updated
 	OS.align(16)
-	reflect_graphic_struct:
+	wolf_reflect_graphic_struct:
     dw  0x060F0000
     dw  Character.WOLF_file_7_ptr
     OS.copy_segment(0xA98F4, 0x8)
-	dw	reflector_graphic_routine
+	dw	wolf_reflector_graphic_routine
 	dw	0x80014038
 	dw	0x00000288
 	dw	0x00000000
@@ -497,30 +510,70 @@ scope Wolf {
 
 	// below is another hardcoding relevant to the the looping of the reflector. This required just making a new subroutine and routine to be placed in the struct above
 
-	reflector_graphic_routine:
+	wolf_reflector_graphic_routine:
 	OS.copy_segment(0x7C6D0, 0x70)
-	jal	reflector_graphic_subroutine
+	jal	wolf_reflector_graphic_subroutine
 	sw	a2, 0x0024(sp)
 	OS.copy_segment(0x7C748, 0x34)
-	jal	reflector_graphic_subroutine
+	jal	wolf_reflector_graphic_subroutine
 	sw	a2, 0x0024(sp)
 	OS.copy_segment(0x7C784, 0x20)
 
-	reflector_graphic_subroutine:
+	wolf_reflector_graphic_subroutine:
     OS.copy_segment(0x7C684, 0x10)
 	sw	a1, 0x0018(v0)
-	li	t7, reflector_struct
+	li	t7, wolf_reflector_struct
 	addu t7, t7, t6
 	lw t7, 0x0000(t7)
 	li	t8, Character.WOLF_file_7_ptr
 	lw	t8, 0x0000(t8)
 	OS.copy_segment(0x7C6AC, 0x28)
 
-	reflector_struct:
+	wolf_reflector_struct:
 	dw	0x0000041C
 	dw	0x000004C4
 	dw	0x000005E8
 	dw	0x000006FC
+
+    // Slippy
+    // this struct needs updated whenever Reflector File updated
+    OS.align(16)
+    slippy_reflect_graphic_struct:
+    dw  0x060F0000
+    dw  Character.SLIPPY_file_7_ptr
+    OS.copy_segment(0xA98F4, 0x8)
+    dw  slippy_reflector_graphic_routine
+    dw  0x80014038
+    dw  0x000002B0
+    dw  0x00000000
+    dw  0x00000340
+    dw  0x00000000
+
+    // below is another hardcoding relevant to the the looping of the reflector. This required just making a new subroutine and routine to be placed in the struct above
+    slippy_reflector_graphic_routine:
+    OS.copy_segment(0x7C6D0, 0x70)
+    jal     slippy_reflector_graphic_subroutine
+    sw      a2, 0x0024(sp)
+    OS.copy_segment(0x7C748, 0x34)
+    jal     slippy_reflector_graphic_subroutine
+    sw      a2, 0x0024(sp)
+    OS.copy_segment(0x7C784, 0x20)
+
+    slippy_reflector_graphic_subroutine:
+    OS.copy_segment(0x7C684, 0x10)
+    sw      a1, 0x0018(v0)
+    li      t7, slippy_reflector_struct
+    addu    t7, t7, t6
+    lw      t7, 0x0000(t7)
+    li      t8, Character.SLIPPY_file_7_ptr
+    lw      t8, 0x0000(t8)
+    OS.copy_segment(0x7C6AC, 0x28)
+
+    slippy_reflector_struct:
+    dw  0x00000320
+    dw  0x000004C0
+    dw  0x000003A0
+    dw  0x00000430
 
 	// @ Description
     // This adds a check to Fox's Arwing entry subroutine that looks to see if wolf is entering, if so it changes hardcoding to his Wolfen
@@ -603,6 +656,9 @@ scope Wolf {
 		lli     t8, Character.id.WOLF       // t1 = id.WOLF
         beq     t0, t8, _wolf               // if Wolf, jump
         nop
+		lli     t8, Character.id.SLIPPY       // t1 = id.SLIPPY
+        beq     t0, t8, _slippy               // if SLIPPY, jump
+        nop
 
 
 		bne		t7, at, _branch_1			// original line 2 modified
@@ -617,6 +673,20 @@ scope Wolf {
 		j		0x801038B8
 		nop
 
+
+        _slippy:
+        li      t0, Character.SLIPPY_file_7_ptr
+        bne     t7, at, _slippy_branch_2
+        lw      t0, 0x0000(t0)
+        li      t8, Character.SLIPPY_file_7_ptr
+        li      t9, 0x000009E0              // Needs updated when Reflector Updated
+        j       _return
+        lw      t8, 0x0000(t8)
+
+        _slippy_branch_2:
+        lui     t1, 0x0000
+        j       0x801038C4
+        addiu   t1, t1, 0x0590              // Needs updated when Reflector Updated
 
 		_wolf:
 		li		t0, Character.WOLF_file_7_ptr

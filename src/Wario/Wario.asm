@@ -226,11 +226,11 @@ scope Wario {
     db      Character.id.NONE
     db      Character.id.NONE
     OS.patch_end()
-    
+
     Character.table_patch_start(variant_original, Character.id.NWARIO, 0x4)
     dw      Character.id.WARIO // set Wario as original character (not Mario, who NWARIO is a clone of)
     OS.patch_end()
-    
+
     // Set crowd chant FGM.
     Character.table_patch_start(crowd_chant_fgm, Character.id.WARIO, 0x2)
     dh 0x303
@@ -256,7 +256,7 @@ scope Wario {
     Character.table_patch_start(ai_behaviour, Character.id.WARIO, 0x4)
     dw      CPU_ATTACKS
     OS.patch_end()
-	
+
 	// Set CPU NSP long range behaviour
     Character.table_patch_start(ai_long_range, Character.id.WARIO, 0x4)
     dw    	AI.LONG_RANGE.ROUTINE.NONE
@@ -657,7 +657,7 @@ scope Wario {
         sw      ra, 0x0014(sp)              // original line 2
         j       _return                     // return (and continue subroutine)
         nop
-        
+
         _marina:
         lli     a3, Action.ThrowF           // a3 = ThrowF
         lw      t7, 0x0024(a2)              // t7 = grabbing player action

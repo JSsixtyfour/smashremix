@@ -9,6 +9,15 @@ print "included GFX.asm\n"
 include "OS.asm"
 
 scope GFX {
+
+    scope TEXTURE {
+        constant FOOTSTEP_SMOKE(0x11)
+        constant JUMP_SMOKE(0x13)
+        constant JUMP_SKID(0x15)
+        constant WHITE_SPARK(0x31)
+        constant SHOCK_WAVE(0x33)
+    }
+
     variable new_gfx_count(0)                            // Number of new graphics effects added
     variable new_gfx_texture_block_count(0)              // Number of new gfx texture blocks added
     variable current_gfx_texture_count(0)                // Number of gfx textures in the current gfx texture block
@@ -380,6 +389,7 @@ scope GFX {
 	    constant WHITE_SPARK(0x1F)
 	    constant WHITE_SPARKLE(0x29)
 	    constant NOTE(0x5A)
+	    constant PINK_BLAST(0x62)
 	}
 
     // ADD NEW GFX TEXTURES HERE
@@ -431,6 +441,10 @@ scope GFX {
     add_gfx_texture(gfx/mewtwo-jab-3.ia8)
     add_gfx_texture(gfx/mewtwo-jab-4.ia8)
     add_gfx_texture(gfx/mewtwo-jab-5.ia8)
+    
+    add_gfx_texture_block(Orange_Blast, 1, 2, 0, 0x10, 0x8)
+    add_gfx_texture(gfx/orange_blast.rgba5551)
+    add_gfx_texture(gfx/orange_blast_palette.rgba5551)      // I don't see any other way to add a palette
 
     // ADD NEW GFX HERE
     add_gfx(Blue Explosion, gfx/blue_explosion_instructions.bin, id.EXPLOSION)
@@ -456,6 +470,8 @@ scope GFX {
     add_gfx(Mewtwo Jab, gfx/mewtwo_jab_instructions.bin, id.WHITE_SPARKLE)
     add_gfx(Pink Smoke Puff, gfx/pink_smoke_puff_instructions.bin, id.SMOKE_PUFF)
     add_gfx(White Smoke, gfx/white_smoke_instructions.bin, id.SMOKE_PUFF)
+    add_gfx(Orange Spark, gfx/orange_spark_instructions.bin, id.WHITE_SPARK)
+    add_gfx(Orange Blast, gfx/orange_blast_instructions.bin, id.PINK_BLAST)
 
     // writes new GFX to ROM
     write_gfx()

@@ -105,7 +105,14 @@ scope Falco {
     Character.edit_menu_action_parameters(FALCO, 0x4,               File.FALCO_SELECT,          VICTORY_POSE_2,             -1)
     Character.edit_menu_action_parameters(FALCO, 0x5,               File.FALCO_CLAP,            CLAP,                       -1)
     Character.edit_menu_action_parameters(FALCO, 0xD,               File.FALCO_POSE_1P,         POSE_1P,                    -1)
-    Character.edit_menu_action_parameters(FALCO, 0xE,               File.FALCO_1P_CPU_POSE,         POSE_1P,                    -1)
+    Character.edit_menu_action_parameters(FALCO, 0xE,               File.FALCO_CPU_POSE,        POSE_1P,                    -1)
+
+    Character.table_patch_start(variants, Character.id.FALCO, 0x4)
+    db      Character.id.SLIPPY // set Slippy as SPECIAL variant for FALCO
+    db      Character.id.NFALCO // set as POLYGON variant for FALCO
+    db      Character.id.NONE
+    db      Character.id.NONE
+    OS.patch_end()
 
     // Set menu zoom size.
     Character.table_patch_start(menu_zoom, Character.id.FALCO, 0x4)
@@ -132,12 +139,12 @@ scope Falco {
     Character.table_patch_start(ai_behaviour, Character.id.FALCO, 0x4)
     dw      CPU_ATTACKS
     OS.patch_end()
-	
+
 	// Set CPU SD prevent routine
     Character.table_patch_start(ai_attack_prevent, Character.id.FALCO, 0x4)
     dw    	AI.PREVENT_ATTACK.ROUTINE.FALCO_NSP
     OS.patch_end()
-	
+
 	// Set CPU NSP long range behaviour
     Character.table_patch_start(ai_long_range, Character.id.FALCO, 0x4)
     dw    	AI.LONG_RANGE.ROUTINE.NONE
@@ -272,8 +279,14 @@ scope Falco {
         lw      v0, 0x0084(a0)              // v0 = player struct, (original line 1 )
         lw      t6, 0x0008(v0)              // t6 = character id
         ori     t0, r0, Character.id.FALCO  // t0 = FALCO
-        beq     t0, t6, _end                // branch if chracter = FALCO
+        beql    t0, t6, _end                // branch if chracter = FALCO
         addiu   t6, r0, 0x0016              // up special delay = 0x16
+        ori     t0, r0, Character.id.SLIPPY // t0 = SLIPPY
+        beql    t0, t6, _end                // branch if chracter = SLIPPY
+        addiu   t6, r0, 12                  // up special delay = 12
+        ori     t0, r0, Character.id.PEPPY  // t0 = PEPPY
+        beql    t0, t6, _end                // branch if chracter = PEPPY
+        addiu   t6, r0, 43                  // up special delay = 43
 
         addiu   t6, r0, 0x0023              // up special delay = 0x23 (original line 2)
         _end:
@@ -298,8 +311,11 @@ scope Falco {
         sw      t1, 0x0008(sp)              // store t0, t1
         lw      t0, 0x0008(s0)              // t0 = character id
         ori     t1, r0, Character.id.FALCO  // t1 = FALCO
-        beq     t0, t1, _end                // branch if character = FALCO
+        beql    t0, t1, _end                // branch if character = FALCO
         lui     at, 0x42C4                  // up special velocity = 0x42C40000
+        ori     t1, r0, Character.id.PEPPY  // t1 = PEPPY
+        beql    t0, t1, _end                // branch if character = PEPPY
+        lui     at, 0x4308                  // up special velocity = 0x43080000
 
         lui     at, 0x42E6                  // up special velocity = 0x42E60000 (original line 1)
         _end:
@@ -326,8 +342,11 @@ scope Falco {
         sw      t1, 0x0008(sp)              // store t0, t1
         lw      t0, 0x0008(s0)              // t0 = character id
         ori     t1, r0, Character.id.FALCO  // t1 = FALCO
-        beq     t0, t1, _end                // branch if character = FALCO
+        beql    t0, t1, _end                // branch if character = FALCO
         lui     at, 0x42C4                  // up special velocity = 0x42C40000
+        ori     t1, r0, Character.id.PEPPY  // t1 = PEPPY
+        beql    t0, t1, _end                // branch if character = PEPPY
+        lui     at, 0x4308                  // up special velocity = 0x43080000
 
         lui     at, 0x42E6                  // up special velocity = 0x42E60000 (original line 1)
         _end:
@@ -354,7 +373,7 @@ scope Falco {
         sw      t1, 0x0008(sp)              // store t0, t1
         lw      t0, 0x0008(s0)              // t0 = character id
         ori     t1, r0, Character.id.FALCO  // t1 = FALCO
-        beq     t0, t1, _end                // branch if character = FALCO
+        beql    t0, t1, _end                // branch if character = FALCO
         lui     at, 0x42C4                  // up special velocity = 0x42C40000
 
         lui     at, 0x42E6                  // up special velocity = 0x42E60000 (original line 1)

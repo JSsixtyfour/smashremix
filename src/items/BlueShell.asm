@@ -1141,8 +1141,6 @@ scope custom_smoke_: {
 scope hit_gfx_: {
     addiu    sp, sp, -0x30              // allocate sp
     sw       ra, 0x0014(sp)             // store registers
-
-    or        a2, r0, v1                // a2 = v1
     or        a0, r0, a1                // a0 = a1
 
     lw       v0, 0x0084(a0)
@@ -1176,9 +1174,8 @@ scope hit_gfx_: {
     _end:
     sb          t1, 0x0351(v0)
     lw          ra, 0x0014(sp)
-    addiu       sp, sp, 0x30
     jr          ra
-    nop
+    addiu       sp, sp, 0x30
 }
 
 // @ Description

@@ -195,6 +195,8 @@ scope NessShared {
     scope up_special_landing_fsm_: {
         constant LANDING_FSM_JNESS(0x3E75C28F) // float: 0.24
         constant LANDING_FSM_LUCAS(0x3E99999A) // float: 0.3
+        constant AIR_SPEED_MULTIPLIER_NESS(0x3F19999A) // float: 0.600000023842
+        constant AIR_SPEED_MULTIPLIER_LUCAS(0x3F52) // float: 0.8203125
 
         OS.patch_start(0xCEE54, 0x80154414)
         j       up_special_landing_fsm_
@@ -209,7 +211,7 @@ scope NessShared {
         beq     t6, t7, _end                // branch if character id = JNESS
         ori     t7, r0, Character.id.LUCAS  // t7 = id.LUCAS
         li      t8, LANDING_FSM_LUCAS       // t8 = LANDING_FSM_LUCAS
-        beq     t6, t7, _end                // branch if character id = LUCAS
+        beq     t6, t7, _lucas              // branch if character id = LUCAS
         nop
 
         // load default landing FSM when no variant is detected
@@ -218,6 +220,12 @@ scope NessShared {
         _end:
         j       _return                     // return
         mtc1    t8, f8                      // f8 = landing fsm
+        
+        _lucas:
+        lui     a1, AIR_SPEED_MULTIPLIER_LUCAS
+        j       _return                     // return
+        mtc1    t8, f8                      // f8 = landing fsm
+        
     }
 
     // Changes the speed of JNess Projectile to match that of the Japanese Version

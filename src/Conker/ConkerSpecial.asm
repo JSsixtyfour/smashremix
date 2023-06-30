@@ -991,6 +991,7 @@ scope ConkerDSP {
         addiu   sp, sp, -0x0028
         sw      ra, 0x001c(sp)
         lw      v0, 0x0084(a0)
+        sw      r0, 0x017C(v0)          // clear temp variable 1
         addiu   t7, r0, 0x0014
         sw      t7, 0x0B20(v0)          // save 14 to free space in character struct, this is used as a power level of throw
         sw      r0, 0x0B28(v0)
@@ -1035,6 +1036,7 @@ scope ConkerDSP {
         addiu   sp, sp, -0x0028
         sw      ra, 0x001c(sp)
         lw      v0, 0x0084(a0)
+        sw      r0, 0x017C(v0)          // clear temp variable 1
         addiu   t7, r0, 0x0014
         sw      t7, 0x0B20(v0)          // save 14 to free space in character struct, this is used as a power level of throw
         sw      r0, 0x0B28(v0)

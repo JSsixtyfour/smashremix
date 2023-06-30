@@ -401,6 +401,11 @@ scope Piano {
     dw  0x43750000
     OS.patch_end()
 
+    // Set CPU SD prevent routine
+    Character.table_patch_start(ai_attack_prevent, Character.id.PIANO, 0x4)
+    dw    	AI.PREVENT_ATTACK.ROUTINE.USP   // skip usp if unsafe
+    OS.patch_end()
+
     // Set CPU behaviour
     Character.table_patch_start(ai_behaviour, Character.id.PIANO, 0x4)
     dw      CPU_ATTACKS

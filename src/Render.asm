@@ -1320,6 +1320,7 @@ scope Render {
         dh 0x0000
         dh 0x0012                           // signifies end of model part array
 
+        OS.align(8)
         vertex_data:
         dw 0x00C8FF38, 0x00000000, 0x04000400, 0xFFFFFF00
         dw 0xFF38FF38, 0x00000000, 0x00000400, 0xFFFFFF00

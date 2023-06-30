@@ -202,26 +202,6 @@ scope NSonic {
     Character.table_patch_start(menu_zoom, Character.id.NSONIC, 0x4)
     float32 0.95
     OS.patch_end()
-    
-    Character.table_patch_start(variant_original, Character.id.NSONIC, 0x4)
-    dw      Character.id.SONIC // set Sonic as original character (not Fox, who NSONIC is a clone of)
-    OS.patch_end()
-
-    // Set crowd chant FGM.
-    Character.table_patch_start(crowd_chant_fgm, Character.id.NSONIC, 0x2)
-    dh  0x02B7
-    OS.patch_end()
-
-    // Set Kirby hat_id
-    Character.table_patch_start(kirby_inhale_struct, 0x2, Character.id.NSONIC, 0xC)
-    dh 0x08
-    OS.patch_end()
-
-    // Set default costumes
-    Character.set_default_costumes(Character.id.NSONIC, 0, 1, 4, 5, 1, 3, 2)
-
-    // Set default costume shield colors
-    Character.set_costume_shield_colors(NSONIC, PURPLE, RED, GREEN, BLUE, BLACK, WHITE, NA, NA)
 
     Character.table_patch_start(ground_usp, Character.id.NSONIC, 0x4)
     dw      SonicUSP.ground_initial_
@@ -257,10 +237,8 @@ scope NSonic {
     dw      Sonic.CPU_ATTACKS
     OS.patch_end()
 
-    // Remove entry script.
-    Character.table_patch_start(entry_script, Character.id.NSONIC, 0x4)
-    dw 0x8013DD68                           // skips entry script
-    OS.patch_end()
+    // Handles common things for Polygons
+    Character.polygon_setup(NSONIC, SONIC)
 
     // Set action strings
     Character.table_patch_start(action_string, Character.id.NSONIC, 0x4)

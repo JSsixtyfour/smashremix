@@ -56,7 +56,10 @@ scope Ganondorf {
 	insert ENTRY_1,"moveset/ENTRY_1.bin"
 	insert ENTRY_2,"moveset/ENTRY_2.bin"
     insert DOWN_STAND,"moveset/DOWN_STAND.bin"
-	
+
+    TEETER:
+    dw FACE.SHOCK; dw 0;
+
 	DOWN_BOUNCE:
 	dw FACE.SHOCK
 	Moveset.GO_TO(Moveset.shared.DOWN_BOUNCE)
@@ -69,6 +72,7 @@ scope Ganondorf {
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(GND,   Action.Idle,            -1,                         IDLE,                       -1)
     Character.edit_action_parameters(GND,   Action.Run,             -1,                         RUN,                        -1)
+    Character.edit_action_parameters(GND,   Action.Teeter,          -1,                         TEETER,                     -1)
     Character.edit_action_parameters(GND,   Action.JumpAerialF,     -1,                         JUMP2,                      -1)
     Character.edit_action_parameters(GND,   Action.JumpAerialB,     -1,                         JUMP2,                      -1)
     Character.edit_action_parameters(GND,   Action.DownBounceD,     -1,                         DOWN_BOUNCE,                -1)
@@ -123,9 +127,16 @@ scope Ganondorf {
     Character.edit_menu_action_parameters(GND,   0x1,               -1,                         VICTORY_POSE_1,             -1)
     Character.edit_menu_action_parameters(GND,   0x2,               File.GND_SELECT,            VICTORY_POSE_2,             -1)
     Character.edit_menu_action_parameters(GND,   0x3,               File.GND_VICTORY1,          VICTORY_POSE_3,             -1)
-    Character.edit_menu_action_parameters(GND,   0x4,               -1,                         VICTORY_POSE_3,             -1)
+    Character.edit_menu_action_parameters(GND,   0x4,               File.GND_VICTORY1,          VICTORY_POSE_3,             -1)
     Character.edit_menu_action_parameters(GND,   0xE,               File.GND_1P_CPU,            ONEP,                       -1)
     Character.edit_menu_action_parameters(GND,   0xD,               File.GND_POSE_1P,           ONEP,                       -1)
+
+    Character.table_patch_start(variants, Character.id.GND, 0x4)
+    db      Character.id.NONE   // set as SPECIAL variant for GND
+    db      Character.id.NGND   // set as POLYGON variant for GND
+    db      Character.id.NONE
+    db      Character.id.NONE
+    OS.patch_end()
 
     // Set menu zoom size.
     Character.table_patch_start(menu_zoom, Character.id.GND, 0x4)

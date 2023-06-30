@@ -2809,20 +2809,44 @@ scope TwelveCharBattle {
         bne     t0, t1, _end                // if screen id != 1p title screen, skip
         nop
 
+        
+        
         // check to see if on team stage of 1p
         lui     t0, 0x8013
         lw      t0, 0x5C28(t0)              // load from current progress of 1p ID
         addiu   t1, r0, 0x0001              // team stage id
+        beq     t0, t1, _team
+        addiu   t1, r0, 0x0004              // duo stage id
         bne     t0, t1, _end
         nop
+
+        _duo:
         // check to see if is the cpu character
-        lbu     t1, 0x001B(s1)              // t1 = 1 if a cpu
-        addiu   t0, r0, 0x0001
-        beq     t1, t0, _end                // if not the first loaded character, continue
+        lbu     t1, 0x001B(s1)              // t1 = 1 if a hmn or ally
+        slti    t1, t1, 0x0003              // t1 = 1 if a hmn or ally
+        bnez    t1, _end                    // if not the first loaded character, continue
+        nop
+        
+        li      t0, SinglePlayerModes.duo_array // t0 = duo_array
+        lw      t1, 0x0008(s1)              // t1 = character_id
+        sll     t2, t1, 0x2                 // ~
+        subu    t2, t2, t1                  // ~
+        sll     t2, t2, 0x2                 // t2 = offset (character_id * 0xC)
+
+        addu    t3, t0, t2                  // t3 = new parameters pointer (defeated_array + offset)
+
+        beq     r0, r0, _end
         nop
 
         // If we reach this point, the character is the cpu on the Remix 1p Title Card, so we should override the action paramters.
-        li      t0, team_array              // t0 = remix_team_array_array
+        _team:
+        // check to see if is the cpu character
+        lbu     t1, 0x001B(s1)              // t1 = 1 if a hmn or ally
+        addiu   t0, r0, 0x0001
+        beq     t1, t0, _end                // if not the first loaded character, continue
+        nop
+        
+        li      t0, SinglePlayerModes.team_array              // t0 = remix_team_array
         lw      t1, 0x0008(s1)              // t1 = character_id
         sll     t2, t1, 0x2                 // ~
         subu    t2, t2, t1                  // ~
@@ -3032,6 +3056,9 @@ scope TwelveCharBattle {
     add_defeat_parameters(0x617,                        defeated_moveset_sheik,     0)          // 0x3E - SHEIK
     add_defeat_parameters(File.MARINA_DOWN_STND_U,      defeated_moveset_marina,    0)          // 0x3F - MARINA
     add_defeat_parameters(0x617,                        defeated_moveset_dedede,    0)          // 0x40 - DEDEDE
+    add_defeat_parameters(0x222,                        defeated_moveset_mario,     0)          // 0x41 - GOEMON
+    add_defeat_parameters(0x2B1,                        defeated_moveset_fox_link,  0)          // 0x42 - PEPPY
+    add_defeat_parameters(0x2B1,                        defeated_moveset_fox_link,  0)          // 0x43 - SLIPPY
     // ADD NEW CHARACTERS HERE
 
     // REMIX POLYGONS
@@ -3043,162 +3070,8 @@ scope TwelveCharBattle {
     add_defeat_parameters(0x2B1,                        defeated_moveset_sonic,     0)          // - NSONIC
     add_defeat_parameters(0x617,                        defeated_moveset_captain,   0)          // - NSHEIK
     add_defeat_parameters(File.MARINA_DOWN_STND_U,      defeated_moveset,           0)          // - NMARINA
-
-    // REMIX 1p
-
-    // @ Description
-    // Adds parameter overrides for CPU Characters on Team Stage of Remix 1p.
-    // @ Arguments
-    // anim - animation id
-    // moveset - pointer to moveset commands
-    // flags - animation flags
-    macro add_team_parameters(anim, moveset, flags) {
-        dw {anim}
-        dw {moveset}
-        dw {flags}
-    }
-
-    // @ Description
-    // Block of moveset commands for defeated characters.
-    // Generic defeated moveset commands.
-    team_moveset:
-    dw 0xD0000000                           // FSM = 0.0
-    dw 0x00000000                           // End
-    // Moveset commands for defeated Mario.
-    team_moveset_mario:
-    dw 0xAC000001                           // Set Texture Form
-    dw 0xD0000000                           // FSM = 0.0
-    dw 0x00000000                           // End
-    // Moveset commands for defeated Fox/Link.
-    team_moveset_fox_link:
-    dw 0xAC000001                           // Set Texture Form
-    dw 0xAC100001                           // Set Texture Form
-    dw 0xD0000000                           // FSM = 0.0
-    dw 0x00000000                           // End
-    // Moveset commands for defeated DK.
-    team_moveset_donkey:
-    dw 0xA0600001                           // Set Model Form
-    dw 0xD0000000                           // FSM = 0.0
-    dw 0x00000000                           // End
-    // Moveset commands for defeated Luigi.
-    team_moveset_luigi:
-    dw 0xAC000002                           // Set Texture Form
-    dw 0xD0000000                           // FSM = 0.0
-    dw 0x00000000                           // End
-    // Moveset commands for defeated Yoshi.
-    team_moveset_yoshi:
-    dw 0xAC000008                           // Set Texture Form
-    dw 0xAC100008                           // Set Texture Form
-    dw 0xD0000000                           // FSM = 0.0
-    dw 0x00000000                           // End
-    // Moveset commands for defeated Captain Falcon.
-    team_moveset_captain:
-    dw 0xAC000006                           // Set Texture Form
-    dw 0xD0000000                           // FSM = 0.0
-    dw 0x00000000                           // End
-    // Moveset commands for defeated Kirby.
-    team_moveset_kirby:
-    dw 0xAC000007                           // Set Texture Form
-    dw 0xD0000000                           // FSM = 0.0
-    dw 0x00000000                           // End
-    // Moveset commands for defeated Pikachu.
-    team_moveset_pikachu:
-    dw 0xAC000006                           // Set Texture Form
-    dw 0xAC100005                           // Set Texture Form
-    dw 0xD0000000                           // FSM = 0.0
-    dw 0x00000000                           // End
-    // Moveset commands for defeated Jigglypuff.
-    team_moveset_jiggly:
-    dw 0xAC000006                           // Set Texture Form
-    dw 0xAC100006                           // Set Texture Form
-    dw 0xD0000000                           // FSM = 0.0
-    dw 0x00000000                           // End
-    // Moveset commands for defeated Ness.
-    team_moveset_ness:
-    dw 0xAC000004                           // Set Texture Form
-    dw 0xD0000000                           // FSM = 0.0
-    dw 0x00000000                           // End
-
-    // @ Description
-    // Array of menu action parameter overrides for defeated characters. Uses DownStandU animation.
-    // Arguments          Animation file ID             Moveset data                Flags
-    team_array:
-    add_team_parameters(0x222,                        team_moveset_mario,     0)          // 0x00 - MARIO
-    add_team_parameters(0x2B1,                        team_moveset_fox_link,  0)          // 0x01 - FOX
-    add_team_parameters(0x34F,                        team_moveset_donkey,    0)          // 0x02 - DONKEY
-    add_team_parameters(0x3E8,                        team_moveset,           0)          // 0x03 - SAMUS
-    add_team_parameters(0x222,                        team_moveset_luigi,     0)          // 0x04 - LUIGI
-    add_team_parameters(0x48A,                        team_moveset_fox_link,  0)          // 0x05 - LINK
-    add_team_parameters(0x745,                        team_moveset_yoshi,     0)          // 0x06 - YOSHI
-    add_team_parameters(0x617,                        team_moveset_captain,   0)          // 0x07 - CAPTAIN
-    add_team_parameters(0x51D,                        team_moveset_kirby,     0)          // 0x08 - KIRBY
-    add_team_parameters(0x80E,                        team_moveset_pikachu,   0)          // 0x09 - PIKACHU
-    add_team_parameters(0x51D,                        team_moveset_jiggly,    0)          // 0x0A - JIGGLY
-    add_team_parameters(0x6AF,                        team_moveset_ness,      0)          // 0x0B - NESS
-    add_team_parameters(0,                            0x80000000,                 0)          // 0x0C - BOSS
-    add_team_parameters(0x222,                        team_moveset,           0)          // 0x0D - METAL
-    add_team_parameters(0x222,                        team_moveset,           0)          // 0x0E - NMARIO
-    add_team_parameters(0x2B1,                        team_moveset,           0)          // 0x0F - NFOX
-    add_team_parameters(0x34F,                        team_moveset,           0)          // 0x10 - NDONKEY
-    add_team_parameters(0x3E8,                        team_moveset,           0)          // 0x11 - NSAMUS
-    add_team_parameters(0x222,                        team_moveset,           0)          // 0x12 - NLUIGI
-    add_team_parameters(0x48A,                        team_moveset,           0)          // 0x13 - NLINK
-    add_team_parameters(0x745,                        team_moveset,           0)          // 0x14 - NYOSHI
-    add_team_parameters(0x617,                        team_moveset,           0)          // 0x15 - NCAPTAIN
-    add_team_parameters(0x51D,                        team_moveset,           0)          // 0x16 - NKIRBY
-    add_team_parameters(0x80E,                        team_moveset,           0)          // 0x17 - NPIKACHU
-    add_team_parameters(0x51D,                        team_moveset,           0)          // 0x18 - NJIGGLY
-    add_team_parameters(0x1BA,                        team_moveset,           0)          // 0x19 - NNESS
-    add_team_parameters(0x34F,                        team_moveset_donkey,    0)          // 0x1A - GDONKEY
-    add_team_parameters(0,                            0x80000000,                 0)          // 0x1B - PLACEHOLDER
-    add_team_parameters(0,                            0x80000000,                 0)          // 0x1C - PLACEHOLDER
-    add_team_parameters(0x17A,                        team_moveset_fox_link,  0)          // 0x1D - FALCO
-    add_team_parameters(File.GND_TEAM_POSE,           0x80000000,             0)          // 0x1E - GND
-    add_team_parameters(File.YLINK_TEAM_POSE,         0x80000000,             0)          // 0x1F - YLINK
-    add_team_parameters(File.DRM_TEAM_POSE,           0x80000000,             0)          // 0x20 - DRM
-    add_team_parameters(File.WARIO_TEAM_POSE,         0x80000000,             0)          // 0x21 - WARIO
-    add_team_parameters(File.DSAMUS_TEAM_POSE,        team_moveset,           0)          // 0x22 - DARK SAMUS
-    add_team_parameters(0x19F,                        team_moveset_fox_link,  0)          // 0x23 - ELINK
-    add_team_parameters(0x192,                        team_moveset,           0)          // 0x24 - JSAMUS
-    add_team_parameters(0x1BA,                        team_moveset_ness,      0)          // 0x25 - JNESS
-    add_team_parameters(File.LUCAS_TEAM_POSE,         0x80000000,             0)          // 0x26 - LUCAS
-    add_team_parameters(0x19F,                        team_moveset_fox_link,  0)          // 0x27 - JLINK
-    add_team_parameters(0x617,                        team_moveset_captain,   0)          // 0x28 - JFALCON
-    add_team_parameters(0x2B1,                        team_moveset_fox_link,  0)          // 0x29 - JFOX
-    add_team_parameters(0x171,                        team_moveset_mario,     0)          // 0x2A - JMARIO
-    add_team_parameters(0x171,                        team_moveset_luigi,     0)          // 0x2B - JLUIGI
-    add_team_parameters(0x34F,                        team_moveset_donkey,    0)          // 0x2C - JDK
-    add_team_parameters(0x80E,                        team_moveset_pikachu,   0)          // 0x2D - EPIKA
-    add_team_parameters(0x51D,                        team_moveset_jiggly,    0)          // 0x2E - JPUFF
-    add_team_parameters(0x51D,                        team_moveset_jiggly,    0)          // 0x2F - EPUFF
-    add_team_parameters(0x51D,                        team_moveset_kirby,     0)          // 0x30 - JKIRBY
-    add_team_parameters(0x745,                        team_moveset_yoshi,     0)          // 0x31 - JYOSHI
-    add_team_parameters(0x80E,                        team_moveset_pikachu,   0)          // 0x32 - JPIKA
-    add_team_parameters(0x192,                        team_moveset,           0)          // 0x33 - ESAMUS
-    add_team_parameters(File.BOWSER_TEAM_POSE,        0x80000000,             0)          // 0x34 - BOWSER
-    add_team_parameters(0x1C9,                        team_moveset_yoshi,     0)          // 0x35 - GBOWSER
-    add_team_parameters(0x171,                        team_moveset_mario,     0)          // 0x36 - PIANO
-    add_team_parameters(File.WOLF_TEAM_POSE,          0x80000000,             0)          // 0x37 - WOLF
-    add_team_parameters(File.CONKER_TEAM_POSE,        0x80000000,             0)          // 0x38 - CONKER
-    add_team_parameters(File.MTWO_TEAM_POSE,          0x80000000,             0)          // 0x39 - MTWO
-    add_team_parameters(File.MARTH_TEAM_POSE,         0x80000000,             0)          // 0x3A - MARTH
-    add_team_parameters(File.SONIC_TEAM_POSE,         0x80000000,             0)          // 0x3B - SONIC
-    add_team_parameters(0x617,                        team_moveset_captain,   0)          // 0x3C - SANDBAG
-    add_team_parameters(File.SONIC_TEAM_POSE,         0x80000000,             0)          // 0x3D - SSONIC
-    add_team_parameters(File.SHEIK_TEAM_POSE,         0x80000000,             0)          // 0x3E - SHEIK
-    add_team_parameters(File.MARINA_TEAM_POSE,        0x80000000,             0)          // 0x3F - MARINA
-    add_team_parameters(File.DEDEDE_TEAM_POSE,        0x80000000,             0)          // 0x40 - DEDEDE
-    // ADD NEW CHARACTERS HERE
-
-	// REMIX POLYGONS
-    add_team_parameters(File.WARIO_TEAM_POSE,         0x80000000,             0)          // - NWARIO
-    add_team_parameters(File.LUCAS_TEAM_POSE,         0x80000000,             0)          // - NLUCAS
-    add_team_parameters(File.BOWSER_TEAM_POSE,        0x80000000,             0)          // - NBOWSER
-    add_team_parameters(File.WOLF_TEAM_POSE,          0x80000000,             0)          // - NWOLF
-    add_team_parameters(File.DRM_TEAM_POSE,           0x80000000,             0)          // - NDRM
-    add_team_parameters(File.SONIC_TEAM_POSE,         0x80000000,             0)          // - NSONIC
-    add_team_parameters(File.SHEIK_TEAM_POSE,         0x80000000,             0)          // - NSHEIK
-    add_team_parameters(File.MARINA_TEAM_POSE,        0x80000000,             0)          // - NMARINA
+    add_defeat_parameters(0x2B1,                        defeated_moveset_fox_link,  0)          // - NFALCO
+    add_defeat_parameters(0x617,                        defeated_moveset_captain,   0)          // - NGND   
 
     // @ Description
     // This prevents picking up the token of a CPU character with stocks remaining after a match.

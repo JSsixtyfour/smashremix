@@ -1333,6 +1333,24 @@ scope Action {
         constant MarinaNSPAThrow(0x186)
         constant MarinaNSPAThrowU(0x187)
         constant MarinaNSPAThrowD(0x188)
+        constant GoemonNSPGBegin(0x189)
+        constant GoemonNSPGWait(0x18A)
+        constant GoemonNSPGWalk1(0x18B)
+        constant GoemonNSPGWalk2(0x18C)
+        constant GoemonNSPGBWalk1(0x18D)
+        constant GoemonNSPGBWalk2(0x18E)
+        constant GoemonNSPGEnd(0x18F)
+        constant GoemonNSPABegin(0x190)
+        constant GoemonNSPAWait(0x191)
+        constant GoemonNSPAEnd(0x192)
+        constant SlippyNSPG(0x193)
+        constant SlippyNSPA(0x194)
+        constant RevolverBeginGround(0x195)
+        constant RevolverChargeGround(0x196)
+        constant RevolverShootGround(0x197)
+        constant RevolverBeginAir(0x198)
+        constant RevolverChargeAir(0x199)
+        constant RevolverShootAir(0x19A)
 
         // strings!
         string_0x0DC:; String.insert("JabLoopStart")
@@ -1508,7 +1526,24 @@ scope Action {
         string_0x186:; String.insert("JetSnatchThrowA")
         string_0x187:; String.insert("JetSnatchThrowUA")
         string_0x188:; String.insert("JetSnatchThrowDA")
-
+        string_0x189:; String.insert("RyoTossGroundBegin")
+        string_0x18A:; String.insert("RyoTossGroundWait")
+        string_0x18B:; String.insert("RyoTossGroundWalk1")
+        string_0x18C:; String.insert("RyoTossGroundWalk2")
+        string_0x18D:; String.insert("RyoTossGroundBWalk1")
+        string_0x18E:; String.insert("RyoTossGroundBWalk2")
+        string_0x18F:; String.insert("RyoTossGroundEnd")
+        string_0x190:; String.insert("RyoTossAirBegin")
+        string_0x191:; String.insert("RyoTossAirIdle")
+        string_0x192:; String.insert("RyoTossAirEnd")
+        string_0x193:; String.insert("DemonSniper")
+        string_0x194:; String.insert("DemonSniperAir")
+        string_0x195:; String.insert("RevolverBeginGround")
+        string_0x196:; String.insert("RevolverChargeGround")
+        string_0x197:; String.insert("RevolverShootGround")
+        string_0x198:; String.insert("RevolverBeginAir")
+        string_0x199:; String.insert("RevolverChargeAir")
+        string_0x19A:; String.insert("RevolverShootAir")
 
         action_string_table:
         dw string_0x0DC
@@ -1684,6 +1719,24 @@ scope Action {
         dw string_0x186
         dw string_0x187
         dw string_0x188
+        dw string_0x189
+        dw string_0x18A
+        dw string_0x18B
+        dw string_0x18C
+        dw string_0x18D
+        dw string_0x18E
+        dw string_0x18F
+        dw string_0x190
+        dw string_0x191
+        dw string_0x192
+        dw string_0x193
+        dw string_0x194
+        dw string_0x195
+        dw string_0x196
+        dw string_0x197
+        dw string_0x198
+        dw string_0x199
+        dw string_0x19A
     }
 
     // @ Description
@@ -1896,14 +1949,21 @@ scope Action {
         dw string_0x0F4
     }
 
-	// @ Description
-	// Basic action change routine
-	macro change(action_id) {
-		lli     a1, {action_id}             // a1(action id) = action_id
-		or      a2, r0, r0                  // a2(starting frame) = 0
-		lui     a3, 0x3F80                  // a3(frame speed multiplier) = 1.0
-		jal     0x800E6F24                  // change action
-		sw      r0, 0x0010(sp)              // argument 4 = 0
-	}
+    // @ Description
+    // Basic action change routine
+    // a0 must be player object
+    // action_id - action to change to
+    // fsm - frame speed multiplier. default = 0x3F80 (float 1.0)
+    macro change(action_id, fsm) {
+        lli     a1, {action_id}             // a1(action id) = action_id
+        or      a2, r0, r0                  // a2(starting frame) = 0
+        if {fsm} != -1 {
+            lui     a3, {fsm}               // a3(frame speed multiplier) = 1.0
+        } else {
+            lui     a3, 0x3F80              // a3(frame speed multiplier) = 1.0
+        }
+        jal     0x800E6F24                  // change action
+        sw      r0, 0x0010(sp)              // argument 4 = 0
+    }
 
 }

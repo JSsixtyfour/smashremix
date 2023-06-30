@@ -290,14 +290,15 @@ scope ResultsScreen {
 
     // @ Description
     // Checks for winning player's input to pick a victory animation
-    // Also skip Kirby character check and use all 3 animations, instead of just 2
+    // Note: Kirby character check is intact, so it will only randomly pick 2 animations unless manually overridden
     scope victory_animations_: {
-        OS.patch_start(0x152628, 0x80133488)
-        b       0x801334A8                  // original line 1 was: 'bne a0, at, 0x801334A8' (branch if not kirby)
+        OS.patch_start(0x152638, 0x80133498)
+        j       pick_victory_animation_     // Kirby branch
+        nop
         OS.patch_end()
 
         OS.patch_start(0x152650, 0x801334B0)
-        j       pick_victory_animation_
+        j       pick_victory_animation_     // Non-Kirby branch
         nop
         _return:
         OS.patch_end()
@@ -330,7 +331,7 @@ scope ResultsScreen {
         or      v0, r0, r0                  // v0 = 0 (victory animation 1)
 
         _end:
-        sll     t1, v0, 2                   // original line 1
+        sll     t1, v0, 2                   // original line 1 (note: original Kirby branch used t0)
         addu    v0, sp, t1                  // original line 2
         j       _return                     // return
         nop
@@ -357,6 +358,7 @@ scope ResultsScreen {
         constant FIRE_EMBLEM(0x97F8)
         constant SONIC(0xA1B8)
         constant MISCHIEF_MAKERS(0xAD18)
+        constant GOEMON(0xB888)
     }
 
     // @ Description
@@ -380,6 +382,7 @@ scope ResultsScreen {
         constant FIRE_EMBLEM(0x9900)
         constant SONIC(0xA2C0)
         constant MISCHIEF_MAKERS(0xAE20)
+        constant GOEMON(0xB990)
     }
 
     // @ Description
@@ -403,6 +406,7 @@ scope ResultsScreen {
         constant FIRE_EMBLEM(0x9958)
         constant SONIC(0xA318)
         constant MISCHIEF_MAKERS(0xAE78)
+        constant GOEMON(0xB9E8)
     }
 
     // @ Description
@@ -604,6 +608,7 @@ scope ResultsScreen {
     add_to_results_screen(Character.id.NJIGGLY,  FGM.announcer.names.POLYGON_JIGGLYPUFF,     SMASH,           Character.id.MARIO,   185,     POLY PUFF,    20,     0.75,      0x0B)
     add_to_results_screen(Character.id.NNESS,    FGM.announcer.names.POLYGON_NESS,           SMASH,           Character.id.MARIO,   185,     POLY NESS,    20,     0.75,      0x0B)
     add_to_results_screen(Character.id.GDONKEY,  FGM.announcer.names.GDK,                    DONKEY_KONG,     Character.id.DK,      185,     GIANT DK,     20,     0.8,       0x0E)
+    add_to_results_screen(Character.id.BOSS,     FGM.announcer.names.MASTERHAND,             SMASH,           Character.id.BOSS,    185,     MASTER HAND,  20,     0.55,      0x0B)
 
     add_to_results_screen(Character.id.FALCO,    FGM.announcer.names.FALCO,                  STARFOX,         Character.id.FOX,     170,     FALCO,        30,     1,         {MIDI.id.FALCO_VICTORY})
     add_to_results_screen(Character.id.GND,      FGM.announcer.names.GANONDORF,              ZELDA,           Character.id.CAPTAIN, 185,     GANONDORF,    20,     0.6,       {MIDI.id.GANON_VICTORY})
@@ -641,9 +646,14 @@ scope ResultsScreen {
     add_to_results_screen(Character.id.SHEIK,    FGM.announcer.names.SHEIK,                  ZELDA,           Character.id.CAPTAIN, 165,     SHEIK,        30,     1,         {MIDI.id.SHEIK_VICTORY})
     add_to_results_screen(Character.id.MARINA,   FGM.announcer.names.MARINA,                 MISCHIEF_MAKERS, Character.id.CAPTAIN, 180,     MARINA,       20,     0.8,       {MIDI.id.MARINA_VICTORY})
     add_to_results_screen(Character.id.DEDEDE,   FGM.announcer.names.DEDEDE,                 KIRBY,           Character.id.CAPTAIN, 170,     DEDEDE,       25,     0.8,       {MIDI.id.DEDEDE_VICTORY})
+    add_to_results_screen(Character.id.GOEMON,   FGM.announcer.names.GOEMON,                 GOEMON,          Character.id.CAPTAIN, 170,     GOEMON,       25,     0.75,       {MIDI.id.GOEMON_VICTORY})
+    add_to_results_screen(Character.id.PEPPY,    FGM.announcer.names.PEPPY,                  STARFOX,         Character.id.FOX,     170,     PEPPY,        30,     1,          0x10)
+    add_to_results_screen(Character.id.SLIPPY,   FGM.announcer.names.SLIPPY,                 STARFOX,         Character.id.FOX,     180,     SLIPPY,       25,     1,          0x10)
     // ADD NEW CHARACTERS HERE
 
     // REMIX POLYGONS
+    add_to_results_screen(Character.id.NFALCO,   FGM.announcer.names.NFALCO,                 SMASH,           Character.id.FOX,     185,     POLY FALCO,   20,     0.6,       0x0B)
+    add_to_results_screen(Character.id.NGND,     FGM.announcer.names.NGANONDORF,             SMASH,           Character.id.CAPTAIN, 185,     POLY GANONDORF, 20,   0.45,      0x0B)
     add_to_results_screen(Character.id.NWARIO,   FGM.announcer.names.NWARIO,                 SMASH,           Character.id.MARIO,   185,     POLY WARIO,   20,     0.6,       0x0B)
     add_to_results_screen(Character.id.NLUCAS,   FGM.announcer.names.NLUCAS,                 SMASH,           Character.id.NESS,    185,     POLY LUCAS,   20,     0.6,       0x0B)
     add_to_results_screen(Character.id.NBOWSER,  FGM.announcer.names.NBOWSER,                SMASH,           Character.id.YOSHI,   185,     POLY BOWSER,  20,     0.55,      0x0B)

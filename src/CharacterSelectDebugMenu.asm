@@ -2370,6 +2370,9 @@ scope CharacterSelectDebugMenu {
     scope DpadFunctions {
         include "css/DpadFunctions.asm"
     }
+    scope RandomCharacter {
+        include "css/RandomCharacter.asm"
+    }
 
 
     // Add Menu Items
@@ -2390,6 +2393,7 @@ scope CharacterSelectDebugMenu {
     add_menu_item(Practice_1P)
     add_menu_item(KirbyHat)
     add_menu_item(DpadFunctions)
+    add_menu_item(RandomCharacter)
 
     // Write Menu Items
     write_menu_items()

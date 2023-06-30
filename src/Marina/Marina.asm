@@ -858,6 +858,8 @@ scope Marina {
         _end:
         jal     0x8013FD74                  // original line 1
         nop
+
+        _no_jump:
         j       _return                     // return
         nop
     }

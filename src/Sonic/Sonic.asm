@@ -5,6 +5,26 @@
 scope Sonic {
     // Insert Moveset files
     insert SHOW_MODEL,"moveset/SHOW_MODEL.bin"
+    // Subroutine for enabling ball hurtboxes
+    BALL_HURTBOX_ON:
+    dw 0xA8000000   // unknown
+    dw 0x7C300000, 0x00000064, 0xFFC4012C, 0x012C012C // set body hurtbox properties
+    dw 0x70400003   // left shoulder intangible
+    dw 0x70480003   // left wrist intangible
+    dw 0x70600003   // head intangible
+    dw 0x70700003   // right shoulder intangible
+    dw 0x70780003   // right wrist intangible
+    dw 0x70980003   // left thigh intangible
+    dw 0x70A00003   // left shin intangible
+    dw 0x70C00003   // rightt thigh intangible
+    dw 0x70C80003   // rightt shin intangible
+    Moveset.RETURN()
+    // Subroutine for disabling ball hurtboxes
+    BALL_HURTBOX_OFF:
+    dw 0xA4000000   // unknown
+    dw 0x78000000   // reset hurtbox sizes?
+    dw 0x6C000001   // set all hurtboxes to vulernable
+    Moveset.RETURN()
 
     insert IDLE,"moveset/IDLE.bin"; Moveset.GO_TO(IDLE)            // loops
     insert RUN,"moveset/RUN.bin"; Moveset.GO_TO(RUN)            // loops
@@ -44,10 +64,13 @@ scope Sonic {
     BTHROW:; Moveset.CONCURRENT_STREAM(BTHROW_CONCURRENT); Moveset.THROW_DATA(BTHROW_DATA); insert "moveset/BTHROW.bin"
     BTHROW_CONCURRENT:
     dw 0x0800000D;                                  // after 14 frames
+    Moveset.SUBROUTINE(BALL_HURTBOX_ON)             // enable ball hurtboxes
     dw 0x80000007                                   // begin a loop with 7 iterations
     dw 0xA8000000; dw 0xA0300001; dw 0x04000003     // show ball model and wait 3 frames
     Moveset.SUBROUTINE(SHOW_MODEL); dw 0x04000003   // show full model and wait 3 frames
-    dw 0x84000000; dw 0                             // end loop and terminate moveset commands
+    dw 0x84000000                                   // end loop
+    Moveset.SUBROUTINE(BALL_HURTBOX_OFF)            // disable ball hurtboxes
+    dw 0                                            // terminate moveset commands
 
     insert TAUNT,"moveset/TAUNT.bin"
     insert JAB1,"moveset/JAB1.bin"
@@ -55,12 +78,17 @@ scope Sonic {
     insert JAB3,"moveset/JAB3.bin"
     DASH_ATTACK:; Moveset.CONCURRENT_STREAM(DASH_ATTACK_CONCURRENT); insert "moveset/DASH_ATTACK.bin"
     DASH_ATTACK_CONCURRENT:
-    dw 0x04000005; dw 0xA8000000; dw 0xA0300002     // wait 5 frames then show ball model
+    dw 0x04000005                                   // wait 5 frames
+    Moveset.SUBROUTINE(BALL_HURTBOX_ON)             // enable ball hurtboxes
+    dw 0xA8000000; dw 0xA0300002                    // show ball model
     dw 0x04000009; Moveset.SUBROUTINE(SHOW_MODEL)   // wait 9 frames then show full model
     dw 0x80000002                                   // begin a loop with 2 iterations
     dw 0x04000003; dw 0xA8000000; dw 0xA0300001     // show ball model and wait 3 frames
     dw 0x04000003; Moveset.SUBROUTINE(SHOW_MODEL)   // show full model and wait 3 frames
-    dw 0x84000000; dw 0                             // end loop and terminate moveset commands
+    dw 0x84000000                                   // end loop
+    Moveset.SUBROUTINE(BALL_HURTBOX_OFF)            // disable ball hurtboxes
+    dw 0                                            // terminate moveset commands
+
     insert UTILT,"moveset/UTILT.bin"
     insert DTILT,"moveset/DTILT.bin"
     insert FTILT,"moveset/FTILT.bin"
@@ -75,29 +103,37 @@ scope Sonic {
     insert FSMASH_LOW,"moveset/FSMASH_LOW.bin"
     insert NAIR,"moveset/NEUTRAL_AERIAL.bin"
     insert FAIR,"moveset/FORWARD_AERIAL.bin"
-    insert BAIR,"moveset/BACK_AERIAL.bin"
+    insert BAIR, "moveset/BACK_AERIAL.bin"
     insert UAIR,"moveset/UP_AERIAL.bin"
     insert DAIR,"moveset/DOWN_AERIAL.bin"
 
-
     insert USP,"moveset/USP.bin"
-    insert DSP_CHARGE,"moveset/DSP_CHARGE.bin"
-    insert DSP_AIR_CHARGE,"moveset/DSP_AIR_CHARGE.bin"
-    DSP_MOVE:; Moveset.CONCURRENT_STREAM(DSP_FLICKER_LOOP); insert "moveset/DSP_MOVE.bin"
-    DSP_AIR_MOVE:; Moveset.CONCURRENT_STREAM(DSP_FLICKER_END); insert "moveset/DSP_AIR_MOVE.bin"
+    DSP_CHARGE:; Moveset.CONCURRENT_STREAM(DSP_CHARGE_HITBOX); Moveset.SUBROUTINE(BALL_HURTBOX_ON); insert "moveset/DSP_CHARGE.bin"
+    DSP_AIR_CHARGE:; Moveset.CONCURRENT_STREAM(DSP_CHARGE_HITBOX); Moveset.SUBROUTINE(BALL_HURTBOX_ON); insert "moveset/DSP_AIR_CHARGE.bin"
+    DSP_MOVE:; Moveset.CONCURRENT_STREAM(DSP_FLICKER_LOOP); Moveset.SUBROUTINE(BALL_HURTBOX_ON); insert "moveset/DSP_MOVE.bin"
+    DSP_AIR_MOVE:; Moveset.CONCURRENT_STREAM(DSP_FLICKER_END);  insert "moveset/DSP_AIR_MOVE.bin"
     DSP_AIR_JUMP:; Moveset.CONCURRENT_STREAM(DSP_FLICKER_END); insert "moveset/DSP_AIR_JUMP.bin"
+    DSP_CHARGE_HITBOX:
+    dw 0x04000001                                   // wait 1 frames
+    dw 0x0C000053, 0x00B40000, 0x00C80000, 0x1186407B, 0x002A0000 // create hitbox
+    dw 0x04000004                                   // wait 4 frames
+    dw 0x18000000                                   // end hitboxes
+    Moveset.GO_TO(DSP_CHARGE_HITBOX)                // loops
     DSP_FLICKER_LOOP:
     dw 0xA8000000; dw 0xA0300001; dw 0x04000003     // show ball model and wait 3 frames
     Moveset.SUBROUTINE(SHOW_MODEL); dw 0x04000003   // show full model and wait 3 frames
     Moveset.GO_TO(DSP_FLICKER_LOOP)                 // loops
     DSP_FLICKER_END:
+    Moveset.SUBROUTINE(BALL_HURTBOX_ON)             // enabled ball hurtboxes
     dw 0x80000006                                   // begin a loop with 6 iterations
     dw 0xA8000000; dw 0xA0300001; dw 0x04000003     // show ball model and wait 3 frames
     Moveset.SUBROUTINE(SHOW_MODEL); dw 0x04000003   // show full model and wait 3 frames
-    dw 0x84000000; dw 0                             // end loop and terminate moveset commands
-    insert NSP_CHARGE,"moveset/NSP_CHARGE.bin"
-    insert NSP_MOVE,"moveset/NSP_MOVE.bin"
-    insert NSP_BOUNCE,"moveset/NSP_BOUNCE.bin"
+    dw 0x84000000                                   // end loop
+    Moveset.SUBROUTINE(BALL_HURTBOX_OFF)            // disable ball hurtboxes
+    dw 0                                            // terminate moveset commands
+    NSP_CHARGE:; Moveset.SUBROUTINE(BALL_HURTBOX_ON); insert "moveset/NSP_CHARGE.bin"
+    NSP_MOVE:; Moveset.SUBROUTINE(BALL_HURTBOX_ON); insert "moveset/NSP_MOVE.bin"
+    NSP_BOUNCE:; insert "moveset/NSP_BOUNCE.bin"
 
     insert TAILS_LOOP,"moveset/TAILS_LOOP.bin"
     ENTRY:; Moveset.CONCURRENT_STREAM(TAILS_LOOP); insert "moveset/ENTRY.bin"
@@ -370,7 +406,12 @@ scope Sonic {
     Character.table_patch_start(ai_behaviour, Character.id.SONIC, 0x4)
     dw      CPU_ATTACKS
     OS.patch_end()
-	
+    
+    // Set CPU SD prevent routine
+    Character.table_patch_start(ai_attack_prevent, Character.id.SONIC, 0x4)
+    dw      AI.PREVENT_ATTACK.ROUTINE.SONIC_DSP
+    OS.patch_end()
+
 	// Set CPU NSP long range behaviour
     Character.table_patch_start(ai_long_range, Character.id.SONIC, 0x4)
     dw    	AI.LONG_RANGE.ROUTINE.NONE

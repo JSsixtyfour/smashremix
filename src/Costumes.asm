@@ -927,7 +927,10 @@ scope Costumes {
         db 0x05                             // Sheik
         db 0x05                             // Marina
         db 0x05                             // Dedede
-        
+        db 0x05                             // Goemon
+        db 0x05                             // Peppy
+        db 0x05                             // Slippy
+
         // Polygons
         db 0x05                             // Polygon Wario
         db 0x05                             // Polygon Lucas
@@ -936,6 +939,8 @@ scope Costumes {
         db 0x05                             // Polygon Dr. Mario
         db 0x05                             // Polygon Sonic
         db 0x05                             // Polygon Sheik
+        db 0x05                             // Polygon Falco
+        db 0x05                             // Polygon Ganondorf
         OS.align(4)
 
         functions:
@@ -1277,6 +1282,10 @@ scope Costumes {
 
         li      t6, special_part_index          // t6 = special_part_index
         lh      t6, 0x0000(t6)                  // t6 = special part index, or -1 if not a special part
+        // This is probably the right way, but I'll keep doing the old way for now!
+        // sll     t6, t8, 0x0001                  // t6 = offset to special part index for part
+        // addu    t6, t1, t6                      // t6 = player struct + offset
+        // lb      t6, 0x097D(t6)                  // t6 = special part index
         blezl   t6, _get_image_info_array       // if not a special part, then get normal part images array
         lw      t3, 0x0000(t3)                  // t3 = extra costume table images array for part
 

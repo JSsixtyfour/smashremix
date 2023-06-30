@@ -79,6 +79,13 @@ scope ComboMeter {
     dw      0x00000000
 
     // @ Description
+    // This maps team_id to offsets.
+    team_offset_table:
+    dw      TEXT_OFFSET_R - 0x10, NUMBER_OFFSET_R - 0x10
+    dw      TEXT_OFFSET_B - 0x10, NUMBER_OFFSET_B - 0x10
+    dw      TEXT_OFFSET_G - 0x10, NUMBER_OFFSET_G - 0x10
+
+    // @ Description
     // This macro creates a combo struct for the given port
     macro combo_struct(port) {
         combo_struct_p{port}: {
@@ -110,29 +117,15 @@ scope ComboMeter {
     macro set_color_by_team(port, offset) {
         li      t0, Global.vs.p{port}         // t0 = pointer to address of player struct for p{port}
         lbu     t0, 0x0004(t0)                // t0 = team (0 = red, 1 = blue, 2 = green)
-        bnez    t0, _blue_or_green_p{port}    // if (t0 != 0) then check if blue or green
-        nop                                   // otherwise set to red
-        addiu   t0, a2, TEXT_OFFSET_R - 0x10  // t0 = address of red combo text texture
-        addiu   t1, a2, NUMBER_OFFSET_R - 0x10// t1 = address of red combo numbers texture
-        b       _team_color_set_p{port}
-        nop
-
-        _blue_or_green_p{port}:
-        addi    t0, -0x0001                   // t0 = 0 if blue, 1 if green
-        bnez    t0, _green_p{port}            // if (t0 != 0) then set to green
-        nop                                   // otherwise set to blue
-        addiu   t0, a2, TEXT_OFFSET_B - 0x10  // t0 = address of blue combo text texture
-        addiu   t1, a2, NUMBER_OFFSET_B - 0x10// t1 = address of blue combo numbers texture
-        b       _team_color_set_p{port}
-        nop
-
-        _green_p{port}:
-        addiu   t0, a2, TEXT_OFFSET_G - 0x10  // t0 = address of green combo text texture
-        addiu   t1, a2, NUMBER_OFFSET_G - 0x10// t1 = address of green combo numbers texture
-
-        _team_color_set_p{port}:
-        sw      t0, {offset}(a0)                // set p{port} combo text color
-        sw      t1, {offset}(a1)                // set p{port} combo numbers color
+        sll     t0, t0, 0x0003                // t0 = offset in table
+        li      t1, team_offset_table         // t1 = team offset table
+        addu    t1, t1, t0                    // t1 = address of offset array
+        lw      t0, 0x0000(t1)                // t0 = TEXT_OFFSET_X
+        addu    t0, a2, t0                    // t0 = address of combo text
+        sw      t0, {offset}(a0)              // set p{port} combo text color
+        lw      t0, 0x0004(t1)                // t0 = NUMBER_OFFSET_X
+        addu    t0, a2, t0                    // t0 = address of combo numbers
+        sw      t0, {offset}(a1)              // set p{port} combo numbers color
     }
 
     // @ Description
@@ -377,6 +370,9 @@ scope ComboMeter {
         _continue_in_combo:
         addu    t3, t3, t1                        // t3 = t3 + t1 (add more frames for higher combo values)
         sw      t3, 0x001C(t5)                    // frame buffer = DEFAULT_FRAME_BUFFER + additional frames
+
+        jal     PokemonAnnouncer.pokemon_combo_                      // pokemon announcer subroutines
+        nop
 
         lli     t1, 0x0014                        // t1 = 20
         bne     t1, a0, _max_hit_check            // if (hit count != 20) then don't play sound effect

@@ -79,97 +79,12 @@ scope NLucas {
 	Character.edit_menu_action_parameters(NLUCAS, 0x1,               File.LUCAS_NEEDLE_ANIM,     Lucas.NEEDLE,                             0x10000000)
 	Character.edit_menu_action_parameters(NLUCAS, 0x3,               File.LUCAS_PKVICTORY,       Lucas.PKVICTORY,                          -1)
 
-    // Set crowd chant FGM.
-    Character.table_patch_start(crowd_chant_fgm, Character.id.NLUCAS, 0x2)
-    dh  0x0338
-    OS.patch_end()
-
-    // Remove entry script.
-    Character.table_patch_start(entry_script, Character.id.NLUCAS, 0x4)
-    dw 0x8013DD68                           // skips entry script
-    OS.patch_end()
-
     // Remove gfx routine ending script.
     Character.table_patch_start(gfx_routine_end, Character.id.NLUCAS, 0x4)
     dw  0x800E9A60                          // skips overlay ending script
     OS.patch_end()
 
-    // Set Kirby hat_id
-    Character.table_patch_start(kirby_inhale_struct, 0x2, Character.id.NLUCAS, 0xC)
-    dh 0x08
-    OS.patch_end()
-
-    // Set default costumes
-    Character.set_default_costumes(Character.id.NLUCAS, 0, 1, 4, 5, 1, 3, 2)
-
-    // Set CPU behaviour
-    Character.table_patch_start(ai_behaviour, Character.id.NLUCAS, 0x4)
-    dw      Lucas.CPU_ATTACKS
-    OS.patch_end()
-
-    // Shield colors for costume matching
-    Character.set_costume_shield_colors(NLUCAS, PURPLE, RED, GREEN, BLUE, BLACK, WHITE, NA, NA)
-
-    // @ Description
-    // Polygon Lucas's extra actions
-    scope Action {
-        constant Jab3(0x0DC)
-        constant Appear1(0x0DD)
-        constant Appear2(0x0DE)
-        //constant Appear1(0x0DF)
-        //constant Appear2(0x0E0)
-        //constant AppearEnd(0x0E1)
-        constant PKFire(0x0E2)
-        constant PKFireAir(0x0E3)
-        constant PKThunderStart1(0x0E4)
-        constant PKThunderStart2(0x0E5)
-        constant PKThunderEnd(0x0E6)
-        constant PKTA(0x0E7)
-        constant PKThunderStartAir(0x0E8)
-        constant PKThunderAir(0x0E9)
-        constant PKThunderEndAir(0x0EA)
-        constant ClashingPKTA(0x0EB)
-        constant PKTAAir(0x0EC)
-        constant PsiMagnetStart(0x0ED)
-        constant PsiMagnet(0x0EE)
-        constant Healing(0x0EF)
-        constant PsiMagnetEnd(0x0F0)
-        constant PsiMagnetStartAir(0x0F1)
-        constant PsiMagnetAir(0x0F2)
-        constant HealingAir(0x0F3)
-        constant PsiMagnetEndAir(0x0F4)
-
-        action_string_table:
-        dw Action.COMMON.string_jab3
-        dw Action.COMMON.string_appear1
-        dw Action.COMMON.string_appear2
-        dw 0 //dw string_0x0DF
-        dw 0 //dw string_0x0E0
-        dw 0 //dw string_0x0E1
-        dw Action.NESS.string_0x0E2
-        dw Action.NESS.string_0x0E3
-        dw Action.NESS.string_0x0E4
-        dw Action.NESS.string_0x0E5
-        dw Action.NESS.string_0x0E6
-        dw Action.NESS.string_0x0E7
-        dw Action.NESS.string_0x0E8
-        dw Action.NESS.string_0x0E9
-        dw Action.NESS.string_0x0EA
-        dw Action.NESS.string_0x0EB
-        dw Action.NESS.string_0x0EC
-        dw Action.NESS.string_0x0ED
-        dw Action.NESS.string_0x0EE
-        dw Action.NESS.string_0x0EF
-        dw Action.NESS.string_0x0F0
-        dw Action.NESS.string_0x0F1
-        dw Action.NESS.string_0x0F2
-        dw Action.NESS.string_0x0F3
-        dw Action.NESS.string_0x0F4
-    }
-
-    // Set action strings
-    Character.table_patch_start(action_string, Character.id.NLUCAS, 0x4)
-    dw  Action.action_string_table
-    OS.patch_end()
+    // Handles common things for Polygons
+    Character.polygon_setup(NLUCAS, LUCAS)
 
 }

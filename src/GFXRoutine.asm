@@ -7,6 +7,15 @@ print "included GFXRoutine.asm\n"
 // They can also be called with the moveset command BXXXYYYY, XXX = gfx routine index, YYYY = duration
 
 scope GFXRoutine {
+
+    // @ Description
+    // manually set the graphic routine for a player
+    // a0 = player object
+    macro set_player(routine_id) {
+        jal     0x800E9814
+        addiu   a1, r0, {routine_id}    // a1 = routine id to run
+    }
+
     variable new_gfx_routine_count(0)       // number of new gfx routines
 
     // COMMANDS
@@ -200,8 +209,34 @@ scope GFXRoutine {
     SHEIK_DSP:; OVERLAY(0xdb03fc80); WAIT(2); OVERLAY_SHIFT(0xdb03fc00, 16); WAIT(16); CLEAR_OVERLAY(); END()
     SHEIK_SHOOT:; OVERLAY(0xFFFFFF49); WAIT(0x1); CLEAR_OVERLAY(); WAIT(0x2); END();
     insert FRANKLIN_BADGE, "gfx/routines/FRANKLIN_BADGE.bin"; GO_TO(FRANKLIN_BADGE)
-    SHEIK_USP_END:; OVERLAY(0xDE240A80); WAIT(1); CLEAR_OVERLAY(); WAIT(1); OVERLAY(0xDE240A80); WAIT(1); CLEAR_OVERLAY(); WAIT(1); OVERLAY(0xDE240A80); WAIT(1); CLEAR_OVERLAY(); END();
+    SHEIK_USP_END:; OVERLAY(0xDE240A80); WAIT(1); OVERLAY_SHIFT(0xDE240A00, 3); WAIT(3); OVERLAY(0xDE240A80); WAIT(1); OVERLAY_SHIFT(0xDE240A00, 3); WAIT(3); CLEAR_OVERLAY(); END();
     insert MARINA_CHARGE, "gfx/routines/MARINA_CHARGE.bin"; GO_TO(MARINA_CHARGE)
+    insert GOEMON_CHARGE, "gfx/routines/GOEMON_CHARGE.bin"; GO_TO(GOEMON_CHARGE) // loops
+    insert DEDEDE_CHARGE, "gfx/routines/DEDEDE_CHARGE.bin"; GO_TO(DEDEDE_CHARGE)
+
+    SLIPPY_NSP:
+    dw 0x3C001FB0   // set light
+    OVERLAY(0x00FFFF50); WAIT(1); OVERLAY(0x00FFFF40); WAIT(1); OVERLAY(0x00FFFF1F); WAIT(1); CLEAR_OVERLAY(); WAIT(1); GO_TO(SLIPPY_NSP);
+
+    SUDDEN_IMPACT:; OVERLAY(0xFFFFFFFF); OVERLAY_SHIFT(0xFFFFFF00, 16); WAIT(16); CLEAR_OVERLAY(); END();
+
+    PEPPY_USP_READYING:
+    // based on Fox's at 0x8012D3D8
+    dw 0x3C001FB0; // set light angle
+    BEGIN_LOOP(4); OVERLAY(0xFFFFFF1E);
+    WAIT(1); OVERLAY(0xFFFF001E);
+    WAIT(1); CLEAR_OVERLAY();
+    WAIT(1); END_LOOP();
+
+    BEGIN_LOOP(12); OVERLAY(0xFFFFFF64);
+    WAIT(1); OVERLAY(0xFFFF0064);
+    WAIT(1); CLEAR_OVERLAY();
+    WAIT(1); END_LOOP();
+    
+    OVERLAY(0xFFFFFFB4);
+    WAIT(1); OVERLAY(0xFFFF00B4);
+    WAIT(1); CLEAR_OVERLAY();
+    WAIT(1); GO_TO(PEPPY_USP_READYING);
 
     // name - gfx routine effect name, used for display only
     // filename - file containing gfx routine commands
@@ -240,6 +275,11 @@ scope GFXRoutine {
     add_gfx_routine(FRANKLIN_BADGE, FRANKLIN_BADGE, 100, OS.FALSE)
     add_gfx_routine(SHEIK_USP_END, SHEIK_USP_END, 60, OS.FALSE)
     add_gfx_routine(MARINA_CHARGE, MARINA_CHARGE, 10, OS.FALSE)
+    add_gfx_routine(GOEMON_CHARGE, GOEMON_CHARGE, 60, OS.TRUE)
+    add_gfx_routine(DEDEDE_CHARGE, DEDEDE_CHARGE, 10, OS.FALSE)
+    add_gfx_routine(SLIPPY_NSP, SLIPPY_NSP, 60, OS.TRUE) 
+    add_gfx_routine(SUDDEN_IMPACT, SUDDEN_IMPACT, 60, OS.TRUE)
+    add_gfx_routine(PEPPY_USP_READYING, PEPPY_USP_READYING, 60, OS.TRUE)
 
     // write gfx routines to ROM
     write_gfx_routines()

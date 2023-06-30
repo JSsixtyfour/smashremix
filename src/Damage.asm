@@ -112,6 +112,7 @@ scope Damage {
         constant LASER(create_normal_gfx_)
         constant DEKU_STUN(create_normal_gfx_)
         constant BURY(create_normal_gfx_)
+        constant FLASHBANG(create_normal_gfx_)
         table:
         constant table_origin(origin())
         dw NORMAL                           // 0x0 - normal
@@ -168,7 +169,7 @@ scope Damage {
         constant SHADOW(begin_shadow_gfx_routine_)
         constant LASER(begin_laser_gfx_routine_)
         constant DEKU_STUN(begin_deku_stun_gfx_routine_)
-        constant BURY(0x80140C30)	// for now, the same as normal
+        constant BURY(0x80140C30)
         table:
         constant table_origin(origin())
         dw NORMAL                           // 0x0 - normal
@@ -178,11 +179,12 @@ scope Damage {
         dw NORMAL                           // 0x4 - coin
         dw ICE                              // 0x5 - ice (mostly unfinished/removed)
         dw NORMAL                           // 0x6 - sleep
-        dw NORMAL                           // 0x7 - 
+        dw NORMAL                           // 0x7 - stun (mewtwo)
         dw NORMAL                           // 0x8 - 
         dw NORMAL                           // 0x9 - 
         dw DEKU_STUN                        // 0xA - deku stun
-        dw BURY                        		// 0xB - bury
+        dw BURY                             // 0xB - bury
+        dw NORMAL                           // 0xC - flashbang
 
         while pc() < (table + 0x18) {
             dw NORMAL                       // 0xB-0xF - normal by default
@@ -213,11 +215,12 @@ scope Damage {
         nop
 
         _stun_check:
+        lli     at, Damage.id.FLASHBANG     // at = id.Stun
+        beq     v1, at, _flashbang_branch             // skip if damage type != STUN (modified original line 1)
         lli     at, Damage.id.DEKU_STUN     // at = id.Deku_Stun
         beq     v1, at, _deku_stun_branch   // skip if damage type = DEKU_STUN
         lli     at, Damage.id.BURY     		// at = id.BURY
         beq     v1, at, _bury_branch   		// skip if damage type = BURY
-        nop
         lli     at, Damage.id.STUN          // at = id.Stun
         bne     v1, at, _branch             // skip if damage type != STUN (modified original line 1)
         nop
@@ -230,10 +233,14 @@ scope Damage {
         // if current action != Stun
         lw      t9, 0x0084(a0)              // ~
         lw      at, 0x07FC(t9)              // at = hit direction
-        lw      t9, 0x0044(v0)              // t8 = facing direction
-        bne     at, t9, _branch             // skip/take original branch if hit direction != facing direction
+        lw      t8, 0x0044(v0)              // t8 = facing direction
+        bne     at, t8, _branch             // skip/take original branch if hit direction != facing direction
         nop
         // if hit direction = facing direction
+        lw      at, 0x014C(t9)              // at = kinetic state
+        bnez    at, _branch                 // skip/take original branch if character is aerial (failsafe)
+        nop
+        
         jal     stun_initial_modified_      // initial subroutine for Stun action
         nop
         j       _stun_return                // return
@@ -265,6 +272,21 @@ scope Damage {
 
         _bury_branch_2:
         jal     bury_initial_ 		        // initial subroutine for Bury
+        lw      t9, 0x0084(a0)              // ~
+        j       _stun_return                // return
+        nop
+
+        // if damage type = DEKU_STUN
+        _flashbang_branch:
+        lw      t9, 0x0084(a0)              // ~
+        lw      t9, 0x0024(t9)              // t9 = current action id
+        lli     a1, Action.Stun             // a1 = Stun action id
+        beql    a1, t9, _flashbang_branch_2 // skip if action id = Stun
+        addiu   a1, r0, 0x0000              // a1 = boolean that skips
+
+        _flashbang_branch_2:
+        // if current action != Stun
+        jal     flashbang_initial_modified_ // initial subroutine for Stun action
         lw      t9, 0x0084(a0)              // ~
         j       _stun_return                // return
         nop
@@ -315,10 +337,10 @@ scope Damage {
         or      a0, s0, r0
         addiu   t8, r0, 0x001E
         b       branch_2
-        sw      t8, 0x0034 (s0)
+        sw      t8, 0x0034(s0)
 
         branch_1:
-        sw      t9, 0x0034 (s0)
+        sw      t9, 0x0034(s0)
 
         branch_2:
         lw      t0, 0x002c (s0)
@@ -398,7 +420,102 @@ scope Damage {
         jr      ra
         addiu   sp, sp, 0x28
     }
-	
+
+    constant FLASHBANG_BASE_STUN_TIME(90)
+    constant FLASHBANG_STUN_TIME_GROUNDED(150)  // additional stun time if grounded
+    constant FLASHBANG_STUN_TIME_AERIAL(0)      // addition stun time if aerial
+    // frame count = 90 + extra stun time + player %.
+    // can mash out
+
+    // @ Description
+    // Modified initial subroutine for stun action, sets argument 4 of the change action subroutine to 0.
+    // This prevents a bug where Yoshi would be invisible after being stunned out of roll, and potentially other issues.
+    scope flashbang_initial_modified_: {
+        addiu   sp, sp,-0x0028              // ~
+        sw      ra, 0x0024(sp)              // ~
+        sw      s0, 0x0020(sp)              // ~
+        sw      a0, 0x0028(sp)              // ~
+        beqz    a1, _end                    // skip action change if boolean was set to 0
+        lw      s0, 0x0084(a0)              // original logic
+
+        lw      at, 0x14C(s0)               // at = kinetic state
+        beqz    at, _change_action          // branch if grounded
+        // this | grounded
+        addiu   a1, r0, 0x00A4              // action id = stun
+        // or | aerial
+        addiu   a1, r0, Action.ShieldBreakFall // action id = ShieldBreakFall
+        _change_action:
+        addiu   a2, r0, 0x0000              // a2 = set starting frame
+        sw      r0, 0x0010(sp)              // argument 4 = 0 (idk what this is)
+        jal     0x800E6F24                  // change action
+        lui     a3, 0x3F80                  // animation speed = 1
+        
+        addiu   a0, s0, 0
+        lw      at, 0x14C(s0)               // at = kinetic state
+        beqzl   at, _continue               // branch if grounded
+        addiu   t1, r0, FLASHBANG_STUN_TIME_GROUNDED // initial stun timer (grounded)
+        li      at, stun_main_aerial_
+        sw      at, 0x09D4(s0)              // overwrite main routine so player can mash out
+        addiu   t1, r0, FLASHBANG_STUN_TIME_AERIAL // initial stun timer (aerial)
+        
+        _continue:
+        addiu   t9, r0, 0x001E
+        sw      t9, 0x0034(s0)
+
+        lw      t0, 0x002C(s0)              // t0 = current percent
+        addu    a1, t1, t0                  // stun damage = initial stun time + current percent
+
+        jal     0x8014E3EC                  // apply stun timer
+        addiu   a1, a1, FLASHBANG_BASE_STUN_TIME // stun time += base stun time
+        lw      a0, 0x0028(sp)
+        addiu   a1, r0, 0x0025              // argument = stun overlay gfx
+        jal     0x800E9814
+        or      a2, r0, r0
+
+        _end:
+        lw      ra, 0x0024(sp)
+        lw      s0, 0x0020(sp)
+        jr      ra
+        addiu   sp, sp, 0x28
+    }
+    
+    // @ Description
+    // main routine for stunned players who are aerial (flashbang)
+    scope stun_main_aerial_: {
+        addiu   sp, sp, -0x20
+        sw  ra, 0x0014(sp)
+        sw  a0, 0x0020(sp)                  // store player object
+        lw  a0, 0x0084(a0)                  // a0 = player struct
+        
+        lw      t6, 0x026C(a0)              // get stunned timer
+        addiu   t7, t6, -1                  // -1
+        sw      t7, 0x026C(a0)              // stunned--;
+        sw      t7, 0x0018(sp)              // save stunned timer to sp
+        jal     0x8014E400                  // get/apply mash inputs
+        sw      a0, 0x001C(sp)              // save player struct to sp
+        lw      a0, 0x001C(sp)              // load player struct
+        lw      v0, 0x026C(a0)              // get stunned timer
+        
+        lw      t2, 0x0018(sp)              // get previous stunned timer
+        subu    t3, v0, t2                  // wizard magic stuff from 0x80149874
+        sll     t4, t3, 2                   // ~
+        subu    t4, t4, t3                  // ~
+        addu    t5, v0, t4                  // ~
+        bgtz    v0, _end                    // branch if timer is not up
+        sw      t5, 0x026C(a0)              // save timer again
+        
+        // unbury player if timer is up
+        jal     0x8013F9E0                  // common routine set player to aerial idle
+        lw      a0, 0x0020(sp)              // restore player object
+        b       _end
+        nop
+        _end:
+        lw      ra, 0x0014(sp)
+        jr      ra
+        addiu   sp, sp, 0x20
+    }
+    
+
     // @ Description
 	// Buries a grounded player.
 	// a0 = player object
@@ -600,7 +717,7 @@ scope Damage {
 		addiu	sp, sp, 0x18
 	}
 	
-	constant PLUNGE_ACTION(Action.DamageAir3)
+	constant PLUNGE_ACTION(Action.ShieldBreakFall)
 	
 	constant INITIAL_PLUNGE_SPEED(0xC248)	// y speed -50
     // @ Description
@@ -634,7 +751,11 @@ scope Damage {
 		
 		li		at, plunge_collision_
 		sw		at, 0x09E0(s0)				// overwrite collision routine
-		
+        
+        // prevent stun transition
+        li      at, 0x800DEDF0              // some routine that does not transition to stun?
+        sw      at, 0x09E4(s0)              // overwrite current routine
+        
 		lw		ra, 0x0014(sp)
 		jr		ra
 		addiu	sp, sp, 0x30
@@ -722,15 +843,14 @@ scope Damage {
         // at = damage.id.ELECTRIC
 
         beq     t0, at, _electric           // branch if damage type = ELECTRIC
-        nop
         lli     at, Damage.id.BURY     		// at = id.BURY
         bne     t0, at, _bury               // skip if damage type != BURY (modified original line 1)
-        nop
         lli     at, Damage.id.DEKU_STUN     // at = id.DEKU_STUN
         bne     t0, at, _deku_stun          // skip if damage type != DEKU_STUN (modified original line 1)
-        nop
         lli     at, Damage.id.STUN          // at = id.STUN
         bne     t0, at, _stun               // skip if damage type != STUN (modified original line 1)
+        lli     at, Damage.id.FLASHBANG     // at = id.FLASHBANG
+        bne     t0, at, _stun               // skip if damage type != FLASHBANG (modified original line 1)
         nop
 
         _electric:
@@ -738,17 +858,13 @@ scope Damage {
         j       _return                     // return
         nop
 
+        _flashbang:
+        _bury:
+        _deku_stun:
         _stun:
         j       _branch_return              // return, taking original branch
         lw      t4, 0x00A0(sp)              // original line 2
 
-        _deku_stun:
-        j       _branch_return              // return, taking original branch
-        lw      t4, 0x00A0(sp)              // original line 2
-		
-        _bury:
-        j       _branch_return              // return, taking original branch
-        lw      t4, 0x00A0(sp)              // original line 2
     }
 
 
@@ -764,6 +880,7 @@ scope Damage {
     add_damage_type(LASER, on_hit_gfx.LASER, on_hit_routine.LASER)
     add_damage_type(DEKU_STUN, on_hit_gfx.DEKU_STUN, on_hit_routine.DEKU_STUN)
     add_damage_type(BURY, on_hit_gfx.BURY, on_hit_routine.BURY)
+    add_damage_type(FLASHBANG, on_hit_gfx.ELECTRIC, on_hit_routine.ELECTRIC)
 
     print "========================================================================== \n"
 

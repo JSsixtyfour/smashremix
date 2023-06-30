@@ -22,6 +22,11 @@ scope Dedede {
 		constant PUFFED(0xAC100005)
 	}
 
+    scope BODY: {
+        constant NORMAL(0xA0300000)
+        constant EXPANDED(0xA0300001)
+    }
+
     CLIFF_CATCH:
 	dw EYES.CLOSED_2
 	Moveset.GO_TO(Moveset.shared.CLIFF_CATCH)
@@ -44,6 +49,8 @@ scope Dedede {
     dw 0x04000050; Moveset.GO_TO(IDLE)         // loop
 
     insert JUMP,"moveset/JUMP.bin"
+    JUMP_AERIAL_EARLY:
+    dw BODY.EXPANDED;
     insert JUMP_AERIAL,"moveset/JUMP_AERIAL.bin"
     insert JUMP_LAST,"moveset/JUMP_LAST.bin"
     insert GRAB_RELEASE_DATA,"moveset/GRAB_RELEASE_DATA.bin"
@@ -101,6 +108,7 @@ scope Dedede {
     dw      0x08000007      // after 7 frames
     Moveset.SUBROUTINE(NSP_SUBROUTINE)
     insert NSP_SPIT_2,"moveset/NSP_SPIT_2.bin"
+    NSP_HOLD:; dw BODY.EXPANDED; dw 0;
 
     insert USP_BEGIN,"moveset/USP_BEGIN.bin"
     insert USP_MOVE,"moveset/USP_MOVE.bin"
@@ -278,11 +286,11 @@ Character.edit_action_parameters(DEDEDE, Action.JumpSquat,              File.DED
 Character.edit_action_parameters(DEDEDE, Action.ShieldJumpSquat,        File.DEDEDE_LANDING,                -1,                         -1)
 Character.edit_action_parameters(DEDEDE, Action.JumpF,                  File.DEDEDE_JUMP_F,                 JUMP,                       -1)
 Character.edit_action_parameters(DEDEDE, Action.JumpB,                  File.DEDEDE_JUMP_B,                 JUMP,                       -1)
-Character.edit_action_parameters(DEDEDE, Action.JumpAerialF,            File.DEDEDE_JUMP_AERIAL_F,          JUMP_AERIAL,                -1)
-Character.edit_action_parameters(DEDEDE, Action.JumpAerialB,            File.DEDEDE_JUMP_AERIAL_B,          JUMP_AERIAL,                -1)
+Character.edit_action_parameters(DEDEDE, Action.JumpAerialF,            File.DEDEDE_JUMP_AERIAL_F,          JUMP_AERIAL_EARLY,                -1)
+Character.edit_action_parameters(DEDEDE, Action.JumpAerialB,            File.DEDEDE_JUMP_AERIAL_B,          JUMP_AERIAL_EARLY,                0)
 
-Character.edit_action_parameters(DEDEDE, Action.KIRBY.Jump2,            File.DEDEDE_JUMP_AERIAL_F,          JUMP_AERIAL,                0)
-Character.edit_action_parameters(DEDEDE, Action.KIRBY.Jump3,            File.DEDEDE_JUMP_AERIAL_F,          JUMP_AERIAL,                0)
+Character.edit_action_parameters(DEDEDE, Action.KIRBY.Jump2,            File.DEDEDE_JUMP_AERIAL_F,          JUMP_AERIAL_EARLY,                0)
+Character.edit_action_parameters(DEDEDE, Action.KIRBY.Jump3,            File.DEDEDE_JUMP_AERIAL_F,          JUMP_AERIAL_EARLY,                0)
 Character.edit_action_parameters(DEDEDE, Action.KIRBY.Jump4,            File.DEDEDE_JUMP_AERIAL_F,          JUMP_AERIAL,                0)
 Character.edit_action_parameters(DEDEDE, Action.KIRBY.Jump5,            File.DEDEDE_JUMP_AERIAL_F,          JUMP_LAST,                  0)
 Character.edit_action_parameters(DEDEDE, Action.KIRBY.Jump6,            File.DEDEDE_JUMP_AERIAL_F,          JUMP_LAST,                  0)
@@ -441,6 +449,9 @@ Character.edit_action_parameters(DEDEDE, Action.Thrown2,                 File.DE
 Character.edit_action_parameters(DEDEDE, Action.Taunt,                  File.DEDEDE_TAUNT,                  TAUNT,                      -1)
 Character.edit_action_parameters(DEDEDE, Action.Jab1,                   File.DEDEDE_JAB_1,                  JAB_1,                      0x00000000)
 Character.edit_action_parameters(DEDEDE, Action.Jab2,                   File.DEDEDE_JAB_2,                  JAB_2,                      0x00000000)
+Character.edit_action_parameters(DEDEDE, 0xDC,                          File.DEDEDE_JAB_3,                  JAB_3,                      0x40000000)
+Character.edit_action_parameters(DEDEDE, 0xDD,                          File.DEDEDE_JAB_1,                  JAB_1,                      0x00000000)
+Character.edit_action_parameters(DEDEDE, 0xDE,                          File.DEDEDE_JAB_2,                  JAB_2,                      0x00000000)
 
 Character.edit_action_parameters(DEDEDE, Action.DashAttack,             File.DEDEDE_DASH_ATTACK,            DASHATTACK,                 -1)
 Character.edit_action_parameters(DEDEDE, Action.FTiltHigh,              0,                                  0x80000000,                 0)
@@ -482,7 +493,7 @@ Character.edit_action_parameters(DEDEDE, Action.LandingAirX,            File.DED
     Character.edit_action_parameters(DEDEDE, Action.NSP_SWALLOW_GROUND, File.DEDEDE_NSP_PULL,               NSP_SWALLOW,                0x00000000)// 0x1C000000)
     Character.edit_action_parameters(DEDEDE, Action.NSP_IDLE_GROUND,    File.DEDEDE_NSP_INHALED_IDLE,       NSP_SWALLOW,                0x00000000)// 0x0C000000)
     Character.edit_action_parameters(DEDEDE, Action.NSP_SPIT_GROUND,    File.DEDEDE_NSP_SPIT,               NSP_SPIT,                   0x40000000)// 0x4C000000)
-    Character.edit_action_parameters(DEDEDE, Action.NSP_TURN_GROUND,    File.DEDEDE_TURN,      			    0x80000000,                 0x00000000)
+    Character.edit_action_parameters(DEDEDE, Action.NSP_TURN_GROUND,    File.DEDEDE_TURN,      			    NSP_HOLD,                 0x00000000)
 
 
 
@@ -530,7 +541,7 @@ Character.edit_action_parameters(DEDEDE, Action.LandingAirX,            File.DED
     Character.add_new_action_params(DEDEDE, DEDEDE_NSP_SWALLOW_AIR,      -1,             File.DEDEDE_NSP_PULL,         NSP_SWALLOW,               0)
     Character.add_new_action_params(DEDEDE, DEDEDE_NSP_FALL,             -1,             File.DEDEDE_NSP_INHALED_IDLE, NSP_SWALLOW,                0)
     Character.add_new_action_params(DEDEDE, DEDEDE_NSP_SPIT_AIR,         -1,             File.DEDEDE_NSP_SPIT,         NSP_SPIT,                  0x40000000)
-    Character.add_new_action_params(DEDEDE, DEDEDE_NSP_TURN_AIR,         -1,             File.DEDEDE_TURN,             0x80000000,                0)
+    Character.add_new_action_params(DEDEDE, DEDEDE_NSP_TURN_AIR,         -1,             File.DEDEDE_TURN,             NSP_HOLD,                0)
     Character.add_new_action_params(DEDEDE, DEDEDE_NSP_END_AIR,          -1,             File.DEDEDE_NSP_END,          0x80000000,                0)
     Character.add_new_action_params(DEDEDE, DEDEDE_DSPG_BEGIN,           -1,             File.DEDEDE_DSP_BEGIN,         DSP_BEGIN,                 0)
     Character.add_new_action_params(DEDEDE, DEDEDE_DSPG_CHARGE,          -1,             File.DEDEDE_DSP_CHARGE,        DSP_CHARGE,                0)
@@ -674,7 +685,7 @@ Character.edit_action_parameters(DEDEDE, Action.LandingAirX,            File.DED
 
 	// Set CPU SD prevent routine
     Character.table_patch_start(ai_attack_prevent, Character.id.DEDEDE, 0x4)
-    dw    	AI.PREVENT_ATTACK.ROUTINE.WOLF_USP		// skip USP if unsafe
+    dw    	AI.PREVENT_ATTACK.ROUTINE.USP		// skip USP if unsafe
     OS.patch_end()
 
 	// TODO:
@@ -694,8 +705,8 @@ Character.edit_action_parameters(DEDEDE, Action.LandingAirX,            File.DED
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPA,   -1,  15,  		0,  200, 900, 100, 250)		// todo need to look at kirbys
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPG,   -1,  15,  		0,  200, 900, 100, 250)		// todo need to look at kirbys
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UAIR,   -1,  11,   		0,  50, 200, 128, 500)		// todo: coords
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPA,   -1,  14,  		0,  89, 475, 242, 1000)		// todo: coords
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPG,   -1,  14,  		0,  89, 475, 242, 1700)		// todo: coords
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPA,   -1,  0,  		0,  0, 0, 0, 0)             // no attack
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPG,   -1,  0,  		0,  0, 0, 0, 0)             // no attack
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USMASH, -1,  20,  		0,  -174, 243, 177, 940)	// todo: coords
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UTILT,  -1,  6,   		0,  -274, 326, 196, 717)	// todo: coords
 
@@ -717,7 +728,7 @@ Character.edit_action_parameters(DEDEDE, Action.LandingAirX,            File.DED
         lli     at, 0x0002                  // at = 2
         lw      a0, 0x0020(sp)              // a0 = player object
         bne     t9, at, _end                // skip if charge level != 2 (full)
-        lli     a1, GFXRoutine.id.SHEIK_CHARGE // a1 = SHEIK_CHARGE id
+        lli     a1, GFXRoutine.id.DEDEDE_CHARGE // a1 = DEDEDE_CHARGE id
 
         // if the neutral special is full charged
         or      a2, r0, r0                  // a2 = 0

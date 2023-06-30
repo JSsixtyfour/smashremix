@@ -15,7 +15,7 @@ db  "SMASH REMIX"
 fill 0x34 - origin(), 0x20
 
 // add asm to rom
-origin  0x02000000
+origin  0x02400000
 base    0x80400000
 include "src/OS.asm"
 include "src/String.asm"
@@ -85,6 +85,18 @@ include "src/Reflect.asm"
 include "src/Transitions.asm"
 include "src/ZCancel.asm"
 include "src/Tripping.asm"
+include "src/PokemonAnnouncer.asm"
+include "src/FootStool.asm"
+include "src/AirDodge.asm"
+include "src/JabLock.asm"
+include "src/LedgeJump.asm"
+include "src/PerfectShield.asm"
+include "src/SpotDodge.asm"
+include "src/AerialAttackFastFall.asm"
+include "src/LedgeTrump.asm"
+include "src/Hitstun.asm"
+include "src/WallTeching.asm"
+
 // CHARACTER
 include "src/Character.asm"
 include "src/AI.asm"
@@ -93,6 +105,7 @@ include "src/CharacterSelectDebugMenu.asm"
 include "src/Costumes.asm"
 include "src/Fireball.asm"
 include "src/ResultsScreen.asm"
+include "src/CharacterDataScreen.asm"
 include "src/linkshared.asm"
 include "src/captainshared.asm"
 include "src/dkshared.asm"
@@ -101,6 +114,8 @@ include "src/jigglypuffkirbyshared.asm"
 include "src/yoshishared.asm"
 include "src/pikashared.asm"
 include "src/samusshared.asm"
+// METAL MARIO
+include "src/MetalMario/MetalMario.asm"
 // FALCO
 include "src/Falco/Phantasm.asm"
 include "src/Falco/Falco.asm"
@@ -201,6 +216,19 @@ include "src/Dedede/DededeSpecial.asm"
 include "src/Dedede/Dedede.asm"
 // NMARINA
 include "src/NMarina/NMarina.asm"
+// GOEMON
+include "src/Goemon/GoemonSpecial.asm"
+include "src/Goemon/Goemon.asm"
+// NFALCO
+include "src/NFalco/NFalco.asm"
+// NGANONDORF
+include "src/NGanondorf/NGanondorf.asm"
+// PEPPY
+include "src/Peppy/PeppySpecial.asm"
+include "src/Peppy/Peppy.asm"
+// SLIPPY
+include "src/Slippy/SlippySpecial.asm"
+include "src/Slippy/Slippy.asm"
 
 // KIRBY
 include "src/Kirby/Kirby.asm"
@@ -221,6 +249,6 @@ fill 0x580
 
 custom_heap: // This is where we move the heap to when we need to increase its size
 
-// rom size = 48MB
-origin 0x2FFFFFF
+// rom size = 64MB
+origin 0x3E7FFFF
 db 0x00

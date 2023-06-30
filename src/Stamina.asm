@@ -831,6 +831,10 @@ scope Stamina {
 
         addiu       sp, sp, -0x0010
         sw          at, 0x0004(sp)
+        //sw          t0, 0x0008(sp)
+        sw          ra, 0x000C(sp)
+        
+        jal         PokemonAnnouncer.pokemon_ko_sounds_
         sw          t0, 0x0008(sp)
 
         addiu       at, r0, 0x0016              // screen id
@@ -852,12 +856,14 @@ scope Stamina {
 
         lw          at, 0x0004(sp)
         lw          t0, 0x0008(sp)
+        lw          ra, 0x000C(sp)
         j           _return
         addiu       sp, sp, 0x0010
 
         _0x8013BF14:
         lw          at, 0x0004(sp)
         lw          t0, 0x0008(sp)
+        lw          ra, 0x000C(sp)
         addiu       sp, sp, 0x0010
         j           0x8013BF14
         nop

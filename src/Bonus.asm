@@ -4,7 +4,7 @@ define __BONUS__()
 print "included Bonus.asm\n"
 
 scope Bonus {
-    constant NUM_BONUS_STAGES(29)
+    constant NUM_BONUS_STAGES(30)
 
     // @ Description
     // Sets up CSS for alternate Bonus modes
@@ -703,6 +703,7 @@ scope Bonus {
     db Stages.id.BTT_SHEIK
     db Stages.id.BTT_MARINA
     db Stages.id.BTT_DEDEDE
+    db Stages.id.BTT_GOEMON
 
     db Stages.id.BTT_STG1
     OS.align(4)
@@ -738,6 +739,7 @@ scope Bonus {
     db Stages.id.BTP_SHEIK
     db Stages.id.BTP_MARINA
     db Stages.id.BTP_DEDEDE
+    db Stages.id.BTP_GOEMON
 
     db Stages.id.BTP_POLY
     OS.align(4)
@@ -745,7 +747,7 @@ scope Bonus {
     // Maps BTX stage index to character IDs corresponding to stock icons representing the BTX stage
     stock_icon_table:
     db Character.id.MARIO,      Character.id.METAL
-    db Character.id.FOX,        0x0
+    db Character.id.FOX,        Character.id.PEPPY
     db Character.id.DK,         0x0
     db Character.id.SAMUS,      0x0
     db Character.id.LUIGI,      0x0
@@ -757,7 +759,7 @@ scope Bonus {
     db Character.id.JIGGLYPUFF, 0x0
     db Character.id.NESS,       0x0
 
-    db Character.id.FALCO,      0x0
+    db Character.id.FALCO,      Character.id.SLIPPY
     db Character.id.GND,        0x0
     db Character.id.YLINK,      0x0
     db Character.id.DRM,        0x0
@@ -773,6 +775,7 @@ scope Bonus {
     db Character.id.SHEIK,      0x0
     db Character.id.MARINA,     0x0
     db Character.id.DEDEDE,     0x0
+    db Character.id.GOEMON,     0x0
 
     db Character.id.NMARIO,     Character.id.PIANO
     OS.align(4)

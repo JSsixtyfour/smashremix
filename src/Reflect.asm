@@ -42,6 +42,8 @@ scope Reflect {
     db    	OS.TRUE;     OS.patch_end();
     Character.table_patch_start(fighter_reflect, Character.id.PIANO, 0x1)
     db    	OS.TRUE;     OS.patch_end();
+    Character.table_patch_start(fighter_reflect, Character.id.SLIPPY, 0x1)
+    db    	OS.TRUE;     OS.patch_end();
 
 	// @ Description
 	// Hooks related to cpu behaviour with absorb and reflect
@@ -98,10 +100,10 @@ scope Reflect {
 			// s6, s4 is safe
 			lli   	s4, Character.id.MARINA	// s4 = id.MARINA
 			beq		s4, s6, _marina			// marina branch
-			lli   	s4, Character.id.LUCAS	// s4 = id.LUCAS
-			beq		s4, s6, _lucas			// lucas branch
-			lli   	s4, Character.id.NLUCAS	// s4 = id.NLUCAS
-			beq		s4, s6, _lucas			// lucas branch
+			// lli   	s4, Character.id.LUCAS	// s4 = id.LUCAS
+			// beq		s4, s6, _lucas			// lucas branch
+			// lli   	s4, Character.id.NLUCAS	// s4 = id.NLUCAS
+			// beq		s4, s6, _lucas			// lucas branch
 
 			// if here, take original.
 			lui		at, 0x4170				// original line 1 (float 15.0)
@@ -116,11 +118,11 @@ scope Reflect {
 			j		_return
 			nop
 			
-			_lucas:
-			lui		at, 0x41C8				// modify line 1 (float 25.0)
-			mtc1	at, f26					// original line 2
-			j		_return
-			nop
+			// _lucas:
+			// lui		at, 0x41C8				// modify line 1 (float 25.0)
+			// mtc1	at, f26					// original line 2
+			// j		_return
+			// nop
 		}
 		
 		// @ Description
@@ -136,10 +138,10 @@ scope Reflect {
 			// at, s7 is safe
 			lli   	at, Character.id.MARINA	// s7 = id.MARINA
 			beq		at, s7, _marina			// marina branch
-			lli   	at, Character.id.LUCAS	// s7 = id.LUCAS
-			beq		at, s7, _lucas			// lucas branch
-			lli   	at, Character.id.NLUCAS	// s7 = id.NLUCAS
-			beq		at, s7, _lucas			// lucas branch
+			// lli   	at, Character.id.LUCAS	// s7 = id.LUCAS
+			// beq		at, s7, _lucas			// lucas branch
+			// lli   	at, Character.id.NLUCAS	// s7 = id.NLUCAS
+			// beq		at, s7, _lucas			// lucas branch
 
 			// if here, take original.
 			lui		at, 0x4110				// original line 1 (float 15.0)
@@ -151,10 +153,10 @@ scope Reflect {
 			j		_return
 			lui		s7, 0x8004				// original line 2
 			
-			_lucas:
-			lui		at, 0x41C8				// modify line 1 (float 25.0)
-			j		_return
-			lui		s7, 0x8004				// original line 2
+			// _lucas:
+			// lui		at, 0x41C8				// modify line 1 (float 25.0)
+			// j		_return
+			// lui		s7, 0x8004				// original line 2
 		}
 		
 		// @ Description
@@ -176,14 +178,16 @@ scope Reflect {
 			beq    at, v0, _marina            	// Fox branch if MARINA
 			lli    at, Character.id.FALCO
 			beq    at, v0, _fox_reflect       	// Fox branch if FALCO
+			lli    at, Character.id.SLIPPY
+			beq    at, v0, _fox_reflect       	// Fox branch if SLIPPY
 			lli    at, Character.id.WOLF
 			beq    at, v0, _fox_reflect       	// Fox branch if WOLF
 			lli    at, Character.id.JNESS
 			beq    at, v0, _ness_absorb       	// Ness branch if JNESS
 			lli    at, Character.id.LUCAS
-			beq    at, v0, _lucas       	  	// Lucas branch if LUCAS
+			beq    at, v0, _ness_absorb         // Ness branch if LUCAS
 			lli    at, Character.id.NLUCAS
-			beq    at, v0, _lucas             	// Lucas branch if NLUCAS
+			beq    at, v0, _ness_absorb         // Ness branch if NLUCAS
 			lli    at, Character.id.PIANO
 			beq    at, v0, _ness_absorb       	// Ness branch if PIANO
 			nop
@@ -192,27 +196,27 @@ scope Reflect {
 			j 		0x80136174					// original line 1
 			addiu	v0, r0, 0x0001				// original line 2
 			
-			_lucas:
-			li		t0, last_known_hazard_direction
-			lbu     at, 0x000D(s2)              // at = player.port
-			lw      v0, 0x0074(s7)				// v0 = projectile position struct
-			lwc1    f4, 0x001C(v0)				// f4 = projectile.x
-			lw      v0, 0x0074(a0)				// v0 = player position struct
-			lwc1    f6, 0x001C(v0)				// f6 = player.x
-			addu    t0, t0, at                  // t3 = Lucas's entry in hazard_last_known_direction
-			c.le.s	f4, f6
-			lli 	at, 0x0000
-			bc1fl	_lucas_continue				// set to 1 if projectile.x > player.x
-			lli 	at, 0x0001
-			_lucas_continue:
-			lw      v0, 0x0044(s2)				// v0 = player direction
-			beql	v0, at,	_lucas_apply_bat
-			lli 	at, 0x0001					// attack forwards
-			lli 	at, 0x0000					// or attack backwards
-			_lucas_apply_bat:
-			sb      at, 0x0000(t0)				// save last known direction
-			j      0x80135E9C					// attempt to reflect
-			lbu    t0, 0x0049(s1)             	// get cpu reflect flag
+			// _lucas:
+			// li		t0, last_known_hazard_direction
+			// lbu     at, 0x000D(s2)              // at = player.port
+			// lw      v0, 0x0074(s7)				// v0 = projectile position struct
+			// lwc1    f4, 0x001C(v0)				// f4 = projectile.x
+			// lw      v0, 0x0074(a0)				// v0 = player position struct
+			// lwc1    f6, 0x001C(v0)				// f6 = player.x
+			// addu    t0, t0, at                  // t3 = Lucas's entry in hazard_last_known_direction
+			// c.le.s	f4, f6
+			// lli 	at, 0x0000
+			// bc1fl	_lucas_continue				// set to 1 if projectile.x > player.x
+			// lli 	at, 0x0001
+			// _lucas_continue:
+			// lw      v0, 0x0044(s2)				// v0 = player direction
+			// beql	v0, at,	_lucas_apply_bat
+			// lli 	at, 0x0001					// attack forwards
+			// lli 	at, 0x0000					// or attack backwards
+			// _lucas_apply_bat:
+			// sb      at, 0x0000(t0)				// save last known direction
+			// j      0x80135E9C					// attempt to reflect
+			// lbu    t0, 0x0049(s1)             	// get cpu reflect flag
 
 			_fox_reflect:
 			j      0x80135E9C					// attempt to reflect
@@ -291,11 +295,12 @@ scope Reflect {
 			// check special cases here
 			lli		at, Character.id.MARINA
 			beq		v0, at, _marina				// branch if id = MARINA
-			lli		at, Character.id.LUCAS
-			beq		v0, at, _lucas				// branch if id = LUCAS
-			lli		at, Character.id.NLUCAS
-			beq		v0, at, _lucas				// branch if id = NLUCAS
-			nop
+            nop
+			// lli		at, Character.id.LUCAS
+			// beq		v0, at, _lucas				// branch if id = LUCAS
+			// lli		at, Character.id.NLUCAS
+			// beq		v0, at, _lucas				// branch if id = NLUCAS
+			// nop
 			j 		0x80136140					// original fox logic 1
 			lbu		t3, 0x0049(s1)				// get reflect/absorb flag
 				
@@ -333,6 +338,8 @@ scope Reflect {
 			beq    at, v0, _marina_absorb     	// Marina branch if MARINA
 			lli    at, Character.id.FALCO
 			beq    at, v0, _fox_reflect       	// Fox branch if FALCO
+			lli    at, Character.id.SLIPPY
+			beq    at, v0, _fox_reflect       	// Fox branch if SLIPPY
 			lli    at, Character.id.WOLF
 			beq    at, v0, _fox_reflect       	// Fox branch if WOLF
 			lli    at, Character.id.JNESS
@@ -426,14 +433,16 @@ scope Reflect {
 			beq    at, v0, _marina_absorb     	// Marina branch if MARINA
 			lli    at, Character.id.FALCO
 			beq    at, v0, _fox_reflect       	// Fox branch if FALCO
+			lli    at, Character.id.SLIPPY
+			beq    at, v0, _fox_reflect       	// Fox branch if SLIPPY
 			lli    at, Character.id.WOLF
 			beq    at, v0, _fox_reflect       	// Fox branch if WOLF
 			lli    at, Character.id.JNESS
 			beq    at, v0, _ness_absorb       	// Ness branch if JNESS
 			lli    at, Character.id.LUCAS
-			beq    at, v0, _lucas             	// Lucas branch if LUCAS
+			beq    at, v0, _ness_absorb         // Ness branch if LUCAS
 			lli    at, Character.id.LUCAS
-			beq    at, v0, _lucas             	// Lucas branch if NLUCAS
+			beq    at, v0, _ness_absorb         // Ness branch if NLUCAS
 			lli    at, Character.id.PIANO
 			beq    at, v0, _piano_absorb      	// Piano branch if PIANO
 			lw     v0, 0x0024(a0)             	// v0 = current action id
@@ -446,22 +455,22 @@ scope Reflect {
 			j      0x80138064
 			lw     v0, 0x0024(a0)             	// v0 = current action id
 			
-			_lucas:
-			// Lucas will try using his Bat if grounded
-			lw		v0, 0x014C(a0)				// v0 = player kinetic state
-			bnez	v0, _ness_absorb			// do normal absorb if aerial	
-			li		v0, last_known_hazard_direction
-			lbu     at, 0x000D(a0)              // at = player.port
-			addu    v0, v0, at                  // v0 = Lucas's entry in last_known_hazard_direction
-			lb      at, 0x0000(v0)				// get entry
-			addiu	a1, r0, 0x0039				// a1 = custom routine. AI.FSMASH_REFLECT_RIGHT
-			beqzl	at, _lucas_continue			// smash left if direction is so
-			addiu	a1, r0, 0x0038				// a1 = custom routine. AI.FSMASH_REFLECT_LEFT
-			_lucas_continue:
-			jal		0x80132758					// set controller input
-			nop
-			j		0x801380F8					// branch to end
-			lw    	ra, 0x0014(sp)             	// restore ra
+			// _lucas:
+			// // Lucas will try using his Bat if grounded
+			// lw		v0, 0x014C(a0)				// v0 = player kinetic state
+			// bnez	v0, _ness_absorb			// do normal absorb if aerial	
+			// li		v0, last_known_hazard_direction
+			// lbu     at, 0x000D(a0)              // at = player.port
+			// addu    v0, v0, at                  // v0 = Lucas's entry in last_known_hazard_direction
+			// lb      at, 0x0000(v0)				// get entry
+			// addiu	a1, r0, 0x0039				// a1 = custom routine. AI.FSMASH_REFLECT_RIGHT
+			// beqzl	at, _lucas_continue			// smash left if direction is so
+			// addiu	a1, r0, 0x0038				// a1 = custom routine. AI.FSMASH_REFLECT_LEFT
+			// _lucas_continue:
+			// jal		0x80132758					// set controller input
+			// nop
+			// j		0x801380F8					// branch to end
+			// lw    	ra, 0x0014(sp)             	// restore ra
 
 			_ness_absorb:
 			j      0x8013808C

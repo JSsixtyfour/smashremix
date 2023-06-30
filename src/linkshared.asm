@@ -106,6 +106,24 @@ scope LinkShared {
     dw  0x0000090C
     dw  0x00000940
 
+    // entry_anim_struct_1_GOEMON:
+    // dw  0x040A0000
+    // dw  Character.GOEMON_file_9_ptr
+    // OS.copy_segment(0xA9CEC, 0x10)
+	// dw	0x00000240					        // Goemon entry alters these
+	// dw  0x00000348
+    // dw  0x00000668
+    // dw  0x000006C4
+
+    entry_anim_struct_2_GOEMON:
+    dw  0x040A0000
+    dw  Character.GOEMON_file_9_ptr
+    OS.copy_segment(0xA9D14, 0x10)
+	dw	0x00000990					        // Goemon entry alters these
+	dw  0x00000A98
+    dw  0x00000CA4
+    dw  0x00000CEC
+
     // @ Description
     // loads a different animation struct when Young Link or Marth use their entry animation.
     scope get_entry_anim_struct_1: {
@@ -130,6 +148,9 @@ scope LinkShared {
         lli     t1, Character.id.MARINA     // t1 = id.MARINA
         li      a0, entry_anim_struct_1_MARINA // a0 = entry_anim_struct
         beq     t0, t1, _custom             // branch if Marina
+        lli     t1, Character.id.GOEMON     // t1 = id.GOEMON
+        // li      a0, entry_anim_struct_1_GOEMON // a0 = entry_anim_struct
+        beq     t0, t1, _skip               // branch if Goemon
         lw      t0, 0x0004(sp)              // ~
 
         // normal path
@@ -145,6 +166,12 @@ scope LinkShared {
         nop
         j       0x80102AFC                  // return
         nop
+
+        _skip:
+        lw      t1, 0x0008(sp)              // load t0, t1
+        or      v0, r0, r0                  // pretend 0x800FDAFC returned no object
+        j       0x80102AFC                  // return
+        addiu   sp, sp, 0x0010              // deallocate stack space
     }
 
     // @ Description
@@ -171,6 +198,9 @@ scope LinkShared {
         lli     t1, Character.id.MARINA     // t1 = id.MARINA
         li      a0, entry_anim_struct_2_MARINA // a0 = entry_anim_struct
         beq     t0, t1, _custom             // branch if Marina
+        lli     t1, Character.id.GOEMON     // t1 = id.GOEMON
+        li      a0, entry_anim_struct_2_GOEMON // a0 = entry_anim_struct
+        beq     t0, t1, _custom             // branch if Goemon
         lw      t0, 0x0004(sp)              // ~
 
         // normal path

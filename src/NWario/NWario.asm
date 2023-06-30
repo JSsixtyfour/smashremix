@@ -141,25 +141,9 @@ scope NWARIO {
     dw Character.grounded_script.DISABLED   // skips grounded script
     OS.patch_end()
 
-    // Set crowd chant FGM.
-    Character.table_patch_start(crowd_chant_fgm, Character.id.NWARIO, 0x2)
-    dh 0x02B7
-    OS.patch_end()
-
-    // Set default costumes
-    Character.set_default_costumes(Character.id.NWARIO, 0, 1, 4, 5, 1, 3, 2)
-
-    // Shield colors for costume matching
-    Character.set_costume_shield_colors(NWARIO, PURPLE, RED, GREEN, BLUE, BLACK, WHITE, NA, NA)
-
     // Set Kirby star damage
     Character.table_patch_start(kirby_inhale_struct, 0x8, Character.id.NWARIO, 0xC)
     dw Character.kirby_inhale_struct.star_damage.YOSHI
-    OS.patch_end()
-
-    // Set Kirby hat_id
-    Character.table_patch_start(kirby_inhale_struct, 0x2, Character.id.NWARIO, 0xC)
-    dh 0x8
     OS.patch_end()
 
     // Set CPU behaviour
@@ -167,48 +151,7 @@ scope NWARIO {
     dw      Wario.CPU_ATTACKS
     OS.patch_end()
 
-    // @ Description
-    // Wario's extra actions
-    scope Action {
-        //constant Jab3(0x0DC)
-        constant Appear1(0x0DD)
-        constant Appear2(0x0DE)
-        constant BodySlam(0x0DF)
-        constant BodySlamAir(0x0E0)
-        constant Corkscrew(0x0E1)
-        constant GroundPoundLanding(0x0E2)
-        constant GroundPound(0x0E3)
-        constant GroundPoundAir(0x0E4)
+    // Handles common things for Polygons
+    Character.polygon_setup(NWARIO, WARIO)
 
-        // strings!
-        //string_0x0DC:; String.insert("Jab3")
-        //string_0x0DD:; String.insert("Appear1")
-        //string_0x0DE:; String.insert("Appear2")
-        string_0x0DF:; String.insert("BodySlam")
-        string_0x0E0:; String.insert("BodySlamAir")
-        string_0x0E1:; String.insert("Corkscrew")
-        string_0x0E2:; String.insert("GroundPoundLanding")
-        string_0x0E3:; String.insert("GroundPound")
-        string_0x0E4:; String.insert("GroundPoundAir")
-        string_0x0E5:; String.insert("BodySlamRecoil")
-        string_0x0E6:; String.insert("BodySlamRecoilAir")
-
-        action_string_table:
-        dw 0 //dw Action.COMMON.string_jab3
-        dw Action.COMMON.string_appear1
-        dw Action.COMMON.string_appear2
-        dw string_0x0DF
-        dw string_0x0E0
-        dw string_0x0E1
-        dw string_0x0E2
-        dw string_0x0E3
-        dw string_0x0E4
-        dw string_0x0E5
-        dw string_0x0E6
-    }
-
-    // Set action strings
-    Character.table_patch_start(action_string, Character.id.NWARIO, 0x4)
-    dw  Action.action_string_table
-    OS.patch_end()
 }

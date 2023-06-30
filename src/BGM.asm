@@ -76,23 +76,22 @@ scope BGM {
         lui     a0, 0x8013
         lw      a0, 0x1300(a0)              // a0 = stage file
         lw      a1, 0x007C(a0)              // a1 = default stage bgm_id
-	
+
         // check if there is an override
-		// TODO: Make sure this works
-        // li      t0, Global.match_info       // ~
-        // lw      t0, 0x0000(t0)              // t0 = match_info
-        // lbu     t0, 0x0001(t0)              // t0 = current stage id
-        // sll		t0, t0, 1					// t0 = offset in music override table
-        // li		at, Stages.default_music_track_table
-        // addu 	t0, t0, at					// t0 = stages entry in music override table
-        // lh		t0, 0x0000(t0)				// t0 = stages override
-        // beqz    t0, _set_default_track		// branch if no override value
-        // nop
-        // addiu   t0, t0, -1					// correct track id
-        // move	a1, t0						// replace a1 with override value
-        // sw      t0, 0x007C(a0)              // set default bgm_id
-	
-        // _set_default_track:
+        li      t0, Global.match_info       // ~
+        lw      t0, 0x0000(t0)              // t0 = match_info
+        lbu     t0, 0x0001(t0)              // t0 = current stage id
+        sll		t0, t0, 1					// t0 = offset in music override table
+        li		at, Stages.default_music_track_table
+        addu 	t0, t0, at					// t0 = stages entry in music override table
+        lh		t0, 0x0000(t0)				// t0 = stages override
+        beqz    t0, _use_default_track		// branch if no override value
+        nop
+        addiu   t0, t0, -1					// correct track id
+        or      a1, t0, r0					// replace a1 with override value
+        sw      t0, 0x007C(a0)              // set default bgm_id
+
+        _use_default_track:
         li		at, default_track			// at = address we use to store stages default track
         sw		a1, 0x0000(at)				// save default track id
 
@@ -375,8 +374,9 @@ scope BGM {
     scope alt_menu_music_: {
         // @ Description
         // These constants determine alternate menu music chances
-        constant CHANCE_64(90)
+        constant CHANCE_64(85)
         constant CHANCE_MELEE(5)
+        constant CHANCE_MENU2(5)
         constant CHANCE_BRAWL(5)
 
         // From title screen
@@ -452,29 +452,41 @@ scope BGM {
         sw      v0, 0x0014(sp)              // ~
 
         li      t0, Toggles.entry_menu_music
-        lw      t0, 0x0004(t0)              // t0 = 0 if DEFAULT, 1 if 64, 2 if MELEE, 3 if BRAWL
+        lw      t0, 0x0004(t0)              // t0 = 0 if DEFAULT, 1 if 64, 2 if MELEE, 3 if MENU 2, 4 if BRAWL, 5 if GOLDENEYE,  6 if OFF
         lli     t1, 0x0001                  // t1 = 1 (64)
         beq     t1, t0, _original           // if 64, then use 64 BGM
         nop
         lli     t1, 0x0002                  // t1 = 2 (MELEE)
         beql    t1, t0, _check_current_track// if MELEE, then use MELEE BGM
         addiu   a1, r0, menu.MAIN_MELEE
-        lli     t1, 0x0003                  // t1 = 3 (BRAWL)
+        lli     t1, 0x0003                  // t1 = 3 (MENU 2)
+        beql    t1, t0, _check_current_track// if MENU 2, then use MENU 2 BGM
+        addiu   a1, r0, menu.MAIN_MENU2
+        lli     t1, 0x0004                  // t1 = 4 (BRAWL)
         beql    t1, t0, _check_current_track// if BRAWL, then use BRAWL BGM
         addiu   a1, r0, menu.MAIN_BRAWL
-        lli     t1, 0x0004                  // t1 = 4 (OFF)
+        lli     t1, 0x0005                  // t1 = 5 (GOLDENEYE)
+        beql    t1, t0, _check_current_track// if GOLDENEYE, then use GOLDENEYE BGM
+        addiu   a1, r0, menu.MAIN_GOLDENEYE
+        lli     t1, 0x0006                  // t1 = 6 (OFF)
         beq     t1, t0, _menu_music_off     // if OFF, then stop music
         nop
 
-        // otherwise, alt menu music will play by chance - unless we already are playing MELEE or BRAWL
+        // otherwise, alt menu music will play by chance - unless we already are playing MELEE, MENU 2 or BRAWL
         lui     t0, 0x800A
         lw      t0, 0xD974(t0)              // t0 = address of current bgm_id
         lw      t0, 0x0000(t0)              // t0 = current bgm_id
         lli     t1, menu.MAIN_MELEE         // t1 = menu.MAIN_MELEE
         beq     t0, t1, _check_music_toggle // if playing MELEE, then don't restart it
         nop
+        lli     t1, menu.MAIN_MENU2         // t1 = menu.MAIN_MENU2
+        beq     t0, t1, _check_music_toggle // if playing MENU 2, then don't restart it
+        nop
         lli     t1, menu.MAIN_BRAWL         // t1 = menu.MAIN_BRAWL
         beq     t0, t1, _check_music_toggle // if playing BRAWL, then don't restart it
+        nop
+        lli     t1, menu.MAIN_GOLDENEYE         // t1 = menu.MAIN_GOLDENEYE
+        beq     t0, t1, _check_music_toggle // if playing GOLDENEYE, then don't restart it
         nop
 
         // alt menu music will play by chance if we are coming from Title screen
@@ -486,14 +498,15 @@ scope BGM {
         nop
         sltiu   t0, v0, CHANCE_64
         bnez    t0, _original               // if we should play the 64 track, skip to end
-        nop                                 // else, check to see which other track to play
-
         sltiu   t0, v0, CHANCE_64 + CHANCE_MELEE
-        beql    t0, r0, _original           // if (v0 > 64 + MELEE chances)
-        addiu   a1, r0, menu.MAIN_BRAWL     // then we'll use the BRAWL track
+        bnezl   t0, _original               // if we should play the Melee track, skip to end...
+        addiu   a1, r0, menu.MAIN_MELEE     // ...and use the MELEE track
+        sltiu   t0, v0, CHANCE_64 + CHANCE_MELEE + CHANCE_MENU2
+        bnezl   t0, _original               // if  we should play the Menu 2 track, skip to end...
+        addiu   a1, r0, menu.MAIN_MENU2     // ...and use the MENU 2 track
         b       _original
-        addiu   a1, r0, menu.MAIN_MELEE     // otherwise we'll use the MELEE track
-
+        addiu   a1, r0, menu.MAIN_BRAWL     // otherwise we'll use the BRAWL track
+        
         _check_current_track:
         // if the current track is the one we want to play, then don't restart it
         lui     t0, 0x800A
@@ -544,8 +557,14 @@ scope BGM {
         lli     t1, menu.MAIN_MELEE         // t1 = menu.MAIN_MELEE
         beq     t0, t1, _done               // if playing MELEE, then don't stop it
         nop
+        lli     t1, menu.MAIN_MENU2         // t1 = menu.MAIN_MENU2
+        beq     t0, t1, _done               // if playing MENU 2, then don't stop it
+        nop
         lli     t1, menu.MAIN_BRAWL         // t1 = menu.MAIN_BRAWL
         beq     t0, t1, _done               // if playing BRAWL, then don't stop it
+        nop
+        lli     t1, menu.MAIN_GOLDENEYE     // t1 = menu.MAIN_GOLDENEYE
+        beq     t0, t1, _done               // if playing GOLDENEYE, then don't stop it
         nop
 
         jal     BGM.stop_                   // original line 1
@@ -885,7 +904,9 @@ scope BGM {
         constant MAIN(44)
         constant MAIN_MELEE(71)
         constant MAIN_BRAWL(108)
-    }
+        constant MAIN_MENU2(224)
+        constant MAIN_GOLDENEYE(231)
+        }
 
     scope special {
         constant UNKNOWN(11)

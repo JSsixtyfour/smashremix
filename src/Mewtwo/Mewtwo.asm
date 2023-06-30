@@ -406,12 +406,12 @@ scope Mewtwo {
     Character.table_patch_start(ai_behaviour, Character.id.MTWO, 0x4)
     dw      CPU_ATTACKS
     OS.patch_end()
-	
+
 	// Set CPU SD prevent routine
     Character.table_patch_start(ai_attack_prevent, Character.id.MTWO, 0x4)
     dw    	AI.PREVENT_ATTACK.ROUTINE.NONE
     OS.patch_end()
-	
+
 	// Set CPU NSP long range behaviour
     Character.table_patch_start(ai_long_range, Character.id.MTWO, 0x4)
     dw    	AI.LONG_RANGE.ROUTINE.NSP_SHOOT

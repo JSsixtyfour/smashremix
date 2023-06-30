@@ -2606,7 +2606,7 @@ scope MarinaDSP {
     db 0    // 0x2A - Koffing
     db 0    // 0x2B - Clefairy
     db 0    // 0x2C - Mew
-	// custom items
+    // custom items
     db 0    // 0x2D - CloakingDevice
     db 0    // 0x2E - SuperMushroom
     db 0    // 0x2F - PoisonMushroom
@@ -2615,12 +2615,14 @@ scope MarinaDSP {
     db 2    // 0x32 - DekuNut
     db 0    // 0x33 - FranklinBadge
     db 1    // 0x34 - PitFall
-	// custom stage items
+    db 2    // 0x35 - GoldenGun
+    // custom stage items
     db 0    // 1 - KlapTrap
     db 0    // 2 - RobotBee
     db 0    // 3 - Car
-	// custom pokemon
-	// custom character items
+    db 0    // 4 - Bullet Bill
+    // custom pokemon
+    // custom character items
     db 1    // 1 - Gem
     db 2    // 2 - Shuriken
     db 3    // 3 - Boomerang
@@ -2628,6 +2630,8 @@ scope MarinaDSP {
     db 1    // 5 - Waddle Dee
     db 1    // 6 - Waddle Doo
     db 1    // 7 - Gordo
+    db 0    // 8 - Cloud
+    db 1    // 9 - Flashbang
     OS.align(4)
 
     // @ Description

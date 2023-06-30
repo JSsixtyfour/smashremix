@@ -1,7 +1,7 @@
 scope samus_costumes {
     // @ Description
     // Number of additional costumes
-    constant NUM_EXTRA_COSTUMES(2)
+    constant NUM_EXTRA_COSTUMES(3)
 
     // @ Description
     // Number of parts
@@ -163,4 +163,52 @@ scope samus_costumes {
 
         Costumes.set_stock_icon_palette_for_costume(1, Samus/cos_6_stock_icon.bin)
     }
+    
+    // Costume 0x7
+    scope costume_0x7 {
+        palette_1:; insert "Samus/cos_7_1.bin"
+        palette_2:; insert "Samus/cos_7_2.bin"
+        palette_3:; insert "Samus/cos_7_3.bin"
+        palette_4:; insert "Samus/cos_7_4.bin"
+        palette_5:; insert "Samus/cos_7_5.bin"
+        palette_6:; insert "Samus/cos_7_6.bin"
+        palette_7:; insert "Samus/cos_7_7.bin"
+        palette_8:; insert "Samus/cos_7_8.bin"
+        palette_9:; insert "Samus/cos_7_9.bin"
+        palette_A:; insert "Samus/cos_7_A.bin"
+        palette_B:; insert "Samus/cos_7_B.bin"
+        palette_C:; insert "Samus/cos_7_C.bin"
+        palette_D:; insert "Samus/cos_7_D.bin"
+        
+        constant color(0xe3e3e300)
+
+        Costumes.set_palette_for_part(2, 1, 0, palette_2)
+        Costumes.set_palette_for_part(2, 1, 1, palette_2)
+        Costumes.set_palette_for_part(2, 2, 0, palette_2)
+        Costumes.set_palette_for_part(2, 2, 1, palette_4)
+        Costumes.set_palette_for_part(2, 2, 2, palette_A)
+        Costumes.set_palette_for_special_part(2, 2, 1, 0, palette_D)
+        Costumes.set_palette_for_special_part(2, 2, 2, 0, palette_D)
+        Costumes.set_palette_for_part(2, 4, 0, palette_6)
+        Costumes.set_palette_for_part(2, 4, 1, palette_7)
+        Costumes.set_palette_for_part(2, 5, 0, palette_8)
+        Costumes.set_palette_for_part(2, 6, 0, palette_8)
+        Costumes.set_palette_for_part(2, 6, 1, palette_9)
+        Costumes.set_palette_for_part(2, 9, 0, palette_A)
+        Costumes.set_palette_for_part(2, 9, 1, palette_A)
+        Costumes.set_palette_for_part(2, 9, 2, palette_A)
+        Costumes.set_palette_for_part(2, B, 0, palette_6)
+        Costumes.set_palette_for_part(2, B, 1, palette_7)
+        Costumes.set_prim_color_for_part(2, 17, 0, color)
+        Costumes.set_palette_for_part(2, 17, 1, palette_B)
+        Costumes.set_palette_for_part(2, 18, 0, palette_C)
+        Costumes.set_palette_for_part(2, 1A, 0, palette_9)
+        Costumes.set_prim_color_for_part(2, 1C, 0, color)
+        Costumes.set_palette_for_part(2, 1C, 1, palette_B)
+        Costumes.set_palette_for_part(2, 1D, 0, palette_C)
+        Costumes.set_palette_for_part(2, 1F, 0, palette_9)
+
+        Costumes.set_stock_icon_palette_for_costume(2, Samus/cos_7_stock_icon.bin)
+    }
+    
 }

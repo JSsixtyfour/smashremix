@@ -1989,6 +1989,11 @@ scope Size {
             beq     t7, t8, _end            // if GS code is active, don't set scale values
             lui     t7, 0x3F80              // t7 = 1.0
 
+            // We also have a toggle, so if that's turned on then skip setting scale
+            OS.read_word(Toggles.entry_puff_sing_anim + 0x04, t7) // t7 = 1 if on, 0 if off
+            bnez    t7, _end                // if anim is on, don't set scale values
+            lui     t7, 0x3F80              // t7 = 1.0
+
             sw      t7, 0x0040(t3)          // update x scale
             sw      t7, 0x0044(t3)          // update y scale
             sw      t7, 0x0048(t3)          // update z scale
@@ -2141,7 +2146,7 @@ scope Size {
 
             // This changes the size of Link's portal shaft gfx
             OS.patch_start(0x7E384, 0x80102B84)
-            jal     gfx_._top_joint
+            jal     gfx_._entry_shaft
             lw      t0, 0x0008(t6)          // original line 1 - t0 = z offset
             OS.patch_end()
 
@@ -2157,9 +2162,44 @@ scope Size {
             sw      t4, 0x0024(s5)          // original line 1 - set z
             OS.patch_end()
 
-            // TODO: 
+            // TODO:
             // - Arwing?
-            
+
+            _entry_shaft:
+            sw      t0, 0x0024(v1)          // original line 2 - set z offset
+            lw      t7, 0x0008(s0)          // t7 = char_id
+            lli     t8, Character.id.LINK
+            beq     t7, t8, _top_joint_no_y // if Link, scale top joint without y
+            lli     t8, Character.id.JLINK
+            beq     t7, t8, _top_joint_no_y // if J Link, scale top joint without y
+            lli     t8, Character.id.ELINK
+            beq     t7, t8, _top_joint_no_y // if E Link, scale top joint without y
+            lli     t8, Character.id.YLINK
+            beq     t7, t8, _top_joint_no_y // if Young Link, scale top joint without y
+            lli     t8, Character.id.MARINA
+            beq     t7, t8, _link_ground_gfx // if Marina, scale like ground gfx
+            lli     t8, Character.id.GOEMON
+            bne     t7, t8, _top_joint      // if not Goemon, scale top joint
+            nop                             // otherwise we'll update the render routine
+
+            // Goemon beam
+            li      t7, beam_render_routine_
+            lbu     t8, 0x000D(s0)          // t8 = port
+            sw      t8, 0x0040(v0)          // set port on object
+            jr      ra
+            sw      t7, 0x002C(v0)          // set render routine
+
+            _top_joint_no_y:
+            li      t8, Size.multiplier_table
+            lbu     t7, 0x000D(s0)          // t7 = port
+            sll     t7, t7, 0x0002          // t7 = port * 4 = offset to multiplier
+            addu    t8, t8, t7              // t8 = size multiplier address
+            lwc1    f6, 0x0000(t8)          // f6 = size multiplier
+            swc1    f6, 0x0040(v1)          // update x scale
+
+            jr      ra
+            swc1    f6, 0x0048(v1)          // update z scale
+
             _2nd_joint:
             sw      t0, 0x0024(v1)          // original line 2 - set z offset
             b       _common
@@ -2189,7 +2229,7 @@ scope Size {
             sll     t7, t7, 0x0002          // t7 = port * 4 = offset to multiplier
             addu    t8, t8, t7              // t8 = size multiplier address
             lwc1    f6, 0x0000(t8)          // f6 = size multiplier
-            
+
             lw      t7, 0x0008(t5)          // t7 = char_id
             lw      t5, 0x0010(s5)          // t5 = 2nd joint
             lli     t8, Character.id.FALCON
@@ -2277,13 +2317,149 @@ scope Size {
                 jr      ra
                 addiu   sp, sp, 0x0010          // deallocate stack space
             }
+
+            // @ Description
+            // This is the wrapper for the original render routine used for beam animation.
+            // @ Arguments
+            // a0 - projectile object
+            scope beam_render_routine_: {
+                addiu   sp, sp,-0x0010      // allocate stack space
+                sw      ra, 0x0004(sp)      // save registers
+
+                lw      t3, 0x0074(a0)      // t3 = position struct top joint
+
+                li      t8, Size.multiplier_table
+                lw      t7, 0x0040(a0)      // t7 = port
+                sll     t7, t7, 0x0002      // t7 = port * 4 = offset to multiplier
+                addu    t8, t8, t7          // t8 = size multiplier address
+                lwc1    f6, 0x0000(t8)      // f6 = size multiplier
+                lwc1    f0, 0x0040(t3)      // f0 = x
+                mul.s   f0, f0, f6          // f0 = updated x
+                lwc1    f4, 0x0048(t3)      // f4 = z
+                mul.s   f4, f4, f6          // f4 = updated z
+                swc1    f0, 0x0040(t3)      // update x scale
+
+                jal     0x80014768          // call original render routine
+                swc1    f4, 0x0048(t3)      // update z scale
+
+                lw      ra, 0x0004(sp)      // restore registers
+                jr      ra
+                addiu   sp, sp, 0x0010      // deallocate stack space
+            }
         }
     }
 
     // @ Description
-    // These patches adjust Bowser's Koopa Clown Car
-    scope bowser_entry {
-        // TODO
+    // This patch adjusts item size and ECB
+    // Currently only used for Goemon's cloud
+    scope item {
+        // @ Description
+        // This allows animations to have size applied.
+        // Will only check for Goemon cloud for now.
+        scope apply_size_to_animation_: {
+            // First, update jump table for X, Y and Z scale
+            OS.patch_start(0x3EA5C, 0x8003DE5C)
+            dw apply_size_to_animation_._set_x_scale
+            dw apply_size_to_animation_._set_y_scale
+            dw apply_size_to_animation_._set_z_scale
+            OS.patch_end()
+
+            _apply_scale:
+            // a3 = joint
+            // f26 = new scale value
+            lw      t0, 0x0004(a3)          // t0 = object
+            lw      t1, 0x0000(t0)          // t1 = object type ID
+            lli     t2, 0x03F5              // t2 = item type ID
+            bne     t1, t2, _return         // skip if not an item
+            lw      t0, 0x0084(t0)          // t0 = special struct
+            lw      t1, 0x000C(t0)          // t1 = item ID
+            lli     t2, Item.Cloud.id       // t2 = Goemon cloud item ID
+            bne     t1, t2, _return         // skip if not Goemon cloud
+            lw      t2, 0x0008(t0)          // t2 = player object
+            beqz    t2, _return             // skip if not set
+            li      t1, Size.multiplier_table
+            lw      t2, 0x0084(t2)          // t2 = player special struct
+            lbu     t2, 0x000D(t2)          // t2 = port
+            sll     t2, t2, 0x0002          // t2 = port * 4 = offset to multiplier
+            addu    t1, t1, t2              // t1 = size multiplier address
+            lwc1    f0, 0x0000(t1)          // f0 = size multiplier
+            jr      ra
+            mul.s   f26, f26, f0            // f26 = updated scale value
+
+            _return:
+            jr      ra
+            nop
+
+            _set_x_scale:
+            jal     _apply_scale
+            nop
+            j       0x8000CF0C              // jump to rest of routine
+            swc1    f26, 0x0040(a3)         // set x scale
+
+            _set_y_scale:
+            jal     _apply_scale
+            nop
+            j       0x8000CF0C              // jump to rest of routine
+            swc1    f26, 0x0044(a3)         // set y scale
+
+            _set_z_scale:
+            jal     _apply_scale
+            nop
+            j       0x8000CF0C              // jump to rest of routine
+            swc1    f26, 0x0048(a3)         // set z scale
+        }
+
+        // @ Description
+        // This is the wrapper for the original render routine used, which updates ecb scale.
+        // @ Arguments
+        // a0 - item object
+        scope render_routine_: {
+            addiu   sp, sp,-0x0010          // allocate stack space
+            sw      ra, 0x0004(sp)          // save registers
+
+            jal     0x80171F4C              // call original render routine
+            nop
+
+            lw      a0, 0x0000(sp)          // a0 = item object
+            lw      t3, 0x0074(a0)          // t3 = item position struct top joint
+
+            li      t8, Size.multiplier_table
+            lw      t4, 0x0084(a0)          // t4 = item special struct
+            lw      t7, 0x0008(t4)          // t7 = player object
+            lw      t7, 0x0084(t7)          // t7 = player special struct
+            lbu     t7, 0x000D(t7)          // t7 = port
+            sll     t7, t7, 0x0002          // t7 = port * 4 = offset to multiplier
+            addu    t8, t8, t7              // t8 = size multiplier address
+            lwc1    f6, 0x0000(t8)          // f6 = size multiplier
+
+            lw      t3, 0x02D4(t4)          // t3 = item attributes
+            lh      t0, 0x002A(t3)          // t0 = ecb top
+            mtc1    t0, f0                  // f0 = ecb top
+            lh      t1, 0x002C(t3)          // t1 = ecb center
+            mtc1    t1, f2                  // f2 = ecb center
+            lh      t2, 0x002E(t3)          // t2 = ecb bottom
+            mtc1    t2, f4                  // f4 = ecb bottom
+            lh      t5, 0x0030(t3)          // t5 = ecb width
+            mtc1    t5, f8                  // f8 = ecb width
+
+            cvt.s.w f0, f0                  // f0 = ecb top, fp
+            cvt.s.w f2, f2                  // f2 = ecb center, fp
+            cvt.s.w f4, f4                  // f4 = ecb bottom, fp
+            cvt.s.w f8, f8                  // f8 = ecb width, fp
+            mul.s   f0, f0, f6              // f0 = updated ecb top
+            mul.s   f2, f2, f6              // f2 = updated ecb center
+            mul.s   f4, f4, f6              // f4 = updated ecb bottom
+            mul.s   f8, f8, f6              // f8 = updated ecb width
+            swc1    f0, 0x0070(t4)          // update ecb top
+            swc1    f2, 0x0074(t4)          // update ecb center
+            swc1    f4, 0x0078(t4)          // update ecb bottom
+            swc1    f8, 0x007C(t4)          // update ecb width
+
+            _end:
+            lw      ra, 0x0004(sp)          // restore registers
+            jr      ra
+            addiu   sp, sp, 0x0010          // deallocate stack space
+        }
     }
 }
 } // __SIZE__

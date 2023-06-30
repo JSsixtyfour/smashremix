@@ -45,6 +45,17 @@ scope OS {
     fill    {length}, 0x00
     pullvar base, origin
     }
+    
+    macro routine_begin(allocation_space) {
+        addiu   sp, sp, -{allocation_space}
+        sw      ra, 0x0014(sp)
+    }
+    
+    macro routine_end(allocation_space) {
+        lw      ra, 0x0014(sp)
+        jr      ra
+        addiu   sp, sp, {allocation_space}
+    }
 
     macro save_registers() {
         addiu   sp, sp,-0x0070              // allocate stack space

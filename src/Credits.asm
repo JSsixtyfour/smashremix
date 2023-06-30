@@ -15,6 +15,13 @@ scope Credits {
     OS.patch_start(0x183F58, 0x80136858)
     dw 0x54
     OS.patch_end()
+    
+    // credits speed is faster when start button is pressed
+    OS.patch_start(0x187EB4, 0x8013A7B4)
+    dw 0x3DCCCCCD   // speed = 0.1 (was 0.05)
+    OS.patch_end()
+    
+    // make the credits move twice as fast
 
     // @ Description
     // Holds the number of added titles
@@ -364,6 +371,7 @@ scope Credits {
     add_name("M-1", "Character Animations", remix)
     add_name("Halofactory", "Character Animations", remix)
     add_name("TheQuickSlash", "Character Animations", remix)
+    add_name("Pringles", "Character Animations", remix)
 
     add_title("Musicians")
     add_name("TT", "Music Porter and Arranger", remix)
@@ -399,10 +407,14 @@ scope Credits {
     add_name("TheQuickSlash", "dataDyne, Castle Siege", remix)
     add_name("ownsoldier", "Rith Essa", remix)
     add_name("Halofactory", "Dracula's Castle,|Reverse Castle", remix)
+    add_name("Pringles", "First Destination Remix", remix)
+    add_name("HeronNobody", "Melrode, Deku Tree,|Crateria", remix)
 
     add_title("Voice Artists")
     add_name("Zarkpudd", "Narration", remix)
     add_name("Puma Pet", "Editing and Effects", remix)
+    add_name("Pringles", "Editing and Effects", remix)
+    add_name("TheMrIron2", "Narration", remix)
 
     add_title("Modders")
     add_name("Qapples", "", remix)
@@ -420,7 +432,9 @@ scope Credits {
     add_name("M-1", "Animation and Modeling|Consultant", remix)
     add_name("Kaki", "Stage Consultant - Tent|Final Destination", remix)
     add_name("Katakiri", "Stage Consultant - Green|Hill Zone", remix)
-    add_name("Aqua Midi", "Instrument Consultant", remix)
+    add_name("Aqua MIDI", "Instrument Consultant", remix)
+    add_name("Uncle Punch", "Consultant", remix)
+    add_name("Cjag", "Stage Consultant", remix)
 
     add_title("Playtesters")
     add_name("Abnormal Adept", "", remix)
@@ -467,7 +481,7 @@ scope Credits {
     add_name("SuperSqank", "", remix)
     add_name("Goon", "", remix)
     add_name("JeyKeyAr", "", remix)
-    add_name("RazzSmash", "", remix)
+    add_name("Razz", "", remix)
     add_name("PADB", "", remix)
     add_name("madrush", "", remix)
     add_name("krakhead", "", remix)
@@ -513,6 +527,10 @@ scope Credits {
     add_name("Wiseacre", "", remix)
     add_name("MissingNo.", "", remix)
     add_name("Pringles", "Nobody wants to |admit they ate |nine cans of |ravioli.", remix)
+    add_name("EG", "", remix)
+    add_name("Gooby", "", remix)
+    add_name("Nax", "", remix)
+    add_name("Papamark", "", remix)
 
 
     add_title("Original Sequencing Musical Credits")
@@ -560,6 +578,8 @@ scope Credits {
     add_name("Blue Warrior", "Green Hill Zone", none)
     add_name("isabellechiming", "Onett", none)
     add_name("Venatus", "The Days When My Mother|Was There", none)
+    add_name("JILost", "Crateria Surface", none)
+    add_name("dY Shock", "Star Fox Medley", none)
 
     add_title("Video Team")
     add_name("Fray", "Trailer Editing, Footage|Capturing, Marth Cinematic", remix)
@@ -568,6 +588,9 @@ scope Credits {
     add_name("Dshaynie", "Cinematic Animation", remix)
     add_name("TheQuickSlash", "Cinematic Animation", remix)
     add_name("Retro64", "Trailer Directing, Trailer|Editing, Graphics", remix)
+    add_name("Pringles", "Trailer Directing,|Cinematic Animation, |Trailer Editing", remix)
+    add_name("HeronNobody", "Graphics, Cinematic|Animation", remix)
+
 
     // The strings and tables for the Remix credits will be in an external file...
     // This constant will help with that.

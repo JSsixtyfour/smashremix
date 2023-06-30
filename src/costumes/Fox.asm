@@ -1,7 +1,7 @@
 scope fox_costumes {
     // @ Description
     // Number of additional costumes
-    constant NUM_EXTRA_COSTUMES(2)
+    constant NUM_EXTRA_COSTUMES(3)
 
     // @ Description
     // Number of parts
@@ -100,5 +100,33 @@ scope fox_costumes {
         Costumes.set_prim_color_for_part(1, 17, 0, 0xFFFFFF00)
 
         Costumes.set_stock_icon_palette_for_costume(1, Fox/cos_5_stock_icon.bin)
+    }
+    
+    // Costume 0x6
+    scope costume_0x6 {
+        palette_1:; insert "Fox/cos_6_1.bin"
+        palette_2:; insert "Fox/cos_6_2.bin"
+        constant pant_color(0xf7ad0000)
+        constant torso_color(0xE9E9E900)
+        constant shoes_color(0xe9e9e900)
+
+        Costumes.set_palette_for_part(2, 1, 0, palette_2)
+        Costumes.set_prim_color_for_part(2, 1, 1, pant_color)
+        Costumes.set_palette_for_part(2, 2, 0, palette_1)
+        Costumes.set_prim_color_for_part(2, 2, 0, torso_color)
+        Costumes.set_palette_for_part(2, 2, 1, palette_1)
+        Costumes.set_prim_color_for_part(2, 2, 1, torso_color)
+        Costumes.set_prim_color_for_part(2, 2, 2, torso_color)
+        Costumes.set_prim_color_for_part(2, 2, 3, torso_color)
+        Costumes.set_prim_color_for_part(2, 4, 0, torso_color)
+        Costumes.set_prim_color_for_part(2, A, 0, torso_color)
+        Costumes.set_prim_color_for_part(2, F, 0, pant_color)
+        Costumes.set_prim_color_for_part(2, 10, 0, shoes_color)
+        Costumes.set_prim_color_for_part(2, 12, 0, shoes_color)
+        Costumes.set_prim_color_for_part(2, 14, 0, pant_color)
+        Costumes.set_prim_color_for_part(2, 15, 0, shoes_color)
+        Costumes.set_prim_color_for_part(2, 17, 0, shoes_color)
+
+        Costumes.set_stock_icon_palette_for_costume(2, Fox/cos_6_stock_icon.bin)
     }
 }

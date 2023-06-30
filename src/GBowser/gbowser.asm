@@ -431,7 +431,7 @@ scope GBowser {
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DTILT,  -1,  6,   22,  -1, -1, -1, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FSMASH, -1,  26,  32,  -1, -1, -1, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FTILT,  -1,  12,  15,  -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, GRAB,   -1,  -1,  -1,  -1, -1, -1, -1) // todo: check range
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, GRAB,   -1,  0,  0,  0, 0, 0, 0) // no grab
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, JAB,    -1,  6,   9,   -1, -1, -1, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NAIR,   -1,  4,   31,  -1, -1, -1, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPA,   -1,  20,  80,  -1, -1, -1, -1)

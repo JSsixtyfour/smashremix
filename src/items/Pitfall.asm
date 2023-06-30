@@ -507,7 +507,11 @@ scope buried_main_: {
 	bnez	t0, _end				// branch if timer is not 0
 	sw		t0, 0x0350(a2)			// save timer
 	// if here, timer is 0 and allow owner to take damage
+    // and also hide the pitfall
 	sw		r0, 0x0008(a2)			// remove player owner
+    lw      v0, 0x0004(a2)          // v0 = object
+    lw      v0, 0x0074(a0)          // v0 = rendering struct
+    sw      r0, 0x50(v0)            // remove displaylist pointer to make invisible
 
 	_end:
     or      v0, r0, r0

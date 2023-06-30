@@ -311,6 +311,11 @@ scope star_stage_setting: {
 	lli     at, 0x0001
 	sh      at, 0x02A8(v1)                   // overwrite custom space with 1
 	sw      at, 0x0018(v1)                   // ?
+    
+    //disable clang
+    lh      t0, 0x0158(v1)                  // t0 = clang bitfield
+    andi    t0, t0, 0x7FFF                  // disable clang
+    sh      t0, 0x0158(v1)                  // ~
 
 	// set timer values
 	sw      v1, 0x0044(sp)                   // save projectile struct to sp

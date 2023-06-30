@@ -584,6 +584,10 @@ scope BowserNSP {
         // s0 = player struct
         // a1 = address of hitbox spawn coordinates
 		swc1	f6, 0x0024(sp)
+        sw      ra, 0x002C(sp)
+        jal     PokemonAnnouncer.flamethrower_announcement_
+        nop
+        lw      ra, 0x002C(sp)
         lwc1    f4, 0x0044(s0)                        // ~
         cvt.s.w f4, f4                                // f4 = DIRECTION
         lui     at, 0x42C8                            // ~

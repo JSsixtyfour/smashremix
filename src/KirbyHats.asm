@@ -6,7 +6,7 @@
 scope KirbyHats {
     // @ Description
     // Number of new "hats" added
-    variable new_hats(19)
+    variable new_hats(22)
 
     // @ Description
     // Used in add_hat to adjust offset
@@ -129,11 +129,15 @@ scope KirbyHats {
         beq     t2, t6, _marth
         addiu   t6, r0, 0x001A              // put Wolf Hat ID into t6
         beq     t2, t6, _wolf
+        addiu   t6, r0, 0x0023              // put Slippy Hat ID into t6
+        beq     t2, t6, _slippy
+        addiu   t6, r0, 0x0024              // put Peppy Hat ID into t6
+        beq     t2, t6, _peppy
+        addiu   t6, r0, 0x0022              // put Goemon Hat ID into t6
+        beq     t2, t6, _goemon
         addiu   t6, r0, 0x0019              // put Conker Hat ID into t6
         bne     t2, t6, _gun_end            // if not Conker Hat ID, exit
         nop
-
-
 
         _conker:
         lw      t2, 0x0008(t0)              // Load Character ID
@@ -168,6 +172,60 @@ scope KirbyHats {
         _load_address_wolf:
         lw      t2, 0x0000(t2)              // load address of model file for kirby
         li      t6, 0x1D830                 // offset of special part struct for Wolf's Gun [UPDATE IF GUN MODEL CHANGED]
+        beq     r0, r0, _gun_end            // jump to end of fox gun swapping
+        addu    v1, t2, t6                  // add offset to file address
+        
+        _slippy:
+        lw      t2, 0x0008(t0)              // Load Character ID
+        addiu   t6, r0, Character.id.JKIRBY
+        beq     t6, t2, _jkirby_slippy
+        nop
+        li      t2, 0x80131078              // Kirby's File pointer to model file
+        beq     r0, r0, _load_address_slippy
+        nop
+
+        _jkirby_slippy:
+        li      t2, Character.JKIRBY_file_4_ptr // J Kirby's File pointer to model file
+
+        _load_address_slippy:
+        lw      t2, 0x0000(t2)              // load address of model file for kirby
+        li      t6, 0x1D8C0                 // offset of special part struct for Slippy's Gun [UPDATE IF GUN MODEL CHANGED]
+        beq     r0, r0, _gun_end            // jump to end of fox gun swapping
+        addu    v1, t2, t6                  // add offset to file address
+        
+        _peppy:
+        lw      t2, 0x0008(t0)              // Load Character ID
+        addiu   t6, r0, Character.id.JKIRBY
+        beq     t6, t2, _jkirby_peppy
+        nop
+        li      t2, 0x80131078              // Kirby's File pointer to model file
+        beq     r0, r0, _load_address_peppy
+        nop
+
+        _jkirby_peppy:
+        li      t2, Character.JKIRBY_file_4_ptr // J Kirby's File pointer to model file
+
+        _load_address_peppy:
+        lw      t2, 0x0000(t2)              // load address of model file for kirby
+        li      t6, 0x1D8F0                 // offset of special part struct for Peppy's Gun [UPDATE IF GUN MODEL CHANGED]
+        beq     r0, r0, _gun_end            // jump to end of fox gun swapping
+        addu    v1, t2, t6                  // add offset to file address
+        
+        _goemon:
+        lw      t2, 0x0008(t0)              // Load Character ID
+        addiu   t6, r0, Character.id.JKIRBY
+        beq     t6, t2, _jkirby_goemon
+        nop
+        li      t2, 0x80131078              // Kirby's File pointer to model file
+        beq     r0, r0, _load_address_goemon
+        nop
+
+        _jkirby_goemon:
+        li      t2, Character.JKIRBY_file_4_ptr // J Kirby's File pointer to model file
+
+        _load_address_goemon:
+        lw      t2, 0x0000(t2)              // load address of model file for kirby
+        li      t6, 0x1D920                 // offset of special part struct for Goemon's Ryo[UPDATE IF Ryo MODEL CHANGED]
         beq     r0, r0, _gun_end            // jump to end of fox gun swapping
         addu    v1, t2, t6                  // add offset to file address
 
@@ -439,6 +497,12 @@ scope KirbyHats {
     add_hat(Character.kirby_hat_id.YOSHI, 0x22CF0, -1, -1, 0x23B98, -1, -1)
     // Dedede (mouth open) hat_id: 0x21
     add_hat(Character.kirby_hat_id.YOSHI_SWALLOW, 0x24840, -1, -1, 0x25238, -1, -1)
+    // Goemon hat_id: 0x22
+    add_hat(Character.kirby_hat_id.MARIO, 0x26638, -1, -1, 0x27CC0, -1, -1)
+    // Slippy hat_id: 0x23
+    add_hat(Character.kirby_hat_id.FOX, 0x28BE8, -1, -1, 0x29A40, -1, -1)
+    // Peppy hat_id: 0x24
+    add_hat(Character.kirby_hat_id.FOX, 0x2A9A0, -1, -1, 0x2B6D0, -1, -1)
 
     spawn_with_table_:
     db 0x08                                   // NA = no hat
@@ -470,6 +534,9 @@ scope KirbyHats {
     db 0x3E                                   // 0x1A = Sheik
     db Character.id.MARINA                    // 0x1B = Marina
     db Character.id.DEDEDE                    // 0x1C = Dedede
+    db Character.id.GOEMON                    // 0x1D = Goemon
+    db Character.id.SLIPPY                    // 0x1E = Slippy
+    db Character.id.PEPPY                     // 0x1F = Peppy
     OS.align(4)
 
     spawn_with_hat:

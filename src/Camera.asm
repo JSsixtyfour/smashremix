@@ -70,6 +70,14 @@ scope Camera {
         beq     at, v0, mkingdom_camera
         addiu   at, r0, Stages.id.DRAGONKING
         beq     at, v0, mkingdom_camera
+        addiu   at, r0, Stages.id.PEACH2
+        beq     at, v0, mkingdom_camera
+        addiu   at, r0, Stages.id.MT_DEDEDE
+        beq     at, v0, mkingdom_camera
+        addiu   at, r0, Stages.id.FIRST_REMIX
+        beq     at, v0, mkingdom_camera
+        addiu   at, r0, Stages.id.MELRODE
+        beq     at, v0, mkingdom_camera
         addiu   at, r0, Stages.id.TOADSTURNPIKE
         bnel    at, v0, _end
 		addiu   t0, r0, 0                           // if here, use default camera index (0)
@@ -98,6 +106,7 @@ scope Camera {
         sw      r0, 0x0000(t9)                      // clear custom x offset variable
         sw      r0, 0x0004(t9)                      // clear custom y offset variable
         sw      r0, 0x0008(t9)                      // clear custom z offset variable
+        sw      r0, 0x000C(t9)                      // clear custom fov offset variable
 
         OS.read_word(Toggles.entry_camera_mode + 0x4, t9) // t9 = camera mode boolean
         beqz    t9, _end                            // branch to end if cam = NORMAL
@@ -522,7 +531,7 @@ scope Camera {
     OS.patch_end()
 
     // @ Description
-    // adds camera up/down/view distance movement when player can control pause camera
+    // adds camera up/down/view distance/fov movement when player can control pause camera
     scope vs_pause_pan_: {
         OS.patch_start(0x000881CC, 0x8010C9CC)
         j       vs_pause_pan_
@@ -551,6 +560,15 @@ scope Camera {
         add.s   f10, f10, f2                    // original z offset + custom z offset
         nop
 
+        lw      at, 0x000C(a0)                  // f2 = fov offset from custom struct
+        beqz    at, _end                        // branch if fov is unchanged
+        lwc1    f2, 0x000C(a0)                  // f2 = fov offset from custom struct
+        add.s   f12, f12, f2                    // original fov += custom fov
+        nop
+        lui     t0, 0x8013
+        swc1    f12, 0x14F0(t0)
+
+        _end:
         or      a0, s0, r0                      // original line 1
         j       _vs_pause_pan_return            // jump to original routine
         addiu   a1, sp, 0x0030                  // original line 2
@@ -573,6 +591,7 @@ scope Camera {
         sw      r0, 0x0000(v0)                      // clear x
         sw      r0, 0x0004(v0)                      // clear y
         sw      r0, 0x0008(v0)                      // clear z
+        sw      r0, 0x000C(v0)                      // clear fov
 
         jal     0x8010CA7C                          // original line 1
         addiu   a0, a0, 0x001C                      // original line 2
@@ -589,8 +608,11 @@ scope Camera {
     dw  0x00000000                                  // x offset
     dw  0x00000000                                  // y offset
     dw  0x00000000                                  // z offset
-	
-	constant max_zoom_offset(0xC480)
+    dw  0x00000000                                  // fov offset
+
+    constant max_zoom_offset(0xC480)
+    constant min_fov(0xC1E0)
+    constant max_fov(0x42F8)
 
     // @ Description
     // pause.asm runs this routine so we can move the camera around in pause
@@ -682,23 +704,56 @@ scope Camera {
 
         apply_z_distance:
         li      a0, Camera.camera_pan_offsets_  // a0 = camera offset array
+        lh      t0, 0x0000(a1)                  // a0 = input flag (check for z press)
+        andi    t0, t0, Joypad.Z                // t0 = 0 if z not pressed
+        bnezl   t0, apply_fov                   // branch if z is down
+        lwc1    f6, 0x0008(a0)                  // f6 = current fox offset
         lwc1    f6, 0x0008(a0)                  // f6 = current z offset
         mtc1    v1, f12                         // move camera distance value to float
         add.s   f6, f6, f12                     // f6 = amount to change z by + current z distance offset
         nop
-		lui		v1, max_zoom_offset				// clamp zoom value
+        lui     v1, max_zoom_offset             // clamp zoom value
         mtc1    v1, f12                         // move to float
-		c.le.s	f6, f12
-		nop
-		bc1tl	_end
+        c.le.s  f6, f12
+        nop
+        bc1tl   _end
         swc1    f12, 0x0008(a0)                 // save clamped camera distance
+        b       _end
         swc1    f6, 0x0008(a0)                  // or save new camera distance
+        
+        apply_fov:
+        li      a0, Camera.camera_pan_offsets_  // a0 = camera offset array
+        lwc1    f6, 0x000C(a0)                  // f6 = current fov offset
+        mtc1    v1, f12                         // move camera distance value to float
+        
+        lui     at, 0x3C23                      // at = some value
+        mtc1    at, f4                          // move to float
+        mul.s   f12, f12, f4                    // multiply amount so its not too fast
+        nop
+        add.s   f6, f6, f12                     // f6 = amount to change fov by + current fov offset
+        nop
+        lui     v1, min_fov                     // clamp fov value
+        mtc1    v1, f12                         // move to float
+        c.le.s  f6, f12
+        nop
+        bc1tl   _end
+        swc1    f12, 0x000C(a0)                 // save clamped camera distance
+        lui     v1, max_fov                     // clamp fov value
+        mtc1    v1, f12                         // move to float
+        c.le.s  f12, f6
+        nop
+        bc1tl   _end
+        swc1    f12, 0x000C(a0)                 // save clamped camera distance
+        swc1    f6, 0x000C(a0)                  // or save new camera distance
 
-		_end:
-		jr		ra
-		nop
-		
-	}
+        b       _end
+        nop
+
+        _end:
+        jr      ra
+        nop
+
+    }
 
     // @ Description
     // routine runs once when game is unpaused. Disables hud from drawing if camera mode = SCENE or entry_disable_hud = ALL
@@ -715,6 +770,7 @@ scope Camera {
         sw      r0, 0x0000(a0)                      // clear x
         sw      r0, 0x0004(a0)                      // clear y
         sw      r0, 0x0008(a0)                      // clear z
+        sw      r0, 0x000C(a0)                      // clear fov
 
         // v0 = TRUE
         // check if hud should be disabled

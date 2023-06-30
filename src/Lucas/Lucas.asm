@@ -118,19 +118,20 @@ scope Lucas {
     Character.edit_action_parameters(LUCAS, 0xDE,                   File.LUCAS_ENTRY_L,         ENTRY,                      0x50000000)
 
     // Modify Actions            // Action          // Staling ID   // Main ASM                 // Interrupt/Other ASM          // Movement/Physics ASM         // Collision ASM
+    Character.edit_action(LUCAS, 0xDD,              -1,             0x8013DA94,                         -1,                             -1,                       -1)
+	Character.edit_action(LUCAS, 0xDE,              -1,             0x8013DA94,                         -1,                             -1,                       -1)
     Character.edit_action(LUCAS, 0xE2,              -1,             -1,                         -1,                             0x800D8CCC,                       -1)
     Character.edit_action(LUCAS, 0xE3,              -1,             -1,                         LucasNSP.air_move_,             -1,                               -1)
     Character.edit_action(LUCAS, 0xF1,              -1,             -1,                         -1,                             -1,                             0x800DE99C)
     Character.edit_action(LUCAS, 0xF2,              -1,             -1,                         -1,                             -1,                             0x800DE99C)
-    Character.edit_action(LUCAS, 0xDD,              -1,             0x8013DA94,                         -1,                             -1,                       -1)
-	Character.edit_action(LUCAS, 0xDE,              -1,             0x8013DA94,                         -1,                             -1,                       -1)
 
     // Modify Menu Action Parameters             // Action          // Animation                // Moveset Data             // Flags
+	Character.edit_menu_action_parameters(LUCAS, 0x1,               File.LUCAS_NEEDLE_ANIM,     NEEDLE,                             0x10000000)
     Character.edit_menu_action_parameters(LUCAS, 0x2,               File.LUCAS_SELECTED,        SELECTED,                           -1)
+	Character.edit_menu_action_parameters(LUCAS, 0x3,               File.LUCAS_PKVICTORY,       PKVICTORY,                          -1)
+	Character.edit_menu_action_parameters(LUCAS, 0x4,               File.LUCAS_PKVICTORY,       PKVICTORY,                          -1)
 	Character.edit_menu_action_parameters(LUCAS, 0xD,               File.LUCAS_1P,        		ONEP,                               -1)
     Character.edit_menu_action_parameters(LUCAS, 0xE,               File.LUCAS_1P_CPU_POSE,     0x80000000,                         -1)
-	Character.edit_menu_action_parameters(LUCAS, 0x1,               File.LUCAS_NEEDLE_ANIM,     NEEDLE,                             0x10000000)
-	Character.edit_menu_action_parameters(LUCAS, 0x3,               File.LUCAS_PKVICTORY,       PKVICTORY,                          -1)
 
     // Set crowd chant FGM.
     Character.table_patch_start(crowd_chant_fgm, Character.id.LUCAS, 0x2)
@@ -154,7 +155,6 @@ scope Lucas {
 
     // Set default costumes
     Character.set_default_costumes(Character.id.LUCAS, 0, 1, 2, 4, 0, 2, 5)
-
 
     Character.table_patch_start(variants, Character.id.LUCAS, 0x4)
     db      Character.id.NONE
@@ -182,7 +182,7 @@ scope Lucas {
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FAIR,   -1, -1, -1,  -457,    180,     -200,    200) // change coords
 
     // Shield colors for costume matching
-    Character.set_costume_shield_colors(LUCAS, YELLOW, ORANGE, PINK, BROWN, BROWN, WHITE, NA, NA)
+    Character.set_costume_shield_colors(LUCAS, YELLOW, ORANGE, PINK, BROWN, BROWN, GREEN, NA, NA)
 
     // @ Description
     // Lucas's extra actions

@@ -1314,7 +1314,7 @@ scope SinglePlayer {
         li      t7, SinglePlayerModes.singleplayer_mode_flag // t4 = Single Player Mode Flag
         lw     	t7, 0x0000(t7)              // t4 = 1 if multiman
         addiu	t1, r0, 0x0004              // Remix 1p Flag
-        beq     t7, t1, _remix_1p
+        //beq     t7, t1, _remix_1p
 
 
         slti    t7, v0, Character.id.BOSS   // if (it's not an original character) then use extended table
@@ -1363,7 +1363,7 @@ scope SinglePlayer {
         li      t5, SinglePlayerModes.singleplayer_mode_flag // t4 = Single Player Mode Flag
         lw     	t5, 0x0000(t5)              // t4 = 4 if Remix 1p
         addiu	t1, r0, 0x0004              // Remix 1p Flag
-        beq     t5, t1, _remix_1p
+        //beq     t5, t1, _remix_1p
         slti    t5, v0, Character.id.BOSS   // if (it's not an original character) then use extended table
         bnez    t5, _original               // otherwise use original table
         nop                                 // ~
@@ -1494,8 +1494,8 @@ scope SinglePlayer {
     }
 
     // @ Description
-    // Name texture offsets in file 0x000C* (non-adjusted - don't add 0x10 here for DF000000 00000000)
-    // *MM and GDK are from file 0x000B
+    // Name texture offsets in file 0x000C* (non-adjusted - don't add 0x10 here)
+    // *MM, MH and GDK are from file 0x000B
     scope name_texture {
         constant MARIO(0x00000128)
         constant FOX(0x00000248)
@@ -1509,6 +1509,7 @@ scope SinglePlayer {
         constant PIKACHU(0x00000D28)
         constant JIGGLYPUFF(0x00000F68)
         constant NESS(0x00001088)
+        constant BOSS(0x00005558)             // file 0xB
         constant METAL(0x00005318)            // file 0xB
         constant NMARIO(0x00001E68)
         constant NFOX(0x00002048)
@@ -1544,6 +1545,18 @@ scope SinglePlayer {
         constant SHEIK(0x00006A38)
         constant MARINA(0x00006D38)
         constant DEDEDE(0x00009248)
+        constant GOEMON(0x000096B8)
+        constant PEPPY(0x000099A8)
+        constant SLIPPY(0x00009830)
+
+        // Duo Teams
+        constant STARFOX(0x00006238)
+        constant DOUBLE_TROUBLE(0x00009C40)
+        constant DREAM_TEAM(0x00009ED8)
+        constant ECHOES(0x0000A050)
+        constant HYLIAN_HEROES(0x0000A2E8)
+        constant POCKET_MONSTERS(0x0000A5E0)
+        constant PSI_ROCKERS(0x0000A878)
 
 		// remix polygons
         constant NWARIO(0x00006F78)
@@ -1561,7 +1574,6 @@ scope SinglePlayer {
         constant NMTWO(0x00008B28)
         constant NYLINK(0x00008DC8)
         constant NDSAMUS(0x000090C8)
-        constant UNUSED48W(0x000093B8)
         // TODO: update J names
         constant JSAMUS(0x00004268)
         constant JNESS(0x00004688)
@@ -1597,7 +1609,7 @@ scope SinglePlayer {
     dw name_texture.PIKACHU                 // Pikachu
     dw name_texture.JIGGLYPUFF              // Jigglypuff
     dw name_texture.NESS                    // Ness
-    dw name_texture.BLANK                   // Master Hand
+    dw name_texture.BOSS                    // Master Hand
     dw name_texture.METAL                   // Metal Mario
     dw name_texture.NMARIO                  // Polygon Mario
     dw name_texture.NFOX                    // Polygon Fox
@@ -1621,18 +1633,28 @@ scope SinglePlayer {
     // allows for custom entries of name texture based on file offset (+0x10 for DF000000 00000000)
     // (requires modification of file 0x000C)
     scope get_name_texture_: {
+        // Get HUMAN name texture
         OS.patch_start(0x12BA4C, 0x8013270C)
 //      lw      t4, 0x0028(t4)                    // original line 1
         jal     get_name_texture_
         or      a0, s1, r0                        // original line 2
         OS.patch_end()
+        // Adjust width for Marina
+        OS.patch_start(0x12BA5C, 0x8013271C)
+//      lhu     t0, 0x0024(v0)                    // original line 1
+        jal     get_name_texture_._marina
+        addiu   s0, r0, 0x00FF                    // original line 2
+        OS.patch_end()
 
-        // Default is File 0xC, but we can reuse MM and GDK from file 0xB
+        // Default is File 0xC, but we can reuse MM, MH and GDK from file 0xB
         lli     a1, Character.id.METAL            // a1 = Character.id.METAL
         beq     t2, a1, _use_file_b               // if Metal Mario, then use file 0xB
         nop
         lli     a1, Character.id.GDONKEY          // a1 = Character.id.GDONKEY
         beq     t2, a1, _use_file_b               // if Giant DK, then use file 0xB
+        nop
+        lli     a1, Character.id.BOSS             // a1 = Character.id.BOSS
+        beq     t2, a1, _use_file_b               // if Master Hand, then use file 0xB
         nop
 
         _get_offset:
@@ -1641,6 +1663,7 @@ scope SinglePlayer {
         lw      t4, 0x0000(t4)                    // t4 = texture offset
         addiu   t4, t4, 0x0010                    // t4 = adjusted texture offset (+0x10 for DF000000 00000000)
 
+        _return:
         jr      ra                                // return
         nop
 
@@ -1651,6 +1674,17 @@ scope SinglePlayer {
 
         b       _get_offset                       // continue to getting offset
         nop
+
+        _marina:
+        lui     t0, 0x8013
+        lw      t0, 0x5CC8(t0)                    // t0 = char_id
+        lli     t6, Character.id.MARINA           // t6 = MARINA
+        bne     t0, t6, _return                   // skip if not Marina
+        lhu     t0, 0x0024(v0)                    // original line 1
+
+        lli     t6, 0x002A                        // t6 = width of "Marina"
+        jr      ra
+        sh      t6, 0x0014(v0)                    // set width
     }
 
     // @ Description
@@ -1711,11 +1745,13 @@ scope SinglePlayer {
         constant NSONIC(POLYGON + SONIC)
         constant NSHEIK(POLYGON + SHEIK)
         constant NMARINA(POLYGON + MARINA)
+        constant NFALCO(POLYGON + FALCO)
+        constant NGND(POLYGON + GND)
         constant GDONKEY(0x00000024 + DONKEY_KONG)
         constant GND(0x00000046)
         constant FALCO(0x00000032)
         constant YLINK(0x00000046)
-        constant DRM(0x00000048)
+        constant DRM(0x00000060)
         constant WARIO(0x0000003C)
         constant DSAMUS(0x00000046)
         constant LUCAS(0x00000032)
@@ -1724,13 +1760,16 @@ scope SinglePlayer {
         constant PIANO(0x00000046)
         constant WOLF(0x00000028)
         constant CONKER(0x0000002C)
-        constant MTWO(0x0000002C)
+        constant MTWO(0x0000003C)
         constant MARTH(0x00000028)
-        constant SONIC(0x0000002C)
+        constant SONIC(0x00000030)
         constant SSONIC(0x00000014 + SONIC)
         constant SHEIK(0x00000032)
         constant MARINA(0x00000032)
         constant DEDEDE(0x00000054)
+        constant GOEMON(0x00000032)
+        constant PEPPY(0x00000032)
+        constant SLIPPY(0x00000032)
         // TODO: make sure these are good
         constant JSAMUS(0x00000032)
         constant JNESS(0x00000032)
@@ -2020,6 +2059,59 @@ scope SinglePlayer {
     }
 
     // @ Description
+    // Duo team costume fix
+    scope duo_team_costume_preview_fix_: {
+        // Enemy 1 (Mario)
+        OS.patch_start(0x12D15C, 0x80133E1C)
+        jal     duo_team_costume_preview_fix_
+        or      a1, r0, r0                     // original line 2 - a1 = Character.id.MARIO
+        OS.patch_end()
+        // Enemy 1 (Mario) set costume
+        OS.patch_start(0x12D170, 0x80133E30)
+        lw      a0, 0x0090(sp)                 // a0 = char_id saved to unused stack space
+        OS.patch_end()
+
+        // Enemy 2 (Luigi)
+        OS.patch_start(0x12D1C8, 0x80133E88)
+        jal     duo_team_costume_preview_fix_
+        addiu   a1, r0, 0x0004                 // original line 2 - a1 = Character.id.LUIGI
+        OS.patch_end()
+        // Enemy 2 (Luigi) set costume
+        OS.patch_start(0x12D1DC, 0x80133E9C)
+        lw      a0, 0x0090(sp)                 // a0 = char_id saved to unused stack space
+        OS.patch_end()
+
+        or      a0, s5, r0                     // original line 1 - a0 = 1p match ID
+        li      at, SinglePlayerModes.singleplayer_mode_flag // at = singleplayer flag address
+        lw      at, 0x0000(at)                 // at = 4 if remix
+        addiu   t1, r0, 0x0004                 //
+        bne     at, t1, _return                // if not Remix 1p, skip
+        sll     t1, s5, 0x0004                 // t1 = offset to match settings
+
+        li      at, SinglePlayerModes.MATCH_SETTINGS_PART1 // at = match settings head
+        addu    at, at, t1                     // at = match settings
+        li      t1, SinglePlayerModes.duo_spawn // t1 = duo_spawn
+        lw      t1, 0x0000(t1)                 // t1 = 0 if Mario slot = Enemy 1, 1 if Luigi slot = Enemy 1
+
+        bnez    a1, _enemy_2                   // if Enemy 2 (Luigi slot), use enemy 2 char_id
+        nop
+
+        beqzl   t1, _return                    // if Remix loads first, use Mario slot
+        lbu     a1, 0x0009(at)                 // a1 = Enemy 1 char_id
+        b       _return
+        lbu     a1, 0x000A(at)                 // a1 = Enemy 2 char_id
+
+        _enemy_2:
+        beqzl   t1, _return                    // if Remix loads first, use Luigi slot
+        lbu     a1, 0x000A(at)                 // a1 = Enemy 2 char_id
+        lbu     a1, 0x0009(at)                 // a1 = Enemy 1 char_id
+
+        _return:
+        jr      ra
+        sw      a1, 0x0090(sp)                 // save char_id to unused stack space
+    }
+
+    // @ Description
     // constants for defining the victory picture
     constant VICTORY_FILE_1(File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM)
     constant VICTORY_OFFSET_1(0x00020718)
@@ -2085,6 +2177,9 @@ scope SinglePlayer {
     dh File.SHEIK_VICTORY_IMAGE_BOTTOM                      // SHEIK
     dh File.MARINA_VICTORY_IMAGE_BOTTOM                     // MARINA
     dh File.DEDEDE_VICTORY_IMAGE_BOTTOM                     // DEDEDE
+    dh File.GOEMON_VICTORY_IMAGE_BOTTOM                     // GOEMON
+    dh File.PEPPY_SLIPPY_VICTORY_IMAGE_BOTTOM               // PEPPY
+    dh File.PEPPY_SLIPPY_VICTORY_IMAGE_BOTTOM               // SLIPPY
     // ADD NEW CHARACTERS HERE
 
     // ADD FOR REMIX POLYGONS HERE
@@ -2096,7 +2191,8 @@ scope SinglePlayer {
     dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // NSONIC
     dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // NSHEIK
     dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // NMARINA
-
+    dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // NFALCO
+    dh File.SINGLEPLAYER_VICTORY_IMAGE_BOTTOM               // NGANON
 
     OS.align(4)
 
@@ -2451,6 +2547,9 @@ scope SinglePlayer {
     add_to_single_player(Character.id.SHEIK,   name_texture.SHEIK,   name_delay.SHEIK)
     add_to_single_player(Character.id.MARINA,  name_texture.MARINA,  name_delay.MARINA)
     add_to_single_player(Character.id.DEDEDE,  name_texture.DEDEDE,  name_delay.DEDEDE)
+    add_to_single_player(Character.id.GOEMON,  name_texture.GOEMON,  name_delay.GOEMON)
+    add_to_single_player(Character.id.PEPPY,   name_texture.PEPPY,   name_delay.PEPPY)
+    add_to_single_player(Character.id.SLIPPY,  name_texture.SLIPPY,  name_delay.SLIPPY)
 
 	// REMIX POLYGONS    character id          name texture          name delay
     add_to_single_player(Character.id.NWARIO,  name_texture.NWARIO,  name_delay.NWARIO)
@@ -2461,6 +2560,8 @@ scope SinglePlayer {
     add_to_single_player(Character.id.NSONIC,  name_texture.NSONIC,  name_delay.NSONIC)
     add_to_single_player(Character.id.NSHEIK,  name_texture.NSHEIK,  name_delay.NSHEIK)
     add_to_single_player(Character.id.NMARINA, name_texture.NMARINA, name_delay.NMARINA)
+    add_to_single_player(Character.id.NFALCO,  name_texture.NFALCO,  name_delay.NFALCO)
+    add_to_single_player(Character.id.NGND,    name_texture.NGND,    name_delay.NGND)
 
     // J CHARS           character id          name texture          name delay
     add_to_single_player(Character.id.JSAMUS,  name_texture.JSAMUS,  name_delay.JSAMUS)

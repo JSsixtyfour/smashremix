@@ -12,25 +12,25 @@ scope Global {
     // @ Arguments
     // a0 - ROM address | 0x00FFFFFF
     // a1 - RAM vAddress
-    // a2 - nBytes 
+    // a2 - nBytes
     constant dma_copy_(0x80002CA0)
 
     // @ Description
     // Writing 0x00000001 to this word will load the screen at current_screen.
     constant screen_interrupt(0x800465D0)
-    
+
     // @ Description
     // Gets a random int from (0, N-1)
     // @ Arguments
-    // a0 - N 
+    // a0 - N
     constant get_random_int_(0x80018994)
-    
+
     // @ Description
     // Gets a random int from (0, N-1), perhaps a bit more random than get_random_int_
     // @ Arguments
     // a0 - N
     constant get_random_int_alt_(0x80018A30)
-    
+
     // @ Description
     // Byte, Current screen value is here (CSS = 0x10, Debug = 0x03/0x04)
     constant current_screen(0x800A4AD0)
@@ -43,11 +43,11 @@ scope Global {
     scope vs {
         // @ Description
         // Byte, contains the versus stage stage id
-        constant stage(0x800A4D09) 
+        constant stage(0x800A4D09)
 
         // @ Description
         // Byte, boolean for if teams are enabled, 0 = off, 1 = on
-        constant teams(0x800A4D0A) 
+        constant teams(0x800A4D0A)
 
         // @ Description
         // Byte, 1 = time, 2 = stock, 3 = both
@@ -143,7 +143,7 @@ scope Global {
     // player struct list head
     constant p_struct_head(0x80130D84)
     constant P_STRUCT_LENGTH(0x0B50)
-	
+
 	// @ Description
     // hard-coded pointers and routine for dealing with clipping at runtime
     scope stage_clipping: {
@@ -151,9 +151,43 @@ scope Global {
         constant objects(0x80131304)
         constant info(0x8013136C)			// Entry size = 0x0A
 		constant coordinates(0x80131370)	// Entry size = 0x14
-		
+
 		// routines
 		constant disable_clipping(0x800FC604) // disables clipping, where a0 = the index.
+    }
+
+    // @ Description
+    // A random int routine that is netplay safe and more random than Global.get_random_int_
+    scope get_random_int_safe_: {
+        addiu   sp, sp,-0x0020              // allocate stack space
+        sw      a0, 0x0004(sp)              // ~
+        sw      at, 0x0008(sp)              // ~
+        sw      v0, 0x0010(sp)              // ~
+        sw      v1, 0x0014(sp)              // store a0, at, v0, v1 (for safety)
+        sw      ra, 0x0018(sp)              // save ra
+
+        li      t8, 0x8003B6E4              // ~
+        lw      t8, 0x0000(t8)              // t8 = frame count for current screen
+        andi    t8, t8, 0x003F              // t8 = frame count % 64
+
+        _loop:
+        // advances rng between 1 - 64 times based on frame count
+        jal     0x80018910                  // this function advances the rng seed
+        nop
+        bnez    t8, _loop                   // loop if t8 != 0
+        addiu   t8, t8,-0x0001              // subtract 1 from t8
+
+        lw      a0, 0x0004(sp)              // ~
+        lw      at, 0x0008(sp)              // ~
+        lw      v0, 0x0010(sp)              // ~
+        lw      v1, 0x0014(sp)              // load a0, at, v0, v1
+
+        jal     get_random_int_             // Global.get_random_int_
+        nop
+
+        lw      ra, 0x0018(sp)              // load ra
+        jr      ra
+        addiu   sp, sp, 0x0020              // deallocate stack space
     }
 
 }

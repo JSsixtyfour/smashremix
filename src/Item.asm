@@ -10,11 +10,11 @@ print "included Item.asm\n"
 scope Item {
     // @ Description
     // Number of custom items
-    constant NUM_ITEMS(18)
+    constant NUM_ITEMS(22)
 
     // @ Description
     // Number of standard custom items
-    constant NUM_STANDARD_ITEMS(8)
+    constant NUM_STANDARD_ITEMS(9)
 
     // @ Description
     // Offsets to custom tables added to file 0xFE.
@@ -1289,6 +1289,9 @@ scope Item {
     scope Pitfall {
         include "items/Pitfall.asm"
     }
+    scope GoldenGun {
+        include "items/GoldenGun.asm"
+    }
     scope Car {
         include "items/Car.asm"
     }
@@ -1314,6 +1317,17 @@ scope Item {
         include "items/Gordo.asm"
     }
 
+    scope Cloud {
+        include "items/Cloud.asm"
+    }
+
+    scope Flashbang {
+        include "items/Flashbang.asm"
+    }
+
+    scope BulletBill {
+        include "items/BulletBill.asm"
+    }
 
     // Add items:
     // Standard Items
@@ -1325,11 +1339,13 @@ scope Item {
     add_item(DekuNut)              // 0x32
     add_item(FranklinBadge)        // 0x33
     add_item(Pitfall)              // 0x34
+    add_item(GoldenGun)            // 0x35
     // Stage Items
     add_item(KlapTrap)             // 1
     add_item(RobotBee)             // 2
     add_item(Car)                  // 3
-	// Pokemon
+    add_item(BulletBill)           // 4
+    // Pokemon
     // Character Items
     add_item(Gem)                  // 1
     add_item(Shuriken)             // 2
@@ -1338,6 +1354,8 @@ scope Item {
 	add_item(WaddleDee)            // 5
 	add_item(WaddleDoo)            // 6
 	add_item(Gordo)                // 7
+    add_item(Cloud)                // 8
+    add_item(Flashbang)            // 9
 
     // @ Description
     // Active item clean up.
@@ -1477,9 +1495,10 @@ scope Item {
     dw Item.BlueShell.id                            // 0x0E = BLUE_SHELL(0x0030)
     dw Item.DekuNut.id                              // 0x0F = DEKU_NUT(0x0032)
     dw Item.Pitfall.id                              // 0x10 = PIT_FALL(0x0033)
-    dw 0x0000FFFF                                   // 0x11 = random item, insert new entries above.
+    dw Item.GoldenGun.id                            // 0x11 = GOLDENGUN
+    dw 0x0000FFFF                                   // 0x12 = random item, insert new entries above.
 
-    constant start_with_random_entry(0x11)          // must update to same entry as random if adding new entries.
+    constant start_with_random_entry(0x12)          // must update to same entry as random if adding new entries.
 
     start_with_item:
     dw 0, 0, 0, 0
@@ -1687,9 +1706,10 @@ scope Item {
     dw Item.BlueShell.id                            // 0x0E = BLUE_SHELL(0x0030)
     dw Item.DekuNut.id                              // 0x0F = DEKU_NUT(0x0032)
     dw Item.Pitfall.id                              // 0x10 = PIT_FALL(0x0033)
-    dw 0x0000FFFF                                   // 0x11 = random item
+    dw Item.GoldenGun.id                            // 0x11 = GOLDENGUN
+    dw 0x0000FFFF                                   // 0x12 = random item
 
-    constant taunt_item_random_entry(0x11)
+    constant taunt_item_random_entry(0x12)
 
     taunt_spawn_item:
     dw 0, 0, 0, 0
@@ -1836,147 +1856,158 @@ scope Item {
 	// Hard-coded pointer to file 0xFB
 	constant info_struct(0x8018D040)
 	
-	scope Crate: {
+	scope Crate {
 		// constant item_info_array()
 		// constant SPAWN_ITEM()
 		constant id(0x0)
 	}
 	
-	scope Barrel: {
+	scope Barrel {
 		// constant item_info_array()
 		// constant SPAWN_ITEM()
 		constant id(0x1)
 	}
 
-	scope Capsule: {
+	scope Capsule {
 		// constant item_info_array()
 		// constant SPAWN_ITEM()
 		constant id(0x2)
 	}
 
-	scope Egg: {
+	scope Egg {
 		// constant item_info_array()
 		// constant SPAWN_ITEM()
 		constant id(0x3)
 	}
 
-	scope Tomato: {
+	scope Tomato {
 		constant item_info_array(0x80189730)
 		constant SPAWN_ITEM(0x80174624)
 		constant id(0x4)
 	}
 
-	scope Heart: {
+	scope Heart {
 		constant item_info_array(0x801897D0)
 		constant SPAWN_ITEM(0x80174850)
 		constant id(0x5)
 	}
 
-	scope Star: {
+	scope Star {
 		constant item_info_array(0x80189870)
 		constant SPAWN_ITEM(0x80174A18)
 		constant id(0x6)
 	}
 	
-	scope BeamSword: {
+	scope BeamSword {
 		constant item_info_array(0x801898B0)
 		constant SPAWN_ITEM(0x80174DA0)
 		constant id(0x7)
 	}
 	
-	scope HomeRunBat: {
+	scope HomeRunBat {
 		constant item_info_array(0x80189990)
 		constant SPAWN_ITEM(0x801750B8)
 		constant id(0x8)
 	}
 	
-	scope Fan: {
+	scope Fan {
 		constant item_info_array(0x80189490)
 		constant SPAWN_ITEM(0x80175460)
 		constant id(0x9)
 	}
 	
-	scope StarRod: {
+	scope StarRod {
 		constant item_info_array(0x8018A0F0)
 		constant SPAWN_ITEM(0x80178134)
 		constant id(0xA)
 	}
 
-	scope RayGun: {
+	scope RayGun {
 		constant item_info_array(0x80189B50)
 		constant SPAWN_ITEM(0x80175800)
 		constant id(0xB)
 	}
 
-	scope FireFlower: {
+	scope FireFlower {
 		constant item_info_array(0x80189C60)
 		constant SPAWN_ITEM(0x80175D60)
 		constant id(0xC)
 	}
 
-	scope Hammer: {
+	scope Hammer {
 		constant item_info_array(0x80189D70)
 		constant SPAWN_ITEM(0x801763C8)
 		constant id(0xD)
 	}
 
-	scope MotionSensorBomb: {
+	scope MotionSensorBomb {
 		constant item_info_array(0x80189E50)
 		constant SPAWN_ITEM(0x80176F60)
 		constant id(0xE)
 	}
 
-	scope Bobomb: {
+	scope Bobomb {
 		constant item_info_array(0x80189F98)
 		constant SPAWN_ITEM(0x80177D9C)
 		constant id(0xF)
 	}
 
-	scope Bumper: {
+	scope Bumper {
 		constant item_info_array(0x8018A690)
 		constant SPAWN_ITEM(0x8017BF8C)
 		constant id(0x10)
 	}
 
-	scope GreenShell: {
+	scope GreenShell {
 		constant item_info_array(0x8018A200)
 		constant SPAWN_ITEM(0x80178FDC)
 		constant id(0x11)
 	}
 
-	scope RedShell: {
+	scope RedShell {
 		constant item_info_array(0x8018A570)
 		constant SPAWN_ITEM(0x8017B1D8)
 		constant id(0x12)
 	}
 
-	scope Pokeball: {
+	scope Pokeball {
 		constant item_info_array(0x8018A890)
 		constant SPAWN_ITEM(0x8017CE0C)
 		constant id(0x13)
 	}
 
-	scope PkFirePillar: {
+	scope PkFirePillar {
 		//constant item_info_array()
 		constant id(0x14)
 	}
 
-	scope Bomb: {
+	scope Bomb {
 	// Links bomb
 	// constant item_info_array()
 		constant id(0x15)
 	}
 	
-	scope FloatingBumper: {
+	scope FloatingBumper {
 		constant item_info_array(0x8018AA50)
 		constant id(0x16)
 	}
-	
+
+	// @ Description
+    // Item Types, value is present at 0x10 in item struct
+    scope TYPE {
+        constant MELEE(0x1)         // sword, bat
+        constant SHOOT(0x2)         // raygun, f.flower
+        constant THROW(0x3)         // MSB, pokeball
+        constant COLLISION(0x4)     // star, shrooms
+        constant OTHER(0x5)         // hammer, tomato
+    }
+
 	// @ Description
 	// Offsets in item Special Struct
-	scope STRUCT: {
+	scope STRUCT {
 		constant OBJECT(0x4)
 		constant OWNER(0x8)
+        constant TYPE(0x10)
 		constant ID(0xC)
 		constant OWNER_PORT(0x15)	// byte
 		constant PERCENT_DAMAGE(0x1C)
@@ -1999,13 +2030,13 @@ scope Item {
 			constant KNOCKBACK3(0x148)
 			constant ANGLE(0x13C)
 		}
-		scope HURTBOX: {
+		scope HURTBOX {
 			constant ENABLED(0x248)
 		}
 		constant DURATION(0x2C0)
 		
 		constant MAIN_ROUTINE(0x378)
-		scope COLLISION: {
+		scope COLLISION {
 			constant CLIPPING(0x37C)
 			constant HURTBOX(0x380)
 			constant SHIELD(0x384)

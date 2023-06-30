@@ -25,6 +25,11 @@ scope CharacterSelect {
         // a0 = character id
         addiu   sp, sp,-0x0010              // allocate stack space
         sw      ra, 0x0008(sp)              // store ra
+
+        // let's skip alt_req_list stuff on data screen
+        OS.read_byte(Global.current_screen, t7)
+        lli     t6, 0x1A                    // t7 = data screen ID
+        beq     t6, t7, _end                // skip if data screen
         sll     t6, a0, 0x2                 // t6 = character id * 4
         li      t7, alt_req_table           // t7 = alt_req_table
         li      t8, alt_req_list            // t8 = alt_req_list address
@@ -150,11 +155,11 @@ scope CharacterSelect {
     dw  0x12170                             // 0x05 - LINK
     dw  0xAEE0                              // 0x06 - YOSHI
     dw  0xCA90                              // 0x07 - CAPTAIN
-    dw  0x1D8C0 + 0xC18 + 0x740 + 0xB50 + 0x400 + 0x255D0  // 0x08 - KIRBY
+    dw  0x1D8C0 + 0xC18 + 0x740 + 0xB50 + 0x400 + 0x2BB88  // 0x08 - KIRBY
     dw  0x9E30                              // 0x09 - PIKACHU
     dw  0x7FE0                              // 0x0A - JIGGLY
     dw  0xC5C0                              // 0x0B - NESS
-    dw  0                                   // 0x0C - BOSS
+    dw  0x2D40 + 0x200                      // 0x0C - BOSS
     dw  0x36D4                              // 0x0D - METAL
     dw  0x41B0                              // 0x0E - NMARIO (file 0x012D)
     dw  0x4304                              // 0x0F - NFOX (file 0x012F)
@@ -204,9 +209,12 @@ scope CharacterSelect {
     dw  0x16320 + 0x22260 + 0x170E8 + 0x200 // 0x3B - SONIC
     dw  0x49F8 + 0x200                      // 0x3C - SANDBAG
     dw  0xC900 + 0x200                      // 0x3D - SUPER SONIC
-    dw  0x13C60 + 0x200                     // 0x3E - SHEIK
+    dw  0x12378 + 0x200                     // 0x3E - SHEIK
     dw  0x136E8 + 0x200                     // 0x3F - MARINA
     dw  0x173C8 + 0x200                     // 0x40 - DEDEDE
+    dw  0x12EA0 + 0x1BE0 + 0x200            // 0x41 - GOEMON
+    dw  0x5A50 + 0x200                      // 0x42 - PEPPY
+    dw  0xA310 + 0x200                      // 0x43 - SLIPPY
     // ADD NEW CHARACTERS HERE
 
     // REMIX POLYGONS
@@ -218,6 +226,8 @@ scope CharacterSelect {
     dw  0x4BC0 + 0x200                      // NSONIC
     dw  0x3F78 + 0x200                      // NSHEIK
     dw  0x35A0 + 0x200                      // NMARINA
+    dw  0x4328 + 0x200                      // NFALCO
+    dw  0x4470 + 0x200                      // NGND
 
     // @ Description
     // Holds the ROM offset of an alternate req list, used by get_alternate_req_list_
@@ -272,6 +282,7 @@ scope CharacterSelect {
     add_alt_req_list(Character.id.PIKACHU, req/PIKACHU_MODEL)
     add_alt_req_list(Character.id.JIGGLY, req/JIGGLY_MODEL)
     add_alt_req_list(Character.id.NESS, req/NESS_MODEL)
+    add_alt_req_list(Character.id.BOSS, req/BOSS_MODEL)
     add_alt_req_list(Character.id.METAL, req/METAL_MODEL)
     add_alt_req_list(Character.id.NMARIO, req/NMARIO_MODEL)
     add_alt_req_list(Character.id.NFOX, req/NFOX_MODEL)
@@ -322,6 +333,9 @@ scope CharacterSelect {
     add_alt_req_list(Character.id.SHEIK, req/SHEIK_MODEL)
     add_alt_req_list(Character.id.MARINA, req/MARINA_MODEL)
     add_alt_req_list(Character.id.DEDEDE, req/DEDEDE_MODEL)
+    add_alt_req_list(Character.id.GOEMON, req/GOEMON_MODEL)
+    add_alt_req_list(Character.id.PEPPY, req/PEPPY_MODEL)
+    add_alt_req_list(Character.id.SLIPPY, req/SLIPPY_MODEL)
 
     // POLYGONS
     add_alt_req_list(Character.id.NWARIO, req/NWARIO_MODEL)
@@ -332,6 +346,8 @@ scope CharacterSelect {
     add_alt_req_list(Character.id.NSONIC, req/NSONIC_MODEL)
     add_alt_req_list(Character.id.NSHEIK, req/NSHEIK_MODEL)
     add_alt_req_list(Character.id.NMARINA, req/NMARINA_MODEL)
+    add_alt_req_list(Character.id.NFALCO, req/NFALCO_MODEL)
+    add_alt_req_list(Character.id.NGND, req/NGND_MODEL)
     OS.align(4)
 
     // @ Description
@@ -483,6 +499,14 @@ scope CharacterSelect {
         addiu   t0, r0, Character.id.NONE   // t0 = id.NONE
         beq     t1, t0, _end                // if no variant defined, skip to end and return portrait's character id
         nop                                 // otherwise return the variant ID
+        lli     t0, Character.id.BOSS
+        bnel    t0, t1, _end                // If not BOSS, return variant ID
+        addu    v0, r0, t1                  // v0 = variant ID
+
+        li      t0, CharacterSelectDebugMenu.PlayerTag.string_table + (20 * 4)
+        lw      t0, 0x0000(t0)              // t0 = 20th tag
+        lbu     t0, 0x0000(t0)              // t0 = first character
+        bnezl   t0, _end                    // if not blank, return variant ID
         addu    v0, r0, t1                  // v0 = variant ID
 
         _end:
@@ -886,7 +910,7 @@ scope CharacterSelect {
         bnezl   s0, pc() + 8                // if 12cb, use correct slot count
         addiu   a0, r0, TwelveCharBattle.NUM_SLOTS // original line 2 modified to include all slots
 
-        jal     Global.get_random_int_alt_  // original line 1
+        jal     Global.get_random_int_safe_ // original line 1, modified from Global.get_random_int_alt_
         nop
         // v0 = random number between 0 and NUM_SLOTS
 
@@ -992,6 +1016,17 @@ scope CharacterSelect {
         lli     v0, Character.id.NONE       // v0 = Character.id.NONE
         beql    a0, v0, _end                // if there is no variant, then use the original character
         srl     v0, s0, 0x0002              // v0 = character id (not a variant)
+
+        lli     v0, Character.id.BOSS
+        bnel    a0, v0, _end                // valid variant if not Master Hand
+        addu    v0, r0, a0                  // v0 = character id (variant)
+
+        li      v1, CharacterSelectDebugMenu.PlayerTag.string_table + (20 * 4)
+        lw      v1, 0x0000(v1)              // v1 = 20th tag
+        lbu     v1, 0x0000(v1)              // v1 = first character
+        beqzl   v1, _end                    // if blank, not a valid variant
+        srl     v0, s0, 0x0002              // v0 = character id (not a variant)
+
         addu    v0, r0, a0                  // v0 = character id (variant)
 
         _end:
@@ -1541,8 +1576,7 @@ scope CharacterSelect {
         jr      ra                          // original line 3
         lbu     v0, LOWER+4(v0)             // modified original line 4
         OS.patch_end()
-        // returns unknown costume id (byte after green team id)
-        // TODO: figure out what this costume id is for (low priority)
+        // returns max costume id, seemingly only used on battle debug screen
         OS.patch_start(0x67920, 0x800EC120)
         if LOWER > 0x7FFF {
             lui     v0, (UPPER + 0x1)       // modified original line 1
@@ -1551,7 +1585,7 @@ scope CharacterSelect {
         }
         addu    v0, v0, t6                  // original line 2
         jr      ra                          // original line 3
-        lbu     v0, LOWER+7(v0)             // modified original line 4
+        lbu     v0, LOWER+7(v0)             // modified original line 4 - v0 = max costume_id
         OS.patch_end()
     }
 
@@ -1590,7 +1624,7 @@ scope CharacterSelect {
         sw      r0, 0x0000(s0)              // clear out control object reference before it is used
 
         // for (char_id i = METAL; i < last character; i++)
-        lli     s0, Character.id.METAL
+        lli     s0, Character.id.BOSS
 
         _loop:
         lli     a0, Character.id.PLACEHOLDER// a0 = PLACEHOLDER
@@ -1607,12 +1641,14 @@ scope CharacterSelect {
         li      a0, Character.variant_type.table
 		addu    a0, a0, s0
 		lb      a0, 0x0000(a0)              // get variant type
-        bnezl   a0, _loop                   // if not variant_type.NA, skip
-        addiu   s0, s0, 0x0001              // increment index
+        bnez    a0, _next                   // if not variant_type.NA, skip
+        nop
 
         _load:
         jal     load_character_model_       // load character function
         or      a0, s0, r0                  // a0 = index
+
+        _next:
         // end on x character
         slti    at, s0, Character.id.NWARIO - 1
         bnez    at, _loop
@@ -1724,28 +1760,14 @@ scope CharacterSelect {
         // s1 = port id in vs and training
 
         addiu   sp, sp, -0x0010             // allocate stack space
-        sw      t1, 0x0004(sp)              // ~
-        sw      v1, 0x0008(sp)              // ~
         sw      t5, 0x000C(sp)              // ~
 
-        addu    v1, t4, r0                  // v1 = character id
-        sltiu   t1, s1, 0x0004              // t1 = 1 if s1 is a port id
-        beq     t1, r0, _get_fgm_id         // if s1 is port id, use it to get original character id
-        nop
-        li      t1, Character.variant_original.table
-        sll     v1, v1, 0x0002              // v1 = offset in variant_original table
-        addu    t1, t1, v1                  // t1 = address of original character id
-        lw      v1, 0x0000(t1)              // v1 = original character id
-
-        _get_fgm_id:
         // get fgm_id
         li      a0, fgm_table               // a0 = fgm_table
         sll     t5, t4, 0x0001              // ~
         addu    a0, a0, t5                  // a0 = fgm_table + char offset
         lhu     a0, 0x0000(a0)              // a0 = fgm id
 
-        lw      t1, 0x0004(sp)              // ~
-        lw      v1, 0x0008(sp)              // ~
         lw      t5, 0x000C(sp)              // ~
         addiu   sp, sp, 0x0010              // deallocate stack space
 
@@ -2046,7 +2068,7 @@ scope CharacterSelect {
     dh FGM.announcer.names.NESS                   // Ness
 
     // other sound fx
-    dh FGM.announcer.names.MARIO                  // Master Hand
+    dh FGM.announcer.names.MASTERHAND             // Master Hand
     dh FGM.announcer.names.METAL_MARIO            // Metal Mario
     // TODO: better announcer FGMs for polygons
     dh FGM.announcer.names.POLYGON_MARIO          // Polygon Mario
@@ -2083,7 +2105,7 @@ scope CharacterSelect {
     float32 1.50                            // Pikachu
     float32 1.50                            // Jigglypuff
     float32 1.50                            // Ness
-    float32 1.50                            // Master Hand
+    float32 2.50                            // Master Hand
     float32 1.50                            // Metal Mario
     float32 1.50                            // Polygon Mario
     float32 1.50                            // Polygon Fox
@@ -2179,6 +2201,8 @@ scope CharacterSelect {
         constant NSONIC(0x0001E578)
         constant NSHEIK(0x000206F8)
         constant NMARINA(0x000217B8)
+        constant NFALCO(0x0000D978)
+        constant NGND(0x0000EA38)
         // special
         constant METAL(0x00015F78)
         constant GDONKEY(0x00017038)
@@ -2203,6 +2227,10 @@ scope CharacterSelect {
         constant SHEIK(0x000206F8)
         constant MARINA(0x000217B8)
         constant DEDEDE(0x00022878)
+        constant GOEMON(0x00023938)
+        constant PEPPY(0x000249E8 + 0x10)
+        constant SLIPPY(0x00025AA8 + 0x10)
+        constant CLASSIC(0x00026B68 + 0x10)
         // j
         constant JMARIO(0x00001078)
         constant JFOX(0x00002138)
@@ -2255,7 +2283,10 @@ scope CharacterSelect {
         constant TOH(26)
         constant ANIMAL_CROSSING(27)
         constant SONIC(28)
-		constant CASTLEVANIA(29)
+        constant CASTLEVANIA(29)
+        constant GOEMON(30)
+        constant WAVERACE(31)
+        constant QUEST64(32)
 
         scope offset {
             constant NONE(0)
@@ -2288,6 +2319,9 @@ scope CharacterSelect {
             constant ANIMAL_CROSSING(0x0000ABD8)
             constant SONIC(0x0000B238)
             constant CASTLEVANIA(0x0000B898)
+            constant GOEMON(0x0000BEF8)
+            constant WAVERACE(0x0000C558)
+            constant QUEST64(0x0000CBB0)
         }
 
         // @ Description
@@ -2353,6 +2387,12 @@ scope CharacterSelect {
             constant Y_SONIC(0x41900000)
             constant X_CASTLEVANIA(0x40400000)
             constant Y_CASTLEVANIA(0x41900000)
+            constant X_GOEMON(0x40400000)
+            constant Y_GOEMON(0x41900000)
+            constant X_WAVERACE(0x3F000000)
+            constant Y_WAVERACE(0x41A00000)
+            constant X_QUEST64(0x40200000)
+            constant Y_QUEST64(0x419C0000)
         }
 
         table:
@@ -2388,6 +2428,9 @@ scope CharacterSelect {
         dw offset.ANIMAL_CROSSING,  position.X_ANIMAL_CROSSING,  position.Y_ANIMAL_CROSSING
         dw offset.SONIC,            position.X_SONIC,            position.Y_SONIC
         dw offset.CASTLEVANIA,      position.X_CASTLEVANIA,      position.Y_CASTLEVANIA
+        dw offset.GOEMON,           position.X_GOEMON,           position.Y_GOEMON
+        dw offset.WAVERACE,         position.X_WAVERACE,         position.Y_WAVERACE
+        dw offset.QUEST64,          position.X_QUEST64,          position.Y_QUEST64
     }
 
     // @ Description
@@ -2441,6 +2484,7 @@ scope CharacterSelect {
         constant PIKACHU(0x000032F8)
         constant JIGGLYPUFF(0x00003DB8)
         constant NESS(0x000035B0)
+        constant BOSS(0x00020E80)
         constant METAL(0x00013308)
         constant NMARIO(0x00013CC8)
         constant NFOX(0x000141A8)
@@ -2485,6 +2529,9 @@ scope CharacterSelect {
         constant SSONIC(0x0001B7A8)
         constant MARINA(0x0001C168)
         constant DEDEDE(0x0001C648)
+        constant GOEMON(0x0001F228)
+        constant PEPPY(0x0001FFF8)
+        constant SLIPPY(0x0001FB20)
         // POLYGONS
         constant NWARIO(0x0001CB28)
         constant NLUCAS(0x0001D008)
@@ -2494,6 +2541,8 @@ scope CharacterSelect {
         constant NSONIC(0x0001E388)
         constant NSHEIK(0x0001E868)
         constant NMARINA(0x0001ED48)
+        constant NFALCO(0x000209A8)
+        constant NGND(0x000204D0)
         constant BLANK(0x0)
     }
 
@@ -2511,7 +2560,7 @@ scope CharacterSelect {
     dw name_texture.PIKACHU                 // Pikachu
     dw name_texture.JIGGLYPUFF              // Jigglypuff
     dw name_texture.NESS                    // Ness
-    dw name_texture.BLANK                   // Master Hand
+    dw name_texture.BOSS                    // Master Hand
     dw name_texture.METAL                   // Metal Mario
     dw name_texture.NMARIO                  // Polygon Mario
     dw name_texture.NFOX                    // Polygon Fox
@@ -2573,7 +2622,7 @@ scope CharacterSelect {
         define slot_20(SHEIK)
 
         // row 3
-        define slot_21(NONE)
+        define slot_21(GOEMON)
         define slot_22(DSAMUS)
         define slot_23(WARIO)
         define slot_24(LUCAS)
@@ -2918,6 +2967,11 @@ scope CharacterSelect {
             origin portrait_id_table_origin + Character.id.{layout.slot_{n}} + Character.id.NMARIO
             db {n} - 1
         }
+        // Masterhand
+        if (Character.id.{layout.slot_{n}} == Character.id.LINK) {
+            origin portrait_id_table_origin + Character.id.BOSS
+            db {n} - 1
+        }
     }
     // Always return 0 for Character.id.NONE (the game does this)
     origin portrait_id_table_origin + Character.id.NONE
@@ -2939,6 +2993,11 @@ scope CharacterSelect {
     float32 0.9921875
     OS.patch_end()
 
+
+    // Set menu zoom size for Masterhand
+    Character.table_patch_start(menu_zoom, Character.id.BOSS, 0x4)
+    float32 0.8
+    OS.patch_end()
 
     // @ Description
     // Settings for the different CSS pages for easy access
@@ -3445,16 +3504,20 @@ scope CharacterSelect {
         sw      t4, 0x007C(t2)              // update dpad display
     }
 
-	scope VARIANT_ICON_OFFSET {
-		constant POLYGON(0x13A8)
-		constant E(0x03B8)
-		constant J(0x0558)
-		constant METAL(0x2448 + 0x10)
-		constant PIANO(0x2528 + 0x10)
-		constant GBOWSER(0x2608 + 0x10)
-		constant SSONIC(0x26E8 + 0x10)
-		constant MASTER_HAND(0x27F0 + 0x10)
-	}
+    // @ Description
+    // Offsets in CSS Images file
+    scope VARIANT_ICON_OFFSET {
+        constant POLYGON(0x13A8)
+        constant E(0x03B8)
+        constant J(0x0558)
+        constant METAL(0x2448 + 0x10)
+        constant PIANO(0x2528 + 0x10)
+        constant GBOWSER(0x2608 + 0x10)
+        constant SSONIC(0x26E8 + 0x10)
+        constant MASTER_HAND(0x27F0 + 0x10)
+        constant PEPPY(0x28D8 + 0x10)
+        constant SLIPPY(0x29B0 + 0x10)
+    }
 
     // @ Description
     // This adds variant icons (stock icons/flags) to the dpad image
@@ -3492,11 +3555,20 @@ scope CharacterSelect {
 
         // if we're here, then we will use the character's stock icon
         lui     t2, 0x3F80                  // t2 = scale for stock icons (1.0)
+        lli     a2, Character.id.BOSS
+        beql    a1, a2, pc() + 8            // if Masterhand, shrink the icon
+        lui     t2, 0x3F10                  // t2 = scale for MH stock icon
         sw      t2, 0x0024(sp)              // save scale for stock icons
 
         lli     t2, Character.variant_type.POLYGON
         beql    t1, t2, _draw_icon          // if a polygon, then draw polygon icon from our file instead
         addiu   a1, at, 0x13A8              // a1 = polygon icon footer struct TODO: make offset a constant
+        lli     t2, Character.id.PEPPY
+        beql    a1, t2, _draw_icon          // If PEPPY, then draw PEPPY stock icon
+        addiu   a1, at, VARIANT_ICON_OFFSET.PEPPY // a1 = PEPPY footer struct
+        lli     t2, Character.id.SLIPPY
+        beql    a1, t2, _draw_icon          // If SLIPPY, then draw SLIPPY stock icon
+        addiu   a1, at, VARIANT_ICON_OFFSET.SLIPPY // a1 = SLIPPY footer struct
         lli     t2, Character.id.METAL
         beql    a1, t2, _draw_icon          // If METAL, then draw METAL stock icon
         addiu   a1, at, VARIANT_ICON_OFFSET.METAL // a1 = METAL footer struct
@@ -3509,7 +3581,19 @@ scope CharacterSelect {
         lli     t2, Character.id.SSONIC
         beql    a1, t2, _draw_icon          // If SSONIC, then draw SSONIC stock icon
         addiu   a1, at, VARIANT_ICON_OFFSET.SSONIC // a1 = SSONIC footer struct
+        lli     t2, Character.id.BOSS
+        bne     a1, t2, _gdk                // If not Master Hand, then skip... otherwise, draw Master Hand stock icon
+        addiu   a1, at, VARIANT_ICON_OFFSET.MASTER_HAND // a1 = Master Hand footer struct
 
+        li      t1, CharacterSelectDebugMenu.PlayerTag.string_table + (20 * 4)
+        lw      t1, 0x0000(t1)              // t1 = 20th tag
+        lbu     t1, 0x0000(t1)              // t1 = first character
+        beqz    t1, _end                    // if blank, skip
+        nop
+        b       _draw_icon
+        nop
+
+        _gdk:
         // If here, GDK. Loading stock icon from character struct
         li      t1, 0x80116E10              // t1 = main character struct table
 		lli     t2, Character.id.DK
@@ -3524,8 +3608,6 @@ scope CharacterSelect {
         addu    t1, t2, t1                  // t1 = attribute data address
         lw      t1, 0x0340(t1)              // t1 = pointer to stock icon footer address
         lw      a1, 0x0000(t1)              // a1 = stock icon footer address
-        b       _draw_icon
-        nop
 
         _draw_icon:
         lw      a0, 0x0034(a0)              // a0 = RAM address of object block
@@ -4693,11 +4775,26 @@ scope CharacterSelect {
     }
 
     // @ Description
+    // This holds each port's random character selection state
+    random_char_state_table:
+    dw  0   // P1
+    dw  0   // P2
+    dw  0   // P3
+    dw  0   // P4
+
+    // @ Description
     // Selects a random character for a human player
     // @ Arguments
     // a0 - port
     // TODO: 1p, Bonus, Training support?
     scope select_random_char_: {
+        sll     t1, a0, 0x0002              // t1 = offset in state table
+        li      t2, random_char_state_table
+        addu    t2, t2, t1                  // t2 = address of state for this port
+        lw      t1, 0x0000(t2)              // t1 = 0 if random char selection disabled, 1 if enabled
+        beqz    t1, _end                    // if random char selection disabled for this port, skip
+        nop
+
         addiu   sp, sp,-0x0030              // allocate stack space
         sw      ra, 0x0004(sp)              // save registers
         sw      a0, 0x0008(sp)              // ~
@@ -4855,7 +4952,10 @@ scope CharacterSelect {
     add_to_css(Character.id.SSONIC, FGM.announcer.names.SSONIC,        	1.50,         0x00010004, SONIC,        name_texture.SSONIC,         portrait_offsets.SSONIC,         9)
     add_to_css(Character.id.SHEIK,  FGM.announcer.names.SHEIK,          1.50,         0x00010001, ZELDA,        name_texture.SHEIK,          portrait_offsets.SHEIK,          -1)
     add_to_css(Character.id.MARINA, FGM.announcer.names.MARINA,        	1.50,         0x00010004, MISCHIEF_MAKERS,  name_texture.MARINA,     portrait_offsets.MARINA,         -1)
-    add_to_css(Character.id.DEDEDE, FGM.announcer.names.DEDEDE,         2,            0x00010001, KIRBY,        name_texture.DEDEDE,         portrait_offsets.DEDEDE,          -1)
+    add_to_css(Character.id.DEDEDE, FGM.announcer.names.DEDEDE,         2,            0x00010001, KIRBY,        name_texture.DEDEDE,         portrait_offsets.DEDEDE,         -1)
+    add_to_css(Character.id.GOEMON, FGM.announcer.names.GOEMON,         1.50,         0x00010001, GOEMON,       name_texture.GOEMON,         portrait_offsets.GOEMON,         -1)
+    add_to_css(Character.id.PEPPY,  FGM.announcer.names.PEPPY,          1.50,         0x00010004, STARFOX,      name_texture.PEPPY,          portrait_offsets.PEPPY,          15)
+    add_to_css(Character.id.SLIPPY, FGM.announcer.names.SLIPPY,         1.50,         0x00010004, STARFOX,      name_texture.SLIPPY,         portrait_offsets.SLIPPY,         18)
     // ADD NEW CHARACTERS HERE
 
     // REMIX POLYGONS
@@ -4867,6 +4967,8 @@ scope CharacterSelect {
     add_to_css(Character.id.NSONIC, FGM.announcer.names.NSONIC,        	1.50,         0x00010004, SMASH,        name_texture.NSONIC,         portrait_offsets.SONIC,          9)
     add_to_css(Character.id.NSHEIK, FGM.announcer.names.NSHEIK,         1.50,         0x00010001, SMASH,        name_texture.NSHEIK,         portrait_offsets.SHEIK,          19)
     add_to_css(Character.id.NMARINA, FGM.announcer.names.NMARINA,       1.50,         0x00010001, SMASH,        name_texture.NMARINA,        portrait_offsets.MARINA,         0)
+    add_to_css(Character.id.NFALCO,  FGM.announcer.names.NFALCO,        1.50,         0x00010004, SMASH,        name_texture.NFALCO,         portrait_offsets.FALCO,          18)
+    add_to_css(Character.id.NGND, FGM.announcer.names.NGANONDORF,       1.50,         0x00010002, SMASH,        name_texture.NGND,           portrait_offsets.GND,            8)
 }
 
 

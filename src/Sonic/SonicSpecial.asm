@@ -7,7 +7,7 @@ scope SonicNSP {
     constant MIN_Y_RANGE(0x447A)            // current setting - float: 1000
     constant MAX_X_RANGE_SS(0x453b)         // current setting (Super Sonic) - float: 3000
     constant MIN_Y_RANGE_SS(0x447A)         // current setting (Super Sonic) - float: 1000
-    constant SPEED(0x42F0)                  // current setting - float: 120
+    constant SPEED(0x42DC)                  // current setting - float: 110
     constant LOCKED_SPEED(0x4302)           // current setting - float: 130
     constant SPEED_SS(0x4316)               // current setting (Super Sonic) - float: 150
     constant LOCKED_SPEED_SS(0x4320)        // current setting (Super Sonic) - float: 160
@@ -15,7 +15,7 @@ scope SonicNSP {
     constant RECOIL_Y_SPEED(0x42A0)         // current setting - float: 80
     constant BOUNCE_Y_SPEED(0x4270)         // current setting - float: 60
     constant TURN_SPEED(0x3E0EFA1E)         // current setting - float: 0.139626 rads/8 degrees
-    constant DEFAULT_ANGLE(0xBE860A85)      // current setting - float: -0.261799 rads/-15 degrees
+    constant DEFAULT_ANGLE(0xBEBBA861)      // current setting - float: -0.366519 rads/-21 degrees
     constant MAX_INITAL_ANGLE(0x3F1C61A6)   // current setting - float: 0.610865 rads/35 degrees
     constant MIN_INITAL_ANGLE(0xBF1C61A6)   // current setting - float: -0.610865 rads/-35 degrees
     constant DURATION(12)
@@ -994,7 +994,7 @@ scope SonicNSP {
 
 
 scope SonicUSP {
-    constant Y_SPEED(0x4308)                // current setting - float: 136.0
+    constant Y_SPEED(0x4301)                // current setting - float: 129.0
 
     // @ Description
     // Initial Subroutine for Sonic's grounded up special.
@@ -1017,6 +1017,8 @@ scope SonicUSP {
 
         lw      a0, 0x0020(sp)              // a0 = player object
         lw      a0, 0x0084(a0)              // a0 = player struct
+        lli     at, OS.TRUE                 // ~
+        sw      at, 0x0B1C(a0)              // grounded flag = TRUE
         lli     t0, 0x0000                  // t0 = 0 (initialize spring on ground)
         lw      at, 0x00EC(a0)              // at = clipping ID of player
         bltzl   at, pc() + 8                // if not over a normal plat (like on the respawn plat), then initialize in air
@@ -1048,6 +1050,7 @@ scope SonicUSP {
         lli     v1, 0x0001                  // v1 = 1
         sw      v1, 0x0184(a0)              // temp variable 3 = 1 (initialize spring in air)
         sw      r0, 0x0B18(a0)              // movement flag = FALSE
+        sw      r0, 0x0B1C(a0)              // grounded flag = FALSE
         sw      r0, 0x0048(a0)              // set x velocity to 0
         sw      r0, 0x004C(a0)              // set y velocity to 0
         lbu     v1, 0x018D(a0)              // v1 = fast fall flag
@@ -1097,6 +1100,8 @@ scope SonicUSP {
         sw      at, 0x0B18(v0)              // movement flag = TRUE
         sw      at, 0x0ADC(v0)              // up special bool = TRUE
         // take mid-air jumps away at this point
+        lw      at, 0x0B1C(v0)              // at = grounded flag
+        bnez    at, _check_end              // don't take away jumps if grounded
         lw      at, 0x09C8(v0)              // at = attribute pointer
         lw      at, 0x0064(at)              // at = max jumps
         b       _check_end
@@ -1145,19 +1150,21 @@ scope SonicUSP {
     // Subroutine for Sonic's aerial up special interrupt.
     scope interrupt_: {
         addiu   sp, sp, -0x0020
-        sw      a0, 0x0018(sp)              // ~
-        sw      ra, 0x001C(sp)              // store ra, a0
         lw      t0, 0x0084(a0)              // t0 = player struct
         lw      at, 0x0180(t0)              // at = temp variable 2
         beqz    at, _end                    // skip if temp variable 2 isn't set
-        nop
+        sw      ra, 0x001C(sp)              // store ra
 
         // if temp variable 2 was set, do an action check/allow interrupts
         jal     0x80150B00                  // check for aerial attacks
-        nop
+        sw      a0, 0x0018(sp)              // 0x0018(sp) = player object
+        bnezl   v0, _end                    // end if aerial attack initiated
+        lw      ra, 0x001C(sp)              // load ra
+        jal     0x8014019C                  // check for midair jumps
+        lw      a0, 0x0018(sp)              // a0 = player object
+        lw      ra, 0x001C(sp)              // load ra
 
         _end:
-        lw      ra, 0x001C(sp)      // load ra
         jr      ra
         addiu   sp, sp, 0x0020
     }
@@ -1823,7 +1830,7 @@ scope SonicUSP {
 
     OS.align(16)
     spring_properties_struct:
-    dw 180                                  // 0x0000 - duration (int)
+    dw 240                                  // 0x0000 - duration (int)
     float32 100                             // 0x0004 - max speed
     float32 100                             // 0x0008 - min speed
     float32 3                               // 0x000C - gravity
@@ -1838,11 +1845,11 @@ scope SonicUSP {
 }
 
 scope SonicDSP {
-    constant MAX_CHARGE(20)
-    constant MAX_CHARGE_AIR(16)
-    constant BASE_SPEED(0x4258)             // current setting - float: 54.0
+    constant MAX_CHARGE(24)
+    constant MAX_CHARGE_AIR(18)
+    constant BASE_SPEED(0x4238)             // current setting - float: 46.0
     constant MIN_SPEED(0x4170)              // current setting - float: 15.0
-    constant JUMP_SPEED(0x4268)             // current setting - float: 58.0
+    constant JUMP_SPEED(0x4278)             // current setting - float: 62.0
     constant BASE_SPEED_SS(0x428C)          // current setting (Super Sonic) - float: 70.0
     constant MIN_SPEED_SS(0x41C8)           // current setting (Super Sonic) - float: 25.0
     constant JUMP_SPEED_SS(0x4296)          // current setting (Super Sonic) - float: 75.0
@@ -1903,11 +1910,11 @@ scope SonicDSP {
         sw      r0, 0x017C(a0)              // temp variable 1 = 0
         sw      r0, 0x0180(a0)              // temp variable 2 = 0
         sw      r0, 0x0184(a0)              // temp variable 3 = 0
-        lui     t0, 0x3F00                  // ~
-        mtc1    t0, f0                      // f0 = 0.5
+        lui     t0, 0x3EA0                  // ~
+        mtc1    t0, f0                      // f0 = 0.31
         lwc1    f2, 0x004C(a0)              // f2 = y velocity
         mul.s   f2, f2, f0                  // ~
-        swc1    f2, 0x004C(a0)              // multiply y velocity by 0.5 and update
+        swc1    f2, 0x004C(a0)              // multiply y velocity by 0.31 and update
         lbu     v1, 0x018D(a0)              // v1 = fast fall flag
         ori     t6, r0, 0x0007              // t6 = bitmask (01111111)
         and     v1, v1, t6                  // ~
@@ -1935,9 +1942,9 @@ scope SonicDSP {
         beqz    t6, _check_charge_variable  // skip if B or A are not pressed
         nop
 
-        // if either the a or b button was pressed, add two charge levels and play a sound
+        // if either the a or b button was pressed, add three charge levels and play a sound
         lw      t6, 0x0B18(s0)              // t6 = charge level
-        addiu   t6, t6, 0x0002              // increase charge level by 2
+        addiu   t6, t6, 0x0003              // increase charge level by 2
         sw      t6, 0x0B18(s0)              // store updated charge level
         lbu     t6, 0x000D(s0)              // t6 = player port
         li      t7, Sonic.classic_table     // t7 = classic_table
@@ -2021,9 +2028,9 @@ scope SonicDSP {
         nop
 
 
-        // if either the a or b button was pressed, add two charge levels and play a sound
+        // if either the a or b button was pressed, add three charge levels and play a sound
         lw      t6, 0x0B18(s0)              // t6 = charge level
-        addiu   t6, t6, 0x0002              // increase charge level by 2
+        addiu   t6, t6, 0x0003              // increase charge level by 3
         sw      t6, 0x0B18(s0)              // store updated charge level
         lbu     t6, 0x000D(s0)              // t6 = player port
         li      t7, Sonic.classic_table     // t7 = classic_table
@@ -2270,7 +2277,7 @@ scope SonicDSP {
         add.s   f4, f4, f2                  // f2 = ground x velocity + 20
         lui     at, 0x3C22                  // ~
         mtc1    at, f2                      // f2 = 0.01
-        mul.s   f2, f2, f4                  // f2 = FSM = (ground x velocity + 10) * 0.01
+        mul.s   f2, f2, f4                  // f2 = FSM = (ground x velocity + 20) * 0.01
         lw      a0, 0x0018(sp)              // a0 = player object
         lw      t0, 0x0074(a0)              // t0 = top joint struct
         lw      t1, 0x0078(t0)              // t1 = top joint frame speed multiplier

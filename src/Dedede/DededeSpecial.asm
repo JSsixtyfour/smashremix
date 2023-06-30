@@ -36,14 +36,10 @@ scope DededeUSP {
         jal     0x800E6F24                  // change action
         sw      r0, 0x0010(sp)              // argument 4 = 0
 
-        jal     0x800E0830                  // unknown common subroutine
+        jal     0x800E0830                  // unknown common subroutine, sets jumps
         lw      a0, 0x0020(sp)              // a0 = player object
 
         lw      a0, 0x0020(sp)              // load player object
-        jal     0x800DEEC8                  // set aerial state
-        lw      a0, 0x0084(a0)              // load player struct
-
-        lw      a0, 0x0020(sp)              // ~
         lw      a0, 0x0084(a0)              // ~
         sw      r0, 0x017C(a0)              // temp variable 1 = 0
         sw      r0, 0x0180(a0)              // temp variable 2 = 0
@@ -342,7 +338,7 @@ scope DededeUSP {
         beqzl          t6, _end_2           // branch if not colliding with ceiling
         lw             ra, 0x001c (sp)      // load return address
         lw             a0, 0x0028 (sp)      // load player object
-		Action.change(Dedede.Action.USP_CEILING_BONK)	// set to Ceiling Bonk Action
+		Action.change(Dedede.Action.USP_CEILING_BONK, -1)	// set to Ceiling Bonk Action
 		FGM.play(0x0134)					// Play FGM
 
         _end:
@@ -394,7 +390,7 @@ scope DededeUSP {
     scope cancel_initial_: {
         addiu   sp, sp,-0x0028              // allocate stack space
         sw      ra, 0x0020(sp)              // store ra
-		Action.change(Dedede.Action.USP_CANCEL)
+		Action.change(Dedede.Action.USP_CANCEL, -1)
         lw      ra, 0x0020(sp)              // restore ra
         jr      ra                          // return
         addiu   sp, sp, 0x0028              // deallocate stack space
@@ -1954,7 +1950,7 @@ scope DededeNSP {
 		kirby_action_check:
 		lw   	a0, 0x0028(sp)
 		lw   	a1, 0x0084(a0)		// a1 = player struct
-		addiu   at, Character.id.DEDEDE
+		addiu   at, r0, Character.id.DEDEDE
 		lw 		v0, 0x0008(a1)		// v0 = characters id
 		beql	at, v0, _change_action
 		addiu   a1, r0, Dedede.Action.NSP_FALL	// action to change to
@@ -2822,7 +2818,7 @@ scope DededeDSP {
         sw      t0, 0x0AE4(a3)              // store updated charge level
         lli     at, 0x0002                  // at = max charge
         bne     t0, at, _attach             // branch if charge isn't max
-        lli     a1, GFXRoutine.id.SHEIK_CHARGE // a1 = SHEIK_CHARGE id
+        lli     a1, GFXRoutine.id.DEDEDE_CHARGE // a1 = DEDEDE_CHARGE id
         jal     0x800E9814                  // begin gfx routine which attaches white spark to hand
         or      a2, r0, r0                  // a2 = 0
         lw      a0, 0x0044(sp)              // 0x0044(sp) = player object

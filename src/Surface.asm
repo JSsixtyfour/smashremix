@@ -171,6 +171,10 @@ scope Surface {
     add_surface(casino_right_side, 4.0, OS.TRUE, 20, 10, 180, 0, 0, 65, 0, 0x3D6)
     add_surface(toadsturnpike_car, 4.0, OS.TRUE, 8, 20, 90, 100, 200, 0, 0, 0x11F)
     add_surface(failed_z_cancel_lava, 4.0, OS.TRUE, 0x00010005, 0xA, 90, 0x64, 0xC8, 0, 1, 0x11E) // unused bit as override flag
+    add_surface(push_right_2, 4.0, OS.FALSE, 0, 0, 0, 0, 0, 0, 0, 0)
+    add_surface(push_left_2, 4.0, OS.FALSE, 0, 0, 0, 0, 0, 0, 0, 0)
+    add_surface(push_right_1, 4.0, OS.FALSE, 0, 0, 0, 0, 0, 0, 0, 0)
+    add_surface(push_left_1, 4.0, OS.FALSE, 0, 0, 0, 0, 0, 0, 0, 0)
 
     
     // write surfaces to ROM
@@ -313,13 +317,113 @@ scope Surface {
         li      t7, zebes_acid_struct       // t7 = zebes_acid_struct
         OS.patch_end()
     }
-	
-	// Collision Masks
-	constant CEILING(0x0400)
-	constant GROUND(0x0800)
-	constant WALL(0x0021)
-	constant WALL_RIGHT(0x0001)
-	constant WALL_LEFT(0x0020)
+    
+    conveyor_speed:
+    dw  0x41C00000
+    dw  0xC1C00000
+    dw  0x41400000
+    dw  0xC1400000
+
+    scope fighter_apply_conveyor_surface: {
+        OS.patch_start(0x5DBD8, 0x800E23D8)
+        j       fighter_apply_conveyor_surface
+        lw      t0, 0x014C(s1)              // t0 = kinetic state
+        _fighter_apply_conveyor_surface_return:
+        OS.patch_end()
+
+        bnez    t0, _apply_push             // skip conveyor surface logic if aerial
+        lb      t0, 0x00F7(s1)              // get clipping flag
+        beqz    t0, _apply_push             // skip conveyor belt check if not on a hazardous surface
+        nop
+
+        // if grounded
+        li      t1, conveyor_speed
+        addiu   at, r0, 0x1F                // right moving clipping id
+        beql    t0, at, _apply_conveyor_movement
+        lw      t0, 0x0000(t1)              // load right moving speed
+        addiu   at, r0, 0x20                // left moving clipping id (fast)
+        beql     t0, at, _apply_conveyor_movement // skip conveyor if not a conveyor surface
+        lw      t0, 0x0004(t1)              // load left moving speed
+        addiu   at, r0, 0x21                // right moving clipping id (fast)
+        beql    t0, at, _apply_conveyor_movement
+        lw      t0, 0x0008(t1)              // load right moving speed
+        addiu   at, r0, 0x22                // left moving clipping id (slow)
+        beql     t0, at, _apply_conveyor_movement         // skip conveyor if not a conveyor surface
+        lw      t0, 0x000C(t1)              // load left moving speed (slow)
+
+        b       _apply_push
+        nop
+
+        _apply_conveyor_movement:
+        sw      t0, 0x00A4(s1)
+
+        _apply_push:
+        jalr    ra, v0
+        lw      a0, 0x0070(sp)
+        j       _fighter_apply_conveyor_surface_return
+        nop
+
+    }
+    
+    scope item_apply_conveyor_surface: {
+        OS.patch_start(0xEA324, 0x8016F8E4)
+        j       item_apply_conveyor_surface
+        lw      t0, 0x0108(a2)              // t0 = kinetic state
+        _item_apply_conveyor_surface_return:
+        OS.patch_end()
+           
+        bnez    t0, _continue               // skip conveyor surface logic if aerial
+        nop
+        // if grounded
+        li      t0, Global.match_info       // ~ 0x800A50E8
+        lw      t0, 0x0000(t0)              // t0 = match_info
+        lbu     t0, 0x0001(t0)              // t0 = stage id
+        addiu   at, r0, Stages.id.SAFFRON_CITY // at = SAFFRON CITY stage id
+        beq     at, t0, _continue           // skip if the stage is saffron city ()
+        nop
+        jal     get_clipping_flag_
+        lw      a0, 0x00AC(a2)              // get clipping id
+        or      a0, s0, r0                  // restore a0
+        sll     v0, v0, 24
+        srl     v0, v0, 24
+        beqzl   v0, _continue               // skip conveyor belt check if not on a hazardous surface
+        lw      v0, 0x037C(a2)              // restore v0
+
+        li      t1, conveyor_speed
+        addiu   at, r0, 0x1F                // right moving clipping id
+        beql    v0, at, _apply_conveyor_movement
+        lw      v0, 0x0000(t1)              // load right moving speed
+        addiu   at, r0, 0x20                // left moving clipping id
+        beql    v0, at, _apply_conveyor_movement
+        lw      t0, 0x0004(t1)              // load left moving speed
+        addiu   at, r0, 0x21                // right moving clipping id (fast)
+        beql    t0, at, _apply_conveyor_movement
+        lw      t0, 0x0008(t1)              // load right moving speed
+        addiu   at, r0, 0x22                // left moving clipping id (slow)
+        beql    t0, at, _apply_conveyor_movement         // skip conveyor if not a conveyor surface
+        lw      t0, 0x000C(t1)              // load left moving speed (slow)
+
+        b       _continue           // skip conveyor if not a conveyor surface
+        lw      v0, 0x037C(a2)              // restore v0
+
+        _apply_conveyor_movement:
+        sw      t0, 0x0064(a2)
+        lw      v0, 0x037C(a2)              // restore v0
+
+        _continue:
+        jalr    ra, v0
+        sh      t4, 0x008C(a2)
+        j       _item_apply_conveyor_surface_return
+        nop
+
+    }
+
+    // Collision Masks
+    constant CEILING(0x0400)
+    constant GROUND(0x0800)
+    constant WALL(0x0021)
+    constant WALL_RIGHT(0x0001)
+    constant WALL_LEFT(0x0020)
     constant CLIFF(0x3000)
     constant CLIFF_RIGHT(0x1000)
     constant CLIFF_LEFT(0x2000)

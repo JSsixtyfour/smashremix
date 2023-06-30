@@ -1,7 +1,7 @@
 scope link_costumes {
     // @ Description
     // Number of additional costumes
-    constant NUM_EXTRA_COSTUMES(2)
+    constant NUM_EXTRA_COSTUMES(3)
 
     // @ Description
     // Number of parts
@@ -84,5 +84,24 @@ scope link_costumes {
         Costumes.set_palette_for_part(1, 1B, 0, palette_1)
 
         Costumes.set_stock_icon_palette_for_costume(1, Link/cos_5_stock_icon.bin)
+    }
+	//
+	// Pink Link
+    scope costume_0x6 {
+        diffuse_ambient_pair:; dw 0x80285800, 0x80285800
+        palette_1:; insert "Link/cos_6_1.bin"
+        palette_2:; insert "Link/cos_4_2.bin"
+
+        Costumes.set_diffuse_ambient_colors_for_part(2, 1, 0, diffuse_ambient_pair)
+        Costumes.set_diffuse_ambient_colors_for_part(2, 2, 0, diffuse_ambient_pair)
+        Costumes.set_diffuse_ambient_colors_for_part(2, 4, 0, diffuse_ambient_pair)
+        Costumes.set_diffuse_ambient_colors_for_part(2, 9, 0, diffuse_ambient_pair)
+        Costumes.set_palette_for_part(2, 13, 1, palette_2)
+        Costumes.set_diffuse_ambient_colors_for_part(2, 13, 2, diffuse_ambient_pair)
+        Costumes.set_diffuse_ambient_colors_for_part(2, 14, 0, diffuse_ambient_pair)
+        Costumes.set_palette_for_part(2, 16, 0, palette_1)
+        Costumes.set_palette_for_part(2, 1B, 0, palette_1)
+
+        Costumes.set_stock_icon_palette_for_costume(2, Link/cos_6_stock_icon.bin)
     }
 }

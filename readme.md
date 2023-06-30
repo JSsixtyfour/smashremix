@@ -92,6 +92,8 @@ A menu for modifying certain character attributes is available on each panel.
 ##### Dpad map
 - Available mappings are: 'Smash', 'Tilt', 'Special', or 'Movement'
 - Note: When using 'Movement', Shield is mapped to L and Taunt is mapped to Z
+##### Rand Char
+- Allows selecting a random character via L button if 'Press L' is selected.
 
 #### Toggle Name: _CSS Panel Menu_
 
@@ -179,11 +181,58 @@ A menu for modifying certain character attributes is available on each panel.
  - Lasts 20 seconds.
 #### Pitfall
  - Throwable. Can be planted, similar to a proximity mine. When stepped on, buries a player in the ground.
+#### Golden Gun
+ - A powerful, single-shot weapon. Similar to the RayGun. TOP SECRET.
 
 ### Tripping
 - If enabled, characters will randomly trip when dashing or running.
 
 #### Toggle Name: Tripping
+
+### Footstool Jumping
+- If enabled, you can jump off characters heads!
+
+#### Toggle Name: Footstool Jumping
+
+### Air Dodging
+- If enabled, fighters can air dodge to evade attacks! Also has an Air-Dashing mode.
+
+#### Toggle Name: Air Dodging
+
+### Jab Locking
+- If enabled, you can jab-lock your opponents
+
+#### Toggle Name: Jab Locking
+
+### Edge C-Jumping
+- If enabled, you can press one of the C-Buttons to jump up while hanging from a ledge.
+
+#### Toggle Name: Edge C-Jumping
+
+### Perfect Shielding
+- If enabled, you can perform perfect/power shielding against your opponents attacks.
+
+#### Toggle Name: Perfect Shielding
+
+### Spot Dodging
+- If enabled, you can dodge opponents attacks while grounded with Z/R + Down.
+
+#### Toggle Name: Spot Dodging
+
+### Fast Fall Aerials
+- If enabled, you can input a fast fall while doing an aerial attack.
+
+#### Toggle Name: Fast Fall Aerials
+
+### Ledge Trumping
+- If enabled, you can grab a ledge even if another fighter is already holding onto it.
+
+#### Toggle Name: Ledge Trumping
+
+### Wall Teching
+- If enabled, fighters can tech off walls and ceilings too.
+
+#### Toggle Name: Wall Teching
 
 ## Customization
 ### Costume Selection Improvements
@@ -477,7 +526,6 @@ CSS Panel Menu             | On                 | Off               | On        
 Color Overlays             | Off                | Off               | Off               | Off
 Cinematic Camera           | Default            | Default           | Default           | Default
 Flash On Z-Cancel          | Off                | Off               | Off               | Off
-Cruel Z-Cancel Mode        | Off                | Off               | Off               | Off
 FPS Display *BETA          | Off                | Off               | Off               | Off
 Model Display              | Default            | Default           | High Poly         | Default
 Special Model Display      | Off                | Off               | Off               | Off
@@ -487,22 +535,40 @@ Improved Combo Meter       | On                 | Off               | On        
 Tech Chase Combo Meter     | On                 | Off               | On                | On
 Combo Meter                | On                 | Off               | On                | On
 1v1 Combo Meter Swap       | Off                | Off               | Off               | Off
-Improved AI                | On                 | Off               | On                | On
 Neutral Spawns             | On                 | On                | On                | On
 Salty Runback              | On                 | Off               | On                | On
 Widescreen                 | Off                | Off               | Off               | Off
-Japanese Hitlag            | Off                | Off               | Off               | On
-Japanese DI                | Off                | Off               | Off               | On
 Japanese Sounds            | Default            | Default           | Default           | Always
-Momentum Slide             | Off                | Off               | Off               | On
-Japanese Shield Stun       | Off                | Off               | Off               | On
 Stereo Fix for Hit SFX     | On                 | On                | On                | On
 Random Select With Variants| Off                | Off               | Off               | Off
 Disable HUD                | Off                | Off               | Off               | Off
 Disable Anti-Aliasing      | Off                | Off               | Off               | Off
 Always Show Full Results   | On                 | On                | On                | On
 Skip Training Start Cheer  | Off                | Off               | Off               | Off
+Default CPU LVL (V.S.)     | 3                  | 3                 | 3                   | 3
+Jigglypuff Sing GFX Anims  | On                 | Off               | On               | On
+
+#### Gameplay Settings
+Toggle                     | Community          | Tournament        | Netplay           | Japanese
+---------------------------|--------------------|-------------------|-------------------|-------------------
+Hitstun                    | Normal             | Normal            | Normal            | Normal
+Hitlag                     | Normal             | Normal            | Normal            | Japanese
+Japanese DI                | Off                | Off               | Off               | On
+Japanese Sounds            | Default            | Default           | Default           | Always
+Momentum Slide             | Off                | Off               | Off               | On
+Japanese Shield Stun       | Off                | Off               | Off               | On
+Punish Failed Z-Cancel     | Off                | Off               | Off               | Off
+Improved AI                | On                 | Off               | On                | On
 Tripping                   | Off                | Off               | Off               | Off
+Footstool Jumping          | Off                | Off               | Off               | Off
+Air Dodging                | Off                | Off               | Off               | Off
+Jab Locking                | Off                | Off               | Off               | Off
+Edge C-Jumping             | Off                | Off               | Off               | Off
+Perfect Shielding          | Off                | Off               | Off               | Off
+Spot Dodging               | Off                | Off               | Off               | Off
+Fast Fall Aerials          | Off                | Off               | Off               | Off
+Ledge Trumping             | Off                | Off               | Off               | Off
+Wall Teching               | Off                | Off               | Off               | Off
 
 #### Music Settings
 Toggle                          | Community          | Tournament        | Netplay           | Japanese
@@ -520,6 +586,7 @@ Toggle                          | Community          | Tournament        | Netpl
 Stage Select Layout             | NORMAL             | TOURNAMENT        | NORMAL            | NORMAL
 Hazard Mode                     | NORMAL             | NORMAL            | NORMAL            | NORMAL
 Whispy Mode                     | Off                | Off               | Off               | JAPANESE
+Yoshi's Island Cloud Anims      | Off                | Off               | Off               | Off
 Camera Mode                     | NORMAL             | NORMAL            | NORMAL            | NORMAL
 _Random Toggles for All Stages_ | [Community]        | [Tournament]      | [Semi-Competitive]| [Community]
 

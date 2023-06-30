@@ -57,9 +57,9 @@
 087A Ganon's Tower Header
 087B Ganon's Tower Stage
 087C Ganon's Tower BG file
-087D Kalos Header File
-087E Kalos Stage File
-087F Kalos BG
+087D Gym Leader Castle Header File
+087E Gym Leader Castle Stage File
+087F Gym Leader Castle BG
 0880 Pokemon Stadium Header
 0881 Pokemon Stadium Stage
 0882 Pokemon Stadium BG
@@ -1120,7 +1120,7 @@
 0CA1 Conker 1p CPU Pose
 0CA2 Conker Team Pose
 0CA3 Wolf Team Pose
-0CA4 Falco 1p CPU Pose
+0CA4 Falco Duo Pose
 0CA5 Bowser Team Pose
 0CA6 Mewtwo 1p CPU Pose
 0CA7 Mewtwo Team Pose
@@ -2173,6 +2173,203 @@
 10BE Dedede Ending Image 1
 10BF Dedede Ending Image 2
 10C0 Dedede Victory 3
+10C1 Goemon Main
+10C2 Goemon Character
+10C3 Goemon DSPGround
+10C4 Goemon DSPPull
+10C5 Goemon Up Tilt
+10C6 Goemon Up Aerial
+10C7 Goemon Back Aerial
+10C8 Goemon Neutral Aerial
+10C9 Goemon Forward Aerial
+10CA Goemon Down Aerial
+10CB Goemon DSPAir
+10CC Goemon DSPGroundAttack
+10CD Goemon DSPAirAttack
+10CE Goemon DSPEnd
+10CF Goemon Up Smash
+10D0 Goemon Ryo Hitbox
+10D1 Goemon Ryo Graphic
+10D2 Goemon Ryo Fire Graphic
+10D3 Goemon Ryo Sparkle Graphic
+10D4 Goemon Idle
+10D5 Goemon Fall
+10D6 Goemon Fall Aerial
+10D7 Goemon Jump Forward
+10D8 Goemon Jump Air Forward
+10D9 Goemon Jump Air Back
+10DA Goemon Jump Backward
+10DB Goemon Crouch Begin
+10DC Goemon Crouch Idle
+10DD Goemon Crouch End
+10DE Goemon NSPGroundBegin
+10DF Goemon NSPGroundIdle
+10E0 Goemon NSPGroundEnd
+10E1 Goemon NSPGroundWalk1
+10E2 Goemon NSPGroundWalk2
+10E3 Goemon NSPGroundBackWalk1
+10E4 Goemon NSPGroundBackWalk2
+10E5 Goemon Down Tilt
+10E6 Goemon Forward Tilt High
+10E7 Goemon Forward Tilt
+10E8 Goemon Forward Tilt Low
+10E9 Goemon CPU Pose
+10EA Goemon Jab 1
+10EB Goemon Jab 2
+10EC Goemon Jab 3
+10ED Goemon Taunt
+10EE Goemon 1P Pose
+10EF Goemon Forward Smash
+10F0 Polygon Falco Main
+10F1 Polygon Falco Character
+10F2 Polygon Ganondorf Main
+10F3 Polygon Ganondorf Character
+10F4 Goemon Down Smash
+10F5 Character Bios Extended
+10F6 Character Images Extended
+10F7 Edo Town Header
+10F8 Edo Town Stage
+10F9 Edo Town BG
+10FA Goemon Dash Attack
+10FB Deku DL Header
+10FC Deku DL Stage
+10FD Zebes Landing DL Header
+10FE Zebes Landing Stage
+10FF Goemon Cloud Info
+1100 Goemon Cloud Graphic
+1101 Bullet Bill GFX
+1102 Peppy Main
+1103 Peppy Character
+1104 Peppy Gun
+1105 Slippy Main
+1106 Slippy Character
+1107 Slippy Laser Hitbox
+1108 Slippy Laser Graphic
+1109 Slippy Weapon
+110A Slippy Grab Pull
+110B Slippy Select
+110C Peppy Barrel Roll
+110D Peppy Laser Hitbox
+110E Peppy Laser GFX
+110F Goemon Victory 2
+1110 Peppy Victory 1
+1111 Goemon Break the Targets Stage
+1112 Goemon Break the Targets Header
+1113 Slippy Reflect Graphic
+1114 Ness Duo Pose
+1115 Lucas Duo Pose
+1116 Goemon Clap
+1117 Goemon CSS
+1118 Kirby Duo Pose
+1119 Dedede Duo Pose
+111A First Destination Remix Stage
+111B First Destination Remix Header
+111C Goemon Board the Platforms Header
+111D Goemon Board the Platforms Stage
+111E Goemon Grab
+111F Goemon Grab Pull
+1120 Goemon Forward Throw
+1121 Goemon Back Throw
+1122 Peppy Character Select
+1123 Twilight City Stage
+1124 Twilight City Header
+1125 Twilight City BG
+1126 Goemon CliffAttackQuick1
+1127 Goemon CliffAttackQuick2
+1128 Goemon CliffAttackSlow1
+1129 Goemon CliffAttackSlow2
+112A Goemon CliffClimbQuick2
+112B Goemon CliffClimbSlow2
+112C Goemon CliffEscapeQuick2
+112D Goemon CliffEscapeSlow1
+112E Goemon CliffEscapeSlow2
+112F Goemon CliffWait
+1130 Peppy Dash
+1131 Peppy Run
+1132 Peppy RunBrake
+1133 Peppy TurnRun
+1134 Melrode Stage
+1135 Melrode Header
+1136 Melrode BG
+1137 Peppy Grenade Hitbox
+1138 Peppy Grenade Graphic
+1139 Peppy Dash Attack
+113A Peppy Up Tilt
+113B Peppy Forward Air
+113C Peppy Back Air
+113D Peppy Up Air
+113E Link Duo Pose
+113F Sheik Duo Pose
+1140 Peppy 1P Pose
+1141 Slippy 1P Pose
+1142 Goemon DownStandD
+1143 Goemon DownBackU
+1144 Goemon DownForwardD
+1145 Goemon DownBackD
+1146 Goemon DownForwardU
+1147 Goemon DownStandU
+1148 Goemon DownAttackU
+1149 Goemon DownAttackD
+114A Falco CPU Pose
+114B Samus Duo Pose
+114C Dark Samus Duo Pose
+114D Goemon JumpSquat
+114E Goemon Dash
+114F Goemon Run
+1150 Goemon RunBrake
+1151 Goemon TurnRun
+1152 Goemon Stun
+1153 Goemon EnterPipe
+1154 Goemon ExitPipe
+1155 Pikachu Duo Pose
+1156 Mewtwo Duo Pose
+1157 Goemon Team Pose
+1158 Falco Team Pose
+1159 Goemon Ending Image 1
+115A Goemon Ending Image 2
+115B Kirby Goemon Ryo
+115C Goemon Puppet Up
+115D Goemon Up Special Loop
+115E Goemon Up Special Attack
+115F Goemon Up Special Jump
+1160 Goemon Special Fall
+1161 Goemon Entry GFX
+1162 Kirby Goemon NSP Ground Begin
+1163 Kirby Goemon NSP Ground Idle
+1164 Kirby Goemon NSP Ground End
+1165 Kirby Goemon NSP Ground Walk1
+1166 Kirby Goemon NSP Ground Walk2
+1167 Kirby Goemon NSP Ground BackWalk1
+1168 Kirby Goemon NSP Ground BackWalk2
+1169 Goemon Up Special Escape
+116A Bowser Duo Pose
+116B Donkey Kong Duo Pose
+116C Peppy DSP Throw Ground
+116D Peppy DSP Throw Air
+116E Peppy DSP Detonate Ground
+116F Peppy DSP Detonate Air
+1170 Peppy Taunt
+1171 Peppy NSP Charge Start
+1172 Peppy NSP Charge Loop
+1173 Kirby Peppy NSP Charge Start
+1174 Kirby Peppy NSP Charge Loop
+1175 Goemon Victory Sudden Impact
+1176 Peppy and Slippy Ending Image 1
+1177 Peppy and Slippy Ending Image 2
+1178 Goemon Teeter
+1179 Goemon Teeter Start
+117A Goemon Entry
+117B Slippy Duo Pose
+117C Peppy Duo Pose
+117D Goemon Shield Pose
+117E Goemon Shield On
+117F Goemon Shield Off
+1180 Peppy NSP Charge Start Air
+1181 Peppy NSP Charge Loop Air
+1182 Peppy NSP Shoot Air
+1183 Kirby Peppy NSP Shoot Air
+1184 Kirby Peppy NSP Charge Start Air
+1185 Kirby Peppy NSP Charge Loop Air
 
 0611 CAPTAIN DeadU
 0611 CAPTAIN ScreenKO

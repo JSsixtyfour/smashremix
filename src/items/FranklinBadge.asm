@@ -388,13 +388,26 @@ scope grant_item_immunity_: {
 	addiu	at, r0, Item.Star.id
 	beq		at, s1, _check_collision_0
 	nop
-	
-	_check_franklin_badge:
+
+    _check_franklin_badge:
     li      at, players_with_franklin_badge
     sll     t7, t7, 0x0002              // t7 = offset to player entry
     addu    at, at, t7                  // at = address of players badge
     lw      t7, 0x0000(at)              // t7 = current badge ptr
-	bnez	t7, _item_immune			// grant immunity if wearing a Franklin Badge
+    beqzl   t7, _check_collision        // no immunity if not wearing a Franklin Badge
+    or      s1, s7, r0                  // og line 2
+    
+    // if here, wearing a Franklin badge
+    // s1 = item id
+    addiu   at, r0, Hazards.stage.PIRANHA_PLANT
+    beq     at, s1, _check_collision_0  // branch if it is piranha plant
+    slti    at, s1, Hazards.stage.ELECTRODE
+    bnezl   at, _item_immune            // immune if < ELECTRODEs id
+    or      s1, s7, r0                  // og line 2
+    slti    at, s1, Hazards.pokemon.MEW + 1
+    beqz    at, _item_immune            // immune if > MEWs  id
+    or      s1, s7, r0                  // og line 2
+
 	_check_collision_0:
 	or		s1, s7, r0					// og line 2
 	_check_collision:

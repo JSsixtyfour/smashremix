@@ -2351,14 +2351,16 @@ scope Training {
     string_npikachu:; char_0x17:; db "Poly Pikachu", 0x00
     string_npuff:; char_0x18:; db "Poly Puff", 0x00
     string_nness:; char_0x19:; db "Poly Ness", 0x00
-    string_nwario:; char_Px02:; db "Poly Wario", 0x00
-    string_nlucas:; char_Px03:; db "Poly Lucas", 0x00
-    string_nbowser:; char_Px04:; db "Poly Bowser", 0x00
-    string_nwolf:; char_Px05:; db "Poly Wolf", 0x00
-    string_ndrmario:; char_Px01:; db "Poly Dr. Mario", 0x00
-    string_nsonic:; char_Px06:; db "Poly Sonic", 0x00
-    string_nsheik:; char_Px07:; db "Poly Sheik", 0x00
-    string_nmarina:; char_Px08:; db "Poly Marina", 0x00
+    string_nwario:; char_Px04:; db "Poly Wario", 0x00
+    string_nlucas:; char_Px05:; db "Poly Lucas", 0x00
+    string_nbowser:; char_Px06:; db "Poly Bowser", 0x00
+    string_nwolf:; char_Px07:; db "Poly Wolf", 0x00
+    string_ndrmario:; char_Px03:; db "Poly Dr. Mario", 0x00
+    string_nsonic:; char_Px08:; db "Poly Sonic", 0x00
+    string_nsheik:; char_Px09:; db "Poly Sheik", 0x00
+    string_nmarina:; char_Px0A:; db "Poly Marina", 0x00
+    string_nfalco:; char_Px01:; db "Poly Falco", 0x00
+    string_nganondorf:; char_Px02:; db "Poly Ganondorf", 0x00
     string_gdk:; char_0x1A:; db "Giant DK", 0x00
     //char_0x1B:; db "NONE", 0x00
     //char_0x1C:; db "NONE", 0x00
@@ -2398,6 +2400,9 @@ scope Training {
     string_sheik:; char_0x3E:; db "Sheik", 0x00
     string_marina:; char_0x3F:; db "Marina", 0x00
     string_dedede:; char_0x40:; db "Dedede", 0x00
+    string_goemon:; char_0x41:; db "Goemon", 0x00
+    string_peppy:; char_0x42:; db "Peppy", 0x00
+    string_slippy:; char_0x43:; db "Slippy", 0x00
     OS.align(4)
 
     string_table_char:
@@ -2430,6 +2435,7 @@ scope Training {
     dw char_0x3E            // SHEIK
     dw char_0x3F            // MARINA
     dw char_0x40            // DEDEDE
+    dw char_0x41            // GOEMON
 
     dw char_0x2A            // J MARIO
     dw char_0x29            // J FOX
@@ -2451,9 +2457,11 @@ scope Training {
 
     dw char_0x0D            // METAL MARIO
     dw char_0x1A            // GIANT DK
-	dw char_0x35            // GIGA BOWSER
+    dw char_0x35            // GIGA BOWSER
     dw char_0x36            // PIANO
     dw char_0x3D            // SUPER SONIC
+    dw char_0x42            // PEPPY
+    dw char_0x43            // SLIPPY
     dw char_0x3C            // SANDBAG
     dw char_0x0E            // POLYGON MARIO
     dw char_0x0F            // POLYGON FOX
@@ -2467,14 +2475,16 @@ scope Training {
     dw char_0x17            // POLYGON PIKACHU
     dw char_0x18            // POLYGON JIGGLYPUFF
     dw char_0x19            // POLYGON NESS
-    dw char_Px01            // POLYGON DRM
-    dw char_Px02            // POLYGON WARIO
-    dw char_Px03            // POLYGON LUCAS
-    dw char_Px04            // POLYGON BOWSER
-    dw char_Px05            // POLYGON WOLF
-    dw char_Px06            // POLYGON SONIC
-    dw char_Px07            // POLYGON SHEIK
-    dw char_Px08            // POLYGON MARINA
+    dw char_Px01            // POLYGON FALCO
+    dw char_Px02            // POLYGON GANONDORF
+    dw char_Px03            // POLYGON DRM
+    dw char_Px04            // POLYGON WARIO
+    dw char_Px05            // POLYGON LUCAS
+    dw char_Px06            // POLYGON BOWSER
+    dw char_Px07            // POLYGON WOLF
+    dw char_Px08            // POLYGON SONIC
+    dw char_Px09            // POLYGON SHEIK
+    dw char_Px0A            // POLYGON MARINA
 
     // @ Description
     // Training character id is really the order they are displayed in
@@ -2511,10 +2521,11 @@ scope Training {
         constant SHEIK(0x19)
         constant MARINA(0x1A)
         constant DEDEDE(0x1B)
+        constant GOEMON(0x1C)
 
         // Increment JMARIO after adding more characters above
         // j characters
-        constant JMARIO(0x1C)
+        constant JMARIO(0x1D)
         constant JFOX(JMARIO + 0x01)
         constant JDK(JMARIO + 0x02)
         constant JSAMUS(JMARIO + 0x03)
@@ -2537,27 +2548,31 @@ scope Training {
         constant GBOWSER(JMARIO + 0x12)
         constant PIANO(JMARIO + 0x13)
         constant SSONIC(JMARIO + 0x14)
-        constant SANDBAG(JMARIO + 0x15)
-		constant NMARIO(JMARIO + 0x16)
-        constant NFOX(JMARIO + 0x17)
-        constant NDONKEY(JMARIO + 0x18)
-        constant NSAMUS(JMARIO + 0x19)
-        constant NLUIGI(JMARIO + 0x1A)
-        constant NLINK(JMARIO + 0x1B)
-        constant NYOSHI(JMARIO + 0x1C)
-        constant NCAPTAIN(JMARIO + 0x1D)
-        constant NKIRBY(JMARIO + 0x1E)
-        constant NPIKACHU(JMARIO + 0x1F)
-        constant NJIGGLY(JMARIO + 0x20)
-        constant NNESS(JMARIO + 0x21)
-        constant NDRM(JMARIO + 0x22)
-        constant NWARIO(JMARIO + 0x23)
-        constant NLUCAS(JMARIO + 0x24)
-        constant NBOWSER(JMARIO + 0x25)
-        constant NWOLF(JMARIO + 0x26)
-        constant NSONIC(JMARIO + 0x27)
-        constant NSHEIK(JMARIO + 0x28)
-        constant NMARINA(JMARIO + 0x29)
+        constant PEPPY(JMARIO + 0x15)
+        constant SLIPPY(JMARIO + 0x16)
+        constant SANDBAG(JMARIO + 0x17)
+		constant NMARIO(JMARIO + 0x18)
+        constant NFOX(JMARIO + 0x19)
+        constant NDONKEY(JMARIO + 0x1A)
+        constant NSAMUS(JMARIO + 0x1B)
+        constant NLUIGI(JMARIO + 0x1C)
+        constant NLINK(JMARIO + 0x1D)
+        constant NYOSHI(JMARIO + 0x1E)
+        constant NCAPTAIN(JMARIO + 0x1F)
+        constant NKIRBY(JMARIO + 0x20)
+        constant NPIKACHU(JMARIO + 0x21)
+        constant NJIGGLY(JMARIO + 0x22)
+        constant NNESS(JMARIO + 0x23)
+        constant NFALCO(JMARIO + 0x24)
+        constant NGND(JMARIO + 0x25)
+        constant NDRM(JMARIO + 0x26)
+        constant NWARIO(JMARIO + 0x27)
+        constant NLUCAS(JMARIO + 0x28)
+        constant NBOWSER(JMARIO + 0x29)
+        constant NWOLF(JMARIO + 0x2A)
+        constant NSONIC(JMARIO + 0x2B)
+        constant NSHEIK(JMARIO + 0x2C)
+        constant NMARINA(JMARIO + 0x2D)
     }
 
 
@@ -2591,6 +2606,7 @@ scope Training {
     db Character.id.SHEIK
     db Character.id.MARINA
     db Character.id.DEDEDE
+    db Character.id.GOEMON
 
     db Character.id.JMARIO
     db Character.id.JFOX
@@ -2612,9 +2628,11 @@ scope Training {
 
     db Character.id.METAL
     db Character.id.GDONKEY
-	db Character.id.GBOWSER
+    db Character.id.GBOWSER
     db Character.id.PIANO
     db Character.id.SSONIC
+    db Character.id.PEPPY
+    db Character.id.SLIPPY
     db Character.id.SANDBAG
     db Character.id.NMARIO
     db Character.id.NFOX
@@ -2628,6 +2646,8 @@ scope Training {
     db Character.id.NPIKACHU
     db Character.id.NJIGGLY
     db Character.id.NNESS
+    db Character.id.NFALCO
+    db Character.id.NGND
     db Character.id.NDRM
     db Character.id.NWARIO
     db Character.id.NLUCAS
@@ -2703,6 +2723,9 @@ scope Training {
     db id.SHEIK
     db id.MARINA
     db id.DEDEDE
+    db id.GOEMON
+    db id.PEPPY
+    db id.SLIPPY
 	// ADD NEW CHARACTERS Here
 
 	// REMIX POLYGONS
@@ -2714,6 +2737,8 @@ scope Training {
     db id.NSONIC
     db id.NSHEIK
     db id.NMARINA
+    db id.NFALCO
+    db id.NGND
 
     // @ Description
     // Spawn Position Strings
@@ -2807,12 +2832,12 @@ scope Training {
         define spawn_func(Training.spawn_func_{player}_)
         define percent(Training.struct.port_{player}.percent)
 
-        Menu.entry("Character:", Menu.type.U8, 0, 0, char_id_to_entry_id - entry_id_to_char_id - 1, OS.NULL, OS.NULL, string_table_char, {character}, entry_costume_p{player})
-        entry_costume_p{player}:; Menu.entry("Costume:", Menu.type.U8, 0, 0, 5, OS.NULL, OS.NULL, OS.NULL, {costume}, entry_type_p{player})
-        entry_type_p{player}:; Menu.entry("Type:", Menu.type.U8, 2, 0, 2, OS.NULL, OS.NULL, string_table_type, {type}, entry_spawn_p{player})
-        entry_spawn_p{player}:; Menu.entry("Spawn:", Menu.type.U8, 0, 0, 4, OS.NULL, OS.NULL, string_table_spawn, {spawn_id}, entry_set_custom_spawn_p{player})
+        Menu.entry("Character:", Menu.type.INT, 0, 0, char_id_to_entry_id - entry_id_to_char_id - 1, OS.NULL, OS.NULL, string_table_char, {character}, entry_costume_p{player})
+        entry_costume_p{player}:; Menu.entry("Costume:", Menu.type.INT, 0, 0, 5, OS.NULL, OS.NULL, OS.NULL, {costume}, entry_type_p{player})
+        entry_type_p{player}:; Menu.entry("Type:", Menu.type.INT, 2, 0, 2, OS.NULL, OS.NULL, string_table_type, {type}, entry_spawn_p{player})
+        entry_spawn_p{player}:; Menu.entry("Spawn:", Menu.type.INT, 0, 0, 4, OS.NULL, OS.NULL, string_table_spawn, {spawn_id}, entry_set_custom_spawn_p{player})
         entry_set_custom_spawn_p{player}:; Menu.entry_title("Set Custom Spawn", {spawn_func}, entry_percent_p{player})
-        entry_percent_p{player}:; Menu.entry("Percent:", Menu.type.U16, 0, 0, 999, set_percent_, {player} - 1, OS.NULL, {percent}, entry_percent_toggle_p{player})
+        entry_percent_p{player}:; Menu.entry("Percent:", Menu.type.INT, 0, 0, 999, set_percent_, {player} - 1, OS.NULL, {percent}, entry_percent_toggle_p{player})
         entry_percent_toggle_p{player}:; Menu.entry_bool("Reset Sets Percent:", OS.TRUE, entry_shield_break_mode)
     }
 
@@ -2892,7 +2917,7 @@ scope Training {
 
     head:
     entry_port_x:
-    Menu.entry("Port:", Menu.type.U8, 1, 1, 4, OS.NULL, OS.NULL, OS.NULL, OS.NULL, tail_p1)
+    Menu.entry("Port:", Menu.type.INT, 1, 1, 4, OS.NULL, OS.NULL, OS.NULL, OS.NULL, tail_p1)
 
     string_training_mode:; String.insert("Training Mode")
 
@@ -2968,10 +2993,21 @@ scope Training {
         lw      a1, 0x0004(v0)              // a1 = index in bgm_table to bgm_id
         addu    a1, a0, a1                  // a1 = address of bgm_id
         lbu     a1, 0x0000(a1)              // a1 = bgm_id
+        lui     a0, 0x8013
+        sw      a1, 0x13A0(a0)              // update stage bgm_id
+        
+	lw      t0, 0x139C(a0)              // t0 = current bgm_id
+        lli     t1, BGM.special.HAMMER      // t1 = HAMMER
+        beq     t0, t1, _end                // skip playing if hammer
+        lli     t1, BGM.special.INVINCIBLE  // t1 = STAR
+        beq     t0, t1, _end                // skip playing if star
+        nop
 
+        sw      a1, 0x139C(a0)              // update current bgm_id
         jal     BGM.play_
         lli     a0, 0x0000
 
+        _end:
         lw      a0, 0x0004(sp)              // restore registers
         lw      a1, 0x0008(sp)              // ~
         lw      ra, 0x000C(sp)              // ~
@@ -2981,8 +3017,8 @@ scope Training {
     }
 
     entry_shield_break_mode:; Menu.entry_bool("Shield Break Mode:", OS.FALSE, entry_oos_option)
-    entry_oos_option:; Menu.entry("OOS Action:", Menu.type.U8, 0, 0, OOS_MAX, OS.NULL, OS.NULL, string_table_oos_options, OS.NULL, entry_music)
-    entry_music:; Menu.entry("Music:", Menu.type.U8, 0, 0, {total} - 1, play_bgm_, OS.NULL, OS.NULL, OS.NULL, OS.NULL)
+    entry_oos_option:; Menu.entry("OOS Action:", Menu.type.INT, 0, 0, OOS_MAX, OS.NULL, OS.NULL, string_table_oos_options, OS.NULL, entry_music)
+    entry_music:; Menu.entry("Music:", Menu.type.INT, 0, 0, {total} - 1, play_bgm_, OS.NULL, OS.NULL, OS.NULL, OS.NULL)
 
     // @ Description
     // Holds the initial value of the special model display toggle
