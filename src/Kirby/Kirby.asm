@@ -300,8 +300,8 @@ scope Kirby {
     Character.add_new_action(KIRBY, PEPPY_NSP_Ground_Charge,    -1,     ActionParams.PEPPY_NSP_Ground_Charge,  0x12,        PeppyNSP.charge_main_,          PeppyNSP.ground_charge_interrupt_, 0x800D8BB4,                  PeppyNSP.kirby_ground_charge_collision_)
     Character.add_new_action(KIRBY, PEPPY_NSP_Ground_Shoot,     -1,     ActionParams.PEPPY_NSP_Ground_Shoot,   0x12,        PeppyNSP.shoot_main_,           0,                              0x800D8BB4,                     PeppyNSP.kirby_ground_shoot_collision_) 
     Character.add_new_action(KIRBY, PEPPY_NSP_Air_Begin,        -1,     ActionParams.PEPPY_NSP_Air_Begin,      0x12,        PeppyNSP.begin_main_,           0x8015D464,                     0x800D90E0,                     PeppyNSP.air_begin_collision_)     
-    Character.add_new_action(KIRBY, PEPPY_NSP_Air_Charge,       -1,     ActionParams.PEPPY_NSP_Air_Charge,     0x12,        PeppyNSP.charge_main_,          PeppyNSP.air_charge_interrupt_, 0x800D91EC,                     PeppyNSP.air_charge_collision_)    
-    Character.add_new_action(KIRBY, PEPPY_NSP_Air_Shoot,        -1,     ActionParams.PEPPY_NSP_Air_Shoot,      0x12,        PeppyNSP.shoot_main_,           0,                              0x800D91EC,                     PeppyNSP.air_shoot_collision_)
+    Character.add_new_action(KIRBY, PEPPY_NSP_Air_Charge,       -1,     ActionParams.PEPPY_NSP_Air_Charge,     0x12,        PeppyNSP.charge_main_,          PeppyNSP.air_charge_interrupt_, 0x800D90E0,                     PeppyNSP.air_charge_collision_)    
+    Character.add_new_action(KIRBY, PEPPY_NSP_Air_Shoot,        -1,     ActionParams.PEPPY_NSP_Air_Shoot,      0x12,        PeppyNSP.shoot_main_,           0,                              0x800D90E0,                     PeppyNSP.air_shoot_collision_)
     
 
     Character.table_patch_start(kirby_ground_nsp, Character.id.WARIO, 0x4)

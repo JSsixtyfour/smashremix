@@ -426,7 +426,7 @@ scope Bowser {
         string_0x0E1:; String.insert("BowserBombLanding")
         string_0x0E2:; String.insert("BowserBombAir")
         string_0x0E3:; String.insert("BowserBombDrop")
-        string_0x0E4:; String.insert("FireBreath")
+        string_0x0E4:; String.insert("FlameBreath")
         string_0x0E5:; String.insert("BowserForwardThrow1")
         string_0x0E6:; String.insert("BowserForwardThrow2")
         string_0x0E7:; String.insert("FireBreathAir")

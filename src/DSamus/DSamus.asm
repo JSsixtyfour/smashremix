@@ -31,6 +31,7 @@ scope DSamus {
     insert DAIR, "moveset/DAIR.bin"
     insert BAIR, "moveset/BAIR.bin"
     insert LANDING_NAIR, "moveset/LANDING_NAIR.bin"
+    insert VICTORY, "moveset/VICTORY.bin"
     insert VICTORY1, "moveset/VICTORY1.bin"
     insert SELECT, "moveset/SELECT.bin"
     insert CHARGE, "moveset/CHARGE.bin"
@@ -84,7 +85,7 @@ scope DSamus {
        Character.edit_action(DSAMUS, 0xE4,                 -1,             -1,                         0x80160370,                     -1,                             -1)
 
     // Modify Menu Action Parameters                // Action          // Animation                // Moveset Data             // Flags
-    Character.edit_menu_action_parameters(DSAMUS,   0x1,               -1,                         -1,                          -1)
+    Character.edit_menu_action_parameters(DSAMUS,   0x1,               -1,                         VICTORY,                     -1)
     Character.edit_menu_action_parameters(DSAMUS,   0x2,               File.DSAMUS_VICTORY1,       VICTORY1,                    -1)
     Character.edit_menu_action_parameters(DSAMUS,   0x3,               File.DSAMUS_SELECT,         SELECT,                      -1)
     Character.edit_menu_action_parameters(DSAMUS,   0x4,               File.DSAMUS_SELECT,         SELECT,                      -1)

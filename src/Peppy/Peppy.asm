@@ -228,8 +228,8 @@ scope Peppy {
     Character.edit_action(PEPPY,    Action.NSPG_CHARGE, 0x12,           PeppyNSP.charge_main_,      PeppyNSP.ground_charge_interrupt_, 0x800D8BB4,                  PeppyNSP.ground_charge_collision_) //NSP_Ground_Charge
     Character.edit_action(PEPPY,    Action.NSPG_SHOOT,  0x12,           PeppyNSP.shoot_main_,       0,                              0x800D8BB4,                     PeppyNSP.ground_shoot_collision_)  //NSP_Ground_Shoot
     Character.edit_action(PEPPY,    Action.NSPA_BEGIN,  0x12,           PeppyNSP.begin_main_,       PeppyNSP.air_begin_interrupt_,  0x800D90E0,                     PeppyNSP.air_begin_collision_)     //NSP_Air_Begin
-    Character.edit_action(PEPPY,    Action.NSPA_CHARGE, 0x12,           PeppyNSP.charge_main_,      PeppyNSP.air_charge_interrupt_, 0x800D91EC,                     PeppyNSP.air_charge_collision_)    //NSP_Air_Charge
-    Character.edit_action(PEPPY,    Action.NSPA_SHOOT,  0x12,           PeppyNSP.shoot_main_,       0,                              0x800D91EC,                     PeppyNSP.air_shoot_collision_)
+    Character.edit_action(PEPPY,    Action.NSPA_CHARGE, 0x12,           PeppyNSP.charge_main_,      PeppyNSP.air_charge_interrupt_, 0x800D90E0,                     PeppyNSP.air_charge_collision_)    //NSP_Air_Charge
+    Character.edit_action(PEPPY,    Action.NSPA_SHOOT,  0x12,           PeppyNSP.shoot_main_,       0,                              0x800D90E0,                     PeppyNSP.air_shoot_collision_)
     Character.edit_action(PEPPY,   0xEC,                -1,             PeppyDSP.main,              0,                              0x800D8CCC,                     PeppyDSP.ground_collision)
     Character.edit_action(PEPPY,   0xEF,                -1,             PeppyDSP.detonate_main_ground, 0x00000000,                  0x800D8CCC,                     PeppyDSP.ground_collision_fail)
     Character.edit_action(PEPPY,   0xF1,                -1,             PeppyDSP.main,              0,                              0x800D90E0,                     PeppyDSP.air_collision)

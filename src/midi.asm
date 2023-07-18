@@ -310,7 +310,7 @@ scope MIDI {
     insert_midi(TAZMILY, OS.TRUE, OS.TRUE, "Mom's Hometown", mother3)
     insert_midi(FLAT_ZONE, OS.TRUE, OS.TRUE, "Flat Zone", melee)
     insert_midi(FLAT_ZONE_2, OS.TRUE, OS.TRUE, "Flat Zone II", brawl)
-    insert_midi(YOSHI_GOLF, OS.TRUE, OS.TRUE, "Yoshi's Island", mariogolf)
+    insert_midi(YOSHI_GOLF, OS.TRUE, OS.TRUE, "Yoshi's Island (Mario Golf)", mariogolf)
     insert_midi(FINALTEMPLE, OS.TRUE, OS.TRUE, "Great Temple/Dark Link", zelda2)
     insert_midi(OBSTACLE, OS.TRUE, OS.TRUE, "Athletic Theme", yoshis_island)
     insert_midi(EVEN_DRIER_GUYS, OS.TRUE, OS.TRUE, "Even Drier Guys", mother3)

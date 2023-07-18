@@ -107,6 +107,7 @@ scope Combo {
         dh Action.StunLandU                 // ~
         dh Action.StunStartD                // ~
         dh Action.StunStartU                // ~
+        dh Action.EggLayPulled
         dh 0x0000                           // end table
 
 

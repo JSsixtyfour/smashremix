@@ -235,9 +235,9 @@ scope Ganondorf {
         string_0x0E9:; String.insert("WarlockKickEnd")
         string_0x0EA:; String.insert("CollisionWarlockKick")
         string_0x0EB:; String.insert("WarlockDive")
-        string_0x0EC:; String.insert("WarlockDiveCatch")
-        string_0x0ED:; String.insert("WarlockDiveEnd1")
-        string_0x0EE:; String.insert("WarlockDiveEnd2")
+        string_0x0EC:; String.insert("DarkDiveCatch")
+        string_0x0ED:; String.insert("DarkDiveEnd1")
+        string_0x0EE:; String.insert("DarkDiveEnd2")
 
         action_string_table:
         dw 0

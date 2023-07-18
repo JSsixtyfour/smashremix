@@ -142,8 +142,8 @@ scope YoungLink {
         //string_0x0E8:; String.insert("BoomerangAir")
         //string_0x0E9:; String.insert("BoomerangCatchAir")
         //string_0x0EA:; String.insert("BoomerangMissAir")
-        //string_0x0EB:; String.insert("Bomb")
-        //string_0x0EC:; String.insert("BombAir")
+        string_0x0EB:; String.insert("Bombchu")
+        string_0x0EC:; String.insert("BombchuAir")
 
         action_string_table:
         dw Action.COMMON.string_jab3
@@ -161,8 +161,8 @@ scope YoungLink {
         dw Action.LINK.string_0x0E8
         dw Action.LINK.string_0x0E9
         dw Action.LINK.string_0x0EA
-        dw Action.LINK.string_0x0EB
-        dw Action.LINK.string_0x0EC
+        dw string_0x0EB
+        dw string_0x0EC
     }
 
     // Set action strings

@@ -9,7 +9,7 @@ print "included SRAM.asm\n"
 scope SRAM {
     // @ Description
     // Variable to hold current SRAM address. SSB only used 0x0BDC bytes out of 0x8000 available.
-    // Start aligned at 16 bytes - may not be necessary, but we don't need to be stingy currently.
+    // Start aligned at 16 bytes - may not be necessary.
     variable address(0x0BE0)
     constant ADDRESS(0x0BE0)
 
@@ -19,17 +19,21 @@ scope SRAM {
     //  - A new MIDI is added
     //  - A new toggle is added
     //  - The order of the toggles is changed
-    constant REVISION(0x009E)
+    constant REVISION(0x00A0)
 
     // @ Description
     // Struct that holds information for a block of save data.
     macro block(size) {
-        print "\nBlocking SRAM - size: 0x"; OS.print_hex({size}); print "\n"
+        evaluate s({size})
+        if {s} < 0x10 {
+            evaluate s(0x10)
+        }
+        print "\nBlocking SRAM - size: 0x"; OS.print_hex({s}); print "\n"
         dw SRAM.address
         dw pc() + 8
-        dw {size}
-        fill {size}
-        SRAM.address = SRAM.address + {size}
+        dw {s}
+        fill {s}
+        SRAM.address = SRAM.address + {s}
         // 16 byte align the next address - may not be necessary but let's do it anyway
         while (SRAM.address % 16) {
             SRAM.address = SRAM.address + 1

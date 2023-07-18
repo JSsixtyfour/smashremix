@@ -2252,9 +2252,11 @@ scope AI {
         scope auto_jab_grab_: {
             OS.patch_start(0xC48BC, 0x80149E7C)
             j       auto_jab_grab_
-            lb      t3, 0x0013(a0)                  // t3 = cpu level
+            lb      t3, 0x0023(a0)                  // t3 = player type (0 = player, 1 = CPU)
             OS.patch_end()
-            
+
+            beqz    t3, _normal                     // branch if player type = player
+            lb      t3, 0x0013(a0)                  // t3 = cpu level
             slti    t3, t3, 10                      // t3 = 0 if level 10 or above
             bnez    t3, _normal
             nop

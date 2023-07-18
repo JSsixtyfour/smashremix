@@ -475,14 +475,14 @@ scope Sonic {
         string_0xFA:; String.insert("SpinDashAir")
         string_0xFB:; String.insert("SpinDashJumpAir")
         string_0xFC:; String.insert("SpinDashEndAir")
-        string_0xFD:; String.insert("HomingStart")
-        string_0xFE:; String.insert("HomingMove")
-        string_0xFF:; String.insert("HomingLockedMove")
-        string_0x100:; String.insert("HomingEndGround")
-        string_0x101:; String.insert("HomingEndAir")
-        string_0x102:; String.insert("HomingRecoilGround")
-        string_0x103:; String.insert("HomingRecoilAir")
-        string_0x104:; String.insert("HomingBounce")
+        string_0xFD:; String.insert("HomingAttackStart")
+        string_0xFE:; String.insert("HomingAttackMove")
+        string_0xFF:; String.insert("HomingAttackLockedMove")
+        string_0x100:; String.insert("HomingAttackEndGround")
+        string_0x101:; String.insert("HomingAttackEndAir")
+        string_0x102:; String.insert("HomingAttackRecoilGround")
+        string_0x103:; String.insert("HomingAttackRecoilAir")
+        string_0x104:; String.insert("HomingAttackBounce")
 
         action_string_table:
         dw Action.COMMON.string_jab3

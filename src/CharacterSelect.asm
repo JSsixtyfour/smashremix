@@ -209,7 +209,7 @@ scope CharacterSelect {
     dw  0x16320 + 0x22260 + 0x170E8 + 0x200 // 0x3B - SONIC
     dw  0x49F8 + 0x200                      // 0x3C - SANDBAG
     dw  0xC900 + 0x200                      // 0x3D - SUPER SONIC
-    dw  0x12378 + 0x200                     // 0x3E - SHEIK
+    dw  0x122E8 + 0x200                     // 0x3E - SHEIK
     dw  0x136E8 + 0x200                     // 0x3F - MARINA
     dw  0x173C8 + 0x200                     // 0x40 - DEDEDE
     dw  0x12EA0 + 0x1BE0 + 0x200            // 0x41 - GOEMON

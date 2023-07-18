@@ -1,7 +1,7 @@
 scope mario_costumes {
     // @ Description
     // Number of additional costumes
-    constant NUM_EXTRA_COSTUMES(2)
+    constant NUM_EXTRA_COSTUMES(3)
 
     // @ Description
     // Number of parts
@@ -76,7 +76,7 @@ scope mario_costumes {
 
         Costumes.set_stock_icon_palette_for_costume(0, Mario/cos_5_stock_icon.bin)
     }
-    
+
     // Costume 0x6
     scope costume_0x6 {
         diffuse_ambient_pair_1:; dw 0xFFFFFF00, 0x4C4C4C00
@@ -104,7 +104,7 @@ scope mario_costumes {
 
         Costumes.set_stock_icon_palette_for_costume(1, Mario/cos_6_stock_icon.bin)
     }
-	
+
 	// Costume 0x7
     scope costume_0x7 {
         diffuse_ambient_pair_1:; dw 0xFFFFFF00, 0x4C4C4C00
@@ -112,25 +112,25 @@ scope mario_costumes {
         palette_1:; insert "Mario/cos_7_1.bin"
         palette_2:; insert "Mario/cos_7_2.bin"
 
-        Costumes.set_palette_for_part(1, 2, 0, palette_1)
-        Costumes.set_palette_for_part(1, 8, 1, palette_2)
-        Costumes.set_prim_color_for_part(1, 4, 0, 0xf8c800FF)
-        Costumes.set_diffuse_ambient_colors_for_part(1, 4, 0, diffuse_ambient_pair_1)
-        Costumes.set_prim_color_for_part(1, 5, 0, 0xf8c800FF)
-        Costumes.set_diffuse_ambient_colors_for_part(1, 5, 0, diffuse_ambient_pair_1)
-        Costumes.set_prim_color_for_part(1, 8, 2, 0xf8c800FF)
-        Costumes.set_prim_color_for_part(1, A, 0, 0xf8c800FF)
-        Costumes.set_diffuse_ambient_colors_for_part(1, A, 0, diffuse_ambient_pair_1)
-        Costumes.set_prim_color_for_part(1, B, 0, 0x927700FF)
-        Costumes.set_diffuse_ambient_colors_for_part(1, B, 0, diffuse_ambient_pair_1)
-        Costumes.set_prim_color_for_part(1, F, 0, 0x382810FF)
-        Costumes.set_prim_color_for_part(1, 10, 0, 0x382810FF)
-        Costumes.set_prim_color_for_part(1, 14, 0, 0x382810FF)
-        Costumes.set_prim_color_for_part(1, 15, 0, 0x382810FF)
-        Costumes.set_diffuse_ambient_colors_for_part(1, 12, 0, diffuse_ambient_pair_2)
-        Costumes.set_diffuse_ambient_colors_for_part(1, 17, 0, diffuse_ambient_pair_2)
+        Costumes.set_palette_for_part(2, 2, 0, palette_1)
+        Costumes.set_palette_for_part(2, 8, 1, palette_2)
+        Costumes.set_prim_color_for_part(2, 4, 0, 0xf8c800FF)
+        Costumes.set_diffuse_ambient_colors_for_part(2, 4, 0, diffuse_ambient_pair_1)
+        Costumes.set_prim_color_for_part(2, 5, 0, 0xf8c800FF)
+        Costumes.set_diffuse_ambient_colors_for_part(2, 5, 0, diffuse_ambient_pair_1)
+        Costumes.set_prim_color_for_part(2, 8, 2, 0xf8c800FF)
+        Costumes.set_prim_color_for_part(2, A, 0, 0xf8c800FF)
+        Costumes.set_diffuse_ambient_colors_for_part(2, A, 0, diffuse_ambient_pair_1)
+        Costumes.set_prim_color_for_part(2, B, 0, 0x927700FF)
+        Costumes.set_diffuse_ambient_colors_for_part(2, B, 0, diffuse_ambient_pair_1)
+        Costumes.set_prim_color_for_part(2, F, 0, 0x382810FF)
+        Costumes.set_prim_color_for_part(2, 10, 0, 0x382810FF)
+        Costumes.set_prim_color_for_part(2, 14, 0, 0x382810FF)
+        Costumes.set_prim_color_for_part(2, 15, 0, 0x382810FF)
+        Costumes.set_diffuse_ambient_colors_for_part(2, 12, 0, diffuse_ambient_pair_2)
+        Costumes.set_diffuse_ambient_colors_for_part(2, 17, 0, diffuse_ambient_pair_2)
 
-        Costumes.set_stock_icon_palette_for_costume(1, Mario/cos_7_stock_icon.bin)
+        Costumes.set_stock_icon_palette_for_costume(2, Mario/cos_7_stock_icon.bin)
     }
-    
+
 }

@@ -79,10 +79,10 @@ OS.align(16)
 // based on damage colour command @ 0x8012DB70
 flash_array_:
 dw 0x24000000     // 0x00 - ?
-dw 0xDDDDDDCC     // 0x04 - initial colour (white)
+dw 0xDDDDDD88     // 0x04 - initial colour (white)
 dw 0x28000008     // 0x08 - determines length of colour transition (8 frames, second half word)
 dw 0xFFFFFF00     // 0x0C - target colour (white, no alpha)
-dw 0x04000008     // 0x10 - determines total length of flash (8 frames, second half word)
+dw 0x04000004     // 0x10 - determines total length of flash (8 frames, second half word)
 dw 0x00000000     // 0x14 - end of command
 
 // @ Description
