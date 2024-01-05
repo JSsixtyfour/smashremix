@@ -16,7 +16,7 @@ constant KNOCKBACK_ANGLE(90)                    // = 90 DEGREES
 constant HURTBOX_FGM(0x02B7)                    // = none
 constant HURTBOX_DAMAGE(30)                     // = 30 damage
 constant BASE_KNOCKBACK(100)
-constant KNOCKBACK_GROWTH(100)					
+constant KNOCKBACK_GROWTH(0x100)
 
 // @ Description
 // Offset to item in file 0xFB.
@@ -137,7 +137,7 @@ scope spawn_custom_item_based_on_red_shell_: {
     sw      v0, 0x02C0(a0)               // save death timer	
     lli     at, BASE_KNOCKBACK           // at = base knockback
     sw      at, 0x0148(a0)               // overwrite bkb
-    lli     at, KNOCKBACK_GROWTH        // at = knockback growth
+    lli     at, KNOCKBACK_GROWTH         // at = knockback growth
     sw      at, 0x0140(a0)               // overwrite
 
     addiu   v0, r0, 0x0003               // v0 = electric damage type
@@ -616,25 +616,25 @@ scope collide_with_player_: {
     andi    t8, t7, 0x00ff
     
     // check if hit player was in first
-    lw      t9, 0x180(v1)           // t9 = player in first
-    lw      t3, 0x224(v1)           // t3 = hit object ptr 1
-    beq     t9, t3, _destroy_shell  // destroy if it is player first place
-    sb      t7, 0x0355(v1)
-    lw      t3, 0x22C(v1)           // t3 = hit object ptr 2
-    beq     t9, t3, _destroy_shell  // destroy if it is player first place
-    nop
-    lw      t3, 0x234(v1)           // t3 = hit object ptr 3
-    beq     t9, t3, _destroy_shell  // destroy if it is player first place
-    nop
-    lw      t3, 0x23C(v1)           // t3 = hit object ptr 4
-    beq     t9, t3, _destroy_shell  // destroy if it is player first place
-    nop
+    // lw      t9, 0x180(v1)           // t9 = player in first
+    // lw      t3, 0x224(v1)           // t3 = hit object ptr 1
+    // beq     t9, t3, _destroy_shell  // destroy if it is player first place
+    // sb      t7, 0x0355(v1)
+    // lw      t3, 0x22C(v1)           // t3 = hit object ptr 2
+    // beq     t9, t3, _destroy_shell  // destroy if it is player first place
+    // nop
+    // lw      t3, 0x234(v1)           // t3 = hit object ptr 3
+    // beq     t9, t3, _destroy_shell  // destroy if it is player first place
+    // nop
+    // lw      t3, 0x23C(v1)           // t3 = hit object ptr 4
+    // beq     t9, t3, _destroy_shell  // destroy if it is player first place
+    // nop
 
-    jal     FGM.play_               // play fgm
-    addiu   a0, r0, 0x0038          // a0 = shell FGM
-    // check if shells timer is out
-    bnez    t8,  _continue          // branch if shell still alive
-    sb      t7, 0x0355(v1)          //
+    // jal     FGM.play_               // play fgm
+    // addiu   a0, r0, 0x0038          // a0 = shell FGM
+    // // check if shells timer is out
+    // bnez    t8,  _continue          // branch if shell still alive
+    // sb      t7, 0x0355(v1)          //
 
     _destroy_shell:
     jal        hit_gfx_

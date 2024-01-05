@@ -111,8 +111,8 @@ scope Boot {
         li      a1, Global.previous_screen
         lbu     a1, 0x0000(a1)          // a1 = previous_screen
         lli     v0, 0x001B              // v0 = N64 logo screen id
-        bne     v0, a1, _end_fb_fix     // if previous screen is not the N64 logo screen
-        addiu   v0, r0, 0x00FF          // then use original value (original line 2)
+        //bne     v0, a1, _end_fb_fix     // if previous screen is not the N64 logo screen
+        //addiu   v0, r0, 0x00FF          // then use original value (original line 2)
 
         // otherwise, just use r0 to clear the frame buffer (actually the rest of normal RAM)
         // I don't know why this matters, but it works
@@ -139,7 +139,21 @@ scope Boot {
         nop
     }
 
-    string_version:; String.insert("Smash Remix v1.4.1")
+    string_version:; String.insert("Smash Remix v1.5.0")
+
+    // @ Description
+    // Use larger logo black backsplash
+    OS.patch_start(0x1198EC, 0x8013426C)
+    dw 0x00000077 // original 0x0000005E - y
+    dw 0x000245C8 // original 0x00011988 - offset to image footer
+    OS.patch_end()
+
+    // @ Description
+    // Use larger logo
+    OS.patch_start(0x1198F8, 0x80134278)
+    dw 0x00000068 // original 0x00000058 - y
+    dw 0x0003DC88 // original 0x000245C8 - offset to image footer
+    OS.patch_end()
 
     // @ Description
     // Nintendo 64 logo cannot be skipped.
@@ -163,7 +177,7 @@ scope Boot {
         lui     a0, 0x0240              // load rom address (0x02400000)
         lui     a1, 0x8040              // load ram address (0x80400000)
         jal     Global.dma_copy_        // add custom functions
-        lui     a2, 0x0040              // load length of 0x400000
+        lui     a2, ((custom_heap - 0x80400000) >> 16) + 0x0001 // a2 = rough size of custom ram
         j       load_                   // finish function
         nop
         OS.patch_end()

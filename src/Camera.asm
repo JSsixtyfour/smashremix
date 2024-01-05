@@ -78,13 +78,19 @@ scope Camera {
         beq     at, v0, mkingdom_camera
         addiu   at, r0, Stages.id.MELRODE
         beq     at, v0, mkingdom_camera
+        addiu   at, r0, Stages.id.SCUTTLE_TOWN
+        beq     at, v0, mkingdom_camera
+        addiu   at, r0, Stages.id.YOSHIS_ISLAND_MELEE
+        beq     at, v0, mkingdom_camera
+        addiu   at, r0, Stages.id.BIG_SNOWMAN
+        beq     at, v0, mkingdom_camera
         addiu   at, r0, Stages.id.TOADSTURNPIKE
         bnel    at, v0, _end
 		addiu   t0, r0, 0                           // if here, use default camera index (0)
-		
+
 		mkingdom_camera:
 		ori     t0, r0, 3                           // t0 = MKingdom camera routine
-		
+
         _end:
         j       0x8010DAC0                          // original line 1
         sw      t0, 0x0004(s0)                      // kinda original line 2, set match camera to default vs cam
@@ -126,6 +132,7 @@ scope Camera {
         addiu   t0, r0, type.FIXED                  // at = type.FIXED
         beq     t0, t9, _fixed_cam                  // branch if camera mode = FIXED
         nop
+
         // addiu   t0, r0, type.SCENE                  // at = type.SCENE
         // beq     t0, t9, _bonus_cam                  // branch if camera mode = SCENE
         // nop
@@ -184,6 +191,10 @@ scope Camera {
         ori     t2, r0, Stages.id.FLAT_ZONE         // t2 = id.FLAT_ZONE
         beq     t0, t2, _set_fixed_camera_values    // fix fixed camera if stage = FLAT_ZONE
         nop
+        li      t1, fixed_pokefloats                // t1 = frozen camera parameters for POKEFLOATS
+        ori     t2, r0, Stages.id.POKEFLOATS        // t2 = id.POKEFLOATS
+        beq     t0, t2, _set_fixed_camera_values    // fix fixed camera if stage = POKEFLOATS
+        nop
 
         // BTP/BTP
         li      t1, Global.current_screen           // ~
@@ -204,7 +215,7 @@ scope Camera {
         beq     t0, t2, _set_fixed_camera_values    // fix fixed camera if stage = ~
         nop
 
-        // BATTLE STAGES 
+        // BATTLE STAGES
         // check for VS stages with increased camera.Y
         li      t1, fixed_increase_y                // t1 = fixed camera parameters for stages with a high y
         ori     t2, r0, Stages.id.PLANET_ZEBES      // t2 = id.PLANET_ZEBES
@@ -251,7 +262,7 @@ scope Camera {
         nop
         ori     t2, r0, Stages.id.SECTOR_Z_O        // t2 = id.SECTOR_Z_O
         beq     t0, t2, _set_fixed_camera_values    // fix fixed camera if stage = ~
-        nop 
+        nop
         ori     t2, r0, Stages.id.ONETT             // t2 = id.ONETT
         beq     t0, t2, _set_fixed_camera_values    // fix fixed camera if stage = ~
         nop
@@ -371,37 +382,37 @@ scope Camera {
         lw      t0, 0x0000(t0)                      // t0 = address to camera position
 
         // FOCAL X
-        lh      t1, 0x009A(t0)                      // get "bonus pause" focal_x 
+        lh      t1, 0x009A(t0)                      // get "bonus pause" focal_x
         mtc1    t1, f16                             // move to to fp
         cvt.s.w f18, f16                            //
         swc1    f18, struct.focal_x - 0x90(a0)      // set camera focal x
 
         // FOCAL_Y
-        lh      t1, 0x009C(t0)                      // get "bonus pause" focal_y 
+        lh      t1, 0x009C(t0)                      // get "bonus pause" focal_y
         mtc1    t1, f16                             // move to fp
         cvt.s.w f18, f16                            //
         swc1    f18, struct.focal_y - 0x90(a0)      // set camera focal_y
 
         // FOCAL_Z
-        lh      t1, 0x009E(t0)                      // get "bonus pause" focal_z 
+        lh      t1, 0x009E(t0)                      // get "bonus pause" focal_z
         mtc1    t1, f16                             // move to fp
         cvt.s.w f18, f16                            //
         swc1    f18, struct.focal_z - 0x90(a0)      // set camera z
 
         // CAMERA_X
-        lh      t1, 0x00A0(t0)                      // get "bonus pause" x 
+        lh      t1, 0x00A0(t0)                      // get "bonus pause" x
         mtc1    t1, f16                             // move to to fp
         cvt.s.w f18, f16                            //
         swc1    f18, struct.x - 0x90(a0)            // set camera x
 
         // CAMERA_Y
-        lh      t1, 0x00A2(t0)                      // get "bonus pause" y 
+        lh      t1, 0x00A2(t0)                      // get "bonus pause" y
         mtc1    t1, f16                             // move to fp
         cvt.s.w f18, f16                            //
         swc1    f18, struct.y - 0x90(a0)            // set camera y
 
         // CAMERA_Z
-        lh      t1, 0x00A4(t0)                      // get "bonus pause" z 
+        lh      t1, 0x00A4(t0)                      // get "bonus pause" z
         mtc1    t1, f16                             // move to fp
         cvt.s.w f18, f16                            //
         swc1    f18, struct.z - 0x90(a0)            // set camera z
@@ -577,11 +588,11 @@ scope Camera {
 
     // @ Description
     // clears x,y,z offset values for custom vs camera panning
-    scope pause_initial_clear_array_: {
+    scope pause_initial_: {
         OS.patch_start(0x0008F9B4, 0x801141B4)
-        j       pause_initial_clear_array_
+        j       pause_initial_
         nop
-        pause_initial_clear_array_return_:
+        pause_initial_return_:
         OS.patch_end()
 
         addiu   sp, sp, -0x10                       // allocate stackspace
@@ -596,8 +607,17 @@ scope Camera {
         jal     0x8010CA7C                          // original line 1
         addiu   a0, a0, 0x001C                      // original line 2
 
+        // Remove camera control for Fixed Camera Mode
+        OS.read_word(Toggles.entry_camera_mode + 0x4, t6) // t6 = fixed cam boolean
+        addiu   t7, r0, type.FIXED                  // t7 = camera type.fixed
+        bne     t6, t7, _end
+        li      t0, 0x80131828                       // bit determines if camera can be moved
+        addiu   at, r0, 1
+        sb      at, 0x0000(t0)
+
+        _end:
         lw      ra, 0x0008(sp)                      // load ra
-        j       pause_initial_clear_array_return_   // return to original routine
+        j       pause_initial_return_               // return to original routine
         addiu   sp, sp, 0x10                        // deallocate stackspace
 
     }
@@ -617,7 +637,7 @@ scope Camera {
     // @ Description
     // pause.asm runs this routine so we can move the camera around in pause
 	// a1 = buttons pressed ptr
-	scope extended_movement_: {	
+	scope extended_movement_: {
 	    lh      a0, 0x0000(a1)                  // a0 = input flag (checking for A/B)
         sll     at, a0, 16                      // shift
         srl     at, at, 30                      // shift
@@ -720,12 +740,12 @@ scope Camera {
         swc1    f12, 0x0008(a0)                 // save clamped camera distance
         b       _end
         swc1    f6, 0x0008(a0)                  // or save new camera distance
-        
+
         apply_fov:
         li      a0, Camera.camera_pan_offsets_  // a0 = camera offset array
         lwc1    f6, 0x000C(a0)                  // f6 = current fov offset
         mtc1    v1, f12                         // move camera distance value to float
-        
+
         lui     at, 0x3C23                      // at = some value
         mtc1    at, f4                          // move to float
         mul.s   f12, f12, f4                    // multiply amount so its not too fast
@@ -764,7 +784,25 @@ scope Camera {
         return_:
         OS.patch_end()
 
+        // Destroy the pause hud legend, if it exists
+        lui     a0, 0x8004
+        lw      a0, 0x672C(a0)                      // a0 = first object in group 0xF
+        beqz    a0, _clear_camera_offsets           // if no object, skip destroying
+        nop
+        OS.save_registers()
+        jal     0x800CB608                          // destroy all objects in group
+        nop
 
+        lui     a0, 0x8004
+        lw      a0, 0x6730(a0)                      // a0 = first object in group 0x10
+        beqz    a0, _finish_pause_hud_clear         // if no object, skip destroying
+        nop
+        jal     0x800CB608                          // destroy all objects in group
+        nop
+        _finish_pause_hud_clear:
+        OS.restore_registers()
+
+        _clear_camera_offsets:
         // since player is unpausing, we will clear camera offsets
         li      a0, camera_pan_offsets_
         sw      r0, 0x0000(a0)                      // clear x
@@ -873,6 +911,10 @@ scope Camera {
         ori     t2, r0, Stages.id.GB_LAND   // t2 = id.GB_LAND
         beq     t0, t2, _frozen             // use frozen camera if stage = GB_LAND
         nop
+        li      t1, fixed_pokefloats        // t1 = frozen camera parameters for POKEFLOATS
+        ori     t2, r0, Stages.id.POKEFLOATS// t2 = id.POKEFLOATS
+        beq     t0, t2, _frozen             // use frozen camera if stage = GB_LAND
+        nop
         li      t1, frozen_flat_zone_2      // t1 = frozen camera parameters for FLAT_ZONE_2
         ori     t2, r0, Stages.id.FLAT_ZONE_2 // t2 = id.FLAT_ZONE_2
         beq     t0, t2, _frozen             // use frozen camera if stage = FLAT_ZONE_2
@@ -907,14 +949,18 @@ scope Camera {
         lw      t2, 0x0014(t1)              // ~
         sw      t2, struct.focal_z(t0)      // update camera focal z
 
+        // Remove camera control for Fixed Camera Mode
+        li      t0, 0x80131828                       // bit determines if camera can be moved
+        addiu   at, r0, 1
+        sb      at, 0x0000(t0)
+
         _end:
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // ~
         lw      t2, 0x000C(sp)              // ~
         lw      ra, 0x0010(sp)              // load t0 - t2, ra
-        addiu   sp, sp, 0x0018              // deallocate stack space
         jr      ra                          // return
-        nop
+        addiu   sp, sp, 0x0018              // deallocate stack space
     }
 
     // @ Description
@@ -1033,12 +1079,12 @@ scope Camera {
     float32 2168                            // camera y position
     float32 11008                           // camera z position
     float32 960                             // camera focal x position
-    float32 692                             // camera focal y position 
+    float32 692                             // camera focal y position
     float32 0                               // camera focal z position
-    float32 60                              // camera zoom/fov 
+    float32 60                              // camera zoom/fov
     float32 0                               // unused
 
-    fixed_sector_z_sr:                      
+    fixed_sector_z_sr:
     float32 6656                            // camera x position
     float32 1250                            // camera y position
     float32 7000                            // camera z position
@@ -1059,7 +1105,7 @@ scope Camera {
     float32 0                               // unused
 
     fixed_yoshis_island:                    // off stage not visible
-    float32 960                             // camera x position 
+    float32 960                             // camera x position
     float32 1250                            // camera y position
     float32 11008                           // camera z position
     float32 1664.0                          // camera focal x position
@@ -1131,9 +1177,9 @@ scope Camera {
     fixed_smashketball:
     float32 0                               // camera x position
     float32 960                             // camera y position
-    float32 11392                           // camera z position 
+    float32 11392                           // camera z position
     float32 0                               // camera focal x position
-    float32 235                             // camera focal y position 
+    float32 235                             // camera focal y position
     float32 -11392                          // camera focal z position
     float32 32                              // camera zoom/fov
     float32 0                               // unused
@@ -1174,6 +1220,18 @@ scope Camera {
     float32 5632                            // camera z position
     float32 0                               // camera focal x position
     float32 942                             // camera focal y position
+    float32 0                               // camera focal z position
+    float32 38                              // camera zoom/fov
+    float32 0                               // unused
+
+    // @ Description
+    // Frozen camera parameters for Poke FLoats
+    fixed_pokefloats:
+    float32 0                               // camera x position
+    float32 0                               // camera y position
+    float32 7000                            // camera z position
+    float32 0                               // camera focal x position
+    float32 0                               // camera focal y position
     float32 0                               // camera focal z position
     float32 38                              // camera zoom/fov
     float32 0                               // unused
@@ -1289,7 +1347,7 @@ scope Camera {
 
         // if here, t5 == TRUE
         _end:
-        sb      t5, 0x1828(at)                      // original line 1, writes t5 
+        sb      t5, 0x1828(at)                      // original line 1, writes t5
         j       _return
         lbu     t6, 0x000E(s2)                      // original line 2
 

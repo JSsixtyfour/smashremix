@@ -140,6 +140,7 @@ scope Render {
         constant R(0x0CF8)
         constant Z(0x0BD8)
         constant PLUS(0x04D8)
+        constant L_THIN(0x1B10)
     }
 
     constant FONTSIZE_DEFAULT(0x3F800000)
@@ -1778,8 +1779,9 @@ scope Render {
         nop
 
         // I'm lazy, so the fastest way is to call update_live_string_ with a new scale then update y scale after
-        lw      t0, 0x0044(a0)              // t0 = original scale
-        sw      t0, 0x000C(sp)              // save original scale
+        lwc1    f6, 0x0044(a0)              // f6 = original scale
+        swc1    f6, 0x000C(sp)              // save original scale
+        mul.s   f8, f8, f6                  // f8 = new X scale, adjusted per original scale
         mfc1    t0, f8                      // t0 = new X scale
         sw      r0, 0x0030(a0)              // clear pointer so string is recreated
         sw      r0, 0x0068(a0)              // clear max width to avoid infinite loop
@@ -2099,22 +2101,22 @@ scope Render {
         li      t0, Global.current_screen   // ~
         lbu     t0, 0x0000(t0)              // t0 = current screen
 
-		// 1P
+        // 1P
         li      t1, SinglePlayerModes.singleplayer_mode_flag       // t1 = Single Player Mode flag address
         lw      t1, 0x0000(t1)              // t1 = 1 if bonus 3
         beqz    t1, _vs_check               // if not multiman or allstar modes, skip
         nop
-		addiu	t2, r0, 0x0004				// Remix 1p Flag
-		beq     t2, t1, _vs_check           // if Remix 1p, skip
+        addiu   t2, r0, 0x0004              // Remix 1p Flag
+        beq     t2, t1, _vs_check           // if Remix 1p, skip
         nop
 
 
-		lli     t1, 0x0077                  // t1 = 1P mode screen_id
+        lli     t1, 0x0077                  // t1 = 1P mode screen_id
         beq     t0, t1, _multiman           // if (screen_id = multiman mode/allstar), jump to _multiman mode
         nop
 
         // VS
-		_vs_check:
+        _vs_check:
         lli     t1, 0x0016                  // t1 = vs mode screen_id
         beq     t0, t1, _vs                 // if (screen_id = vs mode), jump to _vs
         nop
@@ -2194,6 +2196,8 @@ scope Render {
         // debug transitions load as screen 1 with files 0x27 - 0x33 loaded first, so if not those files, assume 1p
         // note files 0x27 and 0x2F were not originally used in the transition table at 800D5D60 but they have been restored in Transitions.asm
         blt     a0, t1, _1p                 // if (first file loaded < 0x28), skip to 1p
+        lli     t1, File.TRANSITION_SMASH_LOGO
+        beq     a0, t1, _end                // if (first file loaded = new transition), skip to end (debug screen transition tests)
         lli     t1, 0x0033                  // t1 = 0x33
         ble     a0, t1, _end                // if (first file loaded between 0x28 and 0x33), skip to end (debug screen transition tests)
         nop
@@ -2201,10 +2205,12 @@ scope Render {
         _1p:
         jal     BGM.setup_                  // load font file if necessary for music titles
         nop
-
         jal     InputDisplay.setup_
         nop
-
+        jal     Hitbox.setup_
+        nop
+        jal     ZCancel.setup_
+        nop
         jal     ComboMeter.setup_              // Setup the Combo Meter
         nop
 
@@ -2220,8 +2226,8 @@ scope Render {
         jr      ra
         nop
 
-		_multiman:
-		jal     SinglePlayerModes.setup_    // Setup the KO counter
+        _multiman:
+        jal     SinglePlayerModes.setup_    // Setup the KO counter
         nop
         jal     ComboMeter.setup_              // Setup the Combo Meter
         nop
@@ -2240,16 +2246,17 @@ scope Render {
 
         jal     TwelveCharBattle.game_setup_ // Setup 12cb functionality
         nop
-
         jal     Item.clear_active_custom_items_
         nop
         jal     GFXRoutine.port_override.clear_gfx_override_table_
         nop
-
         jal     BGM.setup_                  // load font file if necessary for music titles
         nop
-
         jal     InputDisplay.setup_
+        nop
+        jal     Hitbox.setup_
+        nop
+        jal     ZCancel.setup_
         nop
 
         b       _end
@@ -2259,13 +2266,14 @@ scope Render {
         // Always clear 1P practice active flag
         li      t9, Practice_1P.practice_active // t9 = practice flag location
         sw      r0, 0x0000(t9)              // set state inactive
-
         li      a0, TwelveCharBattle.twelve_cb_flag
         lw      a0, 0x0000(a0)              // a0 = 1 if 12cb mode, 0 otherwise
         beqz    a0, _normal_css             // if not 12cb, then do normal css setup
         nop
         jal     TwelveCharBattle.setup_
         addu    a0, r0, t0                  // a0 = screen_id
+        jal     Hitbox.setup_
+        nop
         b       _end
         nop
 
@@ -2275,6 +2283,8 @@ scope Render {
         jal     Item.clear_active_custom_items_
         nop
         jal     GFXRoutine.port_override.clear_gfx_override_table_
+        nop
+        jal     Hitbox.setup_
         nop
 
         li      t0, Global.current_screen   // ~
@@ -2317,6 +2327,8 @@ scope Render {
         nop
         jal     GFXRoutine.port_override.clear_gfx_override_table_
         nop
+        jal     Hitbox.setup_
+        nop
 
         b       _end
         nop
@@ -2332,7 +2344,13 @@ scope Render {
         nop
         jal     GFXRoutine.port_override.clear_gfx_override_table_
         nop
-        jal     CharacterSelectDebugMenu.DpadFunctions.clear_settings_for_training_
+        // jal     CharacterSelectDebugMenu.DpadFunctions.clear_settings_for_training_
+        // nop
+        // jal     CharacterSelectDebugMenu.DpadControl.force_settings_for_training_
+        // nop
+        jal     Hitbox.setup_
+        nop
+        jal     ZCancel.setup_
         nop
 
         b       _end
@@ -2352,11 +2370,17 @@ scope Render {
 
         jal     InputDisplay.setup_
         nop
+        jal     Hitbox.setup_
+        nop
+        jal     ZCancel.setup_
+        nop
 
         b       _end
         nop
 
         _mode_select:
+        li      t0, SinglePlayerModes.page_flag // safeguard clear 1P page_flag if on from Main menu...
+        sw      r0, 0x0000(t0)                  // ...this is to handle non-standard cases of leaving Remix 1P (e.g. Credits)
         jal     Toggles.mode_select_setup_
         nop
 

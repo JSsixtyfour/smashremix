@@ -18,6 +18,8 @@ scope CharacterSelect {
     constant CSS_PLAYER_STRUCT_1P(0x80138EC0)
     constant CSS_PLAYER_STRUCT_BONUS(0x80137620)
 
+    string_high_scores_disabled:; String.insert("High Scores Disabled")
+
     // @ Description
     // Subroutine which loads a character, but uses an alternate req list which loads only the main
     // and model file, instead of all of the character's files. This is safe on the select screen.
@@ -145,7 +147,6 @@ scope CharacterSelect {
     // @ Description
     // Table of alternate malloc sizes.
     // TODO: figure out if padding these segments by 0x200 is needed.
-    // TODO: get the segment size for characters 0xC to 0x1A if we want to use them.
     alt_malloc_table:
     dw  0x7710                              // 0x00 - MARIO
     dw  0x8050                              // 0x01 - FOX
@@ -155,7 +156,7 @@ scope CharacterSelect {
     dw  0x12170                             // 0x05 - LINK
     dw  0xAEE0                              // 0x06 - YOSHI
     dw  0xCA90                              // 0x07 - CAPTAIN
-    dw  0x1D8C0 + 0xC18 + 0x740 + 0xB50 + 0x400 + 0x2BB88  // 0x08 - KIRBY
+    dw  0x1D8C0 + 0xC18 + 0x740 + 0xB50 + 0x400 + 0x35F48  // 0x08 - KIRBY
     dw  0x9E30                              // 0x09 - PIKACHU
     dw  0x7FE0                              // 0x0A - JIGGLY
     dw  0xC5C0                              // 0x0B - NESS
@@ -172,11 +173,11 @@ scope CharacterSelect {
     dw  0x3724                              // 0x16 - NKIRBY (file 0x0131)
     dw  0x434C                              // 0x17 - NPIKACHU (file 0x0133)
     dw  0x3590                              // 0x18 - NJIGGLY (file 0x0132)
-    dw  0x4684                              // 0x19 - NNESS (file 0x0138)
+    dw  0x4940                              // 0x19 - NNESS (file 0x0138)
     dw  0xD800                              // 0x1A - GDONKEY (file 0x013D - sams as DK)
     dw  0                                   // 0x1B - PLACEHOLDER
     dw  0                                   // 0x1C - PLACEHOLDER
-    dw  0x7AE0 + 0x200                      // 0x1D - FALCO
+    dw  0xA498 + 0x200                      // 0x1D - FALCO
     dw  0x1A6D8 + 0x200                     // 0x1E - GND
     dw  0x186D0 + 0x200                     // 0x1F - YLINK
     dw  0xAED0 + 0x200                      // 0x20 - DRM
@@ -199,8 +200,8 @@ scope CharacterSelect {
     dw  0x0                                 // 0x31 - JYOSHI
     dw  0x0                                 // 0x32 - JPIKA
     dw  0x0                                 // 0x33 - ESAMUS
-	dw  0x1B778 + 0x200                     // 0x34 - BOWSER
-	dw  0xFA38 + 0x200                      // 0x35 - GBOWSER
+    dw  0x1B778 + 0x200                     // 0x34 - BOWSER
+    dw  0xFA38 + 0x200                      // 0x35 - GBOWSER
     dw  0x4DB0 + 0x200                      // 0x36 - PIANO
     dw  0x76A0 + 0x200                      // 0x37 - WOLF
     dw  0x110F0 + 0x200                     // 0x38 - CONKER
@@ -215,6 +216,10 @@ scope CharacterSelect {
     dw  0x12EA0 + 0x1BE0 + 0x200            // 0x41 - GOEMON
     dw  0x5A50 + 0x200                      // 0x42 - PEPPY
     dw  0xA310 + 0x200                      // 0x43 - SLIPPY
+    dw  0x27C70 + 0x200                     // 0x44 - BANJO
+    dw  0x3500 + 0x200                      // 0x44 - METAL LUIGI
+    dw  0xCEE0 + 0x200                      // 0x45 - EBISUMARU
+    dw  0x58D0 + 0x200                      // 0x46 - DRAGONKING
     // ADD NEW CHARACTERS HERE
 
     // REMIX POLYGONS
@@ -228,6 +233,14 @@ scope CharacterSelect {
     dw  0x35A0 + 0x200                      // NMARINA
     dw  0x4328 + 0x200                      // NFALCO
     dw  0x4470 + 0x200                      // NGND
+    dw  0x5AF0                              // NDSAMUS
+    dw  0x43D0 + 0x200                      // NMARTH
+    dw  0x4708 + 0x200                      // NMTWO
+    dw  0x38D8 + 0x200                      // NDEDEDE
+    dw  0x3018 + 0x200                      // NYLINK
+    dw  0x62A0 + 0x200                      // NGOEMON
+    dw  0x70E8 + 0x200                      // NCONKER
+    dw  0x7700 + 0x200                      // NBANJO
 
     // @ Description
     // Holds the ROM offset of an alternate req list, used by get_alternate_req_list_
@@ -336,6 +349,10 @@ scope CharacterSelect {
     add_alt_req_list(Character.id.GOEMON, req/GOEMON_MODEL)
     add_alt_req_list(Character.id.PEPPY, req/PEPPY_MODEL)
     add_alt_req_list(Character.id.SLIPPY, req/SLIPPY_MODEL)
+    add_alt_req_list(Character.id.BANJO, req/BANJO_MODEL)
+    add_alt_req_list(Character.id.MLUIGI, req/MLUIGI_MODEL)
+    add_alt_req_list(Character.id.EBI, req/EBI_MODEL)
+    add_alt_req_list(Character.id.DRAGONKING, req/DRAGONKING_MODEL)
 
     // POLYGONS
     add_alt_req_list(Character.id.NWARIO, req/NWARIO_MODEL)
@@ -348,6 +365,14 @@ scope CharacterSelect {
     add_alt_req_list(Character.id.NMARINA, req/NMARINA_MODEL)
     add_alt_req_list(Character.id.NFALCO, req/NFALCO_MODEL)
     add_alt_req_list(Character.id.NGND, req/NGND_MODEL)
+    add_alt_req_list(Character.id.NDSAMUS, req/NSAMUS_MODEL)
+    add_alt_req_list(Character.id.NMARTH, req/NMARTH_MODEL)
+    add_alt_req_list(Character.id.NMTWO, req/NMTWO_MODEL)
+    add_alt_req_list(Character.id.NDEDEDE, req/NDEDEDE_MODEL)
+    add_alt_req_list(Character.id.NYLINK, req/NYLINK_MODEL)
+    add_alt_req_list(Character.id.NGOEMON, req/NGOEMON_MODEL)
+    add_alt_req_list(Character.id.NCONKER, req/NCONKER_MODEL)
+    add_alt_req_list(Character.id.NBANJO, req/NBANJO_MODEL)
     OS.align(4)
 
     // @ Description
@@ -1697,14 +1722,85 @@ scope CharacterSelect {
         bnez    t5, _end                    // if loaded, end normally
         nop
 
+        // Custom heap Logic:
+        //  - Skip if loaded (0x80116E10 pointers loaded - lines above)
+        //  - Skip if current_heap under threshold (0x807D0000)
+        //  - Get empty heap slot
+        //    - If none empty, find first slot where char_id is not associated w/a panel
+        //    - Clear slot and return as empty slot
+        //  - Load into empty heap slot
+
+        lui     t7, 0x807D                  // t7 = 0x807D0000 = ram threshold
+        li      t8, 0x800465E8              // t8 = main heap struct
+        lw      t8, 0x000C(t8)              // t8 = current free memory address
+        sltu    t8, t7, t8                  // t1 = 1 if above threshold
+        beqz    t8, _normal_load            // if not above threshold, load normally
+        lw      t8, 0x0000(s6)              // t8 = character id
+
+        // Get empty heap slot
+        addiu   sp, sp, -0x0020             // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+        sw      v0, 0x0008(sp)              // ~
+
+        jal     get_free_heap_slot_         // v0 = unassigned heap slot
+        nop
+        bnezl   v0, _use_alt_heap           // if not 0, then we got a slot, so use it
+        lw      t0, 0x0000(v0)              // t0 = custom heap struct
+
+        // clear first heap slot with non-used character
+        lw      v0, 0x0008(sp)              // v0 = player struct
+        jal     clear_first_obsolete_heap_slot_
+        lbu     a0, 0x000D(v0)              // a0 = player port
+        lw      t0, 0x0000(v0)              // t0 = custom heap struct
+
+        _use_alt_heap:
+        li      t7, dynamic_css.alt_heap_pointer
+        sw      t0, 0x0000(t7)              // set alt heap
+        lw      t8, 0x0000(s6)              // t8 = character id
+        sw      t8, 0x0004(v0)              // assign char_id to heap slot
+        li      t7, 0x800D62E0              // t7 = file manager struct
+        lw      t0, 0x0018(t7)              // t0 = total files loaded
+
+        lw      ra, 0x0004(sp)              // restore registers
+        lw      v0, 0x0008(sp)              // ~
+        addiu   sp, sp, 0x0020              // deallocate stack space
+
+        _normal_load:
         OS.save_registers()
         jal     load_character_model_
         lw      a0, 0x0008(v0)              // a0 = char_id
         OS.restore_registers()
 
+        li      t7, dynamic_css.alt_heap_pointer
+        lw      t5, 0x0000(t7)              // t5 = non-zero if we used custom heap
+        sw      r0, 0x0000(t7)              // clear alt heap
+        beqz    t5, _finish                 // if we didn't use custom heap, skip
+        li      t5, 0x800D62E0              // t5 = file manager struct
+
+        // t0 = total files loaded
+        sw      t0, 0x0018(t5)              // reset file count to pre-load
+
+        _finish:
         lw      t5, 0x0000(t4)              // t5 = address of main character file, now loaded
 
         _end:
+        // here we need to update dynamic_css.slot_used_by_port
+        lbu     t7, 0x000D(v0)              // t7 = player port
+        li      s4, dynamic_css.slot_used_by_port
+        addu    t7, s4, t7                  // t7 = heap slot used by player port address
+
+        addiu   sp, sp, -0x0020             // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+        sw      v0, 0x0008(sp)              // ~
+
+        jal     get_heap_slot_for_char_id_
+        lw      a0, 0x0008(v0)              // a0 = char_id
+        sb      v0, 0x0004(t7)              // save heat slot ID to slot_used_by_port
+
+        lw      ra, 0x0004(sp)              // restore registers
+        lw      v0, 0x0008(sp)              // ~
+        addiu   sp, sp, 0x0020              // deallocate stack space
+
         jr      ra
         addu    s4, t5, t6                  // original line 2 (address of attribute data)
     }
@@ -1818,15 +1914,15 @@ scope CharacterSelect {
         OS.patch_end()
 
         // training
-        OS.patch_start(0x00144F54, 0x80135974)
+        OS.patch_start(0x00144F50, 0x80135970)
         jal     check_variant_input_._training
         nop
         OS.patch_end()
 
         // 1p
-        OS.patch_start(0x0013EF88, 0x80136D88)
+        OS.patch_start(0x0013EF84, 0x80136D84)
         jal     check_variant_input_._1p
-        nop
+        sll     t6, t6, 0x0001                    // original line 1
         OS.patch_end()
 
         // Bonus
@@ -1897,8 +1993,8 @@ scope CharacterSelect {
         // t1 = pointer to 0x0028 offset in player CSS struct
         // 0x0054(t1) = held token player index (port 0 - 3 or -1 if not holding a token)
 
-        addu    t8, t6, t7                  // original line 1
-        sw      t8, 0x001C(sp)              // original line 2
+        addu    t8, t6, t7                  // original line 2
+        sw      t8, 0x001C(sp)              // original line 3
 
         addiu   sp, sp, -0x000C             // allocate stack space
         sw      v1, 0x0004(sp)              // ~
@@ -1918,13 +2014,17 @@ scope CharacterSelect {
         nop
 
         _training:
+        addiu   t9, t8, 0x5228              // t9 = address of controller input array
+        sw      t9, 0x0020(sp)              // save to unused stack space - used in CharacterSelectDebugMenu.hold_a_handler_
+        lhu     t8, 0x522A(t8)              // original line 1
+
         // s0 = player index (port 0 - 3)
         // v0 = pointer to player CSS struct
         // 0x007C(v0) = held token player index (port 1 when P1, P3 or P4 and port 0 when P2)
         // t8 = unique press button state
 
-        subu    t0, t0, s0                  // original line 1
-        lw      a0, 0x0040(sp)              // original line 2
+        subu    t0, t0, s0                  // original line 2
+        lw      a0, 0x0040(sp)              // original line 3
 
         addiu   sp, sp, -0x0010             // allocate stack space
         sw      v1, 0x0004(sp)              // ~
@@ -1976,7 +2076,7 @@ scope CharacterSelect {
         nop
 
         _shared:
-        addiu   sp, sp, -0x0020             // allocate stack space
+        addiu   sp, sp, -0x0028             // allocate stack space
         sw      at, 0x0004(sp)              // ~
         sw      t0, 0x0008(sp)              // ~
         sw      t1, 0x000C(sp)              // ~
@@ -1984,6 +2084,13 @@ scope CharacterSelect {
         sw      t8, 0x0014(sp)              // ~
         sw      a0, 0x0018(sp)              // ~
         sw      ra, 0x001C(sp)              // ~
+        sw      a2, 0x0020(sp)              // ~
+
+        _check_settings_shortcut:
+        jal     Toggles.settings_shortcut   // a0 = 1 if L was held long enough to activate Settings shortcut...
+        nop
+        bnezl   a0, _end                    // ...and if so, skip to end
+        nop
 
         _check_mask:
         andi    t8, t8, 0x2F00              // Check for Z or any d-pad button
@@ -2038,7 +2145,8 @@ scope CharacterSelect {
         lw      t8, 0x0014(sp)              // ~
         lw      a0, 0x0018(sp)              // ~
         lw      ra, 0x001C(sp)              // ~
-        addiu   sp, sp, 0x0020              // deallocate stack space
+        lw      a2, 0x0020(sp)              // ~
+        addiu   sp, sp, 0x0028              // deallocate stack space
 
         jr      ra
         nop
@@ -2203,12 +2311,25 @@ scope CharacterSelect {
         constant NMARINA(0x000217B8)
         constant NFALCO(0x0000D978)
         constant NGND(0x0000EA38)
+        constant NDSAMUS(0x00011C78)
+        constant NMARTH(0x0001D4B8)
+        constant NMTWO(0x0001C3F8)
+        constant NDEDEDE(0x00022878)
+        constant NYLINK(0x0000FAF8)
+        constant NGOEMON(0x00023938)
+        constant NCONKER(0x0001B338)
+        constant NBANJO(0x00026B68 + 0x10)
         // special
         constant METAL(0x00015F78)
         constant GDONKEY(0x00017038)
 		constant GBOWSER(0x000180F8)
         constant PIANO(0x000191B8)
         constant SSONIC(0x0001F638)
+        constant PEPPY(0x000249E8 + 0x10)
+        constant SLIPPY(0x00025AA8 + 0x10)
+        constant EBI(0x00027C28 + 0x10)
+        constant METALLUIGI(0x00028CE0 + 0x10)
+        constant DRAGONKING(0x00029D98 + 0x10)
         // custom
         constant FALCO(0x0000D978)
         constant GND(0x0000EA38)
@@ -2228,9 +2349,7 @@ scope CharacterSelect {
         constant MARINA(0x000217B8)
         constant DEDEDE(0x00022878)
         constant GOEMON(0x00023938)
-        constant PEPPY(0x000249E8 + 0x10)
-        constant SLIPPY(0x00025AA8 + 0x10)
-        constant CLASSIC(0x00026B68 + 0x10)
+        constant BANJO(0x00026B68 + 0x10)
         // j
         constant JMARIO(0x00001078)
         constant JFOX(0x00002138)
@@ -2287,6 +2406,10 @@ scope CharacterSelect {
         constant GOEMON(30)
         constant WAVERACE(31)
         constant QUEST64(32)
+        constant JACKBROS(33)
+        constant SHANTAE(34)
+        constant DOOM(35)
+        constant SNOWBOARDKIDS(36)
 
         scope offset {
             constant NONE(0)
@@ -2322,6 +2445,10 @@ scope CharacterSelect {
             constant GOEMON(0x0000BEF8)
             constant WAVERACE(0x0000C558)
             constant QUEST64(0x0000CBB0)
+            constant JACKBROS(0x0000D208)
+            constant SHANTAE(0x0000D860)
+            constant DOOM(0x0000DEB8)
+            constant SNOWBOARDKIDS(0xE510)
         }
 
         // @ Description
@@ -2393,6 +2520,14 @@ scope CharacterSelect {
             constant Y_WAVERACE(0x41A00000)
             constant X_QUEST64(0x40200000)
             constant Y_QUEST64(0x419C0000)
+            constant X_JACKBROS(0x40000000)
+            constant Y_JACKBROS(0x419C0000)
+            constant X_SHANTAE(0x40000000)
+            constant Y_SHANTAE(0x419C0000)
+            constant X_DOOM(0x40000000)
+            constant Y_DOOM(0x419C0000)
+            constant X_SNOWBOARDKIDS(0x40000000)
+            constant Y_SNOWBOARDKIDS(0x419C0000)
         }
 
         table:
@@ -2431,6 +2566,10 @@ scope CharacterSelect {
         dw offset.GOEMON,           position.X_GOEMON,           position.Y_GOEMON
         dw offset.WAVERACE,         position.X_WAVERACE,         position.Y_WAVERACE
         dw offset.QUEST64,          position.X_QUEST64,          position.Y_QUEST64
+        dw offset.JACKBROS,         position.X_JACKBROS,         position.Y_JACKBROS
+        dw offset.SHANTAE,          position.X_SHANTAE,          position.Y_SHANTAE
+        dw offset.DOOM,             position.X_DOOM,             position.Y_DOOM
+        dw offset.SNOWBOARDKIDS,    position.X_SNOWBOARDKIDS,    position.Y_SNOWBOARDKIDS
     }
 
     // @ Description
@@ -2508,7 +2647,7 @@ scope CharacterSelect {
         constant WARIO(0x000175C8)
         constant LUCAS(0x00018138)
         constant BOWSER(0x00018618)
-		constant GBOWSER(0x00018BC8)
+        constant GBOWSER(0x00018BC8)
         constant JLINK(0x00002BA0)
         constant JFALCON(0x00003998)
         constant JFOX(0x000025B8)
@@ -2519,7 +2658,7 @@ scope CharacterSelect {
         constant JPUFF(0x00017DD8)
         constant JPIKA(0x000032F8)
         constant PIANO(0x000190A8)
-		constant WOLF(0x00019588)
+        constant WOLF(0x00019588)
         constant CONKER(0x00019A68)
         constant MEWTWO(0x00019F48)
         constant MARTH(0x0001A428)
@@ -2532,6 +2671,11 @@ scope CharacterSelect {
         constant GOEMON(0x0001F228)
         constant PEPPY(0x0001FFF8)
         constant SLIPPY(0x0001FB20)
+        constant EBI(0x00021820 + 0x10)
+        constant BANJO(0x00021CF8 + 0x10)
+        constant MLUIGI(0x00021358)
+        constant DRAGONKING(0x00023A28 + 0x10)
+        constant EPUFF(0x00024CE0 + 0x10)
         // POLYGONS
         constant NWARIO(0x0001CB28)
         constant NLUCAS(0x0001D008)
@@ -2543,6 +2687,14 @@ scope CharacterSelect {
         constant NMARINA(0x0001ED48)
         constant NFALCO(0x000209A8)
         constant NGND(0x000204D0)
+        constant NDSAMUS(0x000221D0 + 0x10)
+        constant NMARTH(0x00022B88 + 0x10)
+        constant NMTWO(0x00023068 + 0x10)
+        constant NDEDEDE(0x000226A8 + 0x10)
+        constant NYLINK(0x00023548 + 0x10)
+        constant NGOEMON(0x000243E0 + 0x10)
+        constant NCONKER(0x00023F00 + 0x10)
+        constant NBANJO(0x000248C0 + 0x10)
         constant BLANK(0x0)
     }
 
@@ -2631,7 +2783,7 @@ scope CharacterSelect {
         define slot_27(CONKER)
         define slot_28(MTWO)
         define slot_29(MARTH)
-        define slot_30(NONE)
+        define slot_30(BANJO)
     }
 
     // @ Description
@@ -3020,9 +3172,384 @@ scope CharacterSelect {
     dw CSS_PLAYER_STRUCT_BONUS
 
     // @ Description
-    // This points to the object that olds the dpad objects
+    // This points to the object that holds the dpad objects
     render_control_object:
     dw 0x00000000
+
+    // @ Description
+    // Holds dynamic CSS related fields
+    scope dynamic_css {
+        macro create_heap_slot(slot) {
+            scope heap_slot_{slot}: {
+                heap_pointer:; dw heap_struct_{slot}
+                character_id:; dw Character.id.NONE
+                unused_1:; dw 0x0
+                unused_2:; dw 0x0
+            }
+        }
+
+        // @ Description
+        // Points to a custom heap object if malloc should use it
+        alt_heap_pointer:; dw 0x0
+
+        // @ Description
+        // Keeps track of which slot is being used per port
+        slot_used_by_port:; db -1, -1, -1, -1
+        curr_slot_used_by_port:; db -1, -1, -1, -1
+
+        // @ Description
+        // Custom heap structs used by malloc for dynamic character model loading
+        OS.align(8)
+        heap_struct_0:; dw 0x00010001; dw 0x0; dw 0x0; dw 0x0
+        heap_struct_1:; dw 0x00010002; dw 0x0; dw 0x0; dw 0x0
+        heap_struct_2:; dw 0x00010003; dw 0x0; dw 0x0; dw 0x0
+        heap_struct_3:; dw 0x00010004; dw 0x0; dw 0x0; dw 0x0
+        heap_struct_4:; dw 0x00010005; dw 0x0; dw 0x0; dw 0x0
+        heap_struct_5:; dw 0x00010006; dw 0x0; dw 0x0; dw 0x0
+        heap_struct_6:; dw 0x00010007; dw 0x0; dw 0x0; dw 0x0
+        heap_struct_7:; dw 0x00010008; dw 0x0; dw 0x0; dw 0x0
+
+        // @ Description
+        // Pool of heap slots available to assign to ports as needed
+        create_heap_slot(0)
+        create_heap_slot(1)
+        create_heap_slot(2)
+        create_heap_slot(3)
+        create_heap_slot(4)
+        create_heap_slot(5)
+        create_heap_slot(6)
+        create_heap_slot(7)
+    }
+
+    // @ Description
+    // This returns a free heap slot in v0, or 0 if none are free
+    scope get_free_heap_slot_: {
+        addiu   sp, sp, -0x0020            // allocate stack space
+        sw      at, 0x0004(sp)             // save registers
+        sw      t0, 0x0008(sp)             // ~
+        sw      t1, 0x000C(sp)             // ~
+        sw      t2, 0x0010(sp)             // ~
+
+        li      at, dynamic_css.heap_slot_0
+        lli     t0, Character.id.NONE
+        lli     t2, 0x0007                 // t2 = times to loop - 1
+        _loop:
+        lw      t1, 0x0004(at)             // t1 = heap slot X character_id
+        beql    t0, t1, _end               // if no character assigned, use this
+        or      v0, at, r0                 // v0 = heap_slot_X
+        addiu   at, at, 0x0010             // at = next heap_slot character_id address
+        bnez    t2, _loop                  // loop until t2 is 0
+        addiu   t2, t2, -0x0001            // t2--
+
+        lli     v0, 0x0000                 // v0 = 0 since none are free
+
+        _end:
+        lw      at, 0x0004(sp)             // restore registers
+        lw      t0, 0x0008(sp)             // ~
+        lw      t1, 0x000C(sp)             // ~
+        lw      t2, 0x0010(sp)             // ~
+        jr      ra
+        addiu   sp, sp, 0x0020             // deallocate stack space
+    }
+
+    // @ Description
+    // This returns the heap slot ID with the given char_id loaded in v0, or -1 if char_id isn't loaded in a heap slot
+    // @ Arguments
+    // a0 - char_id
+    // @ Returns
+    // v0 - heap slot ID, or -1 if not found
+    scope get_heap_slot_for_char_id_: {
+        addiu   sp, sp, -0x0020            // allocate stack space
+        sw      at, 0x0004(sp)             // save registers
+        sw      t0, 0x0008(sp)             // ~
+        sw      t1, 0x000C(sp)             // ~
+        sw      t2, 0x0010(sp)             // ~
+
+        li      at, dynamic_css.heap_slot_0
+        lli     t2, 0x0007                 // t2 = times to loop - 1
+        addiu   v0, r0, -0x0001            // v0 = -1
+        _loop:
+        lw      t1, 0x0004(at)             // t1 = heap slot X character_id
+        beq     a0, t1, _end               // if char_id is assigned, use this
+        addiu   v0, v0, 0x0001             // v0++
+        addiu   at, at, 0x0010             // at = next heap_slot character_id address
+        bnez    t2, _loop                  // loop until t2 is 0
+        addiu   t2, t2, -0x0001            // t2--
+
+        addiu   v0, r0, -0x0001            // v0 = -1 since none are free
+
+        _end:
+        lw      at, 0x0004(sp)             // restore registers
+        lw      t0, 0x0008(sp)             // ~
+        lw      t1, 0x000C(sp)             // ~
+        lw      t2, 0x0010(sp)             // ~
+        jr      ra
+        addiu   sp, sp, 0x0020             // deallocate stack space
+    }
+
+    // @ Description
+    // Clears first heap slot with non-used character ID
+    // @ Arguments
+    // a0 - port_id
+    // @ Returns
+    // v0 - cleared heap slot
+    scope clear_first_obsolete_heap_slot_: {
+        addiu   sp, sp, -0x0030            // allocate stack space
+        sw      ra, 0x0004(sp)             // save registers
+        sw      at, 0x0008(sp)             // ~
+        sw      t0, 0x000C(sp)             // ~
+        sw      t1, 0x0010(sp)             // ~
+        sw      t2, 0x0014(sp)             // ~
+        sw      t3, 0x0018(sp)             // ~
+        sw      t4, 0x001C(sp)             // ~
+        sw      s1, 0x0020(sp)             // ~
+        sw      s2, 0x0024(sp)             // ~
+        sw      s3, 0x0028(sp)             // ~
+        sw      s4, 0x002C(sp)             // ~
+
+        lli     v0, 0x0000                 // v0 = first heap slot
+
+        // First check to see which CSS we're on
+        OS.read_byte(Global.current_screen, t0)
+        lli     at, Global.screen.VS_CSS
+        beq     t0, at, _vs                // if VS css, do vs check
+        lli     at, Global.screen.TRAINING_CSS
+        // if bonus or 1p css, only one character is loaded so choose the first spot
+        bne     t0, at, _clear             // if not Training css, then it's 1p or bonus css
+        nop
+
+        _training:
+        li      t0, CSS_PLAYER_STRUCT_TRAINING
+        lw      s1, 0x0008(t0)             // s1 = p1 object
+        lw      t1, 0x0048(t0)             // t1 = p1 char_id
+        lw      s2, 0x00C0(t0)             // s2 = p2 object
+        lw      t2, 0x0100(t0)             // t2 = p2 char_id
+        lw      s3, 0x0178(t0)             // s3 = p3 object
+        lw      t3, 0x01B8(t0)             // t3 = p3 char_id
+        lw      s4, 0x0230(t0)             // s4 = p4 object
+        b       _get_first_free_slot
+        lw      t4, 0x0270(t0)             // t4 = p4 char_id
+
+        _vs:
+        li      t0, CSS_PLAYER_STRUCT
+        lw      s1, 0x0008(t0)             // s1 = p1 object
+        lw      t1, 0x0048(t0)             // t1 = p1 char_id
+        lw      s2, 0x00C4(t0)             // s2 = p2 object
+        lw      t2, 0x0104(t0)             // t2 = p2 char_id
+        lw      s3, 0x0180(t0)             // s3 = p3 object
+        lw      t3, 0x01C0(t0)             // t3 = p3 char_id
+        lw      s4, 0x023C(t0)             // s4 = p4 object
+        lw      t4, 0x027C(t0)             // t4 = p4 char_id
+
+        _get_first_free_slot:
+        lli     at, Character.id.NONE
+        beqz    s1, _p2                    // if no player object, then trust CSS struct
+        nop
+        bne     at, t1, _p2
+        lw      s1, 0x0084(s1)             // s1 = p1 player struct
+        lw      t1, 0x0008(s1)             // t1 = p1 char_id
+
+        _p2:
+        beqz    s2, _p3                    // if no player object, then trust CSS struct
+        nop
+        bne     at, t2, _p3
+        lw      s2, 0x0084(s2)             // s2 = p2 player struct
+        lw      t2, 0x0008(s2)             // t2 = p2 char_id
+
+        _p3:
+        beqz    s3, _p4                    // if no player object, then trust CSS struct
+        nop
+        bne     at, t3, _p4
+        lw      s3, 0x0084(s3)             // s3 = p3 player struct
+        lw      t3, 0x0008(s3)             // t3 = p3 char_id
+
+        _p4:
+        beqz    s4, _setup_loop            // if no player object, then trust CSS struct
+        nop
+        bne     at, t4, _setup_loop
+        lw      s4, 0x0084(s4)             // s4 = p4 player struct
+        lw      t4, 0x0008(s4)             // t4 = p4 char_id
+
+        _setup_loop:
+        li      t0, dynamic_css.heap_slot_0
+        addiu   v0, r0, -0x0001            // v0 = -1 (so we start at 0)
+        _loop:
+        addiu   v0, v0, 0x0001             // v0 = next heap slot
+        lw      at, 0x0004(t0)             // at = slot's char_id
+        beql    at, t1, _loop              // if slot's char_id still in use, skip
+        addiu   t0, t0, 0x0010             // t0 = next heap slot address
+        beql    at, t2, _loop              // if slot's char_id still in use, skip
+        addiu   t0, t0, 0x0010             // t0 = next heap slot address
+        beql    at, t3, _loop              // if slot's char_id still in use, skip
+        addiu   t0, t0, 0x0010             // t0 = next heap slot address
+        beql    at, t4, _loop              // if slot's char_id still in use, skip
+        addiu   t0, t0, 0x0010             // t0 = next heap slot address
+
+        // if here, then the slot is unused! (maybe)
+        // but we need to check if it's a slot used just prior to prevent a console crash
+        li      at, dynamic_css.slot_used_by_port
+        lbu     t1, 0x0000(at)             // t1 = heap slot previously used for p1
+        beql    v0, t1, _loop              // if port is using this slot, skip
+        addiu   t0, t0, 0x0010             // t0 = next heap slot address
+        lbu     t1, 0x0001(at)             // t1 = heap slot previously used for p2
+        beql    v0, t1, _loop              // if port is using this slot, skip
+        addiu   t0, t0, 0x0010             // t0 = next heap slot address
+        lbu     t1, 0x0002(at)             // t1 = heap slot previously used for p3
+        beql    v0, t1, _loop              // if port is using this slot, skip
+        addiu   t0, t0, 0x0010             // t0 = next heap slot address
+        lbu     t1, 0x0003(at)             // t1 = heap slot previously used for p4
+        beql    v0, t1, _loop              // if port is using this slot, skip
+        addiu   t0, t0, 0x0010             // t0 = next heap slot address
+        lbu     t1, 0x0004(at)             // t1 = heap slot currently used for p1
+        beql    v0, t1, _loop              // if port is using this slot, skip
+        addiu   t0, t0, 0x0010             // t0 = next heap slot address
+        lbu     t1, 0x0005(at)             // t1 = heap slot currently used for p2
+        beql    v0, t1, _loop              // if port is using this slot, skip
+        addiu   t0, t0, 0x0010             // t0 = next heap slot address
+        lbu     t1, 0x0006(at)             // t1 = heap slot currently used for p3
+        beql    v0, t1, _loop              // if port is using this slot, skip
+        addiu   t0, t0, 0x0010             // t0 = next heap slot address
+        lbu     t1, 0x0007(at)             // t1 = heap slot currently used for p4
+        beql    v0, t1, _loop              // if port is using this slot, skip
+        addiu   t0, t0, 0x0010             // t0 = next heap slot address
+
+        // if here, then the slot is *definitely* unused! (I hope)
+
+        _clear:
+        jal     reset_heap_slot_
+        or      a0, v0, r0                 // a0 = heap slot to clear
+
+        _end:
+        lw      ra, 0x0004(sp)             // restore registers
+        lw      at, 0x0008(sp)             // ~
+        lw      t0, 0x000C(sp)             // ~
+        lw      t1, 0x0010(sp)             // ~
+        lw      t2, 0x0014(sp)             // ~
+        lw      t3, 0x0018(sp)             // ~
+        lw      t4, 0x001C(sp)             // ~
+        lw      s1, 0x0020(sp)             // ~
+        lw      s2, 0x0024(sp)             // ~
+        lw      s3, 0x0028(sp)             // ~
+        lw      s4, 0x002C(sp)             // ~
+        jr      ra
+        addiu   sp, sp, 0x0030             // deallocate stack space
+    }
+
+    // @ Description
+    // Resets the given heap slot by resetting the heap, clearing player pointers and clearing file table entries.
+    // @ Arguments
+    // a0 - slot index
+    // @ Returns
+    // v0 - heap slot
+    scope reset_heap_slot_: {
+        li      at, dynamic_css.heap_slot_0
+        sll     t0, a0, 0x0004             // t0 = offset to heap slot
+        addu    v0, at, t0                 // v0 = heap slot
+
+        // First, reset the custom heap
+        lw      t0, 0x0000(v0)             // t0 = heap struct
+        lw      t1, 0x0004(t0)             // t1 = initial floor of heap
+        sw      t1, 0x000C(t0)             // set current heap location to initial floor
+
+        // Next, clear the character_id and clear the previously loaded character's pointers
+        lw      t0, 0x0004(v0)             // t0 = previously loaded character_id
+        lli     t1, Character.id.NONE
+        sw      t1, 0x0004(v0)             // clear character_id
+        li      t1, 0x80116E10             // t1 = character struct table
+        sll     t0, t0, 0x0002             // t0 = offset in character struct table
+        addu    t1, t1, t0                 // t1 = pointer to character struct
+        lw      t1, 0x0000(t1)             // t1 = character struct
+        lw      t0, 0x0028(t1)             // t0 = main file pointer
+        jr      ra
+        sw      r0, 0x0000(t0)             // clear out main file pointer
+    }
+
+    // @ Description
+    // Initializes the custom heap structs and slots for the dynamic CSS
+    scope initialize_dynamic_css_: {
+        addiu   sp, sp, -0x0030             // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+
+        // First, initialize the heap structs
+        li      a0, dynamic_css.heap_struct_0
+        lli     s2, 0x0008                  // s2 = loop index
+
+        _loop:
+        lw      a1, 0x0000(a0)              // a1 = debug ID
+        li      at, 0x800465E8              // at = main heap struct
+        lw      a2, 0x000C(at)              // a2 = current free memory address = initial floor of heap
+        li      a3, 0x00015000              // a3 = size of heap
+        addu    t0, a2, a3                  // t0 = new main heap struct free memory address
+        jal     0x80006D54                  // reset heap
+        sw      t0, 0x000C(at)              // update main heap struct free memory address
+
+        addiu   s2, s2, -0x0001             // s2 = loop index++
+        bnez    s2, _loop                   // loop until all custom heap structs initialized
+        addiu   a0, a0, 0x0010              // heap_struct++
+
+        // Next, clear characters from the heap slots
+        li      at, dynamic_css.heap_slot_0.character_id
+        lli     t0, Character.id.NONE
+        lli     s2, 0x0008                  // s2 = loop index
+        _loop_2:
+        sw      t0, 0x0000(at)              // save NONE for slot 0 char_id
+
+        addiu   s2, s2, -0x0001             // s2 = loop index++
+        bnez    s2, _loop_2                 // loop until all custom heap slots initialized
+        addiu   at, at, 0x0010              // heap_slot_x++
+
+        addiu   s2, r0, -0x0001             // s2 = -1
+        li      at, dynamic_css.slot_used_by_port
+        sw      s2, 0x0000(at)              // clear previous slot used by port
+        sw      s2, 0x0004(at)              // clear current slot used by port
+
+        // This routine will run after characters load and update slot_used_by_port
+        Render.register_routine(sync_slot_used_by_port, 0x001C, 0x8000)
+
+        lw      ra, 0x0004(sp)              // restore registers
+        jr      ra
+        addiu   sp, sp, 0x0030              // deallocate stack space
+    }
+
+    // @ Description
+    // This runs before the character load stuff, so we use it to refresh slot_used_by_port every frame
+    scope sync_slot_used_by_port: {
+        li      t0, dynamic_css.slot_used_by_port
+        lw      t1, 0x0004(t0)              // curr_slot_used_by_port
+        jr      ra
+        sw      t1, 0x0000(t0)              // update slot_used_by_port
+    }
+
+    // @ Description
+    // This enables custom heap structs to be used when loading models
+    scope use_custom_heap_structs_: {
+        OS.patch_start(0x5594, 0x80004994)
+        jal     use_custom_heap_structs_
+        lui     a0, 0x8004                  // original line 1
+        jal     0x80006CEC                  // original line 2 (malloc)
+        nop
+        lw      ra, 0x0014(sp)              // original line 4
+        jr      ra                          // original line 6
+        addiu   sp, sp, 0x0018              // original line 5
+        OS.patch_end()
+
+        addiu   sp, sp, -0x0030             // allocate stack space
+        sw      t0, 0x0004(sp)              // save registers
+
+        li      t0, dynamic_css.alt_heap_pointer
+        lw      t0, 0x0000(t0)              // t0 = alternate heap
+        beqzl   t0, _end                    // if not defined, use original a0
+        addiu   a0, a0, 0x65E8              // original line 3
+
+        or      a0, r0, t0                  // otherwise, use the alternate heap
+
+        _end:
+        lw      t0, 0x0004(sp)              // restore registers
+        addiu   sp, sp, 0x0030              // deallocate stack space
+
+        jr      ra
+        nop
+    }
 
     // @ Description
     // This sets up variant-related indicators and renders the portraits to the screen.
@@ -3088,6 +3615,14 @@ scope CharacterSelect {
         sw      s3, 0x0018(sp)              // ~
         sw      s4, 0x001C(sp)              // ~
         sw      s5, 0x0020(sp)              // save registers
+
+        // Make sure Initial Damage value isn't too high
+        jal     CharacterSelectDebugMenu.Damage.restrict_damage_for_stamina_
+        nop
+
+        // Make sure Size.match_state_table is in sync with Size.state_table
+        jal     CharacterSelectDebugMenu.Size.sync_match_state_table_
+        nop
 
         Render.load_font()                                                // load font for strings
         Render.load_file(File.CHARACTER_PORTRAITS, Render.file_pointer_1) // load character portraits into file_pointer_1
@@ -3235,9 +3770,33 @@ scope CharacterSelect {
         jal     draw_portraits_
         lli     a0, OS.FALSE                // a0 = 12cb mode flag
 
+        jal     initialize_dynamic_css_
+        nop
+
         jal     CharacterSelectDebugMenu.init_debug_menu_
         lw      a0, 0x0008(sp)              // a0 = offset in css_player_structs
 
+        // Initialize flag for saving high scores
+        lw      a0, 0x0008(sp)              // a0 = offset in css_player_structs = 4 for 1P, >=0xC for Bonus
+        sltiu   t0, a0, 0x000C              // t0 = 0 if Bonus
+        beqz    t0, _check_high_scores_flag // if Bonus, skip to check high scores flag
+        lli     t0, 0x0004                  // t0 = 4 for 1p
+        bne     a0, t0, _vs_setup         // if not 1p, skip
+        nop
+
+        _check_high_scores_flag:
+        jal     CharacterSelectDebugMenu.check_high_scores_enabled
+        nop
+
+        li      t0, SinglePlayer.high_score_enabled
+        sw      v0, 0x0000(t0)              // set high scores enabled flag
+
+        // Draw High Scores Disabled String
+        Render.draw_string(0x22, 0x1B, string_high_scores_disabled, set_high_scores_disabled_visibility_, 0x43400000, 0x43590000, 0xFF8080FF, 0x3F500000, Render.alignment.LEFT)
+        lli     t0, 0x0001                  // t0 = 1 = display off
+        sw      t0, 0x007C(v0)              // turn off initially
+
+        _vs_setup:
         lw      a0, 0x0008(sp)              // a0 = offset in css_player_structs = 0 for VS
         bnez    a0, _return                 // skip remaining stock and count indicators if not VS
         nop
@@ -3268,6 +3827,15 @@ scope CharacterSelect {
 
         jr      ra
         nop
+    }
+
+    // @ Description
+    // Shows/Hides the High Scores Disabled string
+    scope set_high_scores_disabled_visibility_: {
+        li      t0, SinglePlayer.high_score_enabled
+        lw      t0, 0x0000(t0)              // t0 = 1 if high scores enabled, 0 if not
+        jr      ra
+        sw      t0, 0x007C(a0)              // set display off if high scores enabled, on if if disabled
     }
 
     // @ Description
@@ -3314,6 +3882,28 @@ scope CharacterSelect {
         jal     0x80136128                  // original line 1 - set character model
         lw      a0, 0x0008(sp)              // a0 = panel index
 
+        // update indicators and stock icon right away
+        OS.read_word(TwelveCharBattle.twelve_cb_flag, t1) // t1 = 1 if 12cb mode
+        bnez    t1, _12cb                   // if 12cb mode, go to 12cb
+        nop
+
+        OS.read_word(render_control_object, a0) // a0 = render control object
+        jal     CharacterSelect.update_variant_indicators_
+        nop
+
+        OS.read_word(render_control_object, t0) // t0 = render control object
+        jal     CharacterSelect.update_stock_icon_and_count_indicators_
+        lw      a0, 0x0044(t0)              // a0 = stock icon and count indicators object
+
+        b       _vs_finish
+        nop
+
+        _12cb:
+        OS.read_word(render_control_object, t0) // t0 = render control object
+        jal     CharacterSelect.update_stock_icon_and_count_indicators_
+        lw      a0, 0x0034(t0)              // a0 = stock icon and count indicators object
+
+        _vs_finish:
         lw      ra, 0x0004(sp)              // restore registers
         addiu   sp, sp, 0x0010              // deallocate stack space
         jr      ra
@@ -3517,6 +4107,9 @@ scope CharacterSelect {
         constant MASTER_HAND(0x27F0 + 0x10)
         constant PEPPY(0x28D8 + 0x10)
         constant SLIPPY(0x29B0 + 0x10)
+        constant MLUIGI(0x2A88 + 0x10)
+        constant EBI(0x2B60 + 0x10)
+        constant DRAGONKING(0x2C38 + 0x10)
     }
 
     // @ Description
@@ -3572,6 +4165,12 @@ scope CharacterSelect {
         lli     t2, Character.id.METAL
         beql    a1, t2, _draw_icon          // If METAL, then draw METAL stock icon
         addiu   a1, at, VARIANT_ICON_OFFSET.METAL // a1 = METAL footer struct
+        lli     t2, Character.id.MLUIGI
+        beql    a1, t2, _draw_icon          // If MLUIGI, then draw MLUIGI stock icon
+        addiu   a1, at, VARIANT_ICON_OFFSET.MLUIGI // a1 = MLUIGI footer struct
+        lli     t2, Character.id.EBI
+        beql    a1, t2, _draw_icon          // If EBI, then draw EBI stock icon
+        addiu   a1, at, VARIANT_ICON_OFFSET.EBI // a1 = EBI footer struct
         lli     t2, Character.id.GBOWSER
         beql    a1, t2, _draw_icon          // If GBOWSER, then draw GBOWSER stock icon
         addiu   a1, at, VARIANT_ICON_OFFSET.GBOWSER // a1 = GBOWSER footer struct
@@ -3581,6 +4180,9 @@ scope CharacterSelect {
         lli     t2, Character.id.SSONIC
         beql    a1, t2, _draw_icon          // If SSONIC, then draw SSONIC stock icon
         addiu   a1, at, VARIANT_ICON_OFFSET.SSONIC // a1 = SSONIC footer struct
+        lli     t2, Character.id.DRAGONKING
+        beql    a1, t2, _draw_icon          // If DRAGONKING, then draw DRAGONKING stock icon
+        addiu   a1, at, VARIANT_ICON_OFFSET.DRAGONKING // a1 = DRAGONKING footer struct
         lli     t2, Character.id.BOSS
         bne     a1, t2, _gdk                // If not Master Hand, then skip... otherwise, draw Master Hand stock icon
         addiu   a1, at, VARIANT_ICON_OFFSET.MASTER_HAND // a1 = Master Hand footer struct
@@ -4592,6 +5194,15 @@ scope CharacterSelect {
         sw      t2, 0x0000(t1)              // update stocks remaining
 
         _play_fgm:
+        li      a0, CharacterSelectDebugMenu.hold_a_handler_.fgm_buffer
+        lw      t0, 0x0000(a0)              // t0 = fgm buffer
+        bnez    t0, _end                    // make sure we don't play every frame when being held
+        lli     t0, CharacterSelectDebugMenu.hold_a_handler_.FGM_BUFFER // t0 = fgm buffer
+        OS.read_word(0x800451A0, t1)        // t1 = number of plugged in controllers
+        multu   t0, t1                      // mflo = fgm buffer * num controllers
+        mflo    t0                          // ~
+        sw      t0, 0x0000(a0)              // save fgm buffer
+
         // play FGM
         jal     0x800269C0
         lli     a0, FGM.menu.TOGGLE         // a0 = FGM.menu.TOGGLE
@@ -4775,24 +5386,14 @@ scope CharacterSelect {
     }
 
     // @ Description
-    // This holds each port's random character selection state
-    random_char_state_table:
-    dw  0   // P1
-    dw  0   // P2
-    dw  0   // P3
-    dw  0   // P4
-
-    // @ Description
     // Selects a random character for a human player
     // @ Arguments
     // a0 - port
     // TODO: 1p, Bonus, Training support?
     scope select_random_char_: {
-        sll     t1, a0, 0x0002              // t1 = offset in state table
-        li      t2, random_char_state_table
-        addu    t2, t2, t1                  // t2 = address of state for this port
-        lw      t1, 0x0000(t2)              // t1 = 0 if random char selection disabled, 1 if enabled
-        beqz    t1, _end                    // if random char selection disabled for this port, skip
+        li      t1, Toggles.entry_l_random_char
+        lw      t1, 0x0004(t1)              // t1 = entry_l_random_char (0 if OFF, 1 if ON)
+        beqz    t1, _end                    // if random char selection is disabled, skip
         nop
 
         addiu   sp, sp,-0x0030              // allocate stack space
@@ -4935,14 +5536,14 @@ scope CharacterSelect {
     add_to_css(Character.id.JDK,    FGM.announcer.names.DONKEY_KONG,    2,            0x00010001, DONKEY_KONG,  name_texture.JDK,            portrait_offsets.JDK,            4)
     add_to_css(Character.id.EPIKA,  FGM.announcer.names.PIKACHU,        1.50,         0x00010001, POKEMON,      name_texture.PIKACHU,        portrait_offsets.EPIKA,          16)
     add_to_css(Character.id.JPUFF,  FGM.announcer.names.JPUFF,          1.50,         0x00010002, POKEMON,      name_texture.JPUFF,          portrait_offsets.JPUFF,          17)
-    add_to_css(Character.id.EPUFF,  FGM.announcer.names.JIGGLYPUFF,     1.50,         0x00010002, POKEMON,      name_texture.JIGGLYPUFF,     portrait_offsets.EPUFF,          17)
+    add_to_css(Character.id.EPUFF,  FGM.announcer.names.EPUFF,          1.50,         0x00010002, POKEMON,      name_texture.EPUFF,          portrait_offsets.EPUFF,          17)
     add_to_css(Character.id.JKIRBY, FGM.announcer.names.KIRBY,          1.50,         0x00010003, KIRBY,        name_texture.KIRBY,          portrait_offsets.JKIRBY,         14)
     add_to_css(Character.id.JYOSHI, FGM.announcer.names.YOSHI,          1.50,         0x00010002, YOSHI,        name_texture.YOSHI,          portrait_offsets.JYOSHI,         13)
     add_to_css(Character.id.JPIKA,  FGM.announcer.names.PIKACHU,        1.50,         0x00010001, POKEMON,      name_texture.PIKACHU,        portrait_offsets.JPIKA,          16)
     add_to_css(Character.id.ESAMUS, FGM.announcer.names.ESAMUS,         1.50,         0x00010003, METROID,      name_texture.SAMUS,          portrait_offsets.ESAMUS,         6)
     add_to_css(Character.id.BOWSER, FGM.announcer.names.BOWSER,         2,            0x00010002, BOWSER,       name_texture.BOWSER,         portrait_offsets.BOWSER,         -1)
     add_to_css(Character.id.GBOWSER,FGM.announcer.names.GBOWSER,        2.25,         0x00010002, BOWSER,       name_texture.GBOWSER,        portrait_offsets.GBOWSER,        24)
-    add_to_css(Character.id.PIANO,  FGM.announcer.names.PIANO,          2,            0x00010004, MARIO_BROS,   name_texture.PIANO,          portrait_offsets.PIANO,          2)
+    add_to_css(Character.id.PIANO,  FGM.announcer.names.PIANO,          2,            0x00010004, MARIO_BROS,   name_texture.PIANO,          portrait_offsets.PIANO,          14)
     add_to_css(Character.id.WOLF,   FGM.announcer.names.WOLF,           1.50,         0x00010004, STARFOX,      name_texture.WOLF,           portrait_offsets.WOLF,           -1)
     add_to_css(Character.id.CONKER, FGM.announcer.names.CONKER,        	1.50,         0x00010004, CONKER,       name_texture.CONKER,         portrait_offsets.CONKER,         -1)
     add_to_css(Character.id.MTWO,   FGM.announcer.names.MEWTWO,         1.50,         0x00010004, POKEMON,      name_texture.MEWTWO,         portrait_offsets.MTWO,           -1)
@@ -4956,6 +5557,10 @@ scope CharacterSelect {
     add_to_css(Character.id.GOEMON, FGM.announcer.names.GOEMON,         1.50,         0x00010001, GOEMON,       name_texture.GOEMON,         portrait_offsets.GOEMON,         -1)
     add_to_css(Character.id.PEPPY,  FGM.announcer.names.PEPPY,          1.50,         0x00010004, STARFOX,      name_texture.PEPPY,          portrait_offsets.PEPPY,          15)
     add_to_css(Character.id.SLIPPY, FGM.announcer.names.SLIPPY,         1.50,         0x00010004, STARFOX,      name_texture.SLIPPY,         portrait_offsets.SLIPPY,         18)
+    add_to_css(Character.id.BANJO,  FGM.announcer.names.BANJO,          1.50,         0x00010001, BANJO_KAZOOIE, name_texture.BANJO,         portrait_offsets.BANJO,          -1)
+    add_to_css(Character.id.MLUIGI, FGM.announcer.names.MLUIGI,         1.50,         0x00010001, MARIO_BROS,   name_texture.MLUIGI,         portrait_offsets.METALLUIGI,      2)
+    add_to_css(Character.id.EBI,    FGM.announcer.names.EBI,            1.50,         0x00010001, GOEMON,       name_texture.EBI,            portrait_offsets.EBI,            20)
+    add_to_css(Character.id.DRAGONKING, FGM.announcer.names.DRAGONKING, 1.50,         0x00010002, SMASH,        name_texture.DRAGONKING,     portrait_offsets.DRAGONKING,      7)
     // ADD NEW CHARACTERS HERE
 
     // REMIX POLYGONS
@@ -4969,6 +5574,14 @@ scope CharacterSelect {
     add_to_css(Character.id.NMARINA, FGM.announcer.names.NMARINA,       1.50,         0x00010001, SMASH,        name_texture.NMARINA,        portrait_offsets.MARINA,         0)
     add_to_css(Character.id.NFALCO,  FGM.announcer.names.NFALCO,        1.50,         0x00010004, SMASH,        name_texture.NFALCO,         portrait_offsets.FALCO,          18)
     add_to_css(Character.id.NGND, FGM.announcer.names.NGANONDORF,       1.50,         0x00010002, SMASH,        name_texture.NGND,           portrait_offsets.GND,            8)
+    add_to_css(Character.id.NDSAMUS, FGM.announcer.names.NDSAMUS,       1.50,         0x00010004, SMASH,        name_texture.NDSAMUS,        portrait_offsets.DSAMUS,         21)
+    add_to_css(Character.id.NMARTH, FGM.announcer.names.NMARTH,         1.50,         0x00010004, SMASH,        name_texture.NMARTH,         portrait_offsets.MARTH,          28)
+    add_to_css(Character.id.NMTWO, FGM.announcer.names.NMTWO,           1.50,         0x00010004, SMASH,        name_texture.NMTWO,          portrait_offsets.MTWO,           27)
+    add_to_css(Character.id.NDEDEDE, FGM.announcer.names.NDEDEDE,       2,            0x00010001, SMASH,        name_texture.NDEDEDE,        portrait_offsets.DEDEDE,         10)
+    add_to_css(Character.id.NYLINK, FGM.announcer.names.NYLINK,         1.50,         0x00010002, SMASH,        name_texture.NYLINK,         portrait_offsets.YLINK,          11)
+    add_to_css(Character.id.NGOEMON, FGM.announcer.names.NGOEMON,       1.50,         0x00010001, SMASH,        name_texture.NGOEMON,        portrait_offsets.GOEMON,         20)
+    add_to_css(Character.id.NCONKER, FGM.announcer.names.NCONKER,       1.50,         0x00010004, SMASH,        name_texture.NCONKER,        portrait_offsets.CONKER,         26)
+    add_to_css(Character.id.NBANJO, FGM.announcer.names.NBANJO,         1.50,         0x00010001, SMASH,        name_texture.NBANJO,         portrait_offsets.BANJO,          29)
 }
 
 

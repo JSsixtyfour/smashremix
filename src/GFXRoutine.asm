@@ -238,6 +238,29 @@ scope GFXRoutine {
     WAIT(1); CLEAR_OVERLAY();
     WAIT(1); GO_TO(PEPPY_USP_READYING);
 
+    CHARGE_SMASH:
+    OVERLAY(0xE7C900BD); OVERLAY_SHIFT(0xE7C90000, 10); WAIT(10); CLEAR_OVERLAY(); END();
+
+    DOOM_ACID:
+    OVERLAY(0x00D90088);
+    DOOM_ACID_2:
+    OVERLAY_SHIFT(0x00d90022, 20); WAIT(20);
+    OVERLAY_SHIFT(0x00D90088, 20); WAIT(20);
+    END();
+    GO_TO(DOOM_ACID_2);
+
+    PWING:
+    OVERLAY(0xFF682D46); WAIT(3);
+    OVERLAY_SHIFT(0x00000000, 5); WAIT(5);
+    GO_TO(PWING);
+
+    EBI_GROW:
+    OVERLAY(0x00000000); WAIT(1);
+    OVERLAY_SHIFT(0xFF88ABCC, 5); WAIT(5);
+    OVERLAY(0xFF88ABCC); WAIT(28);
+    OVERLAY_SHIFT(0x00000000, 5); WAIT(5);
+    END();
+
     // name - gfx routine effect name, used for display only
     // filename - file containing gfx routine commands
     // priority - the priority this routine has relative to others, higher/equal priority will override an active routine
@@ -277,9 +300,13 @@ scope GFXRoutine {
     add_gfx_routine(MARINA_CHARGE, MARINA_CHARGE, 10, OS.FALSE)
     add_gfx_routine(GOEMON_CHARGE, GOEMON_CHARGE, 60, OS.TRUE)
     add_gfx_routine(DEDEDE_CHARGE, DEDEDE_CHARGE, 10, OS.FALSE)
-    add_gfx_routine(SLIPPY_NSP, SLIPPY_NSP, 60, OS.TRUE) 
+    add_gfx_routine(SLIPPY_NSP, SLIPPY_NSP, 60, OS.TRUE)
     add_gfx_routine(SUDDEN_IMPACT, SUDDEN_IMPACT, 60, OS.TRUE)
     add_gfx_routine(PEPPY_USP_READYING, PEPPY_USP_READYING, 60, OS.TRUE)
+    add_gfx_routine(CHARGE_SMASH, CHARGE_SMASH, 60, OS.TRUE)
+    add_gfx_routine(DOOM_ACID, DOOM_ACID, 100, OS.FALSE)
+    add_gfx_routine(PWING, PWING, 100, OS.FALSE)
+    add_gfx_routine(EBI_GROW, EBI_GROW, 100, OS.FALSE)
 
     // write gfx routines to ROM
     write_gfx_routines()

@@ -155,6 +155,7 @@ scope Lucas {
 
     // Set default costumes
     Character.set_default_costumes(Character.id.LUCAS, 0, 1, 2, 4, 0, 2, 5)
+    Teams.add_team_costume(YELLOW, LUCAS, 0x4)
 
     Character.table_patch_start(variants, Character.id.LUCAS, 0x4)
     db      Character.id.NONE
@@ -633,6 +634,28 @@ scope Lucas {
         j       _return
         nop
     }
+    
+    // @ Description
+    // Prevent Lucas from turning around
+    scope dsp_absorption_turnaround_prevent: {
+        OS.patch_start(0xCFC80, 0x80155240)
+        j       dsp_absorption_turnaround_prevent
+        lwc1    f6, 0xC610(at)      // og line 2
+        _return:
+        OS.patch_end()
+        
+        lw      at, 0x0008(v0)      // at = character id
+        addiu   t9, r0, Character.id.LUCAS
+        beq     at, t9, _continue
+        nop
+
+        // normal
+        sw      t8, 0x0044(v0)     // og line 1, update characters facing direction
+
+        _continue:
+        j       _return
+        nop
+    }
 
     // @ Description
     // Fixes the position of the down special absorption radius for Lucas by creating a new struct.
@@ -694,10 +717,10 @@ scope Lucas {
 
     dw      0x00000001
     dw      0x00000000
-    float32 0
-    float32 300
-    float32 280                      // changed for Lucas
-    float32 380
-    float32 380
-    float32 380
+    float32 0           // x position
+    float32 300         // y position
+    float32 350         // z position
+    float32 300         // scale 1
+    float32 300         // scale 2
+    float32 300         // scale 3
 }

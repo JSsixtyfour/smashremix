@@ -140,6 +140,7 @@ scope CharacterDataScreen {
         // Third party (sorting by year of appearance)
         dw Character.id.GOEMON
         dw Character.id.SONIC
+        dw Character.id.BANJO
         dw Character.id.CONKER
         dw Character.id.MARINA
 
@@ -677,6 +678,8 @@ scope CharacterDataScreen {
         beq     v0, at, _large_border       // branch to use large border
         addiu   at, r0, Character.id.GND    // at = Character ID
         beq     v0, at, _large_border       // branch to use large border
+        addiu   at, r0, Character.id.BANJO  // at = Character ID
+        beq     v0, at, _large_border       // branch to use large border
         addiu   at, r0, Character.id.YLINK  // at = Character ID
         beq     v0, at, _large_border       // branch to use large border
         nop
@@ -744,6 +747,9 @@ scope CharacterDataScreen {
         constant cloud(0x8000ED48)
         constant ryo_throw(0x8000EE88)
         constant chain_pipe(0x8000EFC8)
+        constant egg_fire(0x80019068)
+        constant beak_barge_buster(0x800191A0)
+        constant beak_bomb(0x800192D8)
 
     }
 
@@ -855,6 +861,14 @@ scope CharacterDataScreen {
         set_action(DSP, Goemon.Action.DSPGround, 0x0000029A, 0x00000000)
         set_action(DSP, Goemon.Action.DSPGAttack, 0x0000029A, 0x00000000)
         set_action(DSP, Goemon.Action.DSPEnd, 0x0000029A, 0x00000000)
+    add_char_to_data_screen(BANJO, 0x80029088, 0x00000000, 0x00000000, 20, 48, 0x8001A200, 0x8000A5A8, offset.egg_fire, offset.beak_barge_buster, offset.beak_bomb, 0, 0,        0, -1)
+        set_action(USP, Banjo.Action.USPBegin, 0x0000003C, 0x00000000)
+        set_action(USP, Banjo.Action.USPAttack, 0x0000029A, 0x00000000)
+        set_action(NSP, Banjo.Action.NSPBeginG, 0x0000029A, 0x00000000)
+        set_action(NSP, Banjo.Action.NSPForwardA, 0x0000029A, 0x00000000)
+        set_action(DSP, Banjo.Action.DSPG, 0x0000029A, 0x00000000)
+        set_action(JAB, Action.Jab2, 0x0000029A, 0x00000000)
+        set_action(JAB, Banjo.Action.Jab3, 0x0000029A, 0x40000000)
 
     extend_tables()
 

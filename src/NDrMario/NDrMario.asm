@@ -49,6 +49,11 @@ scope NDrMario {
     Character.edit_menu_action_parameters(NDRM,     0x2,                -1,                         0x80000000,                 -1)
     Character.edit_menu_action_parameters(NDRM,     0x1,                -1,                         0x80000000,                 -1)
 
+    // Set action strings
+    Character.table_patch_start(action_string, Character.id.NDRM, 0x4)
+    dw  DrMario.Action.action_string_table
+    OS.patch_end()
+
     // Handles common things for Polygons
     Character.polygon_setup(NDRM, DRM)
 

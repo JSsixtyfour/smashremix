@@ -85,6 +85,7 @@ scope Practice_1P {
 
     // @ Description
     // Runs while GAME SET is displayed in 1P mode and allows retrying during Practice
+    // Also allows retrying in Bonus 1/2 and various Remix modes (with 'L: Retry')
     scope hold_l_to_retry_: {
         OS.patch_start(0x8FF24, 0x80114724)
         j       hold_l_to_retry_
@@ -92,14 +93,41 @@ scope Practice_1P {
         _return:
         OS.patch_end()
 
+        li      t6, SinglePlayerModes.singleplayer_mode_flag // t6 = singleplayer mode flag
+        lw      t6, 0x0000(t6)              // t6 = 1P mode (0 = standard, 4 = Remix)
         li      t0, Global.current_screen
-        lbu     t0, 0x0000(t0)              // t0 = screen id = 1 if 1p
+        lbu     t0, 0x0000(t0)              // t0 = screen id = 1 if 1p, 0x35 if Bonus, 0x77 if Remix Mode
+        lli     t1, Global.screen.BONUS     // t1 = 0x35 (BONUS)
+        beq     t0, t1, _check_bonus_not_1p  // if Bonus, check if not 1P
+        lli     t1, Global.screen.REMIX_MODES // t1 = 0x77 (Remix Modes (other than Remix 1P) All-star, Multiman, HRC
+        beq     t0, t1, _check_remix_not_allstar  // if Remix mode, first make sure it isn't All-star
         lli     t1, 0x0001                  // t1 = 1 = 1p screen id
         bne     t0, t1, _normal             // if not 1p, skip
         nop
+        b       _check_1p_mode              // if we're here, it's a 1p mode
+        nop
 
-        li      t6, SinglePlayerModes.singleplayer_mode_flag // t6 = singleplayer mode flag
-        lw      t6, 0x0000(t6)              // t6 = 1P mode (0 = standard, 4 = Remix)
+        _check_bonus_not_1p:
+        // verify that the Bonus is not a non-Practice 1P
+        li      t0, Global.previous_screen
+        lbu     t0, 0x0000(t0)                    // t0 = previous screen id
+        lli     t1, Global.screen.BONUS_1_CSS     // t1 = 0x13 (BONUS 1 CSS)
+        beq     t0, t1, _check_for_l_press        // branch if BTT Practice
+        lli     t1, Global.screen.BONUS_2_CSS     // t1 = 0x14 (BONUS 2 CSS)
+        beq     t0, t1, _check_for_l_press        // branch if BTP Practice
+        nop
+        b       _check_practice                   // otherwise, check if 1P Practice mode is enabled
+        nop
+
+
+        _check_remix_not_allstar:
+        lli     at, SinglePlayerModes.ALLSTAR_ID
+        beq     t6, at, _normal             // skip if All-star
+        nop
+        b       _check_for_l_press          // otherwise, check for L press
+        nop
+
+        _check_1p_mode:
         beqz    t6, _check_practice         // if normal 1P, proceed
         lli     at, SinglePlayerModes.REMIX_1P_ID
         bne     t6, at, _normal             // skip if not Remix 1P
@@ -115,6 +143,7 @@ scope Practice_1P {
         beqz    t6, _normal                 // if Practice mode is disabled, skip
         nop
 
+        _check_for_l_press:
         // check for L press while GAME SET is displayed
         addiu   sp, sp, -0x0010             // allocate stack space
         sw      ra, 0x0004(sp)              // save ra
@@ -215,6 +244,52 @@ scope Practice_1P {
         lui     v0, 0x8013                  // original line 1
         jr      ra
         lw      v0, 0x52D4(v0)              // original line 2
+    }
+
+    // @ Description
+    // Required for Bonus Practice modes to allow retrying (retains current_screen)
+    scope hold_l_to_retry_bonus_1: {
+        OS.patch_start(0x113358, 0x8018EC18)
+        j      hold_l_to_retry_bonus_1
+        nop
+        _return:
+        OS.patch_end()
+        // t3 is probably safe
+        li      t3, SinglePlayerModes.reset_flag // load reset flag location
+        lw      at, 0x0000(t3)              // at = 1 if we are resetting
+        li      t6, Global.current_screen
+        lbu     t6, 0x0000(t6)              // t6 = current screen id
+        beqzl   at, _normal                 // retain current screen if reset_flag active
+        addiu   t6, r0, 0x0013              // otherwise, original line 1 (BONUS_CSS 1)
+
+        // if we're here, we want to skip setting 'Global.previous_screen' to '0x35'
+        sw      r0, 0x0000(t3)              // reset reset flag
+        j       0x8018ED58                  // modified jump (from 0x8018ED50)
+        _normal:
+        addiu   at, r0, 0x000A              // original line 2
+        j       _return
+        nop
+    }
+    scope hold_l_to_retry_bonus_2: {
+        OS.patch_start(0x11345C, 0x8018ED1C)
+        j      hold_l_to_retry_bonus_2
+        nop
+        _return:
+        OS.patch_end()
+        li      t3, SinglePlayerModes.reset_flag // load reset flag location
+        lw      at, 0x0000(t3)              // at = 1 if we are resetting
+        li      t2, Global.current_screen
+        lbu     t2, 0x0000(t2)              // t2 = current screen id
+        beqzl   at, _normal                 // retain current screen if reset_flag active
+        addiu   t2, r0, 0x0014              // otherwise, original line 1 (BONUS_CSS 2)
+
+        // if we're here, we want to skip setting 'Global.previous_screen' to '0x35'
+        sw      r0, 0x0000(t3)              // reset reset flag
+        j       0x8018ED58                  // modified jump (from 0x8018ED50)
+        _normal:
+        addiu   at, r0, 0x000A              // original line 2
+        j       _return
+        nop
     }
 
     constant STAGES(11)

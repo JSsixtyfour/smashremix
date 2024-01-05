@@ -18,16 +18,23 @@ scope Size {
 
     // @ Description
     // These state values are used to force a character into a predefined size through the match.
+    // This always corresponds to the menu's values.
     // See state scope below.
     state_table:
     dw 0, 0, 0, 0                           // state for p1 through p4
 
     // @ Description
+    // These state values are used to force a character into a predefined size through the match.
+    // See state scope below.
+    match_state_table:
+    dw 0, 0, 0, 0                           // state for p1 through p4
+
+    // @ Description
     // State constants
     scope state {
-    	constant NORMAL(0)
-    	constant GIANT(1)
-    	constant TINY(2)
+        constant NORMAL(0)
+        constant GIANT(1)
+        constant TINY(2)
     }
 
     // @ Description
@@ -318,18 +325,47 @@ scope Size {
         addu    t4, t4, t9                  // t4 = &base_multiplier_table[index]
         swc1    f0, 0x0000(t4)              // update our cloned body size multiplier
 
-        addiu   t4, t4, 0x0010              // t4 = &state_table[index]
+        addiu   sp, sp, -0x0010             // allocate stack space
+        sw      at, 0x0004(sp)              // save registers
+
+        // hijack this routine to clear KirbyHats.magic_hat_on and taunt_loses_power :E
+        li      a2, KirbyHats.spawn_with_hat
+        addu    a2, a2, t9                  // a2 = address of port's spawn_with_hat
+        lw      at, 0x0000(a2)              // t6 = spawn_with_hat
+        lli     a2, CharacterSelectDebugMenu.KirbyHat.MAX_VALUE - 1 // a2 = 2nd to last kirby hat entry ('???')
+        bnel    at, a2, pc() + 12           // if not magic hat, then don't set to on
+        lli     t6, OS.FALSE                // t6 = FALSE
+        lli     t6, OS.TRUE                 // t6 = TRUE
+        li      a2, KirbyHats.magic_hat_on  // a2 = magic_hat_on
+        addu    a2, a2, t9                  // a2 = address of port's magic_hat_on
+        sw      t6, 0x0000(a2)              // set magic_hat_on
+
+        li      a2, KirbyHats.taunt_loses_power // a2 = taunt_loses_power
+        addu    a2, a2, t9                  // a2 = address of port's taunt_loses_power
+        beqzl   at, pc() + 12               // if not spawning with a hat, then set to true
+        lli     t6, OS.TRUE                 // t6 = TRUE
+        lli     t6, OS.FALSE                // t6 = FALSE
+        sw      t6, 0x0000(a2)              // set taunt_loses_power to true if not spawning with hat
+
+        lw      at, 0x0004(sp)              // restore registers
+        addiu   sp, sp, 0x0010              // deallocate stack space
+
+        addiu   t4, t4, 0x0020              // t4 = &match_state_table[index]
         lw      t9, 0x0000(t4)              // t9 = state
-        addiu   t4, t4, -0x0020             // t4 = &multiplier_table[index]
+        addiu   t4, t4, -0x0030             // t4 = &multiplier_table[index]
         beqzl   t9, _return                 // if in NORMAL state, use 1 as size multiplier
         lui     t9, 0x3F80                  // t9 = 1 (float)
 
         li      a2, Global.current_screen
         lbu     a2, 0x0000(a2)              // a2 = current screen
+        lli     t6, 0x0077                  // t6 = Justin's magic screen
+        beq     a2, t6, _apply              // if on Justin's magic screen, don't reset to 1
+        nop
         sltiu   a2, a2, 0x003C              // a2 = 1 if not 0x3C (how to play screen id) or 0x3D (demo vs battle screen id)
         beqzl   a2, _return                 // if on how to play or demo vs battle screen, use 1 as size multiplier
         lui     t9, 0x3F80                  // t9 = 1 (float)
 
+        _apply:
         lli     a2, state.GIANT             // a2 = GIANT
         beql    t9, a2, _return             // if in GIANT state, use giant size multiplier
         lui     t9, 0x4010                  // t9 = 2.25 (float)
@@ -407,8 +443,61 @@ scope Size {
         _return:
         OS.patch_end()
 
-        li      t9, multiplier_table        // t9 = multiplier_table
+        Toggles.read(entry_charged_smashes, t9)
+        beqz    t9, _continue               // branch if charged smash attacks aren't allowed.
+        // if here, charged smash attacks enabled.
+        lw      t9, 0x24(s1)                // load action ID
+        slti    t5, t9, Action.FSmashHigh   // t5 = 0 if actionID is => FSmashHigh
+        bnez    t5, _check_item_smash       // branch if actionID is < FSmashHigh
+        slti    t5, t9, Action.AttackAirN   // t5 = 0 if actionID is > DSmash
+        beqz    t5, _continue               // branch if actionID is > DSmash
+        nop
+        b       _smash_attack
+        nop
+        _check_item_smash:
+        lw      t5, 0x084C(s1)              // held item
+        beqz    t5, _continue               // branch to end if not holding an item
+        addiu   t5, r0, Action.BeamSwordSmash
+        beq     t5, t9, _smash_attack
+        // addiu   t5, r0, Action.BatSmash
+        // beq     t5, t9, _smash_attack
+        addiu   t5, r0, Action.FanSmash
+        beq     t5, t9, _smash_attack
+        addiu   t5, r0, Action.StarRodSmash
+        bne     t5, t9, _continue     // branch if not doing a smash attack
+
+        // if here, see if a charged smash
+        _smash_attack:
+        li      t9, ChargeSmashAttacks.charged_smash_fighter_array        // t9 = charged_smash_fighter_array
+        sll     t5, t8, 3                   // t5 = offset in table
+        addu    t9, t9, t5
+        lw      t9, 0x0000(t9)              // load charged smash value
+
+        beqz    t9, _continue               // continue normally if not a charged smash
+        nop
+
+        // if here, multiply damage amount by charged smash multiplier
+        mtc1    t9, f14                     // move charge smash amount to fp
+        cvt.s.w f14, f14                    // convert to fp
+        li      t9, 0x3BDA740E              // t9 = 0.4 / 60
+        mtc1    t9, f16                     // move to fp
+        mul.s   f16, f14, f16               // f16 = charge time * 0.4
+        lui     t9, 0x3F80
+        mtc1    t9, f14                     // f14 = 1.0
+        add.s   f16, f14, f16               // f16 = charged smash damage multiplier.
+        mtc1    t7, f6                      // ~
+        cvt.s.w f6, f6                      // f6 = current damage amount (fp)
+        nop
+        mul.s   f6, f6, f16                 // multiply current damage by charged smash multiplier
+        nop
+        cvt.w.s f6, f6                      // f6 = current damage amount (fp)
+        nop
+
+        mfc1    t7, f6                      // replace current damage value
+
+        _continue:
         sll     t8, t8, 0x0002              // t8 = index = port * 4
+        li      t9, multiplier_table        // t9 = multiplier_table
         addu    t9, t9, t8                  // t9 = &multiplier_table[index]
         lwc1    f16, 0x0000(t9)             // f16 = multiplier
         lui     t8, 0x3f80                  // t1= 1
@@ -556,7 +645,7 @@ scope Size {
         swc1    f4, 0x0060(v0)              // original line 2
     }
 
-	// @ Description
+    // @ Description
     // Adjusts jump squat.
     scope adjust_player_jump_squat_: {
         OS.patch_start(0xB9D48, 0x8013F308)
@@ -575,19 +664,19 @@ scope Size {
         c.le.s  f4, f6
         bc1t    _end
         lwc1    f4, 0x0034(v1)              // original line 1
-		add.s	f4, f4, f6					// add 1 frame to jump squat for giant characters
+        add.s   f4, f4, f6                  // add 1 frame to jump squat for giant characters
 
         _end:
         j       _return
         c.le.s  f4, f18                     // original line 2
     }
 
-	// @ Description
+    // @ Description
     // Adjusts jumping height multiplier and base jumping height for first jump.
     scope adjust_jumping_height_multiplier_1: {
         OS.patch_start(0xBA38C, 0x8013F94C)
         jal     adjust_jumping_height_multiplier_1
-        lwc1	f16, 0x003C(v0)				// original line 1 (jumping height multiplier)
+        lwc1    f16, 0x003C(v0)             // original line 1 (jumping height multiplier)
         OS.patch_end()
 
         li      t8, multiplier_table        // t8 = multiplier_table
@@ -615,7 +704,7 @@ scope Size {
 
     }
 
-	// @ Description
+    // @ Description
     // Adjusts jumping height multiplier and base jumping height for second jump.
     scope adjust_jumping_height_multiplier_2: {
         OS.patch_start(0xBA8A4, 0x8013FE64)
@@ -653,9 +742,25 @@ scope Size {
         add.s   f6, f18, f10                // f6 = multiplier = 1 + m * (s - 1)
         cvt.s.w f10, f8                     // original line 1
         lwc1    f8, 0x0048(t0)              // original line 2, load 2nd jump multiplier
+        mul.s   f8, f8, f6                  // f8 = multiplier * 2nd jumping height multiplier
 
+        // adjust height of pwing jumps
+        _check_pwing:
+        // s0 = player struct
+        lbu     t6, 0x000D(s0)              // t6 = port
+        li      at, Item.Pwing.pwing_jump_flag
+        addu    at, at, t6                  // at = address of pwing jump flag for this player
+        lb      at, 0x0000(at)              // at = 1 if we are currently jumping with pwing
+        beqz    at, _end                    // branch accordingly
+        nop
+
+        li      at, 0x3F4CCCCD              // at = 0.8
+        mtc1    at, f6                      // f6 = 0.8
+        mul.s   f8, f8, f6                  // f8 = multiplier * 2nd jumping height multiplier
+
+        _end:
         jr      ra
-        mul.s   f8, f8, f6                  // f8 = multiplier * 2nd jumpin height multiplier
+        nop
     }
 
     // @ Description
@@ -1876,7 +1981,7 @@ scope Size {
         }
 
         scope dsp {
-        	// The following patches allow scaling the DSP gfx.
+            // The following patches allow scaling the DSP gfx.
             // replace update routine with a wrapper that adjusts the size
             OS.patch_start(0xA9C1C + 0x10, 0x8012E41C + 0x10)
             dw update_routine_._update
@@ -2002,6 +2107,104 @@ scope Size {
             lw      ra, 0x0004(sp)          // restore registers
             jr      ra
             addiu   sp, sp, 0x0010          // deallocate stack space
+        }
+    }
+
+    scope dragonking {
+        scope nsp {
+            // The following patch replaces the render routine with a wrapper that adjust the size
+
+            OS.patch_start(0xA99D4 + 0x14, 0x8012E1D4 + 0x14)
+            dw render_routine_
+            OS.patch_end()
+
+            // @ Description
+            // This is the wrapper for the original render routine used for Dragon King's NSP ball gfx.
+            // @ Arguments
+            // a0 - gfx object
+            scope render_routine_: {
+                addiu   sp, sp,-0x0010          // allocate stack space
+                sw      ra, 0x0004(sp)          // save registers
+
+                li      t8, Size.multiplier_table
+                lw      t7, 0x0084(a0)          // t7 = projectile special struct
+                lw      t4, 0x0004(t7)          // t4 = player special struct
+                lbu     t7, 0x000D(t4)          // t7 = port
+                sll     t7, t7, 0x0002          // t7 = port * 4 = offset to multiplier
+                addu    t8, t8, t7              // t8 = size multiplier address
+                lwc1    f6, 0x0000(t8)          // f6 = size multiplier
+
+                lw      t8, 0x0008(t4)          // t8 = current character ID
+                lli     t3, Character.id.KIRBY  // t3 = id.KIRBY
+                beql    t8, t3, _calc_scale     // if Kirby, load alternate scale
+                lui     t3, 0x3F00              // t3 = scale
+                lli     t3, Character.id.JKIRBY // t3 = id.JKIRBY
+                beql    t8, t3, _calc_scale     // if J Kirby, load alternate scale
+                lui     t3, 0x3F00              // t3 = scale
+
+                lui     t3, 0x3F40              // t3 = default scale
+
+                _calc_scale:
+                mtc1    t3, f8                  // f8 = scale
+                mul.s   f6, f6, f8              // f6 = new scale
+
+                lw      t4, 0x0074(a0)          // t4 = gfx position struct top joint
+                lw      t3, 0x0010(t4)          // t3 = gfx 2nd joint
+
+                swc1    f6, 0x0040(t3)          // update x scale
+                swc1    f6, 0x0044(t3)          // update y scale
+                swc1    f6, 0x0048(t3)          // update z scale
+
+                jal     0x80014038              // call original render routine
+                nop
+
+                lw      ra, 0x0004(sp)          // restore registers
+                jr      ra
+                addiu   sp, sp, 0x0010          // deallocate stack space
+            }
+
+            // @ Description
+            // This is the wrapper for the original render routine used for Kirby's USP descending sword trail gfx.
+            // @ Arguments
+            // a0 - gfx object
+            scope render_routine_descend_: {
+                addiu   sp, sp,-0x0010          // allocate stack space
+                sw      ra, 0x0004(sp)          // save registers
+
+                lw      t4, 0x0074(a0)          // t4 = gfx position struct top joint
+                lw      t3, 0x0010(t4)          // t3 = gfx 2nd joint
+
+                li      t8, Size.multiplier_table
+                lw      t7, 0x0084(a0)          // t7 = projectile special struct
+                lw      t7, 0x0004(t7)          // t7 = player object
+                lw      t7, 0x0084(t7)          // t7 = player special struct
+                lbu     t7, 0x000D(t7)          // t7 = port
+                sll     t7, t7, 0x0002          // t7 = port * 4 = offset to multiplier
+                addu    t8, t8, t7              // t8 = size multiplier address
+                lwc1    f6, 0x0000(t8)          // f6 = size multiplier
+                li      t7, 0x358637BD          // t7 = original x
+                mtc1    t7, f2                  // f2 = original x
+                mul.s   f2, f2, f6              // f2 = updated x
+                lui     t7, 0x4396              // t7 = original y
+                mtc1    t7, f4                  // f4 = original y
+                mul.s   f4, f4, f6              // f4 = updated y
+                li      t7, 0xC170000D          // t7 = original z
+                mtc1    t7, f0                  // f0 = original z
+                mul.s   f0, f0, f6              // f0 = updated z
+                swc1    f6, 0x0040(t3)          // update x scale
+                swc1    f6, 0x0044(t3)          // update y scale
+                swc1    f6, 0x0048(t3)          // update z scale
+                swc1    f2, 0x001C(t3)          // update x
+                swc1    f4, 0x0020(t3)          // update y
+                swc1    f0, 0x0024(t3)          // update z
+
+                jal     0x80014768              // call original render routine
+                nop
+
+                lw      ra, 0x0004(sp)          // restore registers
+                jr      ra
+                addiu   sp, sp, 0x0010          // deallocate stack space
+            }
         }
     }
 
@@ -2179,11 +2382,16 @@ scope Size {
             lli     t8, Character.id.MARINA
             beq     t7, t8, _link_ground_gfx // if Marina, scale like ground gfx
             lli     t8, Character.id.GOEMON
-            bne     t7, t8, _top_joint      // if not Goemon, scale top joint
+            beq     t7, t8, _render_override  // if Goemon, update render routine
+            lli     t8, Character.id.BANJO
+            beq     t7, t8, _2nd_joint  // if Banjo, update 2nd joint
+            lli     t8, Character.id.EBI
+            bne     t7, t8, _top_joint      // if not Ebisumaru, scale top joint
             nop                             // otherwise we'll update the render routine
 
             // Goemon beam
-            li      t7, beam_render_routine_
+            _render_override:
+            li      t7, scaled_render_routine_
             lbu     t8, 0x000D(s0)          // t8 = port
             sw      t8, 0x0040(v0)          // set port on object
             jr      ra
@@ -2299,10 +2507,20 @@ scope Size {
 
                 li      t8, Size.multiplier_table
                 lw      t7, 0x0040(a0)          // t7 = player special struct
+
+                lw      t0, 0x0008(t7)          // t0 = char_id
                 lbu     t7, 0x000D(t7)          // t7 = port
                 sll     t7, t7, 0x0002          // t7 = port * 4 = offset to multiplier
                 addu    t8, t8, t7              // t8 = size multiplier address
                 lwc1    f6, 0x0000(t8)          // f6 = size multiplier
+
+                lli     t1, Character.id.BANJO
+                bne     t0, t1, _continue       // if not Banjo, don't adjust y offset
+                lwc1    f8, 0x0024(t3)          // f8 = y offset, unadjusted
+
+                mul.s   f8, f8, f6              // f8 = y offset, adjusted
+
+                _continue:
                 lwc1    f0, 0x0040(t3)          // f0 = x
                 mul.s   f0, f0, f6              // f0 = updated x
                 lwc1    f2, 0x0044(t3)          // f2 = y
@@ -2312,6 +2530,7 @@ scope Size {
                 swc1    f0, 0x0040(t3)          // update x scale
                 swc1    f2, 0x0044(t3)          // update y scale
                 swc1    f4, 0x0048(t3)          // update z scale
+                swc1    f8, 0x0024(t3)          // update y offset
 
                 lw      ra, 0x0004(sp)          // restore registers
                 jr      ra
@@ -2319,10 +2538,11 @@ scope Size {
             }
 
             // @ Description
-            // This is the wrapper for the original render routine used for beam animation.
+            // This is the wrapper for the original render routine used for animating the entry gfx.
+            // Goemon/Ebi beam and Banjo platform.
             // @ Arguments
             // a0 - projectile object
-            scope beam_render_routine_: {
+            scope scaled_render_routine_: {
                 addiu   sp, sp,-0x0010      // allocate stack space
                 sw      ra, 0x0004(sp)      // save registers
 

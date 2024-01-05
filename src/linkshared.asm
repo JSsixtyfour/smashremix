@@ -124,6 +124,33 @@ scope LinkShared {
     dw  0x00000CA4
     dw  0x00000CEC
 
+    entry_anim_struct_2_EBI:
+    dw  0x040A0000
+    dw  Character.EBI_file_9_ptr
+    OS.copy_segment(0xA9D14, 0x10)
+	dw	0x00000990					        // Ebisumaru entry alters these
+	dw  0x00000A98
+    dw  0x00000CA4
+    dw  0x00000CEC
+
+    entry_anim_struct_2_BANJO:
+    dw  0x040A0000
+    dw  Character.BANJO_file_8_ptr
+    OS.copy_segment(0xA9CEC, 0x10)
+	dw	0x00000240					        // Banjo entry alters these
+	dw  0x00000348
+    dw  0x00000378
+    dw  0x000003D4
+
+    entry_anim_struct_1_BANJO:
+    dw  0x040A0000
+    dw  Character.BANJO_file_8_ptr
+    OS.copy_segment(0xA9D14, 0x10)
+	dw	0x00000878					        // Banjo entry alters these
+	dw  0x00000980
+    dw  0x00000A54
+    dw  0x00000A9C
+
     // @ Description
     // loads a different animation struct when Young Link or Marth use their entry animation.
     scope get_entry_anim_struct_1: {
@@ -148,9 +175,13 @@ scope LinkShared {
         lli     t1, Character.id.MARINA     // t1 = id.MARINA
         li      a0, entry_anim_struct_1_MARINA // a0 = entry_anim_struct
         beq     t0, t1, _custom             // branch if Marina
+        ori     t1, r0, Character.id.BANJO  // t1 = id.BANJO
+        li      a0, entry_anim_struct_1_BANJO       // a0 = entry_anim_struct
+        beq     t0, t1, _custom             // branch if Banjo
         lli     t1, Character.id.GOEMON     // t1 = id.GOEMON
-        // li      a0, entry_anim_struct_1_GOEMON // a0 = entry_anim_struct
         beq     t0, t1, _skip               // branch if Goemon
+        lli     t1, Character.id.EBI        // t1 = id.EBI
+        beq     t0, t1, _skip               // branch if Ebisumaru
         lw      t0, 0x0004(sp)              // ~
 
         // normal path
@@ -198,9 +229,15 @@ scope LinkShared {
         lli     t1, Character.id.MARINA     // t1 = id.MARINA
         li      a0, entry_anim_struct_2_MARINA // a0 = entry_anim_struct
         beq     t0, t1, _custom             // branch if Marina
+        ori     t1, r0, Character.id.BANJO  // t1 = id.BANJO
+        li      a0, entry_anim_struct_2_BANJO       // a0 = entry_anim_struct
+        beq     t0, t1, _custom             // branch if BANJO
         lli     t1, Character.id.GOEMON     // t1 = id.GOEMON
         li      a0, entry_anim_struct_2_GOEMON // a0 = entry_anim_struct
         beq     t0, t1, _custom             // branch if Goemon
+        lli     t1, Character.id.EBI        // t1 = id.EBI
+        li      a0, entry_anim_struct_2_EBI // a0 = entry_anim_struct
+        beq     t0, t1, _custom             // branch if Ebisumaru
         lw      t0, 0x0004(sp)              // ~
 
         // normal path
@@ -398,7 +435,10 @@ scope LinkShared {
         beq     v1, at, _end                // end if id = NLINK
         nop
         ori     at, r0, Character.id.YLINK  // at = YLINK
-        beq     v1, at, _end                // end if id = ELINK
+        beq     v1, at, _end                // end if id = YLINK
+        nop
+        ori     at, r0, Character.id.NYLINK  // at = NYLINK
+        beq     v1, at, _end                // end if id = NYLINK
         nop
         ori     at, r0, Character.id.ELINK  // at = ELINK
         beq     v1, at, _end                // end if id = ELINK
@@ -430,6 +470,9 @@ scope LinkShared {
         nop
         ori     at, r0, Character.id.YLINK  // at = YLINK
         beq     v0, at, _end                // end if id = YLINK
+        nop
+        ori     at, r0, Character.id.NYLINK  // at = NYLINK
+        beq     v0, at, _end                // end if id = NYLINK
         nop
         ori     at, r0, Character.id.ELINK  // at = ELINK
         beq     v0, at, _end                // end if id = ELINK
@@ -465,13 +508,16 @@ scope LinkShared {
         beq     v1, at, _end                // end if id = NLINK
         nop
         ori     at, r0, Character.id.YLINK  // at = YLINK
-        beq     v1, at, _end                // end if id = YINK
+        beq     v1, at, _end                // end if id = YLINK
         nop
         ori     at, r0, Character.id.ELINK  // at = ELINK
         beq     v1, at, _end                // end if id = ELINK
         nop
         ori     at, r0, Character.id.JLINK  // at = JLINK
         beq     v1, at, _end                // end if id = JLINK
+        nop
+        ori     at, r0, Character.id.NYLINK  // at = NYLINK
+        beq     v1, at, _end                // end if id = NYLINK
         nop
 
         _end:

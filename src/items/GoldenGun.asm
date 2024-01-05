@@ -51,6 +51,7 @@ constant KNOCKBACK_ANGLE(7)
 constant PROJECTILE_SPEED(0x4396)       // 300
 constant FRAME_SPEED_MULTIPLIER(0x3F00) // 0.5
 constant ON_HIT_FGM(FGM.item.BAT)       // on hit fgm
+constant PROJECTILE_ID(0x1009)
 
 // @ Description
 // I copied the original routine for raygun and modified it
@@ -124,7 +125,7 @@ scope pickup_item: {
 OS.align(16)
 golden_bullet_projectile_struct:
 dw 0x00000000              // unknown
-dw 0x00000014              // projectile id
+dw PROJECTILE_ID           // projectile id
 dw projectile_info_pointer // address of display / hitbox file
 dw 0x00000000              // offset to hitbox
 dw 0x1C000000              // Rendering routine

@@ -5,6 +5,71 @@
 scope NessShared {
 
     // @ Description
+    // Fix PK Thunder reflect crashing 2
+    scope pk_thunder_reflect_crash_fix_1_: {
+        OS.patch_start(0xE6280, 0x8016B840)
+        j       pk_thunder_reflect_crash_fix_1_
+        addiu   sp, sp, -0x18       // og line 1
+        _return:
+        OS.patch_end()
+
+        sw      ra, 0x0014(sp)      // og line 2
+
+        Toggles.read(entry_pk_thunder_reflect_crash_fix, at) // at = toggle
+        beqz    at, _normal         // branch if toggle is disabled
+        nop
+
+        // fixed
+        jal     0x8016B6A0          // Mark trail objects as 'discarded' on reflection
+        sw      a0, 0x0018(sp)      // store a0 (weapon_gobj)
+        lw      a0, 0x0018(sp)      // restore a0
+
+        _normal:
+        j       _return
+        nop
+
+    }
+
+    // @ Description
+    // Fix PK Thunder reflect crashing 2
+    scope pk_thunder_reflect_crash_fix_2_: {
+        OS.patch_start(0xE6640, 0x8016BC00)
+        j       pk_thunder_reflect_crash_fix_2_
+        nop
+        _return:
+        OS.patch_end()
+
+        Toggles.read(entry_pk_thunder_reflect_crash_fix, at) // at = toggle
+        beqz    at, _normal         // branch if toggle is disabled
+        nop
+
+        _fixed:
+        lwc1    f14, 0x20(t0)       // 
+        swc1    f14, 0x20(v1)       // 
+        lwc1    f12, 0x24(t0)       // 
+        swc1    f12, 0x24(v1)       // 
+        jal     0x8001863C          // Get tangent of velocity; same method used by DamageFlyRoll to calculate model rotation
+        sw      a0, 0x002C(sp)      // 
+
+        lw      a0, 0x002C(sp)      // 
+        lw      t3, 0x0074(a0)      // 
+        lui     at, 0x8019          // og line 2
+        lwc1    f6, 0xCB18(at)      // Get M_PI / 2
+        sub.s   f0, f0, f6          // The PK Thunder trail model's rotation is, by default, situated vertically at 90 degrees; subtract 90 degrees to get the correct rotation
+        j       0x8016BC2C          // return to original routine
+        swc1    f0, 0x0038(t3)      // 
+
+        // bugged version
+        _normal:
+        lwc1    f4, 0x0020(t0)      // og line 1
+        j       _return
+        lui     at, 0x8019          // og line 2
+
+    }
+
+
+
+    // @ Description
     // loads a different pointer for Ness clones/Kirby when spawning pkfire graphic.
     scope get_pkfire_pointer_: {
         OS.patch_start(0xE56D0, 0x8016AC90)
@@ -150,6 +215,9 @@ scope NessShared {
         addiu   at, r0, Character.id.NLUCAS // Polygon Lucas Character ID
         beq     v0, at, special_jump
         nop
+        addiu   at, r0, Character.id.NMTWO  // Polygon Mewtwo Character ID
+        beq     v0, at, special_jump
+        nop
         j       _return                     // return
         nop
 
@@ -180,6 +248,9 @@ scope NessShared {
         beq     v0, at, special_jump
         nop
         addiu   at, r0, Character.id.NLUCAS // Polygon Lucas Character ID
+        beq     v0, at, special_jump        // jump to special jump
+        nop
+        addiu   at, r0, Character.id.NMTWO  // Polygon Mewtwo Character ID
         beq     v0, at, special_jump        // jump to special jump
         nop
         j       _return                     // return
@@ -604,9 +675,9 @@ scope NessShared {
         sw      t2, 0x0008(sp)              // store t2, t1
         lui     t1, 0x8019
         addiu   t1, t1, 0xCFF0              // This is some kind of hardcoded location for the projectile struct
-        lw      t2, 0x0000(v1)              // load player struct from projectile struct. The parent struct to the projectile struct is here and you just go down till you get there.
-        lw      t2, 0x0000(t2)              // load player struct from projectile struct
-        lw      t2, 0x01B4(t2)              // load player struct from projectile struct
+        lw      t2, 0x0084(a0)
+        lw      t2, 0x02A4(t2)              // load original player object from projectile struct
+        lw      t2, 0x0084(t2)              // load player struct from player object
         sw      t2, 0x0010(t1)              // save playerstruct to magic struct. This struct is hardcoded, always in the same spot and can be loaded from whenever.
         lw      t2, 0x0008(t2)              // load character ID from projectile struct
         ori     t1, r0, Character.id.JNESS  // t1 = id.JNESS

@@ -147,6 +147,28 @@ scope GFX {
     }
 
     // @ Description
+    // Modifies the routine that references GFX Texture Block IDs within GFX instructions so that we can use an extended table
+    scope extend_referenced_gfx_texture_block_map_: {
+        OS.patch_start(0x4F190, 0x800D37B0)
+        j       extend_referenced_gfx_texture_block_map_
+        lw      t2, 0x0000(t1)                          // original line 1
+        OS.patch_end()
+
+        // t3 is the GFX_TEXTURE_BLOCK_ID
+        lhu     t3, 0x0002(t2)                          // original line 2
+
+        slti    t6, t3, 0x002F                           // check if ID is less than 0x2F, which means it's an original GFX_TEXTURE_BLOCK_ID
+        bnez    t6, _normal                              // if it is not a new GFX_TEXTURE_BLOCK_ID, then branch
+        nop                                              // else determine extended table address and offset:
+        li      t9, extended_gfx_texture_block_map       // t9 = address of extended table
+        addiu   t3, t3, -0x002F                          // t3 = slot in extended table
+
+        _normal:
+        j       0x800D37B8                               // return
+        nop                                              // ~
+    }
+
+    // @ Description
     // Modifies the render routine that maps GFX Texture Block IDs to GFX Texture Blocks so that we can use an extended table
     scope extend_gfx_texture_block_map_render_: {
         OS.patch_start(0x4D0D4, 0x800D16F4)
@@ -383,12 +405,16 @@ scope GFX {
     scope id {
         constant FLAME(0x4)
         constant FIRE(0x6)
+        constant KIRBY_USP_SPARKLES_SECONDARY_A(0xC)
+        constant KIRBY_USP_SPARKLES_SECONDARY_B(0xD)
+        constant KIRBY_USP_SPARKLES_PRIMARY(0x4A)
 	    constant SMOKE_PUFF(0x12)
 	    constant FIRE_CROSS(0x13)
 	    constant EXPLOSION(0x1C)
 	    constant WHITE_SPARK(0x1F)
 	    constant WHITE_SPARKLE(0x29)
 	    constant NOTE(0x5A)
+        constant YOSHI_SHELL_BREAK_PRIMARY(0x5B)
 	    constant PINK_BLAST(0x62)
 	}
 
@@ -441,10 +467,15 @@ scope GFX {
     add_gfx_texture(gfx/mewtwo-jab-3.ia8)
     add_gfx_texture(gfx/mewtwo-jab-4.ia8)
     add_gfx_texture(gfx/mewtwo-jab-5.ia8)
-    
+
     add_gfx_texture_block(Orange_Blast, 1, 2, 0, 0x10, 0x8)
     add_gfx_texture(gfx/orange_blast.rgba5551)
     add_gfx_texture(gfx/orange_blast_palette.rgba5551)      // I don't see any other way to add a palette
+
+    add_gfx_texture_block(Feather, 3, 0, 2, 0x10, 0x10)
+    add_gfx_texture(gfx/feather-1.rgba5551)
+    add_gfx_texture(gfx/feather-2.rgba5551)
+    add_gfx_texture(gfx/feather-3.rgba5551)
 
     // ADD NEW GFX HERE
     add_gfx(Blue Explosion, gfx/blue_explosion_instructions.bin, id.EXPLOSION)
@@ -472,6 +503,15 @@ scope GFX {
     add_gfx(White Smoke, gfx/white_smoke_instructions.bin, id.SMOKE_PUFF)
     add_gfx(Orange Spark, gfx/orange_spark_instructions.bin, id.WHITE_SPARK)
     add_gfx(Orange Blast, gfx/orange_blast_instructions.bin, id.PINK_BLAST)
+    add_gfx(Red Sparkles Secondary A, gfx/red_sparkles_secondary_a_instructions.bin, id.KIRBY_USP_SPARKLES_SECONDARY_A)
+    add_gfx(Red Sparkles Secondary B, gfx/red_sparkles_secondary_b_instructions.bin, id.KIRBY_USP_SPARKLES_SECONDARY_B)
+    add_gfx(Red Sparkles Primary, gfx/red_sparkles_primary_instructions.bin, id.KIRBY_USP_SPARKLES_PRIMARY)
+    add_gfx(Feathers Secondary A, gfx/feather_secondary_a_instructions.bin, id.YOSHI_SHELL_BREAK_PRIMARY)
+    add_gfx(Feathers Secondary B, gfx/feather_secondary_b_instructions.bin, id.YOSHI_SHELL_BREAK_PRIMARY)
+    add_gfx(Feathers Primary, gfx/feather_primary_instructions.bin, id.YOSHI_SHELL_BREAK_PRIMARY)
+    add_gfx(Gold Sparkles Secondary A, gfx/gold_sparkles_secondary_a_instructions.bin, id.KIRBY_USP_SPARKLES_SECONDARY_A)
+    add_gfx(Gold Sparkles Secondary B, gfx/gold_sparkles_secondary_b_instructions.bin, id.KIRBY_USP_SPARKLES_SECONDARY_B)
+    add_gfx(Gold Sparkles Primary, gfx/gold_sparkles_primary_instructions.bin, id.KIRBY_USP_SPARKLES_PRIMARY)
 
     // writes new GFX to ROM
     write_gfx()

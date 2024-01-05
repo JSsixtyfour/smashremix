@@ -4,6 +4,12 @@
 
 scope Peppy {
 
+    OS.align(4)
+    // Insert AI attack options
+    constant CPU_ATTACKS_ORIGIN(origin())
+    insert CPU_ATTACKS,"AI/attack_options.bin"
+    OS.align(16)
+
     // @ Description
     // Peppy's extra actions
     scope Action {
@@ -97,9 +103,9 @@ scope Peppy {
     insert NSP_BEGIN,"moveset/NSP_BEGIN.bin"
     NSP_CHARGE:
     Moveset.HIDE_ITEM();
-    dw 0xA0880000, 0xC40C8007;
+    dw 0xA0880000, 0xC40C8007, 0xD0004000;
     NSP_CHARGE_LOOP:
-    Moveset.WAIT(0x16); Moveset.SET_FLAG(); dw 0x4400002C; Moveset.WAIT(9); Moveset.GO_TO(NSP_CHARGE_LOOP)
+    Moveset.WAIT(0x16); Moveset.SET_FLAG(0); dw 0x4400002C; Moveset.WAIT(9); Moveset.GO_TO(NSP_CHARGE_LOOP)
     insert NSP_SHOOT,"moveset/NSP_SHOOT.bin"
 
     USP_READY_ROUTINE:
@@ -179,7 +185,7 @@ scope Peppy {
     Character.edit_action_parameters(PEPPY, Action.Grab,            -1,                         GRAB,                       -1)
     Character.edit_action_parameters(PEPPY, Action.ThrowF,          -1,                         FTHROW,                     -1)
     Character.edit_action_parameters(PEPPY, Action.ThrowB,          -1,                         BTHROW,                     -1)
-	Character.edit_action_parameters(PEPPY, Action.Crouch,          File.WOLF_CROUCH,          -1,                          -1)
+    Character.edit_action_parameters(PEPPY, Action.Crouch,          File.WOLF_CROUCH,          -1,                          -1)
     Character.edit_action_parameters(PEPPY, Action.CrouchIdle,      File.WOLF_CROUCH_IDLE,     -1,                          -1)
     Character.edit_action_parameters(PEPPY, Action.CrouchEnd,       File.WOLF_CROUCH_END,      -1,                          -1)
     Character.edit_action_parameters(PEPPY, Action.JumpAerialF,     -1,                         JUMP2,                      -1)
@@ -196,8 +202,8 @@ scope Peppy {
     Character.edit_action_parameters(PEPPY, Action.Sleep,           -1,                         ASLEEP,                     -1)
     Character.edit_action_parameters(PEPPY, Action.Taunt,           File.PEPPY_TAUNT,           TAUNT,                      -1)
     Character.edit_action_parameters(PEPPY, Action.DashAttack,      File.PEPPY_DASH_ATTACK,     DASH_ATTACK,                -1)
-	Character.edit_action_parameters(PEPPY, Action.UTilt,           File.PEPPY_UTILT,           UTILT,                      -1)
-	Character.edit_action_parameters(PEPPY, Action.DTilt,           File.WOLF_DTILT,            DTILT,                      -1)
+    Character.edit_action_parameters(PEPPY, Action.UTilt,           File.PEPPY_UTILT,           UTILT,                      -1)
+    Character.edit_action_parameters(PEPPY, Action.DTilt,           File.WOLF_DTILT,            DTILT,                      -1)
     Character.edit_action_parameters(PEPPY, Action.FSmash,          File.FALCO_FSMASH,          FSMASH,                     -1)
     Character.edit_action_parameters(PEPPY, Action.USmash,          -1,                         USMASH,                     -1)
     Character.edit_action_parameters(PEPPY, Action.AttackAirN,      -1,                         NAIR,                       -1)
@@ -281,6 +287,7 @@ scope Peppy {
 
     // Set default costumes
     Character.set_default_costumes(Character.id.PEPPY, 0, 1, 4, 5, 1, 3, 2)
+    Teams.add_team_costume(YELLOW, PEPPY, 0x5)
 
     // Patches for full charge Neutral B effect removal.
     Character.table_patch_start(gfx_routine_end, Character.id.PEPPY, 0x4)
@@ -316,7 +323,26 @@ scope Peppy {
     // Shield colors for costume matching
     Character.set_costume_shield_colors(PEPPY, WHITE, RED, BROWN, AZURE, BLACK, ORANGE, NA, NA)
 
-
+    // Edit cpu attack behaviours
+    // edit_attack_behavior(table, attack, override, start_hb, end_hb, min_x, max_x, min_y, max_y)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DAIR,   -1,  4,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPA,   -1,  0,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPG,   -1,  60,  -1,  200, 1000, -50, 200)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSMASH, -1,  6,  -1,  -1, -1, -10, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DTILT,  -1,  4,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FAIR,   -1,  4,   -1,   -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FSMASH, -1,  14,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FTILT,  -1,  6,   -1,   -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, GRAB,   -1,  -1,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, JAB,    -1,  -1,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NAIR,   -1,  4,   -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPA,   -1,  65,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPG,   -1,  65,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UAIR,   -1,  6,   -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPA,   -1,  44,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPG,   -1,  44,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USMASH, -1,  6,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UTILT,  -1,  6,  -1,  -1, -1, -1, -1)
 
     // Set action strings
     Character.table_patch_start(action_string, Character.id.PEPPY, 0x4)

@@ -370,6 +370,7 @@ scope Mewtwo {
 
     // Set default costumes
     Character.set_default_costumes(Character.id.MTWO, 0, 2, 3, 1, 2, 3, 1)
+    Teams.add_team_costume(YELLOW, MTWO, 0x4)
 
     // Shield colors for costume matching
     Character.set_costume_shield_colors(MTWO, PURPLE, GREEN, RED, BLUE, YELLOW, CYAN, NA, NA)
@@ -510,6 +511,11 @@ scope Mewtwo {
     dw  Action.action_string_table
     OS.patch_end()
 
+    // Set Magnifying Glass Scale Override
+    Character.table_patch_start(magnifying_glass_zoom, Character.id.MTWO, 0x2)
+    dh  0x006B
+    OS.patch_end()
+
     // @ Description
     // Jump table patch which sets the rapid jab begin action.
     scope set_rapid_jab_begin_action_: {
@@ -549,6 +555,8 @@ scope Mewtwo {
         lw      t6, 0x0008(t6)              // t6 = character ID
         lli     at, Character.id.MTWO       // at = id.MTWO
         beq     t6, at, _mewtwo             // branch if character = MTWO
+        lli     at, Character.id.NMTWO       // at = id.NMTWO
+        beq     t6, at, _mewtwo             // branch if character = NMTWO
         nop
 
         // if the character is not mewtwo

@@ -205,10 +205,10 @@ scope SSonic {
     Character.edit_action_parameters(SSONIC, Action.DamageFlyLow,    -1,                         Sonic.DMG_2,                      -1)
     Character.edit_action_parameters(SSONIC, Action.DamageFlyTop,    -1,                         Sonic.DMG_2,                      -1)
     Character.edit_action_parameters(SSONIC, Action.DamageFlyRoll,   -1,                         Sonic.DMG_2,                      -1)
-    
-    
-    
-    
+
+
+
+
 
     // Add Action Parameters                // Action Name      // Base Action  // Animation                // Moveset Data             // Flags
     Character.add_new_action_params(SSONIC,  DSP_Ground_Charge,  -1,             File.SONIC_CHARGE_LOOP,    Sonic.DSP_CHARGE,           0)
@@ -284,6 +284,7 @@ scope SSonic {
 
     // Set default costumes
     Character.set_default_costumes(Character.id.SSONIC, 0, 1, 4, 5, 3, 1, 2)
+    Teams.add_team_costume(YELLOW, SSONIC, 0x0)
 
     // Set default costume shield colors
     Character.set_costume_shield_colors(SSONIC, YELLOW, AZURE, LIME, RED, PURPLE, MAGENTA, NA, NA)
@@ -301,7 +302,7 @@ scope SSonic {
 	// Set CPU NSP long range behaviour
     Character.table_patch_start(ai_long_range, Character.id.SSONIC, 0x4)
     dw    	AI.LONG_RANGE.ROUTINE.NONE
-    OS.patch_end()	
+    OS.patch_end()
 
     // Edit cpu attack behaviours
     // edit_attack_behavior(table, attack, override, start_hb, end_hb, min_x, max_x, min_y, max_y)

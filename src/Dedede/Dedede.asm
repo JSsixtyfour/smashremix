@@ -675,6 +675,7 @@ Character.edit_action_parameters(DEDEDE, Action.LandingAirX,            File.DED
 
     // Set default costumes
     Character.set_default_costumes(Character.id.DEDEDE, 0, 1, 2, 5, 0, 3, 4)
+    Teams.add_team_costume(YELLOW, DEDEDE, 0x2)
 
     // Set default costume shield colors
     Character.set_costume_shield_colors(DEDEDE, RED, PINK, ORANGE, BLUE, GREEN, WHITE, NA, NA)
@@ -682,6 +683,11 @@ Character.edit_action_parameters(DEDEDE, Action.LandingAirX,            File.DED
 	Character.table_patch_start(initial_script, Character.id.DEDEDE, 0x4)
 	dw		initial_script_
 	OS.patch_end()
+    
+    // Set Magnifying Glass Scale Override
+    Character.table_patch_start(magnifying_glass_zoom, Character.id.DEDEDE, 0x2)
+    dh  0x005E
+    OS.patch_end()
 
 	// Set CPU SD prevent routine
     Character.table_patch_start(ai_attack_prevent, Character.id.DEDEDE, 0x4)

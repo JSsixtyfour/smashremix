@@ -49,7 +49,13 @@
         dw 0x74000001
         Moveset.END()
         
+        // @ Description
+        // tracks if players can't air dodge
+        // see Stamina.asm where this value is reset on hit
         air_dash_player_port_array:
+        dw 0
+        
+        special_air_dodge_flag:
         dw 0
         
         // @ Description
@@ -221,10 +227,10 @@
             bne     at, v0, _normal_melee   // branch if not Ultimate
             li      at, air_dash_main_
             sw      at, 0x09D4(s0)          // update main routine (transition to idle)
-            lb      t0, 0x01C2(s0)          // t0 = stick_x
-            bnez    t0, _normal_moveset     // branch if stick_x !=0
-            lb      t1, 0x01C3(s0)          // t1 = stick_y
-            bne     t1, r0, _normal_moveset // branch if not 0
+            li      at, special_air_dodge_flag
+            OS.read_word(special_air_dodge_flag, t0) // t0 = special air dodge flag to see if neutral
+            beqz    t0, _normal_moveset     // directional moveset if special flag = 0
+            nop
             li      at, neutral_moveset
 
             b       _continue
@@ -240,8 +246,14 @@
             _continue:
             sw      at, 0x086C(s0)          // update moveset pointer
             sw      at, 0x08AC(s0)          // update moveset pointer
+            OS.read_word(Toggles.entry_air_dodge + 0x4, at)   // at = toggle
+            addiu   t0, r0, TYPE.ULTIMATE
+            beq     t0, at, _collision      // skip updating movement routine if ULTIMATE
+            nop
+            _melee_movement:
             li      at, movement_
             sw      at, 0x09E0(s0)          // update movement routine
+            _collision:
             li      at, collision_
             sw      at, 0x09E4(s0)          // update collision pointer
             sw      r0, 0x09DC(s0)          // remove interrupt routine
@@ -314,6 +326,8 @@
             addiu   sp, sp, 0x0040          // deallocate stack space
         }
         
+        constant DEADZONE(10)
+        
         // @ Description
         // Applies air dash movement
         // a0 = player struct
@@ -323,13 +337,30 @@
             sw      a0, 0x0020(sp)          // ~
             sw      s0, 0x0024(sp)          // store ra, a0, s0
 
+            li      at, special_air_dodge_flag // this flag will track if player is inputting a direction air dodge or not
+            sw      r0, 0x0000(at)          // set the flag to 0
+
+            // dead zone check
             lb      t0, 0x01C2(a0)          // t0 = stick_x
-            bnez    t0, _continue           // branch if stick_x !=0
+            slti    t3, t0, DEADZONE        // t3 = 0 if stick_x > DEADZONE
+            beqz    t3, _not_neutral        // branch if stick_x > DEADZONE
             lb      t1, 0x01C3(a0)          // t1 = stick_y
-            beq     t1, r0, _default_angle  // branch if 0
+            slti    t3, t1, DEADZONE        // t3 = 0 if stick_y > DEADZONE
+            beqz    t3, _not_neutral        // branch if stick_y > DEADZONE
+
+            addiu   at, r0, -DEADZONE       // at = -DEADZONE
+            blt     t0, at, _not_neutral
+            nop
+            addiu   at, r0, -DEADZONE       // at = -DEADZONE
+            blt     t1, at, _not_neutral
+            nop
+            b       _default_angle
             nop
 
-            _continue:
+            // if here, then not neutral
+            _not_neutral:
+            li      at, movement_
+            sw      at, 0x09E0(a0)          // update movement routine
             lw      t2, 0x0044(a0)          // t2 = direction
             multu   t0, t2                  // ~
             mflo    t0                      // t0 = stick_x * direction
@@ -362,6 +393,11 @@
             addiu   v0, r0, TYPE.MELEE
             beq     at, v0, _default_angle_continue // branch if Melee
             nop
+            li      at, special_air_dodge_flag
+            addiu   t5, r0, 0x0001          // t5 = 1
+            sw      t5, 0x0000(at)          // write flag to indicate that this is a neutral air dodge
+            li      at, 0x800D9160          // default aerial movement routine
+            sw      at, 0x09E0(a0)          // update movement routine
             b       _end
             nop
 

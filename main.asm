@@ -96,6 +96,15 @@ include "src/AerialAttackFastFall.asm"
 include "src/LedgeTrump.asm"
 include "src/Hitstun.asm"
 include "src/WallTeching.asm"
+include "src/VsDemo.asm"
+include "src/Teams.asm"
+include "src/ChargeSmashAttacks.asm"
+include "src/Gallery.asm"
+include "src/Poison.asm"
+include "src/DragonKingHUD.asm"
+include "src/Accessibility.asm"
+include "src/BlastZone.asm"
+include "src/MagnifyingGlass.asm"
 
 // CHARACTER
 include "src/Character.asm"
@@ -229,6 +238,34 @@ include "src/Peppy/Peppy.asm"
 // SLIPPY
 include "src/Slippy/SlippySpecial.asm"
 include "src/Slippy/Slippy.asm"
+// BANJO
+include "src/Banjo/BanjoSpecial.asm"
+include "src/Banjo/Banjo.asm"
+// NDSAMUS
+include "src/NDSamus/NDSamus.asm"
+// MLUIGI
+include "src/MLuigi/MLuigi.asm"
+// EBISUMARU/EBI
+include "src/Ebi/EbiSpecial.asm"
+include "src/Ebi/Ebi.asm"
+// NMARTH
+include "src/NMarth/NMarth.asm"
+// NMTWO
+include "src/NMewtwo/NMewtwo.asm"
+// NDEDEDE
+include "src/NDedede/NDedede.asm"
+// NYOUNGLINK
+include "src/NYoungLink/NYoungLink.asm"
+// DRAGONKING
+include "src/DragonKing/DragonKingSpecial.asm"
+include "src/DragonKing/DragonKing.asm"
+// NGOEMON
+include "src/NGoemon/NGoemon.asm"
+// NCONKER
+include "src/NConker/NConker.asm"
+// NBANJO
+include "src/NBanjo/NBanjo.asm"
+
 
 // KIRBY
 include "src/Kirby/Kirby.asm"
@@ -245,7 +282,7 @@ fill MIDI.largest_midi  // Allocate as much space as we need!
 
 OS.align(16)
 file_table:  // This is where we move the file table to in order to load more files
-fill 0x580
+fill 0x620
 
 custom_heap: // This is where we move the heap to when we need to increase its size
 

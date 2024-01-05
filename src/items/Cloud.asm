@@ -294,6 +294,8 @@ scope enable_flash: {
     
     addiu   at, r0, Item.Cloud.id
     beq     at, t9, _cloud
+    addiu   at, r0, 0x011A      // bowser bomb item id
+    beq     at, t9, _cloud
     nop
     
     _normal:

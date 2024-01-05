@@ -95,6 +95,9 @@ scope Fireball: {
         beq     t0, t1, _capsule            // branch if type = Capsule.TYPE
         ori     t1, r0, Book.TYPE           // t1 = Book.TYPE
         beq     t0, t1, _book               // branch if type = Book.TYPE
+        lw      t0, 0x000C(v1)              // t0 = projectile ID
+        addiu   t1, r0, 0x1008              // Banjos egg ID
+        beq     t1, t0, _egg
         nop
 
         _fireball:
@@ -103,6 +106,10 @@ scope Fireball: {
         li      ra, _hit_effect_return      // load return address (default)
         b       _end                        // end
         sw      ra, 0x006C(sp)              // update ra and save to stack
+
+        _egg:
+        b       _fireball                   // todo
+        nop
 
         _capsule:
         jal     0x800269C0                  // play fgm
@@ -170,11 +177,19 @@ scope Fireball: {
         beq     t0, t1, _capsule            // branch if type = Capsule.TYPE
         ori     t1, r0, Book.TYPE           // t1 = Book.TYPE
         beq     t0, t1, _book               // branch if type = Book.TYPE
+        lw      t0, 0x000C(v0)              // check projectile ID
+        addiu   t1, r0, 0x1008              // Banjos egg ID
+        beq     t1, t0, _egg
         nop
 
         _fireball:
         jal     0x80102DEC                  // create "fire dust" gfx (original line 1)
         nop
+        b       _end
+        nop
+
+        _egg:
+        FGM.play(0x506)                     // play egg bounce sfx
         b       _end
         nop
 
@@ -194,6 +209,34 @@ scope Fireball: {
         addiu   sp, sp, 0x0010              // allocate stack space
         j       _bounce_effect_return       // return
         nop
+    }
+
+    // @ Description
+    // Banjos egg won't destroy itself so easilly
+    scope bounce_destroy_check: {
+        OS.patch_start(0xE30A4, 0x80168664)
+        j       bounce_destroy_check
+        lw      t3, 0x000C(t0)              // load projectile ID
+        _return:
+        OS.patch_end()
+
+        addiu   t4, r0, 0x1008              // t4 = banjo egg projectile id
+        bne     t4, t3, _normal             // branch to normal logic if not Banjos egg
+        addu    at, at, t2                  // og line 1
+
+        // banjo egg
+        lh      t4, 0x0082(t0)              // get current collision result
+        andi    t4, t4, 0x0021
+        beqz    t4, egg_continue
+        lui     t4, 0x41A0                  // t4 = float 20.0
+        lui     t4, 0xC4A0                  // t4 = float -HIGH VALUE
+        egg_continue:
+        j       _return
+        mtc1    t4, f4                      // move to float
+
+        _normal:
+        j       _return
+        lwc1    f4, 0x8E38(at)              // load value to check against og line 2
     }
 
     // @ Description

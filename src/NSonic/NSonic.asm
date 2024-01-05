@@ -203,6 +203,11 @@ scope NSonic {
     float32 0.95
     OS.patch_end()
 
+    // Set Magnifying Glass Scale Override
+    Character.table_patch_start(magnifying_glass_zoom, Character.id.NSONIC, 0x2)
+    dh  0x0068
+    OS.patch_end()
+
     Character.table_patch_start(ground_usp, Character.id.NSONIC, 0x4)
     dw      SonicUSP.ground_initial_
     OS.patch_end()

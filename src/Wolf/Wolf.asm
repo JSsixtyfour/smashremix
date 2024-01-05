@@ -377,8 +377,10 @@ scope Wolf {
     dw  Action.action_string_table
     OS.patch_end()
 
+    Teams.add_team_costume(YELLOW, WOLF, 0x6)
+
     // Shield colors for costume matching
-    Character.set_costume_shield_colors(WOLF, BROWN, PINK, AZURE, TURQUOISE, BLACK, PURPLE, NA, NA)
+    Character.set_costume_shield_colors(WOLF, BROWN, PINK, AZURE, TURQUOISE, BLACK, PURPLE, YELLOW, NA)
 
     // Set CPU behaviour
     Character.table_patch_start(ai_behaviour, Character.id.WOLF, 0x4)

@@ -291,9 +291,9 @@ Character.edit_action_parameters(SHEIK, Action.CliffAttackSlow2,        File.SHE
 // Character.edit_action_parameters(SHEIK, Action.CliffEscapeQuick2,       File.SHEIK_CLIFF_ESCAPE_QUICK_2,    -1,                         -1)
 Character.edit_action_parameters(SHEIK, Action.CliffEscapeSlow1,        File.SHEIK_CLIFF_ATTACK_SLOW_1,     -1,                         -1)
 // Character.edit_action_parameters(SHEIK, Action.CliffEscapeSlow2,        File.SHEIK_CLIFF_ESCAPE_SLOW_2,     -1,                         -1)
-// Character.edit_action_parameters(SHEIK, Action.LightItemPickup,         File.SHEIK_LIGHT_ITEM_PICKUP,       -1,                         -1)
+Character.edit_action_parameters(SHEIK, Action.LightItemPickup,         File.SHEIK_LIGHT_ITEM_PICKUP,       -1,                         -1)
 // Character.edit_action_parameters(SHEIK, Action.HeavyItemPickup,         File.SHEIK_HEAVY_ITEM_PICKUP,       -1,                         -1)
-// Character.edit_action_parameters(SHEIK, Action.ItemDrop,                File.SHEIK_ITEM_DROP,               -1,                         -1)
+Character.edit_action_parameters(SHEIK, Action.ItemDrop,                File.SHEIK_ITEM_DROP,               -1,                         -1)
 Character.edit_action_parameters(SHEIK, Action.ItemThrowDash,           File.SHEIK_ITEM_THROW_DASH,         -1,                         -1)
 // Character.edit_action_parameters(SHEIK, Action.ItemThrowF,              File.SHEIK_ITEM_THROW,              -1,                         -1)
 // Character.edit_action_parameters(SHEIK, Action.ItemThrowB,              File.SHEIK_ITEM_THROW,              -1,                         -1)
@@ -331,9 +331,9 @@ Character.edit_action_parameters(SHEIK, Action.StarRodNeutral,          File.SHE
 Character.edit_action_parameters(SHEIK, Action.StarRodTilt,             File.SHEIK_ITEM_TILT,               -1,                         -1)
 Character.edit_action_parameters(SHEIK, Action.StarRodSmash,            File.SHEIK_ITEM_SMASH,              -1,                         -1)
 Character.edit_action_parameters(SHEIK, Action.StarRodDash,             File.SHEIK_ITEM_DASH_ATTACK,        -1,                         -1)
-// Character.edit_action_parameters(SHEIK, Action.RayGunShoot,             File.SHEIK_ITEM_SHOOT,              -1,                         -1)
+Character.edit_action_parameters(SHEIK, Action.RayGunShoot,             File.SHEIK_ITEM_SHOOT_GROUND,              -1,                         -1)
 Character.edit_action_parameters(SHEIK, Action.RayGunShootAir,          File.SHEIK_ITEM_SHOOT_AIR,          -1,                         -1)
-// Character.edit_action_parameters(SHEIK, Action.FireFlowerShoot,         File.SHEIK_ITEM_SHOOT,              -1,                         -1)
+Character.edit_action_parameters(SHEIK, Action.FireFlowerShoot,         File.SHEIK_ITEM_SHOOT_GROUND,              -1,                         -1)
 Character.edit_action_parameters(SHEIK, Action.FireFlowerShootAir,      File.SHEIK_ITEM_SHOOT_AIR,          -1,                         -1)
 // Character.edit_action_parameters(SHEIK, Action.HammerIdle,              File.SHEIK_HAMMER_IDLE,             -1,                         -1)
 Character.edit_action_parameters(SHEIK, Action.HammerWalk,              File.SHEIK_HAMMER_MOVE,             -1,                         -1)
@@ -536,9 +536,10 @@ Character.edit_action_parameters(SHEIK, Action.LandingAirX,             File.SHE
 
     // Set default costumes
     Character.set_default_costumes(Character.id.SHEIK, 0, 3, 4, 5, 1, 0, 2)
+    Teams.add_team_costume(YELLOW, SHEIK, 0x6)
 
     // Set default costume shield colors
-    Character.set_costume_shield_colors(SHEIK, BLUE, RED, GREEN, PURPLE, BLACK, WHITE, NA, NA)
+    Character.set_costume_shield_colors(SHEIK, BLUE, RED, GREEN, PURPLE, BLACK, WHITE, YELLOW, NA)
 
     Character.table_patch_start(variants, Character.id.SHEIK, 0x4)
     db      Character.id.NONE

@@ -454,6 +454,8 @@ scope Bowser {
     dw  Action.action_string_table
     OS.patch_end()
 
+    Teams.add_team_costume(YELLOW, BOWSER, 0x5)
+
     // Shield colors for costume matching
     Character.set_costume_shield_colors(BOWSER, GREEN, RED, BLUE, BLACK, ORANGE, YELLOW, NA, NA)
 

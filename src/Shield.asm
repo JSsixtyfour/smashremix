@@ -142,10 +142,12 @@ scope Shield {
         dw (0xFFFFFF00 & Color.high.YELLOW) // p3
         dw (0xFFFFFF00 & Color.high.GREEN)  // p4
 
+        // Needs to be updated manually for added teams, like for yellow below
         table_team:
         dw (0xFFFFFF00 & Color.high.RED)    // red
         dw (0xFFFFFF00 & Color.high.BLUE)   // blue
         dw (0xFFFFFF00 & Color.high.GREEN)  // green
+        dw (0xFFFFFF00 & Color.high.YELLOW) // yellow
 
         table_custom:
         dw 0                                // Default
@@ -399,6 +401,29 @@ scope Shield {
         addiu   sp, sp, 0x0030              // restore stack space
 
         lw      a0, 0x0058(sp)              // a0 = capturer player object
+        bnez    a0, _get_capturer_shield_color // branch if a player is actually capturing
+        nop
+        // if we're here, this is Cruel Z cancel 'EGG'; we match the costume color in this case       
+        // s0 = player struct
+        lw      t8, 0x0008(s0)              // t8 = char_id
+        li      v1, Character.costume_shield_color.table
+        sll     t8, t8, 0x0002              // t8 = offset for character's costume shield color array pointer
+        addu    v1, v1, t8                  // v1 = costume shield color array pointer for character
+        lw      v1, 0x0000(v1)              // v1 = costume shield color array
+        lbu     t8, 0x0010(s0)              // t8 = costume_id
+        addu    v1, v1, t8                  // v1 = address of shield color index
+        lbu     a0, 0x0000(v1)              // a0 = shield color index
+        b       _set_palette_egglay         // branch
+        nop
+        // old alternative method is random color
+        // or      a1, v0, r0                  // save v0
+        // lli     a0, 0xF                     // a0 - range (0, N-1)
+        // jal     Global.get_random_int_      // v0 = (0, N-1)
+        // nop
+        // addiu   a0, v0, 1                   // a0 = random shield color
+        // or      v0, a1, r0                  // restore v0
+
+        _get_capturer_shield_color:
         lw      t9, 0x0084(a0)              // t9 = player struct
         lbu     v1, 0x000D(t9)              // v1 = port
         sll     v1, v1, 0x0002              // v1 = port * 4

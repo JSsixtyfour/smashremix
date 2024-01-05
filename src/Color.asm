@@ -48,6 +48,13 @@ scope Color {
         constant GREY(0x808080FF)
         constant WHITE(0xFFFFFFFF)
     }
+
+    scope dragon_king {
+        constant RED(0xF7D4D2FF)
+        constant GREEN(0xC3FBCEFF)
+        constant BLUE(0xC2C9FDFF)
+        constant YELLOW(0xEBE78DFF)
+    }
 }
 
 } // __COLOR__

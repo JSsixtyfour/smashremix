@@ -71,7 +71,7 @@ scope pickup_cloaking_device_: {
     sw      a2, 0x0044(v0)              // save item object in handler object
     sw      t0, 0x0048(v0)              // save address of env color override value
     sw      r0, 0x004C(v0)              // save timer value
-
+    FGM.play(0x529)                     // play cloaking sfx
     OS.restore_registers()
 
     // Continue after damage restore routine in tomato/heart pickup routine
@@ -209,6 +209,7 @@ scope handle_active_cloaking_device_: {
     sw      ra, 0x0004(sp)              // save ra
     jal     Render.DESTROY_OBJECT_
     nop
+    FGM.play(0x52A)                     // play decloak sfx
     lw      ra, 0x0004(sp)              // restore ra
     addiu   sp, sp, 0x0010              // deallocate stack space
 

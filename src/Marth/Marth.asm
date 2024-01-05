@@ -509,6 +509,7 @@ scope Marth {
 
     // Set default costumes
     Character.set_default_costumes(Character.id.MARTH, 0, 1, 2, 3, 1, 0, 2)
+    Teams.add_team_costume(YELLOW, MARTH, 0x5)
 
     // Shield colors for costume matching
     Character.set_costume_shield_colors(MARTH, BLUE, RED, GREEN, YELLOW, WHITE, ORANGE, NA, NA)
@@ -516,6 +517,11 @@ scope Marth {
     // Set action strings
     Character.table_patch_start(action_string, Character.id.MARTH, 0x4)
     dw  Action.action_string_table
+    OS.patch_end()
+
+    // Set Magnifying Glass Scale Override
+    Character.table_patch_start(magnifying_glass_zoom, Character.id.MARTH, 0x2)
+    dh  0x0068
     OS.patch_end()
 
     // Allows Marth to use his entry which is similar to Link

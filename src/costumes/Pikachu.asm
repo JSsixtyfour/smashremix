@@ -1,7 +1,7 @@
 scope pikachu_costumes {
     // @ Description
     // Number of additional costumes
-    constant NUM_EXTRA_COSTUMES(3)
+    constant NUM_EXTRA_COSTUMES(4)
 
     // @ Description
     // Number of parts
@@ -231,5 +231,63 @@ scope pikachu_costumes {
         Costumes.set_diffuse_ambient_colors_for_part(2, 19, 2, diffuse_ambient_pair_2)
 
         Costumes.set_stock_icon_palette_for_costume(2, Pikachu/cos_8_stock_icon.bin)
+    }
+    
+    // Costume 0x9
+    scope costume_0x9 {
+        diffuse_ambient_pair:; dw 0xFFFFFF00, 0x80808000
+        diffuse_ambient_pair_2:; dw 0xFFFFFF00, 0xCCCCCC00
+        palette_1:; insert "Pikachu/cos_6_1.bin"
+        palette_2:; insert "Pikachu/cos_6_2.bin"
+        palette_3:; insert "Pikachu/cos_6_3.bin"
+        palette_4:; insert "Pikachu/cos_6_4.bin"
+        palette_5:; insert "Pikachu/cos_6_5.bin"
+        palette_6:; insert "Pikachu/cos_9_6.bin"
+
+        Costumes.set_palette_for_part(3, 1, 0, palette_1)
+        Costumes.set_diffuse_ambient_colors_for_part(3, 1, 0, diffuse_ambient_pair)
+        Costumes.set_palette_for_part(3, 2, 0, palette_1)
+        Costumes.set_diffuse_ambient_colors_for_part(3, 2, 0, diffuse_ambient_pair)
+        Costumes.set_prim_color_for_part(3, 5, 0, 0xFFD933FF)
+        Costumes.set_diffuse_ambient_colors_for_part(3, 5, 0, diffuse_ambient_pair)
+        Costumes.set_prim_color_for_part(3, 6, 0, 0xFFD933FF)
+        Costumes.set_diffuse_ambient_colors_for_part(3, 6, 0, diffuse_ambient_pair)
+        Costumes.set_palette_for_part(3, 7, 0, palette_2)
+        Costumes.set_diffuse_ambient_colors_for_part(3, 7, 0, diffuse_ambient_pair)
+        Costumes.set_palette_for_part(3, 7, 1, palette_3)
+        Costumes.set_diffuse_ambient_colors_for_part(3, 7, 1, diffuse_ambient_pair)
+        Costumes.set_prim_color_for_part(3, 7, 2, 0xFFD933FF)
+        Costumes.set_diffuse_ambient_colors_for_part(3, 7, 2, diffuse_ambient_pair)
+        Costumes.set_palette_for_part(3, 7, 3, palette_6)
+        Costumes.set_prim_color_for_part(3, 7, 4, 0xFFFFFFFF)
+        Costumes.set_palette_for_part(3, 9, 0, palette_4)
+        Costumes.set_diffuse_ambient_colors_for_part(3, 9, 0, diffuse_ambient_pair)
+        Costumes.set_palette_for_part(3, A, 0, palette_4)
+        Costumes.set_diffuse_ambient_colors_for_part(3, A, 0, diffuse_ambient_pair)
+        Costumes.set_prim_color_for_part(3, D, 0, 0xFFD933FF)
+        Costumes.set_diffuse_ambient_colors_for_part(3, D, 0, diffuse_ambient_pair)
+        Costumes.set_prim_color_for_part(3, E, 0, 0xFFD933FF)
+        Costumes.set_diffuse_ambient_colors_for_part(3, E, 0, diffuse_ambient_pair)
+        Costumes.set_prim_color_for_part(3, 10, 0, 0xFFD933FF)
+        Costumes.set_diffuse_ambient_colors_for_part(3, 10, 0, diffuse_ambient_pair)
+        Costumes.set_prim_color_for_part(3, 11, 0, 0xFFD933FF)
+        Costumes.set_diffuse_ambient_colors_for_part(3, 11, 0, diffuse_ambient_pair)
+        Costumes.set_prim_color_for_part(3, 13, 0, 0xFFD933FF)
+        Costumes.set_diffuse_ambient_colors_for_part(3, 13, 0, diffuse_ambient_pair)
+        Costumes.set_prim_color_for_part(3, 15, 0, 0xFFD933FF)
+        Costumes.set_diffuse_ambient_colors_for_part(3, 15, 0, diffuse_ambient_pair)
+        Costumes.set_prim_color_for_part(3, 16, 0, 0xFFD933FF)
+        Costumes.set_diffuse_ambient_colors_for_part(3, 16, 0, diffuse_ambient_pair)
+        Costumes.set_prim_color_for_part(3, 18, 0, 0xFFD933FF)
+        Costumes.set_diffuse_ambient_colors_for_part(3, 18, 0, diffuse_ambient_pair)
+        Costumes.set_palette_for_part(3, 19, 0, palette_5)
+        Costumes.set_prim_color_for_part(3, 19, 0, 0xFFD933FF)
+        Costumes.set_diffuse_ambient_colors_for_part(3, 19, 0, diffuse_ambient_pair_2)
+        Costumes.set_palette_for_part(3, 19, 1, palette_5)
+        Costumes.set_diffuse_ambient_colors_for_part(3, 19, 1, diffuse_ambient_pair_2)
+        Costumes.set_palette_for_part(3, 19, 2, palette_5)
+        Costumes.set_diffuse_ambient_colors_for_part(3, 19, 2, diffuse_ambient_pair_2)
+
+        Costumes.set_stock_icon_palette_for_costume(3, Pikachu/cos_9_stock_icon.bin)
     }
 }

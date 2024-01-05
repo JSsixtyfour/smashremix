@@ -175,6 +175,7 @@ scope Surface {
     add_surface(push_left_2, 4.0, OS.FALSE, 0, 0, 0, 0, 0, 0, 0, 0)
     add_surface(push_right_1, 4.0, OS.FALSE, 0, 0, 0, 0, 0, 0, 0, 0)
     add_surface(push_left_1, 4.0, OS.FALSE, 0, 0, 0, 0, 0, 0, 0, 0)
+    add_surface(acid, 4.0, OS.FALSE, 0, 0, 0, 0, 0, 0, 0, 0)
 
     
     // write surfaces to ROM
@@ -319,10 +320,10 @@ scope Surface {
     }
     
     conveyor_speed:
-    dw  0x41C00000
-    dw  0xC1C00000
-    dw  0x41400000
-    dw  0xC1400000
+    dw  0x41A40000  // RTTF Remix, +20.5 units
+    dw  0xC1C00000  // RTTF Remix, -24 units
+    dw  0x41400000  // unused, placeholder +12 units
+    dw  0xC1400000  // unused, placeholder -12 units
 
     scope fighter_apply_conveyor_surface: {
         OS.patch_start(0x5DBD8, 0x800E23D8)
@@ -392,7 +393,7 @@ scope Surface {
         li      t1, conveyor_speed
         addiu   at, r0, 0x1F                // right moving clipping id
         beql    v0, at, _apply_conveyor_movement
-        lw      v0, 0x0000(t1)              // load right moving speed
+        lw      t0, 0x0000(t1)              // load right moving speed
         addiu   at, r0, 0x20                // left moving clipping id
         beql    v0, at, _apply_conveyor_movement
         lw      t0, 0x0004(t1)              // load left moving speed

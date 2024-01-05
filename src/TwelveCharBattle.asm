@@ -2260,7 +2260,7 @@ scope TwelveCharBattle {
     // Updates the character set for the given player.
     // @ Arguments
     // a0 - port_id
-    // a1 - increment?
+    // a1 - increment? 0 if no, 1 or -1 if yes
     scope update_character_set_: {
         addiu   sp, sp,-0x0020              // allocate stack space
         sw      ra, 0x0004(sp)              // save registers
@@ -2280,6 +2280,8 @@ scope TwelveCharBattle {
 
         lw      t2, 0x0000(t1)              // t2 = character_set_index
         addu    t2, t2, a1                  // character_set_index++, maybe
+        bltzl   t2, pc() + 8                // if before first item in table, set to last index
+        lli     t2, NUM_PRESETS             // t2 = NUM_PRESETS
         sltiu   at, t2, NUM_PRESETS + 1     // at = 0 if past last item in table
         beqzl   at, pc() + 8                // if past last item in table, set to first index
         lli     t2, 0x0000                  // t2 = 0
@@ -2529,9 +2531,27 @@ scope TwelveCharBattle {
         nop
 
         _check_character_set_p1:
-        // p1
-        lui     a1, 0x42C2                  // a1 = image ulx
-        lli     a2, 55                      // a2 = image width
+        // p1 scroll right
+        lui     a1, 0x42F7                  // a1 = image ulx (123.5)
+        lli     a2, 33                      // a2 = image width
+        lui     a3, 0x432C                  // a3 = image uly
+        lli     t4, 14                      // t4 = image height
+        jal     CharacterSelect.check_press_ // v0 = (bool) image pressed
+        sw      t4, 0x0010(sp)              // 0x0010(sp) = image height
+
+        beqz    v0, _check_character_set_p1_left // if not pressed, skip
+        nop
+
+        lli     a0, 0x0000                  // a0 = player 1
+        jal     update_character_set_
+        lli     a1, 0x0001                  // a1 = increment? yes, to right
+        b       _play_sound
+        nop
+
+        _check_character_set_p1_left:
+        // p1 scroll left
+        lui     a1, 0x42B7                  // a1 = image ulx (91.5)
+        lli     a2, 32                      // a2 = image width
         lui     a3, 0x432C                  // a3 = image uly
         lli     t4, 14                      // t4 = image height
         jal     CharacterSelect.check_press_ // v0 = (bool) image pressed
@@ -2542,14 +2562,32 @@ scope TwelveCharBattle {
 
         lli     a0, 0x0000                  // a0 = player 1
         jal     update_character_set_
-        lli     a1, OS.TRUE                 // a1 = increment? yes
+        addiu   a1, r0, -0x0001             // a1 = increment? yes, to left
         b       _play_sound
         nop
 
         _check_character_set_p2:
-        // p2
-        lui     a1, 0x4325                  // a1 = image ulx
-        lli     a2, 55                      // a2 = image width
+        // p2 right
+        lui     a1, 0x433F                  // a1 = image ulx (191)
+        lli     a2, 33                      // a2 = image width
+        lui     a3, 0x432C                  // a3 = image uly
+        lli     t4, 14                      // t4 = image height
+        jal     CharacterSelect.check_press_ // v0 = (bool) image pressed
+        sw      t4, 0x0010(sp)              // 0x0010(sp) = image height
+
+        beqz    v0, _check_character_set_p2_left // if not pressed, skip
+        nop
+
+        lli     a0, 0x0001                  // a0 = player 2
+        jal     update_character_set_
+        lli     a1, 0x0001                  // a1 = increment? yes, to right
+        b       _play_sound
+        nop
+
+        _check_character_set_p2_left:
+        // p2 left
+        lui     a1, 0x431F                  // a1 = image ulx (159)
+        lli     a2, 32                      // a2 = image width
         lui     a3, 0x432C                  // a3 = image uly
         lli     t4, 14                      // t4 = image height
         jal     CharacterSelect.check_press_ // v0 = (bool) image pressed
@@ -2560,7 +2598,7 @@ scope TwelveCharBattle {
 
         lli     a0, 0x0001                  // a0 = player 2
         jal     update_character_set_
-        lli     a1, OS.TRUE                 // a1 = increment? yes
+        addiu   a1, r0, -0x0001             // a1 = increment? yes, to left
 
         _play_sound:
         // audial feedback
@@ -2809,8 +2847,8 @@ scope TwelveCharBattle {
         bne     t0, t1, _end                // if screen id != 1p title screen, skip
         nop
 
-        
-        
+
+
         // check to see if on team stage of 1p
         lui     t0, 0x8013
         lw      t0, 0x5C28(t0)              // load from current progress of 1p ID
@@ -2826,7 +2864,7 @@ scope TwelveCharBattle {
         slti    t1, t1, 0x0003              // t1 = 1 if a hmn or ally
         bnez    t1, _end                    // if not the first loaded character, continue
         nop
-        
+
         li      t0, SinglePlayerModes.duo_array // t0 = duo_array
         lw      t1, 0x0008(s1)              // t1 = character_id
         sll     t2, t1, 0x2                 // ~
@@ -2845,7 +2883,7 @@ scope TwelveCharBattle {
         addiu   t0, r0, 0x0001
         beq     t1, t0, _end                // if not the first loaded character, continue
         nop
-        
+
         li      t0, SinglePlayerModes.team_array              // t0 = remix_team_array
         lw      t1, 0x0008(s1)              // t1 = character_id
         sll     t2, t1, 0x2                 // ~
@@ -3046,19 +3084,23 @@ scope TwelveCharBattle {
     add_defeat_parameters(File.BOWSER_DOWN_STAND_U,     defeated_moveset_yoshi,     0)          // 0x34 - BOWSER
     add_defeat_parameters(File.BOWSER_DOWN_STAND_U,     defeated_moveset_yoshi,     0)          // 0x35 - GBOWSER
     add_defeat_parameters(File.PIANO_DOWN_STND_U,       defeated_moveset_mario,     0)          // 0x36 - PIANO
-	add_defeat_parameters(0x2B1,                        defeated_moveset_fox_link,  0)          // 0x37 - WOLF
+    add_defeat_parameters(File.WOLF_DOWNSTANDU,         defeated_moveset_fox_link,  0)          // 0x37 - WOLF
     add_defeat_parameters(File.CONKER_DOWNSTANDU,       defeated_moveset_fox_link,  0)          // 0x38 - CONKER
     add_defeat_parameters(File.MTWO_DOWN_STND_U,        defeated_moveset_kirby,     0)          // 0x39 - MTWO
     add_defeat_parameters(File.MARTH_DOWN_STAND_U,      defeated_moveset_jiggly,    0)          // 0x3A - MARTH
-    add_defeat_parameters(0x2B1,                        defeated_moveset_sonic,     0)          // 0x3B - SONIC
+    add_defeat_parameters(File.SONIC_DOWNSTANDU,        defeated_moveset_sonic,     0)          // 0x3B - SONIC
     add_defeat_parameters(0x617,                        defeated_moveset_captain,   0)          // 0x3C - SANDBAG
-    add_defeat_parameters(0x2B1,                        defeated_moveset_sonic,     0)          // 0x3D - SSONIC
-    add_defeat_parameters(0x617,                        defeated_moveset_sheik,     0)          // 0x3E - SHEIK
+    add_defeat_parameters(File.SONIC_DOWNSTANDU,        defeated_moveset_sonic,     0)          // 0x3D - SSONIC
+    add_defeat_parameters(File.SHEIK_DOWN_STAND_U,      defeated_moveset_sheik,     0)          // 0x3E - SHEIK
     add_defeat_parameters(File.MARINA_DOWN_STND_U,      defeated_moveset_marina,    0)          // 0x3F - MARINA
-    add_defeat_parameters(0x617,                        defeated_moveset_dedede,    0)          // 0x40 - DEDEDE
-    add_defeat_parameters(0x222,                        defeated_moveset_mario,     0)          // 0x41 - GOEMON
+    add_defeat_parameters(File.DEDEDE_DOWN_STAND_U,     defeated_moveset_dedede,    0)          // 0x40 - DEDEDE
+    add_defeat_parameters(File.GOEMON_DOWN_STAND_U,     defeated_moveset_mario,     0)          // 0x41 - GOEMON
     add_defeat_parameters(0x2B1,                        defeated_moveset_fox_link,  0)          // 0x42 - PEPPY
     add_defeat_parameters(0x2B1,                        defeated_moveset_fox_link,  0)          // 0x43 - SLIPPY
+    add_defeat_parameters(File.BANJO_DOWN_STND_U,       defeated_moveset_sheik,     0)          // 0x44 - BANJO
+    add_defeat_parameters(0x222,                        defeated_moveset,           0)          // 0x45 - METAL LUIGI
+    add_defeat_parameters(File.GOEMON_DOWN_STAND_U,     defeated_moveset_mario,     0)          // 0x46 - EBI
+    add_defeat_parameters(0x617,                        defeated_moveset_captain,   0)          // 0x47 - DRAGONKING
     // ADD NEW CHARACTERS HERE
 
     // REMIX POLYGONS
@@ -3071,7 +3113,15 @@ scope TwelveCharBattle {
     add_defeat_parameters(0x617,                        defeated_moveset_captain,   0)          // - NSHEIK
     add_defeat_parameters(File.MARINA_DOWN_STND_U,      defeated_moveset,           0)          // - NMARINA
     add_defeat_parameters(0x2B1,                        defeated_moveset_fox_link,  0)          // - NFALCO
-    add_defeat_parameters(0x617,                        defeated_moveset_captain,   0)          // - NGND   
+    add_defeat_parameters(0x617,                        defeated_moveset_captain,   0)          // - NGND
+    add_defeat_parameters(0x3E8,                        defeated_moveset,           0)          // - NDSAMUS
+    add_defeat_parameters(File.MARTH_DOWN_STAND_U,      defeated_moveset_jiggly,    0)          // - NMARTH
+    add_defeat_parameters(File.MTWO_DOWN_STND_U,        defeated_moveset_kirby,     0)          // - NMTWO
+    add_defeat_parameters(File.DEDEDE_DOWN_STAND_U,     defeated_moveset_dedede,    0)          // - NDEDEDE
+    add_defeat_parameters(0x48A,                        defeated_moveset_fox_link,  0)          // - NYLINK
+    add_defeat_parameters(File.GOEMON_DOWN_STAND_U,     defeated_moveset_mario,     0)          // - NGOEMON
+    add_defeat_parameters(File.CONKER_DOWNSTANDU,       defeated_moveset_fox_link,  0)          // - NCONKER
+    add_defeat_parameters(File.BANJO_DOWN_STND_U,       defeated_moveset_sheik,     0)          // - NBANJO
 
     // @ Description
     // This prevents picking up the token of a CPU character with stocks remaining after a match.
@@ -3312,9 +3362,27 @@ scope TwelveCharBattle {
 
         li      t7, twelve_cb_flag          // ~
         lw      t7, 0x0000(t7)              // t7 = 1 if 12cb mode
-        beqz    t7, _end                    // if not 12cb mode, skip
+        bnez    t7, _12cb_continue          // branch if in 12cb mode
         nop
 
+        // Make sure the pause hud legend is hidden when resetting
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      a0, 0x0004(sp)              // ~
+        sw      a1, 0x0008(sp)              // ~
+        sw      ra, 0x000C(sp)              // save registers
+        addiu   a1, r0, 1                   // a1 = 1 to hide
+        jal     Render.toggle_group_display_
+        lli     a0, 0x000F                  // a0 = group
+        jal     Render.toggle_group_display_
+        lli     a0, 0x0010                  // a0 = group
+        lw      a0, 0x0004(sp)              // ~
+        lw      a1, 0x0008(sp)              // ~
+        lw      ra, 0x000C(sp)              // restore registers
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        b       _end
+        nop
+
+        _12cb_continue:
         // check if this is a request or an approval
         li      t0, reset_requested
         lw      t7, 0x0000(t0)              // t7 = 0 if request, 1 if approval
@@ -3360,6 +3428,22 @@ scope TwelveCharBattle {
 
         Render.draw_string(0x18, 0xE, string_reset_decline, Render.NOOP, 0x433C0000, 0x43240000, 0xFFFFFFFF, Render.FONTSIZE_DEFAULT, Render.alignment.LEFT)
         Render.draw_texture_at_offset(0x18, 0xE, Render.file_pointer_1, 0x1D50, Render.NOOP, 0x43740000, 0x43240000, 0xff0000FF, 0x303030FF, 0x3F800000)
+
+        // Destroy the pause hud legend, if it exists
+        lui     a0, 0x8004
+        lw      a0, 0x672C(a0)              // a0 = first object in group 0xF
+        beqz    a0, _restore_registers      // if no object, skip destroying
+        nop
+        jal     0x800CB608                  // destroy all objects in group
+        nop
+
+        lui     a0, 0x8004
+        lw      a0, 0x6730(a0)              // a0 = first object in group 0x10
+        beqz    a0, _restore_registers      // if no object, skip destroying
+        nop
+        jal     0x800CB608                  // destroy all objects in group
+        nop
+        _restore_registers:
         OS.restore_registers()
 
         // give input control to other player, if not CPU
@@ -3779,6 +3863,13 @@ scope TwelveCharBattle {
         sw      t8, 0x0038(sp)              // ~
         sw      v0, 0x003C(sp)              // ~
         sw      v1, 0x004C(sp)              // ~
+
+        _check_settings_shortcut:
+        jal     Toggles.settings_shortcut   // a0 = 1 if L was held long enough to activate Settings shortcut...
+        nop
+        bnezl   a0, _end                    // ...and if so, skip to end
+        nop
+        lw      v0, 0x003C(sp)              // restore v0
 
         lw      t2, 0x0080(v0)              // t2 = held token player index (port 0 - 3 or -1 if not holding a token)
         bltz    t2, _end                    // if not holding a token, skip
@@ -4609,6 +4700,10 @@ scope TwelveCharBattle {
         Render.draw_string(0x1E, GROUP_NOT_STARTED, string_character_set, Render.NOOP, 0x43200000, 0x43200000, 0xFFFFFFFF, 0x3F600000, Render.alignment.CENTER)
         Render.draw_string_pointer(0x1E, GROUP_NOT_STARTED, config.p1.character_set_pointer, Render.update_live_string_, X_P1, 0x432D8000, 0xB00000FF, 0x3F600000, Render.alignment.CENTER)
         Render.draw_string_pointer(0x1E, GROUP_NOT_STARTED, config.p2.character_set_pointer, Render.update_live_string_, X_P2, 0x432D8000, 0x4040C0FF, 0x3F600000, Render.alignment.CENTER)
+        Render.draw_texture_at_offset(0x1E, GROUP_NOT_STARTED, 0x8013C4A0, 0xECE8, Render.NOOP, 0x42B70000, 0x432F8000, 0xFF0000FF, 0x303030FF, 0x3F200000)
+        Render.draw_texture_at_offset(0x1E, GROUP_NOT_STARTED, 0x8013C4A0, 0xEDC8, Render.NOOP, 0x43190000, 0x432F8000, 0xFF0000FF, 0x303030FF, 0x3F200000)
+        Render.draw_texture_at_offset(0x1E, GROUP_NOT_STARTED, 0x8013C4A0, 0xECE8, Render.NOOP, 0x431F0000, 0x432F8000, 0xFF0000FF, 0x303030FF, 0x3F200000)
+        Render.draw_texture_at_offset(0x1E, GROUP_NOT_STARTED, 0x8013C4A0, 0xEDC8, Render.NOOP, 0x435D0000, 0x432F8000, 0xFF0000FF, 0x303030FF, 0x3F200000)
 
         // Best Character
         jal     set_best_characters_
@@ -4695,6 +4790,9 @@ scope TwelveCharBattle {
         li      t0, CharacterSelect.render_control_object
         lw      t0, 0x0000(t0)              // t0 = render control object
         sw      v0, 0x0038(t0)              // save custom portrait indicators object
+
+        jal     CharacterSelect.initialize_dynamic_css_
+        nop
 
         jal     CharacterSelectDebugMenu.init_debug_menu_
         lli     a0, 0x0000                  // a0 = offset in CharacterSelect.css_player_structs

@@ -6,11 +6,12 @@ constant MIN_VALUE(0)
 constant MAX_VALUE(Item.start_with_random_entry)
 constant DEFAULT_VALUE(0)
 // bitmask: [vs] [1p] [training] [bonus1] [bonus2] [allstar]
-constant APPLIES_TO(0b101000)
+constant APPLIES_TO(0b111111)
 // bitmask: [human] [cpu]
 constant APPLIES_TO_HUMAN_CPU(0b11)
 constant VALUE_ARRAY_POINTER(Item.start_with_item)
 constant ONCHANGE_HANDLER(0)
+constant DISABLES_HIGH_SCORES(OS.TRUE)
 
 // @ Description
 // Holds pointers to value labels
@@ -45,29 +46,29 @@ dw string_random
 // Value labels
 string_none:; String.insert("None")
 string_random:; String.insert("Random")
-string_tomato:; String.insert("M Tomato")
+string_tomato:; String.insert("Maxim Tomato")
 string_heart:; String.insert("Heart")
 string_star:; String.insert("Star")
-string_beam_sword:; String.insert("B Sword")
-string_home_run_bat:; String.insert("HR Bat")
+string_beam_sword:; String.insert("Beam Sword")
+string_home_run_bat:; String.insert("HomeRun Bat")
 string_fan:; String.insert("Fan")
 string_star_rod:; String.insert("Star Rod")
 string_ray_gun:; String.insert("Ray Gun")
-string_fire_flower:; String.insert("Flower")
+string_fire_flower:; String.insert("Fire Flower")
 string_hammer:; String.insert("Hammer")
 string_motion_sensor_bomb:; String.insert("MS Bomb")
-string_bobomb:; String.insert("Bobomb")
+string_bobomb:; String.insert("Bob-omb")
 string_bumper:; String.insert("Bumper")
-string_green_shell:; String.insert("Grn Shell")
+string_green_shell:; String.insert("Green Shell")
 string_red_shell:; String.insert("Red Shell")
-string_pokeball:; String.insert("Pokeball")
-string_cloaking_device:; String.insert("Cloak Dvc")
-string_super_mushroom:; String.insert("S Shroom")
-string_poison_mushroom:; String.insert("Ps Shroom")
-string_blue_shell:; String.insert("Blu Shell")
+string_pokeball:; String.insert("Poke Ball")
+string_cloaking_device:; String.insert("Cloaking Device")
+string_super_mushroom:; String.insert("Super Shroom")
+string_poison_mushroom:; String.insert("Poison Shroom")
+string_blue_shell:; String.insert("Spiny Shell")
 string_deku_nut:; String.insert("Deku Nut")
 string_pit_fall:; String.insert("Pitfall")
-string_golden_gun:; String.insert("GoldenGun")
+string_golden_gun:; String.insert("Golden Gun")
 
 // @ Description
 // Runs before 1p modes to ensure settings aren't applied.
@@ -76,13 +77,22 @@ string_golden_gun:; String.insert("GoldenGun")
 scope clear_settings_for_1p_: {
     addiu   sp, sp, -0x0010                 // allocate stack space
     sw      t0, 0x0004(sp)                  // ~
+    sw      t1, 0x0008(sp)                  // ~
 
 	li      t0, VALUE_ARRAY_POINTER         // t0 = address
-	sw      r0, 0x0000(t0)                  // clear for 1p
-	sw      r0, 0x0004(t0)                  // clear for 2p
-	sw      r0, 0x0008(t0)                  // clear for 3p
-	sw      r0, 0x000C(t0)                  // clear for 4p
+	bnezl   a0, pc() + 8                    // don't clear if p1 is human
+	sw      r0, 0x0000(t0)                  // clear 1p
+	lli     t1, 0x0001                      // t1 = 1 (p2)
+	bnel    a0, t1, pc() + 8                // don't clear if p2 is human
+	sw      r0, 0x0004(t0)                  // clear 2p
+	lli     t1, 0x0002                      // t1 = 2 (p3)
+	bnel    a0, t1, pc() + 8                // don't clear if p3 is human
+	sw      r0, 0x0008(t0)                  // clear 3p
+	lli     t1, 0x0003                      // t1 = 3 (p4)
+	bnel    a0, t1, pc() + 8                // don't clear if p4 is human
+	sw      r0, 0x000C(t0)                  // clear 4p
 
+    lw      t1, 0x0008(sp)                  // ~
     lw      t0, 0x0004(sp)
     addiu   sp, sp, 0x0010                  // deallocate stack space
     jr      ra

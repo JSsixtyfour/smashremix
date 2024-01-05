@@ -93,12 +93,15 @@ scope Combo {
         dh Action.CapturePulled
         dh Action.CaptureWait
         dh Action.FalconDivePulled
+        dh 0x00B4
         dh Action.ThrownDKPulled
         dh Action.ThrownMarioBros
+        dh Action.ThrownFoxFStart
         dh Action.ThrownDK
         dh Action.Thrown1
         dh Action.Thrown2
         dh Action.Thrown3
+        dh Action.ThrownFoxB
         dh Action.Tornado
         dh Action.Barrel
         dh Action.Stun                      // added for deku stun

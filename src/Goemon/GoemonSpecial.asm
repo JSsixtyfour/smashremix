@@ -1007,8 +1007,8 @@ scope GoemonNSP {
         lw      a0, 0x001C(sp)              // a0 = projectile special struct
 
         _end_duration:
-        lw      a0, 0x001C(sp)              // a0 = projectile special struct
-        lw      t0, 0x01B8(a0)              // t0 = effect projectile object
+        lw      a1, 0x001C(sp)              // a1 = projectile special struct
+        lw      t0, 0x01B8(a1)              // t0 = effect projectile object
         beqz    t0, _destroy                // branch if no effect projectile
         lli     at, OS.TRUE                 // at = TRUE
         lw      t0, 0x0084(t0)              // t0 = effect projectile special struct
@@ -1016,10 +1016,21 @@ scope GoemonNSP {
 
         _destroy:
         lw      t7, 0x0020(sp)              // t7 = projectile object
-        lw      a0, 0x0074(t7)              // ~
+        lw      a0, 0x0074(t7)              // a0 = projectile part 0 struct
+        lw      at, 0x01B4(a1)              // at = charge flag
+        bnez    at, _explode                // branch if charge flag = TRUE
         addiu   a0, a0, 0x001C              // a0 = projectile x/y/z coords
+
         jal     0x800FF648                  // create smoke gfx
         lui     a1, 0x3F80                  // a1 = 1.0
+        b       _end                        // branch to end
+        lli     v0, OS.TRUE                 // return TRUE (destroys projectile)
+
+        _explode:
+        jal     0x80100480                  // create smoke gfx
+        nop
+        jal     0x800269C0                  // play FGM
+        lli     a0, 0                       // FGM id = 0
         b       _end                        // branch to end
         lli     v0, OS.TRUE                 // return TRUE (destroys projectile)
 
@@ -1042,6 +1053,28 @@ scope GoemonNSP {
         lw      s0, 0x0024(sp)              // load s0
         jr      ra                          // return
         addiu   sp, sp, 0x0040              // deallocate stack space
+    }
+
+    // @ Description
+    // Collision subroutine for the ryo.
+    // Based on 0x801688C4, which is the equivalent for Charge Shot.
+    scope ryo_collision_: {
+        addiu   sp, sp,-0x0020              // allocate stack space
+        sw      ra, 0x00014(sp)             // store ra
+
+        jal     0x80167C04                  // general collision detection?
+        sw      a0, 0x0018(sp)              // 0x0018(sp) = projectile object
+        beqz    v0, _end                    // end if collision wasn't detected
+        lw      a0, 0x0018(sp)              // a2 = projectile object
+        // if collision was detected
+        jal     ryo_destruction_
+        nop
+
+        _end:
+        lw      ra, 0x0014(sp)              // load ra
+        addiu   sp, sp, 0x0020              // deallocate stack space
+        jr      ra                          // return
+        nop
     }
 
     // @ Description
@@ -1085,10 +1118,23 @@ scope GoemonNSP {
         lli     at, OS.TRUE                 // at = TRUE
         lw      t0, 0x0084(t0)              // t0 = effect projectile special struct
         sw      at, 0x01B4(t0)              // signify to the effect projectile struct that its time in this world has come to an end
-        lw      a0, 0x0074(a0)              // ~
+        lw      a0, 0x0074(a0)              // projectile part 0 struct
+        lw      at, 0x01B4(v0)              // at = charge flag
+        bnez    at, _explode                // branch if charge flag = TRUE
         addiu   a0, a0, 0x001C              // a0 = projectile x/y/z coords
+
         jal     0x800FF648                  // create smoke gfx
         lui     a1, 0x3F80                  // a1 = 1.0
+        b       _end                        // branch to end
+        lli     v0, OS.TRUE                 // return TRUE (destroys projectile)
+
+        _explode:
+        jal     0x80100480                  // create smoke gfx
+        nop
+        jal     0x800269C0                  // play FGM
+        lli     a0, 0                       // FGM id = 0
+        b       _end                        // branch to end
+        lli     v0, OS.TRUE                 // return TRUE (destroys projectile)
 
         _end:
         lw      ra, 0x0014(sp)              // load ra
@@ -1153,7 +1199,7 @@ scope GoemonNSP {
     dw 0x00000000                           // offset to hitbox
     dw 0x12450000                           // Render routine
     dw ryo_main_                            // This is the main subroutine for the projectile, handles duration and other things. (default 0x80168540) (samus 0x80168F98)
-    dw 0x80175914                           // This function runs when the projectile collides with clipping. (0x801685F0 - Mario) (0x80169108 - Samus)
+    dw ryo_collision_                       // This is the collision subroutine for the projectile, responsible for detecting collision with clipping.
     dw ryo_destruction_                     // This function runs when the projectile collides with a hurtbox.
     dw ryo_destruction_                     // This function runs when the projectile collides with a shield.
     dw ryo_shield_bounce_                   // This function runs when the projectile collides with edges of a shield and bounces off

@@ -6,7 +6,7 @@ scope JigglypuffKirbyShared {
 
 
 	constant kirby_jump_multiplier_table(0x80188578)// NA, NA, 60.0, 52.0, 47.0, 40.0
-	constant puff_jump_multiplier_table(0x80188588)	// NA, NA, 60.0, 40.0, 20.0, 0.0		
+	constant puff_jump_multiplier_table(0x80188588)	// NA, NA, 60.0, 40.0, 20.0, 0.0
 
     // character ID check add for when Jigglypuff Clones are doing 2+ jumps. This is the first of the double jump routines
     scope jump_fix_1: {
@@ -24,6 +24,8 @@ scope JigglypuffKirbyShared {
         addiu   at, r0, Character.id.EPUFF    // EPuff ID
         beq     v0, at, _puff_jump_1
         addiu   at, r0, Character.id.JKIRBY    // JKirby ID
+        beq     v0, at, _kirby_jump_1
+        addiu   at, r0, Character.id.NDEDEDE    // NDedede ID
         beq     v0, at, _kirby_jump_1
         nop
         j       _return                     // return
@@ -54,14 +56,16 @@ scope JigglypuffKirbyShared {
         beq     v0, at, _puff_jump_2
         addiu   at, r0, Character.id.EPUFF   // EPuff ID
         beq     v0, at, _puff_jump_2
-        addiu   at, r0, Character.id.JKIRBY   // JKIRBY ID
+        addiu   at, r0, Character.id.JKIRBY   // JKirby ID
         beq     v0, at, _kirby_jump_2
+        addiu   at, r0, Character.id.NDEDEDE   // NDedede ID
+        beq     v0, at, _dedede_jump_2
         nop
         j       _return                     // return
         nop
 
         _puff_jump_2:
-		constant puff_jump_decay(0x42A0)	// 80.0	
+		constant puff_jump_decay(0x42A0)	// 80.0
         j       0x801400A0                  // routine for puff jumps
         nop
 
@@ -69,7 +73,7 @@ scope JigglypuffKirbyShared {
 		constant kirby_jump_decay(0x42A0)	// 80.0
         j       0x80140070                  // routine for kirby jumps
         nop
-		
+
         _dedede_jump_2:
 		mtc1	t4, f4						// move t4 to float
 		lui		at, Dedede.jump_decay       // at - Dededes jump decay
@@ -100,6 +104,8 @@ scope JigglypuffKirbyShared {
         beq     v1, at, _puff_jump_3
         addiu   at, r0, Character.id.JKIRBY   // J Kirby ID
         beq     v1, at, _puff_jump_3
+        addiu   at, r0, Character.id.NDEDEDE     // NDedede ID
+        beq     v1, at, _puff_jump_3
         nop
         j       _return                     // return
         addiu   at, r0, 0x0018              // original line 2
@@ -125,6 +131,8 @@ scope JigglypuffKirbyShared {
         addiu   at, r0, Character.id.EPUFF   // EPuff ID
         beq     v0, at, _puff_jump_4
         addiu   at, r0, Character.id.JKIRBY   // JKIRBY ID
+        beq     v0, at, _kirby_jump_4
+        addiu   at, r0, Character.id.NDEDEDE     // NDedede ID
         beq     v0, at, _kirby_jump_4
         nop
         j       _return                     // return
@@ -155,6 +163,8 @@ scope JigglypuffKirbyShared {
         addiu   at, r0, Character.id.EPUFF      // EPuff ID
         beq     v1, at, _puff_jump_5
         addiu   at, r0, Character.id.JKIRBY     // JKIrby ID
+        beq     v1, at, _kirby_jump_5
+        addiu   at, r0, Character.id.NDEDEDE     // Dedede ID
         beq     v1, at, _kirby_jump_5
         nop
         j       _return                         // return
@@ -267,7 +277,7 @@ scope JigglypuffKirbyShared {
         _return:
         OS.patch_end()
 
-        
+
 
         beq     v0, at, _kirbyfthrow_1          // modified original line 1
         addiu   at, r0, Character.id.JKIRBY     // JKIRBY ID
@@ -540,7 +550,7 @@ scope JigglypuffKirbyShared {
         nop
         j       0x80136C2C                  // modified line 1
         or      v0, r0, r0                  // original line 2
-		
+
         _dedede:
         j       _return
         or      v0, v1, r0                  // original line 2
@@ -591,7 +601,7 @@ scope JigglypuffKirbyShared {
         _end:
         j       0x80137160                  // modified line 1
         addiu   at, r0, 0x000B              // original line 2
-		
+
 		_dedede:
 		lw		v0, 0x0024(a2)					// v0 = current action
 		addiu	at, r0, Dedede.Action.NSP_IDLE_GROUND
@@ -608,7 +618,7 @@ scope JigglypuffKirbyShared {
         lli		a1, AI.ROUTINE.NSP          // press B
         j		0x80137768
         or		v0, r0, r0
-        
+
         _dedede_hat:
         lw		v0, 0x0024(a2)              // v0 = current action
         addiu	at, r0, Kirby.Action.DEDEDE_NSP_IDLE_GROUND
@@ -779,7 +789,7 @@ scope JigglypuffKirbyShared {
         j       _return                         // return
         nop
     }
-	
+
     // @ Description
     // Allows characters with slow/short aerial hops to make contact with the ledge better during recovering
     scope multi_jump_recovery_fix_: {
@@ -793,21 +803,25 @@ scope JigglypuffKirbyShared {
         // at = Jiggly character id
         beq      v0, at, _puff_kirby       // skip if PUFF
         addiu    at, r0, Character.id.JPUFF
-        beq      t6, at, _puff_kirby       // skip if JPN PUFF
+        beq      v0, at, _puff_kirby       // skip if JPN PUFF
         addiu    at, r0, Character.id.MARINA
         beq      v0, at, _puff_kirby       // skip if MARINA
         addiu    at, r0, Character.id.DEDEDE
         beq      v0, at, _dedede           // skip if DEDEDE
         addiu    at, r0, Character.id.EPUFF
-        beq      t6, at, _puff_kirby       // skip if E PUFF
+        beq      v0, at, _puff_kirby       // skip if E PUFF
         addiu    at, r0, Character.id.JKIRBY
         beq      t6, at, _puff_kirby       // skip if J KIRBY
+        addiu    v0, r0, Character.id.NMARINA
+        beq      v0, at, _puff_kirby       // skip if NMARINA
+        addiu    at, r0, Character.id.NDEDEDE
+        beq      v0, at, _dedede           // skip if NDEDEDE
         nop
 
         _normal:
         j       0x80135368                 // skip puff/kirby branch
         or      a0, s0, r0                 // og line 2 (delay slot)
-		
+
 		_dedede:
 		lw		v0, 0x0024(s0)             // v0 = current action
 		lli 	at, Dedede.Action.USP_MOVE        // at = USP_MOVE action ID
@@ -821,7 +835,7 @@ scope JigglypuffKirbyShared {
         nop
 
     }
-	
+
     // @ Description
     // May prevent puff copies from doing an up special to an opponent while they are aerial
     // Hooks into check for vanilla puff

@@ -107,16 +107,21 @@ scope Pause {
 
         addiu   sp, sp, -0x0020         // allocate sp
         sw      ra, 0x0014(sp)          // store ra
+        sw      a0, 0x000C(sp)          // store a0
         sw      a1, 0x000C(sp)          // store a1
-        sw      a1, 0x0010(sp)          // store a2
+        sw      a2, 0x0010(sp)          // store a2
         sw      a3, 0x0018(sp)          // store a3
 
         jal     set_alternate_music_
         sw      at, 0x001C(sp)          // store at
 
-        lw      ra, 0x0014(sp)          // restore ra
+        jal     check_legend_toggle_press_
         lw      a1, 0x000C(sp)          // restore a1
-        lw      a1, 0x0010(sp)          // restore a2
+
+        lw      ra, 0x0014(sp)          // restore ra
+        lw      a0, 0x0008(sp)          // restore a0
+        lw      a1, 0x000C(sp)          // restore a1
+        lw      a2, 0x0010(sp)          // restore a2
         lw      a3, 0x0018(sp)          // restore a3
         lw      at, 0x001C(sp)          // restore at
         bne     a3, at, _no_camera_controls
@@ -130,6 +135,205 @@ scope Pause {
         j       0x8011445C              // original branch line 1
         lhu     a2, 0x0002(a1)          // original line 2
 
+    }
+
+    // @ Description
+    // Display pause HUD legend helper
+    scope show_legend_helper_: {
+        OS.patch_start(0x8F6A0, 0x80113EA0)
+        j       show_legend_helper_
+        nop
+        _return:
+        OS.patch_end()
+
+        OS.read_word(0x80046728, t0)        // t0 = group 0xE head
+        beqz    t0, _end                    // if pause HUD wasn't drawn, skip
+        OS.read_byte(0x80131828, t0)        // t0 = 1 if camera control allowed
+        lli     t1, 0x0001                  // t1 = 1 = camera control allowed
+        // bne     t0, t1, _end                // if camera control is not allowed, skip
+        nop
+
+        OS.save_registers()
+
+        Render.load_font()
+        Render.draw_texture_at_offset(0x18, 0xE, 0x80130D54, Render.file_c5_offsets.R, Render.NOOP, 0x43620000, 0x434B0000, 0x808080FF, 0x212121FF, 0x3F800000)
+        Render.draw_texture_at_offset(0x18, 0xE, 0x80130D54, 0x19F8, Render.NOOP, 0x43730000, 0x434D0000, 0xFFFFFFFF, 0x00000000, 0x3F800000)
+
+        OS.restore_registers()
+
+        _end:
+        lw      s0, 0x0018(sp)              // original line 1
+        lw      s1, 0x001C(sp)              // original line 2
+        j       _return
+        lw      ra, 0x0024(sp)              // make sure ra is set
+    }
+
+    // @ Description
+    // Checks if R is pressed and toggles on/off the legend
+    scope check_legend_toggle_press_: {
+        OS.save_registers()
+
+        // Only check if on a screen that allows camera control
+        OS.read_byte(0x80131828, t0)        // t0 = 1 if camera control allowed
+        lli     t1, 0x0001                  // t1 = 1 = camera control allowed
+        // bne     t0, t1, _return             // if camera control is not allowed, skip
+        lli     v0, Joypad.R                // v0 = Joypad.R
+        lh      t0, 0x0000(a1)              // t0 = players current input (held)
+        bne     v0, t0, _return             // if anything other than R is being held, return
+        lh      t0, 0x0002(a1)              // t0 = players current input (pressed)
+        bne     v0, t0, _return             // if not solo R press, return
+        nop
+
+        // Don't draw during Gentlemen's Reset in 12CB mode
+        li      t1, TwelveCharBattle.twelve_cb_flag
+        lw      t1, 0x0000(t1)              // t1 = 1 if 12cb mode
+        beqz    t1, _check_created          // if not 12cb mode, skip
+        nop
+        li      t1, TwelveCharBattle.gentlemens_reset_.reset_requested
+        lw      t1, 0x0000(t1)              // t1 = 1 if request is being displayed
+        bnez    t1, _return                 // if reset is requested, skip
+        nop
+
+        _check_created:
+        // check if we've already created the legend
+        lui     t1, 0x8004
+        lw      t1, 0x672C(t1)              // t1 = group 0xF object pointer if exists
+        beqz    t1, _create_legend          // if not created, yet, then create
+        nop
+        lw      a1, 0x007C(t1)              // t1 = display state (0 = shown, 1 = hidden)
+        b       _toggle_display             // it's already shown, so toggle it
+        xori    a1, a1, 0x0001              // a1 = 1 to hide, 0 to show
+
+        _create_legend:
+        // we haven't created it yet, so create the objects here
+        Render.load_file(File.CSS_IMAGES, css_images_file_pointer)  // load css images for dpad and c buttons
+
+        Render.draw_string(0x18, 0xF, string_music_note, Render.NOOP, 0x42200000, 0x42940000, 0xFFFFFFFF, Render.FONTSIZE_DEFAULT, Render.alignment.LEFT)
+
+        // Get BGM ID
+        //lui     t0, 0x8013
+        //lw      t0, 0x1300(t0)
+        //lw      t0, 0x007C(t0)              // t0 = bgm_id
+        li      t0, BGM.vanilla_current_track
+        lw      t0, 0x0004(t0)              // t0 = bgm_id
+
+        // Get title
+        li      t1, BGM.string_table
+        sll     t0, t0, 0x0003              // t0 = offset to title pointer array
+        addu    t0, t1, t0                  // t0 = address of title pointer array
+        lw      a2, 0x0004(t0)              // a2 = track title pointer
+        addiu   sp, sp, -0x0010             // allocate stack space
+        sw      t0, 0x0004(sp)              // save title pointer array
+        Render.draw_string(0x18, 0xF, 0xFFFFFFFF, Render.NOOP, 0x42500000, 0x42940000, 0xFFFFFFFF, Render.FONTSIZE_DEFAULT, Render.alignment.LEFT)
+        or      a0, v0, r0                  // a0 = track title string object
+        jal     Render.apply_max_width_
+        lli     a1, 0x00E4                  // a1 = max width
+        sw      r0, 0x0084(v0)              // set 0x84 to 0 for track title
+        li      t0, render_live_music_string_
+        sw      t0, 0x002C(v0)              // update render routine to custom routine
+        lw      t0, 0x0004(sp)              // restore title pointer array
+        addiu   sp, sp, 0x0010              // deallocate stack space
+        lw      a2, 0x0000(t0)              // a2 = game title pointer
+        Render.draw_string(0x18, 0xF, 0xFFFFFFFF, Render.NOOP, 0x42500000, 0x42B40000, 0xFFFFFFFF, 0x3F400000, Render.alignment.LEFT)
+        or      a0, v0, r0                  // a0 = track title string object
+        jal     Render.apply_max_width_
+        lli     a1, 0x00E4                  // a1 = max width
+        lli     t0, 0x0001                  // t0 = 1 for game title
+        sw      t0, 0x0084(v0)              // set 0x84 to 1 for game title
+        li      t0, render_live_music_string_
+        sw      t0, 0x002C(v0)              // update render routine to custom routine
+
+        Render.draw_texture_at_offset(0x18, 0xF, css_images_file_pointer, 0x0218, Render.NOOP, 0x42200000, 0x42D20000, 0x848484FF, 0x303030FF, 0x3F800000)
+        Render.draw_rectangle(0x18, 0xF, 51, 113, 2, 2, Color.high.YELLOW, OS.FALSE)
+        Render.draw_string(0x18, 0xF, string_music_next, Render.NOOP, 0x42700000, 0x42D40000, 0xFFFFFFFF, Render.FONTSIZE_DEFAULT, Render.alignment.LEFT)
+        Render.draw_texture_at_offset(0x18, 0xF, css_images_file_pointer, 0x0218, Render.NOOP, 0x42200000, 0x42F20000, 0x848484FF, 0x303030FF, 0x3F800000)
+        Render.draw_rectangle(0x18, 0xF, 47, 132, 2, 2, Color.high.YELLOW, OS.FALSE)
+        Render.draw_string(0x18, 0xF, string_music_random, Render.NOOP, 0x42700000, 0x42F40000, 0xFFFFFFFF, Render.FONTSIZE_DEFAULT, Render.alignment.LEFT)
+
+        Render.draw_texture_at_offset(0x18, 0x10, 0x80130D54, Render.file_c5_offsets.A, Render.NOOP, 0x42200000, 0x430C0000, 0x50A8FFFF, 0x303030FF, 0x3F700000)
+        Render.draw_string(0x18, 0x10, Toggles.slash, Render.NOOP, 0x42500000, 0x430C0000, 0xFFFFFFFF, Render.FONTSIZE_DEFAULT, Render.alignment.LEFT)
+        Render.draw_texture_at_offset(0x18, 0x10, 0x80130D54, Render.file_c5_offsets.B, Render.NOOP, 0x42680000, 0x430C0000, 0x00D040FF, 0x003000FF, 0x3F700000)
+        Render.draw_string(0x18, 0x10, string_camera_zoom, Render.NOOP, 0x42900000, 0x430C0000, 0xFFFFFFFF, Render.FONTSIZE_DEFAULT, Render.alignment.LEFT)
+
+        Render.draw_texture_at_offset(0x18, 0x10, css_images_file_pointer, 0x1958, Render.NOOP, 0x42200000, 0x431C0000, 0xC0CC00FF, 0x000000FF, 0x3F400000)
+        Render.draw_string(0x18, 0x10, Toggles.slash, Render.NOOP, 0x42480000, 0x431A0000, 0xFFFFFFFF, Render.FONTSIZE_DEFAULT, Render.alignment.LEFT)
+        Render.draw_texture_at_offset(0x18, 0x10, css_images_file_pointer, 0x0688, Render.NOOP, 0x42580000, 0x431C0000, 0xC0CC00FF, 0x000000FF, 0x3F400000)
+        Render.draw_string(0x18, 0x10, Toggles.slash, Render.NOOP, 0x42800000, 0x431A0000, 0xFFFFFFFF, Render.FONTSIZE_DEFAULT, Render.alignment.LEFT)
+        Render.draw_texture_at_offset(0x18, 0x10, css_images_file_pointer, 0x1A88, Render.NOOP, 0x42880000, 0x431C0000, 0xC0CC00FF, 0x000000FF, 0x3F400000)
+        Render.draw_string(0x18, 0x10, Toggles.slash, Render.NOOP, 0x429C0000, 0x431A0000, 0xFFFFFFFF, Render.FONTSIZE_DEFAULT, Render.alignment.LEFT)
+        Render.draw_texture_at_offset(0x18, 0x10, css_images_file_pointer, 0x1BB8, Render.NOOP, 0x42A40000, 0x431C0000, 0xC0CC00FF, 0x000000FF, 0x3F400000)
+        Render.draw_string(0x18, 0x10, string_camera_pan, Render.NOOP, 0x42BC0000, 0x431A0000, 0xFFFFFFFF, Render.FONTSIZE_DEFAULT, Render.alignment.LEFT)
+
+        Render.draw_texture_at_offset(0x18, 0x10, 0x80130D54, Render.file_c5_offsets.Z, Render.NOOP, 0x42240000, 0x432A0000, 0x848484FF, 0x303030FF, 0x3F800000)
+        Render.draw_texture_at_offset(0x18, 0x10, 0x80130D54, Render.file_c5_offsets.PLUS, Render.NOOP, 0x42540000, 0x432D0000, 0xFFFFFFFF, 0x303030FF, 0x3F700000)
+        Render.draw_texture_at_offset(0x18, 0x10, 0x80130D54, Render.file_c5_offsets.A, Render.NOOP, 0x42780000, 0x432A0000, 0x50A8FFFF, 0x303030FF, 0x3F700000)
+        Render.draw_string(0x18, 0x10, Toggles.slash, Render.NOOP, 0x42940000, 0x432A0000, 0xFFFFFFFF, Render.FONTSIZE_DEFAULT, Render.alignment.LEFT)
+        Render.draw_texture_at_offset(0x18, 0x10, 0x80130D54, Render.file_c5_offsets.B, Render.NOOP, 0x42A00000, 0x432A0000, 0x00D040FF, 0x003000FF, 0x3F700000)
+        Render.draw_string(0x18, 0x10, string_camera_fov, Render.NOOP, 0x42BC0000, 0x432A0000, 0xFFFFFFFF, Render.FONTSIZE_DEFAULT, Render.alignment.LEFT)
+
+        b       _toggle_display_camera_controls
+        addiu   a1, r0, r0                  // a1 = 0 (show)
+
+        _toggle_display:
+        jal     Render.toggle_group_display_
+        lli     a0, 0x000F                  // a0 = group
+
+        // Only show camera controls if on a screen that allows camera control
+        _toggle_display_camera_controls:
+        OS.read_byte(0x80131828, t0)        // t0 = 1 if camera control allowed
+        lli     t1, 0x0001                  // t1 = 1 = camera control allowed
+        bnel    t0, t1, pc() + 8            // if camera control is not allowed, always hide
+        addiu   a1, r0, 1                   // a1 = 1 (hide)
+
+        jal     Render.toggle_group_display_
+        lli     a0, 0x0010                  // a0 = group
+
+        _return:
+        OS.restore_registers()
+        jr      ra
+        nop
+
+        css_images_file_pointer:
+        dw 0
+    }
+
+    // @ Description
+    // Ensures music strings are kept up to date on the pause HUD
+    scope render_live_music_string_: {
+        addiu   sp, sp, -0x0020             // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+
+        lw      t2, 0x0084(a0)              // t2 = 1 if game title, 0 if track title
+        sw      t2, 0x0008(sp)              // save t2
+
+        // lui     t0, 0x8013
+        // lw      t0, 0x1300(t0)
+        // lw      at, 0x007C(t0)              // at = bgm_id
+        li      t0, BGM.vanilla_current_track
+        lw      at, 0x0004(t0)              // at = bgm_id
+
+        // Get title
+        li      t1, BGM.string_table
+        sll     t0, at, 0x0003              // t0 = offset to title pointer array
+        addu    t0, t1, t0                  // t0 = address of title pointer array
+        lw      t1, 0x0000(t0)              // t1 = game title pointer
+        beqzl   t2, pc() + 8                // if track title, get track title pointer
+        lw      t1, 0x0004(t0)              // t1 = track title pointer
+
+        // Update string if it's changed
+        jal     Render.update_live_string_
+        sw      t1, 0x0034(a0)              // save title pointer
+        lw      t2, 0x0008(sp)              // t2 = 1 if game title, 0 if track title
+        sw      t2, 0x0084(v0)              // save t2
+        li      t1, render_live_music_string_
+        sw      t1, 0x002C(v0)
+
+        jal     Render.TEXTURE_RENDER_      // call original render routine
+        or      a0, v0, r0                  // a0 = string object
+
+        lw      ra, 0x0004(sp)              // store ra
+        jr      ra
+        addiu   sp, sp, 0x0020              // deallocate stack space
     }
 
     // @ Description
@@ -278,10 +482,10 @@ scope Pause {
 
         _save:
         li      a0, BGM.current_track       // a0 = address of current_track
-        lw      at, 0x0000(a0)              // at = current track
         sw      a1, 0x0000(a0)              // store current_track
         li      t1, BGM.vanilla_current_track // t1 = hardcoded spot for current track
         sw      a1, 0x0000(t1)              // save as override track (vanilla)
+        lw      at, 0x0004(t1)              // at = stage music (vanilla)
         sw      a1, 0x0004(t1)              // save as stage music (vanilla)
         beql    at, a1, _update_timer       // don't change the music if it's the same track
         addiu   a0, r0, 2                   // a0 = 2 (reset dpad cycle initial delay)
@@ -313,6 +517,16 @@ scope Pause {
     // Timer for cycling song with held dpad to control speed of cycling.
     dpad_song_cycle_timer:
     dw  0x0002
+
+    // @ Description
+    // Legend strings
+    string_music_note:; db 0x80, 0
+    string_music_next:; db ": Next Music Track", 0
+    string_music_random:; db ": Random Music Track", 0
+    string_camera_zoom:; db ": Zoom Camera", 0
+    string_camera_pan:; db ": Pan Camera", 0
+    string_camera_fov:; db ": Field of View", 0
+    OS.align(4)
 
 }
 

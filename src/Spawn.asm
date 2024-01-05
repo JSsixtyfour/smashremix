@@ -353,6 +353,30 @@ scope Spawn {
         dw 0x02010201, 0x00010203
         dw 0x02010102, 0x00010302
 
+        // red vs yellow
+        dw 0x00000303, 0x00020103
+        dw 0x00030003, 0x00010203
+        dw 0x00030300, 0x00010302
+        dw 0x03030000, 0x00020103
+        dw 0x03000300, 0x00010203
+        dw 0x03000003, 0x00010302
+
+        // blue vs yellow
+        dw 0x01010303, 0x00020103
+        dw 0x01030103, 0x00010203
+        dw 0x01030301, 0x00010302
+        dw 0x03030101, 0x00020103
+        dw 0x03010301, 0x00010203
+        dw 0x03010103, 0x00010302
+
+        // green vs yellow
+        dw 0x02020303, 0x00020103
+        dw 0x02030203, 0x00010203
+        dw 0x02030302, 0x00010302
+        dw 0x03030202, 0x00020103
+        dw 0x03020302, 0x00010203
+        dw 0x03020203, 0x00010302
+
         // null terminator
         dw 0x00000000, 0x00000000
 
@@ -853,11 +877,11 @@ scope Spawn {
     float32  0000,  0035
     float32  0000,  0035
 
-    // 50 - Great Bay SSS
-    float32 -1013,  0511
-    float32  1190,  0511
-    float32 -2162, -0563
-    float32  2083, -0545
+    // 50 - Battlefield DL
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32  0000,  1545
+    float32  0000,  0005
 
     // 51 - BTT_DS
     float32  0000,  0035
@@ -1501,6 +1525,78 @@ scope Spawn {
     float32 -0568,  1421
     float32  0568,  1421
 
+    // BC - Meta Crystal Remix
+    float32 -1047,  0006
+    float32  1047,  0006
+    float32 -2008,  1915
+    float32  2008,  1915
+    
+    // BD - Remix 1p Race to the Finish
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+
+    // BE - Grim Reapers Cavern
+    float32  -1800, 0335
+    float32  0900, 0025
+    float32  -0450, 0226
+    float32  2250, 0025
+
+    // BF - Scuttle Town
+    float32  -2920, 0468
+    float32  0356, -0030
+    float32  0881, 2198
+    float32  2974, 0890
+
+    // C0 - Big Boo's Haunt
+    float32  -1400, 0002
+    float32  1400,  0002
+    float32 -0430, 0911
+    float32  0610, 0880
+
+    // C1 - Yoshis Island Melee (III)
+    float32  -1050, 0035
+    float32   1640, 0035
+    float32  -2037, 0900
+    float32   2907, 0900
+    
+    // C2 - Banjo Break the Targets
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+
+    // C3 - Spawned Fear
+    float32  -3100,  0900
+    float32  3100,  0900
+    float32  -1800,  0900
+    float32  1800,  0900
+
+    // C4 - Smashville Remix
+    float32 -1500,  0035
+    float32  1500,  0035
+    float32 -0800,  0035
+    float32  0800,  0035
+    
+    // C5 - Banjo Board the Platforms
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // C6 - Poke Floats
+    float32 -1714, -1244
+    float32  1305, -1661
+    float32 -0498, -0118
+    float32  0251, -0133
+    
+    // C7 - Ski Lifts
+    float32 -3880,  1745
+    float32  4095,  0645
+    float32 -2090,  1745
+    float32  2210,  0645
+
     neutral_table:
     // 00 - Peach's Castle
     float32 -1613,  1554
@@ -1986,11 +2082,11 @@ scope Spawn {
     float32  0000,  0035
     float32  0000,  0035
 
-    // 50 - Great Bay SSS
-    float32 -1013,  0511
-    float32  1190,  0511
-    float32 -2162, -0563
-    float32  2083, -0545
+    // 50 - Battlefield DL
+    float32 -1400,  0910
+    float32  1400,  0910
+    float32  0000,  1545
+    float32  0000,  0005
 
     // 51 - BTT_DS
     float32  0000,  0035
@@ -2633,7 +2729,79 @@ scope Spawn {
     float32  1767,  0832
     float32 -0568,  1421
     float32  0568,  1421
+    
+    // BC - Meta Crystal Remix
+    float32 -1047,  0006
+    float32  1047,  0006
+    float32 -2008,  1915
+    float32  2008,  1915
+    
+    // BD - Remix 1p Race to the Finish
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // BE - Grim Reapers Cavern
+    float32  -1800, 0335
+    float32  0900, 0025
+    float32  -0450, 0226
+    float32  2250, 0025
 
+    // BF - Scuttle Town
+    float32  -2920, 0468
+    float32  0356, -0030
+    float32  0881, 2198
+    float32  2974, 0890
+
+    // C0 - Big Boo's Haunt
+    float32  -1400, 0002
+    float32  1400,  0002
+    float32 -0430, 0911
+    float32  0610, 0880
+    
+    // C1 - Yoshis Island Melee (III)
+    float32  -1050, 0035
+    float32   1640, 0035
+    float32  -2037, 0900
+    float32   2907, 0900
+    
+    // C2 - Banjo Break the Targets
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // C3 - Spawned Fear
+    float32  -3100,  0900
+    float32  3100,  0900
+    float32  -1800,  0900
+    float32  1800,  0900
+
+    // C4 - Smashville Remix
+    float32 -1500,  0035
+    float32  1500,  0035
+    float32 -0800,  0035
+    float32  0800,  0035
+    
+    // C5 - Banjo Board the Platforms
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    float32  0000,  0000
+    
+    // C6 - Poke Floats
+    float32 -1714, -1244
+    float32  1305, -1661
+    float32 -0498, -0118
+    float32  0251, -0133
+    
+    // C7 - Ski Lifts
+    float32 -3880,  1745
+    float32  4095,  0645
+    float32 -2090,  1745
+    float32  2210,  0645
+    
 }
 
 } // __SPAWN__

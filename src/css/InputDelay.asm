@@ -11,6 +11,7 @@ constant APPLIES_TO(0b111111)
 constant APPLIES_TO_HUMAN_CPU(0b10)
 constant VALUE_ARRAY_POINTER(InputDelay.delay_table)
 constant ONCHANGE_HANDLER(0)
+constant DISABLES_HIGH_SCORES(OS.FALSE)
 
 // @ Description
 // Holds pointers to value labels

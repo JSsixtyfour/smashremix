@@ -16,14 +16,15 @@ scope Transitions {
     constant TRANSITONS_TABLE_ORIGIN(0x51740)
 
     // @ Description
-    // Number of transitions, original + restored
-    constant NUM_TRANSITIONS(11 + 2)
+    // Number of transitions, original + restored + new
+    constant NUM_TRANSITIONS(11 + 2 + 1)
+    constant NUM_TRANSITIONS_FLOATING_POINT(0x41500000)
 
     pushvar origin, base
 
     // Shrink the original table to use halfwords so we can fit the restored transitions in the same space.
-    // Then we squeeze in some pointers and strings for the debug menu.
-    // We use 100% of the original space, so if we ever add more, we'll have to move stuff.
+    // Then we squeeze in some pointers for the debug menu.
+    // The strings make us use >100% of the original space, so we have to move them to expansion RAM.
     origin TRANSITONS_TABLE_ORIGIN
     base TRANSITONS_TABLE
     // original
@@ -41,16 +42,21 @@ scope Transitions {
     // restored
     dh 0x0027, 0x3BC0, 0x3D78, 0x0000 // file 27's shapes falling
     dh 0x002F, 0x0F98, 0x101C, 0x0000 // file 2F's vertical flip
+    // new
+    dh File.TRANSITION_SMASH_LOGO, 0x3C80, 0x4138, 0x0000 // smash logo
 
     debug_menu_label_array:
     OS.copy_segment(0x11B5DC, 0x2C) // original array
     dw string_shapes
     dw string_flip
+    dw string_smash_logo
+
+    pullvar base, origin
 
     string_shapes:; db "Falling Shapes", 0
     string_flip:; db "Flip", 0
-
-    pullvar base, origin
+    string_smash_logo:; db "Smash Logo", 0
+    OS.align(4)
 
     // @ Description
     // Fix end of table during max size loop
@@ -115,7 +121,7 @@ scope Transitions {
     // @ Description
     // Increase debug menu label array max index from 10 to 12
     OS.patch_start(0x11B734, 0x80132EF4)
-    dw 0x41400000
+    dw NUM_TRANSITIONS_FLOATING_POINT
     OS.patch_end()
 }
 

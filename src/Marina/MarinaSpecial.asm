@@ -26,8 +26,8 @@ scope MarinaCargo {
         nop
     }
 
-    constant SHAKE_FGM_ID(0x420)			// JPN voice clip
-    constant SHAKE_ALTERNATE_FGM_ID(0x43C)	// NA voice clip
+    constant SHAKE_FGM_ID(0x420)            // JPN voice clip
+    constant SHAKE_ALTERNATE_FGM_ID(0x43C)  // NA voice clip
 
     // @ Description
     // Initial subroutine for CargoShake
@@ -48,15 +48,15 @@ scope MarinaCargo {
         sw      r0, 0x0180(v0)              // b press flag = FALSE
         sw      r0, 0x0184(v0)              // loop flag = FALSE
 
-		// Play voice FGM
+        // Play voice FGM
         lh      t6, 0x01BA(v0)              // t6 = taunt button mask
         lh      t5, 0x01BC(v0)              // t5 = buttons held
-        and		t5, t5, t6                  // t5 != 0 if taunt held
+        and     t5, t5, t6                  // t5 != 0 if taunt held
         beqzl   t5, _play_voice
         lli     a0, SHAKE_FGM_ID            // arg0 = default voice
         lli     a0, SHAKE_ALTERNATE_FGM_ID  // or arg0 = alternate voice
         _play_voice:
-        jal		0x800269C0                  // play FGM
+        jal     0x800269C0                  // play FGM
         nop
 
         lw      ra, 0x001C(sp)              // load ra
@@ -120,7 +120,7 @@ scope MarinaCargo {
         addiu   sp, sp, 0x0060              // deallocate stack space
 
         // prevent spawned item from clipping into walls
-        lw      a1, 0x001C(sp)					// a1 = player struct
+        lw      a1, 0x001C(sp)                  // a1 = player struct
         addiu   a2, a1, 0x0078                  // a2 = unknown
         lw      a1, 0x0078(a1)                  // a1 = player x/y/z coordinates
         jal     0x800DF058                      // check clipping
@@ -1652,17 +1652,17 @@ scope MarinaDSP {
         jal     0x800E0830                  // unknown common subroutine
         lw      a0, 0x0020(sp)              // a0 = player object
 
-		// Play voice FGM
+        // Play voice FGM
         lw      a0, 0x0020(sp)              // a0 = player object
         lw      v0, 0x0084(a0)              // v0 = player struct
         lh      t6, 0x01BA(v0)              // t6 = taunt button mask
         lh      t5, 0x01BC(v0)              // t5 = buttons held
-        and		t5, t5, t6                  // t5 != 0 if taunt held
+        and     t5, t5, t6                  // t5 != 0 if taunt held
         beqzl   t5, _play_voice
         lli     a0, MarinaCargo.SHAKE_FGM_ID            // arg0 = default voice
         lli     a0, MarinaCargo.SHAKE_ALTERNATE_FGM_ID  // or arg0 = alternate voice
         _play_voice:
-        jal		0x800269C0                  // play FGM
+        jal     0x800269C0                  // play FGM
         nop
 
         lw      a0, 0x0020(sp)              // ~
@@ -1694,17 +1694,17 @@ scope MarinaDSP {
         jal     0x800E0830                  // unknown common subroutine
         lw      a0, 0x0020(sp)              // a0 = player object
 
-		// Play voice FGM
+        // Play voice FGM
         lw      a0, 0x0020(sp)              // a0 = player object
         lw      v0, 0x0084(a0)              // v0 = player struct
         lh      t6, 0x01BA(v0)              // t6 = taunt button mask
         lh      t5, 0x01BC(v0)              // t5 = buttons held
-        and		t5, t5, t6                  // t5 != 0 if taunt held
+        and     t5, t5, t6                  // t5 != 0 if taunt held
         beqzl   t5, _play_voice
         lli     a0, MarinaCargo.SHAKE_FGM_ID            // arg0 = default voice
         lli     a0, MarinaCargo.SHAKE_ALTERNATE_FGM_ID  // or arg0 = alternate voice
         _play_voice:
-        jal		0x800269C0                  // play FGM
+        jal     0x800269C0                  // play FGM
         nop
 
         lw      a0, 0x0020(sp)              // ~
@@ -2324,7 +2324,7 @@ scope MarinaDSP {
         bnez    t0, _end                            // if player is holding an item, skip
         nop
 
-		addiu	at, r0, 0x0001
+        addiu   at, r0, 0x0001
         li      t0, Item.skip_item_spawn_gfx_.flag
         sw      at, 0x0000(t0)                      // update override flag to skip showing spawn gfx
 
@@ -2341,10 +2341,10 @@ scope MarinaDSP {
         sw      r0, 0x0004(a2)                      // set up float 2
 
         lw      t0, 0x0084(a0)                      // t0 = player struct
-        lw      t0, 0x0ADC(t0)	                    // t7 = clanpot charge level
-	    lli     at, 0x0002                          // at = shuriken
+        lw      t0, 0x0ADC(t0)                      // t7 = clanpot charge level
+        lli     at, 0x0002                          // at = shuriken
         beq     at, t0, _shuriken                   // branch if shuriken
-		lli     at, 0x0003                          // at = boomerang
+        lli     at, 0x0003                          // at = boomerang
         beq     at, t0, _boomerang                  // branch if boomerang
         lli     at, 0x0004                          // at = clanbomb
         beq     at, t0, _clanbomb                   // branch if clanbomb
@@ -2357,19 +2357,19 @@ scope MarinaDSP {
         addiu   sp, sp, 0x0030                      // deallocate stack space
 
         _shuriken:
-        jal     Item.Shuriken.SPAWN_ITEM     		// create shuriken item
+        jal     Item.Shuriken.SPAWN_ITEM            // create shuriken item
         sw      r0, 0x0008(a2)                      // set up float 3
         b       _continue                           // continue after item is created
         addiu   sp, sp, 0x0030                      // deallocate stack space
 
         _boomerang:
-        jal     Item.Boomerang.SPAWN_ITEM     		// create boomerang item
+        jal     Item.Boomerang.SPAWN_ITEM           // create boomerang item
         sw      r0, 0x0008(a2)                      // set up float 3
         b       _continue                           // continue after item is created
         addiu   sp, sp, 0x0030                      // deallocate stack space
 
         _clanbomb:
-        jal     Item.ClanBomb.SPAWN_ITEM     		// create clanbomb item
+        jal     Item.ClanBomb.SPAWN_ITEM            // create clanbomb item
         sw      r0, 0x0008(a2)                      // set up float 3
         addiu   sp, sp, 0x0030                      // deallocate stack space
 
@@ -2407,7 +2407,7 @@ scope MarinaDSP {
 
         // s0 = item struct
         lw      t0, 0x000C(s0)              // t0 = item_id
-        lli     t1, Item.Gem.id        		// t1 = gem/bomb id
+        lli     t1, Item.Gem.id             // t1 = gem/bomb id
         beq     t1, t0, _j_0x80173C28       // skip if item = gem/bomb
         lli     t1, Item.Shuriken.id        // t1 = shuriken id
         beq     t1, t0, _j_0x80173C28       // skip if item = shuriken
@@ -2527,6 +2527,9 @@ scope MarinaDSP {
         lli     at, 0x1005                  // at = pirate land cannonball id
         beql    t0, at, _end                // branch if projectile = pirate land cannonball...
         lli     v0, 0x0004                  // ...and return 4
+        lli     at, 0x1009                  // at = golden gun bullet
+        beql    t0, at, _end                // branch if projectile = golden gun bullet...
+        lli     v0, 0x0004                  // ...and return 4
         b       _end                        // for all other projectiles...
         lli     v0, 0x0001                  // ...return 1
 
@@ -2552,10 +2555,18 @@ scope MarinaDSP {
     // v0 - clanpot charge level
     scope get_item_level_: {
         lw      t0, 0x000C(a0)              // t0 = item id
+        lli     at, 0x011A                  // at = bowser bomb
+        beql    t0, at, _end                // branch if item = bowser bomb...
+        lli     v0, 0x0002                  // ...and return 2
+
+        // if here, normal item
         li      t1, item_charge_table       // t1 = item_charge_table
         addu    t1, t1, t0                  // t1 = item charge table + id
-        jr      ra                          // return
         lbu     v0, 0x0000(t1)              // v0 = return value from table
+
+        _end:
+        jr      ra                          // return
+        nop
     }
 
     // @ Description
@@ -2616,11 +2627,15 @@ scope MarinaDSP {
     db 0    // 0x33 - FranklinBadge
     db 1    // 0x34 - PitFall
     db 2    // 0x35 - GoldenGun
+    db 0    // 0x36 - Dango
+    db 0    // 0x37 - Pwing
     // custom stage items
     db 0    // 1 - KlapTrap
     db 0    // 2 - RobotBee
     db 0    // 3 - Car
     db 0    // 4 - Bullet Bill
+    db 0    // 5 - Scuttle Town Minion
+    db 0    // 6 - Cacodemon
     // custom pokemon
     // custom character items
     db 1    // 1 - Gem

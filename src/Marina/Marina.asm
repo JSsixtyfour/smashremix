@@ -4,15 +4,17 @@
 
 scope Marina {
 
-	// Image commands used by moveset files
-	scope EYES: {
-		constant OPEN(0xAC000000)
-		constant DAMAGE(0xAC000001)
-	}
-	scope MOUTH: {
-		constant CLOSED(0xAC100000)
-		constant OPEN(0xAC100001)
-	}
+    // Image commands used by moveset files
+    scope EYES: {
+        constant OPEN(0xAC000000)
+        constant DAMAGE(0xAC000001)
+        constant MID(0xAC000002)
+        constant CLOSED(0xAC000003)
+    }
+    scope MOUTH: {
+        constant CLOSED(0xAC100000)
+        constant OPEN(0xAC100001)
+    }
 
 	DOWN_BOUNCE:
 	dw EYES.DAMAGE; dw MOUTH.OPEN
@@ -178,11 +180,6 @@ scope Marina {
         // constant ClanpotStowA(0x010B)
 
         // strings!
-        string_0x0DC:; String.insert("JabLoopStart")
-        string_0x0DD:; String.insert("JabLoop")
-        string_0x0DE:; String.insert("JabLoopEnd")
-        string_0x0DF:; String.insert("EntryR")
-        string_0x0E0:; String.insert("EntryL")
         string_0x0E1:; String.insert("JetSnatchG")
         string_0x0E2:; String.insert("JetSnatchPullG")
         string_0x0E3:; String.insert("JetSnatchThrowG")
@@ -653,7 +650,7 @@ scope Marina {
 
     // Set crowd chant FGM.
     Character.table_patch_start(crowd_chant_fgm, Character.id.MARINA, 0x2)
-    dh  0x02B7
+    dh  0x056B
     OS.patch_end()
 
     // Set Kirby hat_id
@@ -694,13 +691,19 @@ scope Marina {
 
     // Set default costumes
     Character.set_default_costumes(Character.id.MARINA, 0, 2, 4, 5, 1, 2, 3)
+    Teams.add_team_costume(YELLOW, MARINA, 0x5)
 
     // Shield colors for costume matching
     Character.set_costume_shield_colors(MARINA, RED, MAGENTA, BLUE, GREEN, PURPLE, YELLOW, NA, NA)
 
     // Set action strings
     Character.table_patch_start(action_string, Character.id.MARINA, 0x4)
-    dw  Action.action_string_table
+    dw  Marina.Action.action_string_table
+    OS.patch_end()
+
+    // Set Magnifying Glass Scale Override
+    Character.table_patch_start(magnifying_glass_zoom, Character.id.MARINA, 0x2)
+    dh  0x0053
     OS.patch_end()
 
     // @ Description

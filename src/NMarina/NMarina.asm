@@ -6,7 +6,7 @@ scope NMarina {
 
     // Insert Moveset files
 	OS.align(16)
-	
+
     insert JUMP_2,"moveset/JUMP_2.bin"
 	insert DASH,"moveset/DASH.bin"
 	insert DASH_ATTACK,"moveset/DASH_ATTACK.bin"
@@ -386,6 +386,16 @@ scope NMarina {
     float32 0.63
     OS.patch_end()
 
+    // Set action strings
+    Character.table_patch_start(action_string, Character.id.NMARINA, 0x4)
+    dw  Marina.Action.action_string_table
+    OS.patch_end()
+
+    // Set Magnifying Glass Scale Override
+    Character.table_patch_start(magnifying_glass_zoom, Character.id.NMARINA, 0x2)
+    dh  0x0053
+    OS.patch_end()
+
     // Remove entry for now.
     Character.table_patch_start(entry_action, Character.id.NMARINA, 0x8)
     dw 0x6; dw 0x6
@@ -407,7 +417,7 @@ scope NMarina {
     Character.table_patch_start(ai_attack_prevent, Character.id.NMARINA, 0x4)
     dw    	AI.PREVENT_ATTACK.ROUTINE.NONE
     OS.patch_end()
-	
+
 	// Handles common things for Polygons
 	Character.polygon_setup(NMARINA, MARINA)
 

@@ -97,6 +97,7 @@ scope DrMario {
 
     // Set default costumes
     Character.set_default_costumes(Character.id.DRM, 0, 1, 2, 4, 1, 3, 4)
+    Teams.add_team_costume(YELLOW, DRM, 0x5)
 
     // Shield colors for costume matching
     Character.set_costume_shield_colors(DRM, WHITE, PINK, BLACK, AZURE, LIME, YELLOW, NA, NA)
@@ -178,11 +179,21 @@ scope DrMario {
         OS.patch_end()
 
         beq     v0, r0, _mario_turn         // modified original line 1, correct turn
+        addiu   at, r0, Character.id.NDRM   // Poly Dr. Mario ID
+        beq     v0, at, _mario_turn         // correct turn
+        addiu   at, r0, Character.id.NWARIO // Poly Wario ID
+        beq     v0, at, _mario_turn         // correct turn
         addiu   at, r0, Character.id.JMARIO // J Mario ID
         beq     v0, at, _mario_turn         // correct turn
         addiu   at, r0, Character.id.JLUIGI // J Luigi ID
         beq     v0, at, _mario_turn         // correct turn
+        addiu   at, r0, Character.id.MLUIGI // Metal Luigi ID
+        beq     v0, at, _mario_turn         // correct turn
         addiu   at, r0, Character.id.WARIO  // Wario ID
+        beq     v0, at, _mario_turn         // correct turn
+        addiu   at, r0, Character.id.GOEMON // Goemon ID
+        beq     v0, at, _mario_turn         // correct turn
+        addiu   at, r0, Character.id.EBI    // Ebisumaru ID
         beq     v0, at, _mario_turn         // correct turn
         addiu   at, r0, Character.id.DRM    // Dr. Mario ID
         beq     v0, at, _mario_turn         // correct turn
@@ -205,11 +216,21 @@ scope DrMario {
         OS.patch_end()
 
         beq     v0, r0, _mario_turn         // modified original line 1, correct turn
+        addiu   at, r0, Character.id.NDRM   // Poly Dr. Mario ID
+        beq     v0, at, _mario_turn         // correct turn
+        addiu   at, r0, Character.id.NWARIO // Poly Wario ID
+        beq     v0, at, _mario_turn         // correct turn
         addiu   at, r0, Character.id.JMARIO // J Mario ID
         beq     v0, at, _mario_turn         // correct turn
         addiu   at, r0, Character.id.JLUIGI // J Luigi ID
         beq     v0, at, _mario_turn         // correct turn
+        addiu   at, r0, Character.id.MLUIGI // Metal Luigi ID
+        beq     v0, at, _mario_turn         // correct turn
         addiu   at, r0, Character.id.WARIO  // Wario ID
+        beq     v0, at, _mario_turn         // correct turn
+        addiu   at, r0, Character.id.GOEMON // Goemon ID
+        beq     v0, at, _mario_turn         // correct turn
+        addiu   at, r0, Character.id.EBI    // Ebisumaru ID
         beq     v0, at, _mario_turn         // correct turn
         addiu   at, r0, Character.id.DRM    // Dr. Mario ID
         beq     v0, at, _mario_turn         // correct turn

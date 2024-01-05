@@ -41,9 +41,8 @@ Computer controlled players have received a variety of improvements.
 - Metal Mario, Giant DK, and polygon versions of the original cast are available via d-pad up or down.
 - Japanese versions of the original cast are available via d-pad left.
 - European versions of some of the original cast are available via d-pad right.
-- Giga Bowser, Mad Piano, and Super Sonic are available via d-pad up.
+- Giga Bowser, Mad Piano, Super Sonic, Peppy, Slippy, Metal Luigi, Ebisumaru, and Dragon King are available via d-pad up.
 - Polygon versions of some of the remix cast are available via d-pad down.
-- Note: Press L to select a random character on the VS CSS and 12CB CSS.
 
 ### Character Select Debug Menu
 A menu for modifying certain character attributes is available on each panel.
@@ -90,10 +89,16 @@ A menu for modifying certain character attributes is available on each panel.
 - Scores are disabled while this is active.
 - Can reset stage while mode is activated (press L while paused, during GameEnd, or at Score Screen).
 ##### Dpad map
-- Available mappings are: 'Smash', 'Tilt', 'Special', or 'Movement'
-- Note: When using 'Movement', Shield is mapped to L and Taunt is mapped to Z
-##### Rand Char
-- Allows selecting a random character via L button if 'Press L' is selected.
+- Available mappings are: 'Smash', 'Tilt' or 'Special'
+##### Dpad ctrl
+- Available control schemes are: 'Stick Swap', 'Stickless', 'Stick Swap J', or 'Stickless J'
+    - 'Stick Swap' switches Dpad and Stick inputs, and can be used in conjunction with 'Dpad Map'.
+- Note: When using this, Shield is mapped to L and Taunt is mapped to Z.
+##### Initial Damage
+- Allows setting the damage percent to begin the match with.
+##### Poison Dmg
+- Applies constant percent damage every two seconds.
+- Available strengths are: 'Low' (1%), 'Med' (2%), 'High' (4%), 'Heal' (-1%)
 
 #### Toggle Name: _CSS Panel Menu_
 
@@ -115,6 +120,21 @@ A menu for modifying certain character attributes is available on each panel.
 
 #### Toggle Name: _Whispy Mode_
 
+### Saffron Pokemon Rate
+- Available Pokemon rates are: 'Normal', 'Super', 'Hyper', or 'Quick Attack'
+
+#### Toggle Name: _Saffron Pokemon Rate_
+
+### Pokemon Announcer
+- Available options are: 'Stadium', 'All Stages', or 'Off'
+
+#### Toggle Name: _Pokemon Announcer_
+
+### Dragon King HUD
+- Available options are: 'Dragon King', 'All Stages', or 'Off'
+
+#### Toggle Name: _Dragon King HUD_
+
 ### Stage Select Layout
 - Choose between NORMAL and TOURNAMENT stage select layouts. In the TOURNAMENT layout, the stages available align with the Smash Remix Tour ruleset.
 - Note: Random stage selection respects layout.
@@ -133,6 +153,7 @@ A menu for modifying certain character attributes is available on each panel.
 
 ### Salty Runback
 - Holding Start along with A + B + Z + R will restart the match on the same stage.
+- Note: Can select alternate button combo (A + B + Z + R + D-Pad Right).
 
 #### Toggle Name: _Salty Runback_
 
@@ -183,6 +204,11 @@ A menu for modifying certain character attributes is available on each panel.
  - Throwable. Can be planted, similar to a proximity mine. When stepped on, buries a player in the ground.
 #### Golden Gun
  - A powerful, single-shot weapon. Similar to the RayGun. TOP SECRET.
+#### Dango
+ - Ebisumaru's food of choice. Heals 10%.
+#### P-Wing
+ - Player can jump continuously in midair.
+ - Lasts 20 seconds.
 
 ### Tripping
 - If enabled, characters will randomly trip when dashing or running.
@@ -200,7 +226,7 @@ A menu for modifying certain character attributes is available on each panel.
 #### Toggle Name: Air Dodging
 
 ### Jab Locking
-- If enabled, you can jab-lock your opponents
+- If enabled, you can jab-lock your opponents.
 
 #### Toggle Name: Jab Locking
 
@@ -234,6 +260,22 @@ A menu for modifying certain character attributes is available on each panel.
 
 #### Toggle Name: Wall Teching
 
+### Charged Smash Attacks
+- If enabled, fighters can charge smash attacks.
+
+#### Toggle Name: Charged Smash Attacks
+
+### Item Containers
+- Allows disabling item containers, having them never explode, or forcing explosions.
+- Affects Crates, Barrels, Capsules.
+
+#### Toggle Name: Item Containers
+
+### Blastzone Warp *BETA
+- If enabled, fighters will warp across Blastzones instead of KOing.
+
+#### Toggle Name: Blastzone Warp *BETA
+
 ## Customization
 ### Costume Selection Improvements
 - Access all available costumes by scrolling with the left and right C buttons.
@@ -262,7 +304,7 @@ Load a curated list of tracks.
 - Staff Picks: Favorites of the contributors of Smash Remix.
 
 ### Menu Music
-- Choose between the classic SSB64 music or from Melee's and Brawl's menu themes.
+- Choose between the classic SSB64 music or from Melee's and Brawl's menu themes, as well as various tracks from other games.
 - By default, the Melee and Brawl themes will play from time to time.
 - Can turn menu music off if desired.
 
@@ -330,10 +372,13 @@ When Special Model Display is Hitbox or Hitbox+, these changes are applied:
 
 #### Toggle Name: _Flash On Z-Cancel_
 
-### Cruel Z-Cancel Mode
-- Punishes the player in various ways for missing Z-cancels
+### Z-Cancel
+- Allows Disabling Z-Cancel, using Melee timing (7 frames), Automating, or 'Glide Mode' (landing does not cancel attack).
 
-#### Toggle Name: _Cruel Z-Cancel Mode_
+### Punish Failed Z-Cancel
+- Punishes the player in various ways for missing Z-cancels.
+
+#### Toggle Name: _Punish Failed Z-Cancel_
 
 ## Quality of Life
 ## New Music Added
@@ -341,12 +386,16 @@ When Special Model Display is Hitbox or Hitbox+, these changes are applied:
 
 ### Improved Pause Camera
 - Allows the camera to be zoomed, moved and rotated freely while the game is paused.
-- A and B to zoom, C buttons to move.
+- A and B to zoom, C buttons to move. Z+A or Z+B to adjust FOV.
 
 ### Cycle Music Tracks
 - Players can change music tracks during a match with d-pad while the game is paused.
     - D-Pad Right cycles through the stage's music tracks.
     - D-Pad Down picks a random music track.
+	- Can view current track in Pause Legend.
+
+### Settings Menu Shorcut
+- Quickly access Settings from any CSS or SSS screen by holding 'L'.
 
 ### Crash Debugger
 - When a game crash occurs, attempts to display a screen with detailed information on what went wrong.
@@ -404,7 +453,22 @@ When Special Model Display is Hitbox or Hitbox+, these changes are applied:
 ### Always Show Full Results
 - When off, restores vanilla results screen behavior for stock matches.
 
-#### Toggle Name: Always Show Full Results
+#### Toggle Name: _Always Show Full Results_
+
+### 'L' selects Random Character
+- Allows selecting a random character via L button if 'Press L' is selected.
+
+#### Toggle Name: _'L' selects Random Character_
+
+### Dpad CSS Cursor Control
+- Allows Dpad to control cursor (for controllers without a stick).
+
+#### Toggle Name: _Dpad CSS Cursor Control_
+
+### PK Thunder Reflect Crash Fix
+- Allows toggling _PK Thunder Reflect Crash fix_
+
+#### Toggle Name: _PK Thunder Reflect Crash Fix_
 
 ### Camera Mode
 - Override the in-game Camera
@@ -414,6 +478,18 @@ When Special Model Display is Hitbox or Hitbox+, these changes are applied:
 - Scene: Camera remains frozen at the last pause position, HUD is disabled, cinematic entry is disabled.
 
 #### Toggle Name: _Camera Mode_
+
+## Accessibility features
+### Flash Guard
+- Reduces screen flashing effects when turned on.
+
+#### Toggle Name: _Flash Guard_
+
+### Screenshake
+- Allows reducing or disabling screen shake visual effect.
+- May help with motion sensitivity.
+
+#### Toggle Name: _Screenshake_
 
 ## Training Mode
 ### Custom Menu
@@ -427,12 +503,17 @@ When Special Model Display is Hitbox or Hitbox+, these changes are applied:
     - Set Percent: Changes the character's percent to the above value.
     - Reset Sets Percent: Toggles whether or not the character's percent will be changed on reset.
     - OOS Action: The action CPU will take out of shield in Shield Break Mode.
+    - CPU Teching: Set CPU teching. (Random, Roll Backward, Roll Forward, In Place, None)
+    - CPU DI Type: Set CPU DI Type. (None, Random, Smash, Slide)
+    - CPU DI Strength: Set CPU DI Strength. (High, Medium, Low, Random)
+    - CPU DI Direction: Set CPU DI Direction. (Left, Right, Up, Down, Toward, Away, Random)
+    - D-Pad Controls: Toggles the Training D-pad functions. (On, Reset Only, Disabled)
 
 ### D-Pad Shortcuts
-- Pressing up on the d-pad will pause/unpause the game
-- Pressing right on the d-pad will advance to the next frame
-- Pressing down on the d-pad will cycle through special model display modes
-- Pressing left on the d-pad will reset
+- Pressing up on the d-pad will pause/unpause the game.
+- Pressing right on the d-pad will advance to the next frame.
+- Pressing down on the d-pad will cycle through special model display modes.
+- Pressing left on the d-pad will reset.
 
 ### Reset Counter
 - The reset count for the current training session will be recorded and displayed at the top of the screen while the menu is open.
@@ -513,6 +594,13 @@ When Special Model Display is Hitbox or Hitbox+, these changes are applied:
 - Scores are disabled while this is active.
 - Master Hand controls can be found [here](https://www.ssbwiki.com/Master_Hand_(SSB)#Moveset).
 
+### Gallery
+- View 1P "Congratulations" images and listen to music tracks.
+    - Press Start to enter Idle mode (all 1P images and music cycle on a timer)
+    - Press Start a second time to enter Idle 2 mode (your Random music and matching 1P images cycle on a timer)
+    - Press A to play music, or skip to the next track in Idle modes
+    - Press B to exit
+
 ## Profiles
 - Toggles can be controlled quickly by choosing one of four built-in profiles: Community, Tournament, Netplay and Japanese
 
@@ -545,8 +633,12 @@ Disable HUD                | Off                | Off               | Off       
 Disable Anti-Aliasing      | Off                | Off               | Off               | Off
 Always Show Full Results   | On                 | On                | On                | On
 Skip Training Start Cheer  | Off                | Off               | Off               | Off
-Default CPU LVL (V.S.)     | 3                  | 3                 | 3                   | 3
-Jigglypuff Sing GFX Anims  | On                 | Off               | On               | On
+Default CPU LVL (V.S.)     | 3                  | 3                 | 3                 | 3
+Jigglypuff Sing GFX Anims  | On                 | Off               | On                | On
+L Selects Random Character | Off                | Off               | Off               | OFf
+PK Thunder Reflect Crash Fix  | On              | On                | On                | On
+Flash Guard                | Off                | Off               | Off               | OFf
+Screenshake                | Default            | Default           | Default           | Default
 
 #### Gameplay Settings
 Toggle                     | Community          | Tournament        | Netplay           | Japanese
@@ -557,6 +649,7 @@ Japanese DI                | Off                | Off               | Off       
 Japanese Sounds            | Default            | Default           | Default           | Always
 Momentum Slide             | Off                | Off               | Off               | On
 Japanese Shield Stun       | Off                | Off               | Off               | On
+Z-Cancel                   | Default            | Default           | Default           | Default
 Punish Failed Z-Cancel     | Off                | Off               | Off               | Off
 Improved AI                | On                 | Off               | On                | On
 Tripping                   | Off                | Off               | Off               | Off
@@ -569,6 +662,9 @@ Spot Dodging               | Off                | Off               | Off       
 Fast Fall Aerials          | Off                | Off               | Off               | Off
 Ledge Trumping             | Off                | Off               | Off               | Off
 Wall Teching               | Off                | Off               | Off               | Off
+Charged Smash Attacks      | Off                | Off               | Off               | Off
+Item Containers            | Default            | Default           | Default           | Default
+Blastzone Warp *BETA       | Off                | Off               | Off               | Off
 
 #### Music Settings
 Toggle                          | Community          | Tournament        | Netplay           | Japanese
@@ -585,7 +681,10 @@ Toggle                          | Community          | Tournament        | Netpl
 --------------------------------|--------------------|-------------------|-------------------|-------------------
 Stage Select Layout             | NORMAL             | TOURNAMENT        | NORMAL            | NORMAL
 Hazard Mode                     | NORMAL             | NORMAL            | NORMAL            | NORMAL
-Whispy Mode                     | Off                | Off               | Off               | JAPANESE
+Whispy Mode                     | NORMAL             | NORMAL            | NORMAL            | JAPANESE
+Saffron Pokemon Rate            | NORMAL             | NORMAL            | NORMAL            | NORMAL
+Pokemon Announcer               | DEFAULT            | OFF               | DEFAULT           | OFF
+Dragon King HUD                 | DEFAULT            | OFF               | DEFAULT           | DEFAULT
 Yoshi's Island Cloud Anims      | Off                | Off               | Off               | Off
 Camera Mode                     | NORMAL             | NORMAL            | NORMAL            | NORMAL
 _Random Toggles for All Stages_ | [Community]        | [Tournament]      | [Semi-Competitive]| [Community]

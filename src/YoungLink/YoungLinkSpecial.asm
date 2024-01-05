@@ -106,7 +106,7 @@ scope YoungLinkDSP: {
     dw 0x80186498                           // 0x6C - hitbox collision w/ shield
     dw 0x801733E4                           // 0x70 - hitbox collision w/ shield edge
     dw 0                                    // 0x74 - clang?
-    dw 0x80173434                           // 0x78 - hitbox collision w/ reflector
+    dw reflect_                             // 0x78 - hitbox collision w/ reflector
     dw hurtbox_collision_                   // 0x7C - hurtbox collision w/ hitbox
 
     // STATE 4 - DROPPED/FALLING
@@ -116,7 +116,7 @@ scope YoungLinkDSP: {
     dw 0x80186498                           // 0x8C - hitbox collision w/ shield
     dw 0x801733E4                           // 0x90 - hitbox collision w/ shield edge
     dw 0                                    // 0x94 - clang?
-    dw 0x80173434                           // 0x98 - hitbox collision w/ reflector
+    dw reflect_                             // 0x98 - hitbox collision w/ reflector
     dw dropped_hurtbox_collision_           // 0x9C - hurtbox collision w/ hitbox
 
     // STATE 5 - EXPLODING
@@ -136,7 +136,7 @@ scope YoungLinkDSP: {
     dw begin_explosion_                     // 0xCC - hitbox collision w/ shield
     dw 0                                    // 0xD0 - hitbox collision w/ shield edge
     dw 0                                    // 0xD4 - clang?
-    dw begin_explosion_                     // 0xD8 - hitbox collision w/ reflector
+    dw reflect_                             // 0xD8 - hitbox collision w/ reflector
     dw hurtbox_collision_                   // 0xDC - hurtbox collision w/ hitbox
 
     // @ Description
@@ -261,16 +261,26 @@ scope YoungLinkDSP: {
     scope begin_falling_: {
         addiu   sp, sp,-0x0028              // allocate stack space
         sw      ra, 0x0014(sp)              // store ra
-        jal     0x80186314                  // original begin falling function
+        jal     0x80185CD4                  // original subroutine
         sw      a0, 0x0018(sp)              // 0x0018(sp) = item object
-        lw      a0, 0x0018(sp)              // ~
+        lw      a0, 0x0018(sp)              // a0 = item object
+        lw      v0, 0x0084(a0)              // v0 = item special struct
+        //addiu   t6, r0, 0x000A              // ~
+        //sh      t6, 0x0352(v0)              // set invincibility timer
+        sh      r0, 0x0352(v0)              // set invincibility timer to 0
+        lbu     at, 0x02CF(v0)              // at = bit field
+        ori     at, at, 0x0080              // ~
+        sb      at, 0x02CF(v0)              // enable unknown bitflag
+        li      a1, item_state_table        // a1 = object state base address
+        jal     0x80172EC8                  // change item state
+        ori     a2, r0, 0x0004              // a2 = 4 (falling state)
+        lw      a0, 0x0018(sp)              // a0 = item object
         lw      v0, 0x0084(a0)              // v0 = item special struct
         lui     at, MOVING_FALL_SPEED       // ~
         sw      at, 0x0030(v0)              // y velocity = MOVING_FALL_SPEED
         lli     at, 0x0001                  // ~
-        sw      at, 0x0108(v0)              // kinetic state = aerial
         jal     update_direction_           // update graphic direction if necessary
-        lw      a0, 0x0018(sp)              // a0 = item object
+        sw      at, 0x0108(v0)              // kinetic state = aerial
         lw      ra, 0x0014(sp)              // restore ra
         addiu   sp, sp, 0x0028              // deallocate stack space
         jr      ra                          // return
@@ -419,6 +429,19 @@ scope YoungLinkDSP: {
         _end:
         addiu   t9, v1, 0xFFFF
         sw      t9, 0x02C0(a3)
+
+        // spawn a footstep gfx every 8 frames
+        lw      t6, 0x02C0(a3)              // ~
+        andi    t6, t6, 0x0007              // ~
+        bnez    t6, _skip                   // branch if timer value does not end in 0b000 (branch won't be taken once every 8 frames)
+        lw      a0, 0x0020(sp)              // ~
+        lw      a0, 0x0074(a0)              // ~
+        addiu   a0, a0, 0x001C              // a0 = object x/y/z coordinates
+        lw      a1, 0x0024(a3)              // a1 = item direction
+        jal     0x800FF048                  // create footstep gfx
+        lui     a2, 0x3F80                  // a2 = scale? float32 1
+
+        _skip:
         lw      ra, 0x0014(sp)
         addiu   sp, sp, 0x0020
         jr      ra
@@ -578,6 +601,26 @@ scope YoungLinkDSP: {
     }
 
     // @ Description
+    // Reflect function for Bomchus
+    scope reflect_: {
+        addiu   sp, sp,-0x0028              // allocate stack space
+        sw      ra, 0x0014(sp)              // store ra
+        jal     0x80173434                  // original reflect routine
+        sw      a0, 0x0018(sp)              // store a0
+        // f6 = direction (float)
+        lw      a0, 0x0018(sp)              // ~
+        lw      a1, 0x0084(a0)              // a1 = projectile special struct
+        cvt.w.s f6, f6                      // f6 = direction (int)
+        swc1    f6, 0x0024(a1)              // store new project direction
+        jal     update_direction_           // update graphic direction if necessary
+        lw      a0, 0x0018(sp)              // a0 = item object
+        lw      ra, 0x0014(sp)              // deallocate stack space
+        addiu   sp, sp, 0x0028              // deallocate stack space
+        jr      ra                          // return
+        or      v0, r0, r0                  // return 0
+    }
+
+    // @ Description
     // Patch which redirects to the Bombchu's item state table on state change
     scope state_change_: {
         OS.patch_start(0xED908, 0x80172EC8)
@@ -604,7 +647,7 @@ scope YoungLinkDSP: {
         j       _return                     // return
         nop
     }
-    
+
     // @ Description
     // this routine gets run by whenever a projectile crosses the blast zone. The purpose here is to end the bombchu sound.
     scope bombchu_blast_zone_: {

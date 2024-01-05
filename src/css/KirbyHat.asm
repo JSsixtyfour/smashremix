@@ -3,14 +3,15 @@
 define LABEL("Kirby Hat")
 constant VALUE_TYPE(CharacterSelectDebugMenu.value_type.STRING)
 constant MIN_VALUE(0)
-constant MAX_VALUE(0x0000001F)
+constant MAX_VALUE(0x00000024)
 constant DEFAULT_VALUE(0)
 // bitmask: [vs] [1p] [training] [bonus1] [bonus2] [allstar]
-constant APPLIES_TO(0b101000)
+constant APPLIES_TO(0b111111)
 // bitmask: [human] [cpu]
 constant APPLIES_TO_HUMAN_CPU(0b11)
 constant VALUE_ARRAY_POINTER(KirbyHats.spawn_with_hat)
 constant ONCHANGE_HANDLER(onchange_handler)
+constant DISABLES_HIGH_SCORES(OS.TRUE)
 
 // @ Description
 // Holds pointers to value labels
@@ -47,10 +48,17 @@ dw Training.string_dedede
 dw Training.string_goemon
 dw Training.string_slippy
 dw Training.string_peppy
+dw Training.string_banjo
+dw Training.string_ebi
+dw Training.string_dragonking
+dw string_magic
+dw string_random
 
 // @ Description
 // Value labels
 string_none:; String.insert("None")
+string_magic:; String.insert("???")
+string_random:; String.insert("Random")
 
 // @ Description
 // Runs when the menu item value changes
@@ -126,10 +134,17 @@ scope clear_settings_for_1p_: {
     sw      t1, 0x0008(sp)                  // ~
 
 	li      t0, KirbyHats.spawn_with_hat    // t0 = kirby hat setting address
-	sw      r0, 0x0000(t0)                  // clear size state 1p
-	sw      r0, 0x0004(t0)                  // clear size state 2p
-	sw      r0, 0x0008(t0)                  // clear size state 3p
-	sw      r0, 0x000C(t0)                  // clear size state 4p
+	bnezl   a0, pc() + 8                    // don't clear if p1 is human
+	sw      r0, 0x0000(t0)                  // clear 1p
+	lli     t1, 0x0001                      // t1 = 1 (p2)
+	bnel    a0, t1, pc() + 8                // don't clear if p2 is human
+	sw      r0, 0x0004(t0)                  // clear 2p
+	lli     t1, 0x0002                      // t1 = 2 (p3)
+	bnel    a0, t1, pc() + 8                // don't clear if p3 is human
+	sw      r0, 0x0008(t0)                  // clear 3p
+	lli     t1, 0x0003                      // t1 = 3 (p4)
+	bnel    a0, t1, pc() + 8                // don't clear if p4 is human
+	sw      r0, 0x000C(t0)                  // clear 4p
 
     lw      t0, 0x0004(sp)
     lw      t1, 0x0008(sp)

@@ -1045,7 +1045,7 @@ scope PianoDSP {
     }
 
     // @ Description
-    // Patch which swaps the action id of the captured opponent for Piano/Marina's command grabs
+    // Patch which swaps the action id of the captured opponent for Piano/Marina/Dragon King's command grabs
     scope command_grab_action_fix_: {
         OS.patch_start(0xC733C, 0x8014C8FC)
         jal     command_grab_action_fix_
@@ -1058,20 +1058,28 @@ scope PianoDSP {
         lw      t7, 0x0008(t5)              // t7 = grabbing player character id
         ori     t6, r0, Character.id.PIANO  // t6 = id.PIANO
         beq     t7, t6, _piano              // branch if id = PIANO
+        ori     t6, r0, Character.id.DRAGONKING // t6 = id.DRAGONKING
+        beq     t7, t6, _dragon_king        // branch if id = DRAGONKING
         ori     t6, r0, Character.id.MARINA // t6 = id.MARINA
         beq     t7, t6, _marina             // branch if id = MARINA
         ori     t8, r0, Character.id.JKIRBY // t8 = id.JKIRBY
         beq     t7, t8, _kirby              // branch if id = JKIRBY
         ori     t8, r0, Character.id.KIRBY  // t8 = id.KIRBY
         bne     t7, t8, _end                // skip if id != KIRBY
-        
+        nop
+
         _kirby:
         lw      t7, 0x0ADC(t5)              // t7 = grabbing player copied power id
         bne     t7, t6, _end                // skip if copied power != Marina
         nop
 
         _marina:
-        // load an alternate action id if the character is being captured by Piano
+        // load an alternate action id if the character is being captured by Marina
+        b       _end                        // branch to end
+        lli     a1, Action.Thrown2          // a1(action id) = Thrown1
+
+        _dragon_king:
+        // load an alternate action id if the character is being captured by Dragon King
         b       _end                        // branch to end
         lli     a1, Action.Thrown2          // a1(action id) = Thrown1
 

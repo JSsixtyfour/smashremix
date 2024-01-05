@@ -48,6 +48,8 @@ scope Training {
     // float32 xpos, float32 ypos
     // @ spawn_dir
     // Contains custom spawn direction.
+    // @ clipping_id
+    // Contains custom spawn clipping_id if on ledge (-1 otherwise).
     constant FACE_LEFT(0xFFFFFFFF)
     constant FACE_RIGHT(0x00000001)
     // 0xFFFFFFFF = left, 0x00000001 = right
@@ -67,6 +69,8 @@ scope Training {
             float32 0,0
             spawn_dir:
             dw FACE_LEFT
+            clipping_id:
+            dw -1
         }
         scope port_2: {
             ID:
@@ -83,6 +87,8 @@ scope Training {
             float32 0,0
             spawn_dir:
             dw FACE_LEFT
+            clipping_id:
+            dw -1
         }
         scope port_3: {
             ID:
@@ -99,6 +105,8 @@ scope Training {
             float32 0,0
             spawn_dir:
             dw FACE_LEFT
+            clipping_id:
+            dw -1
         }
         scope port_4: {
             ID:
@@ -115,6 +123,8 @@ scope Training {
             float32 0,0
             spawn_dir:
             dw FACE_LEFT
+            clipping_id:
+            dw -1
         }
 
         // @ Description
@@ -389,7 +399,7 @@ scope Training {
    scope init_character_: {
       OS.patch_start(0x0005321C, 0x800D7A1C)
 //      beq     t8, at, 0x800D7A4C          // original line 1
-//      sw      t7, 0x0008(v1)              // original line 2
+//      sw      t7, 0x002C(v1)              // original line 2
         j       init_character_
         nop
         OS.patch_end()
@@ -403,13 +413,14 @@ scope Training {
         sw      t1, 0x0008(sp)              // ~
         sw      t2, 0x000C(sp)              // store registers
 
+        _get_current_screen:
         li      t0, Global.current_screen   // ~
         lbu     t0, 0x0000(t0)              // t0 = screen_id
         ori     t1, r0, 0x0036              // ~
         bne     t0, t1, _end                // skip if screen_id != training mode
-        nop
+        lw      t0, 0x0034(sp)              // t0 = ra for char init routine
         li      t1, 0x800D86B4              // ~
-        bne     ra, t1, _end                // skip if ra != 800D86B4
+        bne     t0, t1, _end                // skip if respawning
         nop
 
         _update_spawn_dir:
@@ -424,6 +435,10 @@ scope Training {
         nop
         lw      t0, 0x001C(t2)              // t1 = spawn_dir
         sw      t0, 0x0044(v1)              // player facing direction = spawn_dir
+        lw      t0, 0x0020(t2)              // t0 = ledge clipping_id
+        bltz    t0, _update_percent         // if not starting on ledge, skip
+        nop
+        sw      t0, 0x0140(v1)              // set ledge clipping_id
 
         _update_percent:
         li      t0, toggle_table            // t0 = toggle table
@@ -444,6 +459,47 @@ scope Training {
 
         _take_branch:
         j       0x800D7A4C                  // return (take branch)
+        nop
+    }
+
+    // @ Description
+    // Sets action when starting on ledge
+    scope set_action_: {
+        OS.patch_start(0x53F34, 0x800D8734)
+        j       set_action_
+        lli     t1, Global.screen.TRAINING_MODE
+        _return:
+        OS.patch_end()
+
+        OS.read_byte(Global.current_screen, t0)
+        bne     t0, t1, _normal             // if not training mode, proceed normally
+        lbu     t1, 0x000D(s5)              // t1 = port
+
+        li      t0, struct.table            // t0 = struct table
+        sll     t1, t1, 0x2                 // t1 = offset (player port * 4)
+        add     t2, t0, t1                  // t2 = struct table + offset
+        lw      t2, 0x0000(t2)              // t2 = port struct address
+        lw      t0, 0x0010(t2)              // ~
+        slti    t0, t0, 0x4                 // t0 = 1 if spawn_id >= 0x4; else t0 = 0
+        bnez    t0, _normal                 // skip if spawn_id != custom
+        lw      t0, 0x0020(t2)              // t0 = ledge clipping_id
+        bltz    t0, _normal                 // if not starting on ledge, skip
+        lli     a1, Action.CliffWait
+
+        addiu   sp, sp, -0x0030             // allocate stack space
+        sw      r0, 0x0010(sp)              // set flags
+        lli     a2, 0x0000                  // a2 = starting frame = 0
+        jal     0x800E6F24                  // change action
+        lui     a3, 0x3F80                  // a3 = frame speed multiplier = 1.0
+        addiu   sp, sp, 0x0030              // deallocate stack space
+
+        j       _return
+        nop
+        _normal:
+        jal     0x800DEE54                  // original line 1 - transition to idle
+        lw      a0, 0x0060(sp)              // original line 2 - a0 = player object
+
+        j       _return
         nop
     }
 
@@ -784,20 +840,25 @@ scope Training {
     // Additionally, contains a shortcut for toggling hitbox mode.
     scope advance_frame_: {
         OS.patch_start(0x00114260, 0x8018DA40)
-        j   advance_frame_
-        nop
-        _advance_frame_return:
+        jal     advance_frame_
+        lui     a0, 0x8013                  // original line 2
         OS.patch_end()
 
         // the original code: skips the frame advance function if the branch is taken
         // bnez    v0, 0x8018DA58           // original line 1
         // lui     a0, 0x8013               // original line 2
         // v0 = bool skip_advance
-        lui     a0, 0x8013                  // original line 2
         OS.save_registers()
         move    t6, v0                      // t6 = bool skip_advance
         li      t0, skip_advance
         sw      v0, 0x0000(t0)              // save skip_advance value for later use
+
+        li      t0, entry_dpad_menu
+        lw      t0, 0x0004(t0)              // t0 = 2 if dpad menu is off
+        lli     t1, 0x0002                  // t1 = dpad menu options disabled
+        beq     t0, t1, _check_frame_advance // don't check dpad presses if dpad menu is off
+        nop
+
         _check_dl:
         // check if reset is allowed
         li      t0, allow_reset             // ~
@@ -922,6 +983,11 @@ scope Training {
         // addiu   sp, sp, 0x0018              // deallocate stack space
 
         _check_dd:
+        li      t0, entry_dpad_menu
+        lw      t0, 0x0004(t0)              // t0 = 0 if dpad options for du, dr and dd are enabled
+        bnez    t0, _check_frame_advance    // don't check dpad presses if dpad menu is off
+        nop
+
         // check for a DPAD DOWN press, cycles through special model display if detected
         lli     a0, Joypad.DD               // a0 - button_mask
         lli     a1, 000069                  // a1 - whatever you like!
@@ -949,6 +1015,10 @@ scope Training {
         or      t0, t4, t5                  // ~
         bnez    t0, _skip_input             // if (du_pressed) or (dr_pressed), skip checking for inputs
         nop
+        li      t0, entry_dpad_menu
+        lw      t0, 0x0004(t0)              // t0 = 0 if dpad options for du, dr and dd are enabled
+        bnezl   t0, _skip_input             // don't check dpad presses if dpad menu is off
+        sw      r0, 0x0000(t1)              // clear freeze if these dpad controls are off
 
         _check_du:
         // check for a DPAD UP press and store the result
@@ -971,9 +1041,8 @@ scope Training {
         _skip_input:
         // replicate the original branch if skip_advance = true
         li      ra, 0x8018DA58              // return value - skip
+        bnezl   t6, _skip                   // if (skip_advance), skip
         sw      ra, 0x006C(sp)              // save ra
-        bnez    t6, _skip                   // if (skip_advance), skip
-        nop
 
         _load_du:
         // toggle freeze if a dpad up input is given
@@ -986,8 +1055,6 @@ scope Training {
 
         _load_dr:
         // advance one frame and freeze if a dpad right input is given
-        li      ra, _advance_frame_return   // return value - advance frame
-        sw      ra, 0x006C(sp)              // save ra
         lw      t5, 0x0000(t3)              // t5 = bool dr_pressed
         beqz    t5, _check_freeze           // if !(dr_pressed), check freeze
         nop
@@ -1013,14 +1080,6 @@ scope Training {
         bnez    t1, _finish                 // skip custom menu updates if currently resetting
         nop
 
-        // if frame advance is off, the joystick also won't get updated correctly, so call that here
-        li      t1, freeze                  // t1 = freeze
-        lw      t0, 0x0000(t1)              // t0 = bool freeze
-        beqz    t0, _run                    // if (!freeze), finish
-        nop
-        jal     Joypad.update_stick_
-        nop
-
         _run:
         jal     run_
         nop
@@ -1039,14 +1098,6 @@ scope Training {
         nop
         lw      a0, 0x006C(a0)              // a0 = value object
         beqz    a0, _finish                 // skip if no value object (can happen for titles)
-        nop
-        jal     Render.update_live_string_
-        nop
-
-        // we may have just updated the bgm name, so update that too
-        li      t0, bgm_name_object
-        lw      a0, 0x0000(t0)              // a0 = bgm name object
-        beqz    a0, _finish                 // skip if no bgm name object (shouldn't happen)
         nop
         jal     Render.update_live_string_
         nop
@@ -1133,6 +1184,14 @@ scope Training {
         lw      t1, 0x0044(a0)              // t1 = player facing direction
         sw      t1, 0x001C(t2)              // save player facing direction to struct
 
+        lli     t1, Action.CliffWait
+        lw      t0, 0x0024(a0)              // t0 = action
+        bnel    t0, t1, _save_clipping_id   // if not on ledge, set to -1
+        addiu   t1, r0, -0x0001             // t1 = -1
+        lw      t1, 0x0140(a0)              // t1 = ledge clipping_id
+
+        _save_clipping_id:
+        sw      t1, 0x0020(t2)              // save ledge clipping_id to struct
         // set spawn type to custom
         lli     t1, 0x0004                  // t1 = spawn_id: CUSTOM
         sw      t1, 0x0004(a1)              // save spawn_id to tail_px
@@ -1303,6 +1362,8 @@ scope Training {
         li      a0, info                    // a0 - info
         sw      r0, 0x0008(a0)              // clear cursor object reference on page load
         sw      r0, 0x000C(a0)              // reset cursor to top
+        lw      t0, 0x0000(a0)              // t0 = menu head (first entry)
+        sw      t0, 0x0018(a0)              // reset first entry so it starts on first page
 
         Render.draw_string(0x17, 0xE, press_z, Render.NOOP, 0x43200000, 0x42480000, 0xFFFFFFFF, 0x3F800000, Render.alignment.CENTER, OS.FALSE)
         Render.draw_texture_at_offset(0x17, 0xE, Render.file_pointer_1, Render.file_c5_offsets.Z, Render.NOOP, 0x42EB0000, 0x42440000, 0x848484FF, 0x303030FF, 0x3F800000)
@@ -1342,37 +1403,35 @@ scope Training {
         Render.draw_number(0x17, 0x15, reset_counter, Render.NOOP, 0x435D0000, 0x41C80000, 0xFFFFFFFF, 0x3F800000, Render.alignment.RIGHT, OS.FALSE)
 
         // Dpad images
-        Render.draw_texture_at_offset(0x17, 0x15, Render.file_pointer_2, 0x0218, Render.NOOP, 0x42350000, 0x43480000, 0x848484FF, 0x303030FF, 0x3F800000)
-        Render.draw_texture_at_offset(0x17, 0x15, Render.file_pointer_2, 0x0218, Render.NOOP, 0x42350000, 0x43570000, 0x848484FF, 0x303030FF, 0x3F800000)
-        Render.draw_texture_at_offset(0x17, 0x15, Render.file_pointer_2, 0x0218, Render.NOOP, 0x43200000, 0x43480000, 0x848484FF, 0x303030FF, 0x3F800000)
-        Render.draw_texture_at_offset(0x17, 0x15, Render.file_pointer_2, 0x0218, Render.NOOP, 0x43200000, 0x43570000, 0x848484FF, 0x303030FF, 0x3F800000)
-        Render.draw_rectangle(0x17, 0x15, 52, 203, 2, 2, Color.high.YELLOW, OS.FALSE)
-        Render.draw_rectangle(0x17, 0x15, 48, 222, 2, 2, Color.high.YELLOW, OS.FALSE)
-        Render.draw_rectangle(0x17, 0x15, 171, 207, 2, 2, Color.high.YELLOW, OS.FALSE)
-        Render.draw_rectangle(0x17, 0x15, 167, 226, 2, 2, Color.high.YELLOW, OS.FALSE)
-        Render.draw_string(0x17, 0x15, dpad_pause, Render.NOOP, 0x427D0000, 0x434A0000, 0xFFFFFFFF, 0x3F800000, Render.alignment.LEFT, OS.FALSE)
-        Render.draw_string(0x17, 0x15, dpad_reset, Render.NOOP, 0x427D0000, 0x43590000, 0xFFFFFFFF, 0x3F800000, Render.alignment.LEFT, OS.FALSE)
-        Render.draw_string(0x17, 0x15, dpad_frame, Render.NOOP, 0x43320000, 0x434A0000, 0xFFFFFFFF, 0x3F800000, Render.alignment.LEFT, OS.FALSE)
-        Render.draw_string(0x17, 0x15, dpad_model, Render.NOOP, 0x43320000, 0x43590000, 0xFFFFFFFF, 0x3F800000, Render.alignment.LEFT, OS.FALSE)
+        Render.draw_texture_at_offset(0x17, 0x19, Render.file_pointer_2, 0x0218, Render.NOOP, 0x42350000, 0x43480000, 0x848484FF, 0x303030FF, 0x3F800000)
+        Render.draw_texture_at_offset(0x17, 0x1A, Render.file_pointer_2, 0x0218, Render.NOOP, 0x42350000, 0x43570000, 0x848484FF, 0x303030FF, 0x3F800000)
+        Render.draw_texture_at_offset(0x17, 0x19, Render.file_pointer_2, 0x0218, Render.NOOP, 0x43200000, 0x43480000, 0x848484FF, 0x303030FF, 0x3F800000)
+        Render.draw_texture_at_offset(0x17, 0x19, Render.file_pointer_2, 0x0218, Render.NOOP, 0x43200000, 0x43570000, 0x848484FF, 0x303030FF, 0x3F800000)
+        Render.draw_rectangle(0x17, 0x19, 52, 203, 2, 2, Color.high.YELLOW, OS.FALSE)
+        Render.draw_rectangle(0x17, 0x1A, 48, 222, 2, 2, Color.high.YELLOW, OS.FALSE)
+        Render.draw_rectangle(0x17, 0x19, 171, 207, 2, 2, Color.high.YELLOW, OS.FALSE)
+        Render.draw_rectangle(0x17, 0x19, 167, 226, 2, 2, Color.high.YELLOW, OS.FALSE)
+        Render.draw_string(0x17, 0x19, dpad_pause, Render.NOOP, 0x427D0000, 0x434A0000, 0xFFFFFFFF, 0x3F800000, Render.alignment.LEFT, OS.FALSE)
+        Render.draw_string(0x17, 0x1A, dpad_reset, Render.NOOP, 0x427D0000, 0x43590000, 0xFFFFFFFF, 0x3F800000, Render.alignment.LEFT, OS.FALSE)
+        Render.draw_string(0x17, 0x19, dpad_frame, Render.NOOP, 0x43320000, 0x434A0000, 0xFFFFFFFF, 0x3F800000, Render.alignment.LEFT, OS.FALSE)
+        Render.draw_string(0x17, 0x19, dpad_model, Render.NOOP, 0x43320000, 0x43590000, 0xFFFFFFFF, 0x3F800000, Render.alignment.LEFT, OS.FALSE)
 
         // Action legend
         Render.draw_texture_at_offset(0x17, 0x15, Render.file_pointer_1, Render.file_c5_offsets.L, Render.NOOP, 0x41A00000, 0x41800000, 0x848484FF, 0x303030FF, 0x3F600000)
         Render.draw_string(0x17, 0x15, action_legend_1, Render.NOOP, 0x41A00000, 0x41DA0000, 0xFFFFFFFF, 0x3F600000, Render.alignment.LEFT, OS.FALSE)
         Render.draw_string(0x17, 0x15, action_legend_2, Render.NOOP, 0x41A00000, 0x421A0000, 0xFFFFFFFF, 0x3F600000, Render.alignment.LEFT, OS.FALSE)
 
+        // Pagination legend
+        Render.draw_texture_at_offset(0x17, 0x16, Render.file_pointer_1, Render.file_c5_offsets.R, Render.NOOP, 0x43880000, 0x41800000, 0x848484FF, 0x303030FF, 0x3F600000)
+        Render.draw_string(0x17, 0x16, pagination_legend_1 + 4, Render.NOOP, 0x43900000, 0x41800000, 0xFFFFFFFF, 0x3F600000, Render.alignment.LEFT, OS.FALSE)
+        Render.draw_texture_at_offset(0x17, 0x16, Render.file_pointer_1, Render.file_c5_offsets.Z, Render.NOOP, 0x43930000, 0x41700000, 0x848484FF, 0x303030FF, 0x3F600000)
+        Render.draw_string(0x17, 0x16, pagination_legend_1, Render.NOOP, 0x43880000, 0x41DA0000, 0xFFFFFFFF, 0x3F600000, Render.alignment.LEFT, OS.FALSE)
+        Render.draw_string(0x17, 0x16, pagination_legend_2, Render.NOOP, 0x43880000, 0x421A0000, 0xFFFFFFFF, 0x3F600000, Render.alignment.LEFT, OS.FALSE)
+
         // Transparent background and frame
         Render.draw_rectangle(0x16, 0x16, 66, 45, 189, 154, 0x0064FF64, OS.TRUE)
         jal     draw_modal_frame_
         nop
-
-        // BGM name
-        Render.draw_string_pointer(0x17, 0x16, bgm_pointer, Render.update_live_string_, 0x43200000, 0x43380000, 0xFFFFFFFF, 0x3F5C0000, Render.alignment.CENTER, OS.FALSE)
-        li      t0, bgm_name_object
-        sw      v0, 0x0000(t0)              // save reference to bgm name object
-        sw      t0, 0x0054(v0)              // store address of reference to bgm name object
-        lli     a1, 162                     // a1 = max width
-        jal     Render.apply_max_width_     // apply max width
-        or      a0, v0, r0                  // a0 = bgm name object
 
         // Action & Frame strings
         // Create a room to use for these strings that shows up behind the pause menu
@@ -1462,6 +1521,14 @@ scope Training {
         jal     Render.toggle_group_display_
         lli     a1, 0x0001                  // a1 = display off
 
+        lli     a0, 0x0019                  // a0 = custom pause group (dpad non-quick reset)
+        jal     Render.toggle_group_display_
+        lli     a1, 0x0001                  // a1 = display off
+
+        lli     a0, 0x001A                  // a0 = custom pause group (dpad quick reset)
+        jal     Render.toggle_group_display_
+        lli     a1, 0x0001                  // a1 = display off
+
         lli     a0, 0x0016                  // a0 = custom menu group
         jal     Render.toggle_group_display_
         lli     a1, 0x0001                  // a1 = display off
@@ -1521,30 +1588,20 @@ scope Training {
         nop
 
         _custom_up:
-        li      t0, skip_advance
-        lw      t0, 0x0000(t0)              // t0 = 0 if we should check for menu updates
-        bnez    t0, _check_b                // if not on a frame where we should check menu updates, skip
+        jal     Joypad.update_stick_
         nop
 
-        _update_menu:
         // update menu
         li      a0, info                    // a0 - address of Menu.info()
         jal     Menu.update_                // check for updates
         nop
 
-        li      t0, entry_music             // t0 - music menu entry address
-        lw      t0, 0x0004(t0)              // t0 - string_table_music index
-        sll     t0, t0, 0x0002              // t0 - string_table_music offset
-        li      t1, string_table_music      // t1 - address of music string table
-        addu    t1, t1, t0                  // t1 - address of BGM name string pointer
-        lw      t1, 0x0000(t1)              // t1 - address of BGM name string
-        li      t0, bgm_pointer             // t0 - bgm_pointer
-        sw      t1, 0x0000(t0)              // save address of BGM name string
-
         // the first option in the custom training menu has it's next pointer modified for the
         // rest of the option based on the value it holds. this block updates the next pointer
         li      a0, info                    // a0 = info
         lw      t0, 0x0000(a0)              // t0 = address of head (entry)
+        lw      t1, 0x0018(a0)              // t1 = first entry
+        bne     t0, t1, _check_b            // if we're not on the first page, skip
         lw      t1, 0x0004(t0)              // t1 = entry.curr
         addiu   t1, t1,-0x0001              // t1 = entry.curr-- (p1 = 0, p2 = 1 etc.)
         sll     t1, t1, 0x0002              // t1 = offset
@@ -1611,15 +1668,7 @@ scope Training {
         lli     a2, Joypad.PRESSED          // a2 - type
         jal     Joypad.check_buttons_all_   // v0 - bool b_pressed
         nop
-        bnez    v0, _close_custom_menu      // if (b_pressed), close custom menu
-        nop
-        // check for z press
-        lli     a0, Joypad.Z                // a0 - button_mask
-        lli     a1, 000069                  // a1 - whatever you like!
-        lli     a2, Joypad.PRESSED          // a2 - type
-        jal     Joypad.check_buttons_all_   // v0 - bool b_pressed
-        nop
-        beqz    v0, _check_l                // if (!z_pressed), jump to L check
+        beqz    v0, _check_l                // if (!b_pressed), jump to L check
         nop
         _close_custom_menu:
         li      t0, toggle_menu             // t0 = toggle_menu
@@ -1672,6 +1721,21 @@ scope Training {
         lli     a1, 0x0001                  // a1 = display off
 
         _check_l:
+        // fix display of dpad options
+        li      a1, entry_dpad_menu
+        lw      a1, 0x0004(a1)              // a1 = 0 if displayed, 1 or 2 if not
+        bnezl   a1, pc() + 8                // if not 0, set to 1 for display off
+        lli     a1, 0x0001                  // a1 = display off
+        jal     Render.toggle_group_display_
+        lli     a0, 0x0019                  // a0 = custom pause group (dpad non-quick reset)
+
+        li      a1, entry_dpad_menu
+        lw      a1, 0x0004(a1)              // a1 = 0 or 1 if displayed, 2 if not
+        bnezl   a1, pc() + 8                // if not 0, set to 0 if displayed or 1 for display off
+        addiu   a1, a1, -0x0001             // a1 = display on/off
+        jal     Render.toggle_group_display_
+        lli     a0, 0x001A                  // a0 = custom pause group (dpad quick reset)
+
         lli     a0, Joypad.L                // a0 - button_mask
         lli     a1, 000069                  // a1 - whatever you like!
         jal     Joypad.check_buttons_all_   // v0 - bool l_pressed
@@ -1760,6 +1824,14 @@ scope Training {
         jal     Render.toggle_group_display_
         lli     a1, 0x0001                  // a1 = display off
 
+        lli     a0, 0x0019                  // a0 = custom pause group (dpad non-quick reset)
+        jal     Render.toggle_group_display_
+        lli     a1, 0x0001                  // a1 = display off
+
+        lli     a0, 0x001A                  // a0 = custom pause group (dpad quick reset)
+        jal     Render.toggle_group_display_
+        lli     a1, 0x0001                  // a1 = display off
+
         lli     a0, 0x000F                  // a0 = Hold A text
         jal     Render.toggle_group_display_
         lli     a1, 0x0001                  // a1 = display off
@@ -1793,9 +1865,13 @@ scope Training {
     // a0 - action & frame control object
     scope update_frame_counts_: {
         // 0x0030(a0) - previous actionID for p1
+        // 0x0032(a0) - previous hitlag for p1
         // 0x0034(a0) - previous actionID for p2
+        // 0x0036(a0) - previous hitlag for p2
         // 0x0038(a0) - previous actionID for p3
+        // 0x003A(a0) - previous hitlag for p3
         // 0x003C(a0) - previous actionID for p4
+        // 0x003E(a0) - previous hitlag for p4
         // 0x0040(a0) - frame count for p1
         // 0x0044(a0) - frame count for p2
         // 0x0048(a0) - frame count for p3
@@ -1818,13 +1894,19 @@ scope Training {
         lbu     t1, 0x000D(t0)              // t1 = port
         sll     t1, t1, 0x0002              // t1 = offset for port
         addu    t2, a0, t1                  // t2 = address of control object offset by port
-        lw      t3, 0x0030(t2)              // t3 = previous actionID
+        lh      t3, 0x0030(t2)              // t3 = previous actionID
         lw      t4, 0x0024(t0)              // t4 = current actionID
-        sw      t4, 0x0030(t2)              // update previous actionID
-        lw      t5, 0x0040(t2)              // t5 = frame count
+        sh      t4, 0x0030(t2)              // update previous actionID
+        lh      t7, 0x0032(t2)              // t7 = previous hit lag frames remaining
         lw      t6, 0x0040(t0)              // t6 = hit lag frames remaining
-        beqzl   t6, pc() + 8                // if not in hit lag, increment frame count
+        sh      t6, 0x0032(t2)              // update previous hit lag frames remaining
+        lw      t5, 0x0040(t2)              // t5 = frame count
+        beqzl   t6, _check_new_action       // if not in hit lag, increment frame count
         addiu   t5, t5, 0x0001              // t5++
+        beqzl   t7, _check_new_action       // if first frame in hit lag, increment frame count
+        addiu   t5, t5, 0x0001              // t5++
+
+        _check_new_action:
         bnel    t3, t4, pc() + 8            // if action changed, reset frame count
         lli     t5, 0x0001                  // t5 = 1
         sw      t5, 0x0040(t2)              // update frame count
@@ -1976,13 +2058,12 @@ scope Training {
         li      at, entry_music             // at = address of music menu entry
         lw      at, 0x0004(at)              // at = bgm_table index
         li      t7, bgm_table               // t7 = address of bgm_table
+        sll     at, at, 0x0001              // at = offset to bgm_id
         addu    a1, at, t7                  // a1 = address of bgm_id
-        lbu     a1, 0x0000(a1)              // a1 = bgm_id
-
-        sw      a1, 0x0000(v0)              // original line 2
+        lhu     a1, 0x0000(a1)              // a1 = bgm_id
 
         jr      ra                          // return
-        nop
+        sw      a1, 0x0000(v0)              // original line 2
     }
 
     // @ Description
@@ -2156,6 +2237,10 @@ scope Training {
     // Hooks to avoid crashes due to Pokemon opponent targeting when no other ports loaded
     scope fix_pokemon_crashes_: {
         // hitmonlee
+        OS.patch_start(0xFD3B0, 0x80182970)
+        jal     fix_pokemon_crashes_._hitmonlee_init
+        sw      s4, 0x0030(sp)              // original line 1
+        OS.patch_end()
         OS.patch_start(0xFD2A0, 0x80182860)
         sw      ra, 0x001C(sp)              // original line 3
         jal     fix_pokemon_crashes_._hitmonlee
@@ -2173,6 +2258,11 @@ scope Training {
         jal     fix_pokemon_crashes_._blastoise
         lw      s2, 0x0084(a0)              // original line 1 - s2 = item special struct
         OS.patch_end()
+
+        _hitmonlee_init:
+        sw      r0, 0x0074(sp)              // clear closest opponent pointer before determining closes opponent!
+        jr      ra
+        sw      s3, 0x002C(sp)              // original line 2
 
         _hitmonlee:
         // a0 - item object
@@ -2207,7 +2297,7 @@ scope Training {
     }
 
     // @ Description
-    // This allows us to not hear the crowd cheer when entering/reseting Training Mode
+    // This allows us to not hear the crowd cheer when entering/resetting Training Mode
     scope skip_crowd_cheer_: {
         OS.patch_start(0x116D68, 0x80190548)
         j       skip_crowd_cheer_
@@ -2254,9 +2344,14 @@ scope Training {
     type_3:; db "Disabled", 0x00
 
     // @ Description
-    // String used for L button legend
+    // Strings used for L button legend
     action_legend_1:; db "Show", 0x00
     action_legend_2:; db "Action", 0x00
+
+    // @ Description
+    // Strings used for pagination legend
+    pagination_legend_1:; db "Next/", 0x00
+    pagination_legend_2:; db "Prev", 0x00
 
     // @ Description
     // Out of Shield Options
@@ -2271,6 +2366,38 @@ scope Training {
     oos_shield_drop:; db "Shield Drop", 0x00
     oos_shield_drop_dsp:; db "S. Drop DSP", 0x00
     oos_shield_drop_nair:; db "S. Drop NAir", 0x00
+
+    // @ Description
+    // CPU Tech Options
+    string_random:; db "Random", 0x00
+    tech_roll_backward:; db "Roll Backward", 0x00
+    tech_roll_forward:; db "Roll Forward", 0x00
+    tech_in_place:; db "In Place", 0x00
+    string_none:; db "None", 0x00
+
+    // @ Description
+    // CPU DI Direction Options
+    di_left:; db "Left", 0x00
+    di_right:; db "Right", 0x00
+    di_up:; db "Up", 0x00
+    di_down:; db "Down", 0x00
+    di_away:; db "Away", 0x00
+    di_toward:; db "Toward", 0x00
+
+    // @ Description
+    // CPU DI Type Options
+    di_smash:; db "Smash", 0x00
+    di_slide:; db "Slide", 0x00
+
+    // @ Description
+    // CPU DI Strength Options
+    di_high:; db "High", 0x00
+    di_medium:; db "Medium", 0x00
+    di_low:; db "Low", 0x00
+
+    // @ Description
+    // DPAD Menu Options
+    reset_only:; db "Reset Only", 0x00
 
     OS.align(4)
 
@@ -2292,6 +2419,45 @@ scope Training {
     dw oos_shield_drop_dsp
     dw oos_shield_drop_nair
     constant OOS_MAX(10)
+
+    string_table_tech_options:
+    dw string_random
+    dw tech_roll_backward
+    dw tech_roll_forward
+    dw tech_in_place
+    dw oos_roll_left
+    dw oos_roll_right
+    dw string_none
+    constant TECH_MAX(6)
+
+    string_table_di_direction_options:
+    dw string_random
+    dw di_left
+    dw di_right
+    dw di_up
+    dw di_down
+    dw di_away
+    dw di_toward
+    constant DI_DIRECTION_MAX(6)
+
+    string_table_di_type_options:
+    dw string_none
+    dw string_random
+    dw di_smash
+    dw di_slide
+    constant DI_TYPE_MAX(3)
+
+    string_table_di_strength_options:
+    dw string_random
+    dw di_high
+    dw di_medium
+    dw di_low
+    constant DI_STRENGTH_MAX(3)
+
+    string_table_dpad_controls:
+    dw Menu.bool_1
+    dw reset_only
+    dw Menu.bool_0
 
     // @ Description
     // Holds button masks and stick values for the first 2 frames after shied stun ends in shield break mode
@@ -2327,12 +2493,12 @@ scope Training {
     // Character Strings
     string_mario:; string_Mario:; char_0x00:; db "Mario" , 0x00
     string_fox:; char_0x01:; db "Fox", 0x00
-    string_dk:; char_0x02:; db "DK", 0x00
+    string_dk:; char_0x02:; db "Donkey Kong", 0x00
     string_samus:; char_0x03:; db "Samus", 0x00
     string_luigi:; char_0x04:; db "Luigi", 0x00
     string_link:; char_0x05:; db "Link", 0x00
     string_yoshi:; char_0x06:; db "Yoshi", 0x00
-    string_cfalcon:; char_0x07:; db "C. Falcon", 0x00
+    string_cfalcon:; char_0x07:; db "Captain Falcon", 0x00
     string_kirby:; char_0x08:; db "Kirby", 0x00
     string_pikachu:; char_0x09:; db "Pikachu", 0x00
     string_jigglypuff:; char_0x0A:; db "Jigglypuff", 0x00
@@ -2351,16 +2517,24 @@ scope Training {
     string_npikachu:; char_0x17:; db "Poly Pikachu", 0x00
     string_npuff:; char_0x18:; db "Poly Puff", 0x00
     string_nness:; char_0x19:; db "Poly Ness", 0x00
-    string_nwario:; char_Px04:; db "Poly Wario", 0x00
-    string_nlucas:; char_Px05:; db "Poly Lucas", 0x00
-    string_nbowser:; char_Px06:; db "Poly Bowser", 0x00
-    string_nwolf:; char_Px07:; db "Poly Wolf", 0x00
-    string_ndrmario:; char_Px03:; db "Poly Dr. Mario", 0x00
-    string_nsonic:; char_Px08:; db "Poly Sonic", 0x00
-    string_nsheik:; char_Px09:; db "Poly Sheik", 0x00
-    string_nmarina:; char_Px0A:; db "Poly Marina", 0x00
+    string_nwario:; char_Px06:; db "Poly Wario", 0x00
+    string_nlucas:; char_Px07:; db "Poly Lucas", 0x00
+    string_nbowser:; char_Px08:; db "Poly Bowser", 0x00
+    string_nwolf:; char_Px09:; db "Poly Wolf", 0x00
+    string_ndrmario:; char_Px04:; db "Poly Dr. Mario", 0x00
+    string_nsonic:; char_Px0D:; db "Poly Sonic", 0x00
+    string_nsheik:; char_Px0E:; db "Poly Sheik", 0x00
+    string_nmarina:; char_Px0F:; db "Poly Marina", 0x00
     string_nfalco:; char_Px01:; db "Poly Falco", 0x00
     string_nganondorf:; char_Px02:; db "Poly Ganondorf", 0x00
+    string_ndarksamus:; char_Px05:; db "Poly Dark Samus", 0x00
+    string_nmewtwo:; char_Px0B:; db "Poly Mewtwo", 0x00
+    string_nmarth:; char_Px0C:; db "Poly Marth", 0x00
+    string_ndedede:; char_Px10:; db "Poly Dedede", 0x00
+    string_nyounglink:; char_Px03:; db "Poly Young Link", 0x00
+    string_ngoemon:; char_Px11:; db "Poly Goemon", 0x00
+    string_nconker:; char_Px0A:; db "Poly Conker", 0x00
+    string_nbanjo:; char_Px12:; db "Poly Banjo", 0x00
     string_gdk:; char_0x1A:; db "Giant DK", 0x00
     //char_0x1B:; db "NONE", 0x00
     //char_0x1C:; db "NONE", 0x00
@@ -2382,7 +2556,7 @@ scope Training {
     string_jdk:; char_0x2C:; db "J DK", 0x00
     string_epikachu:; char_0x2D:; db "E Pikachu", 0x00
     string_purin:; char_0x2E:; db "Purin", 0x00
-    string_ejigglypuff:; char_0x2F:; db "E Jigglypuff", 0x00
+    string_pummeluff:; char_0x2F:; db "Pummeluff", 0x00
     string_jkirby:; char_0x30:; db "J Kirby", 0x00
     string_jyoshi:; char_0x31:; db "J Yoshi", 0x00
     string_jpikachu:; char_0x32:; db "J Pikachu", 0x00
@@ -2403,6 +2577,10 @@ scope Training {
     string_goemon:; char_0x41:; db "Goemon", 0x00
     string_peppy:; char_0x42:; db "Peppy", 0x00
     string_slippy:; char_0x43:; db "Slippy", 0x00
+    string_banjo:; char_0x44:; db "Banjo & Kazooie", 0x00
+    string_mluigi:; char_0x45:; db "Metal Luigi", 0x00
+    string_ebi:; char_0x46:; db "Ebisumaru", 0x00
+    string_dragonking:; char_0x47:; db "Dragon King", 0x00
     OS.align(4)
 
     string_table_char:
@@ -2436,6 +2614,7 @@ scope Training {
     dw char_0x3F            // MARINA
     dw char_0x40            // DEDEDE
     dw char_0x41            // GOEMON
+    dw char_0x44            // BANJO
 
     dw char_0x2A            // J MARIO
     dw char_0x29            // J FOX
@@ -2462,6 +2641,9 @@ scope Training {
     dw char_0x3D            // SUPER SONIC
     dw char_0x42            // PEPPY
     dw char_0x43            // SLIPPY
+    dw char_0x45            // METAL LUIGI
+    dw char_0x46            // EBISUMARU
+    dw char_0x47            // DRAGONKING
     dw char_0x3C            // SANDBAG
     dw char_0x0E            // POLYGON MARIO
     dw char_0x0F            // POLYGON FOX
@@ -2477,14 +2659,22 @@ scope Training {
     dw char_0x19            // POLYGON NESS
     dw char_Px01            // POLYGON FALCO
     dw char_Px02            // POLYGON GANONDORF
-    dw char_Px03            // POLYGON DRM
-    dw char_Px04            // POLYGON WARIO
-    dw char_Px05            // POLYGON LUCAS
-    dw char_Px06            // POLYGON BOWSER
-    dw char_Px07            // POLYGON WOLF
-    dw char_Px08            // POLYGON SONIC
-    dw char_Px09            // POLYGON SHEIK
-    dw char_Px0A            // POLYGON MARINA
+    dw char_Px03            // POLYGON YOUNG LINK
+    dw char_Px04            // POLYGON DR MARIO
+    dw char_Px05            // POLYGON DARK SAMUS
+    dw char_Px06            // POLYGON WARIO
+    dw char_Px07            // POLYGON LUCAS
+    dw char_Px08            // POLYGON BOWSER
+    dw char_Px09            // POLYGON WOLF
+    dw char_Px0A            // POLYGON CONKER
+    dw char_Px0B            // POLYGON MEWTWO
+    dw char_Px0C            // POLYGON MARTH
+    dw char_Px0D            // POLYGON SONIC
+    dw char_Px0E            // POLYGON SHEIK
+    dw char_Px0F            // POLYGON MARINA
+    dw char_Px10            // POLYGON DEDEDE
+    dw char_Px11            // POLYGON GOEMON
+    dw char_Px12            // POLYGON BANJO
 
     // @ Description
     // Training character id is really the order they are displayed in
@@ -2522,10 +2712,11 @@ scope Training {
         constant MARINA(0x1A)
         constant DEDEDE(0x1B)
         constant GOEMON(0x1C)
+        constant BANJO(0x1D)
 
         // Increment JMARIO after adding more characters above
         // j characters
-        constant JMARIO(0x1D)
+        constant JMARIO(0x1E)
         constant JFOX(JMARIO + 0x01)
         constant JDK(JMARIO + 0x02)
         constant JSAMUS(JMARIO + 0x03)
@@ -2550,29 +2741,40 @@ scope Training {
         constant SSONIC(JMARIO + 0x14)
         constant PEPPY(JMARIO + 0x15)
         constant SLIPPY(JMARIO + 0x16)
-        constant SANDBAG(JMARIO + 0x17)
-		constant NMARIO(JMARIO + 0x18)
-        constant NFOX(JMARIO + 0x19)
-        constant NDONKEY(JMARIO + 0x1A)
-        constant NSAMUS(JMARIO + 0x1B)
-        constant NLUIGI(JMARIO + 0x1C)
-        constant NLINK(JMARIO + 0x1D)
-        constant NYOSHI(JMARIO + 0x1E)
-        constant NCAPTAIN(JMARIO + 0x1F)
-        constant NKIRBY(JMARIO + 0x20)
-        constant NPIKACHU(JMARIO + 0x21)
-        constant NJIGGLY(JMARIO + 0x22)
-        constant NNESS(JMARIO + 0x23)
-        constant NFALCO(JMARIO + 0x24)
-        constant NGND(JMARIO + 0x25)
-        constant NDRM(JMARIO + 0x26)
-        constant NWARIO(JMARIO + 0x27)
-        constant NLUCAS(JMARIO + 0x28)
-        constant NBOWSER(JMARIO + 0x29)
-        constant NWOLF(JMARIO + 0x2A)
-        constant NSONIC(JMARIO + 0x2B)
-        constant NSHEIK(JMARIO + 0x2C)
-        constant NMARINA(JMARIO + 0x2D)
+        constant MLUIGI(JMARIO + 0x17)
+        constant EBI(JMARIO + 0x18)
+        constant DRAGONKING(JMARIO + 0x19)
+        constant SANDBAG(JMARIO + 0x1A)
+		constant NMARIO(JMARIO + 0x1B)
+        constant NFOX(JMARIO + 0x1C)
+        constant NDONKEY(JMARIO + 0x1D)
+        constant NSAMUS(JMARIO + 0x1E)
+        constant NLUIGI(JMARIO + 0x1F)
+        constant NLINK(JMARIO + 0x20)
+        constant NYOSHI(JMARIO + 0x21)
+        constant NCAPTAIN(JMARIO + 0x22)
+        constant NKIRBY(JMARIO + 0x23)
+        constant NPIKACHU(JMARIO + 0x24)
+        constant NJIGGLY(JMARIO + 0x25)
+        constant NNESS(JMARIO + 0x26)
+        constant NFALCO(JMARIO + 0x27)
+        constant NGND(JMARIO + 0x28)
+        constant NYLINK(JMARIO + 0x29)
+        constant NDRM(JMARIO + 0x2A)
+        constant NDSAMUS(JMARIO + 0x2B)
+        constant NWARIO(JMARIO + 0x2C)
+        constant NLUCAS(JMARIO + 0x2D)
+        constant NBOWSER(JMARIO + 0x2E)
+        constant NWOLF(JMARIO + 0x2F)
+        constant NCONKER(JMARIO + 0x30)
+        constant NMTWO(JMARIO + 0x31)
+        constant NMARTH(JMARIO + 0x32)
+        constant NSONIC(JMARIO + 0x33)
+        constant NSHEIK(JMARIO + 0x34)
+        constant NMARINA(JMARIO + 0x35)
+        constant NDEDEDE(JMARIO + 0x36)
+        constant NGOEMON(JMARIO + 0x37)
+        constant NBANJO(JMARIO + 0x38)
     }
 
 
@@ -2607,6 +2809,7 @@ scope Training {
     db Character.id.MARINA
     db Character.id.DEDEDE
     db Character.id.GOEMON
+    db Character.id.BANJO
 
     db Character.id.JMARIO
     db Character.id.JFOX
@@ -2633,6 +2836,9 @@ scope Training {
     db Character.id.SSONIC
     db Character.id.PEPPY
     db Character.id.SLIPPY
+    db Character.id.MLUIGI
+    db Character.id.EBI
+    db Character.id.DRAGONKING
     db Character.id.SANDBAG
     db Character.id.NMARIO
     db Character.id.NFOX
@@ -2648,14 +2854,22 @@ scope Training {
     db Character.id.NNESS
     db Character.id.NFALCO
     db Character.id.NGND
+    db Character.id.NYLINK
     db Character.id.NDRM
+    db Character.id.NDSAMUS
     db Character.id.NWARIO
     db Character.id.NLUCAS
     db Character.id.NBOWSER
     db Character.id.NWOLF
+    db Character.id.NCONKER
+    db Character.id.NMTWO
+    db Character.id.NMARTH
     db Character.id.NSONIC
     db Character.id.NSHEIK
     db Character.id.NMARINA
+    db Character.id.NDEDEDE
+    db Character.id.NGOEMON
+    db Character.id.NBANJO
 
     char_id_to_entry_id:
     db id.MARIO
@@ -2726,6 +2940,10 @@ scope Training {
     db id.GOEMON
     db id.PEPPY
     db id.SLIPPY
+    db id.BANJO
+    db id.MLUIGI
+    db id.EBI
+    db id.DRAGONKING
 	// ADD NEW CHARACTERS Here
 
 	// REMIX POLYGONS
@@ -2739,6 +2957,14 @@ scope Training {
     db id.NMARINA
     db id.NFALCO
     db id.NGND
+    db id.NDSAMUS
+    db id.NMARTH
+    db id.NMTWO
+    db id.NDEDEDE
+    db id.NYLINK
+    db id.NGOEMON
+    db id.NCONKER
+    db id.NBANJO
 
     // @ Description
     // Spawn Position Strings
@@ -2952,28 +3178,28 @@ scope Training {
     }
 
     bgm_table:
-    db      BGM.special.TRAINING
-    db      BGM.menu.BONUS
-    db      BGM.stage.CONGO_JUNGLE
-    db      BGM.menu.CREDITS
-    db      BGM.menu.DATA
-    db      BGM.stage.DREAM_LAND
-    db      BGM.stage.DUEL_ZONE
-    db      BGM.stage.FINAL_DESTINATION
-    db      BGM.stage.HOW_TO_PLAY
-    db      BGM.stage.HYRULE_CASTLE
-    db      BGM.stage.META_CRYSTAL
-    db      BGM.stage.MUSHROOM_KINGDOM
-    db      BGM.stage.PEACHS_CASTLE
-    db      BGM.stage.PLANET_ZEBES
-    db      BGM.stage.SAFFRON_CITY
-    db      BGM.stage.SECTOR_Z
-    db      BGM.stage.YOSHIS_ISLAND
+    dh      BGM.special.TRAINING
+    dh      BGM.menu.BONUS
+    dh      BGM.stage.CONGO_JUNGLE
+    dh      BGM.menu.CREDITS
+    dh      BGM.menu.DATA
+    dh      BGM.stage.DREAM_LAND
+    dh      BGM.stage.DUEL_ZONE
+    dh      BGM.stage.FINAL_DESTINATION
+    dh      BGM.stage.HOW_TO_PLAY
+    dh      BGM.stage.HYRULE_CASTLE
+    dh      BGM.stage.META_CRYSTAL
+    dh      BGM.stage.MUSHROOM_KINGDOM
+    dh      BGM.stage.PEACHS_CASTLE
+    dh      BGM.stage.PLANET_ZEBES
+    dh      BGM.stage.SAFFRON_CITY
+    dh      BGM.stage.SECTOR_Z
+    dh      BGM.stage.YOSHIS_ISLAND
     evaluate n(0x2F)
     while {n} < MIDI.midi_count {
         evaluate can_toggle({MIDI.MIDI_{n}_TOGGLE})
         if ({can_toggle} == OS.TRUE) {
-            db       {n}
+            dh       {n}
         }
         evaluate n({n}+1)
     }
@@ -2991,12 +3217,13 @@ scope Training {
         // 0x0004(v0) = index in bgm_table to bgm_id
         li      a0, bgm_table
         lw      a1, 0x0004(v0)              // a1 = index in bgm_table to bgm_id
+        sll     a1, a1, 0x0001              // a1 = offset to bgm_id
         addu    a1, a0, a1                  // a1 = address of bgm_id
-        lbu     a1, 0x0000(a1)              // a1 = bgm_id
+        lhu     a1, 0x0000(a1)              // a1 = bgm_id
         lui     a0, 0x8013
-        sw      a1, 0x13A0(a0)              // update stage bgm_id
-        
-	lw      t0, 0x139C(a0)              // t0 = current bgm_id
+        sw      a1, 0x13A0(a0)              // update stage bgm_id (so music resets after star/hammer)
+
+        lw      t0, 0x139C(a0)              // t0 = current bgm_id
         lli     t1, BGM.special.HAMMER      // t1 = HAMMER
         beq     t0, t1, _end                // skip playing if hammer
         lli     t1, BGM.special.INVINCIBLE  // t1 = STAR
@@ -3016,23 +3243,59 @@ scope Training {
         nop
     }
 
+    // @ Description
+    // Allows for showing the stage's actual background
+    scope show_stage_bg_: {
+        // bg
+        OS.patch_start(0x803F4, 0x80104BF4)
+        j       show_stage_bg_
+        nop
+        _return:
+        OS.patch_end()
+        // magnifying glass
+        OS.patch_start(0x1146C4, 0x8018DEA4)
+        jal     show_stage_bg_._magnifying_glass
+        lw      t6, 0x1300(t6)              // original line 1
+        OS.patch_end()
+
+        // Check our toggle
+        li      t0, entry_bg
+        lw      t0, 0x0004(t0)              // t0 = 1 if we should show the stage bg, 0 if the training bg
+        beqz    t0, _normal                 // if not showing the stage bg, continue normally
+        nop
+        j       0x80104C0C                  // take non-training mode branch
+        nop
+
+        _normal:
+        jal     0x8018DDB0                  // original line 1
+        nop                                 // original line 2
+        j       _return
+        nop
+
+        _magnifying_glass:
+        li      t7, entry_bg
+        lw      t7, 0x0004(t7)              // t7 = 1 if we should show the stage bg, 0 if the training bg
+        beqz    t7, _end_mg                 // if not showing the stage bg, continue normally
+        nop
+        addiu   t4, t6, 0x004C              // t4 = stage magnifying glass bg address
+        _end_mg:
+        jr      ra
+        lbu     t7, 0x0000(t4)              // original line 1
+    }
+
     entry_shield_break_mode:; Menu.entry_bool("Shield Break Mode:", OS.FALSE, entry_oos_option)
     entry_oos_option:; Menu.entry("OOS Action:", Menu.type.INT, 0, 0, OOS_MAX, OS.NULL, OS.NULL, string_table_oos_options, OS.NULL, entry_music)
-    entry_music:; Menu.entry("Music:", Menu.type.INT, 0, 0, {total} - 1, play_bgm_, OS.NULL, OS.NULL, OS.NULL, OS.NULL)
+    entry_music:; Menu.entry("Music:", Menu.type.INT, 0, 0, {total} - 1, play_bgm_, OS.NULL, string_table_music, OS.NULL, entry_bg)
+    entry_bg:; Menu.entry_bool("Stage Background:", OS.FALSE, entry_tech_behavior)
+    entry_tech_behavior:; Menu.entry("CPU Teching:", Menu.type.INT, 0, 0, TECH_MAX, OS.NULL, OS.NULL, string_table_tech_options, OS.NULL, entry_di_type)
+    entry_di_type:; Menu.entry("CPU DI Type:", Menu.type.INT, 0, 0, DI_TYPE_MAX, OS.NULL, OS.NULL, string_table_di_type_options, OS.NULL, entry_di_strength)
+    entry_di_strength:; Menu.entry("CPU DI Strength:", Menu.type.INT, 0, 0, DI_STRENGTH_MAX, OS.NULL, OS.NULL, string_table_di_strength_options, OS.NULL, entry_di_direction)
+    entry_di_direction:; Menu.entry("CPU DI Direction:", Menu.type.INT, 0, 0, DI_DIRECTION_MAX, OS.NULL, OS.NULL, string_table_di_direction_options, OS.NULL, entry_dpad_menu)
+    entry_dpad_menu:; Menu.entry("D-pad Controls:", Menu.type.INT, 0, 0, 2, OS.NULL, OS.NULL, string_table_dpad_controls, OS.NULL, OS.NULL)
 
     // @ Description
     // Holds the initial value of the special model display toggle
     initial_model_display:
-    dw      0x00000000
-
-    // @ Description
-    // Pointer to the address of the BGM name object
-    bgm_name_object:
-    dw      0x00000000
-
-    // @ Description
-    // Pointer to the address of the BGM string
-    bgm_pointer:
     dw      0x00000000
 
     // @ Description

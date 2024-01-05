@@ -1239,6 +1239,10 @@ scope SonicUSP {
         lli     at, Character.id.SSONIC     // at = id.SSONIC
 
         beq     t6, at, _sonic              // branch if character = SSonic
+        lli     at, Character.id.EBI        // at = id.EBI
+
+        // Ebisumaru will use this as well
+        beq     t6, at, _sonic              // branch if character = Ebisumaru
         lli     at, Character.id.SONIC      // at = id.SONIC
 
         bne     t6, at, _end                // skip if character != Sonic
@@ -1796,6 +1800,9 @@ scope SonicUSP {
         sw      r0, 0x0ADC(t3)      // set up special bool to FALSE
         lli     at, Character.id.SSONIC
         beql    t4, at, _next       // if Super Sonic, restore specials
+        sw      r0, 0x0ADC(t3)      // set up special bool to FALSE
+        lli     at, Character.id.EBI
+        beql    t4, at, _next       // if Ebisumaru, restore specials
         sw      r0, 0x0ADC(t3)      // set up special bool to FALSE
 
         _next:

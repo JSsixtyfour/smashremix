@@ -69,7 +69,6 @@ scope FootStool {
     scope foot_stool_check_: {
         addiu   sp, sp,-0x0050              // allocate stack space
         sw      ra, 0x001C(sp)              // ~
-        addiu   a1, a0, 0                   // a1 = player object
         OS.read_word(Toggles.entry_footstool + 0x4, at)   // at = footstool toggle
         beqzl   at, _end_2
         addiu   v0, r0, 0                   // return 0
@@ -92,6 +91,7 @@ scope FootStool {
         lw      s1, 0x0000(s1)              // s1 = first player object
 
         // a1 = player object
+        addiu   a1, a0, 0                   // a1 = player object
         _player_loop:
         beqz    s1, _player_loop_exit       // exit loop when s1 no longer holds an object pointer
         nop
@@ -260,7 +260,7 @@ scope FootStool {
         _check_y:
         lwc1    f2, 0x0004(t8)              // f2 = player y coordinate
         lwc1    f4, 0x0004(t9)              // f4 = target y coordinate
-        c.le.s  f4, f2                     	// check if player is under target
+        c.le.s  f4, f2                      // check if player is under target
         nop
         bc1fl   _end                        // end if player.y < target.y
         or      v0, r0, r0                  // return 0 (no footstool)
@@ -410,7 +410,7 @@ scope FootStool {
         // this | grounded
         addiu   a1, r0, Action.LandingHeavy // action id = heavy landing
         // or | aerial
-        addiu   a1, r0, Action.Tumble		// action id = tumble
+        addiu   a1, r0, Action.Tumble       // action id = tumble
         _branch:
         addiu   a2, r0, 0x0000              // a2 = set starting frame
         sw      r0, 0x0010(sp)              // argument 4 = 0 (idk what this is)
@@ -541,22 +541,21 @@ scope FootStool {
         OS.patch_start(0xBAC60, 0x80140220)
         jal     kirby_jump_aerial_1_check
         nop
-
         OS.patch_end()
         addiu   sp, sp, -0x28
         sw      a0, 0x001C(sp)
         sw      a1, 0x0020(sp)
         sw      ra, 0x0024(sp)
+
         jal     FootStool.foot_stool_check_
         lw      a0, 0x0004(a0)
 
         bnez    v0, _no_jump
         nop
-
         lw      a0, 0x001C(sp)
         lw      a0, 0x0004(a0)
         jal     0x8013FF38              // og line 1
-        lw      a1, 0x0048(sp)          // og line 2
+        lw      a0, 0x0048(sp)          // og line 2 (modified)
 
         _no_jump:
         lw      a0, 0x001C(sp)
@@ -573,9 +572,9 @@ scope FootStool {
         nop
         OS.patch_end()
         addiu   sp, sp, -0x28
-        sw      ra, 0x0024(sp)
         sw      a0, 0x001C(sp)
         sw      a1, 0x0020(sp)
+        sw      ra, 0x0024(sp)
 
         jal     FootStool.foot_stool_check_
         lw      a0, 0x0004(a0)
@@ -584,8 +583,8 @@ scope FootStool {
         nop
         lw      a0, 0x001C(sp)
         lw      a0, 0x0004(a0)
-        jal     0x8013FF38              // og line 1 (modified)
-        lw      a1, 0x0048(sp)
+        jal     0x8013FF38              // og line 1
+        lw      a0, 0x0048(sp)          // og line 2 (modified)
 
         _no_jump:
         lw      a0, 0x001C(sp)
@@ -602,16 +601,15 @@ scope FootStool {
         nop
         OS.patch_end()
         addiu   sp, sp, -0x28
-        sw      ra, 0x0024(sp)
         sw      a0, 0x001C(sp)
         sw      a1, 0x0020(sp)
+        sw      ra, 0x0024(sp)
 
         jal     FootStool.foot_stool_check_
         lw      a0, 0x0004(a0)
 
         bnez    v0, _no_jump
         nop
-
         lw      a0, 0x001C(sp)
         lw      a0, 0x0004(a0)
         jal     0x8013FF38              // og line 1

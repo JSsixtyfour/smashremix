@@ -1128,12 +1128,12 @@ scope Action {
         string_0x0E6:; String.insert("FalconKick")
         string_0x0E7:; String.insert("FalconKickFromGroundAir")
         string_0x0E8:; String.insert("LandingFalconKick")
-        string_0x0E9:; String.insert("FalconKickEnd")
-        string_0x0EA:; String.insert("CollisionFalconKick")
-        string_0x0EB:; String.insert("FalconDive")
+        string_0x0E9:; String.insert("FalconKickAir")
+        string_0x0EA:; String.insert("FalconKickRecoil")
+        string_0x0EB:; String.insert("FalconDiveGround")
         string_0x0EC:; String.insert("FalconDiveCatch")
-        string_0x0ED:; String.insert("FalconDiveEnd1")
-        string_0x0EE:; String.insert("FalconDiveEnd2")
+        string_0x0ED:; String.insert("FalconDiveRelease")
+        string_0x0EE:; String.insert("FalconDiveAir")
 
         action_string_table:
         dw string_0x0DC
@@ -1237,12 +1237,12 @@ scope Action {
         constant PoundAir(0x126)
         constant FalconPunch(0x127)
         constant FalconPunchAir(0x128)
-        constant EggThrow(0x129)
-        constant SucceedingEggThrow(0x12A)
-        constant EggThrowEnd(0x12B)
-        constant EggThrowAir(0x12C)
-        constant SucceedingEggThrowAir(0x12D)
-        constant EggThrowEndAir(0x12E)
+        constant EggLay(0x129)
+        constant SucceedingEggLay(0x12A)
+        constant EggLayEnd(0x12B)
+        constant EggLayAir(0x12C)
+        constant SucceedingEggLayAir(0x12D)
+        constant EggLayEndAir(0x12E)
         constant WarlockPunch(0x12F)
         constant WarlockPunchAir(0x130)
         constant Capsule(0x131)
@@ -1351,6 +1351,25 @@ scope Action {
         constant RevolverBeginAir(0x198)
         constant RevolverChargeAir(0x199)
         constant RevolverShootAir(0x19A)
+        constant BanjoNSPBeginG(0x19B)
+        constant BanjoNSPForwardG(0x19C)
+        constant BanjoNSPBackwardG(0x19D)
+        constant BanjoNSPBeginA(0x19E)
+        constant BanjoNSPForwardA(0x19F)
+        constant BanjoNSPBackwardA(0x1A0)
+        constant EbiNSPGroundBegin(0x1A1)
+        constant EbiNSPGroundWait(0x1A2)
+        constant EbiNSPGroundWalk1(0x1A3)
+        constant EbiNSPGroundWalk2(0x1A4)
+        constant EbiNSPGroundBWalk1(0x1A5)
+        constant EbiNSPGroundBWalk2(0x1A6)
+        constant EbiNSPGroundEnd(0x1A7)
+        constant EbiNSPAirBegin(0x1A8)
+        constant EbiNSPAirIdle(0x1A9)
+        constant EbiNSPAirEnd(0x1AA)
+        constant DragonKingNSPGround(0x1AB)
+        constant DragonKingNSPAir(0x1AC)
+
 
         // strings!
         string_0x0DC:; String.insert("JabLoopStart")
@@ -1430,12 +1449,12 @@ scope Action {
         string_0x126:; String.insert("PoundAir")
         string_0x127:; String.insert("FalconPunch")
         string_0x128:; String.insert("FalconPunchAir")
-        string_0x129:; String.insert("EggThrow")
-        string_0x12A:; String.insert("SucceedingEggThrow")
-        string_0x12B:; String.insert("EggThrowEnd")
-        string_0x12C:; String.insert("EggThrowAir")
-        string_0x12D:; String.insert("SucceedingEggThrowAir")
-        string_0x12E:; String.insert("EggThrowEndAir")
+        string_0x129:; String.insert("EggLay")
+        string_0x12A:; String.insert("SucceedingEggLay")
+        string_0x12B:; String.insert("EggLayEnd")
+        string_0x12C:; String.insert("EggLayAir")
+        string_0x12D:; String.insert("SucceedingEggLayAir")
+        string_0x12E:; String.insert("EggLayEndAir")
         string_0x12F:; String.insert("WarlockPunch")
         string_0x130:; String.insert("WarlockPunchAir")
         string_0x131:; String.insert("Capsule")
@@ -1544,6 +1563,24 @@ scope Action {
         string_0x198:; String.insert("RevolverBeginAir")
         string_0x199:; String.insert("RevolverChargeAir")
         string_0x19A:; String.insert("RevolverShootAir")
+        string_0x19B:; String.insert("EggBeginGround")
+        string_0x19C:; String.insert("FireEggGround")
+        string_0x19D:; String.insert("EggBounceGround")
+        string_0x19E:; String.insert("EggBeginAir")
+        string_0x19F:; String.insert("FireEggAir")
+        string_0x1A0:; String.insert("EggBounceAir")
+        string_0x1A1:; String.insert("MeatSaw-HammerGroundBegin")
+        string_0x1A2:; String.insert("MeatSaw-HammerGroundWait")
+        string_0x1A3:; String.insert("MeatSaw-HammerGroundWalk1")
+        string_0x1A4:; String.insert("MeatSaw-HammerGroundWalk2")
+        string_0x1A5:; String.insert("MeatSaw-HammerGroundBWalk1")
+        string_0x1A6:; String.insert("MeatSaw-HammerGroundBWalk2")
+        string_0x1A7:; String.insert("MeatSaw-HammerGroundAttack")
+        string_0x1A8:; String.insert("MeatSaw-HammerAirBegin")
+        string_0x1A9:; String.insert("MeatSaw-HammerAirIdle")
+        string_0x1AA:; String.insert("MeatSaw-HammerAirAttack")
+        string_0x1AB:; String.insert("DragonBallGround")
+        string_0x1AC:; String.insert("DragonBallAir")
 
         action_string_table:
         dw string_0x0DC
@@ -1737,6 +1774,24 @@ scope Action {
         dw string_0x198
         dw string_0x199
         dw string_0x19A
+        dw string_0x19B
+        dw string_0x19C
+        dw string_0x19E
+        dw string_0x19D
+        dw string_0x19F
+        dw string_0x1A0
+        dw string_0x1A1
+        dw string_0x1A2
+        dw string_0x1A3
+        dw string_0x1A4
+        dw string_0x1A5
+        dw string_0x1A6
+        dw string_0x1A7
+        dw string_0x1A8
+        dw string_0x1A9
+        dw string_0x1AA
+        dw string_0x1AB
+        dw string_0x1AC
     }
 
     // @ Description

@@ -266,6 +266,34 @@ scope Hazards {
     }
 
     // @ Description
+    // Extends AI stage ID check so cpus walk away from tornados on Hyrule Remix
+    scope ai_extend_hyrule_tornado_check: {
+        OS.patch_start(0xAF790, 0x80134D50)
+        j       ai_extend_hyrule_tornado_check
+        addiu   a0, sp, 0x0030              // og line 1
+        OS.patch_end()
+
+        lbu     t9, 0x0001(t8)              // t9 = current stage id (og line 2)
+        beq     at, t9, _tornado_check      // branch if HYRULE
+        addiu   at, r0, Stages.id.HCASTLE_DL// at = HCASTLE_DL
+        beq     at, t9, _tornado_check
+        addiu   at, r0, Stages.id.HCASTLE_O // at = HCASTLE_O
+        beq     at, t9, _tornado_check
+        addiu   at, r0, Stages.id.HCASTLE_REMIX // at = HCASTLE_REMIX
+        beq     at, t9, _tornado_check
+        nop
+
+        //_normal:
+        j       0x80134E88 + 0x4            // return to normal routine
+        or      v0, r0, r0                  // return 0
+
+        _tornado_check:
+        j       0x80134D60 + 0x4
+        sw      a3, 0x0058(sp)
+    }
+
+
+    // @ Description
     // Toggle for Congo Jungle barrel
     scope congo_jungle_barrel_: {
         OS.patch_start(0x000857BC, 0x80109FBC)
@@ -367,6 +395,114 @@ scope Hazards {
         lw      ra, 0x0008(sp)              // restore registers
         addiu   sp, sp, 0x0010              // deallocate stack space
         jr      ra                          // return
+        nop
+    }
+
+    // @ Description
+    // Toggle for Saffron City Pokemon Rate (Inititialize)
+    // @ Note
+    // Door time is initalized at 0x8010B28C (open at start), but we don't need to modify it
+    scope saffron_city_pokemon_rate_init: {
+        OS.patch_start(0x000864F4, 0x8010ACF4)
+        j       saffron_city_pokemon_rate_init
+        sb      t8, 0x140C(at)              // original line 2
+        nop
+        _return:
+        OS.patch_end()
+
+        // a0 = range 0x03E8 (16 seconds)
+        jal     Global.get_random_int_      // get random integer (original line 1)
+        nop
+
+        li      at, Global.current_screen   // at = pointer to current screen
+        lbu     at, 0x0000(at)              // at = current screen_id
+        lli     t9, 0x0016                  // t9 = vs screen_id
+        beq     t9, at, _check_hazard       // if vs, check hazard mode
+        lli     t9, 0x0036                  // t9 = training screen_id
+        beq     t9, at, _check_hazard       // if training, check hazard mode
+        nop
+        b       _end                        // otherwise, don't check hazard mode
+
+        _check_hazard:
+        addiu   t9, v0, 0x03E8              // original line 3
+        li      at, Toggles.entry_saffron_poke_rate
+        lw      at, 0x0004(at)              // at = saffron_poke_rate (0 if DEFAULT, 1 if SUPER, 2 if HYPER, 3 if "QUICK ATTACK")
+
+        beqz    at, _end                    // if DEFAULT, use default values (16-32 second range)
+        nop
+
+        slti    at, at, 0x0003              // at = 1 if SUPER or HYPER
+        bnezl   at, _end                    // if SUPER or HYPER, divide Pokemon timer by 2 (8-16 second range)
+        srl     t9, t9, 1                   // t9 = t9 / 2
+
+        // if we're here, it is set to QUICK ATTACK
+        b       _end
+        addiu   t9, r0, 1                   // t9 = 1 delay
+
+        _end:
+        j       _return
+        nop
+    }
+
+    // @ Description
+    // Toggle for Saffron City Pokemon Rate
+    // @ Note
+    // Pokemon/door timers are halfwords stored at 0x8013140E
+    scope saffron_city_pokemon_rate: {
+        OS.patch_start(0x000868CC, 0x8010B0CC)
+        j       saffron_city_pokemon_rate
+        sb      t6, 0x001C(v0)                  // original line 2
+        OS.patch_end()
+
+        // Default          Door timer is 16 seconds, Pokemon timer is 16-32 seconds
+        // Super            Pokemon double rate
+        // Hyper            Pokemon double rate, door always open
+        // Quick Attack     Non-stop Pokemon
+
+        li      at, Global.current_screen       // at = pointer to current screen
+        lbu     at, 0x0000(at)                  // at = current screen_id
+        lli     t7, 0x0016                      // t7 = vs screen_id
+        beq     t7, at, _check_hazard           // if vs, check hazard mode
+        lli     t7, 0x0036                      // t7 = training screen_id
+        beq     t7, at, _check_hazard           // if training, check hazard mode
+        nop
+        j       0x8010B0D4                      // otherwise, return to original routine
+        addiu   t7, r0, 0x03E8                  // original line 1
+
+        _check_hazard:
+        li      at, Toggles.entry_saffron_poke_rate
+        lw      at, 0x0004(at)                  // at = saffron_poke_rate (0 if DEFAULT, 1 if SUPER, 2 if HYPER, 3 if "QUICK ATTACK")
+
+        beqz    at, _set_door_timer             // if DEFAULT, use default values (16 seconds)
+        addiu   t7, r0, 0x03E8                  // original line 1
+
+        slti    at, at, 0x0002                  // at = 0 if HYPER or "QUICK ATTACK", or 1 if "SUPER"
+        beqzl   at, _set_door_timer             // branch accordingly
+        addiu   t7, r0, 1                       // t7 = 1 (instant door)
+        srl     t7, t7, 1                       // t7 = t7 / 2 (8 seconds)
+
+        _set_door_timer:
+        sh      t7, 0x0020(v0)                  // store door timer
+
+        jal     Global.get_random_int_          // get random integer
+        addiu   a0, r0, 0x03E8                  // a0 - range (0, N-1)
+
+        li      at, Toggles.entry_saffron_poke_rate
+        lw      at, 0x0004(at)                  // at = saffron_poke_rate (0 if DEFAULT, 1 if SUPER, 2 if HYPER, 3 if "QUICK ATTACK")
+
+        addiu   t8, v0, 0x03E8                  // t8 = Pokemon timer (16-32 second range)
+        beqz    at, _end                        // if DEFAULT, use default values
+        nop
+
+        slti    at, at, 0x0003                  // at = 1 if SUPER or HYPER
+        bnezl   at, _end                        // if SUPER or HYPER, divide Pokemon timer by 2 (8-16 second range)
+        srl     t8, t8, 1                       // t8 = t8 / 2
+
+        // if we're here, it is set to QUICK ATTACK
+        addiu   t8, r0, 15                      // t8 = 15 frame delay
+
+        _end:
+        j       0x8010B0E4                      // return to original function (store Pokemon timer)
         nop
     }
 
@@ -562,7 +698,16 @@ scope Hazards {
         // This block ensures the address of file 0x9E is stored at 0x801313F0
         lui     t6, 0x8013
         lw      t6, 0x1300(t6)
-        lw      t7, 0x0080(t6)
+        addiu   v1, r0, Stages.id.BTP_BANJO
+        li      t7, Global.match_info
+        lw      t7, 0x0000(t7)              // a1 = match info
+        lbu     t7, 0x0001(t7)              // a1 = current stage ID
+        beql    t7, v1, _banjo              // if current stage is Banjo's Board the Platforms, then load from new location
+        lw      t7, 0x00E0(t6)              // load barrel pointer
+
+        lw      t7, 0x0080(t6)              // load pointer for all other stages
+
+        _banjo:
         lli     v1, 0x0A98
         subu    v0, t7, v1
         lui     at, 0x8013
@@ -594,7 +739,17 @@ scope Hazards {
         // More barrel object loading?
         lui     a1, 0x8013
         lw      a1, 0x1300(a1)
+
+        addiu   a3, r0, Stages.id.BTP_BANJO
+        li      a0, Global.match_info
+        lw      a0, 0x0000(a0)              // a1 = match info
+        lbu     a0, 0x0001(a0)              // a1 = current stage ID
+        beql    a0, a3, _banjo_2            // if current stage is Banjo's Board the Platforms, then load from new location
+        lw      a1, 0x00E0(a1)              // load barrel pointer
+
         lw      a1, 0x0080(a1)
+
+        _banjo_2:
         or      a0, s0, r0
         li      a3, 0x8012EB50
         jal     0x80105760
@@ -650,6 +805,89 @@ scope Hazards {
         lw      t6, 0x0B20(s0)              // get barrel parameters address from player struct
         nop
         OS.patch_end()
+    }
+
+    // @ Description
+    // Enables using a custom stage collision object array so we can have TOO MANY BARRELS!
+    scope many_barrels_fix_: {
+        // Loop over array
+        OS.patch_start(0x5D71C, 0x800E1F1C)
+        jal     many_barrels_fix_
+        sll     t8, t6, 9                   // original line 2
+        bltz    t8, 0x800E1FBC              // original line 3
+        nop
+        OS.patch_end()
+        // Clear array
+        OS.patch_start(0x5D500, 0x800E1D00)
+        j       many_barrels_fix_._clear_array
+        lli     v0, Stages.id.BTP_BANJO
+        nop
+        nop
+        nop
+        _clear_return:
+        OS.patch_end()
+        // Populate array
+        OS.patch_start(0x5D554, 0x800E1D54)
+        j       many_barrels_fix_._append_array
+        addiu   v1, v1, 0x1180              // original line 1
+        _append_return:
+        bnez    t6, 0x800E1D84
+        nop
+        nop
+        OS.patch_end()
+
+        addiu   s1, s1, 0x1180              // original line 1 - address of stage collision object array
+        addiu   s4, s4, 0x1198              // original line 4 - address of stage collision object count
+
+        lli     t2, Stages.id.BTP_BANJO     // t2 = Stages.id.BTP_BANJO
+        li      t9, Global.match_info
+        lw      t9, 0x0000(t9)              // t9 = match info
+        lbu     t9, 0x0001(t9)              // t9 = current stage ID
+        bne     t9, t2, _end                // if current stage is not Banjo's Board the Platforms, then skip
+        nop
+
+        li      s1, barrel_array
+        li      s4, barrel_array_size
+
+        _end:
+        jr      ra
+        nop
+
+        _clear_array:
+        li      v1, Global.match_info
+        lw      v1, 0x0000(v1)              // v1 = match info
+        lbu     v1, 0x0001(v1)              // v1 = current stage ID
+        bne     v1, v0, _end_clear_normal   // if current stage is not Banjo's Board the Platforms, then skip
+        nop
+        li      v1, barrel_array            // v1 = start of array
+        li      v0, barrel_array_size       // v0 = end of array
+        j       _clear_return
+        sw      r0, 0x0000(v0)              // 0 out array size
+
+        _end_clear_normal:
+        li      v1, 0x80131180              // original line 1/5
+        li      v0, 0x80131190              // original line 2/4
+        j       _clear_return
+        sw      r0, 0x1198(at)              // original line 3 - clear stage collision object count
+
+        _append_array:
+        lli     t6, Stages.id.BTP_BANJO     // t2 = Stages.id.BTP_BANJO
+        li      t7, Global.match_info
+        lw      t7, 0x0000(t7)              // t7 = match info
+        lbu     t7, 0x0001(t7)              // t7 = current stage ID
+        bne     t7, t6, _end_append_normal  // if current stage is not Banjo's Board the Platforms, then skip
+        nop
+
+        li      v1, barrel_array            // v1 = start of array
+        li      v0, barrel_array_size       // v0 = end of array
+        or      a2, v0, r0                  // a2 = barrel array size
+        j       _append_return
+        lw      t6, 0x0000(v1)              // original line 1
+
+        _end_append_normal:
+        li      a2, 0x80131198              // original lines 4/5
+        j       _append_return
+        lw      t6, 0x0000(v1)              // original line 1
     }
 
     // @ Description
@@ -758,7 +996,7 @@ scope Hazards {
         mtc1    r0, f4                      // f4 = 0
         swc1    f4, 0x0000(a3)              // set up float 1
         swc1    f4, 0x0004(a3)              // set up float 2
-        jal     0x8016EA78
+        jal     0x8016EA78                  // spawn stage item
         swc1    f4, 0x0008(a3)              // set up float 3
         addiu   sp, sp, 0x0030              // deallocate
 
@@ -1031,6 +1269,8 @@ scope Hazards {
         sb      t4, 0x0143(v0)                  // set hitbox fkb
     }
 
+    constant BOWSER_BOMB_FLASH_TIME(120)        // frames until active
+
     // @ Description
     // Respawns bombs on Bowser's Stadium after they've been destroyed
     scope replenish_bowser_bombs_: {
@@ -1082,9 +1322,8 @@ scope Hazards {
         lli     t2, 0x0000                  // right bomb unique ID
         jal     add_item_
         lui     t0, 0xC3D0                  // create hover effect by specifying bottom ECB
-        b       _end
+        b       _setup_bomb
         nop
-
         _left:
         li      a1, 0xC53AE000              // left plat edge
         li      a2, 0x44000000              // above 0
@@ -1095,12 +1334,51 @@ scope Hazards {
         jal     add_item_
         lui     t0, 0xC3D0                  // create hover effect by specifying bottom ECB
 
+        _setup_bomb:
+        OS.read_word(0x801313F8, v0)        // created item with add_item
+        beqz    v0,   _end                  // branch if no item was created
+        nop
+        lw      v1, 0x0084(v0)              // v1 = item struct
+        sw      r0, 0x010C(v1)              // disable hitbox
+        addiu   at, r0, BOWSER_BOMB_FLASH_TIME
+        sw      at, 0x02C0(v1)              // set flash timer
+        li      at, bowser_bomb_flash_main
+        sw      at, 0x0378(v1)              // store new main routine
+        addiu   at, r0, 0x011A              // at = bowser bomb item/hazard id
+        sw      at, 0x000C(v1)              // overwrite RTTF bomb id with bowser bomb id
         _end:
         lw      ra, 0x0004(sp)              // restore registers
         addiu   sp, sp, 0x0010              // deallocate stack space
 
         jr      ra                          // return
         nop
+    }
+
+    // @ Description
+    // main routine when the bowser bomb is initially spawned in
+    scope bowser_bomb_flash_main: {
+        OS.routine_begin(0x20)
+        lw      v1, 0x0084(a0)              // v1 =
+
+        lw      t0, 0x02C0(v1)              // t0 = duration
+        addiu   t0, t0, -1                  // duration -=1
+        andi    t6, t0, 0x0002
+        srl     at, t6, 1
+        sw      at, 0x007C(a0)              // save draw flag to make it flash
+        bnez    t0, _end
+        sw      t0, 0x02C0(v1)              // store updated duration
+
+        // if here, duration is over and end flash
+        sw      r0, 0x007C(a0)              // enable draw
+        sw      r0, 0x0378(v1)              // overwrite routine
+        addiu   at, r0, 3
+        sw      at, 0x010C(v1)              // enable hitbox
+
+        FGM.play(0xC2)
+
+        _end:
+        addiu   v0, r0, 0                   // return 0
+        OS.routine_end(0x20)
     }
 
     // @ Description
@@ -1205,14 +1483,18 @@ scope Hazards {
         lw      v0, 0x0000(t8)              // v0 = GOBJ ID of current object
         bne     at, v0, _end                // if GOBJ ID does not match, skip
         nop
-        ori     at, r0, 0x001A              // at = unique ID of RTTF bomb?
+        ori     at, r0, 0x001A              // at = RTTF Bomb ID
         lw      v0, 0x0084(t8)              // ~
-        lw      v0, 0x000C(v0)              // v0 = unique ID of current object
+        lw      v0, 0x000C(v0)              // v0 = current item ID
+        beq     at, v0, _apply_hitstun      // apply hitstun if ID matches
+
+        ori     at, r0, 0x011A              // at = Bowser Bomb ID
         bne     at, v0, _end                // if ID does not match, skip
 
         // at this point we can reasonably assume the player is being hit by a bowser bomb
         // the bowser bomb will apply an extra multiplier to hitstun, formula for the multiplier is 9 / (GRAVITY + 4)
         // f0 = stun frames
+        _apply_hitstun:
         lw      v0, 0x09C8(s0)              // ~
         lw      v0, 0x0058(v0)              // ~
         mtc1    v0, f10                     // f10 = GRAVITY
@@ -1500,7 +1782,7 @@ scope Hazards {
     scope klaptrap_room_: {
         OS.patch_start(0xE8C1C, 0x8016E1DC)
         j       klaptrap_room_
-        lli     t8, Stages.id.BTT_MARINA      // t0 = Stages.id.BTP_MARINA
+        lli     t8, Stages.id.BTT_MARINA      // t0 = Stages.id.BTT_MARINA
         _return:
         OS.patch_end()
 
@@ -1530,6 +1812,8 @@ scope Hazards {
         beq     t6, t8, _end
         addiu   a2, r0, 0x0012
         lli     t8, Item.RobotBee.id
+        beq     t6, t8, _bee
+        lli     t8, Item.Cacodemon.id
         beq     t6, t8, _bee
         lli     t8, Item.KlapTrap.id
         bnel    t6, t8, _end
@@ -2028,13 +2312,16 @@ scope Hazards {
     scope mtwo_btp_setup: {
         OS.patch_start(0x11228C, 0x8018DB4C)
         jal     mtwo_btp_setup
-        lli     v1, Stages.id.BTP_MTWO         // t0 = Stages.id.BTP_MTWO
+        lli     v1, Stages.id.BTP_BANJO     // t0 = Stages.id.BTP_MTWO
         return:
         OS.patch_end()
 
         li      a1, Global.match_info
         lw      a1, 0x0000(a1)              // a1 = match info
         lbu     a1, 0x0001(a1)              // a1 = current stage ID
+        beq     a1, v1, _banjo              // if current stage is Banjo's Board the Platforms, then do barrels
+        nop
+        lli     v1, Stages.id.BTP_MTWO      // t0 = Stages.id.BTP_MTWO
         bne     a1, v1, _normal             // if current stage is not Mewtwo's Board the Platforms, then do normal functions
         nop
 
@@ -2066,7 +2353,53 @@ scope Hazards {
         lw      t6, 0x0004(sp)
         lw      ra, 0x0014(sp)
         addiu   sp, sp, 0x0020
+        beq     r0, r0, _normal
+        nop
 
+        _banjo:
+        addiu   sp, sp, -0x0030
+        sw      ra, 0x0014(sp)
+        sw      t6, 0x0004(sp)
+        sw      a0, 0x0008(sp)
+        sw      a1, 0x000C(sp)
+        sw      a2, 0x0010(sp)
+        sw      a3, 0x001C(sp)
+        sw      t5, 0x0020(sp)
+
+        lui     t7, 0x8013
+        lw      t7, 0x1300(t7)              // load hardcoded stage pointer
+        lw      t7, 0x00E4(t7)              // load address of animation file from stage header
+
+        addiu   t6, r0, TOTAL_BARRELS
+        li      t5, _banjo_btp_barrel_structs
+
+        _loop:
+        sw      t6, 0x0024(sp)              // save count
+        sw      t5, 0x0028(sp)              // save struct address
+        sw      t7, 0x002C(sp)              // save current animation address
+        lw      a0, 0x0000(t5)              // x position
+        lw      a1, 0x0004(t5)              // y position
+        lw      a2, 0x0008(t5)              // rotation
+
+        jal     add_barrel_
+        addiu   a3, t7, 0x0000              // animation address
+
+        lw      t6, 0x0024(sp)              // load count
+        lw      t5, 0x0028(sp)              // load struct address
+        lw      t7, 0x002C(sp)              // load current animation address
+        addiu   t7, t7, 0x0008              // move to next animation address
+        addiu   t6, t6, -0x0001             // subtract from counter
+        bnezl   t6, _loop
+        addiu   t5, t5, 0x0010              // move to next struct
+
+        lw      ra, 0x0014(sp)
+        lw      t6, 0x0004(sp)
+        lw      a0, 0x0008(sp)
+        lw      a1, 0x000C(sp)
+        lw      a2, 0x0010(sp)
+        lw      a3, 0x001C(sp)
+        lw      t5, 0x0020(sp)
+        addiu   sp, sp, 0x0030
         // targets use same spots as bombs for ram address, maybe modify code to use other address, it needs 0x0, 0x4, and 0x14
 
         // targets seem to use, in 801313f0 space, 0x4, 0xC, and 0x70
@@ -2075,6 +2408,107 @@ scope Hazards {
         lw      a1, 0x0080(t6)              // original line 1
         jr      ra
         lui     v1, 0x800A                  // original line 2
+    }
+
+    constant TOTAL_BARRELS(12)
+    _banjo_btp_barrel_structs:
+    // 0x0
+    dw  0x00000000                          // x position
+    dw  0x00000000                          // y position
+    dw  0x00000000                          // rotation
+    dw  0x00000000                          // animation address
+
+    // 0x1
+    dw  0x00000000                          // x position
+    dw  0x00000000                          // y position
+    dw  0x00000000                          // rotation
+    dw  0x00000000                          // animation address
+
+    // 0x2
+    dw  0x00000000                          // x position
+    dw  0x00000000                          // y position
+    dw  0x00000000                          // rotation
+    dw  0x00000000                          // animation address
+
+    // 0x3
+    dw  0x00000000                          // x position
+    dw  0x00000000                          // y position
+    dw  0x00000000                          // rotation
+    dw  0x00000000                          // animation address
+
+    // 0x5
+    dw  0x00000000                          // x position
+    dw  0x00000000                          // y position
+    dw  0x00000000                          // rotation
+    dw  0x00000000                          // animation address
+
+    // 0x6
+    dw  0x00000000                          // x position
+    dw  0x00000000                          // y position
+    dw  0x00000000                          // rotation
+    dw  0x00000000                          // animation address
+
+    // 0x7
+    dw  0x00000000                          // x position
+    dw  0x00000000                          // y position
+    dw  0x00000000                          // rotation
+    dw  0x00000000                          // animation address
+
+    // 0x8
+    dw  0x00000000                          // x position
+    dw  0x00000000                          // y position
+    dw  0x00000000                          // rotation
+    dw  0x00000000                          // animation address
+
+    // 0x9
+    dw  0x00000000                          // x position
+    dw  0x00000000                          // y position
+    dw  0x00000000                          // rotation
+    dw  0x00000000                          // animation address
+
+    // 0xA
+    dw  0x00000000                          // x position
+    dw  0x00000000                          // y position
+    dw  0x00000000                          // rotation
+    dw  0x00000000                          // animation address
+
+    // 0xB
+    dw  0x00000000                          // x position
+    dw  0x00000000                          // y position
+    dw  0x00000000                          // rotation
+    dw  0x00000000                          // animation address
+
+    // 0xC
+    dw  0x00000000                          // x position
+    dw  0x00000000                          // y position
+    dw  0x00000000                          // rotation
+    dw  0x00000000                          // animation address
+
+    barrel_array:
+    fill TOTAL_BARRELS * 0x8
+
+    barrel_array_size:
+    dw TOTAL_BARRELS
+
+    // @ Description
+    // Fixes header issue related to barrels firing
+    scope banjo_btp_barrel_firing_fix: {
+        OS.patch_start(0xBEAAC, 0x8014406C)
+        jal     banjo_btp_barrel_firing_fix
+        lli     t4, Stages.id.BTP_BANJO    // t4 = Stages.id.BTP_BANJO
+        return:
+        OS.patch_end()
+
+        li      t5, Global.match_info
+        lw      t5, 0x0000(t5)              // t5 = match info
+        lbu     t5, 0x0001(t5)              // t5 = current stage ID
+        bnel    t5, t4, _normal             // if current stage is not BANJO_BTP, then do normal functions
+        subu    t9, t7, t8                  // original line 1, subtract 0x14 from header pointer, which is necessary for normal stages, but not for bonus stages
+
+        addu    t9, t7, r0                  // place the correct pointer for BTP stages
+        _normal:
+        j   return
+        swc1    f4, 0x0024(t3)              // original line 2
     }
 
     // @ Description
@@ -2262,6 +2696,217 @@ scope Hazards {
         _normal:
         j       return
         lw      t9, 0xB5A4(t9)              // original line 1
+    }
+
+    // @ Description
+    // This establishes Remix RTTF hazard objects
+    scope remix_rttf_setup_: {
+        addiu   sp, sp, -0x0020
+        sw      ra, 0x0014(sp)
+
+        jal     0x8010B4D0      // unknown RTTF routine
+        nop
+
+        jal     0x8010B508      // Bumpers routine
+        nop
+
+        jal     0x8010B660
+        //jal     remix_rttf_bombs_
+        nop
+
+        jal     0x8010B784      // 0xE clipping flag end stage setup
+        nop
+
+        _end:
+        lw      ra, 0x0014(sp)
+        addiu   sp, sp, 0x0020
+        or      v0, r0, r0      // unknown, done in RTTF
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // This establishes Remix RTTF bombs
+    // bomb spawning based on 0x8010B660
+   //scope remix_rttf_bombs_: {
+   //    addiu   sp, sp, -0x0030
+   //    sw      ra, 0x001C(sp)
+   //    sw      s0, 0x0018 (sp)
+   //
+   //    // rolling bomb 1
+   //    addiu   a0, r0, 0x03f2
+   //    or      a1, r0, r0
+   //    addiu   a2, r0, 0x0001
+   //
+   //    jal     0x80009968          // object creation
+   //    lui     a3, 0x8000
+   //
+   //    lui     a1, 0x8011
+   //    addiu   a1, a1, 0xb5f0
+   //    or      a0, v0, r0
+   //    addiu   a2, r0, 0x0001
+   //
+   //    jal     0x80008188          // Associate the routine in a1 to object
+   //    addiu   a3, r0, 0x0004
+   //
+   //    // rolling bomb 2
+   //    // addiu   a0, r0, 0x03f2
+   //    // or      a1, r0, r0
+   //    // addiu   a2, r0, 0x0001
+   //    //
+   //    // jal     0x80009968          // object creation
+   //    // lui     a3, 0x8000
+   //    //
+   //    // li      a1, rttf_bomb_2_
+   //    // or      a0, v0, r0
+   //    // addiu   a2, r0, 0x0001
+   //    //
+   //    // jal     0x80008188          // Associate the routine in a1 to object
+   //    // addiu   a3, r0, 0x0004
+   //
+   //    addiu   a0, r0, 0x0029      // rolling bomb spawn id
+   //    addiu   at, r0, 0x0001
+   //
+   //    // part below finds the two spawns
+   //    addiu   a1, sp, 0x0024
+   //    lui     t6, 0x8013
+   //    lw      t6, 0x1368 (t6)
+   //    or      a2, a0, r0
+   //    or      a3, a1, r0
+   //    lhu     v0, 0x0014 (t6)
+   //    or      a0, r0, r0
+   //    or      v1, r0, r0
+   //
+   //    beqz    v0, _spawn
+   //    nop
+   //
+   //    blez    v0, _spawn
+   //    or      a1, v0, r0
+   //
+   //    lui     t0, 0x8013
+   //    addiu   t0, t0, 0x1380
+   //    or      v0, r0, r0
+   //    addiu   t4, r0, r0
+   //    sll     t1, v1, 2
+   //    addu    t2, a3, t1
+   //
+   //    _loop:
+   //    lw      t7, 0x0000 (t0)
+   //    addu    t8, t7, v0
+   //    lhu     t9, 0x0000 (t8)
+   //    lui     t3, 0x8013
+   //
+   //    bnel    a2, t9, _check_objects
+   //    addiu   a0, a0, 0x0001
+   //
+   //    sb      a0, 0x0000 (t2)
+   //    //addiu   t2, t2, 0x0001      // advance to next bomb space
+   //    //addiu   t4, t4, 0x0001      // advance bomb count
+   //
+   //
+   //    lw      t3, 0x1368 (t3)
+   //    addiu   v1, v1, 0x0001
+   //    lhu     a1, 0x0014 (t3)
+   //    addiu   a0, a0, 0x0001
+   //
+   //    _check_objects:
+   //    slt     at, a0, a1
+   //    bnez    at, _loop
+   //    addiu   v0, v0, 0x0006
+   //
+   //    // sets to the spawn location
+   //    _spawn:
+   //    addu    t2, r0, sp
+   //    lbu     a0, 0x0024(t2)
+   //
+   //    _loop_2:
+   //    lui     a1, 0x8013
+   //    addiu   a1, a1, 0x13f8      // bomb 1 pointer space
+   //
+   //    jal     0x800fc894
+   //    nop
+   //
+   //    //lbu     a0, 0x0025(t2)      // second bomb id
+   //    //lui     a1, 0x8013
+   //    //addiu   a1, a1, 0x1420      // bomb 2 pointer space
+   //
+   //    //jal     0x800fc894
+   //    //nop
+   //
+   //    addiu   t6, r0, 0x00b4
+   //    lui     at, 0x8013
+   //    lw      s0, 0x0018 (sp)
+   //    sw      t6, 0x1404 (at)
+   //    sw      t6, 0x142C (at)
+   //
+   //
+   //    lw      ra, 0x001C(sp)
+   //    addiu   sp, sp, 0x0030
+   //    jr      ra
+   //    nop
+   //}
+
+    // @ Description
+    // Hardcoding for bumpers on Race to the Finish Stages
+    scope rttf_bomb_2_: {
+        lui            v1, 0x8013
+        addiu          v1, v1, 0x13f0
+        lw             v0, 0x003C (v1)
+        addiu          sp, sp, -0x30
+        sw             ra, 0x001c (sp)
+
+        bnez           v0, _end
+        sw             a0, 0x0030 (sp)
+
+        mtc1           r0, f0
+        lui            a2, 0x8013
+        addiu          t6, r0, 0x0001
+        sw             t6, 0x0010 (sp)
+        addiu          a2, a2, 0x1420
+        or             a0, r0, r0
+        addiu          a1, r0, 0x001a
+        addiu          a3, sp, 0x0024
+        swc1           f0, 0x002c (sp)
+        swc1           f0, 0x0028 (sp)
+
+        jal            0x8016ea78
+        swc1           f0, 0x0024 (sp)
+
+        lui            v1, 0x8013
+        addiu          v1, v1, 0x13f0
+        addiu          v0, r0, 0x00b4
+        sw             v0, 0x003C (v1)
+
+        _end:
+        lw             ra, 0x001c (sp)
+        addiu          t8, v0, 0xffff
+        sw             t8, 0x003C (v1)
+
+        jr             ra
+        addiu          sp, sp, 0x30
+    }
+
+    // @ Description
+    // Hardcoding for bumpers on Race to the Finish Stages
+    scope rttf_bumpers_: {
+        OS.patch_start(0x86D50, 0x8010B550)
+        jal     rttf_bumpers_
+        lui     t7, 0x0000                  // original line 1
+        return_:
+        OS.patch_end()
+
+        addiu   s3, r0, Stages.id.REMIX_RTTF   // ~
+        li      s2, Global.match_info       // load match info pointer
+        lw      s2, 0x0000(s2)              // load match info
+        lbu     s2, 0x0001(s2)              // load stage id
+        bnel    s2, s3, _end                // if stage_id is not remix_rttf, do as normal
+        addiu   t7, t7, 0x0110              // original line 2
+
+        addiu   t7, t7, 0x01E8              // Remix RTTF hardcoding, replacing original line 2
+
+        _end:
+        jr      ra
+        nop
     }
 
     // @ Description
@@ -2863,6 +3508,98 @@ scope Hazards {
         _normal:
         j       return
         or      a3, a0, r0                   // original line 2
+    }
+
+    scope mk_remix_hardcoding_9: {
+        // Enable CPU AI to avoid falling to blastzone on dropping plats
+        OS.patch_start(0x000B1EA4, 0x80137464)
+        jal     mk_remix_hardcoding_9
+        lbu     t6, 0x0001(t5)              // original line 2 - t6 = current stage ID
+        OS.patch_end()
+
+        lli     at, Stages.id.MK_REMIX
+        beq     t6, at, _do_check           // if MK Remix, do check for AI on dropping plat
+        lli     at, Stages.id.BIG_BOOS_HAUNT
+        beq     t6, at, _do_check           // if Big Boo's Haunt, do check for AI on dropping plat
+        lli     at, Stages.id.YOSHIS_ISLAND_II
+        beq     t6, at, _do_check           // if Yoshi's Island II, do check for AI on dropping plat
+        lli     at, Stages.id.GREAT_BAY
+        beq     t6, at, _great_bay         // if GREAT_BAY, do check for AI on dropping turtle plat
+        // lli     at, Stages.id.DATA
+        // beq     t6, at, _taxi_check         // if Datadyne, do check for AI on moving taxi
+        lli     at, Stages.id.MUSHROOM_KINGDOM // original line 1 - at = MK stage ID
+
+        jr      ra
+        nop
+
+        _great_bay:
+        lw      a0, 0x00EC(a2)              // a0 = current clipping id
+        bltz    a0, _normal
+        nop
+        sw      v1, 0x0024(sp)              // save v1 to sp
+        jal     0x800FCA18                  // ??
+        sw      a2, 0x004C(sp)              // save a2 to sp
+        lw      v1, 0x0024(sp)              // restore v1
+
+        beqz    v0, _normal                 // branch if unknown routine returned zero
+        lw      a2, 0x004C(sp)              // restore a2
+
+        lw      t7, 0x08E8(a2)              // get top joint
+        lui     at, 0xc47a                  // max coordinate -500 (MK = 0xC2C8, -100.0)
+        mtc1    at, f10                     // f10 = max coordinate
+        lwc1    f8, 0x0020(t7)              // f8 = cpu y coordinate
+        c.lt.s  f8, f10                     // compare floats
+        nop
+        bc1f    _normal                     // branch to normal routine if not below certain Y
+        nop
+
+        // v1 = fighter AI struct
+        lbu     t8, 0x0000(v1)              // t8 = current CPU state
+        addiu   at, r0, 0x4                 // at = STATE_ID.RECOVER
+        addiu   t1, r0, 0x4                 // t1 = STATE_ID.RECOVER
+        beq     t8, at, _skip               // branch if not already recovering
+        addiu   v0, r0, 0x0001              // return 1
+        lbu     t0, 0x0049(v1)              // load input byte?
+        andi    t9, t0, 0xFFFE              // add to input byte
+        sb      t9, 0x0049(v1)              // save input byte
+        j       0x80137768
+        sb      t1, 0x0000(v1)              // set cpu STATE to RECOVER
+
+        _skip:
+        j       0x80137768                  // ~
+        addiu   v0, r0, 0x0001              // return 1
+
+        // could not prevent datadyne issue with this code
+        // _taxi_check:
+        // lw      a0, 0x00EC(a2)              // get current clipping id
+        // bltz    a0, _normal
+        // nop
+        // sw      v1, 0x0024(sp)              // save v1 to sp
+        // jal     0x800FCA18                  // ??
+        // sw      a2, 0x004C(sp)              // save a2 to sp
+        // lw      v1, 0x0024(sp)              // restore v1
+
+        // beqz    v0, _normal                 // branch if unknown routine returned zero
+        // lw      a2, 0x004C(sp)              // restore a2
+
+        // lw      t7, 0x08E8(a2)              // get top joint
+        // lui     at, 0x451C                  // max coordinate
+        // mtc1    at, f10                     // f10 = max coordinate
+        // lwc1    f8, 0x001C(t7)              // f8 = cpu x coordinate
+        // c.lt.s  f10, f8                     // compare floats
+        // nop
+
+        // j       0x801374B0
+        // nop
+
+
+        _normal:
+        j       0x801374E0 + 0x4
+        lui     t3, 0x800A
+
+        _do_check:
+        j       0x80137474                  // jump to AI platform and height check code
+        nop
     }
 
     // @ Description
@@ -3962,7 +4699,7 @@ scope Hazards {
         // check to see if should end duration of shrink
         li      t0, shrink_timer_table
         li      t6, Size.multiplier_table
-        li      t8, Size.state_table
+        li      t8, Size.match_state_table
         addiu   t5, r0, 0x0003      // load loop amount
 
         _loop_2:
@@ -6227,6 +6964,26 @@ scope Hazards {
 
     }
 
+    // @ Description
+    // Sets the lighting for Grim Reapers Cavern
+    scope reapers_setup_: {
+        addiu   sp, sp, -0x0010             // allocate sp
+        sw      ra, 0x0008(sp)
+        li      t0, Toggles.entry_hazard_mode
+        lw      t0, 0x0004(t0)              // t0 = hazard_mode (hazards disabled when t0 = 1 or 3)
+        addiu   at, r0, 1
+        beq     at, t0, _end                // skip if hazards disabled
+        addiu   at, r0, 3
+        beq     at, t0, _end                // skip if hazards disabled
+        li      a0, 0xFF0000FF              // colour to use (red)
+        jal     set_player_env_colour_
+        nop
+        _end:
+        lw      ra, 0x0008(sp)
+        jr      ra
+        addiu   sp, sp, 0x0010              // deallocate sp
+
+    }
 
 	// @ Description
 	// Set all global player env lighting colour
@@ -6286,34 +7043,17 @@ scope Hazards {
     // @ Description
     // Main function for twilight_city_water_. Based on great bays water.
     scope twilight_city_water_: {
-        constant CYCLE_TIME(240)            // 240 frames
-        constant WATER_Y(0)                 // y = 0
-        constant WATER_TOP_Y(0x4396)        // top y = 300
-        constant WAVE_AMPLITUDE(0x4416)     // wave height = 600 UNITS
-        constant WAVE_LENGTH(0x44FA)        // wave length = 2000 UNITS
-        constant SPLASH_Y(0xC44F)           // current setting - float: -828
+        constant WATER_Y(0)            // current setting - float:
+        constant SPLASH_Y(0x0)           // current setting - float:
         constant RIGHT_X(0x4550)            // current setting - float: 3328
         constant LEFT_X(0xC580)             // current setting
 
-        addiu   sp, sp, -0x0060             // allocate stack space
+        addiu   sp, sp, -0x0050             // allocate stack space
         sw      ra, 0x0024(sp)              // ~
         sw      s0, 0x0028(sp)              // ~
         sw      s1, 0x002C(sp)              // store ra, s0, s1
         or      s0, r0, r0                  // current port = 0
         lli     s1, 0x0003                  // final iteration = 0x3
-
-        _check_intro:
-        li      t6, Global.current_screen   // ~
-        lbu     t6, 0x0000(t6)              // t6 = screen_id
-        ori     at, r0, 0x0036              // ~
-        beq     at, t6, _loop               // skip if screen_id = training mode
-        nop
-
-        li      t6, Global.match_info       // ~
-        lw      t6, 0x0000(t6)              // t6 = match info struct
-        lw      t6, 0x0018(t6)              // t6 = time elapsed
-        beqz    t6, _loop_end               // skip if time elapsed = 0
-        nop
 
         _loop:
         jal     Character.port_to_struct_   // v0 = player struct for current port
@@ -6330,7 +7070,7 @@ scope Hazards {
         lli     at, Character.id.JFOX       // at = id.JFOX
         beq     at, t6, _fire_fox_check     // perform action check if character = FOX
         lli     at, Character.id.FALCO      // at = id.FALCO
-        bne     at, t6, _check_y            // skip action check if character != FALCO
+        bne     at, t6, _check_intro        // skip action check if character != FALCO
 
         _fire_fox_check:
         lw      t6, 0x0024(v0)              // t6 = action id
@@ -6338,41 +7078,27 @@ scope Hazards {
         beq     t6, at, _loop_end           // skip if Fox/Falco are doing their up special
         nop
 
+        _check_intro:
+        li      t6, Global.current_screen   // ~
+        lbu     t6, 0x0000(t6)              // t6 = screen_id
+        ori     at, r0, 0x0036              // ~
+        beq     at, t6, _check_y            // skip if screen_id = training mode
+        nop
+
+        li      t6, Global.match_info       // ~
+        lw      t6, 0x0000(t6)              // t6 = match info struct
+        lw      t6, 0x0018(t6)              // t6 = time elapsed
+        beqz    t6, _loop_end               // skip if time elapsed = 0
+        nop
+
         _check_y:
         lw      v0, 0x0078(v0)              // v0 = px x/y/z coordinates
-        sw      v0, 0x005C(sp)              // store player coords ptr
         li      t8, 0x801313F0              // t8 = stage data
         addu    t8, t8, s0                  // t8 = stage data + port offset
         lwc1    f2, 0x0004(v0)              // f2 = px y position
-        lui     at, WATER_TOP_Y             // ~
+        lui     at, WATER_Y                 // ~
         mtc1    at, f4                      // f4 = WATER_Y
         c.le.s  f2, f4                      // compare player location to beginning of water
-        swc1    f2, 0x0058(sp)              // save player y
-        bc1fl   _loop_end                   // skip if player is above water...
-        sb      r0, 0x005C(t8)              // ...and set px_under_water to FALSE
-
-        _check_wave:
-        // get current x offset
-        OS.read_word(0x80131304, at)        // at = ptr top stage objects
-        lw      at, 0x001C(at)              // at = wave object
-        lw      at, 0x001C(at)              // at = wave x offset
-        mtc1    at, f6                      // f6 = ~
-        lui     at, WAVE_LENGTH             // ~
-        mtc1    at, f4                      // f4 = FREQUENCY
-        lw      v0, 0x005C(sp)              // restore player coords ptr
-        lw      at, 0x0000(v0)              // at = player x
-        mtc1    at, f2                      // f2 = px
-        lui     at, WAVE_LENGTH
-        mtc1    at, f8
-        add.s   f2, f2, f8
-        mul.s   f4, f4, f2                  // f4 = FREQUENCY * 2π/60 = ω/60
-        jal     0x800303F0                  // f0 = sin(f12)
-        mul.s   f12, f4, f6                 // f12 = ω/60 * frame = ωt
-        lui     at, WAVE_AMPLITUDE          // ~
-        mtc1    at, f4                      // f4 = AMPLITUDE
-        mul.s   f4, f4, f0                  // f4 = AMPLITUDE * sin(ωt)
-        lwc1    f2, 0x0058(sp)              // f2 = player y
-        c.le.s  f2, f4                      // compare player location to the wave
         nop
         bc1fl   _loop_end                   // skip if player is above water...
         sb      r0, 0x005C(t8)              // ...and set px_under_water to FALSE
@@ -6383,10 +7109,9 @@ scope Hazards {
 
         // if the player has just gone under the water
         sb      at, 0x005C(t8)              // px_under_water = TRUE
-        lw      v0, 0x005C(sp)              // restore player coords ptr
-        lw      at, 0x0000(v0)              // at = player x
+        lw      at, 0x0000(v0)              // at = px x
         sw      at, 0x0030(sp)              // 0x0030(sp) = px x
-        lw      at, 0x0004(v0)              // at = player y
+        lui     at, SPLASH_Y                // ~
         sw      at, 0x0034(sp)              // 0x0034(sp) = SPLASH_Y
         sw      r0, 0x0038(sp)              // 0x0038(sp) = 0
         addiu   a0, sp, 0x0030              // a0 = coordinates to create gfx at
@@ -6440,8 +7165,1644 @@ scope Hazards {
         lw      s0, 0x0028(sp)              // ~
         lw      s1, 0x002C(sp)              // load ra, s0, s1
         jr      ra                          // return
-        addiu   sp, sp, 0x0060              // deallocate stack space
+        addiu   sp, sp, 0x0050              // deallocate stack space
     }
+
+    scope scuttle_town_setup_: {
+        constant COLOR_NIGHT(0x00105000)
+        constant COLOR_DAY(0x94CEFF00)
+        constant COLOR_NIGHT_GLASS(0x00103800)
+        constant COLOR_DAY_GLASS(0x9ACEFF00)
+
+        addiu   sp, sp, -0x0068
+        sw      ra, 0x0014(sp)
+
+        OS.read_byte(Global.current_screen, t1) // t1 = screen_id
+        lli     t0, Global.screen.TRAINING_MODE
+        bne     t1, t0, _init_fade          // do fade when screen_id != training mode
+        nop
+        OS.read_word(Training.entry_bg + 0x4, t0) // t0 = 0 if normal training bg
+        beqz    t0, _check_hazard          // if not showing the stage bg, skip fade
+        nop
+
+        _init_fade:
+        Render.draw_rectangle(0x0, 0xD, 10, 10, 300, 220, 0x00000000, OS.TRUE)
+
+        li      t0, scuttle_town_bg_fade_
+        sw      t0, 0x0014(v0)              // set update routine
+        sw      r0, 0x0050(v0)              // clear transition flag
+        li      t0, COLOR_NIGHT
+        sw      t0, 0x0060(v0)              // set night color
+        li      t0, COLOR_DAY
+        sw      t0, 0x0064(v0)              // set day color
+        li      t0, COLOR_NIGHT_GLASS
+        sw      t0, 0x0048(v0)              // set night color glass
+        li      t0, COLOR_DAY_GLASS
+        sw      t0, 0x004C(v0)              // set day color glass
+        lui     t0, 0x8013
+        lw      t0, 0x1300(t0)              // t0 = header struct
+        lw      t1, 0x0048(t0)              // t1 = day bg image header
+        lw      t2, 0x00C8(t0)              // t2 = night bg image header
+        lw      t1, 0x0034(t1)              // t1 = day bg address
+        lw      t2, 0x0034(t2)              // t2 = night bg address
+        sw      t2, 0x0068(v0)              // save night bg address
+        sw      t1, 0x006C(v0)              // save day bg address
+        lui     t0, 0x8004
+        lw      t0, 0x6800(t0)              // t0 = bg image object
+        lw      t0, 0x0074(t0)              // t0 = bg image object position struct
+        sw      t0, 0x005C(v0)              // save bg image object position struct
+
+        _check_hazard:
+        // TODO: remove when minions stop crashing
+        b _end
+        nop
+        li      t0, Toggles.entry_hazard_mode
+        lw      t0, 0x0004(t0)              // t0 = hazard_mode (hazards disabled when t0 = 1 or 3)
+        andi    t0, t0, 0x0001              // t0 = 1 if hazard_mode is 1 or 3, 0 otherwise
+        bnez    t0, _end                    // if hazard_mode enabled, skip original
+        nop
+
+        li      t1, 0x80131300              // load the hardcoded address where header address (+14) is located
+        lw      t1, 0x0000(t1)              // load aforemention address
+
+
+        addiu   t1, t1, -0x0014             // acquire address of header
+        lw      t3, 0x00E0(t1)              // load pointer to Minion
+        addiu   t3, t3, -0x0668             // subtract offset amount to get to top of [this would be to the top of the GFX file, need a GFX pointer here]
+        li      t2, 0x801313F0              // load hardcoded space used by hazards, generally for pointers
+        sw      r0, 0x0008(t2)              // clear spot used for timer
+        //lw      t4, 0x0130(t1)              // load pointer to laser hitbox file
+        sw      t3, 0x0000(t2)              // save Robot Bee header address to first word of this struct, as pirhana plant does the same
+        sw      t1, 0x0004(t2)              // save stage header address to second word of this struct, as Pirhana Plant does the same
+        sw      t4, 0x000C(t2)              // save pointer to laser hitbox file
+
+        //li      t3, robot_bee_laser_hitbox_pointer
+        //sw      t4, 0x0000(t3)              // save pointer to pointer spot
+        //li      t2, robot_bee_laser_projectile_struct
+        //sw      t3, 0x0008(t2)              // save pointer to cannonball hitbox file
+
+        sw      r0, 0x0054(sp)
+        sw      r0, 0x0050(sp)
+        sw      r0, 0x004C(sp)
+        addiu   t6, r0, 0x0001
+        sw      t6, 0x0010(sp)
+
+        addiu   a1, r0, r0                  // clear routine
+        addiu   a2, r0, 0x0001              // group
+        addiu   a0, r0, 0x03F2              // object id
+        jal     Render.CREATE_OBJECT_       // create object
+        lui     a3, 0x8000                  // unknown
+
+        li      a1, minion_factory_         // associated routine
+        or      a0, v0, r0                  // place object address in a0
+        addiu   a2, r0, 0x0001              // unknown, used by Dreamland
+        jal     0x80008188                  // assigns special routines that can work correctly with player location
+        addiu   a3, r0, 0x0004
+
+        _end:
+        lw      ra, 0x0014(sp)
+        jr      ra
+        addiu   sp, sp, 0x0068
+    }
+
+    scope scuttle_town_bg_fade_: {
+        lw      t2, 0x0050(a0)              // t2 = transition flag
+        bnez    t2, _in_transition          // if in transition, skip to that logic
+        lli     t2, 0x0001                  // t2 = 1
+
+        // If here, we are waiting for the stage palette change to start
+        lui     t0, 0x8004
+        lw      t0, 0x66F8(t0)              // t0 = grpup 0x2 head
+        lw      t0, 0x0074(t0)              // t0 = top joint
+        lw      t0, 0x0010(t0)              // t0 = 1st joint
+        lw      t0, 0x0080(t0)              // t0 = part image struct
+        lw      t0, 0x0088(t0)              // t0 = current palette index
+
+        // if t0 is 1, we are transitioning to night
+        // if t0 is 9, we are transitioning to day
+
+        lui     t1, 0x3F80                  // t1 = 1 (transition to night started)
+        beql    t1, t0, _start_transition   // if the first palette is displayed, start night transition
+        lli     t1, 0x0000                  // t1 = 0 (offset for transition to night)
+        lui     t1, 0x4110                  // t1 = 9 (transition to day started)
+        beql    t1, t0, _start_transition   // if the 2nd to last palette is displayed, start night transition
+        lli     t1, 0x0004                  // t1 = 4 (offset for transition to day)
+
+        // if here, then still waiting
+        b       _finish
+        nop
+
+        _start_transition:
+        sw      t2, 0x0050(a0)              // set transition flag to on
+        lli     t0, 0x0004                  // t0 = alpha delta
+        sw      t0, 0x0054(a0)              // set alpha delta
+        addiu   t0, a0, 0x0060              // t0 = color array
+        addu    t0, t0, t1                  // t0 = address of color
+        lw      t1, 0x0000(t0)              // t1 = transition color
+        sw      t1, 0x0040(a0)              // set prim color
+        lw      t1, 0x0008(t0)              // t1 = bg address
+        sw      t1, 0x0058(a0)              // set bg address
+        lw      t1, -0x0018(t0)             // t1 = magnifying glass color address
+        sw      t1, 0x0084(a0)              // set magnifying glass color
+
+        _in_transition:
+        lw      t1, 0x0054(a0)              // t1 = alpha delta
+        lbu     t0, 0x0043(a0)              // t0 = alpha
+        addu    t0, t0, t1                  // t0 = updated alpha
+
+        beqzl   t0, pc() + 8                // if just got back to 00, transition is done
+        sw      r0, 0x0050(a0)              // clear transition flag
+
+        lw      t2, 0x0040(a0)              // t2 = prim color
+        addiu   t1, r0, -0x0100             // t1 = 0xFFFFFF00
+        and     t2, t2, t1                  // t2 = prim color, no alpha
+
+        lli     t1, 0x0080                  // t1 = middle alpha
+        bne     t0, t1, _check_max          // if not at middle alpha, check max alpha
+        lw      t1, 0x0084(a0)              // t1 = magnifying glass color
+
+        // midway through the transition, change the magnifying glass color
+        lui     t3, 0x8013
+        lw      t3, 0x1300(t3)              // t3 = stage header
+        b       _set_color
+        sw      t1, 0x004C(t3)              // set magnifying glass color
+
+        _check_max:
+        lli     t1, 0x00FC                  // t1 = max alpha
+        bne     t0, t1, _set_color          // if not at max alpha, set alpha
+        addiu   t1, r0, -0x0004             // t1 = alpha delta
+
+        sw      t1, 0x0054(a0)              // set alpha delta
+
+        // here, need to change the bg image
+        lw      t1, 0x0058(a0)              // t1 = bg address
+        lw      t3, 0x005C(a0)              // t3 = bg image object position struct
+        sw      t1, 0x0044(t3)              // set bg image
+
+        _set_color:
+        or      t0, t2, t0                  // t2 = prim color
+        sw      t0, 0x0040(a0)              // set alpha
+
+        _finish:
+        jr      ra
+        nop
+    }
+
+    minion_coordinates:
+    dw  0x00000000
+    dw  0x00000000
+    dw  0x00000000
+    dw  0x00000000
+
+    // @ Description
+    // main routine for Minions
+    scope minion_factory_: {
+        addiu   sp, sp, -0x0028
+        sw      ra, 0x001C(sp)
+
+        li      t6, Global.current_screen   // ~
+        lbu     t6, 0x0000(t6)              // t0 = screen_id
+        ori     t5, r0, 0x0036              // ~
+        beq     t5, t6, _skip_check         // skip if screen_id = training mode
+        nop
+
+        li      t6, Global.match_info       // ~
+        lw      t6, 0x0000(t6)              // t6 = match info struct
+        lw      t6, 0x0018(t6)              // t6 = time elapsed
+        beqz    t6, _end                    // if match hasn't started, don't begin
+        nop
+
+        _skip_check:
+        li      t5, 0x801313F0
+        lw      t6, 0x0008(t5)              // load timer
+        addiu   t7, t6, 0x0001              // add to timer
+        addiu   at, r0, 0x0001
+        slti    t8, t6, 0x05DC              // wait 1500 frames
+        bne     t8, r0, _end                // if not 1500 or greater, skip animation application, this is the initial check, Minions won't spawn until at least 484 frames
+        sw      t7, 0x0008(t5)              // save updated timer
+        sw      t6, 0x0010(sp)              // save original timer
+        jal     Global.get_random_int_      // get random integer
+        addiu   a0, r0, 0x05DC              // decimal 1500 possible integers
+        lw      a0, 0x0020(sp)              // load registers
+        addiu   t4, r0, 0x0050              // place 50 as the random number to spawn Minion
+
+        // this is added to prevent spawn crash until the item object works
+        //b       _end
+        //nop
+        //
+
+        beq     t4, v0, _spawn              // if 50, spawn Minion
+        addiu   t4, r0, 0x0BB8              // put in max time before Minion, 3000 frames
+        lw      t6, 0x0010(sp)              // load timer from stack
+        bne     t4, t6, _end                // if not same as timer, skip animation
+        nop
+
+        _spawn:
+        sw      r0, 0x0008(t5)              // restart timer
+
+        addiu   a0, r0, 0x03F5              // set object ID
+        lli     a1, Item.ScuttleMinion.id   // set item id to Scuttle Minion
+        li      a2, minion_coordinates      // location in which minion spawns
+        jal     0x8016EA78                  // spawn stage item
+        addiu   a3, sp, 0x0050              // a3 = address of setup floats
+        sw      a0, 0x0024(sp)
+        li      t5, 0x801313F0
+
+        //jal     Global.get_random_int_      // get random integer
+        //addiu   a0, r0, 0x0002              // decimal 2 possible integers
+        //sw      v0, 0x0020(t5)              // save direction ID
+        //jal     Global.get_random_int_      // get random integer
+        //addiu   a0, r0, 0x0002              // decimal 2 possible integers
+
+        //sw      v0, 0x0020(t5)              // save direction ID
+
+        lw      t1, 0x0000(t5)              // load Minion file ram address
+        bnez    v0, _movement
+        addiu   t2, r0, 0x0908              // load in offset of animation track 1
+        //addiu   t2, r0, 0x3598              // load in offset of animation track 1
+
+        _movement:
+        // lw      a0, 0x0024(sp)
+        // addiu   a2, r0, 0x0000              // clear out a2
+        // lw      a0, 0x0074(a0)              // Load Top Joint
+        // jal     0x8000BD1C                  // animation track 1 set up
+        // addu    a1, t1, t2                  // place animation track address in a1
+
+        // li      t5, 0x801313F0
+
+        // lw      t3, 0x0000(t5)              // load Minion file ram address
+        // addiu   t4, r0, 0x09B4              // offset to track 2
+        // lw      a0, 0x0080(a0)              // unknown, probably for image swapping
+        // jal     0x8000BD54                  // set up track 2
+        // addu    a1, t3, t4                  // place animation track address in a1
+
+        _end:
+        lw  ra, 0x001C(sp)
+        jr      ra
+        addiu   sp, sp, 0x0028
+    }
+
+    // @ Description
+    // Subroutine which sets up initial properties of Minion.
+    // a0 - no associated object
+    // a1 - item info array
+    // a2 - x/y/z coordinates to create item at
+    // a3 - unknown x/y/z offset
+    scope minion_stage_setting_: {
+        addiu   sp, sp,-0x0060                  // allocate stack space
+        sw      s0, 0x0020(sp)                  // ~
+        sw      s1, 0x0024(sp)                  // ~
+        sw      ra, 0x0028(sp)                  // store s0, s1, ra
+        sw      a1, 0x0038(sp)                  // 0x0038(sp) = unknown
+        li      a1, Item.ScuttleMinion.item_info_array
+        sw      a2, 0x003C(sp)                  // 0x003C(sp) = original x/y/z
+        li      a3, minion_coordinates
+        addiu   t6, r0, 0x0001                  // unknown, used by pirhana plant
+        jal     0x8016E174                      // create item
+        sw      t6, 0x0010(sp)                  // argument 4(unknown) = 1
+        li      a2, minion_coordinates          // 0x003C(sp) = original x/y/z
+        beqz    v0, _end                        // end if no item was created
+        or      a0, v0, r0                      // a0 = item object
+
+        // item is created
+        sw      r0, 0x0040(v0)                  // clear laser timer
+        addiu   t1, r0, 0x0030
+        sw      t1, 0x0044(v0)                  // save sfx timer so it starts with noise
+
+        lw      v1, 0x0084(v0)                  // v1 = item special struct
+        sw      v1, 0x002C(sp)                  // 0x002C(sp) = item special struct
+        lw      t9, 0x0074(v0)                  // load location struct 2
+        sw      r0, 0x0020(t9)                  // set initial y
+        sw      r0, 0x001C(t9)                  // save initial x coordinates
+        addiu   t2, r0, 0x00B4                  // unknown flag used by pirhana
+        sh      t2, 0x033E(v1)                  // save flag
+        sw      r0, 0x0024(t9)                  // set initial z
+
+        lbu     t9, 0x0158(v1)                  // ~
+        ori     t9, t9, 0x0010                  // ~
+        sb      t9, 0x0158(v1)                  // enable unknown bitflag
+
+        lli     at, 0x0001                      // ~
+        sw      at, 0x010C(v1)                  // enable hitbox
+
+        lui     at, 0x4316                      // 150 (fp)
+        sw      at, 0x0138(v1)                  // save hitbox size
+        addiu   t4, r0, 0x0005                  // hitbox damage set to 5
+        sw      t4, 0x0110(v1)                  // save hitbox damage
+        addiu   t4, r0, 0x0361                  // sakurai angle
+        sw      t4, 0x013C(v1)                  // save hitbox angle to location
+        // 0x0118 damage multiplier
+        addiu   t4, r0, r0                      // punch effect id
+        sw      t4, 0x011C(v1)                  // knockback effect - 0x0 = punch
+        addiu   t4, r0, 0x0026                  // medium kick sound ID
+        sh      t4, 0x0156(v1)                  // save hitbox sound (could also do bat ping 0x34)
+        addiu   t4, r0, 0x0050                  // put hitbox bkb at 20
+        sw      t4, 0x0148(v1)                  // set hitbox bkb
+        addiu   t4, r0, 0x0025                  // put hitbox kbs at 25
+        sw      t4, 0x0140(v1)                  // set hitbox kbs
+
+        lbu     t4, 0x02D3(v1)
+        ori     t5, t4, 0x0008
+        sb      t5, 0x02D3(v1)
+        sw      r0, 0x01D0(v1)                  // hitbox refresh timer = 0
+        sw      r0, 0x01D4(v1)                  // hitbox collision flag = FALSE
+        sw      r0, 0x35C(v1)
+        li      t1, minion_blast_zone_          // load Minion blast zone routine
+        sw      t1, 0x0398(v1)                  // save routine to part of item special struct that carries unique blast wall destruction routines
+
+        _end:
+        or      v0, a0, r0                      // v0 = item object
+        lw      s0, 0x0020(sp)                  // ~
+        lw      s1, 0x0024(sp)                  // ~
+        lw      ra, 0x0028(sp)                  // load s0, s1, ra
+        jr      ra                              // return
+        addiu   sp, sp, 0x0060                  // deallocate stack space
+    }
+
+    // @ Description
+    // main routine for Minion
+    scope minion_main_: {
+        addiu   sp, sp, -0x0028
+        sw      ra, 0x001C(sp)
+        sw      a0, 0x0018(sp)
+        //lw      t1, 0x0040(a0)          // load laser timer
+        //addiu   t2, r0, 0x0100
+        //slt     at, t2, t1
+        //bnez    at, _duration           // if over 100 frames of don't fire
+        //addiu   t2, r0, 0x0060
+
+        //slt     at, t2, t1
+        //beqz    at, _duration           // if not 60 frames of don't fire
+        //lw      t1, 0x0048(a0)          // load laser repeat timer
+
+        //addiu   t3, t1, 0x0001
+        //addiu   t2, r0, REPEAT_TIMER    // timer count
+        //bnel    t1, t2, _sfx_timer      // branch if duration % 0x1E != 0
+        //sw      t3, 0x0048(a0)          // update laser repeat timer
+
+        //jal     robot_bee_laser_
+        //sw      r0, 0x0048(a0)
+
+        _sfx_timer:
+        //lw      a0, 0x0018(sp)
+        //lw      t1, 0x0044(a0)          // load sfx timer
+        //addiu   t3, t1, 0x0001          // add to timer
+        //addiu   t2, r0, 0x0030          // timer count = 10
+        //bnel    t1, t2, _duration       // branch if duration % 0x1E != 0
+        //sw      t3, 0x0044(a0)          // save updated timer
+        //
+        //sw      r0, 0x0044(a0)          // clear sfx timer
+        //jal     0x800269C0              // play fgm
+        //addiu   a0, r0, 0x03FB          // fgm id = Shrinkray
+
+        _duration:
+        lw      a0, 0x0018(sp)
+        lw      t1, 0x0040(a0)          // load laser timer
+        addiu   t3, t1, 0x0001
+        addiu   t2, r0, 0x0186
+        slt     at, t2, t1
+
+        beqz    at, _continue           // if not 390 frames of existence continue
+        sw      t3, 0x0040(a0)          // save updated timer
+
+        beq     r0, r0, _end
+        addiu   v0, r0, 0x0001          // set to destroy
+
+        _continue:
+        addu    v0, r0, r0
+
+        _end:
+        lw  ra, 0x001C(sp)
+        addiu   sp, sp, 0x0028
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // Destruction routine for Minion
+    scope minion_destroy_: {
+        addiu   sp, sp, -0x0028
+        sw      ra, 0x001C(sp)
+
+        jal     0x800269C0                  // play fgm
+        addiu   a0, r0, 0x03E8              // fgm id = Badnik Destroy
+
+        beq     r0, r0, _end
+        addiu   v0, r0, 0x0001         // set to destroy
+
+        _end:
+        lw  ra, 0x001C(sp)
+        addiu   sp, sp, 0x0028
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // this routine gets run by whenever Minion crosses the blast zone.
+    scope minion_blast_zone_: {
+        jr      ra
+        addiu   v0, r0, 0x0001      // destroys Minion when it hits the blast zone
+    }
+
+    // @ Description
+    // this routine sets up hazards for Peach's Castle II, primarily Banzai Bill
+        scope peach_castle_II_setup_: {
+        addiu   sp, sp, -0x0068
+        sw      ra, 0x0014(sp)
+
+        // _check_hazard:
+        li      t0, Toggles.entry_hazard_mode
+        lw      t0, 0x0004(t0)              // t0 = hazard_mode (hazards disabled when t0 = 1 or 3)
+        andi    t0, t0, 0x0001              // t0 = 1 if hazard_mode is 1 or 3, 0 otherwise
+        bnez    t0, _end                    // if hazard_mode enabled, skip original
+        nop
+
+        li      t1, 0x80131300              // load the hardcoded address where header address (+14) is located
+        lw      t1, 0x0000(t1)              // load aforemention address
+
+        addiu   t1, t1, -0x0014             // acquire address of header
+        lw      t3, 0x00E0(t1)              // load pointer to Banzai Bill
+        addiu   t3, t3, -0x07E8             // subtract offset amount to get to top of Robot Bee file
+        li      t2, 0x801313F0              // load hardcoded space used by hazards, generally for pointers
+        sw      r0, 0x0008(t2)              // clear spot used for timer
+        //lw      t4, 0x0130(t1)              // load pointer to laser hitbox file
+        sw      t3, 0x0000(t2)              // save Robot Bee header address to first word of this struct, as pirhana plant does the same
+        sw      t1, 0x0004(t2)              // save stage header address to second word of this struct, as Pirhana Plant does the same
+        sw      t4, 0x000C(t2)              // save pointer to laser hitbox file
+
+        //li      t3, robot_bee_laser_hitbox_pointer
+        //sw      t4, 0x0000(t3)              // save pointer to pointer spot
+        //li      t2, robot_bee_laser_projectile_struct
+        //sw      t3, 0x0008(t2)              // save pointer to cannonball hitbox file
+
+        sw      r0, 0x0054(sp)
+        sw      r0, 0x0050(sp)
+        sw      r0, 0x004C(sp)
+        addiu   t6, r0, 0x0001
+        sw      t6, 0x0010(sp)
+
+        addiu   a1, r0, r0                  // clear routine
+        addiu   a2, r0, 0x0001              // group
+        addiu   a0, r0, 0x03F2              // object id
+        jal     Render.CREATE_OBJECT_       // create object
+        lui     a3, 0x8000                  // unknown
+
+        li      a1, banzai_bill_factory_    // associated routine
+        or      a0, v0, r0                  // place object address in a0
+        addiu   a2, r0, 0x0001              // unknown, used by Dreamland
+        jal     0x80008188                  // assigns special routines that can work correctly with player location
+        addiu   a3, r0, 0x0004
+
+        _end:
+        lw      ra, 0x0014(sp)
+        jr      ra
+        addiu   sp, sp, 0x0068
+    }
+
+    banzai_bill_coordinates:
+    dw  0x00000000
+    dw  0x00000000
+    dw  0x00000000
+    dw  0x00000000
+
+    // @ Description
+    // main routine for Banzai Bill Spawning
+    scope banzai_bill_factory_: {
+        addiu   sp, sp, -0x0028
+        sw      ra, 0x001C(sp)
+
+        li      t6, Global.current_screen   // ~
+        lbu     t6, 0x0000(t6)              // t0 = screen_id
+        ori     t5, r0, 0x0036              // ~
+        beq     t5, t6, _skip_check         // skip if screen_id = training mode
+        nop
+
+        li      t6, Global.match_info       // ~
+        lw      t6, 0x0000(t6)              // t6 = match info struct
+        lw      t6, 0x0018(t6)              // t6 = time elapsed
+        beqz    t6, _end                    // if match hasn't started, don't begin
+        nop
+
+        // this is added to prevent spawn crash until the item object works
+        b       _end
+        nop
+        //
+
+        _skip_check:
+        li      t5, 0x801313F0
+        lw      t6, 0x0008(t5)              // load timer
+        addiu   t7, t6, 0x0001              // add to timer
+        addiu   at, r0, 0x0001
+        slti    t8, t6, 0x05DC              // wait 1500 frames
+        bne     t8, r0, _end                // if not 1500 or greater, skip animation application, this is the initial check, Minions won't spawn until at least 484 frames
+        sw      t7, 0x0008(t5)              // save updated timer
+        sw      t6, 0x0010(sp)              // save original timer
+        jal     Global.get_random_int_      // get random integer
+        addiu   a0, r0, 0x05DC              // decimal 1500 possible integers
+        lw      a0, 0x0020(sp)              // load registers
+        addiu   t4, r0, 0x0050              // place 50 as the random number to spawn Banzai Bill
+        beq     t4, v0, _spawn              // if 50, spawn Banzai Bill
+        addiu   t4, r0, 0x0BB8              // put in max time before Banzai Bill, 3000 frames
+        lw      t6, 0x0010(sp)              // load timer from stack
+        bne     t4, t6, _end                // if not same as timer, skip animation
+        nop
+
+        _spawn:
+        sw      r0, 0x0008(t5)              // restart timer
+
+        addiu   a0, r0, 0x03F5              // set object ID
+        lli     a1, Item.RobotBee.id        // set item id to Robot Bee
+        li      a2, banzai_bill_coordinates      // location in which Banzai Bill spawns
+        jal     0x8016EA78                  // spawn stage item
+        addiu   a3, sp, 0x0050              // a3 = address of setup floats
+        sw      a0, 0x0024(sp)
+        li      t5, 0x801313F0
+
+        //jal     Global.get_random_int_      // get random integer
+        //addiu   a0, r0, 0x0002              // decimal 2 possible integers
+        //sw      v0, 0x0020(t5)              // save direction ID
+        //jal     Global.get_random_int_      // get random integer
+        //addiu   a0, r0, 0x0002              // decimal 2 possible integers
+
+        //sw      v0, 0x0020(t5)              // save direction ID
+
+        lw      t1, 0x0000(t5)              // load Banzai Bill file ram address
+        bnez    v0, _movement
+        addiu   t2, r0, 0x0908              // load in offset of animation track 1
+        //addiu   t2, r0, 0x3598              // load in offset of animation track 1
+
+        _movement:
+        lw      a0, 0x0024(sp)
+        addiu   a2, r0, 0x0000              // clear out a2
+        lw      a0, 0x0074(a0)              // Load Top Joint
+        jal     0x8000BD1C                  // animation track 1 set up
+        addu    a1, t1, t2                  // place animation track address in a1
+
+        li      t5, 0x801313F0
+
+        lw      t3, 0x0000(t5)              // load Banzai file ram address
+        addiu   t4, r0, 0x09B4              // offset to track 2
+        lw      a0, 0x0080(a0)              // unknown, probably for image swapping
+        jal     0x8000BD54                  // set up track 2
+        addu    a1, t3, t4                  // place animation track address in a1
+
+        _end:
+        lw  ra, 0x001C(sp)
+        addiu   sp, sp, 0x0028
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // Subroutine which sets up initial properties of Minion.
+    // a0 - no associated object
+    // a1 - item info array
+    // a2 - x/y/z coordinates to create item at
+    // a3 - unknown x/y/z offset
+    scope banzai_bill_stage_setting_: {
+        addiu   sp, sp,-0x0060                  // allocate stack space
+        sw      s0, 0x0020(sp)                  // ~
+        sw      s1, 0x0024(sp)                  // ~
+        sw      ra, 0x0028(sp)                  // store s0, s1, ra
+        sw      a1, 0x0038(sp)                  // 0x0038(sp) = unknown
+        li      a1, Item.RobotBee.item_info_array
+        sw      a2, 0x003C(sp)                  // 0x003C(sp) = original x/y/z
+        li      a3, banzai_bill_coordinates
+        addiu   t6, r0, 0x0001                  // unknown, used by pirhana plant
+        jal     0x8016E174                      // create item
+        sw      t6, 0x0010(sp)                  // argument 4(unknown) = 1
+        li      a2, banzai_bill_coordinates          // 0x003C(sp) = original x/y/z
+        beqz    v0, _end                        // end if no item was created
+        or      a0, v0, r0                      // a0 = item object
+
+        // item is created
+        sw      r0, 0x0040(v0)                  // clear laser timer
+        addiu   t1, r0, 0x0030
+        sw      t1, 0x0044(v0)                  // save sfx timer so it starts with noise
+
+        lw      v1, 0x0084(v0)                  // v1 = item special struct
+        sw      v1, 0x002C(sp)                  // 0x002C(sp) = item special struct
+        lw      t9, 0x0074(v0)                  // load location struct 2
+        sw      r0, 0x0020(t9)                  // set initial y
+        sw      r0, 0x001C(t9)                  // save initial x coordinates
+        addiu   t2, r0, 0x00B4                  // unknown flag used by pirhana
+        sh      t2, 0x033E(v1)                  // save flag
+        sw      r0, 0x0024(t9)                  // set initial z
+
+        lbu     t9, 0x0158(v1)                  // ~
+        ori     t9, t9, 0x0010                  // ~
+        sb      t9, 0x0158(v1)                  // enable unknown bitflag
+
+        lli     at, 0x0001                      // ~
+        sw      at, 0x010C(v1)                  // enable hitbox
+
+        lui     at, 0x4316                      // 150 (fp)
+        sw      at, 0x0138(v1)                  // save hitbox size
+        addiu   t4, r0, 0x0005                  // hitbox damage set to 5
+        sw      t4, 0x0110(v1)                  // save hitbox damage
+        addiu   t4, r0, 0x0361                  // sakurai angle
+        sw      t4, 0x013C(v1)                  // save hitbox angle to location
+        // 0x0118 damage multiplier
+        addiu   t4, r0, r0                      // punch effect id
+        sw      t4, 0x011C(v1)                  // knockback effect - 0x0 = punch
+        addiu   t4, r0, 0x0026                  // medium kick sound ID
+        sh      t4, 0x0156(v1)                  // save hitbox sound (could also do bat ping 0x34)
+        addiu   t4, r0, 0x0050                  // put hitbox bkb at 20
+        sw      t4, 0x0148(v1)                  // set hitbox bkb
+        addiu   t4, r0, 0x0025                  // put hitbox kbs at 25
+        sw      t4, 0x0140(v1)                  // set hitbox kbs
+
+        lbu     t4, 0x02D3(v1)
+        ori     t5, t4, 0x0008
+        sb      t5, 0x02D3(v1)
+        sw      r0, 0x01D0(v1)                  // hitbox refresh timer = 0
+        sw      r0, 0x01D4(v1)                  // hitbox collision flag = FALSE
+        sw      r0, 0x35C(v1)
+        li      t1, banzai_bill_blast_zone_     // load Banzai Bill blast zone routine
+        sw      t1, 0x0398(v1)                  // save routine to part of item special struct that carries unique blast wall destruction routines
+
+        _end:
+        or      v0, a0, r0                      // v0 = item object
+        lw      s0, 0x0020(sp)                  // ~
+        lw      s1, 0x0024(sp)                  // ~
+        lw      ra, 0x0028(sp)                  // load s0, s1, ra
+        jr      ra                              // return
+        addiu   sp, sp, 0x0060                  // deallocate stack space
+    }
+
+    // @ Description
+    // main routine for Banzai Bill
+    scope banzai_bill_main_: {
+        addiu   sp, sp, -0x0028
+        sw      ra, 0x001C(sp)
+        sw      a0, 0x0018(sp)
+        //lw      t1, 0x0040(a0)          // load laser timer
+        //addiu   t2, r0, 0x0100
+        //slt     at, t2, t1
+        //bnez    at, _duration           // if over 100 frames of don't fire
+        //addiu   t2, r0, 0x0060
+
+        //slt     at, t2, t1
+        //beqz    at, _duration           // if not 60 frames of don't fire
+        //lw      t1, 0x0048(a0)          // load laser repeat timer
+
+        //addiu   t3, t1, 0x0001
+        //addiu   t2, r0, REPEAT_TIMER    // timer count
+        //bnel    t1, t2, _sfx_timer      // branch if duration % 0x1E != 0
+        //sw      t3, 0x0048(a0)          // update laser repeat timer
+
+        //jal     robot_bee_laser_
+        //sw      r0, 0x0048(a0)
+
+        _sfx_timer:
+        //lw      a0, 0x0018(sp)
+        //lw      t1, 0x0044(a0)          // load sfx timer
+        //addiu   t3, t1, 0x0001          // add to timer
+        //addiu   t2, r0, 0x0030          // timer count = 10
+        //bnel    t1, t2, _duration       // branch if duration % 0x1E != 0
+        //sw      t3, 0x0044(a0)          // save updated timer
+        //
+        //sw      r0, 0x0044(a0)          // clear sfx timer
+        //jal     0x800269C0              // play fgm
+        //addiu   a0, r0, 0x03FB          // fgm id = Shrinkray
+
+        _duration:
+        lw      a0, 0x0018(sp)
+        lw      t1, 0x0040(a0)          // load laser timer
+        addiu   t3, t1, 0x0001
+        addiu   t2, r0, 0x0186
+        slt     at, t2, t1
+
+        beqz    at, _continue           // if not 390 frames of existence continue
+        sw      t3, 0x0040(a0)          // save updated timer
+
+        beq     r0, r0, _end
+        addiu   v0, r0, 0x0001          // set to destroy
+
+        _continue:
+        addu    v0, r0, r0
+
+        _end:
+        lw  ra, 0x001C(sp)
+        addiu   sp, sp, 0x0028
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // Destruction routine for Banzai Bill
+    scope banzai_bill_destroy_: {
+        addiu   sp, sp, -0x0028
+        sw      ra, 0x001C(sp)
+
+        jal     0x800269C0                  // play fgm
+        addiu   a0, r0, 0x03E8              // fgm id = Badnik Destroy
+
+        beq     r0, r0, _end
+        addiu   v0, r0, 0x0001         // set to destroy
+
+        _end:
+        lw  ra, 0x001C(sp)
+        addiu   sp, sp, 0x0028
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // this routine gets run by whenever Banzai Bill crosses the blast zone.
+    scope banzai_bill_blast_zone_: {
+        jr      ra
+        addiu   v0, r0, 0x0001      // destroys Banzai Bill when it hits the blast
+        }
+
+    // @ Description
+    // this routine sets up sound effects for the Boos on Big Boo's Haunt
+        scope bbh_setup_: {
+        addiu   sp, sp, -0x0020
+        sw      ra, 0x0014(sp)
+
+        li      t0, Global.current_screen   // t0 = pointer to current screen
+        lbu     t0, 0x0000(t0)              // t0 = current screen_id
+        lli     t1, 0x0036                  // t1 = training screen_id
+        beq     t1, t0, _end                // if training, check hazard mode
+        nop
+
+        li      t1, 0x80131300              // load the hardcoded address where header address (+14) is located
+        lw      t1, 0x0000(t1)              // load aforemention address
+
+        addiu   t1, t1, -0x0014             // acquire address of header
+        li      t2, 0x801313F0              // load hardcoded space used by hazards, generally for pointers
+        sw      r0, 0x0004(t2)              // clear spot used for Boo timer
+        sw      t6, 0x0010(sp)
+
+        addiu   a1, r0, r0                  // clear routine
+        addiu   a2, r0, 0x0001              // group
+        addiu   a0, r0, 0x03F2              // object id
+        jal     Render.CREATE_OBJECT_       // create object
+        lui     a3, 0x8000                  // unknown
+
+        li      a1, boo_sound_              // associated routine
+        or      a0, v0, r0                  // place object address in a0
+        addiu   a2, r0, 0x0001              // unknown, used by Dreamland
+        jal     0x80008188                  // assigns special routines that can work correctly with player location
+        addiu   a3, r0, 0x0004
+
+        _end:
+        lw      ra, 0x0014(sp)
+        jr      ra
+        addiu   sp, sp, 0x0020
+    }
+
+    // @ Description
+    // This code is responsible for making the Boos laugh
+    // a0 =  boo laugh object
+    scope boo_sound_: {
+        addiu   sp, sp, -0x0020
+        sw      ra, 0x0014(sp)
+        sw      a0, 0x0000(sp)
+        sw      s0, 0x0004(sp)
+
+        _bg_object:
+        li      t0, 0x80131AD8          // load hardcoded bg object
+        lw      t5, 0x0000(t0)          // load bg object flag
+        bnez    t5, _end
+        nop
+
+        jal     0x800269C0              // play fgm
+        addiu   a0, r0, 0x0527          // fgm id = Boo Laugh
+
+        _end:
+        lw      ra, 0x0014(sp)          // load ra
+        lw      a0, 0x0000(sp)          //
+        lw      s0, 0x0004(sp)
+        addiu   sp, sp, 0x0020
+
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // Runs once. Registers turnpike lighting routine when routine registrations are allowed.
+    scope spawned_fear_acid_setup_: {
+        OS.routine_begin(0x60)
+
+        // Check if hazards disabled
+        li      a0, Toggles.entry_hazard_mode
+        lw      a1, 0x0004(a0)
+        andi    a1, a1, 0x0001                  // t0 = 1 if hazard_mode is 1 or 3, 0 otherwise
+        bnez    a1, _end                        // don't register if hazards are off
+        nop
+
+        Render.register_routine(spawned_fear_acid_main_)
+        // v0 = routine handler
+        // we are going to save each player struct to the routine handler
+
+        li      t1, 0x80131300              // load the hardcoded address where header address (+14) is located
+        lw      t1, 0x0000(t1)              // load aforemention address
+
+        addiu   t1, t1, -0x0014             // acquire address of header
+        lw      t3, 0x00E0(t1)              // load pointer to Cacodemon
+        addiu   t3, t3, -0x7F8              // subtract offset amount to get to top of Cacodemon file (first pointer -10)
+        li      t2, 0x801313F0              // load hardcoded space used by hazards, generally for pointers
+        sw      r0, 0x0020(t2)              // clear spot used for timer
+        sw      r0, 0x001C(t2)              // clear spot used for prevent flag
+        lw      t4, 0x0130(t1)              // load pointer to thunderball hitbox file
+        sw      t3, 0x0000(t2)              // save Cacodemon header address to first word of this struct, as pirhana plant does the same
+        sw      t1, 0x0004(t2)              // save stage header address to second word of this struct, as Pirhana Plant does the same
+        sw      t4, 0x0024(t2)              // save pointer to thunderball hitbox file
+
+       li      t3, thunderball_hitbox_pointer
+       sw      t4, 0x0000(t3)              // save pointer to hitbox spot
+       li      t2, thunderball_projectile_struct
+       sw      t3, 0x0008(t2)              // save pointer to projectile struct
+       li      t2, thunderball_properties_struct
+       sw      t3, 0x0024(t2)              // save pointer to cannonball hitbox file
+
+        sw      r0, 0x0054(sp)
+        sw      r0, 0x0050(sp)
+        sw      r0, 0x004C(sp)
+        addiu   t6, r0, 0x0001
+        sw      t6, 0x0010(sp)
+
+        addiu   a1, r0, r0                  // clear routine
+        addiu   a2, r0, 0x0001              // group
+        addiu   a0, r0, 0x03F2              // object id
+        jal     Render.CREATE_OBJECT_       // create object
+        lui     a3, 0x8000                  // unknown
+        li      a1, cacodemon_factory_            // associated routine
+        or      a0, v0, r0                  // place object address in a0
+        addiu   a2, r0, 0x0001              // unknown, used by Dreamland
+        jal     0x80008188                  // assigns special routines that can work correctly with player location
+        addiu   a3, r0, 0x0004
+
+        sw      r0, 0x0040(v0)                      // p1
+        sw      r0, 0x0044(v0)                      // p2
+        sw      r0, 0x0048(v0)                      // p3
+        sw      r0, 0x004C(v0)                      // p4
+        sw      r0, 0x0050(v0)                      // none
+        _end:
+        OS.routine_end(0x60)
+    }
+
+    // @ Description
+    // This routine works but is unfinished
+    scope spawned_fear_acid_main_: {
+
+        constant ACID_DURATION(60)              // 1 second
+        constant ACID_DAMAGE(3)
+        constant KILL_PERCENT(666)
+
+        addiu   sp, sp, -0x0020                     // allocate sp
+        sw      a0, 0x0004(sp)                      // save routine handler to sp
+        sw      a1, 0x0008(sp)
+
+        li      at, 0x801313F8                      // load free space
+        lh      t0, 0x0000(at)
+
+        addiu   t1, t0, 1                           // to +=1
+        beqz    t0, _initial
+        sh      t1, 0x0000(at)                      // overwrite timer used by poison
+
+        // a0 = routine handler object
+        // 0x40(a0) = first player struct
+        li      a1, Global.p_struct_head            // t0= pointer to player struct linked list
+        lw      a1, 0x0000(a1)                      // a1 = first player struct
+
+        bnezl   a1, _continue
+        nop
+
+        _initial:
+        addiu   t1, a0, 0x0040                      // t1 = the spot we are writing override values for this player
+        sw      r0, 0x0000(t1)                      // clear spot used for player structs
+        sw      r0, 0x0004(t1)                      //
+        sw      r0, 0x0008(t1)                      //
+        sw      r0, 0x000C(t1)                      //
+
+        li      t3, Global.p_struct_head            // t0= pointer to player struct linked list
+        _initial_loop:
+        lw      t3, 0x0000(t3)                      // load players struct
+        sw      t3, 0x0000(t1)                      // save players struct to routine handler
+
+        _initial_next:
+        beqz    t3, _end_loop                       // end loop if no player
+        nop
+        b       _initial_loop
+        addiu   t1, t1, 0x0004                      // t1 = next spot for player struct
+
+        _continue:
+        _loop:
+        // first, check if grounded
+        lw      t0, 0x014C(a1)                      // get kinetic state
+        bnez    t0, _next                           // branch if aerial
+        // check if on doom acid surface
+        lb      t0, 0x00F7(a1)                      // get clipping flag
+        addiu   at, r0, 0x23                        // at = doom acid clipping id
+        bne     t0, at, _next                       // not acid, NEXT
+        // branch to next if not poisoned
+        lw      t3, 0x002C(a1)                      // t3 = current HP value
+        slti    t3, t3, KILL_PERCENT                // t3 = 0 if HP is 666 or above
+        bnez    t3, _poison_continue
+        nop
+        lw      t3, 0x05B0(a1)                      // t3 = super star counter
+        bnez    t3, _next                           // skip if they have a super star
+        nop
+        OS.save_registers()
+        sw      r0, 0x0A20(a1)                      // clear Overlay Routine
+        sw      r0, 0x0A24(a1)                      // clear Overlay Routine
+        sw      r0, 0x0A28(a1)                      // clear Overlay Routine
+        sw      r0, 0x0A30(a1)                      // clear Overlay Flag
+        sw      r0, 0x0A88(a1)                      // clear current Overlay
+        jal     0x8013C1C4                          // KO this player
+        lw      a0, 0x0004(a1)                      // a0 = player obj
+        OS.restore_registers()
+        b       _next
+        nop
+
+        _poison_continue:
+        lw      at, 0x0A28(a1)                      // set player gfx routine
+        bnez    at, _poison_continue_2
+        li      at, GFXRoutine.DOOM_ACID
+        sw      at, 0x0A28(a1)                      // set player gfx routine
+        _poison_continue_2:
+        li      t0, Poison.poisoned_players
+        lbu     t1, 0x000D(a1)                      // t1 = player port
+        sll     t1, t1, 4                           // t1 = offset to port
+        addu    t0, t0, t1                          // t0 = player entry
+        addiu   t2, r0, ACID_DURATION
+        sw      t2, 0x0000(t0)                      // save duration
+        addiu   t2, r0, ACID_DAMAGE                 // set damage
+        sw      t2, 0x0004(t0)
+        sw      r0, 0x0008(t0)                      // set poison type (0 = doom acid)
+
+        _next:
+        lw      a1, 0x0000(a1)                      // a1 = next entry
+        bnez    a1, _loop                           // loop again if there is another player
+        nop
+
+        _end_loop:
+        lw      a0, 0x0004(sp)
+        lw      a1, 0x0008(sp)
+        jr      ra
+        addiu   sp, sp, 0x0020                      // deallocate sp
+
+    }
+
+    cacodemon_coordinates:
+    dw  0x00000000
+    dw  0x00000000
+    dw  0x00000000
+    dw  0x00000000
+
+    // @ Description
+    // main routine for spawning Cacodemons
+    scope cacodemon_factory_: {
+        addiu   sp, sp, -0x0060
+        sw      ra, 0x001C(sp)
+
+        li      t6, Global.current_screen   // ~
+        lbu     t6, 0x0000(t6)              // t0 = screen_id
+        ori     t5, r0, 0x0036              // ~
+        beq     t5, t6, _skip_check         // skip if screen_id = training mode
+        nop
+
+        li      t6, Global.match_info       // ~
+        lw      t6, 0x0000(t6)              // t6 = match info struct
+        lw      t6, 0x0018(t6)              // t6 = time elapsed
+        beqz    t6, _end                    // if match hasn't started, don't begin
+        nop
+
+        _skip_check:
+        li      t5, 0x801313F0
+        lw      t6, 0x0020(t5)              // load timer
+        addiu   t7, t6, 0x0001              // add to timer
+        addiu   at, r0, 0x0001
+        slti    t8, t6, 0x05DC              // wait 1500 frames
+        bne     t8, r0, _end                // if not 1500 or greater, skip animation application, this is the initial check, Robot Bee won't spawn until at least 484 frames
+        sw      t7, 0x0020(t5)              // save updated timer
+        sw      t6, 0x0010(sp)              // save original timer
+        jal     Global.get_random_int_      // get random integer
+        addiu   a0, r0, 0x05DC              // decimal 1500 possible integers
+        lw      a0, 0x0020(sp)              // load registers
+        addiu   t4, r0, 0x0050              // place 50 as the random number to spawn Cacodemon
+        beq     t4, v0, _spawn              // if 50, spawn Cacodemon
+        addiu   t4, r0, 0x0BB8              // put in max time before Cacodemon, 3000 frames
+        lw      t6, 0x0010(sp)              // load timer from stack
+        bne     t4, t6, _end                // if not same as timer, skip animation
+        nop
+
+        _spawn:
+        lw      t0, 0x001C(t5)              // load cacodemon prevent flag
+        bnez    t0, _end
+        sw      r0, 0x0020(t5)              // restart timer
+        addiu   t0, r0, 0x0001
+        sw      t0, 0x001C(t5)              // set cacodemon prevent flag
+
+        lli     a1, Item.Cacodemon.id       // set item id to Cacodemon
+        li      a2, cacodemon_coordinates   // location in which Cacodemon spawns
+        jal     0x8016EA78                  // spawn stage item
+        addiu   a0, r0, 0x03F5              // set object ID
+        sw      a0, 0x0024(sp)
+        li      t5, 0x801313F0
+
+        jal     Global.get_random_int_      // get random integer
+        addiu   a0, r0, 0x0002              // decimal 2 possible integers
+        sw      v0, 0x0020(t5)              // save direction ID
+        jal     Global.get_random_int_      // get random integer
+        addiu   a0, r0, 0x0002              // decimal 2 possible integers
+
+        sw      v0, 0x0020(t5)              // save direction ID
+
+        lw      t1, 0x0000(t5)              // load Cacodemon file ram address
+        bnez    v0, _movement
+        addiu   t2, r0, 0x0918              // load in offset of animation track 1
+        //addiu   t2, r0, 0x10C4              // load in offset of animation track 1
+
+        _movement:
+        lw      a0, 0x0024(sp)
+        addiu   a2, r0, 0x0000              // clear out a2
+        lw      a0, 0x0074(a0)              // Load Top Joint
+        jal     0x8000BD1C                  // animation track 1 set up
+        addu    a1, t1, t2                  // place animation track address in a1
+
+        li      t5, 0x801313F0
+
+        lw      t3, 0x0000(t5)              // load Cacodemon file ram address
+        addiu   t4, r0, 0x10C4              // offset to track 2
+        lw      a0, 0x0080(a0)              // unknown, probably for image swapping
+        jal     0x8000BD54                  // set up track 2
+        addu    a1, t3, t4                  // place animation track address in a1
+
+        _end:
+        lw  ra, 0x001C(sp)
+        addiu   sp, sp, 0x0060
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // Subroutine which sets up initial properties of Cacodemon.
+    // a0 - no associated object
+    // a1 - item info array
+    // a2 - x/y/z coordinates to create item at
+    // a3 - unknown x/y/z offset
+    scope cacodemon_stage_setting_: {
+        addiu   sp, sp,-0x0060                  // allocate stack space
+        sw      s0, 0x0020(sp)                  // ~
+        sw      s1, 0x0024(sp)                  // ~
+        sw      ra, 0x0028(sp)                  // store s0, s1, ra
+        sw      a1, 0x0038(sp)                  // 0x0038(sp) = unknown
+        li      a1, Item.Cacodemon.item_info_array
+        sw      a2, 0x003C(sp)                  // 0x003C(sp) = original x/y/z
+        li      a3, cacodemon_coordinates
+        addiu   t6, r0, 0x0001                  // unknown, used by pirhana plant
+        jal     0x8016E174                      // create item
+        sw      t6, 0x0010(sp)                  // argument 4(unknown) = 1
+        li      a2, cacodemon_coordinates       // 0x003C(sp) = original x/y/z
+        beqz    v0, _end                        // end if no item was created
+        or      a0, v0, r0                      // a0 = item object
+
+
+        // item is created
+        lw      v1, 0x0084(v0)                  // v1 = item special struct
+        sw      v1, 0x002C(sp)                  // 0x002C(sp) = item special struct
+        lw      t9, 0x0074(v0)                  // load location struct 2
+        sw      r0, 0x0020(t9)                  // set initial y
+        sw      r0, 0x001C(t9)                  // save initial x coordinates
+        addiu   t2, r0, 0x00B4                  // unknown flag used by pirhana
+        sh      t2, 0x033E(v1)                  // save flag
+        sw      r0, 0x0024(t9)                  // set initial z
+
+        //lbu     t9, 0x0158(v1)                  // ~
+        //ori     t9, t9, 0x0010                  // ~
+        sb      r0, 0x0158(v1)                  // remove clanking
+
+        lli     at, 0x0001                      // ~
+        sw      at, 0x010C(v1)                  // enable hitbox
+        sw      r0, 0x01C8(v1)                  // clear free space used for projectile timer
+        lui     at, 0x42fa                      // 125 (fp)
+        sw      at, 0x0138(v1)                  // save hitbox size
+        addiu   t4, r0, 0x0005                  // hitbox damage set to 5
+        sw      t4, 0x0110(v1)                  // save hitbox damage
+        addiu   t4, r0, 0x0361                  // sakurai angle
+        sw      t4, 0x013C(v1)                  // save hitbox angle to location
+        // 0x0118 damage multiplier
+        addiu   t4, r0, r0                      // punch effect id
+        sw      t4, 0x011C(v1)                  // knockback effect - 0x0 = punch
+        addiu   t4, r0, 0x0026                  // medium kick sound ID
+        sh      t4, 0x0156(v1)                  // save hitbox sound (could also do bat ping 0x34)
+        addiu   t4, r0, 0x0050                  // put hitbox bkb at 20
+        sw      t4, 0x0148(v1)                  // set hitbox bkb
+        addiu   t4, r0, 0x0025                  // put hitbox kbs at 25
+        sw      t4, 0x0140(v1)                  // set hitbox kbs
+
+        lbu     t4, 0x02D3(v1)
+        ori     t5, t4, 0x0008
+        sb      t5, 0x02D3(v1)
+        sw      r0, 0x01D4(v1)                  // hitbox collision flag = FALSE
+        sw      r0, 0x35C(v1)
+        li      t1, cacodemon_blast_zone_       // load Cacodemon blast zone routine
+        sw      t1, 0x0398(v1)                  // save routine to part of item special struct that carries unique blast wall destruction routines
+
+        _end:
+        or      v0, a0, r0                      // v0 = item object
+        lw      s0, 0x0020(sp)                  // ~
+        lw      s1, 0x0024(sp)                  // ~
+        lw      ra, 0x0028(sp)                  // load s0, s1, ra
+        jr      ra                              // return
+        addiu   sp, sp, 0x0060                  // deallocate stack space
+    }
+
+    // @ Description
+    // main routine for Cacodemon
+    scope cacodemon_main_: {
+        addiu   sp, sp, -0x0028
+        sw      ra, 0x001C(sp)
+        sw      a0, 0x0018(sp)
+        lhu     t1, 0x01C8(a2)       // load initial timer
+        addiu   t2, r0, 0x3C         // Spawn to Loop time frame
+        addiu   t3, t1, 0x0001       // add to timer
+        bnel    t1, t2, _end         // skip loop timer
+        sh      t3, 0x01C8(a2)       // save new timer
+
+        _second_timer:
+        lhu     t1, 0x01CA(a2)       // load loop timer
+        addiu   t3, t1, 0x0001       // add to timer
+        sh      t3, 0x01CA(a2)       // save new timer
+        addiu   t2, r0, 0x3E         // projectile first shot
+        beq     t1, t2, _shoot
+        addiu   t2, r0, 0x70         // projectile second shot
+        beq     t1, t2, _shoot
+        addiu   t2, r0, 0x106        // turn to right
+        beq     t1, t2, _turn_right
+        addiu   t2, r0, 0x12E        // projectile third shot
+        beq     t1, t2, _shoot
+        addiu   t2, r0, 0x160        // projectile fourth shot
+        beq     t1, t2, _shoot
+        addiu   t2, r0, 0x20C        // loop restart
+        bne     t1, t2, _end
+        nop
+
+        addiu   at, r0, 0x000E
+        sb      at, 0x0228(a2)                  // reset active hitbox 1
+        sb      at, 0x0230(a2)                  // reset active hitbox 2
+        sb      at, 0x0238(a2)                  // reset active hitbox 3
+        sb      at, 0x0240(a2)                  // reset active hitbox 4
+        sw      r0, 0x0224(a2)                  // reset hit object pointer 1
+        sw      r0, 0x022C(a2)                  // reset hit object pointer 2
+        sw      r0, 0x0234(a2)                  // reset hit object pointer 3
+        sw      r0, 0x023C(a2)                  // reset hit object pointer 4
+        lw      t1, 0x0074(a0)       // t1 = position struct
+        OS.read_word(0x801313F0, t2) // t2 = cacodemon file address
+        addiu   t2, t2, 0x06C8       // t2 = display list (facing left)
+        sw      t2, 0x0050(t1)       // update display list
+        b       _end
+        sh      r0, 0x01CA(a2)       // clear timer
+
+        _shoot:
+        jal     cacodemon_thunderball_
+        nop
+
+        jal     0x800269C0              // play fgm
+        addiu   a0, r0, 0x055D          // fgm id = Cacodemon Shoot
+
+        _end:
+        addu    v0, r0, r0           // cacodemon continues
+        lw  ra, 0x001C(sp)
+        addiu   sp, sp, 0x0028
+        jr      ra
+        nop
+
+        _turn_right:
+        addiu   at, r0, 0x000E
+        sb      at, 0x0228(a2)                  // reset active hitbox 1
+        sb      at, 0x0230(a2)                  // reset active hitbox 2
+        sb      at, 0x0238(a2)                  // reset active hitbox 3
+        sb      at, 0x0240(a2)                  // reset active hitbox 4
+        sw      r0, 0x0224(a2)                  // reset hit object pointer 1
+        sw      r0, 0x022C(a2)                  // reset hit object pointer 2
+        sw      r0, 0x0234(a2)                  // reset hit object pointer 3
+        sw      r0, 0x023C(a2)                  // reset hit object pointer 4
+        lw      t1, 0x0074(a0)       // t1 = position struct
+        OS.read_word(0x801313F0, t2) // t2 = cacodemon file address
+        addiu   t2, t2, 0x3058       // t2 = display list (facing right)
+        b       _end
+        sw      t2, 0x0050(t1)       // update display list
+    }
+
+    // @ Description
+    // Destruction routine for Cacodemon
+    scope cacodemon_destroy_: {
+        addiu   sp, sp, -0x0028
+        sw      ra, 0x001C(sp)
+
+        jal     0x800269C0              // play fgm
+        addiu   a0, r0, 0x055E          // fgm id = Cacodemon Death
+        addiu   v0, r0, 0x0001          // set to destroy
+
+        li      t5, 0x801313F0          // load stage space address
+        sw      r0, 0x001C(t5)
+
+        _end:
+        lw  ra, 0x001C(sp)
+        addiu   sp, sp, 0x0028
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // this routine gets run by whenever Cacodemon crosses the blast zone.
+    scope cacodemon_blast_zone_: {
+        li      t5, 0x801313F0      // load stage space address
+        addiu   v0, r0, 0x0001      // destroys Cacodemon when it hits the blast zone
+        jr      ra
+        sw      r0, 0x001C(t5)      // clear prevent flag
+    }
+
+    // @ Description
+    // This sets up for stage spawning of projectile
+    scope cacodemon_thunderball_: {
+        addiu   sp, sp, -0x0038
+        sw      ra, 0x0014(sp)      // save ra to stack
+        sw      a0, 0x0020(sp)      // save object struct
+        lw      v0, 0x0084(a0)      // load item special struct
+        sw      v0, 0x0034(sp)      // save item special struct to stack
+
+        lw      t0, 0x0074(a0)      // load position struct/topjoint
+
+
+        lwc1    f2, 0x001C(t0)      // load x address of Cacodemon
+
+        //mtc1    at, f4
+        //add.s   f2, f2, f4
+        swc1    f2, 0x0028(sp)      // save x address to stack for spawn projectile addresses
+
+        lwc1    f2, 0x0020(t0)      // load y address of Cacodemon
+        swc1    f2, 0x002C(sp)      // save y address to stack for spawn projectile addresses
+
+        sw      r0, 0x0030(sp)      // save z address of Cacodemon for spawn projectile addresses
+        jal     thunderball_stage_setting   // jump to laser stage setting
+        addiu   a2, sp, 0x0028      // addresses portion of stack
+
+
+        // normally saves  something to player struct in free space
+        lw      ra, 0x0014(sp)      // load ra from stack
+        addiu   sp, sp, 0x0038
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // Stage spawning for initial thunderball
+    scope thunderball_stage_setting: {
+        addiu   sp, sp, -0x0050
+        sw      a2, 0x0034(sp)      // save spawn addresses
+        sw      ra, 0x0014(sp)      // save ra
+        sw      s0, 0x0030(sp)      // save item object
+        sw      s1, 0x0004(sp)      // save ra
+        //      a0 = object struct
+        li      a1, thunderball_projectile_struct
+        li      s0, thunderball_properties_struct       // load blaster format address
+
+        jal     0x801655C8          // Projectile stage settling
+        addiu   a3, r0, 0x0001      // Hit all players
+
+        bnez    v0, _destroyed_projectile_check_branch
+        or      v1, v0, r0
+        beq     r0, r0, _true_end
+        or      v0, r0, r0
+
+        _destroyed_projectile_check_branch:
+        mtc1    r0, f4
+        sw      v0, 0x0028(sp)              // 0x0028(sp) = projectile object
+        lw      v1, 0x0084(v0)              // v1 = projectile struct
+        sw      v1, 0x0038(sp)              // v1 = projectile struct
+        lw      t3, 0x0000(s0)              // t3 = duration
+        sw      t3, 0x0268(v1)              // store duration
+        sw      r0, 0x029C(v1)              // clear free space used for explosion check
+        lwc1    f12, 0x0018(s0)
+
+
+        _trajectory:
+        lw      a0, 0x0084(v0)      // projectile struct loaded in
+        addiu   t7, r0, 0x0028      // load in duration
+        sw      t7, 0x0268(a0)      // save duration
+
+        li      s1, 0x800466FC              // s1 = player object head
+        lw      s1, 0x0000(s1)              // s1 = first player object
+        lw      s0, 0x0030(sp)              // load item object
+        lw      s2, 0x0084(s0)              // s2 = Cacodemon Item struct
+
+        _player_loop:
+        beqz    s1, _player_loop_exit       // exit loop when s1 no longer holds an object pointer
+        nop
+
+        _action_check:
+        lw      t0, 0x0084(s1)              // t0 = target player struct
+        lw      t0, 0x0024(t0)              // t0 = target player action
+        sltiu   at, t0, 0x0007              // at = 1 if action id < 7, else at = 0
+        bnez    at, _player_loop_end        // skip if target action id < 7 (target is in a KO action)
+        nop
+
+        _target_check:
+        or      a0, s2, r0                  // a0 = Cacodemon Item struct
+        lw      a1, 0x0074(s1)              // a1 = target top joint struct
+        jal     check_target_               // check_target_
+        or      a2, s1, r0                  // a2 = target object struct
+        beqz    v0, _player_loop_end        // branch if no new target
+        nop
+
+        // if check_target_ returned a new valid target
+        sw      v0, 0x01C0(s2)              // store target object
+        sw      v1, 0x01C4(s2)              // store target X_DIFF
+
+        _player_loop_end:
+        b       _player_loop                // loop
+        lw      s1, 0x0004(s1)              // s1 = next object
+
+        _player_loop_exit:
+        lw      t0, 0x01C0(s2)              // t0 = target object
+        bnez    t0, _target                 // end if there is a targeted object
+        nop
+
+        _default:
+        lw      t8, 0x0028(sp)      // t8 = projectile object
+        lw      t8, 0x0084(t8)      // t8 = projectile struct
+        lui     at, 0xc2c8
+        sw      at, 0x0020(t8)      // save x speed
+        lui     at, 0xc2c8
+        sw      at, 0x0024(t8)      // save y speed
+
+
+        beq     r0, r0, _end
+        lw      v0, 0x0028(sp)
+
+        _target:
+        lw      a0, 0x0030(sp)              // a0 = Cacodemon object
+        lw      a0, 0x0084(a0)              // a0 = item struct
+        lw      t8, 0x0074(s0)              // t8 = Cacodemon x/y/z coordinates
+        addiu   t8, t8, 0x001C
+        lw      t9, 0x01C0(a0)              // ~
+        lw      t9, 0x0074(t9)              // ~
+        addiu   t9, t9, 0x001C              // t9 = target x/y/z coordinates
+        lwc1    f4, 0x0000(t8)              // f4 = cacodemon x
+        lwc1    f6, 0x0000(t9)              // f6 = target x
+        sub.s   f14, f6, f4                 // f14 = X_DIFF
+        //mul.s   f14, f14, f10               // f14 = X_DIFF * DIRECTION
+        lwc1    f4, 0x0004(t8)              // f4 = cacodemon y
+        lwc1    f6, 0x0004(t9)              // f6 = target y
+        sub.s   f12, f6, f4                 // f12 = Y_DIFF
+        jal     0x8001863C                  // f0 = atan2(f12,f14)
+        nop
+
+        mov.s   f12, f0                     // f12 = DIFF_ANGLE
+        jal     0x80035CD0                  // f0 = cos(f12)
+        swc1    f12, 0x0040(sp)             // f12 = movement angle saved
+        lui     at, 0x42a0
+        mtc1    at, f4                      // f4 = SPEED
+        mul.s   f4, f4, f0                  // f4 = x velocity (SPEED * cos(angle))
+        swc1    f4, 0x003C(sp)              // 0x003C(sp) = x velocity
+        // ultra64 sinf function
+        jal     0x800303F0                  // f0 = sin(f12)
+        lwc1    f12, 0x0040(sp)             // f12 = movement angle saved
+        lui     at, 0x42a0
+        mtc1    at, f4                      // f4 = SPEED
+        mul.s   f4, f4, f0                  // f4 = y velocity (SPEED * sin(angle))
+
+        lw      t8, 0x0028(sp)      // t8 = projectile object
+        lw      t8, 0x0084(t8)      // t8 = projectile struct
+        lwc1    f2, 0x003C(sp)              // f2 = x velocity
+        swc1    f2, 0x0020(t8)      // save x speed
+        swc1    f4, 0x0024(t8)      // save y speed
+
+        _end:
+        lw      s0, 0x0030(sp)              // load item object
+        lw      v1, 0x0038(sp)              // v1 = projectile struct
+        addiu   t7, r0, r0                  // set facing to right
+        lui     at, 0x8000
+        mtc1    at, f18
+        mtc1    r0, f12
+        jal     0x800303F0                  // ~
+        nop
+
+        mtc1    r0, f18
+        lw      v1, 0x0038(sp)              // ~
+        lw      a0, 0x0028(sp)              // ~
+        lw      t8, 0x0074(a0)              // ~
+        mtc1    r0, f10                     // sets pallette index flag
+        lw      t9, 0x0080(t8)              // ~
+        jal     0x80167FA0                  // ~
+        swc1    f10, 0x0088(t9)             // ~
+        lw      v0, 0x0028(sp)              // original logic
+
+        _true_end:
+        lw      s1, 0x0004(sp)      // save s1
+        lw      ra, 0x0014(sp)
+        lw      s0, 0x0030(sp)      // load item object
+        addiu   sp, sp, 0x0050
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // Subroutine which checks if a potential target is in range for Cacodemon's Thunderball.
+    // a0 - item struct
+    // a1 - target top joint struct
+    // a2 - target object struct
+    // returns
+    // v0 - target object (NULL when no valid target)
+    // v1 - target X_DIFF
+    scope check_target_: {
+        lw      t8, 0x0074(s0)              // t8 = Cacodemon x/y/z coordinates
+        addiu   t8, t8, 0x001C
+        addiu   t9, a1, 0x001C              // t9 = target x/y/z coordinates
+
+        // check if the target is within x range
+        mtc1    r0, f0                      // f0 = 0
+        lwc1    f2, 0x0000(t8)              // f2 = Cacodemon x coordinate
+        lwc1    f4, 0x0000(t9)              // f4 = target x coordinate
+        sub.s   f10, f4, f2                 // f10 = X_DIFF (target x - player x)
+        abs.s   f10, f10                    // absolute value
+        //c.le.s  f0, f10                      // ~
+        //nop                                 // ~
+        //bc1fl   _end                        // end if X_DIFF =< 0
+        //or      v0, r0, r0                  // return 0
+
+        // check if there is a previous target
+        lw      t0, 0x01C0(a0)              // t0 = current target
+        beq     t0, r0, _check_y            // branch if there is no current target
+        lwc1    f8, 0x01C4(a0)              // f8 = current target X_DIFF
+
+        // compare X_DIFF to see if the previous target was within closer x proximity
+        c.le.s  f10, f8                     // ~
+        nop                                 // ~
+        bc1fl   _end                        // end if prev X_DIFF =< current X_DIFF
+        or      v0, r0, r0                  // return 0
+
+        _check_y:
+       // calculate Y_RANGE based on X_DIFF, creating a cone shaped range
+       //lwc1    f2, 0x0004(t8)              // f2 = player y coordinate
+       //lwc1    f4, 0x0004(t9)              // f4 = target y coordinate
+       //sub.s   f12, f4, f2                 // f12 = Y_DIFF (target y - player y)
+       //abs.s   f12, f12                    // f12 = absolute Y_DIFF
+       //lui     at, MIN_Y_RANGE             // at = MIN_Y_RANGE
+       //ori     t6, r0, Character.id.SSONIC // t6 = id.SSONIC
+       //lw      t7, 0x0008(a0)              // t7 = character id
+       //beql    t7, t6, pc() + 8            // if character = SSONIC...
+       //lui     at, MIN_Y_RANGE_SS          // ...use MIN_Y_RANGE_SS instead
+       //mtc1    at, f8                      // f8 = MIN_Y_RANGE
+       //lui     at, 0x3F00                  // ~
+       //mtc1    at, f6                      // f6 = 0.5
+       //mul.s   f6, f6, f10                 // f6 = X_DIFF * 0.5
+       //add.s   f8, f8, f6                  // f8 = Y_RANGE (MIN_Y_RANGE + X_DIFF * 0.5)
+       //c.le.s  f12, f8                     // ~
+       //nop                                 // ~
+       //bc1fl   _end                        // end if Y_RANGE =< Y_DIFF
+       //or      v0, r0, r0                  // return 0
+
+        // if we're here then the target is the closest within range
+        or      v0, a2, r0                  // v0 = target object
+        mfc1    v1, f10                     // v1 = X_DIFF
+
+        _end:
+        jr      ra                          // return
+        nop
+    }
+
+    // @ Description
+    // Main routine for Cacodemon Thunderball Projectile
+    scope thunderball_main_: {
+        // a0 = projectile object
+        //lw      v0, 0x0074(a0)      // v0 = position struct
+
+        //_end:
+        //jr      ra
+        //or      v0, r0, r0
+        addiu   sp, sp, 0xFFE0              // allocate stack space
+        sw      ra, 0x0014(sp)              // store ra
+        sw      a0, 0x0020(sp)              // 0x0020(sp) = projectile object
+        lw      a0, 0x0084(a0)              // a0 = projectile struct
+        jal     0x80167FE8                  // original logic, subroutine returns 1 if projectile duration is over
+        sw      a0, 0x001C(sp)              // 0x001C(sp) = projectile struct
+        //beq     v0, r0, _continue           // branch if projectile duration has not ended
+        //lw      a0, 0x001C(sp)              // a0 = projectile struct
+
+        _end_duration:
+        lw      t2, 0x029C(a0)              // load projectile struct free space for explosion flag
+        beqz    t2, _continue
+        addiu   t1, r0, 0x0010
+        addiu   t3, t2, 0x0001
+        bne     t1, t2, _continue
+        sw      t3, 0x29C(a0)
+        beq     r0, r0, _end
+        lli     v0, OS.TRUE                // return TRUE (destroy)
+
+        _continue:
+        li      v0, thunderball_properties_struct   // v0 = cannonball_properties_struct
+        //lw      a1, 0x000C(v0)              // a1 = gravity
+        //jal     0x80168088                  // apply gravity to nut
+        lw      a2, 0x0004(v0)              // a2 = max speed
+        lw      a0, 0x001C(sp)              // a0 = projectile struct
+        lw      t1, 0x0020(sp)              // t1 = projectile object
+        lw      v1, 0x0074(t1)              // v1 = projectile struct with coordinates/rotation etc (bone struct?)
+        li      at, thunderball_properties_struct   // at = cannonball properties struct
+        lli     v0, OS.FALSE                // return FALSE (don't destroy)
+
+        _end:
+        lw      ra, 0x0014(sp)              // load ra
+        addiu   sp, sp, 0x0020              // deallocate stack space
+        jr      ra                          // return
+        nop
+    }
+
+
+    // @ Description
+    // Collision routine for Cacodemon Thunderball
+    scope thunderball_collision_: {
+        addiu   sp, sp, -0x0018
+        sw      ra, 0x0014(sp)
+
+        jal     0x80167C04
+        sw      a0, 0x0018(sp)
+        beq     v0, r0, _continue
+        lw      a0, 0x0018(sp)
+
+        lw      a0, 0x0018(sp)
+        lw      a0, 0x0074(a0)              // a0 = projectile joint struct
+        addiu   a0, a0, 0x001C              // at = projectile x/y/z coordinates
+        jal     0x800FF048                  // create small smoke gfx
+        lui     a1, 0x3F80                  // a1 = 1.0
+
+        //      if hits collision and should be destroyed
+        lw      t6, 0x0018(sp)
+        lw      a0, 0x0074(t6)
+
+        beq     r0, r0, _end
+        addiu   v0, r0, 0x0001      // place 1 in v0 for destruction
+
+        _continue:
+        or      v0, r0, r0          // clear v0, so projectile continues
+
+        _end:
+        lw      ra, 0x0014(sp)
+        addiu   sp, sp, 0x0018
+        jr      ra
+        nop
+    }
+
+    // @ Description
+    // Hit routine for Cacodemon Thunderball
+    scope thunderball_hit_: {
+        addiu   sp, sp, -0x0018
+        sw      ra, 0x0014(sp)
+        sw      v1, 0x0010(sp)
+        sw      v0, 0x0008(sp)
+
+        _end:
+        lw      ra, 0x0014(sp)
+        lw      v1, 0x0010(sp)
+        lw      v0, 0x0008(sp)
+        addiu   sp, sp, 0x0018
+        jr      ra
+        addiu   v0, r0, 0x0001          // destroy projectile
+    }
+
+    thunderball_hitbox_pointer:
+    dw 0x00000000
+
+    OS.align(16)
+    thunderball_properties_struct:
+    dw 999                                  // 0x0000 - duration (int)
+    float32 999                             // 0x0004 - max speed
+    float32 0                               // 0x0008 - min speed
+    float32 0                               // 0x000C - gravity
+    float32 0                               // 0x0010 - bounce multiplier
+    float32 0.1                             // 0x0014 - rotation speed
+    float32 270                             // 0x0018 - initial angle (ground)
+    float32 270                             // 0x001C   initial angle (air)
+    float32 100                             // 0x0020   initial speed
+    dw 0x00000000                           // 0x0024   projectile data pointer
+    dw 0x00000000                           // 0x0028   unknown (default 0)
+    dw 0x00000000                           // 0x002C   palette index (0 = mario, 1 = luigi)
+
+    OS.align(16)
+    thunderball_projectile_struct:
+    constant THUNDERBALL_ID(0x1009)
+    dw 0x00000000                           // unknown, (0x02000000 Pikachu's thunderbolt)
+    dw THUNDERBALL_ID                       // projectile id
+    dw 0x00000000                           // address of Thunderball file
+    dw 0x00000000                           // offset to hitbox
+    dw 0x12470000                           // This determines z axis rotation? (samus is 1246), (Pikachu's thunderbolt) 0x1C000000    = pikachu
+    dw thunderball_main_                    // This is the main subroutine for the projectile, handles duration and other things. (default 0x80168540) (samus 0x80168F98)
+    dw thunderball_collision_               // This function runs when the projectile collides with clipping. (0x801685F0 - Mario) (0x80169108 - Samus)
+    dw thunderball_hit_                     // This function runs when the projectile collides with a hurtbox.
+    dw 0                                    // This function runs when the projectile collides with a shield.
+    dw 0                                    // This function runs when the projectile collides with edges of a shield and bounces off
+    dw 0                                    // This function runs when the projectile collides/clangs with a hitbox.
+    dw 0x80168748                           // This function runs when the projectile collides with Fox's reflector (default 0x80168748)
+    dw 0x80168964                           // This function runs when the projectile collides with Ness's psi magnet
+    OS.copy_segment(0x103904, 0x0C)         // empty
+
+    OS.align(16)
 
 
 } // __HAZARDS__

@@ -80,30 +80,30 @@ scope spawn_custom_item_based_on_star_: {
     swc1    f10, 0x0034(sp)                 // set x (original ine 24)
 
     abs.s   f16, f10                        // f16 = vertical speed = same as horizontal speed
-    
-	// next part was OS.copy_segment(0xEF4C8, 0x30)
-	lw		t7, 0x005C(sp)
-	swc1	f18, 0x003C(sp)
-	swc1	f16, 0x0038(sp)
-	jal		0x8016E174
-	sw 		t7, 0x0010(sp)
-	beqz 	v0, _end						// branch if no item created
-	or 		v1, v0, r0
-	lw 		a0, 0x0074(v0)
-	addiu 	t8, sp, 0x0028
-	addiu 	t1, r0, 0x0001
-	addiu 	a3, a0, 0x001C
-	lw 		t0, 0x0000(a3)
-	
+
+    // next part was OS.copy_segment(0xEF4C8, 0x30)
+    lw      t7, 0x005C(sp)
+    swc1    f18, 0x003C(sp)
+    swc1    f16, 0x0038(sp)
+    jal     0x8016E174
+    sw      t7, 0x0010(sp)
+    beqz    v0, _end                        // branch if no item created
+    or      v1, v0, r0
+    lw      a0, 0x0074(v0)
+    addiu   t8, sp, 0x0028
+    addiu   t1, r0, 0x0001
+    addiu   a3, a0, 0x001C
+    lw      t0, 0x0000(a3)
+
     addiu   t2, r0, 0x0020                  // original line 39, modified to be an active item after 0x20 frames
     OS.copy_segment(0xEF4FC, 0x74)
     sw      r0, 0x0040(v1)                  // set custom variable to 0 for not grounded
-	
-	_end:
-	lw		ra, 0x001C(sp)
-	or 		v0, v1, r0
-	jr 		ra
-	addiu 	sp, sp, 0x50
+
+    _end:
+    lw      ra, 0x001C(sp)
+    or      v0, v1, r0
+    jr      ra
+    addiu   sp, sp, 0x50
 }
 
 // @ Description
@@ -192,7 +192,7 @@ scope collide_mushroom_: {
     li      t0, player_shrooms
     addu    t0, t0, t1                  // t0 = address of shroom routine object pointer
     sw      t0, 0x0024(sp)              // remember address of shroom routine object pointer
-    li      t0, Size.state_table
+    li      t0, Size.match_state_table
     addu    t0, t0, t1                  // t0 = address of player's match size state
     lw      t0, 0x0000(t0)              // t0 = player's match size state
     sw      t0, 0x002C(sp)              // remember player's match size state

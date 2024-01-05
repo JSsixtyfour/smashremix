@@ -3,6 +3,14 @@
 // This file contains file inclusions, action edits, and assembly for Dark Samus.
 
 scope DSamus {
+
+    scope MODEL {
+        scope HAND_L {
+            constant DEFAULT(0xA0500000)
+            constant OPEN(0xA0500001)
+        }
+    }
+
     // Insert Moveset files
     insert ROLLSUB, "moveset/ROLLSUBROUTINE.bin"
     insert JUMP2, "moveset/JUMP2.bin"
@@ -27,8 +35,9 @@ scope DSamus {
     insert UP_SPECIAL_GROUND, "moveset/UP_SPECIAL_GROUND.bin"
     ROLLF:; Moveset.CONCURRENT_STREAM(ROLLSUB); insert "moveset/FROLL.bin"
     insert NEUTRAL1, "moveset/NEUTRAL1.bin"
+    insert CLIFFATTACKSLOW, "moveset/CLIFFATTACKSLOW.bin" // cliff attack 2
     insert DASHATTACK, "moveset/DASH.bin"
-    insert DAIR, "moveset/DAIR.bin"
+    //insert DAIR, "moveset/DAIR.bin"
     insert BAIR, "moveset/BAIR.bin"
     insert LANDING_NAIR, "moveset/LANDING_NAIR.bin"
     insert VICTORY, "moveset/VICTORY.bin"
@@ -45,7 +54,13 @@ scope DSamus {
     OS.align(16)
 
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
+    Character.edit_action_parameters(DSAMUS, Action.Entry,          File.DARK_SAMUS_IDLE,       -1,                       -1)
+    Character.edit_action_parameters(DSAMUS, 0x006,                 File.DARK_SAMUS_IDLE,       -1,                       -1)
+    Character.edit_action_parameters(DSAMUS, Action.Idle,           File.DARK_SAMUS_IDLE,       -1,                       -1)
+    Character.edit_action_parameters(DSAMUS, Action.ReviveWait,     File.DARK_SAMUS_IDLE,       -1,                       -1)
     Character.edit_action_parameters(DSAMUS, Action.Dash,           File.DSAMUS_DASH,           -1,                         -1)
+    Character.edit_action_parameters(DSAMUS, Action.TurnRun,        File.DSAMUS_TURNRUN,        -1,                         -1)
+    Character.edit_action_parameters(DSAMUS, Action.RunBrake,       File.DSAMUS_RUNBRAKE,       -1,                         -1)
     Character.edit_action_parameters(DSAMUS, Action.Walk3,          File.DSAMUS_WALK3,          -1,                         -1)
     Character.edit_action_parameters(DSAMUS, Action.Run,            File.DSAMUS_RUN,            RUN_LOOP,                   -1)
     Character.edit_action_parameters(DSAMUS, Action.RollF,          File.DSAMUS_ROLLF,          ROLLF,                      -1)
@@ -55,13 +70,15 @@ scope DSamus {
     Character.edit_action_parameters(DSAMUS, Action.JumpAerialF,    0x8E6,                      JUMP2,                      -1)
     Character.edit_action_parameters(DSAMUS, Action.JumpAerialB,    0x8E7,                      JUMP2,                      -1)
     Character.edit_action_parameters(DSAMUS, Action.Jab1,           -1,                         NEUTRAL1,                   -1)
+    Character.edit_action_parameters(DSAMUS, Action.CliffAttackSlow2,-1,                        CLIFFATTACKSLOW,            -1)
+
     Character.edit_action_parameters(DSAMUS, Action.DashAttack,     -1,                         DASHATTACK,                 -1)
     Character.edit_action_parameters(DSAMUS, Action.AttackAirN,     File.DSAMUS_NAIR,           NAIR,                       -1)
     Character.edit_action_parameters(DSAMUS, Action.LandingAirN,    File.DSAMUS_NAIR_LANDING,   LANDING_NAIR,               -1)
     Character.edit_action_parameters(DSAMUS, Action.AttackAirF,     File.DSAMUS_FAIR,           FAIR,                       -1)
     Character.edit_action_parameters(DSAMUS, Action.AttackAirU,     -1,                         UAIR,                       -1)
     Character.edit_action_parameters(DSAMUS, Action.AttackAirB,     File.DSAMUS_BAIR,           BAIR,                       -1)
-    Character.edit_action_parameters(DSAMUS, Action.AttackAirD,     -1,                         DAIR,                       -1)
+    // Character.edit_action_parameters(DSAMUS, Action.AttackAirD,     -1,                         DAIR,                       -1)
     Character.edit_action_parameters(DSAMUS, Action.FTiltHigh,      -1,                         FTILTUP,                    -1)
     Character.edit_action_parameters(DSAMUS, Action.FTiltMidHigh,   -1,                         FTILTMIDUP,                 -1)
     Character.edit_action_parameters(DSAMUS, Action.FTilt,          -1,                         FTILTMID,                   -1)
@@ -81,16 +98,25 @@ scope DSamus {
     Character.edit_action_parameters(DSAMUS, 0xE4,                  -1,                         UP_SPECIAL_AIR,             -1)
     Character.edit_action_parameters(DSAMUS, 0xDF,                  -1,                         CHARGE,                     -1)
 
+    Character.edit_action_parameters(DSAMUS,    Action.EggLay,      File.DARK_SAMUS_IDLE,       -1,                         -1)
+
      // Modify Actions            // Action             // Staling ID   // Main ASM                 // Interrupt/Other ASM          // Movement/Physics ASM         // Collision ASM
        Character.edit_action(DSAMUS, 0xE4,                 -1,             -1,                         0x80160370,                     -1,                             -1)
 
     // Modify Menu Action Parameters                // Action          // Animation                // Moveset Data             // Flags
+    Character.edit_menu_action_parameters(DSAMUS,   0x0,                File.DARK_SAMUS_IDLE,      -1,                          -1)
     Character.edit_menu_action_parameters(DSAMUS,   0x1,               -1,                         VICTORY,                     -1)
     Character.edit_menu_action_parameters(DSAMUS,   0x2,               File.DSAMUS_VICTORY1,       VICTORY1,                    -1)
     Character.edit_menu_action_parameters(DSAMUS,   0x3,               File.DSAMUS_SELECT,         SELECT,                      -1)
     Character.edit_menu_action_parameters(DSAMUS,   0x4,               File.DSAMUS_SELECT,         SELECT,                      -1)
     Character.edit_menu_action_parameters(DSAMUS,   0x5,               -1,                         CLAP,                        -1)
     Character.edit_menu_action_parameters(DSAMUS,   0xE,               File.DSAMUS_1P_CPU_POSE,    0x80000000,                  -1)
+
+    // Set crowd chant FGM.
+    Character.table_patch_start(crowd_chant_fgm, Character.id.DSAMUS, 0x2)
+    dh  0x0503
+    OS.patch_end()
+
 
     // Set menu zoom size.
     Character.table_patch_start(menu_zoom, Character.id.DSAMUS, 0x4)
@@ -109,13 +135,26 @@ scope DSamus {
 
     // Set default costumes
     Character.set_default_costumes(Character.id.DSAMUS, 0, 1, 2, 4, 5, 1, 3)
+    Teams.add_team_costume(YELLOW, DSAMUS, 0x6)
 
     // Shield colors for costume matching
-    Character.set_costume_shield_colors(DSAMUS, BLUE, YELLOW, ORANGE, GREEN, MAGENTA, RED, NA, NA)
+    Character.set_costume_shield_colors(DSAMUS, BLUE, YELLOW, ORANGE, GREEN, MAGENTA, RED, YELLOW, NA)
 
     // Set CPU behaviour
     Character.table_patch_start(ai_behaviour, Character.id.DSAMUS, 0x4)
     dw      CPU_ATTACKS
+    OS.patch_end()
+
+    Character.table_patch_start(variants, Character.id.DSAMUS, 0x4)
+    db      Character.id.NONE   // set as SPECIAL variant for DSAMUS
+    db      Character.id.NDSAMUS // set as POLYGON variant for DSAMUS
+    db      Character.id.NONE
+    db      Character.id.NONE
+    OS.patch_end()
+
+    // Set Magnifying Glass Scale Override
+    Character.table_patch_start(magnifying_glass_zoom, Character.id.DSAMUS, 0x2)
+    dh  0x0086
     OS.patch_end()
 
     // Edit cpu attack behaviours
@@ -125,7 +164,7 @@ scope DSamus {
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPG,   -1,  -1,  -1,  -1, -1, -1, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSMASH, -1,  25,  33,  -1, -1, -10, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DTILT,  -1,  10,  14,  -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FAIR,   -1,  5,   6,   -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FAIR,   -1,  8,   10,   -1, -1, -1, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FSMASH, -1,  10,  13,  -1, -1, -1, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FTILT,  -1,  6,   9,   -1, -1, -1, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, GRAB,   -1,  -1,  -1,  -1, -1, -1, -1)

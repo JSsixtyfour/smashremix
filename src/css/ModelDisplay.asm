@@ -11,6 +11,7 @@ constant APPLIES_TO(0b111111)
 constant APPLIES_TO_HUMAN_CPU(0b11)
 constant VALUE_ARRAY_POINTER(Costumes.model_display_for_port)
 constant ONCHANGE_HANDLER(onchange_handler)
+constant DISABLES_HIGH_SCORES(OS.FALSE)
 
 // @ Description
 // Holds pointers to value labels

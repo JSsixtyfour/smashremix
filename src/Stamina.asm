@@ -27,8 +27,8 @@ scope Stamina {
         li          t6, Global.current_screen   // ~
         lbu         t6, 0x0000(t6)              // t0 = current screen
         addiu       at, r0, 0x0016              // screen id
-        bne         t6, at, _end
-        addiu       at, r0, 0x000C          // original line 1
+        bne         t6, at, _remix
+        nop
 
         li          t6, VS_MODE
         lbu         t6, 0x0000(t6)          // load mode
@@ -42,6 +42,19 @@ scope Stamina {
         j           0x8010EA10              // jump to stamina display code, skipping branch that normally skips
         or          a0, a2, r0              // replacement code for skipped code
 
+        _remix:
+        li      t6, SinglePlayerModes.singleplayer_mode_flag  // at = singleplayer flag address
+        lw      t6, 0x0000(t6)              // at = 4 if Remix
+        addiu   at, r0, SinglePlayerModes.REMIX_1P_ID
+        bnel    t6, at, _end                // if not Remix, proceed as normal
+        addiu   at, r0, 0x000C          // original line 1
+        
+        lbu     t6, 0x0024(a1)              // load team
+        bnezl   t6, _end
+        addiu   at, r0, Character.id.GBOWSER          // original line 1 replaced with Giga Bowser, instead of Master Hand
+
+
+        addiu       at, r0, 0x000C          // original line 1
         _end:
         j           _return
         or          a1, s0, r0              // original line 2
@@ -507,7 +520,7 @@ scope Stamina {
         li      t8, Global.current_screen   // ~
         lbu     t8, 0x0000(t8)              // t0 = current screen
         addiu   t7, r0, 0x0016              // screen id
-        bne     t8, t7, _end
+        bne     t8, t7, _remix
         nop
 
         li      t8, VS_MODE
@@ -516,6 +529,7 @@ scope Stamina {
         bne     t8, t7, _end
         nop
 
+        _hp:
         li      t8, TOTAL_HP            // load total hitpoints address
         lw      t8, 0x0000(t8)          // load total hitpoints amount
         lw      t7, 0x002C(s1)          // load player percent
@@ -523,6 +537,7 @@ scope Stamina {
         beq     t8, r0, _end            // jump to end if total percent is less than total hit points
         nop
 
+        _end_hp:
         addiu   t8, r0, Action.ScreenKOWait     // revive action check
         beq     a1, t8, _end                    // if a KO Action, let it go
         nop
@@ -592,6 +607,31 @@ scope Stamina {
 
 
         lui     a3, 0x3F80                      // set anim speed to normal
+        
+        beq     r0, r0, _end
+        nop
+        
+        _remix:
+        li      t8, SinglePlayerModes.singleplayer_mode_flag  // at = singleplayer flag address
+        lw      t8, 0x0000(t8)              // t8 = 4 if Remix
+        addiu   t7, r0, SinglePlayerModes.REMIX_1P_ID
+        bne     t8, t7, _end                // if not Remix, proceed as normal
+        nop
+        
+        lbu     t8, 0x0023(s1)              // load player type
+        beqz    t8, _end
+        nop
+        
+        lw     t8, 0x0008(s1)              // load character id
+        addiu   t7, r0, Character.id.GBOWSER          // original line 1 replaced with Giga Bowser, instead of Master Hand
+        bne     t8, t7, _end
+        nop
+        
+        addiu   t8, r0, 0x012C          // load 300 hitpoints amount
+        lw      t7, 0x002C(s1)          // load player percent
+        slt     t8, t8, t7              // if total hitpoints are less than total percent set t8
+        bne     t8, r0, _end_hp         // jump to end if total percent is less than total hit points
+        nop
 
         _end:
         j           _return
@@ -833,7 +873,7 @@ scope Stamina {
         sw          at, 0x0004(sp)
         //sw          t0, 0x0008(sp)
         sw          ra, 0x000C(sp)
-        
+
         jal         PokemonAnnouncer.pokemon_ko_sounds_
         sw          t0, 0x0008(sp)
 
@@ -1310,6 +1350,12 @@ scope Stamina {
         sw          r0, 0xB18(a0)           // clear action word used in coming actions if player is dead already
 
         _end:
+        // reset air dodge flag
+        lbu         t5, 0x000D(a0)          // load port
+        li          t9, AirDodge.air_dash_player_port_array
+        addu        t9, t9, t5              // t9 = entry in air dodge array
+        sb          r0, 0x0000(t9)          // reset air dodge/dash flag if hit
+
         lw          t5, 0x0004(sp)
         lw          t9, 0x0008(sp)
         lw          t0, 0x000C(sp)
@@ -1351,10 +1397,10 @@ scope Stamina {
         addiu       t1, r0, STAMINA_MODE    // stamina mode
         bnel        t1, t0, _end
         sw          t6, 0x0B18(s0)          // original line 2
-        
+
         lw          t0, 0x0024(s0)          // load current action
         addiu       t1, r0, Action.EggLay   // insert EggLay Action
-        bnel        t0, t1, _end            // if not in Eggay, proceed as normal
+        bnel        t0, t1, _end            // if not in EggLay, proceed as normal
         sw          t6, 0x0B18(s0)          // original line 2
 
         _end:
@@ -1365,11 +1411,11 @@ scope Stamina {
 
         jal         0x800D9444              // original line 1
         nop
-        
+
         j           _return
         nop
     }
-    
+
     // @ Description
     // Prevents armor from causing weirdness with final hits
     scope stamina_armor_fix_: {
@@ -1902,6 +1948,10 @@ scope Stamina {
 
             jal     0x800269C0              // play fgm
             ori     a0, r0, 0x00A4          // a0 = scroll fgm_id
+
+            // Make sure Initial Damage value isn't too high
+            jal     CharacterSelectDebugMenu.Damage.restrict_damage_for_stamina_
+            nop
 
             j       0x801384EC              // jump to rest of routine
             lw      a1, 0x0028(sp)          // a1 = cursort special struct

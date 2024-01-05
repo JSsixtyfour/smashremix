@@ -7,6 +7,9 @@
 scope PeppyNSP {
     constant LASER_DURATION(18)
     constant CHARGES(0x5)
+    constant FINAL_SHOT_DAMAGE(8)
+    constant FINAL_SHOT_KB2(0x64)
+    constant FINAL_SHOT_KB_ANGLE(0x46)
 
     // @ Description
     // Subroutine which runs when Peppy initiates a grounded neutral special.
@@ -67,10 +70,10 @@ scope PeppyNSP {
         lw      s0, 0x0084(a0)              // s0 = player struct
         or      a2, r0, r0                  // a2(starting frame) = 0
         lui     a3, 0x3F80                  // a3(frame speed multiplier) = 1.0
-        
+
         jal     0x800E6F24                  // change action
         sw      r0, 0x0010(sp)              // argument 4 = 0
-        
+
         jal     0x800E0830                  // unknown common subroutine
         lw      a0, 0x0028(sp)              // a0 = player object
 
@@ -96,10 +99,11 @@ scope PeppyNSP {
         lw      t7, 0x0AE0(s0)              // t7 = charge level
         lli     at, CHARGES                 // at = 0x0005
         lli     t8, 0x0001                  // t8 = 0x0001
-        bnel    t7, at, _end                // end if charge level != 6(max)
+        bnel    t7, at, _end                // end if charge level != 5(max)
         sw      r0, 0x0B18(s0)              // set transition bool to 0 (charge)
 
         // if we're here, the neutral special is fully charged, so set transition bool to shoot
+        sw      at, 0x0AE0(s0)              // set charges to 5 to prevent kathys random kirby hat jank
         sw      t8, 0x0B18(s0)              // set transition bool to 1 (shoot)
 
         _end:
@@ -180,7 +184,7 @@ scope PeppyNSP {
         jr      ra                          // return
         addiu   sp, sp, 0x0040              // deallocate stack space
     }
-    
+
     // @ Description
     // Interupt subroutine for NSP_Ground_Begin.
     scope ground_begin_interrupt_: {
@@ -191,20 +195,20 @@ scope PeppyNSP {
         lhu            v1, 0x01be (v0)
         lhu            t6, 0x01b6 (v0)
         and            t7, v1, t6
-        
+
         bnezl          t7, _cancel_check
         sw             t0, 0x0b18 (v0)
         lhu            t8, 0x01b4 (v0)
         and            t9, v1, t8
-        
+
         beqz           t9, _cancel_check
-        nop            
+        nop
         sw             t0, 0x0b18 (v0)
-        
-        _cancel_check:       
+
+        _cancel_check:
         // now check if Shield button has been pressed
         lw      a1, 0x0084(a0)              // a1 = player struct
-        lhu     v0, 0x01BE(a1)              // v0 = buttons_pressed       
+        lhu     v0, 0x01BE(a1)              // v0 = buttons_pressed
         lhu     at, 0x01B8(a1)              // at = shield press bitmask
         and     at, at, v0                  // at != 0 if shield pressed; else at = 0
         beql    at, r0, _end                // end if shield is not pressed
@@ -214,14 +218,14 @@ scope PeppyNSP {
         sw      a0, 0x0020(sp)              // 0x0020(sp) = player object
         jal     0x8013E1C8                  // transition to idle
         lw      a0, 0x0020(sp)              // a0 = player object
-        
-        
+
+
         _end:
         lw      ra, 0x0014(sp)              // restore ra
         jr      ra
         addiu   sp, sp, 0x0020              // deallocate stack space
     }
-    
+
     // @ Description
     // Interupt subroutine for NSP_Ground_Air.
     scope air_begin_interrupt_: {
@@ -232,20 +236,20 @@ scope PeppyNSP {
         lhu            v1, 0x01be (v0)
         lhu            t6, 0x01b6 (v0)
         and            t7, v1, t6
-        
+
         bnezl          t7, _cancel_check
         sw             t0, 0x0b18 (v0)
         lhu            t8, 0x01b4 (v0)
         and            t9, v1, t8
-        
+
         beqz           t9, _cancel_check
-        nop            
+        nop
         sw             t0, 0x0b18 (v0)
-        
-        _cancel_check:       
+
+        _cancel_check:
         // now check if Shield button has been pressed
         lw      a1, 0x0084(a0)              // a1 = player struct
-        lhu     v0, 0x01BE(a1)              // v0 = buttons_pressed       
+        lhu     v0, 0x01BE(a1)              // v0 = buttons_pressed
         lhu     at, 0x01B8(a1)              // at = shield press bitmask
         and     at, at, v0                  // at != 0 if shield pressed; else at = 0
         beql    at, r0, _end                // end if shield is not pressed
@@ -255,7 +259,7 @@ scope PeppyNSP {
         sw      a0, 0x0020(sp)              // 0x0020(sp) = player object
         jal     0x8013F9E0                  // transition to fall
         lw      a0, 0x0020(sp)              // a0 = player object
-        
+
         _end:
         lw      ra, 0x0014(sp)              // restore ra
         jr      ra
@@ -361,10 +365,10 @@ scope PeppyNSP {
         sw      ra, 0x0024(sp)              // ~
         sw      a0, 0x0028(sp)              // store s0, ra, a0
         lw      s0, 0x0084(a0)              // s0 = player struct
-        
+
         jal     0x800DEE98                  // set grounded state
         or      a0, s0, r0                  // a0 = player struct
-       
+
         lw      a0, 0x0028(sp)              // a0 = player object
 
         lw      a2, 0x0008(s0)              // a2 = current character ID
@@ -380,7 +384,7 @@ scope PeppyNSP {
         lw      a2, 0x0078(a0)              // a2(starting frame) = current animation frame
         lui     a3, 0x3F80                  // a3(frame speed multiplier) = 1.0
         lli     t8, 0x0002                  // ~
-        
+
         jal     0x800E6F24                  // change action
         sw      t8, 0x0010(sp)              // argument 4 = 0x0002
 
@@ -390,7 +394,7 @@ scope PeppyNSP {
         lli     at, Character.id.JKIRBY     // at = id.JKIRBY
         bne     t7, at, _peppy              // branch if character != JKIRBY
         nop
-      
+
         _kirby:
         li      t7, 0x80156E98              // t7 = kirby's on hit subroutine
         b       _end                        // branch to end
@@ -479,7 +483,7 @@ scope PeppyNSP {
         lw      t9, 0x017C(a3)              // t9 = temp variable 1
         beqz    t9, _end
         sw      r0, 0x017C(a3)              // clear out temp var
-    
+
         // if here, add 1 to charge
         lw      v0, 0x0AE0(a3)              // load charge amount
         addiu   t9, r0, 0x0012
@@ -752,7 +756,7 @@ scope PeppyNSP {
         lli     at, Character.id.JKIRBY     // at = id.JKIRBY
         bne     t7, at, _peppy              // branch if character != JKIRBY
         nop
-     
+
         _kirby:
         li      t7, 0x80156E98              // t7 = kirby's on hit subroutine
         b       _end                        // branch to end
@@ -804,7 +808,7 @@ scope PeppyNSP {
         lli     at, Character.id.JKIRBY     // at = id.JKIRBY
         bne     t7, at, _peppy              // branch if character != JKIRBY
         nop
-     
+
         _kirby:
         li      t7, 0x80156E98              // t7 = kirby's on hit subroutine
         b       _end                        // branch to end
@@ -854,7 +858,7 @@ scope PeppyNSP {
          lli     at, Character.id.JKIRBY     // at = id.JKIRBY
          bne     t7, at, _peppy              // branch if character != JKIRBY
          nop
-       
+
          _kirby:
          li      t7, 0x80156E98              // t7 = kirby's on hit subroutine
          b       _end                        // branch to end
@@ -880,7 +884,7 @@ scope PeppyNSP {
         sw      a0, 0x0034(sp)              // 0x0034(sp) = player object
         addu    a2, a0, r0                  // a2 = player object
         lw      v0, 0x0084(a0)              // v0 = player struct
-        
+
         lw      t6, 0x0AE0(v0)              // load Laser Charge Amount
         beqz    t6, _idle_check
         lw      t9, 0x017C(v0)              // t9 = temp variable 1
@@ -903,12 +907,12 @@ scope PeppyNSP {
         lui     at, 0xC202
         beq     r0, r0, _kirby
         sw      at, 0x0024(sp)              // y offset = ^
-        
+
         _peppy:
         lui     at, 0x4300
         sw      at, 0x0020(sp)              // x offset = ^
         lui     at, 0x4250
-        
+
         _kirby:
         sw      at, 0x0024(sp)              // y offset = ^
         addiu   a1, sp, 0x0020              // a1 = address to return x/y/z coordinates to
@@ -922,6 +926,20 @@ scope PeppyNSP {
         jal     laser_stage_setting_        // INITIATE Laser
         addiu   a1, sp, 0x0020              // a1 = coordinates to create projectile at
         lw      a0, 0x0034(sp)              // a0 = player object
+        // beqz    v0, _checks                 // branch if no projectile created
+        // nop
+        // lw      v1, 0x0084(a0)              // v1 = player struct
+        // lw      t0, 0x0AE0(v1)              // t0 = ammo count
+        // bnez    t0, _checks                 // branch if ammo count is > 0
+
+        // if here, increase projectile damage
+        // lw      t1, 0x0084(v0)
+        // addiu   at, r0, FINAL_SHOT_DAMAGE
+        // sw      at, 0x0104(t1)              // save projectile damage
+        // addiu   at, r0, FINAL_SHOT_KB2
+        // sw      at, 0x0134(t1)              // save new knockback
+        // addiu   at, r0, FINAL_SHOT_KB_ANGLE
+        // sw      at, 0x012C(t1)              // save new knockback angle
 
         _checks:
         lwc1    f8, 0x0078(a0)              // ~
@@ -931,7 +949,7 @@ scope PeppyNSP {
         nop
         bc1f    _idle_check
         nop
-        
+
         lw      t1, 0x0084(a0)              // player struct
         lw      t4, 0x0008(t1)              // t4 = current character ID
         lui     a2, 0x41C0                  // a2(starting frame)
@@ -939,13 +957,13 @@ scope PeppyNSP {
         lli     t3, Character.id.PEPPY      // t3 = id.PEPPYY
         beq     t3, t4, _peppy_action       // if PEPPY, select correct action ID
         nop
-        
+
         addiu   t2, r0, Kirby.Action.PEPPY_NSP_Ground_Shoot
         bnel    t1, t2, _change_action
         addiu   a1, r0, Kirby.Action.PEPPY_NSP_Air_Shoot // a1 = NSP routine
         beq     r0, r0, _change_action
         addiu   a1, r0, Kirby.Action.PEPPY_NSP_Ground_Shoot // a1 = NSP routine
-        
+
         _peppy_action:
         addiu   t2, r0, Peppy.Action.NSPG_SHOOT
         bnel    t1, t2, _change_action
@@ -955,7 +973,7 @@ scope PeppyNSP {
         _change_action:
         jal     0x800E6F24                  // change action
         lui     a3, 0x3F80                  // a3(frame speed multiplier) = 1.0
-        
+
         beq     r0, r0, _end
         nop
 
@@ -975,14 +993,14 @@ scope PeppyNSP {
         jr      ra
         addiu   sp, sp, 0x0040              // deallocate stack space
     }
-    
+
     // @ Description
     // Interrupt subroutine for NSP_Air_Charge.
     // Loosely based on subroutine 0x8015D640, which is the interrupt subroutine for Samus' grounded neutral special charge.
     scope air_shoot_interrupt_: {
         addiu   sp, sp,-0x0030              // allocate stack space
         sw      ra, 0x0014(sp)              // store ra
-        
+
         lui     at, 0x3f80
         mtc1    at, f6                      // ~
         lwc1    f8, 0x0078(a0)              // ~
@@ -990,10 +1008,10 @@ scope PeppyNSP {
         nop
         bc1f   _end                         // skip if animation not on frame 2 has not been reached
         nop
-        
+
         // now check if Shield button has been pressed
         lw      a1, 0x0084(a0)              // a1 = player struct
-        lhu     v0, 0x01BE(a1)              // v0 = buttons_pressed       
+        lhu     v0, 0x01BE(a1)              // v0 = buttons_pressed
         lhu     at, 0x01B8(a1)              // at = shield press bitmask
         and     at, at, v0                  // at != 0 if shield pressed; else at = 0
         beql    at, r0, _end                // end if shield is not pressed
@@ -1009,14 +1027,14 @@ scope PeppyNSP {
         jr      ra                          // return
         addiu   sp, sp, 0x0030              // dellocate stack space
     }
-    
+
     // @ Description
     // Interrupt subroutine for NSP_Air_Charge.
     // Loosely based on subroutine 0x8015D640, which is the interrupt subroutine for Samus' grounded neutral special charge.
     scope ground_shoot_interrupt_: {
         addiu   sp, sp,-0x0030              // allocate stack space
         sw      ra, 0x0014(sp)              // store ra
-        
+
         lui     at, 0x3f80
         mtc1    at, f6                      // ~
         lwc1    f8, 0x0078(a0)              // ~
@@ -1024,10 +1042,10 @@ scope PeppyNSP {
         nop
         bc1f   _end                        // skip if animation not on frame 2 has not been reached
         nop
-        
+
         // now check if Shield button has been pressed
         lw      a1, 0x0084(a0)              // a1 = player struct
-        lhu     v0, 0x01BE(a1)              // v0 = buttons_pressed       
+        lhu     v0, 0x01BE(a1)              // v0 = buttons_pressed
         lhu     at, 0x01B8(a1)              // at = shield press bitmask
         and     at, at, v0                  // at != 0 if shield pressed; else at = 0
         beql    at, r0, _end                // end if shield is not pressed
@@ -1110,14 +1128,14 @@ scope PeppyNSP {
         lli     t8, 0x0802                  // ~
         jal     0x800E6F24                  // change action
         sw      t8, 0x0010(sp)              // argument 4 = 0x0802
-     
+
         lw      t7, 0x0008(s0)              // t7 = current character ID
         lli     at, Character.id.KIRBY      // at = id.KIRBY
         beq     t7, at, _kirby              // branch if character = KIRBY
         lli     at, Character.id.JKIRBY     // at = id.JKIRBY
         bne     t7, at, _peppy              // branch if character != JKIRBY
         nop
-     
+
         _kirby:
         li      t7, 0x80156E98              // t7 = kirby's on hit subroutine
         b       _end                        // branch to end
@@ -1163,7 +1181,7 @@ scope PeppyNSP {
         lli     at, Character.id.JKIRBY     // at = id.JKIRBY
         bne     t7, at, _peppy              // branch if character != JKIRBY
         nop
-     
+
         _kirby:
         li      t7, 0x80156E98              // t7 = kirby's on hit subroutine
         b       _end                        // branch to end
@@ -1187,12 +1205,12 @@ scope PeppyNSP {
         sw      ra, 0x0014(sp)              // store ra
         li      a1, air_to_ground_          // a1(transition subroutine) = air_to_ground_
         jal     0x800DE6E4                  // common air collision subroutine (transition on landing, no ledge grab)
-        nop 
+        nop
         lw      ra, 0x0014(sp)              // load ra
         jr      ra                          // return
         addiu   sp, sp, 0x0018              // deallocate stack space
     }
-    
+
     // @ Description
     // Subroutine which handles ground to air transition for neutral special actions
     scope air_to_ground_: {
@@ -1223,7 +1241,7 @@ scope PeppyNSP {
         jr      ra                          // return
         addiu   sp, sp, 0x0038              // deallocate stack space
     }
-    
+
     // @ Description
     // Initial subroutine for Peppy's laser.
     scope laser_stage_setting_: {
@@ -1253,13 +1271,13 @@ scope PeppyNSP {
         jal     create_orange_blast_gfx_    // greate orange blast gfx
         lw      a0, 0x0024(sp)              // a0 = creation coordinates
         lw      v0, 0x0018(sp)              // v0 = projectile object
-        
+
         _end_stage_setting:
         lw      ra, 0x0014(sp)              // load ra
         jr      ra                          // return
         addiu   sp, sp, 0x0030              // deallocate stack space
     }
-    
+
     // @ Description
     // based on 0x80168924
     blaster_projectile_collision_check_: {
@@ -1284,8 +1302,8 @@ scope PeppyNSP {
         jr      ra
         addiu sp, sp, 0x18
     }
-    
-    
+
+
     // @ Description
     // Based on 0x80103320
     scope create_orange_blast_gfx_: {
@@ -1328,7 +1346,7 @@ scope PeppyNSP {
         jr      ra
         addiu   v0, r0, 0x0001        // destroy projectile
     }
-    
+
     // @ Description
     // based on 80168964
     scope blaster_projectile_collision_2: {
@@ -1346,7 +1364,7 @@ scope PeppyNSP {
         addiu          a1, v0, 0x0248
         mfc1           a2, f8
         jal            0x80019438
-        nop            
+        nop
         lw             v0, 0x001C(sp)
         lwc1           f12, 0x0024(v0)
         jal            0x8001863c
@@ -1366,7 +1384,7 @@ scope PeppyNSP {
         jr             ra
         or             v0, r0, r0
     }
-    
+
     // @ Description
     // Projectile struct for Peppy's laser.
     OS.align(16)
@@ -1555,10 +1573,10 @@ scope PeppyDSP {
         jr      ra
         addiu   sp, sp, 0x0080
     }
-    
+
     scope detonate_main_ground: {
         OS.routine_begin(0x20)
-        
+
         jal     detonate_check
         sw      a0, 0x0010(sp)
         jal     0x800D94C4          // original routine
@@ -1567,10 +1585,10 @@ scope PeppyDSP {
         OS.routine_end(0x20)
 
     }
-    
+
     scope detonate_main_air: {
         OS.routine_begin(0x20)
-        
+
         jal     detonate_check
         sw      a0, 0x0010(sp)
         jal     0x800D94E8          // original routine
@@ -1584,7 +1602,7 @@ scope PeppyDSP {
     // Check if it is time to detonate the explosive for Peppy
     scope detonate_check: {
         OS.routine_begin(0x20)
-        
+
         lw      v0, 0x0084(a0)          // v0 = player struct
         lw      t6, 0x017C(v0)          // t6 = temp variable 1
         beqz    t6, _end

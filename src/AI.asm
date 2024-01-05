@@ -12,51 +12,42 @@ include "OS.asm"
 
 scope AI {
 
-    // @ Description
-    // Override CPU Level Toggle
-    scope override_vs_cpu_level_0: {
-        OS.patch_start(0x1390BC, 0x8013AE3C)
-        j       override_vs_cpu_level_0
-        lbu     t4, 0x0021(v1)     // og line 2
+
+    is_default_cpu_lvl_set:
+    dw 0
+
+    // set the default cpu level
+    // 800A3FE8, 800A4D28, 800A4F18
+    scope force_default_cpu_lvl_setup: {
+        OS.patch_start(0x1391AC, 0x8013AF2C)
+        j       force_default_cpu_lvl_setup
+        nop
         _return:
         OS.patch_end()
         
-        OS.read_word(Toggles.entry_default_cpu_level + 0x4, t3) // t3 = cpu lvl override
+
+        addiu   s3, s3, 0xBDC8      // og line 2
         
-        beqz    t3, _original       // original logic if no override value is set
-        nop
+        li      at, is_default_cpu_lvl_set
+        lw      t2, 0x0000(at)      // t2 = 0 if default cpu level is not already set up
+        bnez    t2, _skip_initial_setup
+        addiu   t3, r0, 1
+        sw      t3, 0x0000(at)      // save setup flag
 
-        _override:
-        j       _return
-        nop
+        // if here, set the default cpu levels
+        OS.read_word(Toggles.entry_default_cpu_level + 0x4, t2) // t2 = cpu lvl override
+        beqzl   t2, _continue
+        lli     t2, 3               // set level to 3 if toggle == 0
 
-        _original:
-        j       _return
-        lbu     t3, 0x0020(v1)      // og line 1 (t3 = cpu level)
-
-    }
-
-    // @ Description
-    // Override CPU Level Toggle
-    scope override_vs_cpu_level_1: {
-        OS.patch_start(0x138FBC, 0x8013AD3C)
-        j       override_vs_cpu_level_1
-        lbu     t5, 0x0021(v1)     // og line 2
-        _return:
-        OS.patch_end()
-        
-        OS.read_word(Toggles.entry_default_cpu_level + 0x4, t4) // t4 = cpu override
-        
-        beqz    t4, _original       // original logic if no override value is set
-        nop
-
-        _override:
-        j       _return
-        nop
-
-        _original:
-        j       _return
-        lbu     t4, 0x0020(v1)      // og line 1 (t4 = cpu level)
+        _continue:
+        li      t3, 0x800A4D28      // t3 = port 1 default cpu level
+        sb      t2, 0x0000(t3)      // overwrite default cpu level 1
+        sb      t2, 0x0074(t3)      // overwrite default cpu level 2
+        sb      t2, 0x00E8(t3)      // overwrite default cpu level 3
+        sb      t2, 0x015C(t3)      // overwrite default cpu level 4
+        _skip_initial_setup:
+        j       _return             // return
+        lui     at, 0x8014          // og line 1
 
     }
 
@@ -68,7 +59,7 @@ scope AI {
         nop
         _return:
         OS.patch_end()
-        
+
         // automatic improved AI if remix 1P
         addiu   t6, r0, 0x4                 // t6 = remix 1P mode
         OS.read_word(SinglePlayerModes.singleplayer_mode_flag, at) // at = Mode Flag Address
@@ -78,7 +69,7 @@ scope AI {
         OS.read_word(Toggles.entry_improved_ai + 0x4, at)   // at = improved AI toggle
         beqz    at, _original
         nop
-        
+
         _invulnerable_check:
         lw      at, 0x05B0(a0)              // at = super star timer
         slti    at, at, 112                 // t0 = 0 if > 112 frames left
@@ -96,7 +87,7 @@ scope AI {
         j       0x80132CE8                  // skip to end of evasion routine
         nop
 
-    
+
     }
 
     // @ Description
@@ -145,17 +136,17 @@ scope AI {
         j       0x80135628                  // jump to 0x80135628
         nop
     }
-    
-    
+
+
     // @ Description
-    // Allows pikachu remix variants to recover properly.
+    // Allows remix characters to recover properly.
     // Runs every frame while in the recovery state (off stage)
     scope fix_remix_recovery: {
         OS.patch_start(0xB298C, 0x80137F4C)
         j       fix_remix_recovery
         lw      t6, 0x0008(a0)      // t6 = character ID (og line 1)
         OS.patch_end()
-        
+
         // at = Charater.ID.PIKACHU
         // t6 = characters ID
         beq     t6, at, _pikachu
@@ -169,8 +160,12 @@ scope AI {
         beq     t6, at, _peppy
         addiu   at, r0, Character.id.MTWO
         beq     t6, at, _mewtwo
+        addiu   at, r0, Character.id.WOLF
+        beq     t6, at, _wolf
+        addiu   at, r0, Character.id.BANJO
+        beq     t6, at, _banjo
         nop
-        
+
         _normal:
         j       0x80137FBC
         nop
@@ -196,7 +191,7 @@ scope AI {
         addiu   a1, r0, 0x0C                // arg1 = command = PRESS Z
         j       0x80137FBC + 0x4            // return to end of routine
         nop
-        
+
         _mewtwo:
         lw      v0, 0x0024(a0)              // v0 = current action ID
         addiu   at, r0, 0x00E2              // at = Mewtwos Aerial Charge action
@@ -207,13 +202,75 @@ scope AI {
         addiu   a1, r0, 0x0C                // arg1 = command = PRESS Z
         j       0x80137FBC + 0x4            // return to end of routine
         nop
-        
-        
+
+
         _pikachu:
+        OS.read_word(Global.match_info, v0)	// v0 = current match info struct
+        lbu     v0, 0x0000(v0)
+        lli     at, Global.GAMEMODE.CLASSIC
+        beq     v0, at, _pikachu_normal     // branch if vanilla 1P/RTTF
+        nop
+
+        Toggles.read(entry_improved_ai, v0)
+        bnez    v0, _normal                 // branch to improved ai. (normal recovery behaviour)
+        nop
+
+        _pikachu_normal:
         j       0x80137F58 + 0x4
-        addiu   at, r0, 0x00EB
+        lw      v0, 0x0024(a0)
+
+        _banjo:
+        lw      v0, 0x0024(a0)              // get current action
+        addiu   at, r0, 0x00EF              // Banjo Flight
+        bne     v0, at, _normal             // exit if not in flight action
+        nop
+
+        _banjo_flight:
+        lw      v0, 0x001C(a0)              // current frame
+        addiu   at, r0, 21                  // frame 22
+        bne     v0, at, _normal             // exit if not frame 22
+        nop
+        // if here, banjo usp input B
+        lh      v0, 0x01BE(a0)              // v0 = buttons pressed
+        ori    v0, v0, 0x4000               // press B
+        sh      v0, 0x01BE(a0)              // save press B mask
+        // then check if banjo is already above clipping
+        addiu   at, r0, -1                  // at = 0xFFFFFFF
+        lw      v0, 0x00EC(a0)              // get current clipping below player
+        bne     at, v0, _normal             // don't press B is already safe
+        nop
+
+        jal     0x80132564                  // execute AI command
+        addiu   a1, r0, 0x09                // arg1 = PRESS B
+        j       0x80137FBC + 0x4            // return to end of routine
+        nop
+
+        _wolf:
+        lw      v0, 0x0024(a0)        // get current action
+        addiu   at, r0, 0x00E4          // wolf USP action 1
+        beq     at, v0, _wolf_set_target_coordinates
+        addiu   at, r0, 0x00E3          // wolf USP action 2
+        beq     at, v0, _wolf_set_target_coordinates
+        addiu   at, r0, 0x00E6          // wolf USP action 3
+        beq     at, v0, _wolf_set_target_coordinates
+        addiu   at, r0, 0x00E8          // wolf USP action 4
+        bne     at, v0, _normal
+        nop
+
+        _wolf_set_target_coordinates:
+        addiu   v0, a0, 0x01CC
+        sw      r0, 0x0060(v0)          // set target X to 0
+        lui     at, 0x457A              // at = 4000.0
+        j       0x80137FBC
+        sw      at, 0x0064(v0)          // set target Y to a high number
+
+        _center_stage:
+        addiu   v0, a0, 0x01CC
+        sw      r0, 0x0060(v0)          // set target X to 0
+        j       0x80137FBC
+        sw      r0, 0x0064(v0)          // set target Y to 0
     }
-    
+
 
 
     // @ Description
@@ -330,10 +387,22 @@ scope AI {
 
         _cpu_check:
         beqz    t2, _original               // if (t2 == man), skip
+        lli     t0, 0x0036                  // t0 = training screen_id
+        OS.read_byte(Global.current_screen, t1) // t1 = screen_id
+        bne     t0, t1, _do_random          // if not training, always do random
         nop
-        lli     a0, 000100                  // ~
+        OS.read_word(Training.entry_tech_behavior + 0x4, t0) // t0 = index of tech routine
+        beqz    t0, _do_random              // if t0 = 0, then do default random behavior
+        sll     t0, t0, 0x0002              // t0 = offset to tech routine
+        li      t1, tech_option_table
+        addu    t1, t1, t0                  // t1 = address of tech routine
+        lw      t0, 0x0000(t1)              // t0 = tech routine
+        jr      t0                          // do tech routine
+        nop
+
+        _do_random:
         jal     Global.get_random_int_      // v0 = (0-99)
-        nop
+        lli     a0, 000100                  // ~
         lw      t0, 0x0018(sp)              // load player struct from stack
         lh      t1, 0x018C(t0)              // get player state flags?
         andi    t1, t1, 0x0004              // !0 if off screen
@@ -396,6 +465,41 @@ scope AI {
         addiu   sp, sp, 0x0018              // deallocate stack space
         jr      ra                          // return
         nop
+
+        _roll_left:
+        move    a0, s0                      // a0 - player object
+        lw      t0, 0x0084(a0)              // t0 = player struct
+        lw      t0, 0x0044(t0)              // t0 = direction (1 = right, -1 = left)
+        lli     a1, FORWARD                 // a1 - enum direction
+        lli     t1, 0x0001                  // t1 = right
+        beql    t0, t1, pc() + 8            // if facing right, then left is backward
+        lli     a1, BACKWARD                // a1 - enum direction
+        jal     tech_roll_                  // tech roll
+        nop
+        b       _end                        // end
+        nop
+
+        _roll_right:
+        move    a0, s0                      // a0 - player object
+        lw      t0, 0x0084(a0)              // t0 = player struct
+        lw      t0, 0x0044(t0)              // t0 = direction (1 = right, -1 = left)
+        lli     a1, BACKWARD                // a1 - enum direction
+        lli     t1, 0x0001                  // t1 = right
+        beql    t0, t1, pc() + 8            // if facing right, then right is forward
+        lli     a1, FORWARD                 // a1 - enum direction
+        jal     tech_roll_                  // tech roll
+        nop
+        b       _end                        // end
+        nop
+
+        tech_option_table:
+        dw 0                                // default, not used
+        dw _roll_backward + 12              // backward
+        dw _roll_forward + 12               // forward
+        dw _in_place + 12                   // in place
+        dw _roll_left                       // left
+        dw _roll_right                      // right
+        dw _fail                            // none
     }
 
 
@@ -591,9 +695,9 @@ scope AI {
     // Improves cpu ability to utilize charge attacks
 	// Removed for Level 10 cpus (experimental)
     // routine is part of 0x8013837C
-    scope improve_remix_charged_NSP: {
+    scope improve_remix_specials: {
         OS.patch_start(0xB1494, 0x80136A54)
-        j     improve_remix_charged_NSP
+        j     improve_remix_specials
         nop
         OS.patch_end()
 
@@ -622,6 +726,10 @@ scope AI {
         beq     at, v0, _check_charge_shot
         lli     at, Character.id.JDK
         beq     at, v0, _donkey_kong
+        lli     at, Character.id.BOWSER
+        beq     at, v0, _bowser
+        lli     at, Character.id.GBOWSER
+        beq     at, v0, _bowser
         nop
 
         // if here, no charge attacks.
@@ -630,8 +738,8 @@ scope AI {
         or      v0, r0, r0                  // original line 2
 
         _donkey_kong:
-        j       0x80136A64                  // jump to dk part of routine
-        addiu   at, r0, 0x00DE              // dk logic
+        j       0x80136A60                  // jump to dk part of routine
+        lw      v0, 0x0024(a0)              // v0 = action id
 
         _check_charge_shot:
         j       0x80136B08                  // check if should charge shot
@@ -653,7 +761,7 @@ scope AI {
         addiu   at, r0, Action.JumpSquat
         beq     v0, at, _end                // end if in a jumpsquat
         nop
-        
+
         // don't add any lines here
         _check_revolver:
         lw      v0, 0x0024(a0)              // v0 = current action id
@@ -679,6 +787,15 @@ scope AI {
         beqz    at, _end                	//
         nop
         j       0x80136B3C                  // go to original routine for Samus B press?
+        nop
+        
+        _bowser:
+        lw      v0, 0x0024(a0)              // v0 = current action id
+        addiu   at, r0, 0xDE                // Bowser.Action.USPGround
+        bne     v0, at, _end                // branch if not doing a grounded up special
+        nop
+        sb      r0, 0x01C8(a0)              // set stick x to zero
+        b       _end
         nop
 
         _level_ten:
@@ -871,6 +988,8 @@ scope AI {
 
         // v0 = character id
         // s0 = player struct
+        lli     at, Character.id.MLUIGI
+        beq     at, v0, _ignore_projectile  // ignore the projectile if MLUIGI (same as MMARIO)
         lli     at, Character.id.GBOWSER
         beq     at, v0, _ignore_projectile  // ignore the projectile if GBOWSER
         nop
@@ -917,7 +1036,9 @@ scope AI {
         addiu    at, r0, Character.id.PEPPY
         beq      t9, at, _fox      // branch to Goemon usp action check
         addiu    at, r0, Character.id.GOEMON
-        beq      t9, at, _goemon   // branch to Fox usp action check
+        beq      t9, at, _goemon   // branch to Goemon usp action check
+        addiu    at, r0, Character.id.EBI
+        beq      t9, at, _ebi      // branch to Ebisumaru usp action check
         addiu    at, r0, Character.id.FALCO
         beq      t9, at, _fox      // branch to Fox usp action check
         nop
@@ -929,7 +1050,15 @@ scope AI {
         _fox:
         j       _return + 0x4     // original - take fox branch
         lw      v0, 0x0024(a0)     // v0 = current action
-        
+
+        _ebi:
+        lw      v0, 0x0024(a0)     // v0 = current action
+        addiu   at, r0, 0xDF       // MagicCloudRide
+        beq     at, v0, _goemon_usp
+        nop
+        b       _normal
+        nop
+
         _goemon:
         lw      v0, 0x0024(a0)     // v0 = current action
         addiu   at, r0, 0xDF      // MagicCloudRide
@@ -959,6 +1088,8 @@ scope AI {
         _return:
         OS.patch_end()
 
+        addiu   at, r0, Character.id.EBI        // at = Ebisumaru
+        beq     at, v0, _ebisumaru_action_check
         addiu   at, r0, Character.id.GOEMON    // at = Goemon
         bne     at, v0, _continue
 
@@ -973,6 +1104,22 @@ scope AI {
 
         b       _continue
         nop
+        
+        _ebisumaru_action_check:
+        lw      v0, 0x0024(a0)    // v0 = current action
+        addiu   at, r0, 0xDF      // MagicCloudRide
+        bne     at, v0, _continue
+        nop
+        addiu   v0, r0, 0x50                // v0 =  stick Y
+        sb      v0, 0x01C9(a0)              // save stick y
+        lw      v0, 0xEC(a0)                // v0 = clipping id cpu is above (0xFFFF if none)
+        addiu   at, r0, 0xFFFF
+        beq     at, v0, _continue           // branch if still recovering
+        nop
+        addiu   v0, r0, 0x80                // v0 =  Press A flag
+        sb      r0, 0x01C9(a0)              // set stick to zero
+        b       _continue
+        sb      v0, 0x01C6(a0)              // cpu presses A to perform a nair
 
         _goemon_usp:
         addiu   v0, r0, 0x50                // v0 =  stick Y
@@ -984,10 +1131,8 @@ scope AI {
         beq     at, v0, _continue           // branch if still recovering
         nop
         addiu   v0, r0, 0x20                // v0 =  Press Z flag
-        sb      v0, 0x01C6(a0)              // save flag
-
         b       _continue
-        nop
+        sb      v0, 0x01C6(a0)              // save flag
 
         _cloud_escape:
         sb      r0, 0x01C6(a0)              // remove z press if already escaping
@@ -1010,6 +1155,17 @@ scope AI {
 	// 0xBxyy - yy = Stick Y
 	macro STICK_Y(stick_value) {
 		db 0xB0	//TODO: WAIT TIMER
+		db {stick_value}
+	}
+	// 0xAxyy - yy = Stick X
+	macro STICK_X(stick_value, wait) {
+		db 0xA{wait}
+		db {stick_value}
+	}
+
+	// 0xBxyy - yy = Stick Y
+	macro STICK_Y(stick_value, wait) {
+		db 0xB{wait}
 		db {stick_value}
 	}
 
@@ -1189,6 +1345,7 @@ scope AI {
 		dh 0x0111       				// press A
 		END();
 
+    // alternate cliff getup for level 10
 	CLIFF_LET_GO:
 		UNPRESS_A(); UNPRESS_B();
 		STICK_X(0)	 					// stick x = 0
@@ -1198,7 +1355,139 @@ scope AI {
 		STICK_Y(0x80)					// jump
 		dh 0xA400						// stick x = 0, wait(4)
 		STICK_Y(0); STICK_X(0); END();	// reset sticks, end
+    // @ Description
+    // DI Types
+    scope di_type {
+        constant SMASH(0)
+        constant SLIDE(1)
+    }
 
+    // @ Description
+    // DI Strengths
+    scope di_strength {
+        constant HIGH(1)
+        constant MEDIUM(2)
+        constant LOW(3)
+    }
+
+    // @ Description
+    // Stick input directions
+    scope stick_direction {
+        constant LEFT(0xB0)
+        constant RIGHT(0x50)
+        constant DOWN(0xB0)
+        constant UP(0x50)
+        constant CENTER(0x0)
+    }
+
+    // @ Description
+    // Creates inputs for the given DI type, strength and starting stick directions
+    macro di_input(type, strength, stick_x, stick_y) {
+        if di_type.{type} == di_type.SLIDE {
+            evaluate wait(di_strength.{strength})
+
+            if stick_direction.{stick_y} == stick_direction.CENTER {
+                evaluate stick_x_frame_2(stick_direction.{stick_x})
+                evaluate stick_x_frame_4(stick_direction.{stick_x})
+                evaluate stick_y_frame_2(stick_direction.DOWN)
+                evaluate stick_y_frame_4(stick_direction.UP)
+            } else {
+                evaluate stick_x_frame_2(stick_direction.LEFT)
+                evaluate stick_x_frame_4(stick_direction.RIGHT)
+                evaluate stick_y_frame_2(stick_direction.{stick_y})
+                evaluate stick_y_frame_4(stick_direction.{stick_y})
+            }
+
+		    STICK_Y(stick_direction.{stick_y})          // set stick y
+            STICK_X(stick_direction.{stick_x}, {wait})  // set stick x, wait according to strength
+            STICK_Y({stick_y_frame_2})                  // set stick y
+            STICK_X({stick_x_frame_2}, {wait})          // set stick x, wait according to strength
+            STICK_Y(stick_direction.{stick_y})          // set stick y
+            STICK_X(stick_direction.{stick_x}, {wait})  // set stick x, wait according to strength
+            STICK_Y({stick_y_frame_4})                  // set stick y
+            STICK_X({stick_x_frame_4}, {wait})          // set stick x, wait according to strength
+            END()
+        } else {
+            evaluate wait(di_strength.{strength})
+		    STICK_Y(stick_direction.{stick_y})          // set stick y
+            STICK_X(stick_direction.{stick_x}, {wait})  // set stick x, wait according to strength
+		    STICK_Y(0)                                  // stick y = 0
+            STICK_X(0, {wait})                          // stick x = 0, wait according to strength
+            END()
+        }
+    }
+
+    DI_SMASH_HIGH_LEFT:
+        di_input(SMASH, HIGH, LEFT, CENTER)
+
+    DI_SMASH_HIGH_RIGHT:
+        di_input(SMASH, HIGH, RIGHT, CENTER)
+
+    DI_SMASH_HIGH_UP:
+        di_input(SMASH, HIGH, CENTER, UP)
+
+    DI_SMASH_HIGH_DOWN:
+        di_input(SMASH, HIGH, CENTER, DOWN)
+
+    DI_SMASH_MEDIUM_LEFT:
+        di_input(SMASH, MEDIUM, LEFT, CENTER)
+
+    DI_SMASH_MEDIUM_RIGHT:
+        di_input(SMASH, MEDIUM, RIGHT, CENTER)
+
+    DI_SMASH_MEDIUM_UP:
+        di_input(SMASH, MEDIUM, CENTER, UP)
+
+    DI_SMASH_MEDIUM_DOWN:
+        di_input(SMASH, MEDIUM, CENTER, DOWN)
+
+    DI_SMASH_LOW_LEFT:
+        di_input(SMASH, LOW, LEFT, CENTER)
+
+    DI_SMASH_LOW_RIGHT:
+        di_input(SMASH, LOW, RIGHT, CENTER)
+
+    DI_SMASH_LOW_UP:
+        di_input(SMASH, LOW, CENTER, UP)
+
+    DI_SMASH_LOW_DOWN:
+        di_input(SMASH, LOW, CENTER, DOWN)
+
+    DI_SLIDE_HIGH_LEFT:
+        di_input(SLIDE, HIGH, LEFT, CENTER)
+
+    DI_SLIDE_HIGH_RIGHT:
+        di_input(SLIDE, HIGH, RIGHT, CENTER)
+
+    DI_SLIDE_HIGH_UP:
+        di_input(SLIDE, HIGH, CENTER, UP)
+
+    DI_SLIDE_HIGH_DOWN:
+        di_input(SLIDE, HIGH, CENTER, DOWN)
+
+    DI_SLIDE_MEDIUM_LEFT:
+        di_input(SLIDE, MEDIUM, LEFT, CENTER)
+
+    DI_SLIDE_MEDIUM_RIGHT:
+        di_input(SLIDE, MEDIUM, RIGHT, CENTER)
+
+    DI_SLIDE_MEDIUM_UP:
+        di_input(SLIDE, MEDIUM, CENTER, UP)
+
+    DI_SLIDE_MEDIUM_DOWN:
+        di_input(SLIDE, MEDIUM, CENTER, DOWN)
+
+    DI_SLIDE_LOW_LEFT:
+        di_input(SLIDE, LOW, LEFT, CENTER)
+
+    DI_SLIDE_LOW_RIGHT:
+        di_input(SLIDE, LOW, RIGHT, CENTER)
+
+    DI_SLIDE_LOW_UP:
+        di_input(SLIDE, LOW, CENTER, UP)
+
+    DI_SLIDE_LOW_DOWN:
+        di_input(SLIDE, LOW, CENTER, DOWN)
 
 	// @ Description
 	// Copy and extend the vanilla ai cpu command table
@@ -1208,7 +1497,7 @@ scope AI {
 	command_table:
 	constant TABLE_ORIGIN(origin())
 	OS.copy_segment(ORIGINAL_TABLE, (0x31 * 0x4))
-	dw SHORT_HOP_DAIR			    // 0x31 todo: replace
+	dw SHORT_HOP_DAIR               // 0x31
 	dw SHORT_HOP_NAIR               // 0x32
 	dw SHORT_HOP_DAIR               // 0x33
 	dw NESS_DJC_NAIR                // 0x34
@@ -1219,6 +1508,30 @@ scope AI {
 	dw LUCAS_BAT_FORWARDS			// 0x39
 	dw PUFF_SHORT_HOP_DAIR			// 0x3A
 	dw CLIFF_LET_GO					// 0x3B
+	dw DI_SMASH_HIGH_LEFT           // 0x3C
+	dw DI_SMASH_HIGH_RIGHT          // 0x3D
+	dw DI_SMASH_HIGH_UP             // 0x3E
+	dw DI_SMASH_HIGH_DOWN           // 0x3F
+	dw DI_SMASH_MEDIUM_LEFT         // 0x40
+	dw DI_SMASH_MEDIUM_RIGHT        // 0x41
+	dw DI_SMASH_MEDIUM_UP           // 0x42
+	dw DI_SMASH_MEDIUM_DOWN         // 0x43
+	dw DI_SMASH_LOW_LEFT            // 0x44
+	dw DI_SMASH_LOW_RIGHT           // 0x45
+	dw DI_SMASH_LOW_UP              // 0x46
+	dw DI_SMASH_LOW_DOWN            // 0x47
+	dw DI_SLIDE_HIGH_LEFT           // 0x48
+	dw DI_SLIDE_HIGH_RIGHT          // 0x49
+	dw DI_SLIDE_HIGH_UP             // 0x4A
+	dw DI_SLIDE_HIGH_DOWN           // 0x4B
+	dw DI_SLIDE_MEDIUM_LEFT         // 0x4C
+	dw DI_SLIDE_MEDIUM_RIGHT        // 0x4D
+	dw DI_SLIDE_MEDIUM_UP           // 0x4E
+	dw DI_SLIDE_MEDIUM_DOWN         // 0x4F
+	dw DI_SLIDE_LOW_LEFT            // 0x50
+	dw DI_SLIDE_LOW_RIGHT           // 0x51
+	dw DI_SLIDE_LOW_UP              // 0x52
+	dw DI_SLIDE_LOW_DOWN            // 0x53
 
 	// new commands go here ^
 
@@ -1282,6 +1595,30 @@ scope AI {
 		constant LUCAS_BAT_FORWARDS(0x39)
 		constant PUFF_SHORT_HOP_DAIR(0x3A)
 		constant CLIFF_LET_GO(0x3B)
+		constant DI_SMASH_HIGH_LEFT(0x3C)
+		constant DI_SMASH_HIGH_RIGHT(0x3D)
+		constant DI_SMASH_HIGH_UP(0x3E)
+		constant DI_SMASH_HIGH_DOWN(0x3F)
+		constant DI_SMASH_MEDIUM_LEFT(0x40)
+		constant DI_SMASH_MEDIUM_RIGHT(0x41)
+		constant DI_SMASH_MEDIUM_UP(0x42)
+		constant DI_SMASH_MEDIUM_DOWN(0x43)
+		constant DI_SMASH_LOW_LEFT(0x44)
+		constant DI_SMASH_LOW_RIGHT(0x45)
+		constant DI_SMASH_LOW_UP(0x46)
+		constant DI_SMASH_LOW_DOWN(0x47)
+		constant DI_SLIDE_HIGH_LEFT(0x48)
+		constant DI_SLIDE_HIGH_RIGHT(0x49)
+		constant DI_SLIDE_HIGH_UP(0x4A)
+		constant DI_SLIDE_HIGH_DOWN(0x4B)
+		constant DI_SLIDE_MEDIUM_LEFT(0x4C)
+		constant DI_SLIDE_MEDIUM_RIGHT(0x4D)
+		constant DI_SLIDE_MEDIUM_UP(0x4E)
+		constant DI_SLIDE_MEDIUM_DOWN(0x4F)
+		constant DI_SLIDE_LOW_LEFT(0x50)
+		constant DI_SLIDE_LOW_RIGHT(0x51)
+		constant DI_SLIDE_LOW_UP(0x52)
+		constant DI_SLIDE_LOW_DOWN(0x53)
     }
 
 	// @ Description
@@ -1645,7 +1982,7 @@ scope AI {
     macro copy_attack_behaviour(attack, attack_table_origin) {
         OS.copy_segment({attack_table_origin} + AI.ATTACK_TABLE.{attack}.OFFSET, 0x1C)
     }
-    
+
     // @ Description
     // Location of vanilla cpus attack arrays
     macro add_attack_behaviour(attack_name, hitbox_start_frame, min_x, max_x, min_y, max_y) {
@@ -1657,7 +1994,7 @@ scope AI {
         float32 {min_y}
         float32 {max_y}
     }
-    
+
     macro END_ATTACKS() {
         dw 0xFFFFFFFF, 0, 0, 0, 0, 0, 0
     }
@@ -1673,7 +2010,7 @@ scope AI {
             END_ATTACKS();
             copy_attack_behaviour(FAIR, ATTACK_ARRAY_ORIGIN.MARIO)
             END_ATTACKS();
-        
+
         luigi:
             copy_attack_behaviour(FSMASH, ATTACK_ARRAY_ORIGIN.LUIGI)
             copy_attack_behaviour(DSMASH, ATTACK_ARRAY_ORIGIN.LUIGI)
@@ -1699,7 +2036,7 @@ scope AI {
 
             copy_attack_behaviour(FAIR, ATTACK_ARRAY_ORIGIN.DK)
             END_ATTACKS();
-            
+
         kirby:
             copy_attack_behaviour(FSMASH, ATTACK_ARRAY_ORIGIN.YOSHI)
             END_ATTACKS();
@@ -1730,7 +2067,7 @@ scope AI {
 
             copy_attack_behaviour(FAIR, ATTACK_ARRAY_ORIGIN.FOX)
             END_ATTACKS();
-            
+
         pikachu:
             copy_attack_behaviour(FSMASH, ATTACK_ARRAY_ORIGIN.PIKACHU)
             END_ATTACKS();
@@ -1746,7 +2083,7 @@ scope AI {
 
             copy_attack_behaviour(NSPA, ATTACK_ARRAY_ORIGIN.FALCON)
             END_ATTACKS();
-    
+
         jigglypuff:
             add_attack_behaviour(DSPG, 1, -200, 200, -100, 300)
             copy_attack_behaviour(FSMASH, ATTACK_ARRAY_ORIGIN.PUFF)
@@ -1757,7 +2094,7 @@ scope AI {
             copy_attack_behaviour(NAIR, ATTACK_ARRAY_ORIGIN.PUFF)
             add_attack_behaviour(DSPA, 1, -200, 200, -100, 300)
             END_ATTACKS();
-            
+
         ness:
             copy_attack_behaviour(FSMASH, ATTACK_ARRAY_ORIGIN.NESS)
             END_ATTACKS();
@@ -1798,7 +2135,7 @@ scope AI {
                 _check_usp:
                 j       FOX_USP                         // LVL 10 Fox USP check
                 nop
-                
+
                 _check_dsp_aerial:
                 lw      at, 0x0014C(s0)                 // get aerial flag
                 beqz    at, _allow_attack               // allow attack if grounded (NSP is safe while grounded)
@@ -1812,7 +2149,7 @@ scope AI {
 
 
 			// @ Description
-			// Prevents Marina from doing a dangerous neutral special.
+			// Prevents Bowser from doing a dangerous attack near ledge
             scope BOWSER_USP_DSP: {
                 // t1 = current cpu attack command
                 addiu   at, r0, ATTACK_TABLE.DSPG.INPUT
@@ -1828,6 +2165,25 @@ scope AI {
 				_allow_attack:
                 j   0x80133520                          // jump to original routine
                 nop
+            }
+            
+            // @ Description
+            // Prevents Bowser from doing a dangerous attack near ledge
+            scope GBOWSER: {
+                // t1 = current cpu attack command
+                addiu   at, r0, ATTACK_TABLE.DSPG.INPUT
+                beq     t1, at, _prevent_sd             // check facing direction
+                nop
+
+                _allow_attack:
+                j   0x80133520                          // jump to original routine
+                nop
+
+                _prevent_sd:
+                j       0x80133520                      // jump to original routine
+                addiu   t2, r0, 0x0001
+
+
             }
 
 			// @ Description
@@ -2246,7 +2602,7 @@ scope AI {
     // Level 10 stuff
     // General LVL 10 AI hooks
     scope level_ten: {
-    
+
         // @ Description
         // Hook where jab subroutine checks if player has input a grab during frame 1-2 of jab
         scope auto_jab_grab_: {
@@ -2260,14 +2616,14 @@ scope AI {
             slti    t3, t3, 10                      // t3 = 0 if level 10 or above
             bnez    t3, _normal
             nop
-            
+
             // level 10
             lw      t3, 0x001C(a0)                  // t3 = current frame
             slti    t3, t3, 3                       // t3 = 0 if 3 or greater
-            
+
             bnez    t3, _normal
             nop
-            
+
             // if here, auto grab
             j       0x80149E94
             nop
@@ -2276,14 +2632,14 @@ scope AI {
             // a0 = player struct
             beqz    t9, _original_end               // modified original line 1
             nop
-            
+
             j       0x80149E88
             lw      t1, 0x0100(t0)                  // do normal routine
-            
+
             _original_end:
             j           0x80149EA8                  // jump to end of grab interrupt
             lw          ra, 0x0014(sp)              // load ra
-        
+
         }
 
 		// Run away from opponents who are coming off the respawn plat
@@ -2383,7 +2739,6 @@ scope AI {
 		// @ Description
 		// Adds alternate options for LVL 10 cpus to use instead of rolling back and forth.
 		// Not perfect but better than roll spamming
-		// TODO: Fix reflect behaviour?
 		scope stop_roll_spam_: {
 			OS.patch_start(0xB3CD4, 0x80139294)
 			j    stop_roll_spam_
@@ -2394,10 +2749,14 @@ scope AI {
 			// keep line 2
 			OS.patch_end()
 
-			lbu 	t6, 0x0013(a0)			// t6 = cpu level
-			slti	at, t6, 10				// at = 0 if 10 or greater
-			bnez    at, _end				// do normal if not LVL 10
-			nop
+
+            lw      t6, 0x0008(a0)          // t6 = character id
+            addiu   at, r0, Character.id.GBOWSER
+            beq     at, t6, _advanced_ai    // automatic advanced AI if GBOWSER
+            lbu     t6, 0x0013(a0)			// t6 = cpu level
+            slti    at, t6, 10				// at = 0 if 10 or greater
+            bnez    at, _end				// do normal if not LVL 10
+            nop
 
 			_advanced_ai:
 			lw      t6, 0x0024(a0)          // get current action
@@ -2470,7 +2829,7 @@ scope AI {
 
 			b       _end
 			addiu   a1, r0, ROUTINE.MULTI_SHINE // custom
-            
+
 
 			b       _continue
 			nop
@@ -2562,7 +2921,10 @@ scope AI {
 			j       0x801392B8           // original branch
 			addiu   v0, r0, 0x0001       // ~
 
-		}
+            _skip:
+            j       0x801392B8           // original branch
+            addiu   v0, r0, 0x0000       // ~
+        }
 
 		// Add characters to roll spam jump-table
 		// KIRBY
@@ -2615,7 +2977,7 @@ scope AI {
         dw     stop_roll_spam_._end; OS.patch_end()
         // GBOWSER
         Character.table_patch_start(close_quarter_combat, Character.id.GBOWSER, 0x4)
-        dw     stop_roll_spam_._end; OS.patch_end()
+        dw     stop_roll_spam_._skip; OS.patch_end()
 
 
 		// @ Description
@@ -2693,7 +3055,7 @@ scope AI {
 			Character.table_patch_start(ai_attack_prevent, Character.id.JFOX, 0x4)
 			dw    	PREVENT_ATTACK.ROUTINE.FOX_USP
 			OS.patch_end()
-            
+
 			// SLIPPY
 			Character.table_patch_start(ai_attack_prevent, Character.id.SLIPPY, 0x4)
 			dw    	PREVENT_ATTACK.ROUTINE.FOX_USP
@@ -2705,6 +3067,166 @@ scope AI {
 			OS.patch_end()
 
 		}
+
+        // @ Description
+        // Adds DI to CPU behavior
+        scope cpu_di_: {
+            OS.patch_start(0xB4E24, 0x8013A3E4)
+            jal     cpu_di_
+            lui     t8, 0x8019                      // original line 1
+            OS.patch_end()
+
+            addiu   sp, sp, -0x0020                 // allocate stack space
+            sw      ra, 0x0004(sp)                  // save registers
+            sw      a0, 0x0008(sp)                  // ~
+            sw      v0, 0x000C(sp)                  // ~
+
+            lw      t0, 0x0040(a1)                  // t0 = hitstun
+            beqzl   t0, _end                        // if not in hitstun, return normally
+            lw      t8, 0x8340(t8)                  // original line 2
+
+            // if here, we are in hitstun
+            // TODO: toggle checks - training, advanced AI, level 10
+            lli     t0, 0x0036                      // t0 = training screen_id
+            OS.read_byte(Global.current_screen, t1) // t1 = screen_id
+            bne     t0, t1, _check_advanced_ai      // if not training, check advanced AI
+            nop
+            OS.read_word(Training.entry_di_type + 0x4, t0) // t0 = DI type index
+            beqzl   t0, _end                        // if DI is none, return normally
+            lw      t8, 0x8340(t8)                  // original line 2
+
+            addiu   t0, -0x0002                     // t0 = DI type
+            bgez    t0, _apply_di_type              // if not random DI type, skip
+            nop
+            jal     Global.get_random_int_          // v0 = 0 or 1
+            lli     a0, 0x0002                      // a0 = 2
+            or      t0, v0, r0                      // t0 = DI type
+
+            _apply_di_type:
+            li      t8, smash_di_table              // t8 = smash_di_table
+            bnezl   t0, pc() + 8                    // if slide DI, use slide_di_table
+            addiu   t8, t8, slide_di_table - smash_di_table // t8 = slide_di_table
+
+            OS.read_word(Training.entry_di_strength + 0x4, t1) // t1 = DI strength
+            OS.read_word(Training.entry_di_direction + 0x4, t2) // t2 = DI direction
+
+            addiu   t1, t1, -0x0001                 // t1 = index of strength group
+            addiu   t2, t2, -0x0001                 // t2 = index of direction in group
+
+            bgez    t1, _check_direction_random     // if strength is not random, skip
+            nop
+            jal     Global.get_random_int_          // v0 = 0, 1 or 2
+            lli     a0, 0x0003                      // a0 = 3
+            or      t1, v0, r0                      // t1 = strength index
+
+            _check_direction_random:
+            bgez    t2, _check_away_toward          // if direction is not random, skip
+            nop
+            jal     Global.get_random_int_          // v0 = 0, 1, 2 or 3
+            lli     a0, 0x0004                      // a0 = 4
+            or      t2, v0, r0                      // t2 = direction index
+
+            _check_away_toward:
+            sltiu   at, t2, 0x0004                  // at = 0 if direction is away or toward
+            bnez    at, _get_di_routine             // if not away or toward, skip
+            addiu   at, t2, -0x0004                 // at = 0 if away, 1 if toward
+            lw      t3, 0x0044(a1)                  // t3 = 1 if right, -1 if left
+
+            slt     t3, r0, t3                      // t3 = 0 if left, 1 if right
+            lli     t2, 0x0000                      // t2 = left direction
+            beql    at, t3, _get_di_routine         // if away&&left or toward&&right, then do right direction
+            lli     t2, 0x0001                      // t2 = right direction
+
+            _get_di_routine:
+            sll     at, t1, 0x0004                  // at = offset to strength group
+            sll     t2, t2, 0x0002                  // t2 = offset to direction group
+            addu    at, at, t2                      // at = offset to di routine
+            addu    t8, t8, at                      // t8 = di routine address
+            b       _end
+            lw      t8, 0x0000(t8)                  // t8 = di routine
+
+            _check_advanced_ai:
+            OS.read_word(Toggles.entry_improved_ai + 0x4, t0) // t0 = improved AI
+            beqz    t0, _check_level_10             // if not improved AI, check if level 10
+            nop
+
+            jal     Global.get_random_int_          // v0 = [1, 8]
+            lli     a0, 0x0009                      // a0 = 9
+
+            beqzl   a0, _end                        // if 0, then don't DI
+            lw      t8, 0x8340(t8)                  // original line 2
+
+            addiu   a0, a0, -0x0001                 // a0 = index, maybe
+            sltiu   t1, t0, 0x0003                  // t1 = 1 if [0, 3]
+
+            li      t8, smash_di_table + 0x10       // t8 = smash_di_table, medium strength
+            beqzl   t1, pc() + 8                    // if slide DI, use slide_di_table
+            addiu   t8, t8, slide_di_table - smash_di_table // t8 = slide_di_table
+
+            sll     t0, t0, 0x0002                  // t0 = offset to direction routine
+            addu    t8, t8, t0                      // t8 = address of routine
+
+            b       _end
+            lw      t8, 0x0000(t8)                  // t8 = di routine
+
+            _check_level_10:
+            lbu     t0, 0x0013(a1)                  // t0 = cpu level
+            sltiu   t0, t0, 10                      // t0 = 0 if 10 or greater
+            bnezl   t0, _end                        // if not level 10, return normally
+            lw      t8, 0x8340(t8)                  // original line 2
+
+            jal     Global.get_random_int_          // v0 = [1, 8]
+            lli     a0, 0x0009                      // a0 = 9
+
+            beqzl   a0, _end                        // if 0, then don't DI
+            lw      t8, 0x8340(t8)                  // original line 2
+
+            addiu   a0, a0, -0x0001                 // a0 = index, maybe
+            sltiu   t1, t0, 0x0003                  // t1 = 1 if [0, 3]
+
+            li      t8, smash_di_table              // t8 = smash_di_table, high strength
+            beqzl   t1, pc() + 8                    // if slide DI, use slide_di_table
+            addiu   t8, t8, slide_di_table - smash_di_table // t8 = slide_di_table
+
+            sll     t0, t0, 0x0002                  // t0 = offset to direction routine
+            addu    t8, t8, t0                      // t8 = address of routine
+            lw      t8, 0x0000(t8)                  // t8 = di routine
+
+            _end:
+            lw      ra, 0x0004(sp)                  // restore registers
+            lw      a0, 0x0008(sp)                  // ~
+            lw      v0, 0x000C(sp)                  // ~
+            jr      ra
+            addiu   sp, sp, 0x0020                  // deallocate stack space
+
+            smash_di_table:
+            dw DI_SMASH_HIGH_LEFT
+            dw DI_SMASH_HIGH_RIGHT
+            dw DI_SMASH_HIGH_UP
+            dw DI_SMASH_HIGH_DOWN
+            dw DI_SMASH_MEDIUM_LEFT
+            dw DI_SMASH_MEDIUM_RIGHT
+            dw DI_SMASH_MEDIUM_UP
+            dw DI_SMASH_MEDIUM_DOWN
+            dw DI_SMASH_LOW_LEFT
+            dw DI_SMASH_LOW_RIGHT
+            dw DI_SMASH_LOW_UP
+            dw DI_SMASH_LOW_DOWN
+
+            slide_di_table:
+            dw DI_SLIDE_HIGH_LEFT
+            dw DI_SLIDE_HIGH_RIGHT
+            dw DI_SLIDE_HIGH_UP
+            dw DI_SLIDE_HIGH_DOWN
+            dw DI_SLIDE_MEDIUM_LEFT
+            dw DI_SLIDE_MEDIUM_RIGHT
+            dw DI_SLIDE_MEDIUM_UP
+            dw DI_SLIDE_MEDIUM_DOWN
+            dw DI_SLIDE_LOW_LEFT
+            dw DI_SLIDE_LOW_RIGHT
+            dw DI_SLIDE_LOW_UP
+            dw DI_SLIDE_LOW_DOWN
+        }
 
 		// @ Description
 		// Allow level 10 in CSS. Also allows for all Handicaps to be used.
@@ -3174,7 +3696,7 @@ scope AI {
 			// 80139EB0 - ?
 			// 8013A964 - ?
 		}
-        
+
     // MISC CHECKS
     // NESS 0x80133854
     // DK 0x80135C04

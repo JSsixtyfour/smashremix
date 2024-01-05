@@ -101,9 +101,10 @@ scope YoungLink {
 
     // Set default costumes
     Character.set_default_costumes(Character.id.YLINK, 0, 1, 4, 5, 2, 3, 0)
+    Teams.add_team_costume(YELLOW, YLINK, 0x6)
 
     // Shield colors for costume matching
-    Character.set_costume_shield_colors(YLINK, GREEN, WHITE, RED, AZURE, PINK, BLACK, NA, NA)
+    Character.set_costume_shield_colors(YLINK, GREEN, WHITE, RED, AZURE, PINK, BLACK, YELLOW, NA)
 
     // @ Description
     // Young Link's extra actions
@@ -186,7 +187,7 @@ scope YoungLink {
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FSMASH, -1,  14,  21,  -1, -1, -1, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FTILT,  -1,  6,   9,   -1, -1, -1, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, GRAB,   -1,  6,  -1,  -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, JAB,    -1,  5,  -1,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, JAB,    -1,  5,  -1,  50, 150, -1, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NAIR,   -1,  4,  -1,  -1, -1, -1, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPA,   -1,  18,  -1,  -1, -1, -1, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPG,   -1,  18,  -1,  -1, -1, -1, -1)

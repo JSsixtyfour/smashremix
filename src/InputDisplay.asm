@@ -59,6 +59,7 @@ scope InputDisplay {
     // a2 - position (1 = top, 2 = bottom)
     scope create_input_display_objects_: {
         addiu   a2, a2, -0x0001             // a2 = position (0 = top, 1 = bottom)
+        or      t8, a2, r0                  // t8 = position
 
         li      at, Global.current_screen
         lbu     t0, 0x0000(at)              // t0 = current screen
@@ -126,6 +127,41 @@ scope InputDisplay {
         lui     a3, 0x4160                  // a3 = 14
 
         _begin:
+        // Check Dragon King HUD
+        Toggles.read(entry_dragon_king_hud, t7) // t7 = 2 if off
+        lli     t6, 0x0002                  // t6 = 2 = off always
+        beq     t7, t6, _save_regs          // if off, skip
+        lli     t6, 0x0001                  // t6 = 1 = always on
+        beq     t7, t6, _dk                 // if on, use Dragon King position
+        nop
+
+        // if here, check if on a Dragon King stage
+        OS.read_word(Global.match_info, t7)
+        lbu     t7, 0x0001(t7)              // t7 = stage_id
+        lli     t6, Stages.id.DRAGONKING
+        beq     t7, t6, _dk                 // if Dragon King, use Dragon King position
+        lli     t6, Stages.id.DRAGONKING_REMIX
+        bne     t7, t6, _save_regs          // if not Dragon King Remix, skip
+        nop
+
+        _dk:
+        or      a2, t8, r0                  // a2 = original position (no need to force bottom)
+        beqzl   a2, _save_regs              // if top, update offset
+        lui     a3, 0x41F0                  // a3 = 30
+        // if down, update offset
+        lui     a3, 0x4160                  // a3 = 14
+
+        // for Allstar Rest Area, move up a bit
+        li      t0, SinglePlayerModes.singleplayer_mode_flag
+        lw      t0, 0x0000(t0)              // t0 = singleplayer mode flag
+        lli     at, SinglePlayerModes.ALLSTAR_ID
+        bne     at, t0, _save_regs          // if not allstar, skip
+        li      t0, SinglePlayerModes.STAGE_FLAG // t0 = stage ID address
+        lb      t0, 0x0000(t0)              // t0 = current stage of 1p
+        beqzl   t0, _save_regs              // if Rest Area, don't move down as much
+        lui     a3, 0xC040                  // a3 = -3
+
+        _save_regs:
         OS.save_registers()
         // 0x0010(sp) = image position struct for series logo of port percent HUD
         // 0x0014(sp) = port

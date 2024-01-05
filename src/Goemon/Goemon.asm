@@ -104,6 +104,7 @@ scope Goemon {
 
     insert JUMP_1, "moveset/JUMP_1.bin"
     insert JUMP_2, "moveset/JUMP_2.bin"
+    insert ENTRY, "moveset/ENTRY.bin"
     insert TECH, "moveset/TECH.bin"
     insert TECH_ROLL, "moveset/TECH_ROLL.bin"
     TEETER:; dw MODEL.FACE.HURT; Moveset.VOICE(0x440); Moveset.END();
@@ -111,9 +112,9 @@ scope Goemon {
 
 
     DOWN_ATTACK_D:; dw MODEL.FACE.ATTACK; dw MODEL.PIPE.SHOW; insert "moveset/DOWN_ATTACK_D.bin"
-    DOWN_ATTACK_U:; dw MODEL.FACE.ATTACK; dw MODEL.PIPE.SHOW; insert "moveset/DOWN_ATTACK_U.bin" 
+    DOWN_ATTACK_U:; dw MODEL.FACE.ATTACK; dw MODEL.PIPE.SHOW; insert "moveset/DOWN_ATTACK_U.bin"
     CLIFF_ATTACK_F:; dw MODEL.FACE.ATTACK; dw MODEL.PIPE.SHOW; insert "moveset/CLIFF_ATTACK_F.bin"
-    CLIFF_ATTACK_S:; dw MODEL.FACE.ATTACK; dw MODEL.PIPE.SHOW; insert "moveset/CLIFF_ATTACK_S.bin" 
+    CLIFF_ATTACK_S:; dw MODEL.FACE.ATTACK; dw MODEL.PIPE.SHOW; insert "moveset/CLIFF_ATTACK_S.bin"
     JAB_1:; dw MODEL.FACE.ATTACK_2; dw MODEL.PIPE.SHOW; insert "moveset/JAB_1.bin"
     JAB_2:; dw MODEL.FACE.ATTACK_2; dw MODEL.PIPE.SHOW; insert "moveset/JAB_2.bin"
     JAB_3:; dw MODEL.FACE.ATTACK; dw MODEL.PIPE.SHOW; insert "moveset/JAB_3.bin"
@@ -307,7 +308,7 @@ scope Goemon {
     }
 
     // Modify Action Parameters                 // Action               // Animation                // Moveset Data             // Flags
-    Character.edit_action_parameters(GOEMON,    Action.Entry,           File.GOEMON_IDLE,           IDLE,                       -1)
+    Character.edit_action_parameters(GOEMON,    Action.Entry,           File.GOEMON_IDLE,           ENTRY,                       -1)
     Character.edit_action_parameters(GOEMON,    0x006,                  File.GOEMON_IDLE,           IDLE,                       -1)
     Character.edit_action_parameters(GOEMON,    Action.Idle,            File.GOEMON_IDLE,           IDLE,                       -1)
     Character.edit_action_parameters(GOEMON,    Action.ReviveWait,      File.GOEMON_IDLE,           IDLE,                       -1)
@@ -404,8 +405,8 @@ scope Goemon {
     Character.edit_action_parameters(GOEMON,    Action.USPAttack,       File.GOEMON_USP_ATTACK,     USP_ATTACK,                  0)
     Character.edit_action_parameters(GOEMON,    Action.USPJump,         File.GOEMON_USP_JUMP,       USP_JUMP,                    0)
     Character.edit_action_parameters(GOEMON,    Action.USPEscape,       File.GOEMON_USP_ESCAPE,     USP_ESCAPE,                  0)
-    Character.edit_action_parameters(GOEMON,    Action.Entry_R,         File.GOEMON_ENTRY,          0x80000000,                 -1)
-    Character.edit_action_parameters(GOEMON,    Action.Entry_L,         File.GOEMON_ENTRY,          0x80000000,                 -1)
+    Character.edit_action_parameters(GOEMON,    Action.Entry_R,         File.GOEMON_ENTRY,          ENTRY,                 -1)
+    Character.edit_action_parameters(GOEMON,    Action.Entry_L,         File.GOEMON_ENTRY,          ENTRY,                 -1)
     Character.edit_action_parameters(GOEMON,    Action.ShieldOn, 		File.GOEMON_SHIELD_ON,   	-1,                         -1)
 	Character.edit_action_parameters(GOEMON,    Action.ShieldOff, 		File.GOEMON_SHIELD_OFF,   	-1,                         -1)
 
@@ -467,7 +468,7 @@ scope Goemon {
     Character.edit_menu_action_parameters(GOEMON,       0xD,            File.GOEMON_1P_POSE,            ONEP,           -1)
     Character.edit_menu_action_parameters(GOEMON,       0xE,            File.GOEMON_1P_CPU,             CPU,            -1)
     Character.edit_menu_action_parameters(GOEMON,       0xA,            File.GOEMON_PUPPET_UP,          -1,             -1)
-    
+
     Character.table_patch_start(ground_nsp, Character.id.GOEMON, 0x4)
     dw      GoemonNSP.ground_begin_initial_
     OS.patch_end()
@@ -497,7 +498,7 @@ scope Goemon {
 
     // Set crowd chant FGM.
     Character.table_patch_start(crowd_chant_fgm, Character.id.GOEMON, 0x2)
-    dh  0x02B7              // generic cheering
+    dh  0x0557
     OS.patch_end()
 
     // Set Kirby hat_id
@@ -506,31 +507,40 @@ scope Goemon {
     OS.patch_end()
 
     // Set default costumes
-    Character.set_default_costumes(Character.id.GOEMON, 0, 1, 2, 3, 0, 1, 2)
+    Character.set_default_costumes(Character.id.GOEMON, 0, 1, 2, 3, 4, 1, 3)
+    Teams.add_team_costume(YELLOW, GOEMON, 0x6)
 
     // Shield colors for costume matching
-    Character.set_costume_shield_colors(GOEMON, RED, BLUE, GREEN, PURPLE, MAGENTA, WHITE, NA, NA)
+    Character.set_costume_shield_colors(GOEMON, RED, BLUE, GREEN, PURPLE, MAGENTA, WHITE, YELLOW, NA)
+    
+    Character.table_patch_start(variants, Character.id.GOEMON, 0x4)
+    db      Character.id.EBI // set EBI as SPECIAL variant for GOEMON
+    db      Character.id.NGOEMON
+    db      Character.id.NONE
+    db      Character.id.NONE
+    OS.patch_end()
+
 
     // Edit cpu attack behaviours
     // edit_attack_behavior(table, attack, override, start_hb, end_hb, min_x, max_x, min_y, max_y)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DAIR,   -1,  -1,   0,  -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPA,   -1,  -1,   0,  -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPG,   -1,  -1,   0,  -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSMASH, -1,  -1,   0,  -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DTILT,  -1,  -1,   0,  -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FSMASH, -1,  -1,   0,  -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FAIR,   -1,  -1,   0,  -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FTILT,  -1,  -1,   0,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DAIR,   -1,  10,   0,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPA,   -1,  20,   0,  50, 700, 0, 150)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPG,   -1,  20,   0,  50, 700, 0, 150)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSMASH, -1,  7,   0,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DTILT,  -1,  5,   0,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FSMASH, -1,  9,   0,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FAIR,   -1,  7,   0,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FTILT,  -1,  12,   0,  -1, -1, -1, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, GRAB,   -1,  -1,   0,  -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, JAB,    -1,  -1,   0,  -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NAIR,   -1,  -1,   0,  -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPA,   -1,  -1,   0,  -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPG,   -1,  -1,   0,  -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UAIR,   -1,  -1,   0,  -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPA,   0,  -1,   0,  0, 0, 0, 0)   // never use up special to attack
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPG,   0,  -1,   0,  0, 0, 0, 0)   // never use up special to attack
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USMASH, -1,  -1,   0,  -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UTILT,  -1,  -1,   0,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, JAB,    -1,  3,   0,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NAIR,   -1,  3,   0,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPA,   -1,  25,   0,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPG,   -1,  25,   0,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UAIR,   -1,  6,   0,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPA,   -1,  0,   0,  0, 0, 0, 0)   // never use up special to attack
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPG,   -1,  0,   0,  0, 0, 0, 0)   // never use up special to attack
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USMASH, -1,  12,   0,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UTILT,  -1,  5,   0,  -1, -1, -1, -1)
 
     // Set CPU behaviour
     Character.table_patch_start(ai_behaviour, Character.id.GOEMON, 0x4)

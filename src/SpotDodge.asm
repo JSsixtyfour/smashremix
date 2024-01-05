@@ -78,7 +78,9 @@ scope SpotDodge {
         sw      at, 0x086C(a0)          // update moveset pointer
         sw      at, 0x08AC(a0)          // update moveset pointer
         sw      r0, 0x09DC(a0)          // remove routine
-        
+        li      at, 0x800DDF44          // same collision routine as dash attack
+        sw      at, 0x09E4(a0)          // update collision routine
+
         j       0x80141FD4
         addiu   v0, r0, 1               // return 1
     }

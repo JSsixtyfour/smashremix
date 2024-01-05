@@ -501,6 +501,11 @@ scope SinglePlayerMenus: {
         nop
 
         li      a2, Character.BONUS3_HIGH_SCORE_TABLE
+        li      v1, Bonus.REMIX_BONUS3_HIGH_SCORE_TABLE
+        OS.read_word(Bonus.mode, v0)        // v0 = 0 if Normal, 1 if Remix
+        bnezl   v0, pc() + 8                // if Remix, use Remix table
+        or      a2, v1, r0                  // a2 = remix table
+
         sll     a0, a0, 0x0002              // a0 always has character ID due to prior subroutine, this shifts it so it can be used to load character's KO total
         addu    a2, a2, a0
         lw      v0, 0x0000(a2)              // loads finish time the character has had
@@ -780,13 +785,13 @@ scope SinglePlayerMenus: {
     // This alters the image that is loaded as the header in Remix 1p
     scope header_graphic_remix_1p: {
         OS.patch_start(0x13C5DC, 0x801343DC)
-        j        header_graphic_remix_1p
+        j       header_graphic_remix_1p
         addiu   t6, r0, SinglePlayerModes.ALLSTAR_ID         // Remix ID inserted
         _return:
         OS.patch_end()
 
         li      t0, SinglePlayerModes.singleplayer_mode_flag       // t0 = multiman flag
-        lw         t0, 0x0000(t0)           // t0 = 2 if multiman
+        lw      t0, 0x0000(t0)              // t0 = 2 if multiman
         beq     t6, t0, _allstar            // branch if Allstar and should use custom texture
         addiu   t6, r0, SinglePlayerModes.REMIX_1P_ID         // Remix ID inserted
         bne     t6, t0, _normal             // branch if not Remix 1p and should use standard 1p Game texture
@@ -809,8 +814,8 @@ scope SinglePlayerMenus: {
     // When entering a bonus css, this sets a new flag in the original bonus mode flag area so that proper header switching can take place
     scope set_original_flag: {
         OS.patch_start(0x14CC2C, 0x80136BFC)
-        j        set_original_flag
-        lui        at, 0x8013               // original line 1
+        j       set_original_flag
+        lui     at, 0x8013                 // original line 1
         _return:
         OS.patch_end()
 
@@ -855,7 +860,7 @@ scope SinglePlayerMenus: {
         addiu   sp, sp, -0x0010             // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      t1, 0x0008(sp)              // ~
-        sw        t3, 0x000C(sp)
+        sw      t3, 0x000C(sp)
 
         beqz    t6, _end
         addiu   t0, r0, SinglePlayerModes.BONUS3_ID
@@ -972,6 +977,71 @@ scope SinglePlayerMenus: {
         jal     0x800269C0                  // original line 1
         nop
         j       _return
+        nop
+    }
+
+    scope _1P_unplugged_b_handler: {
+        // 1P Mode
+        OS.patch_start(0x13EF30, 0x80136D30)
+        jal         _1P_unplugged_b_handler
+        nop
+        OS.patch_end()
+        // Training
+        OS.patch_start(0x144E24, 0x80135844)
+        jal        _1P_unplugged_b_handler
+        nop
+        OS.patch_end()
+        // Bonus
+        OS.patch_start(0x14B808, 0x801357D8)
+        jal        _1P_unplugged_b_handler
+        nop
+        OS.patch_end()
+
+        // a0 = current player in 1P CSS
+        li      t9, 0x800451A4              // t9 = address of port states
+                                            // note: this value shifts dynamically, with active ports in order on left...
+                                            // ...so we need to check them all (unplugged ports have value -1)
+        lb      t8, 0x0000(t9)              // t8 = -1 if no ports are plugged in; otherwise it is first active slot number
+        bltz    t8, _end                    // branch if no ports to check
+        nop
+        beq     t8, a0, _end                // branch if current player's port is plugged in
+        lb      t8, 0x0001(t9)              // ~
+        beq     t8, a0, _end                // branch if current player's port is plugged in
+        lb      t8, 0x0002(t9)              // ~
+        beq     t8, a0, _end                // branch if current player's port is plugged in
+        lb      t8, 0x0003(t9)              // ~
+        beq     t8, a0, _end                // branch if current player's port is plugged in
+        nop
+
+        // if we're here, it is unplugged, so we check to see if any players are pressing B
+        or      t9, r0, r0                  // clear t9
+        _check_b_loop:
+        slti    t8, t9, 0x1F                // t8 = 1 if less than 31 (port 4)
+        beqz    t8, _end                    // branch if no more ports to check
+        lui     t8, 0x8004                  // original line above 1 (in SinglePlayerEnemy.asm)
+        addu    t8, t8, t9                  // t8 = t8 + offset
+        lhu     t8, 0x522A(t8)              // original line 1 (t8 = pressed button mask)
+        andi    t8, t8, 0x4000              // original line 2 (t9 = 0 if B is not pressed)
+        bnez    t8, _end_alt                // branch if B was pressed
+        nop
+        b       _check_b_loop               // loop
+        addiu   t9, t9, 0x0A                // t9 = offset to next port
+
+        // if we're here, proceed as normal
+        _end:
+        lui     t8, 0x8004                  // original line above 1 (in SinglePlayerEnemy.asm)
+        addu    t8, t8, t7                  // original line above 2 ~
+        lhu     t8, 0x522A(t8)              // original line 1 (t8 = pressed button mask)
+        andi    t9, t8, 0x4000              // original line 2 (t9 = 0 if B is not pressed)
+        jr      ra
+        nop
+
+        _end_alt:
+        lui     t8, 0x8004                  // restore registers as they normally would be, just to be safe
+        addu    t8, t8, t7                  // ~
+        lhu     t8, 0x522A(t8)              // ~
+        addiu   t9, r0, 1                   // t9 = 1 (pressed B is true)
+        jr      ra
         nop
     }
 }

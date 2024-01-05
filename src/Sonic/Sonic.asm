@@ -364,6 +364,7 @@ scope Sonic {
 
     // Set default costumes
     Character.set_default_costumes(Character.id.SONIC, 0, 1, 4, 5, 2, 0, 3)
+    Teams.add_team_costume(YELLOW, SONIC, 0x5)
 
     // Set default costume shield colors
     Character.set_costume_shield_colors(SONIC, BLUE, BLACK, RED, GREEN, PURPLE, YELLOW, BLUE, YELLOW, RED, GREEN, PINK, ORANGE)
@@ -406,7 +407,7 @@ scope Sonic {
     Character.table_patch_start(ai_behaviour, Character.id.SONIC, 0x4)
     dw      CPU_ATTACKS
     OS.patch_end()
-    
+
     // Set CPU SD prevent routine
     Character.table_patch_start(ai_attack_prevent, Character.id.SONIC, 0x4)
     dw      AI.PREVENT_ATTACK.ROUTINE.SONIC_DSP
@@ -531,6 +532,11 @@ scope Sonic {
     // Set action strings
     Character.table_patch_start(action_string, Character.id.SONIC, 0x4)
     dw  Action.action_string_table
+    OS.patch_end()
+
+    // Set Magnifying Glass Scale Override
+    Character.table_patch_start(magnifying_glass_zoom, Character.id.SONIC, 0x2)
+    dh  0x0068
     OS.patch_end()
 
 

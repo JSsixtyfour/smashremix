@@ -238,6 +238,7 @@ scope Wario {
 
     // Set default costumes
     Character.set_default_costumes(Character.id.WARIO, 0, 1, 2, 3, 1, 2, 4)
+    Teams.add_team_costume(YELLOW, DEDEDE, 0x0)
 
     // Shield colors for costume matching
     Character.set_costume_shield_colors(WARIO, YELLOW, BLUE, TURQUOISE, PINK, LIME, WHITE, NA, NA)
@@ -328,6 +329,11 @@ scope Wario {
     dw  Action.action_string_table
     OS.patch_end()
 
+    // Set Magnifying Glass Scale Override
+    Character.table_patch_start(magnifying_glass_zoom, Character.id.WARIO, 0x2)
+    dh  0x00A0
+    OS.patch_end()
+
     // @ Description
     // Subroutine which causes Wario's body slam to recoil on hit.
     // Runs when a hitbox makes contact.
@@ -348,6 +354,10 @@ scope Wario {
         nop
         ori     s1, r0, Character.id.SHEIK  // s1 = id.SHEIK
         beq     s0, s1, _check_action_sheik // if id = SHEIK, check action
+        ori     s1, r0, Character.id.BANJO  // s1 = id.SHEIK
+        beq     s0, s1, _check_action_banjo // if id = banjo, check action
+        ori     s1, r0, Character.id.EBI    // s1 = id.EBI
+        beq     s0, s1, _check_action_ebi   // if id = EBI, check action
         ori     s1, r0, Character.id.KIRBY  // s1 = id.KIRBY
         beq     s0, s1, _check_action_kirby // if id = KIRBY, check action
         ori     s1, r0, Character.id.JKIRBY // s1 = id.JKIRBY
@@ -356,6 +366,10 @@ scope Wario {
 
         _check_action_kirby:
         lw      s0, 0x0024(a0)              // s0 = current action
+        ori     s1, r0, Kirby.Action.EBI_NSP_Ground_End   // s1 = action id: EBI_NSPEND
+        beq     s0, s1, _food_check_type    // branch if current action = down special attack
+        ori     s1, r0, Kirby.Action.EBI_NSP_Air_End// s1 = action id: EBI_NSPENDAIR
+        beq     s0, s1, _food_check_type    // branch if current action = down special attack
         lli     s1, Kirby.Action.WARIO_NSP_Ground
         beq     s0, s1, _check_type         // branch if current action = ground neutral special
         lli     s1, Kirby.Action.WARIO_NSP_Air
@@ -371,6 +385,25 @@ scope Wario {
         beq     s0, s1, _recoil             // branch if current action = down special attack
         nop
         beq     r0, r0, _end                // if any other attack, function normally
+        nop
+
+        _check_action_banjo:
+        lw      s0, 0x0024(a0)              // s0 = current action
+        ori     s1, r0, Banjo.Action.USPAttack
+        beq     s0, s1, _recoil             // branch if current action = up special attack
+        nop
+        beq     r0, r0, _end                // if any other attack, function normally
+        nop
+
+
+        _check_action_ebi:
+        lw      s0, 0x0024(a0)              // s0 = current action
+        ori     s1, r0, Ebi.Action.NSPEND   // s1 = action id: NSP_END
+        beq     s0, s1, _food_check_type    // branch if current action = down special attack
+        ori     s1, r0, Ebi.Action.NSPENDAIR// s1 = action id: NSP_END
+        beq     s0, s1, _food_check_type    // branch if current action = down special attack
+        nop
+        b       _end                // if any other attack, function normally
         nop
 
         _check_action_wario:
@@ -409,7 +442,54 @@ scope Wario {
 
         _recoil:
         ori     s2, r0, 0x0001              // ~
+        b       _end
         sw      s2, 0x017C(a0)              // temp variable 1 = 0x1 (recoil flag = true)
+
+        _food_check_type:
+        bne     a3, r0, _end             // branch if contact type = hurtbox
+        nop
+
+        _create_food:
+        OS.save_registers()
+        addiu   sp, sp, -0x0060             // allocate stack space (0x8016EA78 is unsafe)
+        addiu   a1, sp, 0x0020              // a1 = address to return x/y/z coordinates to
+        sw      a0, 0x001C(sp)              // a1 = player struct
+        sw      r0, 0x0000(a1)              // ~
+        sw      r0, 0x0004(a1)              // ~
+        sw      r0, 0x0008(a1)              // clear space for x/y/z coordinates
+        jal     0x800EDF24                  // returns x/y/z coordinates of the part in a0 to a1
+        lw      a0, 0x095C(a0)              // a0 = joint
+        or      a0, r0, r0                  // a0 = owner (none)
+        addiu   a2, sp, 0x0020              // a2 = coordinates to create item at
+        addiu   a3, sp, 0x002C              // a3 = address of velocity floats
+        lli     t3, 0x0001                  // t3 = 1
+        sw      t3, 0x0010(sp)              // 0x0010(sp) = 1
+        sw      r0, 0x0008(a2)              // initial z position = 0
+        sw      r0, 0x0000(a3)              // initial x velocity = 0
+        lui     t3, 0x41F0                  // ~
+        sw      t3, 0x0004(a3)              // initial y velocity = 30
+        jal     Global.get_random_int_safe_
+        addiu   a0, r0, 100
+        beqz    v0, _create_food_continue
+        lli     a1, Item.Tomato.id          // 1 in 100 chance of tomato
+        lli     a1, Item.Dango.id           // 99 in 100 chance of Dango item (heals 10%)
+        _create_food_continue:
+        jal     0x8016EA78                  // create item
+        sw      r0, 0x0008(a3)              // initial z velocity = 0
+        beqz    v0, _end_food               // branch if no item object was created
+        addiu   sp, sp, 0x0060              // deallocate stack space
+
+        // prevent spawned item from clipping into walls
+        lw      a1, 0xFFBC (sp)             // a1 = player struct
+        addiu   a2, a1, 0x0078              // a2 = unknown
+        lw      a1, 0x0078(a1)              // a1 = player x/y/z coordinates
+        jal     0x800DF058                  // check clipping
+        or      a0, v0, r0                  // a0 = item object
+
+        FGM.play(0x524)                     // audience laugh
+
+        _end_food:
+        OS.restore_registers()
 
         _end:
         or      s0, a2, r0                  // original line 1

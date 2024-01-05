@@ -271,7 +271,7 @@ scope Damage {
         addiu   a1, r0, 0x0000              // a1 = skip bury
 
         _bury_branch_2:
-        jal     bury_initial_ 		        // initial subroutine for Bury
+        jal     bury_or_plunge_initial_     // initial subroutine for Bury
         lw      t9, 0x0084(a0)              // ~
         j       _stun_return                // return
         nop
@@ -373,7 +373,7 @@ scope Damage {
 
     // @ Description
     // Checks and buries or plunges an opponent.
-    scope bury_initial_: {
+    scope bury_or_plunge_initial_: {
         addiu   sp, sp,-0x0028              // ~
         sw      ra, 0x0024(sp)              // ~
         sw      s0, 0x0020(sp)              // ~
@@ -420,10 +420,49 @@ scope Damage {
         jr      ra
         addiu   sp, sp, 0x28
     }
+    
+    // @ Description
+    // Buries an opponent.
+    scope bury_initial_: {
+        addiu   sp, sp,-0x0028              // ~
+        sw      ra, 0x0024(sp)              // ~
+        sw      s0, 0x0020(sp)              // ~
+        sw      a0, 0x0028(sp)              // ~
+        lw      s0, 0x0084(a0)              // original logic
+
+        // get buried timer
+        lw      at, 0x002C(s0)              // s0 = players percent
+        mtc1    at, f4
+        cvt.s.w f4, f4                      // f4 = players percent (float)
+        li      at, buried_percent_multiplier
+        mtc1    at, f6                      // f6 = multiplier
+        mul.s   f4, f6, f4                  // f4 = player damage% * 0.7
+        nop
+        cvt.w.s f4, f4                      // f4 = buried time(int)
+        
+        // set buried timer
+        mfc1    at, f4                      // at = buried time (int)
+        addiu   at, at, initial_buried_time // at = inital time plus player percent thing
+        sw      at, 0x026C(s0)              // save buried timer
+        
+ 
+        // set buried
+        jal     bury_player_
+        lw      a0, 0x0028(sp)              // a0 = player object
+        lw      a0, 0x0028(sp)
+        
+        
+        _end:
+        lw      ra, 0x0024(sp)
+        lw      s0, 0x0020(sp)
+        jr      ra
+        addiu   sp, sp, 0x28
+    }
 
     constant FLASHBANG_BASE_STUN_TIME(90)
     constant FLASHBANG_STUN_TIME_GROUNDED(150)  // additional stun time if grounded
     constant FLASHBANG_STUN_TIME_AERIAL(0)      // addition stun time if aerial
+    constant FLASHBANG_AERIAL_STUN_Y_VELOCITY(0x4248)
     // frame count = 90 + extra stun time + player %.
     // can mash out
 
@@ -457,7 +496,23 @@ scope Damage {
         li      at, stun_main_aerial_
         sw      at, 0x09D4(s0)              // overwrite main routine so player can mash out
         addiu   t1, r0, FLASHBANG_STUN_TIME_AERIAL // initial stun timer (aerial)
+
+        // retain current aerial velocity (thrown)
+        // lui     at, FLASHBANG_AERIAL_STUN_Y_VELOCITY
+        // sw      at, 0x0058(s0)              // overwrite air y velocity
         
+        lui     at, 0x3F00
+        mtc1    at, f6
+        lwc1    f4, 0x0048(s0)              // f4 = x velocity
+        mul.s   f4, f6
+        nop
+        swc1    f4, 0x0048(s0)              // x velocity / 2
+        lwc1    f4, 0x004C(s0)              // f4 = y velocity
+        mul.s   f4, f6
+        nop
+        
+        swc1    f4, 0x004C(s0)              // y velocity / 2
+
         _continue:
         addiu   t9, r0, 0x001E
         sw      t9, 0x0034(s0)
@@ -767,6 +822,17 @@ scope Damage {
 		addiu	sp, sp, -0x18
 		sw		ra, 0x0014(sp)
 		lw		v0, 0x0084(a0)
+        
+        lwc1    f4, 0x0090(v0)      // get y velocity
+        lui     at, 0xC300          // minimum y velocity
+        mtc1    at, f6
+        c.lt.s  f4, f6
+        nop
+        bc1fl   _end
+        nop
+
+        // if here, cap y velocity
+        swc1    f6, 0x0090(v0)
 
 		_end:
 		lw		ra, 0x0014(sp)

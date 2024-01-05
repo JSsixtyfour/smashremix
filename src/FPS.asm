@@ -10,15 +10,6 @@ include "Toggles.asm"
 
 scope FPS {
 
-    macro li.s(register, value) {
-        addi    sp,sp,-0x0004
-        li      at, {value}
-        sw      at, 0x0000(sp)
-        lwc1    {register}, 0x0000(sp)
-        addi    sp,sp,0x0004
-        cvt.s.w {register},{register}
-    }
-
     // @ Description
     // TODO: Check this math
     // The standard count register (46.875 MHz) increments every 21.33 ns
@@ -170,7 +161,8 @@ scope FPS {
         sw      t1, 0x0000(t0)              // update current_fps
         cvt.s.w f10, f10                    // f10 = calculated fps FP
         sub.s   f12, f10, f8
-        FPS.li.s(f14, 10.0)
+        lui     at, 0x4120                  // at = 10.0 fp
+        mtc1    at, f14                     // f14 = 10.0 fp
         mul.s   f16, f12, f14
         cvt.w.s f16, f16
         mfc1    t2, f16
@@ -190,8 +182,8 @@ scope FPS {
         li      t0, frame_count             // t0 = address of frame_count
         sw      r0, 0x0000(t0)              // reset frame_count
         li      t0, last_os_get_count       // t0 = address of last_os_get_count
-        sw      t7, 0x0000(t0)              // update last_os_get_count
         b      _done
+        sw      t7, 0x0000(t0)              // update last_os_get_count
 
     }
 

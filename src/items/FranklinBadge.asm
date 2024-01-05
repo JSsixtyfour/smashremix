@@ -59,7 +59,6 @@ constant GFX_ROUTINE(0x70)              // custom gfx routine index
 scope pickup_franklin_badge: {
 
     OS.save_registers()
-
     // check if player already has a franklin badge
     li      t0, players_with_franklin_badge
     lbu     t1, 0x000D(a0)              // t1 = port
@@ -137,24 +136,24 @@ scope handle_active_franklin_badge_: {
     beq     at, t8, _maintain_badge // branch if reflect hitbox is still badges hb
     addiu   t2, r0, 0x0000          // t2 = 0 (dont clear reflect flag on destroy)
 
-	_absorb_check:
+    _absorb_check:
     lh      v0, 0x018C(a1)          // v0 = current players reflect/absorb flag
-	addiu	t0, r0, 0x0880
-	beq		v0, t0, subtract_timer	// branch if absorbing
-	nop
+    addiu   t0, r0, 0x0880
+    beq     v0, t0, subtract_timer  // branch if absorbing
+    nop
 
-	_ness_check:
-	addiu	t0, r0, 0x0C80			// t0 = Ness's shield-break flag
-	bne		v0, t0, _check_if_active// branch if shield break flag is not on
-	nop
-	addiu	t0, r0, 0x0880
-	sh		t0, 0x018C(a1)			// ~
-	b		subtract_timer			// don't maintain badge
+    _ness_check:
+    addiu   t0, r0, 0x0C80          // t0 = Ness's shield-break flag
+    bne     v0, t0, _check_if_active// branch if shield break flag is not on
+    nop
+    addiu   t0, r0, 0x0880
+    sh      t0, 0x018C(a1)          // ~
+    b       subtract_timer          // don't maintain badge
     addiu   t2, r0, 0x0001          // t2 = 1 (clear reflect flag on destroy)
 
-	_check_if_active:
-	andi	t0, v0, 0x0400			// see if reflect/absorb flag is even enabled
-	bnez	t0, subtract_timer		// maintain badge if not reflecting/absorbing
+    _check_if_active:
+    andi    t0, v0, 0x0400          // see if reflect/absorb flag is even enabled
+    bnez    t0, subtract_timer      // maintain badge if not reflecting/absorbing
     addiu   t2, r0, 0x0001          // t2 = 1 (clear reflect flag on destroy)
 
     _maintain_badge:
@@ -281,32 +280,32 @@ scope reflect_gfx_: {
 // keep the reflect flag on action change
 // basically we modify t7 and t5 before they are written
 scope keep_on_action_change_: {
-	OS.patch_start(0x628EC, 0x800E70EC)
-	j		keep_on_action_change_
-	lbu     t7, 0x000D(s1)              // t7 = port
-	_return:
-	OS.patch_end()
-	
-	// Check if this player has a franklin badge
+    OS.patch_start(0x628EC, 0x800E70EC)
+    j       keep_on_action_change_
+    lbu     t7, 0x000D(s1)              // t7 = port
+    _return:
+    OS.patch_end()
+    
+    // Check if this player has a franklin badge
     li      t5, players_with_franklin_badge
     sll     t7, t7, 0x0002              // t7 = offset to player entry
     addu    t5, t5, t7                  // t5 = address of players badge
     lw      t7, 0x0000(t5)              // get current value
 
-	beqz	t7, _normal
-	andi	t5, t4, 0xFFFB				// original line 1
+    beqz    t7, _normal
+    andi    t5, t4, 0xFFFB              // original line 1
 
-	// If player has a Franklin badge, then don't clear reflect flag
+    // If player has a Franklin badge, then don't clear reflect flag
 
-	lw		at, 0x0850(s1)				// at = current reflect/absorb struct
-	li		t7, reflect_hitbox_struct
-	beql	at, t7, _normal				// branch if reflect/absorb struct = Franklin Badge
-	andi	t5, t4, 0xFFFF				// don't clear reflect flag
+    lw      at, 0x0850(s1)              // at = current reflect/absorb struct
+    li      t7, reflect_hitbox_struct
+    beql    at, t7, _normal             // branch if reflect/absorb struct = Franklin Badge
+    andi    t5, t4, 0xFFFF              // don't clear reflect flag
 
-	_normal:
-	j		_return
-	andi	t7, t6, 0xFF7F				// original line 2
-	
+    _normal:
+    j       _return
+    andi    t7, t6, 0xFF7F              // original line 2
+    
 }
 
 // @ Description
@@ -323,71 +322,71 @@ scope clear_active_franklin_badges_: {
 // @ Description
 // Skip hurtbox collision checks for players with a Franklin Badge 1
 scope grant_projectile_immunity_: {
-	OS.patch_start(0x60CF4, 0x800E54F4)
-	j	grant_projectile_immunity_
-	nop
-	_return:
-	OS.patch_end()
-	
-	// t6 = projectile damage enabled
-	// s7 = player struct
-	
-	bnez	t6, _check_franklin_badge	// based on og line 1
-	lbu     t2, 0x000D(s7)              // t2 = port
-	
-	// if here, immune
-	or		s1, s7, r0					// og line 2
-	_projectile_immune:
-	j		0x800E558C					// skip collision check (player immune)
-	lw		v0, 0x0050(t1)
-	
-	_check_franklin_badge:
+    OS.patch_start(0x60CF4, 0x800E54F4)
+    j   grant_projectile_immunity_
+    nop
+    _return:
+    OS.patch_end()
+    
+    // t6 = projectile damage enabled
+    // s7 = player struct
+    
+    bnez    t6, _check_franklin_badge   // based on og line 1
+    lbu     t2, 0x000D(s7)              // t2 = port
+    
+    // if here, immune
+    or      s1, s7, r0                  // og line 2
+    _projectile_immune:
+    j       0x800E558C                  // skip collision check (player immune)
+    lw      v0, 0x0050(t1)
+    
+    _check_franklin_badge:
     li      at, players_with_franklin_badge
     sll     t2, t2, 0x0002              // t2 = offset to player entry
     addu    at, at, t2                  // at = address of players badge
     lw      t2, 0x0000(at)              // t2 = current badge ptr
-	bnez	t2, _projectile_immune		// grant immunity if wearing a Franklin Badge
-	or		s1, s7, r0					// og line 2
-	
-	_check_collision:
-	j		0x800E5504 + 0x4
-	lw		t2, 0x05BC(s1)				// original branch line 1
-	
+    bnez    t2, _projectile_immune      // grant immunity if wearing a Franklin Badge
+    or      s1, s7, r0                  // og line 2
+    
+    _check_collision:
+    j       0x800E5504 + 0x4
+    lw      t2, 0x05BC(s1)              // original branch line 1
+    
 }
 
 // @ Description
 // Skip hurtbox collision checks for players with a Franklin Badge 2
 scope grant_item_immunity_: {
-	OS.patch_start(0x61348, 0x800E5B48)
-	j		grant_item_immunity_
-	nop
-	_return:
-	OS.patch_end()
-	
-	// 0xB4(sp) = item object
-	// t9 = projectile damage enabled
-	// s7 = player struct
-	
-	bnez	t9, _check_item_based_on_star// based on og line 1
-	lbu     t7, 0x000D(s7)              // t7 = port
-	
-	// if here, immune
-	or		s1, s7, r0					// og line 2
-	_item_immune:
-	j		0x800E5BE0					// skip collision check (player immune)
-	lw		v0, 0x0054(t8)
-	
-	_check_item_based_on_star:
-	lw		at, 0x00B4(sp)				// at = item object
-	lw		at, 0x0084(at)				// at = item struct
-	lw		s1, 0x000C(at)				// s1 = item id
-	addiu	at, r0, Item.SuperMushroom.id
-	beq		at, s1, _check_collision_0
-	addiu	at, r0, Item.PoisonMushroom.id
-	beq		at, s1, _check_collision_0
-	addiu	at, r0, Item.Star.id
-	beq		at, s1, _check_collision_0
-	nop
+    OS.patch_start(0x61348, 0x800E5B48)
+    j       grant_item_immunity_
+    nop
+    _return:
+    OS.patch_end()
+    
+    // 0xB4(sp) = item object
+    // t9 = projectile damage enabled
+    // s7 = player struct
+    
+    bnez    t9, _check_item_based_on_star// based on og line 1
+    lbu     t7, 0x000D(s7)              // t7 = port
+    
+    // if here, immune
+    or      s1, s7, r0                  // og line 2
+    _item_immune:
+    j       0x800E5BE0                  // skip collision check (player immune)
+    lw      v0, 0x0054(t8)
+    
+    _check_item_based_on_star:
+    lw      at, 0x00B4(sp)              // at = item object
+    lw      at, 0x0084(at)              // at = item struct
+    lw      s1, 0x000C(at)              // s1 = item id
+    addiu   at, r0, Item.SuperMushroom.id
+    beq     at, s1, _check_collision_0
+    addiu   at, r0, Item.PoisonMushroom.id
+    beq     at, s1, _check_collision_0
+    addiu   at, r0, Item.Star.id
+    beq     at, s1, _check_collision_0
+    nop
 
     _check_franklin_badge:
     li      at, players_with_franklin_badge
@@ -408,13 +407,13 @@ scope grant_item_immunity_: {
     beqz    at, _item_immune            // immune if > MEWs  id
     or      s1, s7, r0                  // og line 2
 
-	_check_collision_0:
-	or		s1, s7, r0					// og line 2
-	_check_collision:
-	j		0x800E5B58 + 0x4
-	lw		t7, 0x05BC(s1)				// original branch line 1
-	
-	
+    _check_collision_0:
+    or      s1, s7, r0                  // og line 2
+    _check_collision:
+    j       0x800E5B58 + 0x4
+    lw      t7, 0x05BC(s1)              // original branch line 1
+    
+    
 }
 
 // @ Description

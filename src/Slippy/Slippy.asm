@@ -91,8 +91,8 @@ scope Slippy {
         constant Appear2(0x0E0)
         constant Blaster(0x0E1)
         constant BlasterAir(0x0E2)
-        constant WolfFlashStartAir(0x0E3)
-        constant WolfFlashStart(0x0E4)
+        constant JetPackAir(0x0E3)
+        constant JetPackStart(0x0E4)
         //constant ReadyingFireFox(0x0E5)
         constant WolfFlash(0x0E6)
         //constant FireFox(0x0E7)
@@ -232,7 +232,8 @@ scope Slippy {
     Character.edit_action_parameters(SLIPPY, Action.AttackAirF,         File.WARIO_FAIR,            FAIR,                       -1); add_hip_translation(Action.AttackAirF, 1.6)
     Character.edit_action_parameters(SLIPPY, Action.AttackAirB,         0x270,                      BAIR,                       -1); add_hip_translation(Action.AttackAirB, 1.6)
     Character.edit_action_parameters(SLIPPY, Action.AttackAirU,         -1,                         UAIR,                       -1)
-    Character.edit_action_parameters(SLIPPY, Action.AttackAirD,         File.WARIO_DAIR,            DAIR,                       0)
+    Character.edit_action_parameters(SLIPPY, Action.AttackAirD,         File.WARIO_DAIR,            DAIR,                        0)
+    Character.edit_action_parameters(SLIPPY, Action.LandingAirB,        0x274,                      -1,                         -1); add_hip_translation(Action.LandingAirB, 1.6)
 
     Character.edit_action_parameters(SLIPPY, 0xE1,                      0x25D,                      NSP_GROUND,                 0);add_hip_translation(0xE1, 1.6)
  	Character.edit_action_parameters(SLIPPY, 0xE2,                      0x281,                      NSP_AIR,                    0);add_hip_translation(0xE2, 1.6)
@@ -288,10 +289,11 @@ scope Slippy {
     OS.patch_end()
 
     // Set default costumes
-    Character.set_default_costumes(Character.id.SLIPPY, 0, 1, 4, 5, 1, 2, 3)
+    Character.set_default_costumes(Character.id.SLIPPY, 0, 1, 4, 5, 1, 0, 3)
+    Teams.add_team_costume(YELLOW, SLIPPY, 0x6)
 
     // Shield colors for costume matching
-    Character.set_costume_shield_colors(SLIPPY, WHITE, RED, BLUE, TURQUOISE, PURPLE, ORANGE, NA, NA)
+    Character.set_costume_shield_colors(SLIPPY, WHITE, RED, BLUE, TURQUOISE, PURPLE, ORANGE, YELLOW, NA)
 
     Character.table_patch_start(variant_original, Character.id.SLIPPY, 0x4)
     dw      Character.id.FALCO // set Falco as original character (not Fox, who SLIPPY is a clone of)

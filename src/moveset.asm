@@ -207,6 +207,40 @@ scope Moveset {
         dh 0x4400
         dh {fgm_id}
     }
+    
+    // @ Description
+    // Alternate VOICE moveset command
+    // Stops playing voice on action change
+    macro VOICE_2(fgm_id) {
+        dh 0x4800
+        dh {fgm_id}
+    }
+
+    // @ Description
+    // adds a ATTACK_VOICE moveset command
+    // Uses a random attack voice from the Characters main file.
+    macro ATTACK_VOICE() {
+        dw 0x50000000
+    }
+
+    // @ Description
+    // adds a SCREEN_SHAKE moveset command
+    // intensity. 0 = low, 1 = medium, 2 = high
+    macro SCREEN_SHAKE(intensity) {
+        dh 0x9800
+        if {intensity} == 0 {
+            dh 0x8000 
+        }
+        if {intensity} == 1 {
+            dh 0x8400 
+        }
+        if {intensity} == 2 {
+            dh 0x8800 
+        }
+        dw 0, 0, 0;
+    }
+
+
 
     // @ Description
     // adds a HIDE_ITEM moveset command
@@ -222,9 +256,19 @@ scope Moveset {
     
     // @ Description
     // adds a SET_FLAG moveset command
-    // Sets variable 0x17C in player struct to TRUE
-    macro SET_FLAG() {
-        dw 0x54000001;
+    // Sets variable 0x17C, 0x180, or 0x184 in player struct to TRUE
+    macro SET_FLAG(id) {
+        if {id} == 0 {
+            dh  0x5400
+        }
+        if {id} == 1 {
+            dh  0x5800
+        }
+        if {id} == 2 {
+            dh  0x5C00
+        }
+
+        dh 0x0001;  // set flag to TRUE
     }
 
     // @ Description

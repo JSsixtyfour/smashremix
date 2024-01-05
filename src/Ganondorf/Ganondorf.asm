@@ -21,6 +21,7 @@ scope Ganondorf {
     insert SPARKLE,"moveset/SPARKLE.bin"; Moveset.GO_TO(SPARKLE)            // loops
     insert SHIELD_BREAK,"moveset/SHIELD_BREAK.bin"; Moveset.GO_TO(SPARKLE)            // loops
     insert STUN, "moveset/STUN.bin"; Moveset.GO_TO(STUN)         // loops
+    insert SLEEP, "moveset/SLEEP.bin"; Moveset.GO_TO(SLEEP)         // loops
     insert JAB_1,"moveset/JAB_1.bin"
     insert DASH_ATTACK,"moveset/DASH_ATTACK.bin"
     insert FTILT_HI,"moveset/FORWARD_TILT_HIGH.bin"
@@ -71,6 +72,7 @@ scope Ganondorf {
 
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(GND,   Action.Idle,            -1,                         IDLE,                       -1)
+    Character.edit_action_parameters(GND,   Action.ReviveWait,      -1,                         IDLE,                       -1)
     Character.edit_action_parameters(GND,   Action.Run,             -1,                         RUN,                        -1)
     Character.edit_action_parameters(GND,   Action.Teeter,          -1,                         TEETER,                     -1)
     Character.edit_action_parameters(GND,   Action.JumpAerialF,     -1,                         JUMP2,                      -1)
@@ -86,7 +88,8 @@ scope Ganondorf {
     Character.edit_action_parameters(GND,   Action.CliffAttackSlow2, -1,                        EDGEATTACKS,                -1)
     Character.edit_action_parameters(GND,   Action.Taunt,           File.GND_TAUNT,             TAUNT,                      -1)
     Character.edit_action_parameters(GND,   Action.ShieldBreak,     -1,                         SHIELD_BREAK,               -1)
-    Character.edit_action_parameters(GND,   Action.Stun,             -1,                        STUN,                       -1)
+    Character.edit_action_parameters(GND,   Action.Stun,            -1,                         STUN,                       -1)
+    Character.edit_action_parameters(GND,   Action.Sleep,           -1,                         SLEEP,                      -1)
     Character.edit_action_parameters(GND,   Action.Jab1,            -1,                         JAB_1,                      -1)
     Character.edit_action_parameters(GND,   Action.DashAttack,      -1,                         DASH_ATTACK,                -1)
     Character.edit_action_parameters(GND,   Action.FTiltHigh,       -1,                         FTILT_HI,                   -1)
@@ -124,6 +127,7 @@ scope Ganondorf {
     Character.edit_action_parameters(GND,   0xEE,                   -1,                         USP_AIR,                    -1)
 
     // Modify Menu Action Parameters             // Action          // Animation                // Moveset Data             // Flags
+    Character.edit_menu_action_parameters(GND,   0x0,               -1,                         IDLE,                       -1)
     Character.edit_menu_action_parameters(GND,   0x1,               -1,                         VICTORY_POSE_1,             -1)
     Character.edit_menu_action_parameters(GND,   0x2,               File.GND_SELECT,            VICTORY_POSE_2,             -1)
     Character.edit_menu_action_parameters(GND,   0x3,               File.GND_VICTORY1,          VICTORY_POSE_3,             -1)
@@ -155,9 +159,10 @@ scope Ganondorf {
 
     // Set default costumes
     Character.set_default_costumes(Character.id.GND, 0, 1, 2, 3, 5, 1, 4)
+    Teams.add_team_costume(YELLOW, GND, 0x6)
 
     // Shield colors for costume matching
-    Character.set_costume_shield_colors(GND, BROWN, BLUE, AZURE, PURPLE, GREEN, RED, NA, NA)
+    Character.set_costume_shield_colors(GND, BROWN, BLUE, AZURE, PURPLE, GREEN, RED, YELLOW, NA)
 
     // Set Kirby star damage
     Character.table_patch_start(kirby_inhale_struct, 0x8, Character.id.GND, 0xC)
@@ -229,15 +234,15 @@ scope Ganondorf {
         string_0x0E3:; String.insert("AppearRight2")
         string_0x0E4:; String.insert("WarlockPunch")
         string_0x0E5:; String.insert("WarlockPunchAir")
-        string_0x0E6:; String.insert("WarlockKick")
-        string_0x0E7:; String.insert("WarlockKickFromGroundAir")
-        string_0x0E8:; String.insert("LandingWarlockKick")
-        string_0x0E9:; String.insert("WarlockKickEnd")
-        string_0x0EA:; String.insert("CollisionWarlockKick")
-        string_0x0EB:; String.insert("WarlockDive")
+        string_0x0E6:; String.insert("WizardsFoot")
+        string_0x0E7:; String.insert("WizardsFootFromGroundAir")
+        string_0x0E8:; String.insert("LandingWizardsFoot")
+        string_0x0E9:; String.insert("WizardsFootAir")
+        string_0x0EA:; String.insert("WizardsFootRecoil")
+        string_0x0EB:; String.insert("DarkDive")
         string_0x0EC:; String.insert("DarkDiveCatch")
-        string_0x0ED:; String.insert("DarkDiveEnd1")
-        string_0x0EE:; String.insert("DarkDiveEnd2")
+        string_0x0ED:; String.insert("DarkDiveRelease")
+        string_0x0EE:; String.insert("DarkDiveAir")
 
         action_string_table:
         dw 0

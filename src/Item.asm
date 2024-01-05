@@ -10,11 +10,11 @@ print "included Item.asm\n"
 scope Item {
     // @ Description
     // Number of custom items
-    constant NUM_ITEMS(22)
+    constant NUM_ITEMS(26)
 
     // @ Description
     // Number of standard custom items
-    constant NUM_STANDARD_ITEMS(9)
+    constant NUM_STANDARD_ITEMS(11)
 
     // @ Description
     // Offsets to custom tables added to file 0xFE.
@@ -57,7 +57,7 @@ scope Item {
     constant PLAYER_COLLISION_TABLE_ORIGIN(origin())
     fill NUM_ITEMS * 0x4
 
-	// @ Description
+    // @ Description
     // Holds routines for throwing custom items.
     extended_item_throw_table:
     constant ITEM_THROW_TABLE_ORIGIN(origin())
@@ -85,7 +85,7 @@ scope Item {
     // main_pickup_routine - routine to run during item pickup
     // pre_pickup_routine - routine to run before item pickup
     // drop_routine - routine to run when item is dropped
-	// throw_routine - toutine to run when item is thrown
+    // throw_routine - toutine to run when item is thrown
     // collision_routine - routine to run during item collision (like star)
     macro add_item(item, item_info_array, item_info_array_origin, spawn_routine, show_gfx_when_spawned, main_pickup_routine, pre_pickup_routine, drop_routine, throw_routine, collision_routine) {
         evaluate n(current_item)
@@ -228,10 +228,10 @@ scope Item {
     scope extend_item_throw_table: {
         OS.patch_start(0xED648, 0x80172C08)
         j       extend_item_throw_table
-		sll		t3, t2, 2						// original line
-		_return_normal:
+        sll     t3, t2, 2                       // original line
+        _return_normal:
         _return:
-		nop
+        nop
         OS.patch_end()
 
         // t2 = item ID
@@ -242,16 +242,16 @@ scope Item {
 
         li      v0, extended_item_throw_table   // t8 = extended table
         addiu   t2, t2, -0x002D                 // t2 = index in extended table
-		sll		t3, t2, 2						// original line 2
-		addu	v0, v0, t3						// v0 = pointer to throw routine
+        sll     t3, t2, 2                       // original line 2
+        addu    v0, v0, t3                      // v0 = pointer to throw routine
 
-		j       _return
-		lw 		v0, 0x0000(v0)
+        j       _return
+        lw      v0, 0x0000(v0)
 
         _normal:
-		addu	v0, v0, t3						// v0 = pointer to throw routine
+        addu    v0, v0, t3                      // v0 = pointer to throw routine
         j       _return_normal
-		lw		v0, 0x9578 (v0)					// original line 3
+        lw      v0, 0x9578 (v0)                 // original line 3
 
     }
 
@@ -333,7 +333,7 @@ scope Item {
         beqz    at, _display_item_image         // if a custom item ID, display item image
         nop
 
-		_no_image:
+        _no_image:
         j       0x8018EA48                      // jump here to not draw item image
         nop
 
@@ -957,7 +957,7 @@ scope Item {
             _next:
             addiu   a1, a1, 0x0004                      // a1++
             addiu   t4, t4, 0x0001                      // t4++
-            sltiu   at, t4, NUM_STANDARD_ITEMS + 0x14            // at = 0 if done looping
+            sltiu   at, t4, NUM_STANDARD_ITEMS + 0x14   // at = 0 if done looping
             bnez    at, _loop
             sw      a0, 0x000C(v0)                      // save mask
 
@@ -1292,6 +1292,9 @@ scope Item {
     scope GoldenGun {
         include "items/GoldenGun.asm"
     }
+    scope Dango {
+        include "items/Dango.asm"
+    }
     scope Car {
         include "items/Car.asm"
     }
@@ -1329,6 +1332,18 @@ scope Item {
         include "items/BulletBill.asm"
     }
 
+    scope ScuttleMinion {
+        include "items/ScuttleMinion.asm"
+    }
+
+    scope Cacodemon {
+        include "items/Cacodemon.asm"
+    }
+
+    scope Pwing {
+        include "items/Pwing.asm"
+    }
+
     // Add items:
     // Standard Items
     add_item(CloakingDevice)       // 0x2D
@@ -1340,20 +1355,24 @@ scope Item {
     add_item(FranklinBadge)        // 0x33
     add_item(Pitfall)              // 0x34
     add_item(GoldenGun)            // 0x35
+    add_item(Dango)                // 0x36
+    add_item(Pwing)                // 0x37
     // Stage Items
     add_item(KlapTrap)             // 1
     add_item(RobotBee)             // 2
     add_item(Car)                  // 3
     add_item(BulletBill)           // 4
+    add_item(ScuttleMinion)        // 5
+    add_item(Cacodemon)            // 6
     // Pokemon
     // Character Items
     add_item(Gem)                  // 1
     add_item(Shuriken)             // 2
     add_item(Boomerang)            // 3
     add_item(ClanBomb)             // 4
-	add_item(WaddleDee)            // 5
-	add_item(WaddleDoo)            // 6
-	add_item(Gordo)                // 7
+    add_item(WaddleDee)            // 5
+    add_item(WaddleDoo)            // 6
+    add_item(Gordo)                // 7
     add_item(Cloud)                // 8
     add_item(Flashbang)            // 9
 
@@ -1376,10 +1395,15 @@ scope Item {
         jal     FranklinBadge.clear_active_franklin_badges_
         nop
 
-        lw      ra, 0x0004(sp)                      // restore ra
-        addiu   sp, sp, 0x0030                      // deallocate stack space
-        jr      ra
+        jal     Pwing.clear_active_pwings_
         nop
+
+        jal     Poison.clear_poison_
+        nop
+
+        lw      ra, 0x0004(sp)                      // restore ra
+        jr      ra
+        addiu   sp, sp, 0x0030                      // deallocate stack space
     }
 
     // @ Description
@@ -1832,7 +1856,7 @@ scope Item {
         jal     0x800F3938                          // initiate hammer
         nop
         jal     0x800E7AFC                          // play midi
-        addiu	a0, r0, 0x002D                      // argument = hammer midi ?
+        addiu   a0, r0, 0x002D                      // argument = hammer midi ?
         lw      a0, 0x0008(sp)                      // a0 = player object
         lw      t0, 0x0084(a0)                      // a1 = player struct
 
@@ -1850,149 +1874,150 @@ scope Item {
         jr      ra
         nop
     }
-	
-	
-	// @ Description
-	// Hard-coded pointer to file 0xFB
-	constant info_struct(0x8018D040)
-	
-	scope Crate {
-		// constant item_info_array()
-		// constant SPAWN_ITEM()
-		constant id(0x0)
-	}
-	
-	scope Barrel {
-		// constant item_info_array()
-		// constant SPAWN_ITEM()
-		constant id(0x1)
-	}
 
-	scope Capsule {
-		// constant item_info_array()
-		// constant SPAWN_ITEM()
-		constant id(0x2)
-	}
 
-	scope Egg {
-		// constant item_info_array()
-		// constant SPAWN_ITEM()
-		constant id(0x3)
-	}
+    // @ Description
+    // Hard-coded pointer to file 0xFB
+    constant info_struct(0x8018D040)
 
-	scope Tomato {
-		constant item_info_array(0x80189730)
-		constant SPAWN_ITEM(0x80174624)
-		constant id(0x4)
-	}
+    scope Crate {
+        // constant item_info_array()
+        // constant SPAWN_ITEM()
+        constant id(0x0)
+    }
 
-	scope Heart {
-		constant item_info_array(0x801897D0)
-		constant SPAWN_ITEM(0x80174850)
-		constant id(0x5)
-	}
+    scope Barrel {
+        // constant item_info_array()
+        // constant SPAWN_ITEM()
+        constant id(0x1)
+    }
 
-	scope Star {
-		constant item_info_array(0x80189870)
-		constant SPAWN_ITEM(0x80174A18)
-		constant id(0x6)
-	}
-	
-	scope BeamSword {
-		constant item_info_array(0x801898B0)
-		constant SPAWN_ITEM(0x80174DA0)
-		constant id(0x7)
-	}
-	
-	scope HomeRunBat {
-		constant item_info_array(0x80189990)
-		constant SPAWN_ITEM(0x801750B8)
-		constant id(0x8)
-	}
-	
-	scope Fan {
-		constant item_info_array(0x80189490)
-		constant SPAWN_ITEM(0x80175460)
-		constant id(0x9)
-	}
-	
-	scope StarRod {
-		constant item_info_array(0x8018A0F0)
-		constant SPAWN_ITEM(0x80178134)
-		constant id(0xA)
-	}
+    scope Capsule {
+        // constant item_info_array()
+        // constant SPAWN_ITEM()
+        constant id(0x2)
+    }
 
-	scope RayGun {
-		constant item_info_array(0x80189B50)
-		constant SPAWN_ITEM(0x80175800)
-		constant id(0xB)
-	}
+    scope Egg {
+        // constant item_info_array()
+        // constant SPAWN_ITEM()
+        constant id(0x3)
+    }
 
-	scope FireFlower {
-		constant item_info_array(0x80189C60)
-		constant SPAWN_ITEM(0x80175D60)
-		constant id(0xC)
-	}
+    scope Tomato {
+        constant item_info_array(0x80189730)
+        constant SPAWN_ITEM(0x80174624)
+        constant id(0x4)
+        constant PICKUP_ITEM_MAIN(0x800EA3D4)
+    }
 
-	scope Hammer {
-		constant item_info_array(0x80189D70)
-		constant SPAWN_ITEM(0x801763C8)
-		constant id(0xD)
-	}
+    scope Heart {
+        constant item_info_array(0x801897D0)
+        constant SPAWN_ITEM(0x80174850)
+        constant id(0x5)
+    }
 
-	scope MotionSensorBomb {
-		constant item_info_array(0x80189E50)
-		constant SPAWN_ITEM(0x80176F60)
-		constant id(0xE)
-	}
+    scope Star {
+        constant item_info_array(0x80189870)
+        constant SPAWN_ITEM(0x80174A18)
+        constant id(0x6)
+    }
 
-	scope Bobomb {
-		constant item_info_array(0x80189F98)
-		constant SPAWN_ITEM(0x80177D9C)
-		constant id(0xF)
-	}
+    scope BeamSword {
+        constant item_info_array(0x801898B0)
+        constant SPAWN_ITEM(0x80174DA0)
+        constant id(0x7)
+    }
 
-	scope Bumper {
-		constant item_info_array(0x8018A690)
-		constant SPAWN_ITEM(0x8017BF8C)
-		constant id(0x10)
-	}
+    scope HomeRunBat {
+        constant item_info_array(0x80189990)
+        constant SPAWN_ITEM(0x801750B8)
+        constant id(0x8)
+    }
 
-	scope GreenShell {
-		constant item_info_array(0x8018A200)
-		constant SPAWN_ITEM(0x80178FDC)
-		constant id(0x11)
-	}
+    scope Fan {
+        constant item_info_array(0x80189490)
+        constant SPAWN_ITEM(0x80175460)
+        constant id(0x9)
+    }
 
-	scope RedShell {
-		constant item_info_array(0x8018A570)
-		constant SPAWN_ITEM(0x8017B1D8)
-		constant id(0x12)
-	}
+    scope StarRod {
+        constant item_info_array(0x8018A0F0)
+        constant SPAWN_ITEM(0x80178134)
+        constant id(0xA)
+    }
 
-	scope Pokeball {
-		constant item_info_array(0x8018A890)
-		constant SPAWN_ITEM(0x8017CE0C)
-		constant id(0x13)
-	}
+    scope RayGun {
+        constant item_info_array(0x80189B50)
+        constant SPAWN_ITEM(0x80175800)
+        constant id(0xB)
+    }
 
-	scope PkFirePillar {
-		//constant item_info_array()
-		constant id(0x14)
-	}
+    scope FireFlower {
+        constant item_info_array(0x80189C60)
+        constant SPAWN_ITEM(0x80175D60)
+        constant id(0xC)
+    }
 
-	scope Bomb {
-	// Links bomb
-	// constant item_info_array()
-		constant id(0x15)
-	}
-	
-	scope FloatingBumper {
-		constant item_info_array(0x8018AA50)
-		constant id(0x16)
-	}
+    scope Hammer {
+        constant item_info_array(0x80189D70)
+        constant SPAWN_ITEM(0x801763C8)
+        constant id(0xD)
+    }
 
-	// @ Description
+    scope MotionSensorBomb {
+        constant item_info_array(0x80189E50)
+        constant SPAWN_ITEM(0x80176F60)
+        constant id(0xE)
+    }
+
+    scope Bobomb {
+        constant item_info_array(0x80189F98)
+        constant SPAWN_ITEM(0x80177D9C)
+        constant id(0xF)
+    }
+
+    scope Bumper {
+        constant item_info_array(0x8018A690)
+        constant SPAWN_ITEM(0x8017BF8C)
+        constant id(0x10)
+    }
+
+    scope GreenShell {
+        constant item_info_array(0x8018A200)
+        constant SPAWN_ITEM(0x80178FDC)
+        constant id(0x11)
+    }
+
+    scope RedShell {
+        constant item_info_array(0x8018A570)
+        constant SPAWN_ITEM(0x8017B1D8)
+        constant id(0x12)
+    }
+
+    scope Pokeball {
+        constant item_info_array(0x8018A890)
+        constant SPAWN_ITEM(0x8017CE0C)
+        constant id(0x13)
+    }
+
+    scope PkFirePillar {
+        //constant item_info_array()
+        constant id(0x14)
+    }
+
+    scope Bomb {
+    // Links bomb
+    // constant item_info_array()
+        constant id(0x15)
+    }
+
+    scope FloatingBumper {
+        constant item_info_array(0x8018AA50)
+        constant id(0x16)
+    }
+
+    // @ Description
     // Item Types, value is present at 0x10 in item struct
     scope TYPE {
         constant MELEE(0x1)         // sword, bat
@@ -2002,56 +2027,551 @@ scope Item {
         constant OTHER(0x5)         // hammer, tomato
     }
 
-	// @ Description
-	// Offsets in item Special Struct
-	scope STRUCT {
-		constant OBJECT(0x4)
-		constant OWNER(0x8)
+    // @ Description
+    // Offsets in item Special Struct
+    scope STRUCT {
+        constant OBJECT(0x4)
+        constant OWNER(0x8)
         constant TYPE(0x10)
-		constant ID(0xC)
-		constant OWNER_PORT(0x15)	// byte
-		constant PERCENT_DAMAGE(0x1C)
-		constant DIRECTION(0x24)
-		constant X_SPEED(0x2C)
-		constant Y_SPEED(0x30)
-		constant Z_SPEED(0x34)
-		constant ASYNC_TIMER(0x94)
-		scope HITBOX: {
-			constant ENABLED(0x10C)
-			constant DAMAGE(0x110)
-			constant DAMAGE_MULTIPLIER(0x118)
-			constant TYPE(0x11C)
-			constant X_OFFSET(0x120)
-			constant Y_OFFSET(0x124)
-			constant Z_OFFSET(0x128)
-			constant SIZE(0x138)
-			constant KNOCKBACK1(0x140)
-			constant KNOCKBACK2(0x144)
-			constant KNOCKBACK3(0x148)
-			constant ANGLE(0x13C)
-		}
-		scope HURTBOX {
-			constant ENABLED(0x248)
-		}
-		constant DURATION(0x2C0)
-		
-		constant MAIN_ROUTINE(0x378)
-		scope COLLISION {
-			constant CLIPPING(0x37C)
-			constant HURTBOX(0x380)
-			constant SHIELD(0x384)
-			constant SHIELD_EDGE(0x388)
-			constant HITBOX(0x38C)
-			constant REFLECTOR(0x390)
-			constant ABSORB(0x394)
-			constant BLAST_WALL(0x398)
-		}
-		
-		constant APPLY_DAMAGE(0x800E39B0)	// This routine is called when an item collides with a player
+        constant ID(0xC)
+        constant OWNER_PORT(0x15)   // byte
+        constant PERCENT_DAMAGE(0x1C)
+        constant DIRECTION(0x24)
+        constant X_SPEED(0x2C)
+        constant Y_SPEED(0x30)
+        constant Z_SPEED(0x34)
+        constant ASYNC_TIMER(0x94)
+        scope HITBOX: {
+            constant ENABLED(0x10C)
+            constant DAMAGE(0x110)
+            constant DAMAGE_MULTIPLIER(0x118)
+            constant TYPE(0x11C)
+            constant X_OFFSET(0x120)
+            constant Y_OFFSET(0x124)
+            constant Z_OFFSET(0x128)
+            constant SIZE(0x138)
+            constant KNOCKBACK1(0x140)
+            constant KNOCKBACK2(0x144)
+            constant KNOCKBACK3(0x148)
+            constant ANGLE(0x13C)
+        }
+        scope HURTBOX {
+            constant ENABLED(0x248)
+        }
+        constant DURATION(0x2C0)
 
-	
-	}
-	
+        constant MAIN_ROUTINE(0x378)
+        scope COLLISION {
+            constant CLIPPING(0x37C)
+            constant HURTBOX(0x380)
+            constant SHIELD(0x384)
+            constant SHIELD_EDGE(0x388)
+            constant HITBOX(0x38C)
+            constant REFLECTOR(0x390)
+            constant ABSORB(0x394)
+            constant BLAST_WALL(0x398)
+        }
+
+        constant APPLY_DAMAGE(0x800E39B0)   // This routine is called when an item collides with a player
+
+
+    }
+
+    // @ Description
+    // Pokemon item menu gate
+    // Handles Pokeball selecting Pokemon type (respecting ON/OFF values)
+    scope whos_that_pokemon: {
+        OS.patch_start(0xEDCA0, 0x80173260)
+        jal     whos_that_pokemon
+        nop
+        OS.patch_end()
+
+            or      t9, r0, r0                  // t9 is used to count number of total Pokemon ON
+            or      a0, r0, r0                  // a0 is loop index
+            sanity_check:
+            li      t1, pokemon_table           // t1 = address of pokemon_table
+            sll     v0, a0, 2                   // v0 = offset * 4
+            add     t1, t1, v0                  // t1 = pokemon_table + incrementing offset
+            lw      t1, 0x0000(t1)              // t1 = Toggle address in table
+            lw      t1, 0x0004(t1)              // t1 = Toggle value (0 if OFF, 1 if ON)
+            addiu   a0, a0, 1                   // a0++
+            add     t9, t9, t1                  // t9 = t9 + t1
+            sltiu   t1, a0, POKEMON_COUNT - 1   // t1 = 1 if a0 < 12
+            bnez    t1, sanity_check
+            nop
+
+            li      a0, Toggles.entry_pokemon_mew  // a0 = entry_pokemon_mew
+            lw      a0, 0x0004(a0)                 // a0 = Toggle value (0 if OFF, 1 if ON)
+            li      t1, pokem_on                   // t1 = address of pokem_on
+            sw      t9, 0x0000(t1)                 // store value of how pokemon are ON (we don't count MEW)
+            bnez    t9, random_mew                 // if any pokemon (other than MEW) are enabled, we need to roll
+            nop
+            // if we're here, no other pokemon is ON; check for MEW and branch if he's the only one
+            bnezl   a0, _mew_selected              // skip if MEW is not ON
+            lli     a1, Hazards.pokemon.MEW        // a1 = 0x2C (MEW)
+            // othewise we return an empty Pokeball
+            b       _return
+            lli     v0, 0x0000                     // v0 = 0 (no pokemon object)
+
+            random_mew:
+            beqz    a0, no_mew            // skip if MEW is not ON
+            // original lines 1 and 2
+            addiu   a0, r0, 0x0097        // a0 = 151 (probability of getting Mew)
+            jal     Global.get_random_int_// v0 = (0, N-1)
+            sw      t2, 0x0054(sp)
+            bnez    v0, no_mew            // branch (likely)
+            lw      t2, 0x0054(sp)
+            li      t0, POKEMON_SLOTS     // t0 = POKEMON_SLOTS address
+            lbu     v1, 0x0000(t0)        // v1 = last pokemon value
+            addiu   t1, r0, Hazards.pokemon.MEW
+            beq     t1, v1, no_mew        // branch if last pokemon was MEW
+            nop
+            lbu     t9, 0x0001(t0)        // branch if second to last pokemon was MEW
+            beq     t1, t9, no_mew        // if we don't take either branch here, we get MEW
+            nop
+            b       _mew_selected         // branch with MEW
+            or      a1, t1, r0            // a1 = Hazards.pokemon.MEW
+            no_mew:
+            li      t0, POKEMON_SLOTS     // t0 = POKEMON_SLOTS address
+            addiu   t1, r0, 0x0020 + POKEMON_COUNT - 1 // t1 = max value for pokemon, excluding Mew (0x20 to 0x2B)
+            addiu   v1, r0, 0x0020        // v1 = 0x20
+            addiu   v0, r0, 0x0020        // v0 = 0x20
+            lbu     t3, 0x0000(t0)        // t3 = last selected pokemon
+
+            loop_to_get_poke:
+            // check if our value matches one of the recent picks
+            beql    v0, t3, try_again     // branch if loop index = last selected pokemon
+            addiu   v0, v0, 0x0001        // ...and pokemon number ++
+            lbu     t4, 0x0001(t0)        // t4 = second to last pokemon
+            addu    t5, t0, v1            // t5 = address of second to last pokemon + 1 (next slot over)
+            beql    v0, t4, try_again     // branch if pokemon number = second to last selected pokemon
+            addiu   v0, v0, 0x0001        // ...and pokemon number ++
+
+            check_slots:
+            // li      t3, pokemon_table    // t3 = address of pokemon_table
+            // add     t3, t3, v0           // pokemon_table + offset
+            // addiu   t3, t3, -0x0020      // offset adjusted
+            // lb      t3, 0x0000(t3)       // t3 = value in table (0 if OFF, 1 if ON)
+            // slti    t6, t3, 3            // t6 = 1 if t3 < 3
+
+            li      t3, pokemon_table    // t3 = address of pokemon_table
+            addiu   t6, v0, -0x0020      // t6 = offset adjusted
+            sll     t6, t6, 2            // t6 = offset * 4
+            add     t3, t3, t6           // t3 = pokemon_table + offset
+            lw      t3, 0x0000(t3)       // t3 = Toggle address in table
+            lw      t3, 0x0004(t3)       // t3 = Toggle value (0 if OFF, 1 if ON)
+            addiu   a0, a0, 1            // a0++
+
+            beqzl   t3, pc() + 12        // branch accordingly if OFF or ON
+            sb      r0, 0xFFE2(t5)       // store 0 for this pokemon slot
+            sb      v0, 0xFFE2(t5)       // saves current pokemon number to this slot
+
+            addiu   v1, v1, 0x0001       // v1++
+            addiu   v0, v0, 0x0001       // v0++
+            try_again:
+            bnel    v0, t1, loop_to_get_poke // branch until we get to 0x2C (max value of pokemon)
+            lbu     t3, 0x0000(t0)       // t3 = last selected pokemon
+            lbu     a0, 0x002E(t0)       // a0 = total number of pokemon (starts at 0x0C)
+            get_pokemon_random_offset:
+            jal     Global.get_random_int_   // v0 = (0, N-1)
+            sw      t2, 0x0054(sp)
+            li      t0, POKEMON_SLOTS    // t0 = POKEMON_SLOTS address
+            addu    t6, t0, v0           // t6 = t0 + v0 (random offset of pokemon slot)
+            lbu     a1, 0x0002(t6)       // a1 = pokemon that was chosen (or forced)
+
+            li      a2, pokem_on         // a2 = address of pokem_on
+            lw      a2, 0x0000(a2)       // load value of how pokemon are ON
+            slti    a2, a2, 3            // a2 = 1 if total number of Pokemon is 1 or 2
+            bnezl   a2, pc() + 12        // based on the number of enabled Pokemon, use full or normal range
+            lli     a0, 0x0C             // set a0 to allow for max range (since 'recent' pokemon check is being ignored)
+            lbu     a0, 0x002E(t0)       // a0 = total number of pokemon in range (starts at 0x0C)
+            beqzl   a1, get_pokemon_random_offset // loop until we get a non-zero
+            nop
+
+            lbu     v1, 0x0000(t0)        // v1 = last pokemon value
+            lw      t2, 0x0054(sp)
+            _mew_selected:
+            lbu     v0, 0x002E(t0)        // v0 = total number of pokemon (starts at 0x0C)
+            addiu   at, r0, 0x000A        // at = 10
+            addiu   a3, sp, 0x0030
+            beq     v0, at, done_lowering_slot_count // branch if v0 = 10 (can't go lower than that)
+            lui     t9, 0x8000
+            addiu   t7, v0, 0xFFFF        // t7 = v0 - 1
+            sb      t7, 0x002E(t0)        // store total number of pokemon slots to update
+            done_lowering_slot_count:
+            lw      a0, 0x0058(sp)
+            li      a2, pokem_on          // a2 = address of pokem_on
+            lw      a2, 0x0000(a2)        // load value of how pokemon are ON
+            sltiu   a2, a2, 3             // a2 = 1 if a2 < 3
+            bnezl   a2, pc() + 16         // this routine has a logic check to avoid picking the same pokemon in a row...
+            nop                           // ...if too few are enabled to satisfy that, we skip saving 'recent' pokemon
+            sb      v1, 0x0001(t0)        // store second to last pokemon
+            sb      a1, 0x0000(t0)        // a1 = store last pokemon (current one we're getting)
+            lw      a2, 0x0074(a0)
+            ori     t9, t9, 0x0003
+            sw      t9, 0x0010(sp)
+            sw      t2, 0x0054(sp)
+            jal     0x8016F238            // a1 = pokemon number to spawn
+            addiu   a2, a2, 0x001C
+
+            _return:
+            j        0x80173348          // jump to end of routine
+            nop
+        }
+
+        // This is where the game keeps track of Pokemon to pick from (and the two most recent)
+        constant POKEMON_SLOTS(0x8018D060)
+
+        // Total number of Pokemon Types
+        constant POKEMON_COUNT(13)
+
+        // Counter of how many Pokemon are ON
+        pokem_on:
+        dw 0
+
+        // Table that stores Pokemon ON/OFF states
+        pokemon_table:
+        dw Toggles.entry_pokemon_onix
+        dw Toggles.entry_pokemon_snorlax
+        dw Toggles.entry_pokemon_goldeen
+        dw Toggles.entry_pokemon_meowth
+        dw Toggles.entry_pokemon_charizard
+        dw Toggles.entry_pokemon_beedrill
+        dw Toggles.entry_pokemon_blastoise
+        dw Toggles.entry_pokemon_chansey
+        dw Toggles.entry_pokemon_starmie
+        dw Toggles.entry_pokemon_hitmonlee
+        dw Toggles.entry_pokemon_koffing
+        dw Toggles.entry_pokemon_clefairy
+        dw Toggles.entry_pokemon_mew
+        OS.align(4)
+
+    // @ Description
+    // Handles Pokemon regional variant Japanese Voices
+    scope pokemon_variant_sfx: {
+        // 0x137 Snorlax 1
+        OS.patch_start(0xF8D14, 0x8017E2D4)
+        jal     pokemon_variant_sfx
+        addiu   a0, r0, 0x0137              // original line 2
+        OS.patch_end()
+        // 0x138 Snorlax 2
+        OS.patch_start(0xF91B4, 0x8017E774)
+        jal     pokemon_variant_sfx
+        sw      v1, 0x002C(sp)              // original line 2
+        OS.patch_end()
+        // 0x143 Goldeen
+        OS.patch_start(0xF9290, 0x8017E850)
+        jal     pokemon_variant_sfx
+        sw      a3, 0x0018(sp)              // original line 2
+        OS.patch_end()
+        // 0x139 Blastoise
+        OS.patch_start(0xFB3CC, 0x8018098C)
+        jal     pokemon_variant_sfx
+        sw      a3, 0x0018(sp)              // original line 2
+        OS.patch_end()
+        // 0x13A Chansey
+        OS.patch_start(0xFBC10, 0x801811D0)
+        jal     pokemon_variant_sfx
+        sw      a3, 0x0018(sp)              // original line 2
+        OS.patch_end()
+        // 0x135 Koffing
+        OS.patch_start(0xFD934, 0x80182EF4)
+        jal     pokemon_variant_sfx
+        addiu   a0, r0, 0x0135              // original line 2
+        OS.patch_end()
+        // 0x13C Clefairy
+        OS.patch_start(0xFE1B4, 0x80183774)
+        jal     pokemon_variant_sfx
+        addiu   a0, r0, 0x013C              // original line 2
+        OS.patch_end()
+        // 0x229 Saffron Venusaur
+        OS.patch_start(0xFEB7C, 0x8018413C)
+        jal     pokemon_variant_sfx
+        sw      a3, 0x002C(sp)              // original line 2
+        OS.patch_end()
+        // 0x228 Saffron Charmander
+        OS.patch_start(0xFF240, 0x80184800)
+        jal     pokemon_variant_sfx
+        sw      a3, 0x002C(sp)              // original line 2
+        OS.patch_end()
+        // 0x22A Saffron Chansey
+        OS.patch_start(0xF70AC, 0x8017C66C)
+        jal     pokemon_variant_sfx
+        sw      v1, 0x0024(sp)              // original line 2
+        OS.patch_end()
+
+        // v0 and t6 are safe, a0 = current pokemon's fgm_id
+
+        addiu   sp, sp,-0x0030              // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+
+        li      t6, Toggles.entry_pokemon_voices
+        lw      t6, 0x0004(t6)              // t6 = 0 if DEFAULT, 1 if JAPANESE, 2 if RANDOM
+        beqz    t6, _play_poke_voice        // if DEFAULT, then use original sound
+        sltiu   t6, t6, 2                   // t6 = 1 if JAPANESE
+        bnez    t6, _japanize               // branch accordingly
+        nop
+        // if we're here, it is set to 'RANDOM'
+        li      t6, 0x800A0578              // t6 = address of RNG value (used by 'get_random_int_alt_')
+        lw      t6, 0x0000(t6)              // t6 = RNG value (ends in 0 or 8)
+        andi    t6, t6, 0x8                 // ~
+        beqz    t6, _play_poke_voice        // 50% chance of remaining English
+        nop
+
+        _japanize:
+        // if we're here, we swap for the corresponding Japanese SFX
+        lli     t6, FGM.pokemon.u.SNORLAX_1       // t6 = SNORLAX_1 U fgm_id
+        beql    t6, a0, _play_poke_voice
+        lli     a0, FGM.pokemon.j.SNORLAX_1       // a0 = SNORLAX_1 J fgm_id
+        lli     t6, FGM.pokemon.u.SNORLAX_2       // t6 = SNORLAX_2 U fgm_id
+        beql    t6, a0, _play_poke_voice
+        lli     a0, FGM.pokemon.j.SNORLAX_2       // a0 = SNORLAX_2 J fgm_id
+        lli     t6, FGM.pokemon.u.GOLDEEN         // t6 = GOLDEEN U fgm_id (0x143)
+        beql    t6, a0, _play_poke_voice
+        lli     a0, FGM.pokemon.j.GOLDEEN         // a0 = GOLDEEN J fgm_id
+        lli     t6, FGM.pokemon.u.BLASTOISE       // t6 = BLASTOISE U fgm_id
+        beql    t6, a0, _play_poke_voice
+        lli     a0, FGM.pokemon.j.BLASTOISE       // a0 = BLASTOISE J fgm_id
+        lli     t6, FGM.pokemon.u.CHANSEY         // t6 = CHANSEY U fgm_id
+        beql    t6, a0, _play_poke_voice
+        lli     a0, FGM.pokemon.j.CHANSEY         // a0 = CHANSEY J fgm_id
+        lli     t6, FGM.pokemon.u.KOFFING         // t6 = KOFFING U fgm_id
+        beql    t6, a0, _play_poke_voice
+        lli     a0, FGM.pokemon.j.KOFFING         // a0 = KOFFING J fgm_id
+        lli     t6, FGM.pokemon.u.CLEFAIRY        // t6 = CLEFAIRY U fgm_id
+        beql    t6, a0, _play_poke_voice
+        lli     a0, FGM.pokemon.j.CLEFAIRY        // a0 = CLEFAIRY J fgm_id
+        lli     t6, FGM.pokemon.u.SAF_VENUSAUR    // t6 = SAF_VENUSAUR U fgm_id
+        beql    t6, a0, _play_poke_voice
+        lli     a0, FGM.pokemon.j.SAF_VENUSAUR    // a0 = SAF_VENUSAUR J fgm_id
+        lli     t6, FGM.pokemon.u.SAF_CHARMANDER  // t6 = SAF_CHARMANDER U fgm_id
+        beql    t6, a0, _play_poke_voice
+        lli     a0, FGM.pokemon.j.SAF_CHARMANDER  // a0 = SAF_CHARMANDER J fgm_id
+        lli     t6, FGM.pokemon.u.SAF_CHANSEY     // t6 = SAF_CHANSEY U fgm_id
+        beql    t6, a0, _play_poke_voice
+        lli     a0, FGM.pokemon.j.CHANSEY         // a0 = CHANSEY J fgm_id
+
+        _play_poke_voice:
+        jal     0x800269C0                  // original line 1 (play fgm)
+        nop
+
+        lw      ra, 0x0004(sp)              // restore registers
+        addiu   sp, sp, 0x0030              // deallocate stack space
+        jr      ra                          // return
+        nop
+    }
+
+    // @ Description
+    // Item Containers Spawn
+    // Handles disabling item containers (Crates, Barrels, Capsules)
+    // Note: Eggs are (almost) always enabled for Chansey
+    // container bit of mask is crate (1) + barrel (2) + capsule (4) + egg (8)
+    scope item_containers_spawn_toggle: {
+        OS.patch_start(0xE99A4, 0x8016EF64)
+        j       item_containers_spawn_toggle
+        lw      a2, 0x000C(t2)              // original line 1
+        _return:
+        OS.patch_end()
+
+        // a2 = item mask, t2 is nearby address of item mask, v0 is safe
+        li      a3, Global.current_screen   // a3 = address of current screen
+        lbu     a3, 0x0000(a3)              // a3 = current screen
+        addiu   a3, a3, -Global.screen.VS_BATTLE // a3 = 0 if vs mode
+        bnezl   a3, _end                    // skip if screen_id != vs mode
+        nop
+        beqzl   a2, _end                    // safety branch if vs item mask is empty (shouldn't happen)
+        nop
+
+        li      t3, Toggles.entry_item_containers
+        lw      t3, 0x0004(t3)              // t3 = entry_item_containers (0 if DEFAULT, 1 if OFF, 2 if NO_EXPLODE, 3 if ALL_EXPLODE)
+        beqzl   t3, _update_mask            // branch if DEFAULT
+        ori     t3, a2, 0x000F              // enable barrels, capsules, etc.
+        slti    t3, t3, 2                   // t3 = 0 if not OFF
+        beqzl   t3, _update_mask            // based on the value, use appropriate container mask
+        ori     t3, a2, 0x000F              // enable barrels, capsules, etc.
+
+        andi    t3, a2, 0xFFFF0             // disable barrels, capsules, etc.
+        // check if current stage is a Yoshi Island variant, which use eggs instead of capsules
+        li      a2, Global.match_info
+        lw      a2, 0x0000(a2)              // a2 = match info
+        lbu     a2, 0x0001(a2)              // a2 = current stage ID
+        lli     v0, Stages.id.YOSHIS_ISLAND // a2 = Stages.id.YOSHIS_ISLAND
+        beq     a2, v0, _update_mask
+        lli     v0, Stages.id.YOSHI_ISLAND_DL
+        beq     a2, v0, _update_mask
+        lli     v0, Stages.id.YOSHI_ISLAND_O
+        beq     a2, v0, _update_mask
+        lli     v0, Stages.id.MINI_YOSHIS_ISLAND
+        beq     a2, v0, _update_mask
+        lli     v0, Stages.id.YOSHI_STORY_2
+        beq     a2, v0, _update_mask
+        lli     v0, Stages.id.YOSHIS_ISLAND_II
+        beq     a2, v0, _update_mask
+        lli     v0, Stages.id.YOSHIS_ISLAND_MELEE
+        beq     a2, v0, _update_mask
+        nop
+
+        // if we're here, include eggs (current stage is not Yoshi Island)
+        ori     t3, t3, 0x00008             // egg (8) is left enabled
+
+        _update_mask:
+        sh      t3, 0x000E(t2)              // save updated mask
+
+        _end:
+        lui     t3, 0x8013                  // original line 2
+        j       _return                     // return
+        lw      a2, 0x000C(t2)              // original line 1
+    }
+
+    // @ Description
+    // Item Containers Explosion Toggle
+    // Handles random explosiveness of item containers (Crates, Barrels, Capsules, Eggs)
+    // Note: the contents of the containers don't change, just whether or not they blow up
+    // 0 if DEFAULT, 1 if OFF, 2 if NO_EXPLODE, 3 if ALL_EXPLODE
+    scope item_containers_explosions: {
+        OS.patch_start(0xF40EC, 0x801796AC)
+        j       item_containers_explosions.crate_hit
+        nop
+        OS.patch_end()
+        // a0, at are safe
+        crate_hit:
+        jal     _check_container_toggle
+        nop
+        // check the explosion flag and branch accordingly
+        beqz    v0, pc() + 16             // if v0 = 0, the container explodes
+        nop
+        j       0x801796B4                // return (no explode)
+        nop
+        j       0x801796BC                // original line 1, modified to jump (explode)
+        nop
+
+        OS.patch_start(0xF4290, 0x80179850)
+        j       item_containers_explosions.crate_throw
+        nop
+        OS.patch_end()
+        crate_throw:
+        jal     _check_container_toggle
+        nop
+        // check the explosion flag and branch accordingly
+        beqz    v0, pc() + 16             // if v0 = 0, the container explodes
+        nop
+        j       0x80179858                // return (no explode)
+        nop
+        j       0x80179860                // original line 1, modified to jump (explode)
+        nop
+
+        // @ Description
+        // Allow crates to play explosion SFX when thrown
+        // Note: normally they don't blow up without collision? (or it just doesn't play)
+        OS.patch_start(0xF4038, 0x801795F8)
+        j       item_containers_explosions.crate_throw_sfx
+        nop
+        crate_throw_sfx_return:
+        OS.patch_end()
+
+        crate_throw_sfx:
+        li      a0, Toggles.entry_item_containers
+        lw      a0, 0x0004(a0)            // a0 = entry_item_containers (0 if DEFAULT, 1 if OFF, 2 if NO_EXPLODE, 3 if ALL_EXPLODE)
+        slti    a0, a0, 3                 // at = 1 if not ALL_EXPLODE
+        beqzl   a0, pc() + 12             // based on the toggle, pick the appropriate sound effect
+        addiu   a0, r0, 0x0001            // a0 = explode fgm_id
+        addiu   a0, r0, 0x003C            // original line 2 (crate open 2 fgm_id)
+        jal     0x800269C0                // original line 1 (play sound)
+        nop
+        j       crate_throw_sfx_return
+        nop
+
+        OS.patch_start(0xEEA44, 0x80174004)
+        j       item_containers_explosions.capsule_hit
+        nop
+        OS.patch_end()
+        capsule_hit:
+        jal     _check_container_toggle
+        nop
+        // check the explosion flag and branch accordingly
+        beqz    v0, pc() + 16             // if v0 = 0, the container explodes
+        nop
+        j       0x8017400C                // return (no explode)
+        nop
+        j       0x80174014                // original line 1, modified to jump (explode)
+        nop
+
+        OS.patch_start(0xEEBC4, 0x80174184)
+        j       item_containers_explosions.capsule_throw
+        nop
+        OS.patch_end()
+        capsule_throw:
+        jal     _check_container_toggle
+        nop
+        // check the explosion flag and branch accordingly
+        beqz    v0, pc() + 16             // if v0 = 0, the container explodes
+        nop
+        j       0x8017418C                // return (no explode)
+        nop
+        j       0x80174194                // original line 1, modified to jump (explode)
+        nop
+
+        OS.patch_start(0xF468C, 0x80179C4C)
+        j       item_containers_explosions.barrel_roll
+        nop
+        OS.patch_end()
+
+        barrel_roll:
+        jal     _check_container_toggle
+        nop
+        // check the explosion flag and branch accordingly
+        beqz    v0, pc() + 16             // if v0 = 0, the container explodes
+        nop
+        j       0x80179C54                // return (no explode)
+        nop
+        j       0x80179C5C                // original line 1, modified to jump (explode)
+        nop
+
+        OS.patch_start(0xFC090, 0x80181650)
+        j       item_containers_explosions.egg_hit
+        lw      a1, 0x0018(sp)            // original line 2
+        OS.patch_end()
+        egg_hit:
+        jal     _check_container_toggle
+        nop
+        // check the explosion flag and branch accordingly
+        beqz    v0, pc() + 16             // if v0 = 0, the container explodes
+        nop
+        j       0x80181658                // return (no explode)
+        nop
+        j       0x8018166C                // original line 1, modified to jump (explode)
+        nop
+
+        OS.patch_start(0xFC25C, 0x8018181C)
+        j       item_containers_explosions.egg_toss
+        lw      t6, 0x0018(sp)            // original line 2
+        OS.patch_end()
+        egg_toss:
+        jal     _check_container_toggle
+        nop
+        // check the explosion flag and branch accordingly
+        beqz    v0, pc() + 16             // if v0 = 0, the container explodes
+        nop
+        j       0x80181824                // return (no explode)
+        nop
+        j       0x80181838                // original line 1, modified to jump (explode)
+        nop
+
+        // shared toggle check function to save some lines of code
+        _check_container_toggle:
+        li      a0, Toggles.entry_item_containers
+        lw      a0, 0x0004(a0)              // a0 = entry_item_containers (0 if DEFAULT, 1 if OFF, 2 if NO_EXPLODE, 3 if ALL_EXPLODE)
+        slti    at, a0, 2                   // at = 1 if DEFAULT or OFF...
+        bnez    at, _check_return           // ...in which case we follow original logic
+        nop
+        // otherwise we force it to explode or not explode based on the toggle
+        andi    a0, a0, 1                   // v0 = 1 (triggers explosion) or 0 (does not explode)
+        xori    v0, a0, 1                   // flip flag
+        _check_return:
+        jr      ra                          // return
+        nop
+    }
+
 }
 
 } // __ITEM__

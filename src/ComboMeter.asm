@@ -18,6 +18,7 @@ scope ComboMeter {
     constant X_COORDS_POINTER(0x80131588)
     constant COMBO_METER_X_OFFSET(0xC234)        // -45
     constant COMBO_METER_Y_COORD(0x4327)         // 167
+    constant DK_COMBO_METER_Y_COORD(0x4248)      // 50 (for Dragon King HUD)
     constant COMBO_METER_NUMBERS_OFFSET(0x4280)  // 64
     constant COMBO_METER_NUMBER_OFFSET(0x4110)   // 9
 
@@ -79,11 +80,12 @@ scope ComboMeter {
     dw      0x00000000
 
     // @ Description
-    // This maps team_id to offsets.
+    // This maps team_id to offsets. Must be manually updated for new teams (like yellow is below)
     team_offset_table:
     dw      TEXT_OFFSET_R - 0x10, NUMBER_OFFSET_R - 0x10
     dw      TEXT_OFFSET_B - 0x10, NUMBER_OFFSET_B - 0x10
     dw      TEXT_OFFSET_G - 0x10, NUMBER_OFFSET_G - 0x10
+    dw      TEXT_OFFSET_Y - 0x10, NUMBER_OFFSET_Y - 0x10
 
     // @ Description
     // This macro creates a combo struct for the given port
@@ -592,6 +594,28 @@ scope ComboMeter {
         // If combo meter is off, skip to _end and don't draw hit counts
         Toggles.guard(Toggles.entry_combo_meter, _toggle_off)
 
+        // Determine Y coord
+        lui     a1, COMBO_METER_Y_COORD
+        Toggles.read(entry_dragon_king_hud, t7) // t7 = 2 if off
+        lli     t6, 0x0002                  // t6 = 2 = off always
+        beq     t7, t6, _save_y_coord       // if off, skip
+        lli     t6, 0x0001                  // t6 = 1 = always on
+        beql    t7, t6, _save_y_coord       // if on, use Dragon King position
+        lui     a1, DK_COMBO_METER_Y_COORD  // at = Y position, lowered
+
+        // if here, check if on a Dragon King stage
+        OS.read_word(Global.match_info, t7)
+        lbu     t7, 0x0001(t7)              // t7 = stage_id
+        lli     t6, Stages.id.DRAGONKING
+        beql    t7, t6, _save_y_coord       // if Dragon King, use Dragon King position
+        lui     a1, DK_COMBO_METER_Y_COORD  // at = Y position, lowered
+        lli     t6, Stages.id.DRAGONKING_REMIX
+        beql    t7, t6, _save_y_coord       // if Dragon King Remix, use Dragon King position
+        lui     a1, DK_COMBO_METER_Y_COORD  // at = Y position, lowered
+
+        _save_y_coord:
+        sw      a1, 0x000C(sp)              // save y coord
+
         // First, load the combo textures file
         li      a1, file_address            // a1 = file_address (array of file RAM addresses to use for later referencing)
         jal     Render.load_file_
@@ -689,7 +713,7 @@ scope ComboMeter {
 
         lw      a1, 0x0018(s1)              // a1 = P{s0}_COMBO_METER_X_COORD
         sw      a1, 0x0058(v0)              // set X position
-        lui     a1, COMBO_METER_Y_COORD
+        lw      a1, 0x000C(sp)              // a1 = Y position
         sw      a1, 0x005C(v0)              // set Y position
         lli     a1, 0x0201
         sh      a1, 0x0024(v0)              // turn on blur
@@ -709,7 +733,7 @@ scope ComboMeter {
         add.s   f4, f4, f6                  // f4 = P{s0}_COMBO_METER_X_COORD + COMBO_METER_NUMBERS_OFFSET
         mfc1    s4, f4                      // s4 = X position
         sw      s4, 0x0058(v0)              // set X position
-        lui     a1, COMBO_METER_Y_COORD
+        lw      a1, 0x000C(sp)              // a1 = Y position
         sw      a1, 0x005C(v0)              // set Y position
         lli     a1, 0x0201
         sh      a1, 0x0024(v0)              // turn on blur
@@ -728,7 +752,7 @@ scope ComboMeter {
         add.s   f4, f4, f6                  // f4 = X position of 1st digit + COMBO_METER_NUMBER_OFFSET
         mfc1    s4, f4                      // s4 = X position
         sw      s4, 0x0058(v0)              // set X position
-        lui     a1, COMBO_METER_Y_COORD
+        lw      a1, 0x000C(sp)              // a1 = Y position
         sw      a1, 0x005C(v0)              // set Y position
         lli     a1, 0x0201
         sh      a1, 0x0024(v0)              // turn on blur
@@ -747,7 +771,7 @@ scope ComboMeter {
         add.s   f4, f4, f6                  // f4 = X position of 1st digit + COMBO_METER_NUMBER_OFFSET
         mfc1    s4, f4                      // s4 = X position
         sw      s4, 0x0058(v0)              // set X position
-        lui     a1, COMBO_METER_Y_COORD
+        lw      a1, 0x000C(sp)              // a1 = Y position
         sw      a1, 0x005C(v0)              // set Y position
         lli     a1, 0x0201
         sh      a1, 0x0024(v0)              // turn on blur

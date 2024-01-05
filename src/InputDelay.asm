@@ -99,9 +99,10 @@ scope InputDelay {
         lli     t0, 0x000A                      // restore t0
 
         _end:
-        sh      t8, 0x0000(v0)                  // original line 1
+        // sh      t8, 0x0000(v0)                  // original line 1 (moved to 'DpadFunctions.css_dpad_cursor_control_')
+        // sh      t9, 0x0002(v0)                  // original line 2 (moved to 'DpadFunctions.css_dpad_cursor_control_')
         jr      ra
-        sh      t9, 0x0002(v0)                  // original line 2
+        nop
 
         // controller struct buffer for 12 frames
         // frame MAX_FRAMES, frame MAX_FRAMES - 1, frame MAX_FRAMES - 2, ...frame 1

@@ -36,7 +36,7 @@ scope Costumes {
         if ({type} & part_type.PRIM_COLOR != 0) {
             part_0x{part_id}_0_prim_color_array:
             constant PART_0x{part_id}_0_PRIM_COLOR_ARRAY(origin())
-            fill NUM_EXTRA_COSTUMES * 4
+            fill NUM_EXTRA_COSTUMES * 8
         }
         if ({type} & part_type.TEXTURE_ARRAY != 0) {
             part_0x{part_id}_0_texture_array_array:
@@ -125,7 +125,7 @@ scope Costumes {
         if ({type} & part_type.PRIM_COLOR != 0) {
             part_0x{part_id}_0_0_prim_color_array:
             constant PART_0x{part_id}_0_0_PRIM_COLOR_ARRAY(origin())
-            fill NUM_EXTRA_COSTUMES * 4
+            fill NUM_EXTRA_COSTUMES * 8
         }
         if ({type} & part_type.TEXTURE_ARRAY != 0) {
             part_0x{part_id}_0_0_texture_array_array:
@@ -198,7 +198,7 @@ scope Costumes {
         if ({type} & part_type.PRIM_COLOR != 0) {
             part_0x{part_id}_{special_part_index}_0_prim_color_array:
             constant PART_0x{part_id}_{special_part_index}_0_PRIM_COLOR_ARRAY(origin())
-            fill NUM_EXTRA_COSTUMES * 4
+            fill NUM_EXTRA_COSTUMES * 8
         }
         if ({type} & part_type.TEXTURE_ARRAY != 0) {
             part_0x{part_id}_{special_part_index}_0_texture_array_array:
@@ -265,7 +265,7 @@ scope Costumes {
         if ({type} & part_type.PRIM_COLOR != 0) {
             part_0x{part_id}_{image_index}_prim_color_array:
             constant PART_0x{part_id}_{image_index}_PRIM_COLOR_ARRAY(origin())
-            fill NUM_EXTRA_COSTUMES * 4
+            fill NUM_EXTRA_COSTUMES * 8
         }
         if ({type} & part_type.TEXTURE_ARRAY != 0) {
             part_0x{part_id}_{image_index}_texture_array_array:
@@ -322,7 +322,7 @@ scope Costumes {
         if ({type} & part_type.PRIM_COLOR != 0) {
             part_0x{part_id}_{special_part_index}_{image_index}_prim_color_array:
             constant PART_0x{part_id}_{special_part_index}_{image_index}_PRIM_COLOR_ARRAY(origin())
-            fill NUM_EXTRA_COSTUMES * 4
+            fill NUM_EXTRA_COSTUMES * 8
         }
         if ({type} & part_type.TEXTURE_ARRAY != 0) {
             part_0x{part_id}_{special_part_index}_{image_index}_texture_array_array:
@@ -423,7 +423,23 @@ scope Costumes {
     macro set_prim_color_for_part(extra_costume_id, part_id, image_index, prim_color) {
         pushvar base, origin
 
-        origin PART_0x{part_id}_{image_index}_PRIM_COLOR_ARRAY + ({extra_costume_id} * 4)
+        origin PART_0x{part_id}_{image_index}_PRIM_COLOR_ARRAY + ({extra_costume_id} * 8)
+        dw {prim_color}
+
+        pullvar origin, base
+    }
+
+    // @ Description
+    // Sets prim color for the given lo poly costume, part and image index.
+    // @ Arguments
+    // extra_costume_id - extra costume ID, zero-based
+    // part_id - part ID
+    // image_index - image index, 0 based
+    // prim_color - prim color (0xRRGGBBAA)
+    macro set_prim_color_for_part_lo(extra_costume_id, part_id, image_index, prim_color) {
+        pushvar base, origin
+
+        origin PART_0x{part_id}_{image_index}_PRIM_COLOR_ARRAY + ({extra_costume_id} * 8) + 4
         dw {prim_color}
 
         pullvar origin, base
@@ -515,7 +531,7 @@ scope Costumes {
     macro set_prim_color_for_special_part(extra_costume_id, part_id, special_part_index, image_index, prim_color) {
         pushvar base, origin
 
-        origin PART_0x{part_id}_{special_part_index}_{image_index}_PRIM_COLOR_ARRAY + ({extra_costume_id} * 4)
+        origin PART_0x{part_id}_{special_part_index}_{image_index}_PRIM_COLOR_ARRAY + ({extra_costume_id} * 8)
         dw {prim_color}
 
         pullvar origin, base
@@ -683,16 +699,8 @@ scope Costumes {
         bnel    at, r0, _end                // if (costume_id < num_costumes)
         addiu   v0, v0, 0x0001              // then, costume_id ++
 
-        or      v0, r0, r0                  // else, v0 = 0
-
-        lw      a0, 0x0008(s0)              // a0 = player object
-        lw      a0, 0x0084(a0)              // a0 = player struct
-        lw      a1, 0x0008(a0)              // a1 = char_id
-        lli     at, Character.id.SONIC      // at = Character.id.SONIC
-        beq     a1, at, _sonic              // branch if Sonic
-        nop
         b       _end                        // end
-        nop
+        or      v0, r0, r0                  // else, v0 = 0
 
         _left:
         addu    t2, t1, t3                  // t2 = costume_id of last original costume
@@ -703,16 +711,8 @@ scope Costumes {
         bgtz    v0, _end                    // if (costume_id > 0)
         addiu   v0, v0,-0x0001              // then, v0--
 
-        or      v0, t4, r0                  // else, v0 = last costume_id
-
-        lw      a0, 0x0008(s0)              // a0 = player object
-        lw      a0, 0x0084(a0)              // a0 = player struct
-        lw      a1, 0x0008(a0)              // a1 = char_id
-        lli     at, Character.id.SONIC      // at = Character.id.SONIC
-        beq     a1, at, _sonic              // branch if Sonic
-        nop
         b       _end                        // end
-        nop
+        or      v0, t4, r0                  // else, v0 = last costume_id
 
         // change tint
         _up:
@@ -736,6 +736,55 @@ scope Costumes {
         lw      a0, 0x0008(s0)              // a0 = player object
         b       _finish
         nop
+
+        _end:
+        lw      a0, 0x0008(s0)              // a0 = player object
+        addu    a1, v0, r0                  // a1 = costume_id
+
+        // if Sonic, may need to change model
+        lw      at, 0x0084(a0)              // at = player struct
+        lw      at, 0x0008(at)              // at = char_id
+        lli     a2, Character.id.SONIC      // a2 = id.SONIC
+        bne     at, a2, _determine_screen   // if not Sonic, skip
+        lw      at, 0x0018(sp)              // at = direction pressed (up = 0, right = 1, down = 2, left = 3)
+
+        // if we're here, we need may need to update the costume
+        andi    t0, at, 0x0001              // t0 = 0 if up/down, 1 if right/left
+        beqz    t0, _determine_screen       // if shade was changed, skip
+        andi    t0, at, 0b0010              // t0 = 0 if right, 1 if left
+
+        // If VS teams, we always need to change model.
+        // Otherwise, we change if:
+        //  - right was pressed and we are at costume 0, or
+        //  - left was pressed and we were at costume 0
+
+        // Check if VS Teams
+        li      at, 0x80137F3C              // at = ra for vs
+        bne     at, ra, _sonic_right_check  // if we're not in vs, then skip teams check
+        lui     at, 0x8014
+        lw      at, 0xBDA8(at)              // at = 0 if FFA, 1 for Team Battle
+        beqz    at, _sonic_right_check      // if not teams, skip
+        nop
+
+        b       _sonic                      // branch to sonic case to switch models
+        lw      a0, 0x0084(a0)              // a0 = player struct
+
+        _sonic_right_check:
+        bnezl   t0, _sonic_left_check       // if left was pressed, do left check
+        lw      at, 0x0084(a0)              // at = player struct
+        bnez    v0, _determine_screen       // if right was pressed but we didn't cycle to 0, skip
+        nop
+
+        b       _sonic                      // branch to sonic case to switch models
+        lw      a0, 0x0084(a0)              // a0 = player struct
+
+        _sonic_left_check:
+        lbu     at, 0x0010(at)              // at = current costume_id
+        bnez    at, _determine_screen       // if left was pressed but we didn't cycle from 0, skip
+        nop
+
+        b       _sonic                      // branch to sonic case to switch models
+        lw      a0, 0x0084(a0)              // a0 = player struct
 
         _sonic:
         lbu     a0, 0x000D(a0)              // a0 = player port
@@ -793,11 +842,9 @@ scope Costumes {
         sw      at, 0x0000(a1)              // update px select_anim_frame
         lw      a0, 0x0008(s0)              // a0 = player object
         sw      at, 0x0078(a0)              // set current animation frame
-
-        _end:
-        lw      a0, 0x0008(s0)              // a0 = player object
         addu    a1, v0, r0                  // a1 = costume_id
 
+        _determine_screen:
         li      at, 0x80136B68              // at = ra for 1p
         beq     at, ra, _1p_or_bonus_2      // if we're in 1p, then skip next part
         nop
@@ -814,17 +861,26 @@ scope Costumes {
         beqz    at, _store_costume          // if FFA, continue normally
         lw      at, 0x0048(s0)              // at = char_id
         lli     a2, Character.id.SONIC      // a2 = id.SONIC
-        bnel    at, a2, _store_costume      // if not Sonic, then don't allow updating the costume
+        bne     at, a2, _store_costume      // if not Sonic, then skip
         lw      v0, 0x004C(s0)              // v0 = current costume_id
 
-        // if we're here, we need may need to update the costume
-        lw      at, 0x004C(s0)              // at = current costume_id
-        beq     v0, at, _store_costume      // if the costumes match, shade was changed, so skip
-        or      v0, at, r0                  // v0 = current costume_id
-        b       _sonic                      // branch to sonic case to switch models
-        lw      a0, 0x0084(a0)              // a0 = player struct
+        // Check if yellow team
+        lw      at, 0x0040(s0)              // at = team_id
+        addiu   at, at, -0x0003             // at = 0 if yellow team
+        bnez    at, _store_costume          // if not yellow team, skip
+        lw      at, 0x0084(a0)              // at = player struct
+        lbu     at, 0x000D(at)              // at = player port
+
+        // Yellow team fix
+        li      t0, Sonic.classic_table     // t0 = classic_table
+        addu    at, at, t0                  // at = classic_table + port
+        lbu     at, 0x0000(at)              // at = px is_classic
+        lli     v0, 0x0005                  // v0 = modern Sonic's yellow costume
+        bnezl   at, _store_costume          // if classic yellow, use different costume
+        lli     v0, 0x0001                  // v0 = classic Sonic's yellow costume
 
         _store_costume:
+        addu    a1, v0, r0                  // a1 = costume_id
         sw      v0, 0x004C(s0)              // store updated costume_id
 
         li      at, 0x80135620              // at = ra for training
@@ -923,14 +979,16 @@ scope Costumes {
         db 0x05                             // Sonic
         db 0x05                             // Sandbag
         db 0x05                             // Super Sonic
-        db 0x05                             // Classic Sonic
         db 0x05                             // Sheik
         db 0x05                             // Marina
         db 0x05                             // Dedede
         db 0x05                             // Goemon
         db 0x05                             // Peppy
         db 0x05                             // Slippy
-
+        db 0x06                             // Banjo
+        db 0x05                             // Metal Luigi
+        db 0x06                             // Ebisumaru
+        db 0x05                             // Dragon King
         // Polygons
         db 0x05                             // Polygon Wario
         db 0x05                             // Polygon Lucas
@@ -939,8 +997,17 @@ scope Costumes {
         db 0x05                             // Polygon Dr. Mario
         db 0x05                             // Polygon Sonic
         db 0x05                             // Polygon Sheik
+        db 0x05                             // Polygon Marina
         db 0x05                             // Polygon Falco
         db 0x05                             // Polygon Ganondorf
+        db 0x05                             // Polygon Dark Samus
+        db 0x05                             // Polygon Marth
+        db 0x05                             // Polygon Mewtwo
+        db 0x05                             // Polygon Dedede
+        db 0x05                             // Polygon Young Link
+        db 0x05                             // Polygon Goemon
+        db 0x05                             // Polygon Conker
+        db 0x05                             // Polygon Banjo
         OS.align(4)
 
         functions:
@@ -1247,12 +1314,20 @@ scope Costumes {
 
         // get the unique ID for this "image"
         lw      at, 0x003C(sp)                  // at = ra for routine hooked into
+        li      t6, 0x800E6B20                  // t6 = ra for showing withheld part
+        beql    at, t6, _get_part_id_withheld   // if a withheld part being shown, get from stack
+        lw      t8, 0x007C(sp)                  // t8 = address of part_id, unadjusted
         li      t6, 0x800C8FD8                  // t6 = ra for when parts array is first initialized
         bnel    at, t6, _get_part_id            // if not initializing, then we can calculate from the array list
         addiu   t6, t1, 0x08F8                  // t6 = part array
 
         b       _get_images_array               // otherwise, it's in the stack already
         lw      t8, 0x0034(sp)                  // t8 = unique part ID
+
+        _get_part_id_withheld:
+        lw      t8, 0x0000(t8)                  // t8 = part_id + 4
+        b       _get_images_array
+        addiu   t8, t8, -0x0004                 // t8 = unique part ID
 
         _get_part_id:
         beqzl   t7, _loop                       // if not a special part with 0x3E9 as the object ID, skip to looping the parts array
@@ -1355,11 +1430,22 @@ scope Costumes {
         nop
 
         lw      t3, 0x0004(t6)                  // t3 = image's prim color array
-        sll     at, t5, 0x0002                  // at = offset in costume table array for part
-        addu    t3, t3, at                      // t3 = part array for costume address
-        lw      t3, 0x0000(t3)                  // t3 = part array for costume
+        sll     at, t5, 0x0003                  // at = offset in prim color array for costume
+        addu    t3, t3, at                      // t3 = prim color array for costume address
+        lbu     t2, 0x000E(t1)                  // t2 = 2 if lo poly
+        lli     at, 0x0002                      // at = 2 (lo poly)
+        bnel    t2, at, _set_prim_color         // if not lo poly, skip
+        lw      t3, 0x0000(t3)                  // t3 = prim color array for costume
 
-        sw      t3, 0x0058(s0)                  //
+        lw      t2, 0x0004(t3)                  // t2 = prim color array for lo poly costume
+        beqzl   t2, _set_prim_color             // if lo poly is not set, use hi poly
+        lw      t3, 0x0000(t3)                  // t3 = prim color array for costume
+
+        // otherwise use lo poly color
+        or      t3, t2, r0                      // t3 = lo poly prim color
+
+        _set_prim_color:
+        sw      t3, 0x0058(s0)                  // set prim color
 
         _diffuse_ambient:
         andi    at, t0, 0x3000                  // at = 0 if not diffuse/ambient
@@ -1505,6 +1591,46 @@ scope Costumes {
     include "costumes/Fox.asm"
     include "costumes/Pikachu.asm"
     include "costumes/Jigglypuff.asm"
+
+    include "costumes/Ganondorf.asm"
+    include "costumes/YoungLink.asm"
+    include "costumes/DarkSamus.asm"
+    include "costumes/Wolf.asm"
+    include "costumes/Conker.asm"
+    include "costumes/Sheik.asm"
+    include "costumes/Goemon.asm"
+    include "costumes/Slippy.asm"
+
+    include "costumes/NMario.asm"
+    include "costumes/NFox.asm"
+    include "costumes/NDK.asm"
+    include "costumes/NSamus.asm"
+    include "costumes/NLuigi.asm"
+    include "costumes/NLink.asm"
+    include "costumes/NYoshi.asm"
+    include "costumes/NCaptain.asm"
+    include "costumes/NKirby.asm"
+    include "costumes/NPikachu.asm"
+    include "costumes/NJiggly.asm"
+    include "costumes/NNess.asm"
+    include "costumes/NGanondorf.asm"
+    include "costumes/NFalco.asm"
+    include "costumes/NDrMario.asm"
+    include "costumes/NDSamus.asm"
+    include "costumes/NWario.asm"
+    include "costumes/NLucas.asm"
+    include "costumes/NBowser.asm"
+    include "costumes/NWolf.asm"
+    include "costumes/NMewtwo.asm"
+    include "costumes/NMarth.asm"
+    include "costumes/NSonic.asm"
+    include "costumes/NSheik.asm"
+    include "costumes/NMarina.asm"
+    include "costumes/NDedede.asm"
+    include "costumes/NYoungLink.asm"
+    include "costumes/NConker.asm"
+    include "costumes/NGoemon.asm"
+    include "costumes/NBanjo.asm"
 
     // @ Description
     // Revises attribute location within main file to adjust for Polygon Characters and Metal Mario's new costumes

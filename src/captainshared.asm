@@ -52,6 +52,21 @@ scope CaptainShared {
     OS.copy_segment(0xA9AF8, 0x0008)
     dw  Size.falcon.punch.render_routine_
     OS.copy_segment(0xA9B04, 0x0010)
+    
+    kick_anim_struct_DRAGONKING:
+    dw  0x060F0000
+    dw  Character.DRAGONKING_file_7_ptr
+    OS.copy_segment(0xA9ACC, 0x08)
+    dw  Size.falcon.kick.update_routine_    // scales gfx based on size
+    OS.copy_segment(0xA9AD8, 0x14)
+    
+    punch_anim_struct_DRAGONKING:
+    dw  0x020F0000
+    dw  Character.DRAGONKING_file_8_ptr
+    dw  0x501C0000
+    OS.copy_segment(0xA9AF8, 0x0008)
+    dw  Size.falcon.punch.render_routine_
+    OS.copy_segment(0xA9B04, 0x0010)
 
     // THIS WILL NEED UPDATED ON REIMPORT
     slash_anim_struct_WOLF:
@@ -80,6 +95,11 @@ scope CaptainShared {
     entry_anim_struct_JFALCON:
     dw  0x060A0000
     dw  Character.JFALCON_file_7_ptr
+    OS.copy_segment(0xA9EAC, 0x20)
+    
+    entry_anim_struct_DRAGONKING:
+    dw  0x060A0000
+    dw  Character.DRAGONKING_file_7_ptr
     OS.copy_segment(0xA9EAC, 0x20)
 
 	entry_anim_struct_BOWSER:
@@ -117,6 +137,11 @@ scope CaptainShared {
         nop
         ori     t1, r0, Character.id.JFALCON    // t1 = id.JFALCON
         li      a0, kick_anim_struct_JFALCON        // a0 = kick_anim_struct_JFALCON
+        beq     t0, t1, _end                // end if character id = JFALCON
+        nop
+        
+        ori     t1, r0, Character.id.DRAGONKING    // t1 = id.JFALCON
+        li      a0, kick_anim_struct_DRAGONKING        // a0 = kick_anim_struct_JFALCON
         beq     t0, t1, _end                // end if character id = JFALCON
         nop
 
@@ -186,6 +211,11 @@ scope CaptainShared {
         li      a0, punch_anim_struct_JFALCON // a0 = punch_anim_struct
         beq     t0, t1, _end                // end if character id = JFALCON
         nop
+        
+        ori     t1, r0, Character.id.DRAGONKING // t1 = id.JFALCON
+        li      a0, punch_anim_struct_DRAGONKING // a0 = punch_anim_struct
+        beq     t0, t1, _end                // end if character id = JFALCON
+        nop
         li      a0, 0x8012E2EC              // original line 1/3 (load falcon punch animation struct)
 
         _end:
@@ -220,6 +250,11 @@ scope CaptainShared {
 
 	    ori     t1, r0, Character.id.JFALCON    // t1 = id.JFALCON
         li      a0, entry_anim_struct_JFALCON       // a0 = entry_anim_struct_JFALCON
+        beq     t0, t1, _end                // end if character id = JFALCON
+        nop
+        
+        ori     t1, r0, Character.id.DRAGONKING    // t1 = id.JFALCON
+        li      a0, entry_anim_struct_DRAGONKING      // a0 = entry_anim_struct_JFALCON
         beq     t0, t1, _end                // end if character id = JFALCON
         nop
 
@@ -323,6 +358,9 @@ scope CaptainShared {
         beq     a1, at, _end                // end if character id = GND
         lw      v1, 0x0928(a0)              // v1 = falcon hand bone struct
         ori     at, r0, Character.id.JFALCON
+        beq     a1, at, _end                // end if character id = JFALCON
+        lw      v1, 0x0928(a0)              // v1 = falcon hand bone struct
+        ori     at, r0, Character.id.DRAGONKING
         beq     a1, at, _end                // end if character id = JFALCON
         lw      v1, 0x0928(a0)              // v1 = falcon hand bone struct
         ori     at, r0, Character.id.WOLF

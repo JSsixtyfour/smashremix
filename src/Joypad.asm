@@ -117,7 +117,7 @@ scope Joypad {
         sw      a3, 0x0010(sp)              // ~
         sw      t0, 0x0014(sp)              // ~
         sw      ra, 0x0018(sp)              // save registers
-        
+
         // player 1
         lw      a0, 0x0004(sp)              // a0 - button mask
         lli     a1, 0x0000                  // a1 - player
@@ -259,7 +259,7 @@ scope Joypad {
         // case 3: frames_held > 1 and frames_held < 28, return false
         sltiu   t1, t0, 000028              // if (frames_held < 28), t0 = OS.TRUE, else OS.FALSE
         bnez    t1, _end                    // end
-        lli     v0, OS.FALSE                // and return false 
+        lli     v0, OS.FALSE                // and return false
 
         // case 4: frames_held >= 28 and frames_held % 4 == 0, return true
         lli     t1, 0x0004                  // t1 = 4
@@ -284,11 +284,17 @@ scope Joypad {
     // Function to update how many frames a direction has been held (should be called once a frame)
     scope update_stick_: {
         constant ORIGINAL_INSTRUCTION(0x27BDFFD8) //addiu sp, sp, 0xFFD8
-    
+
         lli     a0, Joypad.DEADZONE         // a0 - min coordinate (deadzone)
         OS.save_registers()                 // allocate stack space, save registers
         addiu   sp, sp,-0x0008              // deallocate stack space
         sw      a0, 0x0004(sp)              // restore a0
+
+        OS.read_word(0x8003B6E4, t0)        // t0 = current frame
+        li      at, frame_checked
+        lw      t1, 0x0000(at)              // t1 = frame checked
+        beq     t0, t1, _end                // don't update if we already handled this frame
+        sw      t0, 0x0000(at)              // update frame checked to current frame
 
         // make sure the functions are in RAM
         li      t0, check_stick_x_          // ~
@@ -362,6 +368,9 @@ scope Joypad {
         OS.restore_registers()              // restore registers/deallocate stack space
         jr      ra                          // return
         nop
+
+        frame_checked:
+        dw 0
     }
 
     frames_held:

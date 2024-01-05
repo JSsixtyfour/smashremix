@@ -559,8 +559,15 @@ scope CharacterSelectDebugMenu {
 
         _get_current_page:
         sw      t0, 0x0084(a0)              // save max pages
-        lw      t0, 0x005C(a0)              // t0 = current page
-        lli     t1, 12                      // t1 = 12 (size of 3 pointers)
+        lw      t1, 0x005C(a0)              // t1 = current page
+        sltu    t0, t0, t1                  // t0 = 1 if current page > max pages
+        beqz    t0, _get_menu_items         // if current page <= max pages, skip
+        lw      t0, 0x0084(a0)              // t0 = max pages
+        sw      t0, 0x005C(a0)              // save max pages as current page
+        or      t1, t0, r0                  // t1 = current page, updated
+
+        _get_menu_items:
+        lli     t0, 12                      // t0 = 12 (size of 3 pointers)
         multu   t0, t1                      // t1 = offset to first menu item pointer for page
         mflo    t1                          // ~
         addu    at, at, t1                  // at = address of first menu item pointer for page
@@ -773,6 +780,13 @@ scope CharacterSelectDebugMenu {
         jal     Render.draw_string_
         lli     t8, 0x0001                  // t8 = blur (on)
 
+        lw      t0, 0x0014(sp)              // t0 = panel object
+        lw      t1, 0x0074(t0)              // t1 = panel image struct
+        lh      at, 0x0014(t1)              // at = panel width
+        addiu   a1, at, -0x0008             // a1 = max width
+        jal     Render.apply_max_width_
+        or      a0, v0, r0                  // a0 = string object
+
         lw      a0, 0x0010(sp)              // a0 = menu renderer object, offset by 0x4 based on menu item row
         sw      v0, 0x0030(a0)              // save reference to label object
 
@@ -825,14 +839,14 @@ scope CharacterSelectDebugMenu {
         lli     t8, 0x0001                  // t8 = blur (on)
 
         lw      t1, 0x0004(sp)              // t1 = port index
-        lw      s6, 0x0004(a2)              // s6 = value type
+        lhu     s6, 0x0004(a2)              // s6 = value type
         lli     at, value_type.NUMERIC
         bne     at, s6, _text               // if not numeric, jump to text
         sll     t1, t1, 0x0002              // t1 = port index * 4
         lw      a2, 0x001C(a2)              // a2 = value array address
         addu    a2, a2, t1                  // a2 = address of value for port
         jal     Render.draw_string_
-        lli     s7, 0x0001                  // s7 = adjustment (make 1-based, not 0-based)
+        lli     s7, 0x0000                  // s7 = adjustment (none)
 
         b       _end
         nop
@@ -1319,6 +1333,10 @@ scope CharacterSelectDebugMenu {
 
         // a0 is preserved for all the following routines
 
+        li      a1, hold_a_handler_._ra     // a1 = ra for hold routine
+        beq     ra, a1, _arrow_checks       // if holding, only do arrow checks
+        nop
+
         jal     handle_debug_button_press_
         lw      a1, 0x0030(t0)              // a1 = debug button object (1)
 
@@ -1350,6 +1368,7 @@ scope CharacterSelectDebugMenu {
         jal     handle_reset_button_press_
         lw      a1, 0x003C(t0)              // a1 = debug button object (4)
 
+        _arrow_checks:
         jal     handle_item_arrow_press_
         lw      a1, 0x0008(sp)              // a1 = debug control object
 
@@ -1364,6 +1383,146 @@ scope CharacterSelectDebugMenu {
 
         jr      ra
         lw      a1, 0x0028(sp)              // original line 1
+    }
+
+    // @ Description
+    // Checks if A is being held
+    scope hold_a_handler_: {
+        constant BUFFER(15)      // frames to wait until holding enabled
+        constant FASTBUFFER(90)  // frames to wait until no timer is used
+        constant TIMER(6)        // frames to wait between applying press handler
+        constant FGM_BUFFER(3)   // frames to wait between playing sfx for pressing
+
+        // VS
+        OS.patch_start(0x136598, 0x80138318)
+        jal     hold_a_handler_._vs
+        lhu     t9, 0x0000(t8)              // t9 = held button mask
+        OS.patch_end()
+        // Training
+        OS.patch_start(0x00144F58, 0x80135978)
+        jal     hold_a_handler_._training
+        andi    t9, t8, 0x8000              // original line 2
+        OS.patch_end()
+        // 1P
+        OS.patch_start(0x13EF8C, 0x80136D8C)
+        jal     hold_a_handler_._1p
+        lhu     t9, 0x0000(t8)              // t9 = held button mask
+        lw      a0, 0x0038(sp)              // original line 3
+        lui     a2, 0x8014                  // original line 4
+        lw      a1, 0x0020(sp)              // restore a1
+        OS.patch_end()
+        // Bonus
+        OS.patch_start(0x0014B9B8, 0x80135988)
+        jal     hold_a_handler_._bonus
+        lhu     t9, 0x0000(t8)              // t9 = held button mask
+        lw      a0, 0x0040(sp)              // original line 2
+        or      a1, s0, r0                  // original line 3
+        OS.patch_end()
+
+        _training:
+        lw      t8, 0x0020(sp)              // t8 = controller input array (saved in CharacterSelect.check_variant_input_)
+        li      t0, press_a_handler_._common
+        sw      t0, 0x0010(sp)              // save routine start to unused stack space
+        sw      s0, 0x0028(sp)              // save port index
+
+        b       _common
+        lhu     t9, 0x0000(t8)              // t9 = held button state
+
+        _1p:
+        sw      r0, 0x0028(sp)              // save port index
+        li      t0, press_a_handler_._1p
+        sw      t0, 0x0010(sp)              // save routine start to unused stack space
+
+        b       _common
+        nop
+
+        _bonus:
+        sw      r0, 0x0028(sp)              // save port index
+        li      t0, press_a_handler_._common
+        sw      t0, 0x0010(sp)              // save routine start to unused stack space
+
+        b       _common
+        lw      a0, 0x0040(sp)              // a0 = cursor object
+
+        _vs:
+        li      t0, press_a_handler_._vs
+        sw      t0, 0x0010(sp)              // save routine start to unused stack space
+
+        _common:
+        li      t0, fgm_buffer              // t0 = fgm buffer address
+        lw      t1, 0x0000(t0)              // t1 = fgm buffer
+        addiu   t1, t1, -0x0001             // t1--
+        bgezl   t1, pc() + 8                // if t1 >= 0, update buffer
+        sw      t1, 0x0000(t0)              // update buffer
+
+        lw      a1, 0x0028(sp)              // a1 = port
+        li      t1, held_buffer             // t1 = held buffer table
+
+        andi    t0, t9, Joypad.A            // t0 = 0 if A not held
+        bnez    t0, _is_held                // if held, do custom checks
+        addu    t1, t1, a1                  // t1 = address of port's buffer
+
+        // otherwise, return normally
+        sb      r0, 0x0000(t1)              // reset held_buffer
+        li      t1, held_timer              // t1 = held time table
+        addu    t1, t1, a1                  // t1 = address of port's held timer
+        sb      r0, 0x0000(t1)              // reset held_timer
+
+        _normal:
+        lhu     t9, 0x0002(t8)              // original line 1-vs, 2-1p - t9 = pressed button mask
+        andi    t0, t9, Joypad.A            // original line 2-vs, 5-1p - t0 = 0 if A not pressed
+        jr      ra
+        or      t9, t0, r0                  // Training needs this
+
+        _is_held:
+        li      t0, curr_port_buffer_addr   // t0 = curr_port_buffer_addr
+        sw      t1, 0x0000(t0)              // store address of port's held buffer
+        lbu     t0, 0x0000(t1)              // t0 = held buffer
+        addiu   t2, t0, 0x0001              // t2 = held buffer incremented
+        sltiu   t0, t2, FASTBUFFER          // t2 = 0 if we've reached fast buffer time
+        bnezl   t0, pc() + 8                // if we we haven't reach fast buffer, then update held buffer
+        sb      t2, 0x0000(t1)              // update held buffer
+        sltiu   t1, t2, BUFFER              // t1 = 0 if we've reached buffer
+        bnez    t1, _normal                 // if below buffer, treat as normal
+        li      t1, held_timer              // t1 = held time table (yes, use delay slot for 1st instruction)
+
+        addu    t1, t1, a1                  // t1 = address of port's held timer
+        lbu     t0, 0x0000(t1)              // t0 = held timer
+        addiu   t0, t0, 0x0001              // t0++
+        sb      t0, 0x0000(t1)              // update held timer
+        sltiu   t2, t2, FASTBUFFER          // t2 = 0 if we've reached fast buffer time
+        beqz    t2, _apply                  // if fast buffer, skip timer check
+        sltiu   t0, t0, TIMER               // t0 = 0 if we've reached timer
+        bnez    t0, _normal                 // if below timer, treat as normal
+        nop
+
+        _apply:
+        // otherwise, reset the timer and apply the press handler
+        sb      r0, 0x0000(t1)              // reset timer
+        sw      ra, 0x0008(sp)              // save ra to unused stack space
+        lw      t0, 0x0010(sp)              // t0 = routine start in press_a_handler_
+        jalr    t0
+        nop
+        _ra:
+        lw      ra, 0x0008(sp)              // restore ra
+        jr      ra
+        lli     t0, 0x0000                  // t0 = 0 for A press check
+
+        // Frames per port A is held
+        held_buffer:
+        db 0, 0, 0, 0
+
+        // Helps control speed of scroll
+        held_timer:
+        db 0, 0, 0, 0
+
+        // Prevents playing sound every frame
+        fgm_buffer:
+        dw 0
+
+        // Address of current port's buffer
+        curr_port_buffer_addr:
+        dw 0
     }
 
     // @ Description
@@ -1501,12 +1660,12 @@ scope CharacterSelectDebugMenu {
         addiu   t3, a1, 0x0060              // t3 = pointer to first menu item
         lw      t5, 0x0070(a1)              // t5 = menu renderer
         lw      t0, 0x0040(t5)              // t0 = first menu item value object
-        beqz    t0, _play_fgm               // if no menu item yet (pressed same frame as toggle on), then skip
+        beqz    t0, _set_high_scores_flag   // if no menu item yet (pressed same frame as toggle on), then skip
         nop
 
         _refresh_loop:
         lw      t1, 0x0000(t3)              // t1 = menu item
-        lw      t6, 0x0004(t1)              // t6 = value type
+        lhu     t6, 0x0004(t1)              // t6 = value type
         lli     at, value_type.NUMERIC
         beq     at, t6, _refresh_next       // if numeric, skip text stuff
         lw      t6, 0x0014(t1)              // t6 = string table
@@ -1519,6 +1678,23 @@ scope CharacterSelectDebugMenu {
         lw      t0, 0x0040(t5)              // t0 = next menu item value object
         bnez    t0, _refresh_loop           // loop if there is an item value object
         addiu   t3, t3, 0x0004              // t3 = next menu item pointer
+
+        _set_high_scores_flag:
+        li      t0, debug_control_object
+        lw      t0, 0x0000(t0)              // t0 = debug control object
+        lw      a0, 0x0044(t0)              // a0 = offset in css_player_structs = 4 for 1P, >=0xC for Bonus
+        sltiu   t0, a0, 0x000C              // t0 = 0 if Bonus
+        beqz    t0, _check_high_scores_flag // if Bonus, skip to check high scores flag
+        lli     t0, 0x0004                  // t0 = 4 for 1p
+        bne     a0, t0, _play_fgm           // if not 1p, skip
+        nop
+
+        _check_high_scores_flag:
+        jal     check_high_scores_enabled
+        nop
+
+        li      t0, SinglePlayer.high_score_enabled
+        sw      v0, 0x0000(t0)              // set high scores enabled flag
 
         _play_fgm:
         // play FGM
@@ -1543,6 +1719,7 @@ scope CharacterSelectDebugMenu {
         addiu   sp, sp,-0x0030              // allocate stack space
         sw      ra, 0x0004(sp)              // save registers
         sw      a0, 0x0008(sp)              // ~
+        sw      a1, 0x0028(sp)              // ~
 
         // Iterate through each debug button object's menu renderer's arrow objects, if they exist
 
@@ -1619,7 +1796,7 @@ scope CharacterSelectDebugMenu {
 
         // call change handler
         lw      t6, 0x0018(t5)              // t6 = change handler routine
-        beqz    t6, _check_string_update    // if no change handler, skip calling change handler
+        beqz    t6, _set_high_scores_flag   // if no change handler, skip calling change handler
         sw      a1, 0x0024(sp)              // save arrow object
 
         sw      t5, 0x001C(sp)              // save menu item
@@ -1642,9 +1819,25 @@ scope CharacterSelectDebugMenu {
         lw      t7, 0x0020(sp)              // restore updated value
         lw      a1, 0x0024(sp)              // restore arrow object
 
+        _set_high_scores_flag:
+        lw      t0, 0x0028(sp)              // t0 = debug control object
+        lw      a0, 0x0044(t0)              // a0 = offset in css_player_structs = 4 for 1P, >=0xC for Bonus
+        sltiu   t0, a0, 0x000C              // t0 = 0 if Bonus
+        beqz    t0, _check_high_scores_flag // if Bonus, skip to check high scores flag
+        lli     t0, 0x0004                  // t0 = 4 for 1p
+        bne     a0, t0, _check_string_update // if not 1p, skip
+        nop
+
+        _check_high_scores_flag:
+        jal     check_high_scores_enabled
+        nop
+
+        li      t0, SinglePlayer.high_score_enabled
+        sw      v0, 0x0000(t0)              // set high scores enabled flag
+
         _check_string_update:
         // for text, we also have to update the string
-        lw      t6, 0x0004(t5)              // t6 = value type
+        lhu     t6, 0x0004(t5)              // t6 = value type
         lli     at, value_type.NUMERIC
         beq     at, t6, _play_fgm           // if numeric, skip text stuff
         lw      t6, 0x0014(t5)              // t6 = string table
@@ -1659,6 +1852,17 @@ scope CharacterSelectDebugMenu {
         sw      t7, 0x0034(t2)              // update string address
 
         _play_fgm:
+        li      a0, hold_a_handler_.fgm_buffer
+        lw      t0, 0x0000(a0)              // t0 = fgm buffer
+        bnezl   t0, _end                    // make sure we don't play every frame when being held
+        lw      a0, 0x0008(sp)              // a0 = cursor object
+
+        lli     t0, hold_a_handler_.FGM_BUFFER // t0 = fgm buffer
+        OS.read_word(0x800451A0, t1)        // t1 = number of plugged in controllers
+        multu   t0, t1                      // mflo = fgm buffer * num controllers
+        mflo    t0                          // ~
+        sw      t0, 0x0000(a0)              // save fgm buffer
+
         // play FGM
         jal     0x800269C0
         lli     a0, FGM.menu.TOGGLE         // a0 = FGM.menu.TOGGLE
@@ -1739,6 +1943,11 @@ scope CharacterSelectDebugMenu {
         nop
 
         _update_page:
+        // limit scroll speed for pagination arrows
+        li      t4, hold_a_handler_.curr_port_buffer_addr // t4 = curr_port_buffer_addr
+        lw      t4, 0x0000(t4)              // t4 = Address of current port's held buffer
+        sb      r0, 0x0000(t4)              // reset held_buffer
+
         // Check if enabled
         lw      a1, 0x0004(a1)              // a1 = arrow image object
         lw      t4, 0x007C(a1)              // t4 = 1 if disabled, 0 if enabled
@@ -1787,6 +1996,15 @@ scope CharacterSelectDebugMenu {
         lw      a0, 0x0070(t2)              // a0 = menu renderer object
 
         // play FGM
+        li      a0, hold_a_handler_.fgm_buffer
+        lw      t0, 0x0000(a0)              // t0 = fgm buffer
+        bnez    t0, _end                    // make sure we don't play every frame when being held
+        lli     t0, hold_a_handler_.FGM_BUFFER // t0 = fgm buffer
+        OS.read_word(0x800451A0, t1)        // t1 = number of plugged in controllers
+        multu   t0, t1                      // mflo = fgm buffer * num controllers
+        mflo    t0                          // ~
+        sw      t0, 0x0000(a0)              // save fgm buffer
+
         jal     0x800269C0
         lli     a0, FGM.menu.TOGGLE         // a0 = FGM.menu.TOGGLE
 
@@ -2059,6 +2277,9 @@ scope CharacterSelectDebugMenu {
         jal     Shield.clear_settings_for_1p_
         lw      a0, 0x000C(sp)              // a0 = human port
 
+        jal     Handicap.clear_settings_for_1p_
+        lw      a0, 0x000C(sp)              // a0 = human port
+
         jal     InputDelay.clear_settings_for_1p_
         lw      a0, 0x000C(sp)              // a0 = human port
 
@@ -2083,12 +2304,77 @@ scope CharacterSelectDebugMenu {
         jal     KirbyHat.clear_settings_for_1p_
         lw      a0, 0x000C(sp)              // a0 = human port
 
+        jal     Damage.clear_settings_for_1p_
+        lw      a0, 0x000C(sp)              // a0 = human port
+
+        jal     PoisonDmg.clear_settings_for_1p_
+        lw      a0, 0x000C(sp)              // a0 = human port
+
         lw      ra, 0x0004(sp)              // restore registers
         lw      a0, 0x0008(sp)              // ~
         lw      v0, 0x000C(sp)              // ~
         addiu   sp, sp, 0x0010              // deallocate stack space
         jr      ra
         addiu   s5, r0, 0x0074              // original line 2
+    }
+
+    // @ Description
+    // Determines if there are any settings enabled that should disable saving high scores
+    scope check_high_scores_enabled: {
+        addiu   sp, sp, -0x0010             // allocate stack space
+        sw      t0, 0x0004(sp)              // save registers
+        sw      t1, 0x0008(sp)              // ~
+        sw      t2, 0x000C(sp)              // ~
+
+        lli     v0, OS.TRUE                 // v0 = true: high scores enabled
+        li      t0, debug_control_object
+        lw      t0, 0x0000(t0)              // t0 = debug control object
+        lw      t0, 0x0048(t0)              // t0 = menu arrays
+        lw      t0, 0x0000(t0)              // t0 = human menu array
+
+        _loop:
+        lw      t1, 0x0000(t0)              // t1 = menu item
+        beqz    t1, _check_toggles          // if empty, then exit loop
+        addiu   t0, t0, 0x0004              // t0 = next menu item pointer address
+        lhu     t2, 0x0006(t1)              // t2 = 1 if this menu item can disabled high scores
+        beqz    t2, _loop                   // if this menu item doesn't affect high scores, skip
+        lw      t2, 0x0010(t1)              // t2 = default value
+        lw      t1, 0x001C(t1)              // t1 = value array
+        lui     v0, 0x800A                  // v0 = human player port
+        lbu     v0, 0x4AE3(v0)              // ~
+        sll     v0, v0, 0x0002              // v0 = offset to port's value
+        addu    t1, t1, v0                  // t1 = address of port's value
+        lw      t1, 0x0000(t1)              // t1 = port's value
+        bnel    t1, t2, _end                // if not the default value, then can't save high scores!
+        lli     v0, OS.FALSE                // v0 = FALSE = can't save high scores
+        b       _loop                       // continue loop
+        lli     v0, OS.TRUE                 // reset v0
+
+        _check_toggles:
+        li      t0, Toggles.block_gameplay
+        lw      t1, 0x0010(t0)              // t1 = current Gameplay toggles values, word 1
+        li      t2, 0xFFFF7FCF              // t2 = 0xFFFF7FCF = mask to ignore improved AI and J sounds (make sure to update this if Gameplay toggles changed)
+        and     t1, t1, t2                  // t1 = current Gameplay toggles values, ignoring J sounds (make sure to update this if Gameplay toggles changed)
+        lli     t2, 0x0000                  // t2 = default values (make sure to update this if Gameplay toggles changed)
+        bnel    t1, t2, _end                // if current values don't match the defaults, then can't save high scores!
+        lli     v0, OS.FALSE                // v0 = FALSE = can't save high scores
+        lw      t1, 0x0014(t0)              // t1 = current Gameplay toggles values, word 2 (default is 0)
+        bnezl   t1, _end                    // if current values don't match the defaults, then can't save high scores!
+        lli     v0, OS.FALSE                // v0 = FALSE = can't save high scores
+
+        li      t0, Toggles.block_pokemon
+        lw      t1, 0x0010(t0)              // t1 = current Pokemon toggles values
+        andi    t1, t1, 0xFFFC              // t1 = current Pokemon toggles values, ignoring sfx (make sure to update this if Gameplay toggles changed)
+        lli     t2, 0x7FFC                  // t2 = default values (make sure to update this if Pokemon toggles changed)
+        bnel    t1, t2, _end                // if current values don't match the defaults, then can't save high scores!
+        lli     v0, OS.FALSE                // v0 = FALSE = can't save high scores
+
+        _end:
+        lw      t0, 0x0004(sp)              // restore registers
+        lw      t1, 0x0008(sp)              // ~
+        lw      t2, 0x000C(sp)              // ~
+        jr      ra
+        addiu   sp, sp, 0x0010              // deallocate stack space
     }
 
     // @ Description
@@ -2140,7 +2426,8 @@ scope CharacterSelectDebugMenu {
     // applies_to - bitmask for which menu arrays to append... ex: 0b101000 means add to vs and training, 0b010110 means add to 1p and bonus 1 and 2
     // applies_to_hmn_cpu - bitmask for whether the menu item applies to humans, cpus or both... ex: 0b10 means humans only, 0b01 means cpus only, 0b11 means both
     // value_array_pointer - if provided, a pointer to external value array pointer... if 0, value array will be created
-    macro add_menu_item(label, value_type, min_value, max_value, default_value, string_table, onchange_handler, applies_to, applies_to_hmn_cpu, value_array_pointer) {
+    // disables_high_scores - boolean indicating if this value causes high scores to be disabled when not set to default value
+    macro add_menu_item(label, value_type, min_value, max_value, default_value, string_table, onchange_handler, applies_to, applies_to_hmn_cpu, value_array_pointer, disables_high_scores) {
         evaluate i(menu_item_count)
         global variable menu_item_count(menu_item_count + 1)
 
@@ -2150,7 +2437,8 @@ scope CharacterSelectDebugMenu {
         // Create menu item struct
         menu_item_{i}:
         dw menu_item_{i}_label          // 0x00 - pointer to label string
-        dw {value_type}                 // 0x04 - value type
+        dh {value_type}                 // 0x04 - value type
+        dh {disables_high_scores}       // 0x06 - disables high scores flag
         dw {min_value}                  // 0x08 - min value
         dw {max_value}                  // 0x0C - max value
         dw {default_value}              // 0x10 - default value
@@ -2234,7 +2522,7 @@ scope CharacterSelectDebugMenu {
             evaluate string_table({item}.string_table)
         }
 
-        add_menu_item({{item}.LABEL}, {item}.VALUE_TYPE, {item}.MIN_VALUE, {item}.MAX_VALUE, {item}.DEFAULT_VALUE, {string_table}, {item}.ONCHANGE_HANDLER, {item}.APPLIES_TO, {item}.APPLIES_TO_HUMAN_CPU, {item}.VALUE_ARRAY_POINTER)
+        add_menu_item({{item}.LABEL}, {item}.VALUE_TYPE, {item}.MIN_VALUE, {item}.MAX_VALUE, {item}.DEFAULT_VALUE, {string_table}, {item}.ONCHANGE_HANDLER, {item}.APPLIES_TO, {item}.APPLIES_TO_HUMAN_CPU, {item}.VALUE_ARRAY_POINTER, {item}.DISABLES_HIGH_SCORES)
     }
 
     // @ Description
@@ -2370,10 +2658,16 @@ scope CharacterSelectDebugMenu {
     scope DpadFunctions {
         include "css/DpadFunctions.asm"
     }
-    scope RandomCharacter {
-        include "css/RandomCharacter.asm"
+    scope DpadControl {
+        include "css/DpadControl.asm"
+    }
+    scope Damage {
+        include "css/Damage.asm"
     }
 
+    scope PoisonDmg {
+        include "css/PoisonDmg.asm"
+    }
 
     // Add Menu Items
     add_menu_item(Shield)
@@ -2390,10 +2684,12 @@ scope CharacterSelectDebugMenu {
     add_menu_item(StartWith)
     add_menu_item(TauntItem)
     add_menu_item(TauntButton)
-    add_menu_item(Practice_1P)
     add_menu_item(KirbyHat)
     add_menu_item(DpadFunctions)
-    add_menu_item(RandomCharacter)
+    add_menu_item(DpadControl)
+    add_menu_item(Damage)
+    add_menu_item(PoisonDmg)
+    add_menu_item(Practice_1P)
 
     // Write Menu Items
     write_menu_items()

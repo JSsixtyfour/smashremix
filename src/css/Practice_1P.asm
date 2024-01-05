@@ -11,6 +11,7 @@ constant APPLIES_TO(0b010000)
 constant APPLIES_TO_HUMAN_CPU(0b10)
 constant VALUE_ARRAY_POINTER(Practice_1P.stage_table)
 constant ONCHANGE_HANDLER(0)
+constant DISABLES_HIGH_SCORES(OS.TRUE)
 
 // @ Description
 // Holds pointers to value labels

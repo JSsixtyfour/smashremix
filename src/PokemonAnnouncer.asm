@@ -384,8 +384,10 @@ scope PokemonAnnouncer {
         nop
         bc1t    _mid
         nop
-        li      a2, knockback_high_calls
+        
+        _knockback_high:
         addiu   a0, r0, STANDARD
+        li      a2, knockback_high_calls
         jal     announcer_main_
         addiu   a1, r0, 0x0012          // decimal 12 possible integers
         
@@ -418,6 +420,21 @@ scope PokemonAnnouncer {
         bnez    a3, _end                // see above
         nop
         
+        li      a2, Global.vs.elapsed
+        lw      a2, 0x0000(a2)
+        addiu   a0, r0, 0x360           // 9 seconds
+        slt     a1, a2, a0              // if less than 9 seconds in, set a1 to 1
+        beqz    a1, _regular_damage     // if 9 seconds have transpired, do a normal sound
+        addiu   a0, r0, STANDARD
+        
+        li      a2, damage_early_call
+        jal     announcer_main_
+        addiu   a1, r0, 0x0001          // decimal 1 possible integers
+        
+        beq     r0, r0, _play
+        nop
+        
+        _regular_damage:
         li      a2, damage_calls
         addiu   a0, r0, STANDARD
         jal     announcer_main_
@@ -2372,6 +2389,9 @@ scope PokemonAnnouncer {
     add_announcement(0x33, 0x4BB, 0x384, 0x0)       // Kapow Major Damage
     add_announcement(0x34, 0x4BC, 0x384, 0x0)       // Heavy Damage
     add_announcement(0x35, 0x4BD, 0x384, 0x0)       // Major Damage
+    
+    damage_early_call:
+    add_announcement(0x4F, 0x494, 0x8708, 0x1)       // Major Blow from the Word Go
     
     OS.align(16)
     

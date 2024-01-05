@@ -131,6 +131,7 @@ scope Falco {
 
     // Set default costumes
     Character.set_default_costumes(Character.id.FALCO, 0, 1, 4, 5, 1, 2, 3)
+    Teams.add_team_costume(YELLOW, FALCO, 0x5)
 
     // Shield colors for costume matching
     Character.set_costume_shield_colors(FALCO, WHITE, RED, BLUE, GREEN, BLACK, ORANGE, NA, NA)
@@ -286,7 +287,7 @@ scope Falco {
         addiu   t6, r0, 12                  // up special delay = 12
         ori     t0, r0, Character.id.PEPPY  // t0 = PEPPY
         beql    t0, t6, _end                // branch if chracter = PEPPY
-        addiu   t6, r0, 43                  // up special delay = 43
+        addiu   t6, r0, 16                  // up special delay = 16
 
         addiu   t6, r0, 0x0023              // up special delay = 0x23 (original line 2)
         _end:
@@ -315,7 +316,7 @@ scope Falco {
         lui     at, 0x42C4                  // up special velocity = 0x42C40000
         ori     t1, r0, Character.id.PEPPY  // t1 = PEPPY
         beql    t0, t1, _end                // branch if character = PEPPY
-        lui     at, 0x4308                  // up special velocity = 0x43080000
+        lui     at, 0x42FA                  // up special velocity = 0x42FA0000
 
         lui     at, 0x42E6                  // up special velocity = 0x42E60000 (original line 1)
         _end:
@@ -346,7 +347,7 @@ scope Falco {
         lui     at, 0x42C4                  // up special velocity = 0x42C40000
         ori     t1, r0, Character.id.PEPPY  // t1 = PEPPY
         beql    t0, t1, _end                // branch if character = PEPPY
-        lui     at, 0x4308                  // up special velocity = 0x43080000
+        lui     at, 0x42FA                  // up special velocity = 0x42FA0000
 
         lui     at, 0x42E6                  // up special velocity = 0x42E60000 (original line 1)
         _end:
@@ -375,6 +376,9 @@ scope Falco {
         ori     t1, r0, Character.id.FALCO  // t1 = FALCO
         beql    t0, t1, _end                // branch if character = FALCO
         lui     at, 0x42C4                  // up special velocity = 0x42C40000
+        ori     t1, r0, Character.id.PEPPY  // t1 = PEPPY
+        beql    t0, t1, _end                // branch if character = PEPPY
+        lui     at, 0x42FA                  // up special velocity = 0x42FA0000
 
         lui     at, 0x42E6                  // up special velocity = 0x42E60000 (original line 1)
         _end:

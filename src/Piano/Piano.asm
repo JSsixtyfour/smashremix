@@ -348,9 +348,9 @@ scope Piano {
     dw      Fireball.Book.create_
     OS.patch_end()
 
-    // Set Luigi as original character (not Mario, who PIANO is a clone of)
+    // Set Kirby as original character (not Mario, who PIANO is a clone of)
     Character.table_patch_start(variant_original, Character.id.PIANO, 0x4)
-    dw      Character.id.LUIGI
+    dw      Character.id.KIRBY
     OS.patch_end()
 
     // Remove entry script.
@@ -375,6 +375,7 @@ scope Piano {
 
     // Set default costumes
     Character.set_default_costumes(Character.id.PIANO, 0, 1, 2, 3, 1, 3, 4)
+    Teams.add_team_costume(YELLOW, PIANO, 0x2)
 
     // Shield colors for costume matching
     Character.set_costume_shield_colors(PIANO, BLACK, RED, YELLOW, CYAN, GREEN, WHITE, NA, NA)
@@ -413,7 +414,7 @@ scope Piano {
 
     // Edit cpu attack behaviours
     // edit_attack_behavior(table, attack, override, start_hb, end_hb, min_x, max_x, min_y, max_y)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DAIR,   -1,  12,   33,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DAIR,   -1,  12,   33,  -1, -1, -1000, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPA,   -1,  15,   45,  -1, -1, -1, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPG,   -1,  15,   45,  -1, -1, -1, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSMASH, -1,  10,   38,  -1, -1, -1, -1)
@@ -427,8 +428,8 @@ scope Piano {
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPA,   -1,  26,   45,  50, 150, 200, 500) // todo: check if coords good
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPG,   -1,  26,   45,  50, 150, 200, 500) // todo: check if coords good
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UAIR,   -1,  3,    32,  -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPA,   -1,  14,   47,  -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPG,   -1, 14,    47,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPA,   -1,  0,   47,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPG,   -1, 0,    47,  -1, -1, -1, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USMASH, -1,  10,   33,  -1, -1, -1, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UTILT,  -1,  6,    13,  -1, -1, -1, -1)
 

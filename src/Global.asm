@@ -40,6 +40,79 @@ scope Global {
     constant previous_screen(0x800A4AD1)
 
     // @ Description
+    // Word, frame count for current screen
+    constant current_screen_frame_count(0x8003B6E4)
+
+    // @ Description
+    // Screen IDs
+    scope screen {
+        constant NO_CONTROLLER(0x00)
+        constant TITLE_AND_1P(0x01)    // Title, 1p game over screen, 1p battle, remix 1p battle
+        constant BATTLE_DEBUG(0x02)    // Launches Peach's Castle if you select Mario
+        constant DEBUG(0x03)
+        constant BATTLE_DEBUG2(0x04)
+
+        constant MODE_SELECT(0x07)
+        constant _1P_GAME_MODE_MENU(0x08)
+        constant VS_GAME_MODE_MENU(0x09)
+        constant VS_OPTIONS(0x0A)
+        constant VS_OPTIONS_ITEM_SWITCH(0x0B)
+        constant UNLOCK(0x0C)          // The one with the exclamation point in a circle
+        constant CHALLENGER_APPROACHING(0x0D)
+
+        constant _1P_LOADING_SCREEN(0x0E)
+        constant SCREEN_ADJUST(0x0F)
+        constant VS_CSS(0x10)
+        constant _1P_CSS(0x11)
+        constant TRAINING_CSS(0x12)
+        constant BONUS_1_CSS(0x13)
+        constant BONUS_2_CSS(0x14)
+        constant STAGE_SELECT(0x15)    // Applies to all modes
+        constant VS_BATTLE(0x16)
+        constant DEMO(0x17)            // Where the camera is close up on each character?
+        constant RESULTS(0x18)
+        constant DATA_VS_RECORD(0x19)
+        constant DATA_CHARACTERS(0x1A)
+        constant N64_LOGO(0x1B)        // Intro cutscene starts here
+        constant INTRO_1(0x1C)         // Opening
+        constant INTRO_2(0x1D)         // Portrait Flashing
+        constant INTRO_3(0x1E)         // Mario closeup
+        constant INTRO_4(0x1F)         // DK closeup
+        constant INTRO_6(0x20)         // Samus closeup
+        constant INTRO_9(0x21)         // Fox closeup
+        constant INTRO_5(0x22)         // Link closeup
+        constant INTRO_7(0x23)         // Yoshi closeup
+        constant INTRO_10(0x24)        // Pikachu closeup
+        constant INTRO_8(0x25)         // Kirby closeup
+        constant INTRO_11(0x26)        // Running
+        constant INTRO_15(0x27)        // Yoshi nest
+        constant INTRO_12(0x28)        // Showdown Link closeup
+        constant INTRO_17(0x29)        // Showdown Mario v Kirby
+        constant INTRO_13(0x2A)        // Pikachu on Pokeball closeup
+        constant INTRO_18(0x2B)        // 8 characters colliding w/ping
+        constant INTRO_16(0x2C)        // Fox in Arwing closeup
+        constant INTRO_14(0x2D)        // DK v Samus
+        constant INTRO_19(0x2E)        // Unlockable 4 glimpse
+        constant BACKUP_CLEAR(0x2F)
+        constant OUTRO_SCENE(0x30)     // Character on table, camera slowly walks away, fade to white
+
+        constant _1P_STAGE_CLEAR(0x32)
+        constant _1P_RESULTS(0x33)      // Results after clearing a stage or bonus stage
+        constant _1P_MATCH(0x34)        // ???
+        constant BONUS(0x35)           // Bonus 1, Bonus 2, Bonus 3 (BTT/BTP/RTTF)
+        constant TRAINING_MODE(0x36)
+        constant CONGRATULATIONS(0x37)
+        constant STAFF_ROLL(0x38)
+        constant OPTION(0x39)
+        constant DATA_MENU(0x3A)
+        constant DATA_SOUND_TEST(0x3B)
+        constant HOW_TO_PLAY(0x3C)
+        constant DEMO_FIGHT(0x3D)      // 4 CPUs on dreamland or on planet zebes
+
+        constant REMIX_MODES(0x77)     // Remix Modes (other than Remix 1P) All-star, Multiman, HRC
+    }
+
+    // @ Description
     scope vs {
         // @ Description
         // Byte, contains the versus stage stage id
@@ -103,16 +176,16 @@ scope Global {
     // Pointer to match setting. For versus, (0x0000(this) == 0x800A4D08) which is the address of
     // the above vs scope.
     constant match_info(0x800A50E8)
-	scope GAMEMODE: {
-		// byte 0x00 of match_info
-		constant DEMO(0x00)
-		constant VS(0x01)
-		constant BONUS(0x02)
-		constant HOWTOPLAY(0x03)
-		constant INTRO(0x04)
-		constant CLASSIC(0x05)
-		constant TRAINING(0x07)
-	}
+    scope GAMEMODE: {
+        // byte 0x00 of match_info
+        constant DEMO(0x00)
+        constant VS(0x01)
+        constant BONUS(0x02)
+        constant HOWTOPLAY(0x03)
+        constant INTRO(0x04)
+        constant CLASSIC(0x05)
+        constant TRAINING(0x07)
+    }
 
 
     // @ Description
@@ -144,16 +217,16 @@ scope Global {
     constant p_struct_head(0x80130D84)
     constant P_STRUCT_LENGTH(0x0B50)
 
-	// @ Description
+    // @ Description
     // hard-coded pointers and routine for dealing with clipping at runtime
     scope stage_clipping: {
-		// pointers
+        // pointers
         constant objects(0x80131304)
-        constant info(0x8013136C)			// Entry size = 0x0A
-		constant coordinates(0x80131370)	// Entry size = 0x14
+        constant info(0x8013136C)           // Entry size = 0x0A
+        constant coordinates(0x80131370)    // Entry size = 0x14
 
-		// routines
-		constant disable_clipping(0x800FC604) // disables clipping, where a0 = the index.
+        // routines
+        constant disable_clipping(0x800FC604) // disables clipping, where a0 = the index.
     }
 
     // @ Description
@@ -168,7 +241,13 @@ scope Global {
 
         li      t8, 0x8003B6E4              // ~
         lw      t8, 0x0000(t8)              // t8 = frame count for current screen
+        bnez    t8, _loop                   // if not first frame, continue
         andi    t8, t8, 0x003F              // t8 = frame count % 64
+
+        // otherwise use count
+        jal     0x80033490                  // osGetCount
+        nop
+        andi    t8, v0, 0x003F              // t8 = count % 64
 
         _loop:
         // advances rng between 1 - 64 times based on frame count

@@ -3,14 +3,15 @@
 define LABEL("Dpad map")
 constant VALUE_TYPE(CharacterSelectDebugMenu.value_type.STRING)
 constant MIN_VALUE(0)
-constant MAX_VALUE(4)
+constant MAX_VALUE(3)
 constant DEFAULT_VALUE(0)
 // bitmask: [vs] [1p] [training] [bonus1] [bonus2] [allstar]
-constant APPLIES_TO(0b110111)
+constant APPLIES_TO(0b111111)
 // bitmask: [human] [cpu]
 constant APPLIES_TO_HUMAN_CPU(0b10)
 constant VALUE_ARRAY_POINTER(DpadFunctions.dpad_macro_table)
-constant ONCHANGE_HANDLER(onchange_handler)
+constant ONCHANGE_HANDLER(0)
+constant DISABLES_HIGH_SCORES(OS.TRUE)
 
 // @ Description
 // Holds pointers to value labels
@@ -19,7 +20,6 @@ dw string_off
 dw string_smash
 dw string_tilt
 dw string_special
-dw string_move
 
 // @ Description
 // Value labels
@@ -27,45 +27,10 @@ string_off:; String.insert("Off")
 string_smash:; String.insert("Smash")
 string_tilt:; String.insert("Tilt")
 string_special:; String.insert("Special")
-string_move:; String.insert("Movement")
-
-// @ Description
-// Runs when the menu item value changes
-// @ Arguments
-// a0 - menu item
-// a1 - port index
-// a2 - new value
-scope onchange_handler: {
-    // // Update the Taunt button text as an indicator of the 'L <-> Z' button map when using Dpad Movement
-    // // Note: this will ultimately be entry 'Z' not 'CR', code is WIP (need to refresh 'Taunt Btn')
-
-    // li      t5, Joypad.taunt_mask_per_port
-    // sll     t7, a1, 0x0002          // t7 = offset
-    // addu    t5, t5, t7              // t5 = address of taunt mask index
-    // lw      t7, 0x0000(t5)          // t7 = taunt mask index
-
-    // addiu   t6, r0, 4               // t6 = 4 (Movement)
-    // beq     a2, t6, _movement_on_check_taunt_btn // branch if using Dpad Movement
-    // nop
-    
-    // addiu   t6, r0, 4               // t6 = 4 ('CR')
-    // beql    t7, t6, _end            // if taunt mask is 'CR', set it to 'L'
-    // sw      r0, 0x0000(t5)          // update taunt mask index
-    // b       _end                    // otherwise, don't change it
-    // nop
-
-    // _movement_on_check_taunt_btn:
-    // addiu   t6, r0, 4               // t6 = 4 ('CR')
-    // beqzl   t7, _end                // if taunt mask is 'L', set it to 'CR'
-    // sw      t6, 0x0000(t5)          // update taunt mask index
-
-    _end:
-    jr      ra
-    nop
-}
 
 // @ Description
 // Hook into routine that writes Joypad bitmask to player struct (non-cpu players)
+// Handles Dpad Macros and Controls
 // a3 = Joypad input bitmask
 scope dpad_macro_check_: {
     OS.patch_start(0x5CB30, 0x800E1330)
@@ -74,6 +39,48 @@ scope dpad_macro_check_: {
     _return:
     OS.patch_end()
 
+    // a2 is player struct
+    // a0 is controller struct with port offset (safe to edit)
+    // t4, t5, t9 is safe to edit
+    // a3 = button pressed bitmask
+    // v1 = output bitmask
+
+    _check_dpad_controls:
+    li      t4, DpadControl.dpad_controls_table // t4 = dpad controls table
+    lb      at, 0x000D(a2)          // at = player port
+    sll     at, at, 0x0002          // at = offset
+    addu    t4, t4, at              // t4 = player entry in dpad_controls_table
+    lw      at, 0x0000(t4)          // at = players value in table
+
+    beqz    at, _check_dpad_macros  // branch if it's disabled for this port
+    nop
+
+    li      t5, stick_swap_flag     // t5 = address of stick swap flag
+    sw      r0, 0x0000(t5)          // clear flag (just in case)
+
+    // Dpad 'Stick Swap' needs some setup to adjust button bitmask (generate via stick)
+    andi    t4, at, 0x0001          // t4 = 1 if (Stick Swap) or (Stick Swap J)
+    bnezl   t4, _dpad_macro_move_setup // branch accordingly
+    sw      t4, 0x0000(t5)          // stick_swap_flag = 1 (using dpad as stick)
+
+    // Dpad 'Stickless' can use button bitmask as-is
+    addiu   t4, r0, 0x0002          // t4 = 2 (Stickless)
+    beql    at, t4, _dpad_macro_move// branch accordingly
+    or      a0, r0, a3              // a0 = a3 (button pressed bitmask)
+    addiu   t4, r0, 0x0004          // t4 = 4 (Stickless J)
+    beql    at, t4, _dpad_macro_move// branch accordingly
+    or      a0, r0, a3              // a0 = a3 (button pressed bitmask)
+
+    b        _check_dpad_macros    // if none of above, proceed normally (safety branch)
+    nop
+
+    _dpad_macro_move_return:
+    li      t4, stick_swap_flag     // t4 = address of stick swap flag
+    lw      at, 0x0000(t4)          // at = value of stick_swap_flag (0 if Stickless)
+    beqz    at, _normal             // skip below unless we're using dpad as stick
+    sw      r0, 0x0000(t4)          // zero out stick swap flag
+
+    _check_dpad_macros:
     li      t4, dpad_macro_table    // t4 = dpad macro table
     lb      at, 0x000D(a2)          // at = player port
     sll     at, at, 0x0002          // at = offset
@@ -83,15 +90,19 @@ scope dpad_macro_check_: {
     beqz    at, _normal             // proceed normally if it's disabled for this port
     nop
 
-    // a2 is player struct
-    // t4, t5, t9 is safe to edit
-    // a3 = button pressed bitmask
-    // v1 = output bitmask
-
-    // check which type of macro is enabled
-    addiu   t4, r0, 0x0004          // t4 = 4 (Movement)
-    beq     at, t4, _dpad_macro_move// branch accordingly
+    // check if Training, and only allow macros if "D-pad Controls" shortcuts are 'OFF'
+    li      t9, Global.current_screen
+    lbu     t9, 0x0000(t9)          // t9 = current screen
+    lli     t4, Global.screen.TRAINING_MODE
+    bne     t4, t9, _check_macro_type
     nop
+    li      t9, Training.entry_dpad_menu
+    lw      t9, 0x0004(t9)          // t9 = 2 if dpad menu is off
+    lli     t4, 0x0002              // t1 = dpad menu options disabled
+    bne     t9, t4, _normal         // don't check dpad presses unless dpad menu is off
+    nop
+
+    _check_macro_type:
     addiu   t4, r0, 0x0002          // t4 = 2 (Tilt)
     beq     at, t4, _dpad_macro_tilt// branch accordingly
     nop
@@ -189,11 +200,11 @@ scope dpad_macro_check_: {
     bnez    t4, _normal             // skip if holding DPAD was just pressed last frame
 
     lw      at, 0x0024(a2)          // get current action id
-    lli     t4, Action.Run          // t9 = Action.Turn
+    lli     t4, Action.Run          // t4 = Action.Run
     beql    at, t4, pc() + 12       // don't try and turn while running
     addiu   t9, r0, 0x0003          // t9 = 3 (so criteria can't be met)
     // otherwise, if the player taps the opposite direction that they are facing, we need to turn them around
-    lw      t9, 0x0044(a2)          // t1 = player facing direction (-1 = left, 1 = right)
+    lw      t9, 0x0044(a2)          // t9 = player facing direction (-1 = left, 1 = right)
 
     andi    t4, a3, Joypad.DU       // check if pressing up
     bnez    t4, _tilt_pressed
@@ -239,7 +250,7 @@ scope dpad_macro_check_: {
     addu    t9, t9, at              // t9 = player entry in dpad_turn_tilt
     sh      t4, 0x0000(t9)          // t9 = store direction value to dpad turn tilt value
 
-    lw      t9, 0x0044(a2)          // t1 = player facing direction (-1 = left, 1 = right)
+    lw      t9, 0x0044(a2)          // t9 = player facing direction (-1 = left, 1 = right)
     bgtzl   t9, pc() + 12
     lli     t4, 0xC400              // t4 = more-than-halfway min stick X value (turn left)
     lli     t4, 0x3C00              // t4 = more-than-halfway max stick X value (turn right)
@@ -247,8 +258,33 @@ scope dpad_macro_check_: {
     b       _overwrite
     nop
 
+    // constant DU(0x0800)
+    // constant DD(0x0400)
+    // constant DL(0x0200)
+    // constant DR(0x0100)
+    // a0 is a simulated button pressed bitmask (instead of a3) with dpad inputs generated via stick values and visa versa
+    _dpad_macro_move_setup:
+    or      t4, r0, a0              // t4 = a0 (controller struct with port offset)
+    andi    a0, a3, 0xF0FF          // remove pressed dpad input
+    lb      at, 0x0008(t4)          // stick X value
+    beqz    at, check_up_down
+    andi    at, at, 0xFF00          // t6 = 0 if stick left, otherwise stick right
+    beqzl   at, pc() + 12
+    ori     a0, a0, Joypad.DR       // a0 = pressed button mask + Joypad.DR
+    ori     a0, a0, Joypad.DL       // ~
+    sb      r0, 0x0008(t4)          // zero out stick X (just in case?)
+
+    check_up_down:
+    lb      at, 0x0009(t4)          // stick Y value
+    beqz    at, _dpad_macro_move
+    andi    at, at, 0xFF00          // t6 = 0 if stick up, otherwise stick down
+    beqzl   at, pc() + 12
+    ori     a0, a0, Joypad.DU       // a0 = pressed button mask + Joypad.DU
+    ori     a0, a0, Joypad.DD       // ~
+    sb      r0, 0x0009(t4)          // zero out stick Y
+
     _dpad_macro_move:
-    andi    at, a3, 0x0F00          // at = 0 if dpad isn't down
+    andi    at, a0, 0x0F00          // at = 0 if dpad isn't down
     bnez    at, _no_move_countdown  // branch if dpad is down
     nop
     // count down timer if dpad not pressed
@@ -260,7 +296,7 @@ scope dpad_macro_check_: {
     addiu   at, at, -0x00001        // decrement timer
     bgezl   at, pc() + 8            // update timer value (if non-negative)
     sw      at, 0x0000(t4)          // at = timer value in table
-    b       _normal
+    b       _dpad_macro_move_return
     nop
 
     _no_move_countdown:
@@ -277,41 +313,135 @@ scope dpad_macro_check_: {
     subu    at, at, t9              // set timer value in table to 10 (or 9 if already active)
     sw      at, 0x0000(t4)          // ~
 
-
     // Clear timer if Walk3 is held down long enough (less double tap false positives)
     lw      at, 0x0024(a2)          // get current action id
     lli     t5, Action.Walk3        // t5 = Action.Walk3
     bne     at, t5, _dpad_move_check// branch if the player is not in Walk3
     lw      at, 0x001C(a2)          // get current frame of current action
     slti    at, at, 0x0010          // at = 1 if frame of Walk3 is less than 16
-    bnez    at, _dpad_move_check    // if we haven't Walk3d for at least 16 frames, skip clearing timer
+    bnez    at, _dpad_move_check    // if we haven't Walked for at least 16 frames, skip clearing timer
     nop
     sw      r0, 0x0000(t4)          // t4 = dpad movement timer (set to 0)
     addiu   t9, r0, 0x0001          // t9 = 1, so we use full stick values (even though tap timer is reset)
 
     _dpad_move_check:
     or      t4, r0, r0              // clear t4
+    andi    at, a0, 0x0C00          // at = 0 if not pressing Joypad.DU or Joypad.DD
+    beqz    at, _dpad_move_checked_down
+    nop
+    _dpad_move_check_special_character:
+    lw      at, 0x0008(a2)                       // get current character id
+    lli     t5, Character.id.FOX
+    beq     at, t5, _dpad_move_check_action_spacies // branch if relevant character...
+    lli     t5, Character.id.FALCO
+    beq     at, t5, _dpad_move_check_action_spacies
+    lli     t5, Character.id.WOLF
+    beq     at, t5, _dpad_move_check_action_spacies
+    lli     t5, Character.id.MTWO
+    beq     at, t5, _dpad_move_check_action_m2
+    // WIP (maybe he's fine as-is?)
+    // lli     t5, Character.id.PIKACHU
+    // beq     at, t5, _dpad_move_check_action_pika
+    lli     t5, Character.id.PEPPY
+    bne     at, t5, _dpad_move_check_up          // ...otherwise skip checking special action
+    _dpad_move_check_action_spacies:
+    lw      at, 0x0024(a2)                       // get current action id (spacies share these FOX action values)
+    sltiu   t5, at, Action.FOX.LaserAir          // branch if action is less than FOX.LaserAir
+    bnez    t5, _dpad_move_check_up
+    lli     t5, Action.FOX.ReadyingFireFox       // t5 = Action.FOX.ReadyingFireFox (0xE5)
+    beq     at, t5, _dpad_move_check_special
+    lli     t5, Action.FOX.ReadyingFireFoxAir    // t5 = Action.FOX.ReadyingFireFoxAor (0xE6)
+    beq     at, t5, _dpad_move_check_special
+    lli     t5, Action.FOX.FireFoxStart          // t5 = Action.FOX.FireFoxStart (0xE3)
+    beq     at, t5, _dpad_move_check_special
+    lli     t5, Action.FOX.FireFoxStartAir       // t5 = Action.FOX.FireFoxStartAir (0xE4)
+    bne     at, t5, _dpad_move_check_up          // branch if current action id didn't match any of the above
+    _dpad_move_check_action_pika:
+    lli     t5, Action.PIKACHU.QuickAttackStart  // t5 = Action.PIKACHU.QuickAttackStart
+    beq     at, t5, _dpad_move_check_special
+    // lli     t5, Action.PIKACHU.QuickAttack       // t5 = Action.PIKACHU.QuickAttack
+    // beq     at, t5, _dpad_move_check_special
+    lli     t5, Action.PIKACHU.QuickAttackEnd    // t5 = Action.PIKACHU.QuickAttackEnd
+    beq     at, t5, _dpad_move_check_special
+    lli     t5, Action.PIKACHU.QuickAttackStartAir // t5 = Action.PIKACHU.QuickAttackStartAir
+    beq     at, t5, _dpad_move_check_special
+    // lli     t5, Action.PIKACHU.QuickAttackAir    // t5 = Action.PIKACHU.QuickAttackAir
+    // beq     at, t5, _dpad_move_check_special
+    lli     t5, Action.PIKACHU.QuickAttackEndAir // t5 = Action.PIKACHU.QuickAttackEndAir
+    bne     at, t5, _dpad_move_check_up
+    _dpad_move_check_action_m2:
+    lw      at, 0x0024(a2)                       // get current action id
+    lli     t5, Mewtwo.Action.TeleportStart      // t5 = Mewtwo.Action.TeleportStart
+    beq     at, t5, _dpad_move_check_special
+    lli     t5, Mewtwo.Action.TeleportStartAir   // t5 = Mewtwo.Action.TeleportStartAir
+    beq     at, t5, _dpad_move_check_special
+    nop
 
-    andi    at, a3, Joypad.DU       // check if pressing up
-    beqz    at, _dpad_move_checked_up
+    _dpad_move_check_up:
+    andi    at, a0, Joypad.DU       // check if pressing up
+    beqz    at, _dpad_move_check_down
     lw      at, 0x014C(a2)          // at = 0 (ground) or 1 (air)
     bnezl   at, pc() + 12           // if the player is in the air, use appropriate stick value
     addiu   t4, t4, 0x0028          // add halfway max stick Y value
     addiu   t4, t4, 0x0050          // add max stick Y value
 
-    _dpad_move_checked_up:
-    andi    at, a3, Joypad.DD       // check if pressing down
+    _dpad_move_check_down:
+    andi    at, a0, Joypad.DD       // check if pressing down
     bnezl   at, pc() + 8
     addiu   t4, t4, 0x00B0          // add min stick Y value
+    bnez    t9, _dpad_move_full     // use full horizontal stick range if tapped twice
+    nop
+    b       _check_for_platform     // otherwise check to see if we're on a platform
+    nop
 
+    _dpad_move_check_special:
+    andi    at, a0, Joypad.DU       // check if pressing up
+    beqz    at, _dpad_move_checked_special_up
+    _dpad_move_check_b:
+    andi    at, a0, Joypad.B        // check if holding B
+    bnezl   at, pc() + 12           // if the player is holding B, use appropriate stick value
+    addiu   t4, t4, 0x0028          // add halfway max stick Y value
+    addiu   t4, t4, 0x0050          // add max stick Y value
+    b   _dpad_move_checked_down
+    nop
+    // if we're here, we pressed dpad down
+    _dpad_move_checked_special_up:
+    bnezl   at, pc() + 12           // if the player is holding B, use appropriate stick value
+    addiu   t4, t4, 0x00D8          // add halfway min stick Y value
+    addiu   t4, t4, 0x00B0          // add min stick Y value
+    b   _dpad_move_checked_down
+    nop
+
+    _check_for_platform:
+    lw      at, 0x0024(a2)          // get current action id
+    lli     t5, Action.CrouchIdle   // t5 = Action.CrouchIdle
+    beq     at, t5, _dpad_move_checked_down // branch if the player is in CrouchIdle
+    nop
+    sltiu   at, at, Action.DamageHigh1  // branch if action is not less than damage high
+    beqz    at, _dpad_move_checked_down
+    nop
+
+    lh      at, 0x00F0(a2)          // at = distance from Platform directly under character
+    bnez    at, _dpad_move_checked_down
+    nop
+    lh      at, 0x00F6(a2)          // current clipping flag (surface id)
+    andi    at, at, 0x4000          // t5 = 4000 (soft platform)
+    beqz    at, _dpad_move_checked_down // skip if not a soft platform
+    nop
+
+    lli     t5, 0x8000              // t5 = 8000 (solid platform)
+    sh      t5, 0x00F6(a2)          // temporarily overwrite clipping flag so we can crouch (takes 3 frames)
+
+    _dpad_move_checked_down:
     bnez    t9, _dpad_move_full     // use full horizontal stick range if tapped twice
     nop
 
     // Check if they press A button (allows Fsmash on Idle or frame 1 of Walk2)
-    andi    at, a3, 0x8000          // at = 1 if A pressed
+    andi    at, a0, 0x8000          // at = 1 if A pressed
     bnez    at, _dpad_move_full     // branch accordingly
     nop
 
+    _facilitate_walk3:
     // This lets us reach Walk3 while holding down dpad (when not tapping twice)
     lw      at, 0x0024(a2)          // get current action id
     slti    t9, at, 0x00DC          // t9 = 1 if action is less than 0x00DC (non-character-specific)
@@ -338,26 +468,26 @@ scope dpad_macro_check_: {
     nop
 
     _dpad_move_partial:
-    andi    at, a3, Joypad.DL
+    andi    at, a0, Joypad.DL
     bnezl   at, pc() + 8
     addiu   t4, t4, 0xD800          // add halfway min stick X value
-    andi    at, a3, Joypad.DR
+    andi    at, a0, Joypad.DR
     bnezl   at, pc() + 8
     addiu   t4, t4, 0x2800          // add halfway max stick X value
 
-    b       _normal
+    b       _dpad_macro_move_return
     sh      t4, 0x01C2(a2)          // overwrite stick input
 
     _dpad_move_full:
-    andi    at, a3, Joypad.DL
+    andi    at, a0, Joypad.DL
     bnezl   at, pc() + 8
     addiu   t4, t4, 0xB000          // add min stick X value
-    andi    at, a3, Joypad.DR
+    andi    at, a0, Joypad.DR
     bnezl   at, pc() + 8
     addiu   t4, t4, 0x5000          // add max stick X value
 
     // 'Turn Tap' handler (double tapping to dash gets buffered, so not eaten up)
-    andi    at, a3, 0xC000          // check if pressing A or B
+    andi    at, a0, 0xC000          // check if pressing A or B
     bnez    at, _dpad_move_end      // skip centering stick if A or B is held (e.g. Fsmash)
     lw      at, 0x0024(a2)          // get current action id
     lli     t9, Action.Turn         // t9 = Action.Turn
@@ -368,7 +498,7 @@ scope dpad_macro_check_: {
     andi    t4, t4, 0x00FF          // t4 = Y stick value (X is zeroed out)
 
     _dpad_move_end:
-    b       _normal
+    b       _dpad_macro_move_return
     sh      t4, 0x01C2(a2)          // overwrite stick input
 
     _overwrite:
@@ -409,220 +539,6 @@ scope clear_settings_for_training_: {
     nop
 }
 
-// @ Description
-// Disables setting shield button mask yet (moved after Joystick.set_taunt_mask_)
-scope dont_set_shield_mask_: {
-    OS.patch_start(0x53CB8, 0x800D84B8)
-    nop                     // original line 1 was: sh t5, 0x01B8(s5)
-    OS.patch_end()
-}
-
-// @ Description
-// Overrides button mask for shield per port when Dpad is mapped to 'Movement'.
-scope set_shield_mask_: {
-    OS.patch_start(0x53CF0, 0x800D84F0)
-    jal     set_shield_mask_
-    nop
-    OS.patch_end()
-
-    li      t3, dpad_macro_table    // t3 = dpad macro table
-    lb      t8, 0x000D(s5)          // t8 = player port
-    sll     t8, t8, 0x0002          // t8 = offset
-    addu    t3, t3, t8              // t3 = address of shield mask index
-    lw      t8, 0x0000(t3)          // t8 = players value in table
-
-    // skip check if in Training mode (we don't use dpad there)
-    li      t3, Global.current_screen   // ~
-    lbu     t3, 0x0000(t3)              // t3 = screen_id
-    addiu   t3, t3, -0x0036             // t3 = 0 if training
-    beqzl   t3, _end                    // skip if screen_id = training mode
-    lli     t3, Joypad.Z                // t3 = Joypad.Z
-
-    addiu   t3, r0, 0x0004          // t3 = 4 (Movement)
-    bnel    t8, t3, _end            // if not using Dpad Movement, then use default mask
-    lli     t3, Joypad.Z            // t3 = Joypad.Z
-
-    // my code runs first.. so i need an alternative approach (actually just reordered them)
-    // check if using custom 'Taunt Btn', and leave Z mapped as Shield if so (otherwise map Z as Taunt)
-    li      t8, Joypad.taunt_mask_per_port
-    lbu     t3, 0x000D(s5)          // t3 = port
-    sll     t3, t3, 0x0002          // t3 = offset
-    addu    t8, t8, t3              // t8 = address of taunt mask index
-    lw      t8, 0x0000(t8)          // t8 = taunt mask index
-
-    bnezl   t8, _end                // if not 0, then it's not set to default taunt button
-    addiu   t3, r0, 0x2020          // t3 = 0x0020 (Joypad.L) + 0x2000 (Joypad.Z)
-
-    lli     t3, Joypad.L            // t3 = Joypad.L
-    lli     t8, Joypad.Z            // t8 = Joypad.Z
-    sh      t8, 0x01BA(s5)          // t4 = taunt mask (override)
-
-    _end:
-    sh      t3, 0x01B8(s5)          // set shield button mask
-    lw      t8, 0x0104(v1)          // original line 1
-    addiu   a2, v1, 0x011C          // original line 2
-    jr      ra
-    nop
-}
-
-// @ Description
-// Overrides button macro for R per port when Dpad is mapped to 'Movement'.
-scope set_R_macro: {
-    OS.patch_start(0x5CAFC, 0x800E12FC)
-    jal     set_R_macro
-    nop
-    _return:
-    OS.patch_end()
-
-    li      t4, dpad_macro_table    // t4 = dpad macro table
-    lb      t6, 0x000D(a2)          // t6 = player port
-    sll     t6, t6, 0x0002          // t6 = offset
-    addu    t4, t4, t6              // t4 = address of shield mask index
-    lw      t6, 0x0000(t4)          // t6 = players value in table
-
-    addiu   t4, r0, 0x0004          // t4 = 4 (Movement)
-    bnel    t6, t4, pc() + 12       // if not using Dpad Movement, set default macro for R (Z+A)
-    ori     a3, a1, 0xA000          // original line 1
-    ori     a3, a1, 0x8020          // a3 = 0x0020 (Joypad.L) + 0x8000 (Joypad.A)
-
-    _end:
-    andi    a3, a3, 0xFFFF          // original line 2
-    jr      ra
-    nop
-}
-
-    // @ Description
-    // Hijacks the controller struct writing routine to allow for dpad cursor control on VS CSS (req. for dpad map 'movement')
-    // Has a short hold timer to prevent accidental movement by stick users when tapping dpad to set a variant
-    // a1 = port
-    // a3 = 0x80045228 = Joypad.struct
-    // v0 = current port controller struct
-    // t3 = xpos
-    // t4 = ypos
-    scope css_dpad_cursor_control_: {
-        OS.patch_start(0x4C00, 0x80004000)
-        jal     css_dpad_cursor_control_
-        nop
-        OS.patch_end()
-
-        // t5, t6, a0 safe to edit
-
-        // css screen ids: vs - 0x10, 1p - 0x11, training - 0x12, bonus1 - 0x13, bonus2 - 0x14
-        li      t5, Global.current_screen
-        lbu     t6, 0x0000(t5)          // t6 = current screen
-        addiu   t5, r0, 0x0012          // t5 = training screen_id
-        beq     t5, t6, _end            // branch if we're on training CSS screen
-        nop
-        sltiu   t5, t6, 0x0010          // t5 = 0 if < 10
-        bnez    t5, _end                // branch if we're not on a CSS screen
-        nop
-        slti    t5, t6, 0x0015          // t5 = 1 if < 15
-        beqz    t5, _end                // branch if we're not on a CSS screen
-        nop
-
-        // check if dpad is being pressed
-        lh      t5, 0x0000(v0)          // get current button held value
-        andi    t5, t5, 0x0F00          // t5 = 0 if dpad isn't down
-        li      a0, dpad_css_cursor_timer // a0 = dpad_css_cursor_timer
-        sll     t6, a1, 0x0002          // t6 = offset
-        addu    a0, a0, t6              // a0 = player entry in dpad_move_timer
-        bnez    t5, _check_dpad_css_timer // branch if any dpad buttons are held, otherwise reset timer
-        nop
-
-        addiu   t6, r0, 30              // t6 = 30
-        sw      t6, 0x0000(a0)          // save updated timer
-        b      _end
-        nop
-
-        _check_dpad_css_timer:
-        lw      t6, 0x0000(a0)          // t6 = dpad_css_cursor_timer value
-        beqz    t6, _check_dpad_buttons // branch if we've held dpad long enough and/or token criteria was already met
-        nop
-
-        // check if token is already placed or we're not hovering over a character (in which case we disregard timer)
-        // CSS modes don't all have same offsets so we need to do some setup first
-        li      t5, Global.current_screen
-        lbu     t6, 0x0000(t5)          // t6 = current screen
-        addiu   t5, r0, 0x0010          // t5 = vs screen_id
-        beq     t6, t5, _check_token_state_vs
-        nop
-        addiu   t5, r0, 0x0012          // t5 = training screen_id
-        beq     t6, t5, _check_token_state_train
-        nop
-
-        // if we're here, then screen_id is 1p, bonus1, or bonus2
-        li      t5, CharacterSelect.css_player_structs
-        addiu   t6, t6, -0x0010         // t6 = screen_id - 10
-        sll     t6, t6, 0x0002          // t6 = offset
-        addu    t5, t5, t6              // t5 = entry in css_player_struct
-        lw      t5, 0x0000(t5)          // t5 = address of css player structure for current screen
-        b       _check_token_state_1p   // branch to check token state (non-VS)
-        nop
-
-        _check_token_state_train:
-        li      t5, CharacterSelect.CSS_PLAYER_STRUCT_TRAINING // t5 = Training CSS Panel Struct, p1
-        addiu   t6, r0, 0x00B8          // t6 = size of Training CSS Panel Struct (note: different from VS's)
-        multu   t6, a1                  // mflo = offset to port's panel struct
-        mflo    t6                      // t6 = offset to ports panel struct
-        addu    t5, t5, t6              // t5 = port's Training CSS Panel Struct
-
-        _check_token_state_1p:
-        lw      t6, 0x007C(t5)          // t6 = held token index (offset for non-VS)
-        bltzl   t6, _check_dpad_buttons // if not holding token, skip
-        sw      r0, 0x0000(a0)          // a0 = dpad_css_cursor_timer (set to 0)
-        lw      t6, 0x0048(t5)          // t6 = selected char_id
-        lli     t5, Character.id.NONE   // t5 = Character.id.NONE
-        beql    t6, t5, _check_dpad_buttons // if not hovering over a char, skip
-        sw      r0, 0x0000(a0)          // a0 = dpad_css_cursor_timer (set to 0)
-
-        b       _update_dpad_css_timer
-        nop
-
-        _check_token_state_vs:
-        li      t5, CharacterSelect.CSS_PLAYER_STRUCT // t5 = VS CSS Panel Struct, p1
-        addiu   t6, r0, 0x00BC          // t6 = size of VS CSS Panel Struct
-        multu   t6, a1                  // mflo = offset to port's panel struct
-        mflo    t6                      // t6 = offset to ports panel struct
-        addu    t5, t5, t6              // t5 = port's VS CSS Panel Struct
-        lw      t6, 0x0080(t5)          // t6 = held token index (offset for VS)
-
-        // check token and branch accordingly
-        bltzl   t6, _check_dpad_buttons // if not holding token, skip
-        sw      r0, 0x0000(a0)          // a0 = dpad_css_cursor_timer (set to 0)
-        lw      t6, 0x0048(t5)          // t6 = selected char_id
-        lli     t5, Character.id.NONE   // t5 = Character.id.NONE
-        beql    t6, t5, _check_dpad_buttons // if not hovering over a char, skip
-        sw      r0, 0x0000(a0)          // a0 = dpad_css_cursor_timer (set to 0)
-
-        // if we're here, we are hovering over a character in CSS with token in hand
-        _update_dpad_css_timer:
-        lw      t6, 0x0000(a0)         // t6 = dpad_css_cursor_timer value
-        addiu   t6, t6, -0x0001        // t6--
-        bgtz    t6, _end               // branch if timer has not yet reached zero
-        sw      t6, 0x0000(a0)         // save updated timer
-
-        // note: full stick values of 81 min and 7F max is too fast, so we use partial
-        _check_dpad_buttons:
-        lh      t5, 0x0000(v0)          // get current button held value
-        andi    t6, t5, Joypad.DL       // t6 = 1 if dpad left pressed
-        bnezl   t6, pc() + 8
-        addiu   t3, r0, 0xD0            // t3 = partial min stick X value
-        andi    t6, t5, Joypad.DR       // t6 = 1 if dpad right pressed
-        bnezl   t6, pc() + 8
-        addiu   t3, r0, 0x30            // t3 = partial max stick X value
-        andi    t6, t5, Joypad.DD       // t6 = 1 if dpad down pressed
-        bnezl   t6, pc() + 8
-        addiu   t4, r0, 0xD0            // t4 = partial max stick Y value
-        andi    t6, t5, Joypad.DU       // t6 = 1 if dpad up pressed
-        bnezl   t6, pc() + 8
-        addiu   t4, r0, 0x30            // t4 = partial min stick Y value
-
-        _end:
-        sh      t1, 0x0006(v0)          // original line 1
-        jr      ra
-        sh      t2, 0x0004(v0)          // original line 2
-    }
-
 
 
 dpad_macro_table:
@@ -637,14 +553,11 @@ dh  0x0000
 dh  0x0000
 dh  0x0000
 
+stick_swap_flag:
+dw  0
+
 dpad_move_timer:
 dw  0
 dw  0
 dw  0
 dw  0
-
-dpad_css_cursor_timer:
-dw  30
-dw  30
-dw  30
-dw  30

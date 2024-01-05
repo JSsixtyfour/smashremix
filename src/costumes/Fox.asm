@@ -1,7 +1,7 @@
 scope fox_costumes {
     // @ Description
     // Number of additional costumes
-    constant NUM_EXTRA_COSTUMES(3)
+    constant NUM_EXTRA_COSTUMES(4)
 
     // @ Description
     // Number of parts
@@ -76,7 +76,7 @@ scope fox_costumes {
 
         Costumes.set_stock_icon_palette_for_costume(0, Fox/cos_4_stock_icon.bin)
     }
-    
+
     // Costume 0x5
     scope costume_0x5 {
         palette_1:; insert "Fox/cos_5_1.bin"
@@ -101,7 +101,7 @@ scope fox_costumes {
 
         Costumes.set_stock_icon_palette_for_costume(1, Fox/cos_5_stock_icon.bin)
     }
-    
+
     // Costume 0x6
     scope costume_0x6 {
         palette_1:; insert "Fox/cos_6_1.bin"
@@ -128,5 +128,33 @@ scope fox_costumes {
         Costumes.set_prim_color_for_part(2, 17, 0, shoes_color)
 
         Costumes.set_stock_icon_palette_for_costume(2, Fox/cos_6_stock_icon.bin)
+    }
+
+    // Costume 0x7
+    scope costume_0x7 {
+        palette_1:; insert "Fox/cos_7_1.bin"
+        palette_2:; insert "Fox/cos_7_2.bin"
+        constant pant_color(0x70203800)
+        constant torso_color(0xFF509800)
+        constant shoes_color(0xFFFFFF00)
+
+        Costumes.set_palette_for_part(3, 1, 0, palette_2)
+        Costumes.set_prim_color_for_part(3, 1, 1, pant_color)
+        Costumes.set_palette_for_part(3, 2, 0, palette_1)
+        Costumes.set_prim_color_for_part(3, 2, 0, torso_color)
+        Costumes.set_palette_for_part(3, 2, 1, palette_1)
+        Costumes.set_prim_color_for_part(3, 2, 1, torso_color)
+        Costumes.set_prim_color_for_part(3, 2, 2, torso_color)
+        Costumes.set_prim_color_for_part(3, 2, 3, torso_color)
+        Costumes.set_prim_color_for_part(3, 4, 0, torso_color)
+        Costumes.set_prim_color_for_part(3, A, 0, torso_color)
+        Costumes.set_prim_color_for_part(3, F, 0, pant_color)
+        Costumes.set_prim_color_for_part(3, 10, 0, shoes_color)
+        Costumes.set_prim_color_for_part(3, 12, 0, shoes_color)
+        Costumes.set_prim_color_for_part(3, 14, 0, pant_color)
+        Costumes.set_prim_color_for_part(3, 15, 0, shoes_color)
+        Costumes.set_prim_color_for_part(3, 17, 0, shoes_color)
+
+        Costumes.set_stock_icon_palette_for_costume(3, Fox/cos_7_stock_icon.bin)
     }
 }

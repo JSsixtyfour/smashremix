@@ -1,7 +1,7 @@
 scope ness_costumes {
     // @ Description
     // Number of additional costumes
-    constant NUM_EXTRA_COSTUMES(2)
+    constant NUM_EXTRA_COSTUMES(3)
 
     // @ Description
     // Number of parts
@@ -68,7 +68,7 @@ scope ness_costumes {
 
         Costumes.set_stock_icon_palette_for_costume(0, Ness/cos_4_stock_icon.bin)
     }
-    
+
     // Costume 0x5
     scope costume_0x5 {
         palette_1:; insert "Ness/cos_5_1.bin"
@@ -89,5 +89,31 @@ scope ness_costumes {
         Costumes.set_prim_color_for_part(1, 19, 0, 0x383458FF)
 
         Costumes.set_stock_icon_palette_for_costume(1, Ness/cos_5_stock_icon.bin)
+    }
+
+    // Costume 0x6
+    scope costume_0x6 {
+        palette_1:; insert "Ness/cos_6_1.bin"
+        palette_2:; insert "Ness/cos_6_2.bin"
+        palette_3:; insert "Ness/cos_6_3.bin"
+        palette_4:; insert "Ness/cos_6_4.bin"
+
+        constant HAT_BRIM(0xF6F6F6FF)
+        constant HAT(0x69A6FAFF)
+        constant SHORTS(0x69A6FAFF)
+
+        Costumes.set_palette_for_part(2, 2, 0, palette_2)
+        Costumes.set_palette_for_part(2, 2, 1, palette_1)
+        Costumes.set_prim_color_for_part(2, 2, 2, SHORTS)
+        Costumes.set_palette_for_part(2, 4, 0, palette_3)
+        Costumes.set_prim_color_for_part(2, 8, 1, HAT)
+        Costumes.set_prim_color_for_part(2, 8, 2, HAT_BRIM)
+        Costumes.set_palette_for_part(2, A, 0, palette_3)
+        Costumes.set_palette_for_part(2, 12, 0, palette_4)
+        Costumes.set_prim_color_for_part(2, 13, 0, SHORTS)
+        Costumes.set_palette_for_part(2, 18, 0, palette_4)
+        Costumes.set_prim_color_for_part(2, 19, 0, SHORTS)
+
+        Costumes.set_stock_icon_palette_for_costume(2, Ness/cos_6_stock_icon.bin)
     }
 }

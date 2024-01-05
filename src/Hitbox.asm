@@ -26,31 +26,45 @@ scope Hitbox {
 
         OS.patch_start(0x0006E3FC, 0x800F2BFC)
         j       hitbox_mode_
-        nop
+        swc1    f10, 0x0000(v0)             // original line 1
         _hitbox_mode_return:
         OS.patch_end()
 
-        swc1    f10, 0x0000(v0)             // original line 1
         lli     v1, 0x0000                  // v1 = no hitbox display
-        addiu   sp, sp,-0x0010              // allocate stack space
-        sw      t0, 0x0004(sp)              // ~
+        addiu   sp, sp,-0x0020              // allocate stack space
+        sw      t0, 0x0004(sp)              // save registers
         sw      t1, 0x0008(sp)              // ~
-        sw      t2, 0x000C(sp)              // store t0 - t2
+        sw      t2, 0x000C(sp)              // ~
+        sw      t3, 0x0010(sp)              // ~
 
         li      t0, Toggles.entry_special_model
         lw      t0, 0x0004(t0)              // t0 = 1 if hitbox_mode, 2 if hitbox+model, 3 if ECB
         lli     t1, 0x0001                  // t1 = 1
-        beql    t0, t1, _update_player      // if (hitbox_mode), set v1
+        beql    t0, t1, _update_t3          // if (hitbox_mode), set v1
         lli     v1, 0x0001                  // v1 = normal hitbox display
 
         lli     t1, 0x0003                  // t1 = 3
-        beql    t0, t1, _update_player      // if (ecb_mode), set v1
+        beql    t0, t1, _update_t3          // if (ecb_mode), set v1
         lli     v1, 0x0003                  // v1 = ecb display
 
+        lli     t3, 0x0000                  // t3 = no hitbox display
+
+        OS.read_word(kirby_cube_enabled, t2)
+        beqz    t2, _update_player          // skip if Kirby cube not enabled
+        lw      t2, 0x0008(s8)              // t2 = char_id
+        lli     t1, Character.id.KIRBY
+        beql    t2, t1, _update_player      // if Kirby, set hitbox display
+        lli     v1, 0x0004                  // v1 = normal hitbox display because not 1 or 3
+        lli     t1, Character.id.JKIRBY
+        beql    t2, t1, _update_player      // if J Kirby, set hitbox display
+        lli     v1, 0x0004                  // v1 = normal hitbox display because not 1 or 3
+
+        _update_t3:
+        or      t3, v1, r0                  // t3 = v1
         _update_player:
         sw      v1, 0x0B4C(s8)              // save hitbox display state
 
-        or      t2, v1, r0                  // t2 = v1
+        or      t2, t3, r0                  // t2 = t3
         lli     t1, 0x0002                  // t1 = 2
         beql    t0, t1, _update_item        // if (hitbox+model), set t2 for items
         lli     t2, 0x0002                  // t2 = transparent hitbox display
@@ -71,13 +85,30 @@ scope Hitbox {
         lw      t0, 0x0004(t0)              // t0 = next object struct
 
         _exit_loop:
+        li      t6, _hitbox_mode_return     // t6 = normal return address
+
+        OS.read_word(kirby_cube_enabled, t2)
+        beqz    t2, _return                 // skip if Kirby cube not enabled
+        lw      t2, 0x0008(s8)              // t2 = char_id
+        lli     t1, Character.id.KIRBY
+        beq     t2, t1, _check_cube_ecb     // if Kirby, check ecb
+        lli     t1, Character.id.JKIRBY
+        beq     t2, t1, _check_cube_ecb     // if J Kirby, check ecb
+        nop
+
+        _return:
         lw      t0, 0x0004(sp)              // restore registers
         lw      t1, 0x0008(sp)              // ~
         lw      t2, 0x000C(sp)              // ~
-        addiu   sp, sp, 0x0010              // deallocate stack space
+        jr      t6
+        addiu   sp, sp, 0x0020              // deallocate stack space
 
-        j       _hitbox_mode_return
+        _check_cube_ecb:
+        bne     v1, at, _return             // if not ECB, skip
         nop
+        li      t6, 0x800F330C              // forces hitbox display
+        b       _return
+        lui     t7, 0x8004                  // sets up t7 for 800F330C
     }
 
     // @ Description
@@ -172,6 +203,8 @@ scope Hitbox {
         _items_return:
         OS.patch_end()
 
+        // s2 = joint -> 0x0004 = player obj
+
         li      t6, Toggles.entry_special_model
         lw      t6, 0x0004(t6)              // t6 = 2 if hitbox+model
         addiu   t6, t6, -0x0002             // t6 = 0 if hitbox+model
@@ -198,6 +231,25 @@ scope Hitbox {
         nop
 
         _original:
+        // First make sure we're not rendering an item
+        li      t6, 0x800F2838
+        bne     t6, ra, _normal             // if an item, return normally
+        nop
+        // Check if Kirby cube
+        lw      t6, 0x0004(s2)              // t6 = player object
+        lw      t6, 0x0084(t6)              // t6 = player struct
+        lw      t6, 0x0B4C(t6)              // t6 = 4 if Kirby cube (or 3 if ecb)
+        addiu   t6, t6, -0x0003             // t4 >= 0 if Kirby cube
+        bltz    t6, _normal                 // if not Kirby cube, do normal
+        nop
+
+        _kirby_cube:
+        li      t6, kirby_cube_file_pointer
+        lw      t6, 0x0000(t6)              // t6 = file start address
+        jr      ra
+        addiu   t6, t6, 0x0980              // t6 = display list start
+
+        _normal:
         lui     t6, 0x8013                  // original line 1
         addiu   t6, t6, 0xC058              // original line 2
 
@@ -612,7 +664,10 @@ scope Hitbox {
         lli     t5, 0x0001                  // t5 = 1 (hitbox_mode)
         beq     at, t5, _check_screen       // if (hitbox_mode), check screen
         lli     t5, 0x0002                  // t5 = 2 (hitbox+model)
-        bne     at, t5, _original           // if (not a hitbox mode), skip
+        beq     at, t5, _check_screen       // if (hitbox+model mode), check screen
+        nop
+        OS.read_word(kirby_cube_enabled, at)
+        beqz    at, _original               // skip if Kirby cube not enabled
         nop
 
         _check_screen:
@@ -650,6 +705,97 @@ scope Hitbox {
     OS.patch_start(0x6E1A0, 0x800F29A0)
     addu    t3, r0, r0
     OS.patch_end()
+
+    // @ Description
+    // Skips rendering hitboxes for Kirby Cube.
+    scope skip_rendering_hitboxes_: {
+        OS.patch_start(0x6EB6C, 0x800F336C)
+        jal     skip_rendering_hitboxes_
+        lw      t5, 0x0294(s6)              // original line 1
+        OS.patch_end()
+
+        lw      t3, 0x0B4C(s8)              // t3 = 4 if Kirby cube (or 3 if ecb)
+        addiu   t3, t3, -0x0003             // t3 >= 0 if Kirby cube
+        bgez    t3, _check_hitbox_mode      // if Kirby cube, check hitbox+
+        addiu   s2, s6, 0x0294              // original line 2
+
+        _normal:
+        jr      ra
+        addiu   s2, s6, 0x0294              // original line 2
+
+        _check_hitbox_mode:
+        OS.read_word(Toggles.entry_special_model + 4, v0) // v0 = 2 if hitbox+model
+        addiu   v0, v0, -0x0002             // v0 = 0 if hitbox+model
+        beqz    v0, _normal                 // if hitbox+, render normally
+        nop
+
+        _skip_rendering:
+        j       0x800F3634                  // skip past rendering
+        lw      t3, 0x0058(sp)              // original line 4
+    }
+
+    // Render ECB over hurtboxes for Kirby Cube
+    scope render_ecb_over_hurtboxes_: {
+        OS.patch_start(0x6EE48, 0x800F3648)
+        jal     render_ecb_over_hurtboxes_
+        OS.patch_end()
+
+        // check if ecb and if so check if Kirby cube - still need to render ecb
+        // OS.read_word(Toggles.entry_special_model + 4, v0) // v0 = 3 if ecb
+        lw      v0, 0x0B4C(s8)              // v0 = model display mode
+        addiu   v0, v0, -0x0003             // v0 = 0 if ecb
+        bnez    v0, _end                    // skip if not ecb
+        nop
+
+        OS.read_word(kirby_cube_enabled, t2)
+        beqz    t2, _end                    // skip if Kirby cube not enabled
+        lw      t2, 0x0008(s8)              // t2 = char_id
+        lli     t1, Character.id.KIRBY
+        beql    t2, t1, _render_ecb         // if Kirby, set hitbox display
+        lli     t1, Character.id.JKIRBY
+        beql    t2, t1, _render_ecb         // if J Kirby, set hitbox display
+        nop
+
+        _end:
+        jr      ra
+        lw      v0, 0x0020(s8)              // original line 1
+
+        _render_ecb:
+        lli     t1, 0x0004                  // t1 = Kirby Cube
+        lw      s6, 0x0004(s8)              // s6 = player object
+        j       0x800F2FD8                  // jump to rendering ecb
+        sw      v0, 0x0B4C(s8)              // set model display mode to Kirby Cube
+    }
+
+    // Loads Kirby Cube file if necessary
+    scope setup_: {
+        addiu   sp, sp, -0x0010             // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+
+        li      at, kirby_cube_enabled
+        li      t0, CharacterSelectDebugMenu.PlayerTag.string_table + (8 * 4)
+        lw      t0, 0x0000(t0)              // t0 = 8th tag
+        lw      t0, 0x0000(t0)              // t0 = tag
+        li      t1, 0x63756265
+        bnel    t0, t1, _end                // if not equal, turn off Kirby Cube
+        sw      r0, 0x0000(at)              // turn off Kirby Cube
+
+        lli     t1, OS.TRUE                 // t1 = 1
+        sw      t1, 0x0000(at)              // turn on Kirby Cube
+
+        Render.load_file(File.KIRBY_CUBE, kirby_cube_file_pointer)
+
+        _end:
+        lw      ra, 0x0004(sp)              // restore registers
+        jr      ra
+        addiu   sp, sp, 0x0010              // deallocate stack space
+    }
+
+    kirby_cube_enabled:
+    dw OS.FALSE
+
+    kirby_cube_file_pointer:
+    dw 0
 }
 
 } // __HITBOX__

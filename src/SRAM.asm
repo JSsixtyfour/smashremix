@@ -8,10 +8,13 @@ print "included SRAM.asm\n"
 
 scope SRAM {
     // @ Description
-    // Variable to hold current SRAM address. SSB only used 0x0BDC bytes out of 0x8000 available.
+    // Variable to hold current SRAM address.
+    // SSB only used 0x0BDC bytes out of 0x8000 available.
+    // But it's really just 0x5EC repeated twice.
+    // We'll reclaim the second 0x5EC block.
     // Start aligned at 16 bytes - may not be necessary.
-    variable address(0x0BE0)
-    constant ADDRESS(0x0BE0)
+    variable address(0x05F0)
+    constant ADDRESS(0x05F0)
 
     // @ Description
     // Constant to hold current revision. Increment this whenever:
@@ -19,7 +22,7 @@ scope SRAM {
     //  - A new MIDI is added
     //  - A new toggle is added
     //  - The order of the toggles is changed
-    constant REVISION(0x00A0)
+    constant REVISION(0x00C1)
 
     // @ Description
     // Struct that holds information for a block of save data.
@@ -30,8 +33,9 @@ scope SRAM {
         }
         print "\nBlocking SRAM - size: 0x"; OS.print_hex({s}); print "\n"
         dw SRAM.address
-        dw pc() + 8
+        dw pc() + 0xC
         dw {s}
+        dw 0 // padding so the data is 0x10 aligned
         fill {s}
         SRAM.address = SRAM.address + {s}
         // 16 byte align the next address - may not be necessary but let's do it anyway
@@ -42,6 +46,18 @@ scope SRAM {
             print "\n***** SRAM WARNING! ******\nNot enough SRAM! (0x"; OS.print_hex(SRAM.address); print "... it's over 0x8000!)\n"
         }
     }
+
+    // @ Description
+    // Alters the save data method to only write to the first 0x5EC block
+    OS.patch_start(0x0005000C, 0x800D462C)
+    nop
+    OS.patch_end()
+
+    // @ Description
+    // Alters the load data method to only read from the first 0x5EC block
+    OS.patch_start(0x00050050, 0x800D4670)
+    b       0x800D468C
+    OS.patch_end()
 
     // @ Description
     // Allocates space for save info.

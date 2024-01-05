@@ -131,6 +131,11 @@ scope NWARIO {
     float32 1.4
     OS.patch_end()
 
+    // Set Magnifying Glass Scale Override
+    Character.table_patch_start(magnifying_glass_zoom, Character.id.NWARIO, 0x2)
+    dh  0x00A0
+    OS.patch_end()
+
     // Remove entry script.
     Character.table_patch_start(entry_script, Character.id.NWARIO, 0x4)
     dw 0x8013DD68                           // skips entry script

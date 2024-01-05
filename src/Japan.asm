@@ -37,7 +37,11 @@ scope Japan {
         addiu   t7, r0, 0x0002
         beql    at, t7, _end
         lui     at, 0x4040                  // Melee style (3 fp), this adds less to the hitlag calculation thus decreasing hitlag
-        
+
+        addiu   t7, r0, 0x0003
+        beql    at, t7, _end
+        lui     at, 0x0000                  // no hitlag
+
         lui     at, 0x4080                  // Japanese style (4 fp), this adds less to the hitlag calculation thus decreasing hitlag
         
         _end:

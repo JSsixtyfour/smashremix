@@ -68,12 +68,18 @@ scope pickup_lightning_: {
     andi    t9, t8, 0xfff1
     sb      t7, 0x004C(v0)              // save timer
 
+    li      t0, Toggles.entry_flash_guard
+    lw      t0, 0x0004(t0)              // t0 = 1 if Flash Guard is enabled
+    bnez    t0, _restore_registers      // skip if Flash Guard is enabled
+    nop
     li      t0, 0x80131460              // t0 = global ptr to camera object
     lw      t0, 0x0000(t0)              // t0 = global camera object
     addiu   t2, r0, 0x0002              // t2 = 2
-    sw      t2, 0x108(t0)               // set mode to 2. (default is 4)
+    // 'set mode to 2. ' this makes it black
+    sw      t2, 0x0108(t0)              // set mode to 2. (default is 4)
     addiu   t1, r0, 0xFFFF              // t1 = white
-    sw      t1, 0x10C(t0)               // save draw color
+    sw      t1, 0x010C(t0)              // save draw colour
+    _restore_registers:
     OS.restore_registers()
 
     // Continue after damage restore routine in tomato/heart pickup routine
@@ -104,7 +110,7 @@ dw   0x00000000
 // @ Description
 // based on red shell aerial physics routine @ 0x8017A74C
 scope aerial_main_: {
-    addiu   sp, sp, -0x24           // allocate sp    
+    addiu   sp, sp, -0x24           // allocate sp
     sw      ra, 0x0014(sp)          // store registers
     sw      a0, 0x0020(sp)          // save routine handler
     sw      s1, 0x0004(sp)          //
@@ -172,21 +178,25 @@ scope aerial_main_: {
 
     li      t1, 0x040433FF          // t1 = dark blue
     beqzl   at, _set_draw_mode
-    sw      t1, 0x010C(t0)          // overwrite global camera draw colour with COLOR.WHITE
+    sw      t1, 0x010C(t0)          // overwrite global camera draw colour with dark blue
 
     // if here, set colour to white
     addiu   t1, r0, 0xFFFF          // at = color.white 0xFFFFFFFF
     b       _set_draw_mode
-    sw      t1, 0x010C(t0)          // t1 = overwrite global camera draw colour with dark blue
+    sw      t1, 0x010C(t0)          // t1 = overwrite global camera draw colour with COLOR.WHITE
 
     _end_lightning:
     jal     Render.DESTROY_OBJECT_
     lw      a0, 0x0020(sp)          // load routine handler
     lw      t0, 0x0008(sp)          // load camera object ptr
     b       _end
+    sw      t2, 0x0108(t0)          // set camera draw clear true or false. (default is 4)
 
     _set_draw_mode:
-    sw      t2, 0x108(t0)           // set camera draw clear true or false. (default is 4)
+    li      a0, Toggles.entry_flash_guard
+    lw      a0, 0x0004(a0)          // a0 = 1 if Flash Guard is enabled
+    beqzl   a0, _continue           // set camera only if Flash Guard is not enabled
+    sw      t2, 0x0108(t0)          // set camera draw clear true or false. (default is 4)
 
     _continue:
     lw      a0, 0x0020(sp)          // load routine handler
@@ -225,7 +235,7 @@ scope lightning_zap_players_: {
     lw      t0, 0x0000(t0)                      // t0 = first player object
     sw      t0, 0x0010(sp)                      // save player object t0 stack
     lw      t0, 0x0084(t0)                      // t0 = first player struct
-    
+
     li      t3, Global.match_info               // ~
     lw      t3, 0x0000(t3)                      // t3 = match info struct
     lbu     t4, 0x0002(t3)                      // t4 = team battle flag
@@ -245,14 +255,14 @@ scope lightning_zap_players_: {
     lw      t2, 0x000C(sp)                      // t2 = player struct
     beq     t2, a1, _next                       // if player is item owner, skip this port
     nop
-    
+
     beqz    t4, _action_check                   // branch if team battle flag = FALSE
     nop
-    
+
     bnez    t3, _action_check                   // branch if team attack flag != FALSE
     nop
-    
-    lbu     t2, 0x000C(t2)                      // t2 = player team    
+
+    lbu     t2, 0x000C(t2)                      // t2 = player team
     lbu     t5, 0x000C(a1)                      // t5 = item owner team
     beq     t2, t5, _next                       // if player is team mate with team attack off, skip this port
     nop
@@ -272,10 +282,6 @@ scope lightning_zap_players_: {
     lw      a0, 0x05A4(t0)                      // check if player is invulnerable from spawning
     bnez    a0, _next                           // skip this player if they are still spawning
     nop
-    lw      a0, 0x05B0(t0)                      // a0 = super star counter
-    bnez    a0, _next                           // skip this player if they are using a super star
-    nop
-
     lw      a0, 0x05B0(t0)                      // a0 = super star counter
     bnez    a0, _next                           // skip this player if they are using a super star
     nop
@@ -394,7 +400,7 @@ scope shrink_timer_: {
     // check to see if should end duration of shrink
     li      t0, shrink_timer_table
     li      t6, Size.multiplier_table
-    li      t8, Size.state_table
+    li      t8, Size.match_state_table
     addiu   t5, r0, 0x0003      // load loop amount
 
     _loop_2:

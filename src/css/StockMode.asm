@@ -11,6 +11,7 @@ constant APPLIES_TO(0b100000)
 constant APPLIES_TO_HUMAN_CPU(0b11)
 constant VALUE_ARRAY_POINTER(StockMode.stockmode_table)
 constant ONCHANGE_HANDLER(0)
+constant DISABLES_HIGH_SCORES(OS.FALSE)
 
 // @ Description
 // Holds pointers to value labels

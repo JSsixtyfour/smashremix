@@ -590,13 +590,18 @@ scope flashbang_explosion_: {
     jal     0x8017279C                      // bomb subroutine, removes owner, updates unknown value, sets unknown bitflag
     sw      r0, 0x0248(v0)                  // disable hurtbox
     lw      a0, 0x0074(s0)                  // a0 = item first joint struct
-    // jal     0x801005C8                      // create exploseion gfx
+    // jal     0x801005C8                      // create explosion gfx
     // addiu   a0, a0, 0x001C                  // a0 = item x/y/z
 
+    _check_flash:
+    li      a0, Toggles.entry_flash_guard
+    lw      a0, 0x0004(a0)                  // a0 = 1 if Flash Guard is enabled
+    bnez    a0, _screenshake                // skip if Flash Guard is enabled
+    nop
     // we will create a screen flash instead of an explosion effect.
-    li      at, flash_array_       // at = hard-coded pointer to blend colour command
-    li      a0, 0x80131A40         // a0 = hard-coded address to write blend colour commands to screen
-    sw      at, 0x0000(a0)         // save the pointer to the address.
+    li      at, flash_array_                // at = hard-coded pointer to blend colour command
+    li      a0, 0x80131A40                  // a0 = hard-coded address to write blend colour commands to screen
+    sw      at, 0x0000(a0)                  // save the pointer to the address.
 
     // make the explosion larger (probably not needed for flashbang)
     //beqz    v0, _next_gfx_call            // branch if no explosion gfx was created
@@ -608,8 +613,9 @@ scope flashbang_explosion_: {
     //sw      at, 0x0020(t8)                // ~
     //sw      at, 0x0024(t8)                // store multiplier to graphic x/y/z size
 
-    jal     0x801008F4                      // unknown gfx related? function
-    lli     a0, 0x0001                      // a0 = 1 (why?)
+    _screenshake:
+    jal     0x801008F4                      // screen shake
+    lli     a0, 0x0001                      // shake severity = moderate
 
     lw      t0, 0x0074(s0)                  // t0 = item first joint struct
     lli     t1, 0x0002                      // t1 = 2
@@ -619,7 +625,7 @@ scope flashbang_explosion_: {
     sh      t1, 0x0156(t0)                  // set unknown value to 1
     jal     0x8017275C                      // bomb subroutine, sets up hitbox stuff? potentially hard-coded?
     or      a0, s0, r0                      // a0 = item object
-    jal     flashbang_begin_explosion_        // change to explosion state
+    jal     flashbang_begin_explosion_      // change to explosion state
     or      a0, s0, r0                      // a0 = item object
     jal     0x800269C0                      // play FGM
     lli     a0, FLASHBANG_FGM               // FGM id

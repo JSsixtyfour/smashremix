@@ -350,15 +350,21 @@ scope explode_nut_: {
     jal     0x80177218             // disable hitbox
     sw      t7, 0x0024 (sp)
 
+    _check_flash:
+    li      a0, Toggles.entry_flash_guard
+    lw      a0, 0x0004(a0)         // a0 = 1 if Flash Guard is enabled
+    bnez    a0, _screenshake       // skip if Flash Guard is enabled
+    nop
     // we will create a screen flash instead of an explosion effect.
     li      at, flash_array_       // at = hard-coded pointer to blend colour command
     li      a0, 0x80131A40         // a0 = hard-coded address to write blend colour commands to screen
     sw      at, 0x0000(a0)         // save the pointer to the address.
 
-    // continue
+    _screenshake:
     lw      a0, 0x0028 (sp)
     jal     0x801008f4             // do screen shake
-    addiu   a0, r0, 0x0001
+    addiu   a0, r0, 0x0001         // shake severity = moderate
+
     lw      t2, 0x0074 (s0)
     addiu   t1, r0, 0x0002
     addiu   t3, r0, 0x0408         // set hurtbox sound to deku_nut

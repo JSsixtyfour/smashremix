@@ -45,7 +45,7 @@ scope SinglePlayerModes: {
     OS.align(4)
 
     // @ Description
-    // Flag to indicate if we are on page 1 or 2 of Singeplayer Menu (ie. Standard Modes vs. Remix Modes
+    // Flag to indicate if we are on page 1 or 2 of Singleplayer Menu (ie. Standard Modes vs. Remix Modes)
     page_flag:
     db OS.FALSE
     OS.align(4)
@@ -92,10 +92,16 @@ scope SinglePlayerModes: {
     allstar_limbo:
     dw OS.FALSE
     OS.align(4)
-    
+
     // @ description
     // Set to 1 if vanilla character should load first on title
     duo_spawn:
+    db OS.FALSE
+    OS.align(4)
+
+    // @ description
+    // Set to 1 if Metal Bros are Boss
+    metal_bros_flag:
     db OS.FALSE
     OS.align(4)
 
@@ -369,7 +375,12 @@ scope SinglePlayerModes: {
         nop
 
         _bonus3:
-        addiu    t4, r0, 0x000F             // load in RTF
+        addiu    t4, r0, Stages.id.RACE_TO_THE_FINISH // load in RTF
+
+        OS.read_word(Bonus.mode, t5)        // t5 = 0 if Normal, 1 if Remix
+        bnezl    t5, pc() + 8               // if Remix, load Remix RTTF
+        lli      t4, Stages.id.REMIX_RTTF   // t4 = Remix RTTF
+
         lw       t5, 0x0000(s6)             // original line 2
         j        _return
         nop
@@ -764,6 +775,10 @@ scope SinglePlayerModes: {
         lw       t6, 0x2EE0(at)                // original line 2
 
         _giga:
+        addiu   t0, r0, 0x0001
+        li      t6, 0x801938EC
+        sw      t0, 0x0000(t6)                  // this ensures the game looks to Giga Bowser's hp to change stage and end level
+        lw      t0, 0x0004(sp)                  // ~
         addiu   sp, sp, 0x0010                  // deallocate stack space
         li      t6, 0x8018EB10                  // load normal spawn
         j        _return
@@ -782,6 +797,26 @@ scope SinglePlayerModes: {
         li      t6, 0x8018EB30
         j       _return
         nop
+    }
+
+    // @ Description
+    // Ensures Human in Remix RTTF faces left
+    // Actually forces all chars left, but doesn't matter!
+    scope spawn_human_left_remix_rttf_: {
+        OS.patch_start(0x10E388, 0x8018FB28)
+        jal     spawn_human_left_remix_rttf_
+        addiu   t7, r0, 0x0002                  // original line 2
+        OS.patch_end()
+
+        lui     t8, 0x800A
+        lbu     t8, 0x4B19(t8)                  // t8 = 1p stage ID
+        lli     t2, Stages.id.REMIX_RTTF        // t2 = Remix RTTF
+        beql    t8, t2, _end                    // if Remix RTTF, face left
+        addiu   v0, r0, -0x0001                 // v0 = -1 = face left
+
+        _end:
+        jr      ra
+        sw      v0, 0x006C(sp)                  // original line 1 - set spawn direction
     }
 
     // @ Description
@@ -967,6 +1002,13 @@ scope SinglePlayerModes: {
         OS.copy_segment(0x112AC4, 0x44)             // 8018E384 to C4 in Bonus, identical to normal version
 
         lui     at, 0x41F0
+
+        // Check for Dragon King HUD
+        Toggles.read(entry_dragon_king_hud, t8)    // t8 = 1 if on
+        lli     s3, 0x0001                         // s3 = 1 = always on
+        beql    t8, s3, pc() + 8                   // if on, use DK position
+        lui     at, 0x4352
+
         mtc1    at, f22
         lui     at, 0x3F00
         lui     s3, 0x0000
@@ -983,7 +1025,16 @@ scope SinglePlayerModes: {
         jal     0x800CCFDC
         addu    a1, t8, s3
 
-        OS.copy_segment(0x112B50, 0x114)            // 8018E410 to 8018e520
+        OS.copy_segment(0x112B50, 0x7C)            // 8018E410 to 8018E48C
+        lui     at, 0x41A0
+
+        // Check for Dragon King HUD
+        Toggles.read(entry_dragon_king_hud, t9)    // t9 = 1 if on
+        lli     t3, 0x0001                         // t3 = 1 = always on
+        beql    t9, t3, pc() + 8                   // if on, use DK position
+        lui     at, 0x4348
+
+        OS.copy_segment(0x112BD0, 0x94)            // 8018E490 to 8018E520
 
         li      a1, update_routine                  // replaces hardcoded subroutine that is put into action by 0x80008188 below
         cvt.s.w f6, f10
@@ -1044,7 +1095,16 @@ scope SinglePlayerModes: {
         _branch1:
         mtc1    v0, f4
 
-        OS.copy_segment(0x11288C, 0x24)
+        OS.copy_segment(0x11288C, 0x18)
+        lui     at, 0x41F0
+
+        // Check for Dragon King HUD
+        Toggles.read(entry_dragon_king_hud, t9)    // t9 = 1 if on
+        lli     t3, 0x0001                         // t3 = 1 = always on
+        beql    t9, t3, pc() + 8                   // if on, use DK position
+        lui     at, 0x4352
+
+        OS.copy_segment(0x1128A8, 0x8)
 
         li      a3, timer_free_space
         li      t2, timer_free_space
@@ -1110,12 +1170,18 @@ scope SinglePlayerModes: {
     scope _ko_save: {
         OS.patch_start(0x10D8A4, 0x8018F044)
         j        _ko_save
-        addiu    at, r0, MULTIMAN_ID            // insert check
+        nop
         _return:
         OS.patch_end()
 
+        li      at, SinglePlayer.high_score_enabled          // at = high_score_enabled
+        lw      at, 0x0000(at)                  // at = high_score_enabled flag
+        beqz    at, _normal                     // if high scores are not enabled, don't save
+        addiu   at, r0, MULTIMAN_ID             // insert chec
         li      t8, singleplayer_mode_flag      // t8 = singleplayer mode flag
         lw      t8, 0x0000(t8)                  // t8 = 2 if multiman
+
+
         beq     t8, at, _multiman               // if multiman, skip
         addiu   at, r0, CRUEL_ID                // insert check
         beq     t8, at, _cruel                  // if multiman, skip
@@ -1196,6 +1262,12 @@ scope SinglePlayerModes: {
         _return:
         OS.patch_end()
 
+
+        li      a0, SinglePlayer.high_score_enabled      // a0 = high_score_enabled
+        lw      a0, 0x0000(a0)              // a0 = high_score_enabled flag
+        beqzl   a0, _skip                   // if high scores are not enabled, don't save
+        sw      ra, 0x0014(sp)              // original line 1
+
         li      a0, SinglePlayerEnemy.enemy_port
         lw      a0, 0x0000(a0)              // a0 = 0 for off/cpu, 1 for 1p, 2 for 2p, 3 for 3p, and 4 for 4p
         bnez    a0, _skip                   // skip if 1p control active
@@ -1226,7 +1298,12 @@ scope SinglePlayerModes: {
         li      t7, Character.BONUS3_HIGH_SCORE_TABLE_BLOCK
         li      a1, TIME_SAVE_POINTER                     // time address loaded in
         lli     t8, OS.FALSE                              // t8 = FALSE = not HRC
+
+        OS.read_word(Bonus.mode, a0)                      // a0 = 0 if Normal, 1 if Remix
+        beqz    a0, _save_check                           // if not Remix, skip
         lw      a0, 0x0008(v0)                            // character ID loaded in
+        li      a3, Bonus.REMIX_BONUS3_HIGH_SCORE_TABLE   // a3 = remix high score table
+        li      t7, Bonus.REMIX_BONUS3_HIGH_SCORE_TABLE_BLOCK // t7 = remix high score table block
 
         _save_check:
         sll     a0, a0, 0x0002                            // shifted left to find character's word
@@ -1482,7 +1559,7 @@ scope SinglePlayerModes: {
     }
 
     // @ Description
-    //    automatically skips preview in multiman by skipping timer and button press checks
+    // automatically skips preview in multiman by skipping timer and button press checks
     scope _preview_skip: {
     OS.patch_start(0x12DC64, 0x80134924)
         j        _preview_skip
@@ -1620,10 +1697,10 @@ scope SinglePlayerModes: {
         beq     t6, a1, _multiman           // if multiman, skip
         addiu   a1, r0, 0x007E              // places multiman music ID into argument
         addiu   a1, r0, CRUEL_ID            // cruel mode check placed in
-        beq     t6, a1, _cruel_multiman     // if multiman, skip
+        beq     t6, a1, _update_bgm         // if multiman, skip
         addiu   a1, r0, 0x007F              // places cruel multiman music ID into argument
         addiu   a1, r0, HRC_ID              // HRC check placed in
-        beq     t6, a1, _cruel_multiman     // if HRC, use Targets!
+        beq     t6, a1, _update_bgm         // if HRC, use Targets!
         addiu   a1, r0, 0x008E              // a1 = Targets! BGM ID
         addiu   a1, r0, REMIX_1P_ID         // Remix 1p Mode Check in
         bne     a1, t6, _normal             // take normal route if not Remix 1p
@@ -1631,12 +1708,58 @@ scope SinglePlayerModes: {
         li      t6, STAGE_FLAG              // load from current progress of 1p ID
         lb      t6, 0x0000(t6)              // load current progress in 1p
         addiu   a1, r0, 0x000D              // Final Stage ID entered
-        beq     t6, a1, _cruel_multiman
+        beq     t6, a1, _update_bgm
         addiu   a1, r0, 0x004D              // insert Ultimate Bowser
 
         addiu   a1, r0, 0x000A              // Final Stage ID entered
-        bne     a1, t6, _normal             // if not Mad Piano/Super Sonic Stage, do as normal
+        beq     a1, t6, _mini_boss           // if Mad Piano/Super Sonic Stage, do as normal
         nop
+
+        addiu   a1, r0, 0x0004              // Duo Team ID entered
+        beq     a1, t6, _duo_team           // if duo team, branch
+        nop
+        b       _normal
+        nop
+
+        _duo_team:
+        OS.read_word(Global.match_info, t6) // t6 = match info
+        lbu     t6, 0x0001(t6)              // t6 = stage id
+        ori     a1, r0, Stages.id.EDO
+        beql    t6, a1, _update_bgm
+        addiu   a1, r0, {MIDI.id.THE_ALOOF_SOLDIER} // Mystical Ninja
+        ori     a1, r0, Stages.id.ONETT
+        beql    t6, a1, _update_bgm
+        addiu   a1, r0, {MIDI.id.DANGEROUS_FOE}     // PSI Rockers
+        ori     a1, r0, Stages.id.NPC
+        beql    t6, a1, _update_bgm
+        addiu   a1, r0, {MIDI.id.DANGEROUS_FOE}     // PSI Rockers
+        ori     a1, r0, Stages.id.POKEMON_STADIUM_2
+        beql    t6, a1, _update_bgm
+        addiu   a1, r0, {MIDI.id.PIKA_CUP}     // Pocket Monsters
+        ori     a1, r0, Stages.id.GYM_LEADER_CASTLE
+        beql    t6, a1, _update_bgm
+        addiu   a1, r0, {MIDI.id.PIKA_CUP}     // Pocket Monsters
+        ori     a1, r0, Stages.id.SAFFRON_DL
+        beql    t6, a1, _update_bgm
+        addiu   a1, r0, {MIDI.id.PIKA_CUP}     // Pocket Monsters
+        ori     a1, r0, Stages.id.SPIRALM
+        beql    t6, a1, _update_bgm
+        addiu   a1, r0, {MIDI.id.WIZPIG}     // Rare Pair
+        ori     a1, r0, Stages.id.MADMM
+        beql    t6, a1, _update_bgm
+        addiu   a1, r0, {MIDI.id.WIZPIG}     // Rare Pair
+        ori     a1, r0, Stages.id.FROSTY
+        beql    t6, a1, _update_bgm
+        addiu   a1, r0, {MIDI.id.WIZPIG}     // Rare Pair
+        ori     a1, r0, Stages.id.WINDY
+        beql    t6, a1, _update_bgm
+        addiu   a1, r0, {MIDI.id.WIZPIG}     // Rare Pair
+
+        // if here, do normal duo team music for that stage
+        b       _normal
+        nop
+
+        _mini_boss:
         li      t6, Global.match_info       // load match info pointer
         lw      t6, 0x0000(t6)              // load address
         lbu     t6, 0x0001(t6)              // load stage
@@ -1688,7 +1811,7 @@ scope SinglePlayerModes: {
         lw      v1, 0x0010(sp)
         addiu   sp, sp, 0x20
 
-        _cruel_multiman:
+        _update_bgm:
         lui       t6, 0x8013
         lw        t6, 0x1300(t6)            // t6 = stage header info
         sw        a1, 0x007C(t6)            // update stage bgm_id
@@ -1881,7 +2004,7 @@ scope SinglePlayerModes: {
         lui      t1, 0x800A                 // original line 2
         j        _return
         addiu    v0, r0, 0x0009             // set opponent cpu to max
-        
+
         _remix_1p:
         OS.read_byte(0x800A493A, t1)        // t1 = current difficulty
         addiu   at, r0, 0x0004              // at = max difficulty
@@ -2135,8 +2258,22 @@ scope SinglePlayerModes: {
         Render.draw_texture_at_offset(0x17, 0x0B, 0x80130D50, 0x828, Render.NOOP, 0x421C0000, 0x41900000, 0x848484FF, 0x303030FF, 0x3F800000)            // renders X
         Render.draw_number(0x17, 0x0B, KO_AMOUNT_POINTER, Render.update_live_string_, 0x42480000, 0x41900000, 0xFFFFFFFF, 0x3f666666, Render.alignment.LEFT)    // renders counter
 
+// Check if Dragon King HUD
+        Toggles.read(entry_dragon_king_hud, t7)   // t7 = 1 if on
+        lli     t6, 0x0001                        // t6 = 1 = always on
+        bne     t7, t6, _finish                   // if off, skip
+        lui     t7, 0x4354                        // t7 = 212
+        sw      t7, 0x003C(v0)                    // save to live string section
+        lw      t6, 0x0074(v0)                    // t6 = image struct
+        sw      t7, 0x005C(t6)                    // update y position
+        lw      v0, 0x0024(v0)                    // v0 = x icon
+        lw      t6, 0x0074(v0)                    // t6 = image struct
+        sw      t7, 0x005C(t6)                    // update y position
+        lw      v0, 0x0024(v0)                    // v0 = polygon series icon
+        lw      t6, 0x0074(v0)                    // t6 = image struct
+        lui     t7, 0x4356                        // t7 = 214
         b       _finish
-        nop
+        sw      t7, 0x005C(t6)                    // update y position
 
         _hrc:
         li      at, HRC.distance
@@ -2192,6 +2329,10 @@ scope SinglePlayerModes: {
         _finish:
         jal     InputDisplay.setup_
         nop
+        jal     Hitbox.setup_
+        nop
+        jal     ZCancel.setup_
+        nop
 
         lw      ra, 0x0004(sp)              // restore registers
         lw      t0, 0x0008(sp)
@@ -2201,6 +2342,244 @@ scope SinglePlayerModes: {
         jr      ra
         nop
 
+    }
+
+    // @ Description
+    // Master Hand Stamina Routine
+    scope master_hand_: {
+        OS.patch_start(0x61B8C, 0x800E638C)
+        j       master_hand_
+        addiu   at, r0, REMIX_1P_ID
+        _return:
+        OS.patch_end()
+
+        li      t5, SinglePlayerModes.singleplayer_mode_flag  // at = singleplayer flag address
+        lw      t5, 0x0000(t5)              // at = 4 if Remix
+        bne     t5, at, _1p                 // if not Remix, proceed as normal
+        lw      t5, 0x0008(s0)              // restore character ID
+
+        addiu   at, r0, Character.id.GBOWSER          // original line 1 replaced with Giga Bowser, instead of Master Hand
+        bne     t5, at, _1p                 // is it giga bowser? If not, proceed as if normal
+        nop
+
+        lbu     t5, 0x000C(s0)              // load team
+        addiu   at, r0, 0x0003              // 1p cpu is always on team 0x3
+        beq     t5, at, _0x800E6418         // it is a cpu, therefor jump to branch and place giga in as we're at the final stage and this is the cpu
+        lw      t5, 0x0008(s0)              // restore character ID
+
+        _1p:
+        addiu   at, r0, 0x000C              // original line 1, master hand character ID
+        beq     t5, at, _0x800E6418         // jump to master hand routines
+        nop
+
+        _end:
+        j           _return
+        nop
+
+        _0x800E6418:
+        j       0x800E6418
+        nop
+
+    }
+
+    // @ Description
+    // Master Hand Random Music Fix
+    scope master_hand_music_fix_: {
+        OS.patch_start(0x10D31C, 0x8018EABC)
+        j       master_hand_music_fix_
+        addiu   t4, r0, 0x0019              // original line 1
+        _return:
+        OS.patch_end()
+
+        li      at, Toggles.entry_random_music
+        lw      at, 0x0004(at)              // at = (0 if OFF, 1 if ON)
+
+        bnez    at, _skip
+        lui     at, 0x8013                  // original line 2
+
+        _end:
+        j           _return
+        nop
+
+        _skip:
+        j           0x8018EAC8
+        sw          t4, 0x1340(at)          // replace skipped line
+    }
+
+    // @ Description
+    // Skips unnecessary routine for Remix 1p Final stage
+    scope giga_fix_: {
+        OS.patch_start(0xD3170, 0x80158730)
+        j       giga_fix_
+        addiu   t7, r0, REMIX_1P_ID
+        _return:
+        OS.patch_end()
+
+        addiu   sp, sp, -0x0010
+        sw      t1, 0x0004(sp)
+        li      t1, SinglePlayerModes.singleplayer_mode_flag  // at = singleplayer flag address
+        lw      t1, 0x0000(t1)              // at = 4 if Remix
+        beq     t1, t7, _end                // if Remix skip normal routines
+        nop
+        lw      t7, 0x0ADC(v1)              // original line 1
+        swc1    f4, 0x000C(t7)              // original line 2
+
+        _end:
+        lw      t1, 0x0004(sp)
+        addiu   sp, sp, 0x0010
+        j       _return
+        nop
+    }
+
+    // @ Description
+    // Changes Change Action routine for Remix 1p Final stage
+    scope giga_change_action_: {
+        OS.patch_start(0xD3150, 0x80158710)
+        j       giga_change_action_
+        nop
+        _return:
+        OS.patch_end()
+
+        addiu   sp, sp, -0x0018
+        sw      t1, 0x0004(sp)
+        sw      t2, 0x0008(sp)
+        sw      ra, 0x000C(sp)
+        addiu   t2, r0, REMIX_1P_ID
+        li      t1, SinglePlayerModes.singleplayer_mode_flag  // at = singleplayer flag address
+        lw      t1, 0x0000(t1)              // at = 4 if Remix
+        bne     t1, t2, _mh                 // if not Remix proceed as normal routines
+        nop
+
+        OS.save_registers()
+
+        addiu   sp, sp, -0x0018
+        addu    s0, a0, r0                  // place player object in s0
+        lw      t1, 0x0084(a0)              // load player struct
+        sw      a0, 0x0014(sp)
+        sw      r0, 0x05B4(t1)              // no damage
+        sw      r0, 0x05B8(t1)              // make intangible
+        sw      r0, 0x05BC(t1)              // no hurtboxes
+        sw      r0, 0x07E4(t1)              // erase passive armor
+        sw      r0, 0x07E8(t1)              // erase yoshi armor
+        lw      v0, 0x09C8(t1)              // load attribute struct
+        lhu     a0, 0x00B4(v0)              // load ko sound
+
+        jal     0x8013BC60                  // plays KO sound and clunk sound
+        nop
+
+        lw      a0, 0x0014(sp)              // load player object
+        addiu   a2, r0, r0
+        sw      r0, 0x0010(sp)
+        addiu   a1, r0, 0x0027              // load action to change to
+        jal     0x800E6F24                  // change action routine
+        lui     a3, 0x3F80                  // speed of animation
+
+        addiu   sp, sp, 0x0018
+        OS.restore_registers()
+        beq     r0, r0, _end
+        nop
+
+        _mh:
+        jal     0x8015AE80          // original line 1
+        nop                         // original line 2
+
+        _end:
+        lw      ra, 0x000C(sp)
+        lw      t2, 0x0008(sp)
+        lw      t1, 0x0004(sp)
+        addiu   sp, sp, 0x0018
+        j       _return
+        nop
+    }
+
+    // @ Description
+    // Changes Change Action routine for Remix 1p Final stage
+    scope giga_change_action_2_: {
+        OS.patch_start(0xD3140, 0x80158700)
+        j       giga_change_action_2_
+        nop
+        _return:
+        OS.patch_end()
+
+        addiu   sp, sp, -0x0018
+        sw      t1, 0x0004(sp)
+        sw      t2, 0x0008(sp)
+        sw      ra, 0x000C(sp)
+        addiu   t2, r0, REMIX_1P_ID
+        li      t1, SinglePlayerModes.singleplayer_mode_flag  // at = singleplayer flag address
+        lw      t1, 0x0000(t1)              // at = 4 if Remix
+        bne     t1, t2, _mh                 // if not Remix proceed as normal routines
+        nop
+
+        OS.save_registers()
+
+        addiu   sp, sp, -0x0018
+        addu    s0, a0, r0                  // place player object in s0
+        lw      t1, 0x0084(a0)              // load player struct
+        sw      a0, 0x0014(sp)
+        sw      r0, 0x05B4(t1)              // no damage
+        sw      r0, 0x05B8(t1)              // make intangible
+        sw      r0, 0x05BC(t1)              // no hurtboxes
+        sw      r0, 0x07E4(t1)              // erase passive armor
+        sw      r0, 0x07E8(t1)              // erase yoshi armor
+        lw      v0, 0x09C8(t1)              // load attribute struct
+        lhu     a0, 0x00B4(v0)              // load ko sound
+
+        jal     0x8013BC60                  // plays KO sound and clunk sound
+        nop
+
+        lw      a0, 0x0014(sp)              // load player object
+        addiu   a2, r0, r0
+        sw      r0, 0x0010(sp)
+        addiu   a1, r0, 0x0027              // load action to change to
+        jal     0x800E6F24                  // change action routine
+        lui     a3, 0x3F80                  // speed of animation
+
+        addiu   sp, sp, 0x0018
+        OS.restore_registers()
+
+        beq     r0, r0, _end
+        nop
+
+        _mh:
+        jal     0x8015AD74          // original line 1
+        nop                         // original line 2
+
+        _end:
+        lw      ra, 0x000C(sp)
+        lw      t2, 0x0008(sp)
+        lw      t1, 0x0004(sp)
+        addiu   sp, sp, 0x0018
+        j       _return
+        nop
+    }
+
+    // @ Description
+    // Skips master hand laugh
+    scope no_laugh_: {
+        OS.patch_start(0x10DF08, 0x8018F6A8)
+        j       no_laugh_
+        nop
+        _return:
+        OS.patch_end()
+
+        addiu   sp, sp, -0x0010
+        sw      t1, 0x0004(sp)
+        sw      t2, 0x0008(sp)
+        addiu   t2, r0, REMIX_1P_ID
+        li      t1, SinglePlayerModes.singleplayer_mode_flag  // at = singleplayer flag address
+        lw      t1, 0x0000(t1)              // at = 4 if Remix
+        beq     t1, t2, _end                // if Remix skip normal routines
+        nop
+        jal     0x800269C0
+        addiu   a0, r0, 0x01EC
+
+        _end:
+        lw      t1, 0x0004(sp)
+        lw      t2, 0x0008(sp)
+        addiu   sp, sp, 0x0010
+        j       _return
+        nop
     }
 
     //  REMIX 1P
@@ -2321,7 +2700,7 @@ scope SinglePlayerModes: {
     dw  0x01010101      // byte 1 ally cpu level very easy, ally cpu level easy, ally cpu level normal, ally cpu level hard,
     dw  0x01090909      // byte 1 ally cpu level very hard, ally kb ratio very easy, ally kb ratio easy, ally kb ratio normal
     dh  0x0909          // byte 1 ally kb ratio hard, ally kb ratio very hard
-    
+
     //  Luigi Unlock Battle
     dw  0x01000607
     dw  0x07080906
@@ -2422,7 +2801,7 @@ scope SinglePlayerModes: {
     dw  0x00000000
 
     //  Race to the Finish
-    dw  0xFF0F0000
+    dw  0xFFBD0000
     dw  0xFFFFFFFF
     dw  0x031C1C08
     dw  0x00000000
@@ -2507,7 +2886,7 @@ scope SinglePlayerModes: {
     db  Character.id.YLINK              // Character ID
     db  Stages.id.DEKU_TREE             // Stage Option 1
     db  Stages.id.TALTAL                // Stage Option 2
-    db  Stages.id.GREAT_BAY             // Stage Option 3
+    db  Stages.id.DEKU_TREE             // Stage Option 3
     dw  SinglePlayer.name_texture.YLINK + 0x10    // name texture
     dw  0x000002E5                      // Announcer Call
     dw  0x00006F80                      // Model Scale
@@ -2560,11 +2939,12 @@ scope SinglePlayerModes: {
     dw  0x00015B00                      // Progress Icon
 
     // Conker match settings
+    conker_match_setting:
     dw  0x00000000                      // flag
     db  Character.id.CONKER             // Character ID
     db  Stages.id.WINDY                 // Stage Option 1
     db  Stages.id.WINDY                 // Stage Option 2
-    db  Stages.id.WINDY                 // Stage Option 3
+    db  Stages.id.FROSTY                // Stage Option 3
     dw  SinglePlayer.name_texture.CONKER + 0x10    // name texture
     dw  0x000003C4                      // Announcer Call
     dw  0x00006F80                      // Model Scale
@@ -2640,6 +3020,7 @@ scope SinglePlayerModes: {
     dw  0x000163C0                      // Progress Icon
 
     // Goemon match settings
+    goemon_match_setting:
     dw  0x00000000                      // flag
     db  Character.id.GOEMON             // Character ID
     db  Stages.id.EDO                   // Stage Option 1
@@ -2649,7 +3030,7 @@ scope SinglePlayerModes: {
     dw  0x000004C4                      // Announcer Call
     dw  0x00006F80                      // Model Scale
     dw  0x00016500                      // Progress Icon
-    
+
     //  Falco match settings
     falco_match_setting:
     dw  0x00000000                      // flag
@@ -2661,7 +3042,7 @@ scope SinglePlayerModes: {
     dw  0x000002D6                      // Announcer Call
     dw  0x00006F80                      // Model Scale
     dw  0x00016D78 + 0x10               // Progress Icon
-    
+
     // Dark Samus match settings
     ds_match_setting:
     dw  0x00000000                      // flag
@@ -2673,6 +3054,18 @@ scope SinglePlayerModes: {
     dw  0x000002EC                      // Announcer Call
     dw  0x00006F80                      // Model Scale
     dw  0x00015100                      // Progress Icon
+
+    // Banjo match settings
+    banjo_match_setting:
+    dw  0x00000000                      // flag
+    db  Character.id.BANJO              // Character ID
+    db  Stages.id.SPIRALM               // Stage Option 1
+    db  Stages.id.MADMM                 // Stage Option 2
+    db  Stages.id.FROSTY                // Stage Option 3
+    dw  SinglePlayer.name_texture.BANJO + 0x10    // name texture
+    dw  0x00000512                      // Announcer Call
+    dw  0x00006F80                      // Model Scale
+    dw  0x00016EB0 + 0x10               // Progress Icon
 
     // Add entry here if a new variant.type.NA character is added UPDATE
 
@@ -2721,7 +3114,7 @@ scope SinglePlayerModes: {
     dw  0x000002E6                      // Announcer Call
     dw  0x00006F80                      // Model Scale
     dw  0x00014FC0                      // Progress Icon
-    
+
     //  Luigi match settings
     dw  0x00000000                      // flag
     db  Character.id.LUIGI              // Character ID
@@ -2738,7 +3131,7 @@ scope SinglePlayerModes: {
     db  Character.id.LINK               // Character ID
     db  Stages.id.DEKU_TREE             // Stage Option 1
     db  Stages.id.TALTAL                // Stage Option 2
-    db  Stages.id.GREAT_BAY             // Stage Option 3
+    db  Stages.id.DEKU_TREE             // Stage Option 3
     dw  SinglePlayer.name_texture.DRM + 0x10    // name texture
     dw  0x000002E6                      // Announcer Call
     dw  0x00006F80                      // Model Scale
@@ -2809,9 +3202,9 @@ scope SinglePlayerModes: {
     dw  0x000002E6                      // Announcer Call
     dw  0x00006F80                      // Model Scale
     dw  0x00014FC0                      // Progress Icon
-    
-    constant DUO_POOL_NUMBER(0x7)       // update for each additional pool
-    
+
+    constant DUO_POOL_NUMBER(0x9)       // update for each additional pool
+
     // Peppy match settings
     peppy_match_setting:
     dw  0x00000000                      // flag
@@ -2823,7 +3216,7 @@ scope SinglePlayerModes: {
     dw  0x000004F7                      // Announcer Call
     dw  0x00006F80                      // Model Scale
     dw  0x000154C0                      // Progress Icon
-    
+
     // offsets to remix progress icons in file 0xB
     scope progress_icon {
         constant starfox(0x154B0 + 0x10)
@@ -2833,6 +3226,9 @@ scope SinglePlayerModes: {
         constant echoes(0x169D0 + 0x10)
         constant psi_rockers(0x16B08 + 0x10)
         constant dream_team(0x16C40 + 0x10)
+        constant rare_pair(0x16FE8 + 0x10)
+        constant metal_mario_brothers(0x17128 + 0x10)
+        constant mystical_ninjas(0x17268 + 0x10)
     }
 
     duo_pool:
@@ -2877,21 +3273,35 @@ scope SinglePlayerModes: {
     dh 0x04FF                    // Announcement
     dw progress_icon.psi_rockers     // progress icon
     dw SinglePlayer.name_texture.PSI_ROCKERS + 0x10    // name texture
-    
+
     dw peppy_match_setting       // Main stage data - Star Fox
     db Character.id.SLIPPY       // Partner ID (Slippy)
-    db 0x0                       // who loads first flag (0 for Remix, 1 for vanilla)    
+    db 0x0                       // who loads first flag (0 for Remix, 1 for vanilla)
     dh 0x03C5                    // Announcement
     dw progress_icon.starfox     // progress icon
     dw SinglePlayer.name_texture.STARFOX + 0x10    // name texture
-    
+
     dw ds_match_setting          // Main stage data - Echoes
     db 0x3                       // Partner ID (Samus)
     db 0x0                       // who loads first flag (0 for Remix, 1 for vanilla)
     dh 0x04FC                    // Announcement
     dw progress_icon.echoes      // progress icon
     dw SinglePlayer.name_texture.ECHOES + 0x10    // name texture
-    
+
+    dw goemon_match_setting      // Main stage data - Mystical Ninjas
+    db Character.id.EBI          // Partner ID (Ebisumaru)
+    db 0x1                       // who loads first flag (0 for Remix, 1 for vanilla)
+    dh 0x0532                    // Announcement
+    dw progress_icon.mystical_ninjas // progress icon
+    dw SinglePlayer.name_texture.MYSTICAL_NINJAS + 0x10    // name texture
+
+    dw banjo_match_setting       // Main stage data - Rare Pair
+    db Character.id.CONKER       // Partner ID (Conker)
+    db 0x1                       // who loads first flag (0 for Remix, 1 for vanilla)
+    dh 0x055C                    // Announcement
+    dw progress_icon.rare_pair   // progress icon
+    dw SinglePlayer.name_texture.RARE_PAIR + 0x10    // name texture
+
     OS.align(16)
 
     // @ Description
@@ -2981,6 +3391,13 @@ scope SinglePlayerModes: {
         sw      t7, 0x0020(sp)              // save registers
         sw      t8, 0x0024(sp)              // save registers
         sw      t9, 0x0028(sp)              // save registers
+        li      at, metal_bros_flag
+        sb      r0, 0x0000(at)              // clear flag
+        li      t9, MATCH_SETTINGS_PART1
+        addiu   t9, t9, 0xA0                // get to Boss character location
+        ori     t0, r0, 0x1                 // number of characters
+        sb      t0, 0x0008(t9)              // set to 1 (this is to prevent metal luigi spawn
+
         li      at, singleplayer_mode_flag  // at = singleplayer mode flag
         lw      at, 0x0000(at)              // at = 4 if Remix 1p
         addiu   t2, r0, ALLSTAR_ID
@@ -3032,7 +3449,7 @@ scope SinglePlayerModes: {
         addiu   t7, t7, 0x0004              // move to next slot
         bnezl   t4, kirby_loop              // continue loop until all slots filled
         addiu   t4, t4, -0x0001             // subtract from slots
-        addiu   t4, r0, 0x0007              // total slots
+        addiu   t4, r0, NUM_REMIX_HATS      // total number of hats
 
         clear_kirby_loop:
         sw      r0, 0x0008(t9)              // clear flags
@@ -3041,10 +3458,10 @@ scope SinglePlayerModes: {
         addiu   t4, t4, -0x0001             // subtract slot
 
         li      t9, MATCH_SETTINGS_PART1
-        
+
         jal     duo_select
         nop
-        
+
         addiu   t0, r0, 0x0005              // slot countdown (currently six random slots to fill)
         addiu   t1, r0, 0x0018              // jump multiplier for match pool
         li      t5, match_pool              // load match pool address
@@ -3112,7 +3529,7 @@ scope SinglePlayerModes: {
         addiu   v0, v0, 0x0001              // add 1 to output to account for character portion of word
         addu    at, t3, v0                  // add v0 amount to get stage id
         lbu     at, 0x0004(at)              // load stage ID in t3
-        
+
         li      t6, all_star_stage_used_table
         addu    t6, t6, at                  // t6 = address of stage used flag
         lbu     t8, 0x0000(t6)              // t8 = stage used flag
@@ -3149,7 +3566,7 @@ scope SinglePlayerModes: {
         addiu   t5, t5, 0x0018
         bnez    t9, _clear_loop
         addiu   t9, t9, 0xFFFF
-        
+
         li      at, all_star_stage_used_table
         lli     t0, Stages.id.MAX_STAGE_ID
         addu    at, at, t0                  // at = address of last stage used flag
@@ -3160,9 +3577,14 @@ scope SinglePlayerModes: {
         addiu   t0, t0, -0x0001             // t0--
 
         jal     Global.get_random_int_      // generate number based on total number of character pool
-        addiu   a0, r0, 0x0002              // place current number of boss characters in
+        addiu   a0, r0, 0x0003              // place current number of boss characters in
 
         beqz    v0, _mad_piano              // if 0, do mad piano
+        nop
+
+        addiu   at, r0, 0x0001
+
+        beq     v0, at, _metal_bros
         nop
 
         li      t9, MATCH_SETTINGS_PART1
@@ -3208,14 +3630,54 @@ scope SinglePlayerModes: {
         b       _normal
         nop
 
+        _metal_bros:
+        li      t9, MATCH_SETTINGS_PART1
+        addiu   t9, t9, 0xA0                // get to Boss character location
+        ori     t0, r0, Character.id.METAL // place Metal Mario ID in t0
+        sb      t0, 0x0009(t9)              // set Metal Mario
+        ori     t0, r0, Character.id.MLUIGI // place Metal LUIGI ID in t0
+        sb      t0, 0x000A(t9)              // set Metal Luigi
+        ori     t0, r0, 0x2                 // number of characters
+        sb      t0, 0x0008(t9)              // set to 2
+
+        ori     t1, r0, Stages.id.META_CRYSTAL_DL
+        sb      t1, 0x0001(t9)              // set META_CRYSTAL_DL
+
+        li      t9, progress_icon_struct
+        li      t1, progress_icon.metal_mario_brothers // load Metal progess icon
+        sw      t1, 0x0028(t9)              // set mad piano icon
+
+        li      t9, title_card_1_struct
+        ori     t1, r0, Character.id.METAL  // load Metal Mario
+        sw      t1, 0x0028(t9)              // set Metal Mario title card
+
+        li      t9, name_textures
+        ori     t1, r0, SinglePlayer.name_texture.METAL_MARIO_BROS + 0x10              // load alternate name texture
+        sw      t1, 0x0028(t9)              // set mad piano texture
+
+        li      t9, announcer_calls         // load announcer call
+        ori     t1, r0, 0x03C6              // load piano announcement
+        sw      t1, 0x0028(t9)              // set mad piano announcement
+
+        li      t9, model_scale             // load model scale
+        ori     t1, r0, 0x7070              // load alternate model scale
+        sw      t1, 0x0028(t9)              // set mad piano icon
+
+        li      t9, metal_bros_flag
+        ori     t1, r0, 0x1                 // set to 0x1
+        sb      t1, 0x0000(t9)              // set Metal Bros Flag on
+
+        b       _normal
+        nop
+
         _mad_piano:
         li      t9, MATCH_SETTINGS_PART1
         addiu   t9, t9, 0xA0                // get to Boss character location
         ori     t0, r0, Character.id.PIANO  // place Mad Piano ID in t0
         sb      t0, 0x0009(t9)              // set Mad Piano
 
-        ori     t1, r0, Stages.id.MADMM
-        sb      t1, 0x0001(t9)              // set Mad Monster Mansion
+        ori     t1, r0, Stages.id.BIG_BOOS_HAUNT
+        sb      t1, 0x0001(t9)              // set Big Boo's Haunt
 
         li      t9, progress_icon_struct
         li      t1, 0x00015240              // load Piano progess icon
@@ -3253,30 +3715,30 @@ scope SinglePlayerModes: {
         j       _return
         lui     at, 0x8014                  // original line 2
         }
-        
+
         scope duo_select: {
         addiu   sp, sp, -0x10
         sw      ra, 0x0004(sp)
-        
+
         li      t5, duo_pool                // load duo pool address
-        
+
         jal     Global.get_random_int_      // generate number based on total number of character pool
         addiu   a0, r0, DUO_POOL_NUMBER + 0x1 // place current number of character pool in a0
-        
+
         sll     v0, v0, 0x4                 // multiply by 16
-        
+
         addu    t5, t5, v0                  // get duo address
-        
+
         li      t3, duo_spawn
         lbu     t4, 0x0005(t5)              // load flag
         sb      t4, 0x0000(t3)              // set flag
-        
+
         lw      t3, 0x0000(t5)              // get match info
         addiu   t4, r0, 0x0001
         sw      t4, 0x0000(t3)              // save 1 to flag to mark the character as already used
 
         addiu   v0, r0, 0x0010              // Duo Slot
-        
+
         li      a0, progress_icon_struct
         addu    a0, a0, v0                  // add slot to struct address
         lw      t4, 0x0008(t5)              // load icon location in file
@@ -3288,13 +3750,24 @@ scope SinglePlayerModes: {
         sw      t4, 0x0000(a0)              // save name texture to correct location
 
         lh      t4, 0x0006(t5)              // load call of team
-        
+
         li      a0, announcer_calls         // load announcer calls
         addu    a0, a0, v0                  // get location of current character
-        
+
         sw      t4, 0x0000(a0)              // save name call to correct location
-        
+
         lbu     t4, 0x0004(t3)              // load character id into t4
+
+        // conker check
+
+        addiu   t0, r0, Character.id.BANJO
+        bne     t0, t4, _stage_id
+        nop
+
+        li      t0, conker_match_setting
+        addiu   t6, r0, 0x0001
+        sw      t6, 0x0000(t0)              // mark Conker flag as well, since it's Rare Pair
+
         // get stage ID
         _stage_id:
         jal     Global.get_random_int_      // generate number based on total number of stage pool for character
@@ -3302,25 +3775,25 @@ scope SinglePlayerModes: {
         addiu   v0, v0, 0x0001              // add 1 to output to account for character portion of word
         addu    t0, t3, v0                  // add v0 amount to get stage id
         lbu     t0, 0x0004(t0)              // load stage ID in t0
-        
+
         li      t6, all_star_stage_used_table
         addu    t6, t6, t0                  // t6 = address of stage used flag
         lbu     t8, 0x0000(t6)              // t8 = stage used flag
         bnez    t8, _stage_id               // if the stage is used, try to get a different one
         lli     t8, OS.TRUE                 // t8 = TRUE (for next line where we mark it used)
         sb      t8, 0x0000(t6)              // mark the stage as used
-        
+
         // save settings
         addiu   t8, r0, 0x40
         addu    t8, t9, t8                  // place match settings slot address into t8
 
         sb      t0, 0x0001(t8)              // save stage ID to match settings slot
-        
+
         sb      t4, 0x0009(t8)              // save character ID to match settings slot
-        
+
         lbu     t4, 0x0004(t5)              // load partner character ID
         sb      t4, 0x000A(t8)              // save character ID to match settings slot
-        
+
         lw      ra, 0x0004(sp)
         addiu   sp, sp, 0x10
         jr      ra
@@ -3332,14 +3805,22 @@ scope SinglePlayerModes: {
     polygon_id_table:
     dw Character.id.NFALCO                  // Polygon Falco
     dw Character.id.NGND                    // Polygon Ganondorf
+    dw Character.id.NYLINK                  // Polygon Young Link
     dw Character.id.NDRM                    // Polygon Dr. Mario
+    dw Character.id.NDSAMUS                 // Polygon Dark Samus
     dw Character.id.NWARIO                  // Polygon Wario
     dw Character.id.NLUCAS                  // Polygon Lucas
     dw Character.id.NBOWSER                 // Polygon Bowser
     dw Character.id.NWOLF                   // Polygon Wolf
+    dw Character.id.NMTWO                   // Polygon Mewtwo
+    dw Character.id.NMARTH                  // Polygon Marth
     dw Character.id.NSONIC                  // Polygon Sonic
     dw Character.id.NSHEIK                  // Polygon Sheik
     dw Character.id.NMARINA                 // Polygon Marina
+    dw Character.id.NDEDEDE                 // Polygon Dedede
+    dw Character.id.NGOEMON                 // Polygon Goemon
+    dw Character.id.NCONKER                 // Polygon Conker
+    dw Character.id.NBANJO                  // Polygon Banjo
 
     // @ Description
     // Changes polygon match selection to be Remix Polygons
@@ -3362,6 +3843,7 @@ scope SinglePlayerModes: {
         addiu   t1, r0, REMIX_1P_ID         // Remix ID
         li      t0, singleplayer_mode_flag  // t0 = singleplayer mode flag
         lw      t0, 0x0000(t0)              // t0 = 4 if Remix 1p
+
         bnel    t0, t1, _end                // if not Remix 1p, skip
         addiu   t7, v1, 0x000E              // original line 1
 
@@ -3384,22 +3866,77 @@ scope SinglePlayerModes: {
         addiu   sp, sp, 0x0020              // deallocate stack space
         j        _return
         andi    s2, s2, 0xFFFF              // original line 2
-        }
+    }
+
+    // @ Description
+    // Changes polygon match selection to be Remix Polygons in Race to the Finish
+    scope polygon_selection_match_rttf: {
+        OS.patch_start(0x10C794, 0x8018DF34)
+        j       polygon_selection_match_rttf
+        nop
+        _return:
+        OS.patch_end()
+
+        addiu   sp, sp, -0x0020             // allocate stack space
+        sw      t0, 0x0004(sp)              // save registers
+        sw      t1, 0x0008(sp)              // save registers
+        sw      a0, 0x000C(sp)              // save registers
+        sw      v0, 0x0010(sp)              // save registers
+        sw      t6, 0x0014(sp)              // save registers
+        sw      at, 0x0018(sp)              // save registers
+        sw      ra, 0x001C(sp)              // save registers
+
+        li      t0, 0x800A4B19              // t0 = 1p stage ID
+        addiu   t1, r0, Stages.id.REMIX_RTTF         // Remix ID
+        lbu     t0, 0x0000(t0)              // load stage id
+        beq     t0, t1, _remix
+        addiu   t1, r0, REMIX_1P_ID         // Remix ID
+        li      t0, singleplayer_mode_flag  // t0 = singleplayer mode flag
+        lw      t0, 0x0000(t0)              // t0 = 4 if Remix 1p
+        bnel    t0, t1, _end                // if not Remix 1p, skip
+        addiu   t5, v1, 0x000E              // original line 1
+
+        _remix:
+        jal     Global.get_random_int_      // generate number based on total number of character pool
+        addiu   a0, r0, Character.NUM_POLYGONS // place current number of boss characers in
+
+        sll     v0, v0, 0x0002              // multiply by 4 for table
+        li      t0, polygon_id_table        // load polygon ID table
+        addu    t0, v0, t0                  // address of polygon ID
+        lw      t5, 0x0000(t0)              // load Remix 1p Polygon ID
+
+        _end:
+        lw      t0, 0x0004(sp)              // load registers
+        lw      t1, 0x0008(sp)              // load registers
+        lw      a0, 0x000C(sp)              // load registers
+        lw      v0, 0x0010(sp)              // load registers
+        lw      t6, 0x0014(sp)              // load registers
+        lw      at, 0x0018(sp)              // load registers
+        lw      ra, 0x001C(sp)              // load registers
+        addiu   sp, sp, 0x0020              // deallocate stack space
+        j        _return
+        andi    s2, s2, 0xFFFF              // original line 2
+    }
 
     // @ Description
     // Changes polygon file loading to be Remix Polygons
     scope polygon_file_loading: {
         OS.patch_start(0x10E21C, 0x8018F9BC)
         j       polygon_file_loading
-        addiu   t6, r0, REMIX_1P_ID         // Remix ID
+        addiu   t6, r0, Stages.id.REMIX_RTTF         // Remix ID
         _return:
         OS.patch_end()
 
+        li      t0, 0x800A4B19              // t0 = 1p stage ID
+        lbu     t0, 0x0000(t0)              // load stage id
+        beq     t0, t6, _remix
+        addiu   t6, r0, REMIX_1P_ID         // Remix ID
         li      a0, singleplayer_mode_flag  // a0 = singleplayer mode flag
         lw      a0, 0x0000(a0)              // a0 = 4 if Remix 1p
         bnel    a0, t6, _normal             // if not Remix 1p, skip
         or      a0, s1, r0                  // original line 2
 
+        _remix:
         addiu   sp, sp, -0x0010             // allocate stack space
         addiu   t7, r0, (Character.NUM_POLYGONS - 1)
 
@@ -3493,18 +4030,18 @@ scope SinglePlayerModes: {
         _return:
         OS.patch_end()
 
-        li      t0, singleplayer_mode_flag       // t0 = singleplayer mode flag
-        lw      t0, 0x0000(t0)              // t0 = 4 if Remix 1p
-        bne     t0, t6, _normal               // if not Remix 1p, skip
-        sw      ra, 0x001C(sp)                // original line 2
+        li      t0, singleplayer_mode_flag      // t0 = singleplayer mode flag
+        lw      t0, 0x0000(t0)                  // t0 = 4 if Remix 1p
+        bne     t0, t6, _normal                 // if not Remix 1p, skip
+        sw      ra, 0x001C(sp)                  // original line 2
 
-        li        t7, name_textures
+        li      t7, name_textures
         j       _return
         nop
 
         _normal:
-        j        _return
-        addiu   t7, t7, 0x4F24              // original line 1
+        j       _return
+        addiu   t7, t7, 0x4F24                  // original line 1
         }
 
     // @ Description
@@ -3518,7 +4055,7 @@ scope SinglePlayerModes: {
 
         li      t1, singleplayer_mode_flag  // t0 = singleplayer mode flag
         lw      t1, 0x0000(t1)              // t0 = 4 if Remix 1p
-        bne     t1, t6, _normal               // if not Remix 1p, skip
+        bne     t1, t6, _normal             // if not Remix 1p, skip
         nop
 
         beq     a2, at, _end                // do a normal character text load if at Pikachu Stage
@@ -4087,22 +4624,161 @@ scope SinglePlayerModes: {
     scope remix_icon_pointer: {
         OS.patch_start(0x12B518, 0x801321D8)
         j       remix_icon_pointer
-        addiu    s0, r0, REMIX_1P_ID            // Remix ID put into s0
+        addiu   s0, r0, REMIX_1P_ID             // Remix ID put into s0
         _return:
         OS.patch_end()
 
-        li      s6, singleplayer_mode_flag       // s6 = singleplayer mode flag
-        lw      s6, 0x0000(s6)              // s6 = 4 if Remix 1p
-        bne     s6, s0, _normal               // if not Remix 1p, skip
-        lui        s0, 0x8000                    // original line 1
+        li      s6, singleplayer_mode_flag      // s6 = singleplayer mode flag
+        lw      s6, 0x0000(s6)                  // s6 = 4 if Remix 1p
+        bne     s6, s0, _normal                 // if not Remix 1p, skip
+        lui     s0, 0x8000                      // original line 1
 
-        li        t6, progress_icon_struct    // load address of Remix Progress Icons
+        li      t6, STAGE_FLAG
+        lb      t6, 0x0000(t6)                  // load current stage of 1p
+        addiu   s6, r0, 0x000A                  // boss stage
+        bne     t6, s6, _standard_remix_1p
+        nop
+
+        li      t6, metal_bros_flag
+        lbu     t6, 0x0000(t6)                  // load if metal bros
+        beqz    t6, _standard_remix_1p
+        nop
+
+        addiu   a0, r0, 0x000A                  // Keep progress icons correct for Metal Bros
+
+
+        _standard_remix_1p:
+        li      t6, progress_icon_struct      // load address of Remix Progress Icons
         j       _return
         nop
 
         _normal:
         j        _return
-        addiu   t6, t6, 0x4E78              // original line 2
+        addiu   t6, t6, 0x4E78                  // original line 2
+        }
+
+        // Forces a Doubles Style Load up for the Metal Bros and also revises title card to be Metal Bros
+        scope metal_bros_magic: {
+        OS.patch_start(0x12DB58, 0x80134818)
+        j       metal_bros_magic
+        addiu   at, r0, REMIX_1P_ID             // Remix ID put into s0
+        _return:
+        OS.patch_end()
+
+        li      t6, singleplayer_mode_flag      // s6 = singleplayer mode flag
+        lw      t6, 0x0000(t6)                  // s6 = 4 if Remix 1p
+        bne     t6, at, _normal                 // if not Remix 1p, skip
+        lui     at, 0x8013                      // original line 1
+
+        li      t6, STAGE_FLAG
+        lb      t6, 0x0000(t6)                  // load current stage of 1p
+        addiu   t0, r0, 0x000A
+        // boss stage
+        bne     t6, t0, _normal
+        nop
+
+        li      t6, metal_bros_flag
+        lbu     t6, 0x0000(t6)                  // load if metal bros
+        beqz    t6, _normal
+        nop
+
+        li      t6, MATCH_SETTINGS_PART1        // a1 = Match Settings
+        addiu   t6, t6, 0x0040                  // duo stage portion
+        addiu   t0, r0, Character.id.METAL
+        sb      t0, 0x0009(t6)                  // save Metal Mario to first Doubles Character
+        addiu   t0, r0, Character.id.MLUIGI
+        sb      t0, 0x000A(t6)                  // save Metal Luigi to second Doubles Character
+
+        li      t6, name_textures
+        addiu   t6, t6, 0x0010              // add slot to struct address
+        ori     t0, r0, SinglePlayer.name_texture.METAL_MARIO_BROS + 0x10              // load alternate name texture
+        sw      t0, 0x0000(t6)              // save icon location to correct place in struct
+
+        li      t6, announcer_calls         // load announcer calls
+        addiu   t6, t6, 0x0010              // add slot to struct address
+        ori     t0, r0, 0x542               // Metal Mario Bros FGM ID
+        sw      t0, 0x0000(t6)              // save icon location to correct place in struct
+
+        li      t6, duo_spawn
+        sb      r0, 0x0000(t6)                  // set so mario would load as per usual
+
+        j        _return
+        addiu   t6, r0, 0x0004                  // Makes Boss stage act like Duo at title card
+
+        _normal:
+        j        _return
+        lbu     t6, 0x0017(a1)                 // original line 2
+        }
+
+        // Fixes Crash with Metal bros, this routine controls loading allies and camera and such on title screen
+        scope metal_bros_bug_fix: {
+        OS.patch_start(0x12E050, 0x80134D10)
+        j       metal_bros_bug_fix
+        addiu   at, r0, REMIX_1P_ID             // Remix ID put into s0
+        _return:
+        OS.patch_end()
+
+        li      a0, singleplayer_mode_flag      // s6 = singleplayer mode flag
+        lw      a0, 0x0000(a0)                  // s6 = 4 if Remix 1p
+        bne     a0, at, _normal                 // if not Remix 1p, skip
+        nop
+
+        li      a0, STAGE_FLAG
+        lb      a0, 0x0000(a0)                  // load current stage of 1p
+        addiu   at, r0, 0x000A
+        // boss stage
+        bne     a0, at, _normal
+        nop
+
+        li      a0, metal_bros_flag
+        lbu     a0, 0x0000(a0)                  // load if metal bros
+        beqz    a0, _normal
+        nop
+
+        jal     0x80134190                      // original line 1
+        addiu   a0, r0, 0x000A                  // restore stage ID for this routine
+        j        _return
+        nop
+
+        _normal:
+        jal     0x80134190                      // original line 1
+        lw      a0, 0x0000(s2)                  // original line 2
+
+        j        _return
+        nop
+        }
+
+        // Prevents Ally Text Spawn in Metal Bros Title Card
+        scope metal_bros_text: {
+        OS.patch_start(0x12BE58, 0x80132B18)
+        j       metal_bros_text
+        addiu   t7, r0, REMIX_1P_ID             // Remix ID put into s0
+        _return:
+        OS.patch_end()
+
+        li      t6, singleplayer_mode_flag      // t6 = singleplayer mode flag
+        lw      t6, 0x0000(t6)                  // t6 = 4 if Remix 1p
+        bne     t6, t7, _normal                 // if not Remix 1p, skip
+        nop
+
+        li      t6, STAGE_FLAG
+        lb      t6, 0x0000(t6)                  // load current stage of 1p
+        addiu   t7, r0, 0x000A
+        bne     t6, t7, _normal
+        nop
+
+        li      t6, metal_bros_flag
+        lbu     t6, 0x0000(t6)                  // load if metal bros
+        beqz    t6, _normal
+        nop
+
+        addiu   a0, r0, 0x000A              // set text to function like normal for Metal Mario Bros
+
+        _normal:
+        jal     0x80132668                  // original line 1
+        sw      a0, 0x0018(sp)              // original line 2
+        j        _return
+        nop
         }
 
     // @ Description
@@ -4119,7 +4795,7 @@ scope SinglePlayerModes: {
         bne     t7, v0, _normal             // if not Remix 1p, skip
         nop
 
-        li      t7, Size.state_table
+        li      t7, Size.match_state_table
         sll     v0, a2, 0x0002              // v0 = offset to size state (port already in a2)
         addu    t4, v0, t7                  // t4 = address of size state
 
@@ -4141,10 +4817,22 @@ scope SinglePlayerModes: {
         sw      v0, 0x0000(t4)              // save size state to make character a giant
 
         _other:
-        li      t7, Size.state_table
+        li      t7, Size.match_state_table
+        li      v0, 0x800A4AE3
+        lbu     v0, 0x0000(v0)              // load player port
+        bnel    r0, v0, _player_1
         sw      r0, 0x0000(t7)              // reset size state to normal
+        _player_1:
+        addiu   t4, r0, 0x0001              // player port 2
+        bnel    t4, v0, _player_2
         sw      r0, 0x0004(t7)              // reset size state to normal
+        _player_2:
+        addiu   t4, r0, 0x0002              // player port 2
+        bnel    t4, v0, _player_3
         sw      r0, 0x0008(t7)              // reset size state to normal
+        _player_3:
+        addiu   t4, r0, 0x0003              // player port 2
+        bnel    t4, v0, _normal
         sw      r0, 0x000C(t7)              // reset size state to normal
 
         _normal:
@@ -4221,24 +4909,36 @@ scope SinglePlayerModes: {
      dw     0x00000040      // Dedede ID
      dw     0x00000020      // Dedede Hat ID
      dw     0x00000000      // Flag
-     
+
      dw     0x00000036      // Mad Piano ID
-     dw     0x00000020      // Mad Piano Hat ID
+     dw     0x00000017      // Mad Piano Hat ID
      dw     0x00000000      // Flag
-     
+
      dw     Character.id.GOEMON      // Goemon ID
      dw     0x00000022      // Goemon Hat ID
      dw     0x00000000      // Flag
-     
+
+     dw     Character.id.BANJO      // Banjo ID
+     dw     0x00000026      // Banjo Hat ID
+     dw     0x00000000      // Flag
+
      dw     Character.id.SLIPPY      // Slippy ID
      dw     0x00000023      // Slippy Hat ID
      dw     0x00000000      // Flag
-     
+
      dw     Character.id.PEPPY      // Peppy ID
      dw     0x00000024      // Peppy Hat ID
      dw     0x00000000      // Flag
 
-     constant NUM_REMIX_HATS(0x13) // UPDATE if adding a hat
+     dw     Character.id.EBI      // Ebisumaru ID
+     dw     0x00000028      // Ebisumaru Hat ID
+     dw     0x00000000      // Flag
+
+     dw     Character.id.DRAGONKING      // Dragon King ID
+     dw     0x00000029      // Dragon King Hat ID
+     dw     0x00000000      // Flag
+
+     constant NUM_REMIX_HATS(0x16) // UPDATE if adding a hat
      OS.align(16)
 
     // @ Description
@@ -4317,7 +5017,7 @@ scope SinglePlayerModes: {
         _normal_yoshi_load:
         j       0x80133BFC
         nop
-        }
+    }
 
     // @ Description
     // Fixes odd Costume Color choices for Team Colors
@@ -4627,18 +5327,18 @@ scope SinglePlayerModes: {
         li      a1, MATCH_SETTINGS_PART1    // a1 = Match Settings
         addiu   a1, a1, 0x0040              // duo stage portion
         li      a0, duo_spawn
-        
+
         lbu     a0, 0x0000(a0)              // load flag
         bnezl   a0, _normal
         lbu     a0, 0x000A(a1)              // load character id
-        
-        
+
+
         lbu     a0, 0x0009(a1)              // load character id
 
         _normal:
         j        _return
         or      a1, s5, r0                  // original line 2
-        }
+    }
 
     // @ Description
     // Sets spawn order of what was originally Luigi for the Title Card, in order to make one character appear in front or behind
@@ -4656,13 +5356,13 @@ scope SinglePlayerModes: {
 
         li      a1, MATCH_SETTINGS_PART1    // a1 = Match Settings
         addiu   a1, a1, 0x0040              // duo stage portion
-        
+
         li      a0, duo_spawn
         lbu     a0, 0x0000(a0)              // load flag
         bnezl   a0, _vanilla
         lbu     a0, 0x0009(a1)              // load character id
-        
-        
+
+
         lbu     a0, 0x000A(a1)              // load character id
         _vanilla:
         addu    s3, r0, a0                  // load character id
@@ -4670,7 +5370,7 @@ scope SinglePlayerModes: {
         _normal:
         j        _return
         or      a1, s5, r0                  // original line 2
-        }
+    }
 
     // @ Description
     // Allows Luigi to be his normal color against Team Star Fox and forces Fox to be an alternate color
@@ -4700,7 +5400,7 @@ scope SinglePlayerModes: {
         _normal:
         j        _return
         multu    t6, s5                      // original line 2
-        }
+    }
 
     // @ Description
     // Loads the correct files for the Mario Bros/Doubles Stage of 1p
@@ -4718,7 +5418,7 @@ scope SinglePlayerModes: {
 
         li      t6, MATCH_SETTINGS_PART1    // a1 = Match Settings
         addiu   t6, t6, 0x0040              // duo stage portion
-        
+
         jal     0x800D786C                  // file loading routine for characters
         lbu     a0, 0x000A(t6)              // load secondary character id
 
@@ -4736,7 +5436,7 @@ scope SinglePlayerModes: {
         or      a0, r0, r0                  // original line 2 (Mario ID inserted)
         j        _return                    // return
         nop
-        }
+    }
 
     // @ Description
     // Loads the correct files for the Giant Stage of 1p
@@ -4765,7 +5465,7 @@ scope SinglePlayerModes: {
         addiu   a0, r0, 0x0002              // original line 2 (DK ID inserted)
         j        _return                    // return
         nop
-        }
+    }
 
     // @ Description
     // Sets correct Model for CPU Player
@@ -4788,7 +5488,7 @@ scope SinglePlayerModes: {
         _normal:
         j        _return                    // return
         or      a1, s5, r0                  // original line 2
-        }
+    }
 
     // @ Description
     // Revises the selection of kirby hats to use remix characters for title card
@@ -4812,7 +5512,7 @@ scope SinglePlayerModes: {
         addiu    t6, t6, 0x4FD8             // original line 1
         j        _return
         lw      t8, 0x0000(t6)              // original line 2
-        }
+    }
 
     // @ Description
     // Revises the selection of kirby powers to use remix characters
@@ -4837,7 +5537,7 @@ scope SinglePlayerModes: {
         addu    t5, t5, v0                  // original line 1
         j       _return
         lbu     t5, 0x2800(t5)              // original line 2
-        }
+    }
 
     // @ Description
     // Changes a branch that would typically be used by the game to put a random kirby with on of the unlockable characters
@@ -4863,7 +5563,7 @@ scope SinglePlayerModes: {
 
         j       _return                     // this path is taken to load a random unlockable character kirby normally
         nop
-        }
+    }
 
     // @ Description
     // Revises the initial selection of kirby powers to use remix characters
@@ -4885,7 +5585,7 @@ scope SinglePlayerModes: {
         sll        t9, s4, 0x5                // original line 1
         j        _return
         addu    t4, s5, v1                    // original line 2
-        }
+    }
 
     // @ Description
     // Makes it so the Kirby Stage of Remix 1p loads a file which will load all necessary files for his powers
@@ -4907,7 +5607,7 @@ scope SinglePlayerModes: {
         _normal:
         j       _return
         addiu   s1, s1, 0x00E6              // original line 2
-      }
+    }
 
     // @ Description
     //  Skips a function that partially deals with unique spawning on Master Hand Stage
@@ -4935,58 +5635,58 @@ scope SinglePlayerModes: {
         addiu   t5, r0, 0x0001              // original line 2
     }
 
-    // @ Description
-    //  Prevents Giga Bowser from using Grounded Down Special
-    //  This hook is in the generic function that determines the initial routine for a dsp. Skipping it, prevents move from starting
-    scope _giga_dsp_prevent: {
-        OS.patch_start(0xCBC4C, 0x8015120C)
-        j       _giga_dsp_prevent
-        nop
-        _return:
-        OS.patch_end()
+    // // @ Description
+    // //  Prevents Giga Bowser from using Grounded Down Special
+    // //  This hook is in the generic function that determines the initial routine for a dsp. Skipping it, prevents move from starting
+    // scope _giga_dsp_prevent: {
+        // OS.patch_start(0xCBC4C, 0x8015120C)
+        // j       _giga_dsp_prevent
+        // nop
+        // _return:
+        // OS.patch_end()
 
-        addiu   sp, sp,-0x0010              // allocate stack space
-        sw      at, 0x0000(sp)
-        sw      t2, 0x0004(sp)
-        addiu   t2, r0, REMIX_1P_ID         // insert Remix 1p ID
-        li      at, singleplayer_mode_flag  // t0 = Single Player Mode Flag address
-        lw      at, 0x0000(at)              // t0 = 4 if remix 1p
+        // addiu   sp, sp,-0x0010              // allocate stack space
+        // sw      at, 0x0000(sp)
+        // sw      t2, 0x0004(sp)
+        // addiu   t2, r0, REMIX_1P_ID         // insert Remix 1p ID
+        // li      at, singleplayer_mode_flag  // t0 = Single Player Mode Flag address
+        // lw      at, 0x0000(at)              // t0 = 4 if remix 1p
 
-        bne     at, t2, _standard           // do dsp as normal
-        nop
+        // bne     at, t2, _standard           // do dsp as normal
+        // nop
 
-        lw      at, 0x0008(v0)              // load player ID
-        addiu   t2, r0, Character.id.GBOWSER // GIGA Bowser ID inserted
+        // lw      at, 0x0008(v0)              // load player ID
+        // addiu   t2, r0, Character.id.GBOWSER // GIGA Bowser ID inserted
 
-        beq     at, t2, _cpu_check          // got to cpu check as this is Giga Bowser
-        addiu   t2, r0, Character.id.BOWSER // Bowser ID inserted
+        // beq     at, t2, _cpu_check          // got to cpu check as this is Giga Bowser
+        // addiu   t2, r0, Character.id.BOWSER // Bowser ID inserted
 
-        bne     at, t2, _standard           // do dsp as normal, as it is not giga bowser or bowser
-        nop
-
-
-        _cpu_check:
-        lbu     at, 0x0023(v0)              // load player types
-        beqz    at, _standard               // if player type = 0, then its a human player and it should proceed as normal
-        nop
-
-        addiu   t1, r0, r0                  // set t1 to 0, so it takes branch that skips function
+        // bne     at, t2, _standard           // do dsp as normal, as it is not giga bowser or bowser
+        // nop
 
 
-        _standard:
-        lw      at, 0x0000(sp)
-        lw      t2, 0x0004(sp)
-        addiu   sp, sp, 0x0010              // deallocate stack space
-        bgezl   t1, _skip_move              // modified original line 1
-        or      v0, r0, r0                  // modified original line 2
+        // _cpu_check:
+        // lbu     at, 0x0023(v0)              // load player types
+        // beqz    at, _standard               // if player type = 0, then its a human player and it should proceed as normal
+        // nop
 
-        j        _return                    // return as move should function
-        nop
+        // addiu   t1, r0, r0                  // set t1 to 0, so it takes branch that skips function
 
-        _skip_move:
-        j       0x8015124C                  // path taken when skipping move function
-        nop
-    }
+
+        // _standard:
+        // lw      at, 0x0000(sp)
+        // lw      t2, 0x0004(sp)
+        // addiu   sp, sp, 0x0010              // deallocate stack space
+        // bgezl   t1, _skip_move              // modified original line 1
+        // or      v0, r0, r0                  // modified original line 2
+
+        // j        _return                    // return as move should function
+        // nop
+
+        // _skip_move:
+        // j       0x8015124C                  // path taken when skipping move function
+        // nop
+    // }
 
     // @ Description
     //  Prevents Giga Bowser from using Grounded Up Special
@@ -5009,12 +5709,12 @@ scope SinglePlayerModes: {
         nop
 
         lw      at, 0x0008(v0)              // load player ID
-        addiu   t2, r0, Character.id.GBOWSER    // GIGA Bowser ID inserted
+        //addiu   t2, r0, Character.id.GBOWSER    // GIGA Bowser ID inserted
 
-        beq     at, t2, _cpu_check          // take jump to cpu check as is GIGA Bowser
-        addiu   t2, r0, Character.id.BOWSER // Bowser ID inserted
+        //beq     at, t2, _cpu_check          // take jump to cpu check as is GIGA Bowser
+        //addiu   t2, r0, Character.id.BOWSER // Bowser ID inserted
 
-        beq     at, t2, _cpu_check          // take jump to cpu check as is Bowser
+        //beq     at, t2, _cpu_check          // take jump to cpu check as is Bowser
         addiu   t2, r0, Character.id.PIANO  // Mad Piano ID inserted
 
         beq     at, t2, _cpu_check          // take jump to cpu check as is Mad Piano
@@ -5057,18 +5757,24 @@ scope SinglePlayerModes: {
         _return:
         OS.patch_end()
 
-        li      at, Size.state_table
-        sw      r0, 0x0000(at)              // reset size state to normal
-        sw      r0, 0x0004(at)              // reset size state to normal
-        sw      r0, 0x0008(at)              // reset size state to normal
-        sw      r0, 0x000C(at)              // reset size state to normal
+        addiu   sp, sp, -0x0010             // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+        sw      a0, 0x0008(sp)              // ~
+
+        lui     a0, 0x800A
+        jal     CharacterSelectDebugMenu.Size.clear_settings_for_1p_
+        lbu     a0, 0x4AE3(a0)              // a0 = port index of primary human player
+
+        lw      ra, 0x0004(sp)              // restore registers
+        lw      a0, 0x0008(sp)              // ~
+        addiu   sp, sp, 0x0010              // deallocate stack space
 
         li      at, page_flag               // at = page flag address
 
         jr      ra                          // original line 1
         sw      r0, 0x0000(at)              // clear page flag
     }
-    
+
     // @ Description
     // Adds parameter overrides for CPU Characters on Team Stage of Remix 1p.
     // @ Arguments
@@ -5080,7 +5786,7 @@ scope SinglePlayerModes: {
         dw {moveset}
         dw {flags}
     }
-    
+
     // @ Description
     // Adds parameter overrides for CPU Characters on Team Stage of Remix 1p.
     // @ Arguments
@@ -5092,7 +5798,7 @@ scope SinglePlayerModes: {
         dw {moveset}
         dw {flags}
     }
-    
+
     // @ Description
     // Block of moveset commands for defeated characters.
     // Generic defeated moveset commands.
@@ -5226,6 +5932,10 @@ scope SinglePlayerModes: {
     add_team_parameters(File.GOEMON_TEAM_POSE,        team_moveset_ness,      0)          // 0x41 - GOEMON
     add_team_parameters(0x2B1,                        team_moveset_fox_link,  0)          // 0x42 - PEPPY
     add_team_parameters(0x2B1,                        team_moveset_fox_link,  0)          // 0x43 - SLIPPY
+    add_team_parameters(File.BANJO_TEAM_POSE,         0x80000000,             0)          // 0x44 - BANJO
+    add_team_parameters(0x222,                        team_moveset_luigi,     0)          // 0x45 - METAL LUIGI
+    add_team_parameters(File.GOEMON_TEAM_POSE,        team_moveset_ness,      0)          // 0x46 - EBI
+    add_team_parameters(0x617,                        team_moveset_captain,   0)          // 0x47 - DRAGONKING
     // ADD NEW CHARACTERS HERE
 
 	// REMIX POLYGONS
@@ -5239,7 +5949,7 @@ scope SinglePlayerModes: {
     add_team_parameters(File.MARINA_TEAM_POSE,        0x80000000,             0)          // - NMARINA
     add_team_parameters(File.FALCO_TEAM_POSE,         team_moveset,           0)          // - NFALCO
     add_team_parameters(File.GND_TEAM_POSE,           0x80000000,             0)          // - NGND
-    
+
     // @ Description
     // Block of moveset commands for duo characters.
     // Generic duo moveset commands.
@@ -5307,18 +6017,35 @@ scope SinglePlayerModes: {
     dw 0xD0000000                           // FSM = 0.0
     dw 0x00000000                           // End
     duo_moveset_lucas:
-    dw 0xA0880001                            // Set Model Form(?) (Stick)
-    dw 0xAC000005                            // Set Texture Form (Angry Face)
-    dw 0xD0000000                            // FSM = 0.0
-    dw 0x00000000                            // End
+    dw 0xA0880001                           // Set Model Form(?) (Stick)
+    dw 0xAC000005                           // Set Texture Form (Angry Face)
+    dw 0xD0000000                           // FSM = 0.0
+    dw 0x00000000                           // End
     // Moveset commands for duo Dedede.
     duo_moveset_dedede:
     dw 0xAC100004
-    dw 0xD0000000                            // FSM = 0.0
-    dw 0x00000000                            // End
+    dw 0xD0000000                           // FSM = 0.0
+    dw 0x00000000                           // End
     duo_moveset_sheik:
-    dw 0xD0000000                            // FSM = 0.0
-    dw 0x00000000                            // End
+    dw 0xD0000000                           // FSM = 0.0
+    dw 0x00000000                           // End
+	// Moveset commands for duo Goemon
+    duo_moveset_goemon:
+    dw 0xAC000001                           // Set Model Form (Shocked Face)
+    dw 0x00000000                           // End
+    duo_moveset_ebisumaru:
+    dw 0xAC000005                           // Set Model Form (Blush Face)
+    dw 0x00000000                           // End
+	// Moveset commands for duo Banjo.
+	duo_moveset_banjo:
+	dw 0xA0800002							// Set Model Form (Kazooie Feet in Right Hand)
+	dw 0xA0980002							// Set Model Form (Full Kazooie Body)
+	dw 0xA0600002							// Set Model Form (Angry Banjo Face)
+	dw 0xA0A80003							// Set Model Form (Angry Kazooie Face)
+	dw 0x00000000							// End
+	duo_moveset_conker:
+	dw 0xA0880002							// Set Model Form (Chainsaw)
+    dw 0x00000000                           // End
 
     // @ Description
     // Array of menu action parameter overrides for duo characters. Uses DownStandU animation.
@@ -5337,7 +6064,7 @@ scope SinglePlayerModes: {
     add_duo_parameters(0x51D,                        duo_moveset_jiggly,    0)          // 0x0A - JIGGLY
     add_duo_parameters(File.NESS_DUO_POSE,           duo_moveset_ness,      0)          // 0x0B - NESS
     add_duo_parameters(0,                            0x80000000,            0)          // 0x0C - BOSS
-    add_duo_parameters(0x222,                        duo_moveset,           0)          // 0x0D - METAL
+    add_duo_parameters(0x171,                        duo_moveset,           0)          // 0x0D - METAL
     add_duo_parameters(0x222,                        duo_moveset,           0)          // 0x0E - NMARIO
     add_duo_parameters(0x2B1,                        duo_moveset,           0)          // 0x0F - NFOX
     add_duo_parameters(0x34F,                        duo_moveset,           0)          // 0x10 - NDONKEY
@@ -5380,7 +6107,7 @@ scope SinglePlayerModes: {
     add_duo_parameters(File.BOWSER_DUO_POSE,         duo_moveset_yoshi,     0)          // 0x35 - GBOWSER
     add_duo_parameters(0x171,                        duo_moveset_mario,     0)          // 0x36 - PIANO
     add_duo_parameters(File.WOLF_TEAM_POSE,          0x80000000,            0)          // 0x37 - WOLF
-    add_duo_parameters(File.CONKER_TEAM_POSE,        0x80000000,            0)          // 0x38 - CONKER
+    add_duo_parameters(File.CONKER_DUO_POSE,         duo_moveset_conker,    0)          // 0x38 - CONKER
     add_duo_parameters(File.MTWO_DUO_POSE,           0x80000000,            0)          // 0x39 - MTWO
     add_duo_parameters(File.MARTH_TEAM_POSE,         0x80000000,            0)          // 0x3A - MARTH
     add_duo_parameters(File.SONIC_TEAM_POSE,         0x80000000,            0)          // 0x3B - SONIC
@@ -5389,9 +6116,14 @@ scope SinglePlayerModes: {
     add_duo_parameters(File.SHEIK_DUO_POSE,          duo_moveset_sheik,     0)          // 0x3E - SHEIK
     add_duo_parameters(File.MARINA_TEAM_POSE,        0x80000000,            0)          // 0x3F - MARINA
     add_duo_parameters(File.DEDEDE_DUO_POSE,         duo_moveset_dedede,    0)          // 0x40 - DEDEDE
-    add_duo_parameters(File.WARIO_TEAM_POSE,         0x80000000,            0)          // 0x41 - GOEMON
+    add_duo_parameters(File.GOEMON_DUO_POSE,         duo_moveset_goemon,    0)          // 0x41 - GOEMON
     add_duo_parameters(File.PEPPY_DUO_POSE,          duo_moveset_fox,       0)          // 0x42 - PEPPY
     add_duo_parameters(File.SLIPPY_DUO_POSE,         duo_moveset_fox,       0)          // 0x43 - SLIPPY
+    add_duo_parameters(File.BANJO_DUO_POSE,       	 duo_moveset_banjo,     0x0FE00000) // 0x44 - BANJO
+    add_duo_parameters(0x1D4,                        duo_moveset_luigi,     0)          // 0x45 - MLUIGI
+    add_duo_parameters(File.EBISUMARU_DUO_POSE,      duo_moveset_ebisumaru, 0)          // 0x46 - EBISUMARU
+    add_duo_parameters(0x617,                        duo_moveset_captain,   0)          // 0x47 - DRAGONKING
+
     // ADD NEW CHARACTERS HERE
 
 	// REMIX POLYGONS
@@ -5403,8 +6135,16 @@ scope SinglePlayerModes: {
     add_duo_parameters(File.SONIC_TEAM_POSE,         0x80000000,             0)          // - NSONIC
     add_duo_parameters(File.SHEIK_TEAM_POSE,         0x80000000,             0)          // - NSHEIK
     add_duo_parameters(File.MARINA_TEAM_POSE,        0x80000000,             0)          // - NMARINA
-    add_duo_parameters(File.FALCO_TEAM_POSE,         duo_moveset_link,  0)          // - NFALCO
+    add_duo_parameters(File.FALCO_TEAM_POSE,         duo_moveset_link,  0)               // - NFALCO
     add_duo_parameters(File.GND_TEAM_POSE,           0x80000000,             0)          // - NGND
+    add_duo_parameters(File.DSAMUS_TEAM_POSE,        0x80000000,             0)          // - NDSAMUS
+    add_duo_parameters(File.MARTH_TEAM_POSE,         0x80000000,             0)          // - NMARTH
+    add_duo_parameters(File.MTWO_TEAM_POSE,          0x80000000,             0)          // - NMTWO
+    add_duo_parameters(File.DEDEDE_TEAM_POSE,        0x80000000,             0)          // - NDEDEDE
+    add_duo_parameters(File.YLINK_TEAM_POSE,         0x80000000,             0)          // - NYLINK
+    add_duo_parameters(File.GOEMON_TEAM_POSE,        0x80000000,             0)          // - NGOEMON
+    add_duo_parameters(File.CONKER_TEAM_POSE,        0x80000000,             0)          // - NCONKER
+    add_duo_parameters(File.BANJO_TEAM_POSE,         0x80000000,             0)          // - NBANJO
 
 // ALLSTAR
 
@@ -5443,7 +6183,7 @@ scope SinglePlayerModes: {
         li      t0, match_begin_flag
         sw      r0, 0x0000(t0)              // clear match begin flag
 
-        addiu   t0, r0, 0x001C              // slot countdown (currently 28 character slots to fill), UPDATE when new character added
+        addiu   t0, r0, 0x001D              // slot countdown (currently 28 character slots to fill), UPDATE when new character added
         addiu   t1, r0, 0x0018              // jump multiplier for match pool
         li      t5, match_pool              // load match pool address
         li      t7, allstar_character_order // load character slots address
@@ -5452,7 +6192,7 @@ scope SinglePlayerModes: {
 
         _assignment_loop:
         jal     Global.get_random_int_      // generate number based on total number of character pool
-        addiu   a0, r0, 0x001D              // place current number of character pool in a0, UPDATE when new character added
+        addiu   a0, r0, 0x001E              // place current number of character pool in a0, UPDATE when new character added
 
         // get character ID
         mult    v0, t1                      // random number multiplied by jump multiplier
@@ -5492,7 +6232,7 @@ scope SinglePlayerModes: {
         sw      t6, 0x0004(sp)              // save slot spacer
         bnez    t0, _assignment_loop
         addiu   t0, t0, -0x0001
-        addiu   t0, r0, 0x001C              // total character count, UPDATE
+        addiu   t0, r0, 0x001D              // total character count, UPDATE
 
         _clear_loop:
         sw      r0, 0x0000(t5)              // clear character flag 1
@@ -5851,7 +6591,7 @@ scope SinglePlayerModes: {
    // @ Description
    // Sets player percent in allstar
    scope player_percent: {
-       OS.patch_start(0x53210, 0x800D7A10)
+       OS.patch_start(0x5320C, 0x800D7A0C)
        j       player_percent
        addiu   t7, r0, ALLSTAR_ID
        _return:
@@ -5861,7 +6601,7 @@ scope SinglePlayerModes: {
        li      s0, singleplayer_mode_flag  // s0 = singleplayer flag address
        lw      s0, 0x0000(s0)              // s0 = 4 if remix
        bne     s0, t7, _normal             // if not Allstar, proceed as normal
-       lw      t7, 0x0024(a1)              // original line 1 loads percent
+       lw      t7, 0x0024(a1)              // original line 2 loads percent
 
        lw      s0, 0x0020(v1)              // load player type (if cpu or hmn)
        bnez    s0, _normal
@@ -5893,7 +6633,7 @@ scope SinglePlayerModes: {
 
        _normal:
        j       _return                     // return
-       or      s0, a0, r0                  // original line 2
+       sw      t6, 0x0044(v1)              // original line 1
     }
 
    // @ Description
@@ -6138,7 +6878,7 @@ scope SinglePlayerModes: {
 
     // @ Description
     // Offsets to the icon image footers in the Stock Icons file.
-    // The size of each block is 0xE0, so Mario's flash would be at icon_offsets.MARIO + 0xE0 for example.
+    // The size of each block is 0xE0.
     scope icon_offsets: {
         // original
         constant MARIO(0x00000088 + 0x10)
@@ -6163,7 +6903,9 @@ scope SinglePlayerModes: {
         constant SSONIC(0x000019E8 + 0x10)
         constant PEPPY(0x00001E48 + 0x10)
         constant SLIPPY(0x00001F20 + 0x10)
-
+        constant MLUIGI(0x000020D8 + 0x10)
+        constant EBI(0x000021B8 + 0x10)
+        constant DRAGONKING(0x00002298 + 0x10)
 
         // custom
         constant FALCO(0x00000CC8 + 0x10)
@@ -6182,7 +6924,7 @@ scope SinglePlayerModes: {
         constant MARINA(0x00001BA8 + 0x10)
         constant DEDEDE(0x00001C88 + 0x10)
         constant GOEMON(0x00001D68 + 0x10)
-
+        constant BANJO(0x00001FF8 + 0x10)
     }
 
     // @ Description
@@ -6256,6 +6998,10 @@ scope SinglePlayerModes: {
     dw icon_offsets.GOEMON                   // Goemon
     dw icon_offsets.PEPPY                    // Peppy Hare
     dw icon_offsets.SLIPPY                   // Slippy Toad
+    dw icon_offsets.BANJO                    // Banjo
+    dw icon_offsets.MLUIGI                   // Metal Luigi
+    dw icon_offsets.EBI                      // Ebisumaru
+    dw icon_offsets.DRAGONKING               // Dragon King
     // ADD NEW CHARACTERS HERE
 
     // REMIX POLYGONS
@@ -6401,18 +7147,24 @@ scope SinglePlayerModes: {
         add.s   f8, f8, f10
         mfc1    s1, f8
 
-        li      s2, 0x41c00000              // s2 = uly (30)
+        lui     s2, 0x41C0                  // s2 = uly (30)
+
+        // Check if Dragon King HUD
+        Toggles.read(entry_dragon_king_hud, at) // at = 1 if on
+        lli     s4, 0x0001                  // s4 = 1 = always on
+        beql    at, s4, pc() + 8            // if on, use Dragon King position
+        lui     s2, 0x4334
 
         addiu   at, r0, 0x000B              // place 0B in at
         mult    t7, at                      // multiply by current row
         mflo    at                          // addition lowness for icon
         mtc1    at, f6
-        cvt.s.w  f6, f6                     // convert integer to floating point
+        cvt.s.w f6, f6                      // convert integer to floating point
         mtc1    s2, f10
         add.s   f6, f6, f10                 // add 11 for each row after first
         mfc1    s2, f6
-        li      s3, 0xFFFFFFFF              // s3 = color
-        li      s4, 0x00000000              // s4 = palette
+        addiu   s3, r0, -0x0001             // s3 = color = 0xFFFFFFFF
+        lli     s4, 0x0000                  // s4 = palette
         sw      t6, 0x0064(sp)              // save address of current character loading
         sw      t3, 0x0060(sp)              // save amount of loops remaining
         sw      t9, 0x005C(sp)              // save loop count
@@ -6519,9 +7271,9 @@ scope SinglePlayerModes: {
     // @ Description
     // This establishes Rest Area functions such as portraits and heart spawns
     // UPDATE when character added
-    constant DOUBLE_STAGE_AMOUNT(0x7)       // amount of character progress to have 1v2
+    constant DOUBLE_STAGE_AMOUNT(0x8)       // amount of character progress to have 1v2
     constant TRIPLE_STAGE_AMOUNT(0x13)      // amount of character progress to have 1v3
-    constant FINAL_STAGE_AMOUNT(0x1C)       // amount of character progress to have yoshi team style battle
+    constant FINAL_STAGE_AMOUNT(0x1D)       // amount of character progress to have yoshi team style battle
 
     scope rest_area_routine: {
         lui     t7, 0x800A
@@ -6848,11 +7600,17 @@ scope SinglePlayerModes: {
         sb      t7, 0x0000(t6)              // Save to next screen ID address
 
         _remix:
-        li      t7, Size.state_table
-        sw      r0, 0x0000(t7)              // reset size state to normal
-        sw      r0, 0x0004(t7)              // reset size state to normal
-        sw      r0, 0x0008(t7)              // reset size state to normal
-        sw      r0, 0x000C(t7)              // reset size state to normal
+        addiu   sp, sp, -0x0010             // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+        sw      a0, 0x0008(sp)              // ~
+
+        lui     a0, 0x800A
+        jal     CharacterSelectDebugMenu.Size.clear_settings_for_1p_
+        lbu     a0, 0x4AE3(a0)              // a0 = port index of primary human player
+
+        lw      ra, 0x0004(sp)              // restore registers
+        lw      a0, 0x0008(sp)              // ~
+        addiu   sp, sp, 0x0010              // deallocate stack space
 
         _normal:
         lui     t7, 0x800A                  // original line 1,

@@ -14,6 +14,8 @@ scope GameEnd {
     // @ Description
     // Reset combination mask + Start
     constant BUTTON_MASK(Joypad.A | Joypad.B | Joypad.Z | Joypad.R | Joypad.START )
+    // Reset combination mask + Dpad-Right
+    constant BUTTON_MASK_ALT(Joypad.A | Joypad.B | Joypad.Z | Joypad.R | Joypad.DR )
     // (R)esu(L)ts mask (display results regardless of toggles)
     constant BUTTON_MASK_RL(Joypad.R | Joypad.L )
 
@@ -46,7 +48,7 @@ scope GameEnd {
         addiu   sp, sp,-0x0020              // allocate stack space
         sw      t0, 0x0004(sp)              // ~
         sw      v0, 0x0008(sp)              // ~
-        sw      ra, 0x000C(sp)              // ~ 
+        sw      ra, 0x000C(sp)              // ~
         sw      a0, 0x0010(sp)              // ~
         sw      a1, 0x0014(sp)              // ~
         sw      a2, 0x0018(sp)              // save registers
@@ -67,17 +69,31 @@ scope GameEnd {
         nop
 
         li      t6, Toggles.entry_salty_runback
-        lw      t0, 0x0000(t6)              // t0 = 0 if salty runback is off
-        beqzl   t0, _no_salty_runback       // if salty runback is off, skip check
-        nop
+        lw      t0, 0x0004(t6)              // t0 = 0 if salty runback is off
+        beqz    t0, _no_salty_runback       // if salty runback is off, skip check
+        lli     t6, 0x0001                  // t6 = 1 if default button mask
 
         // p1
-        lli     a0, BUTTON_MASK             // a0 - button masks
+        lli     a0, BUTTON_MASK             // a0 - button mask
+        bnel    t0, t6, pc() + 8            // if not normal, then must be alt button mask
+        lli     a0, BUTTON_MASK_ALT         // a0 - button mask
         lli     a1, OS.FALSE                // a1 - all must be pressed
-        lli     a2, Joypad.HELD             // a2 - type
         jal     Joypad.check_buttons_all_   // v0 = bool
+        lli     a2, Joypad.HELD             // a2 - type
+        beqz    v0, _no_salty_runback       // if not held, don't restart
         nop
-        bnez    v0, _success                // if held, restart
+
+        // if here, we are restarting; check the stage_id
+        _salty_stage_check:
+        li      a2, Global.match_info
+        lw      a2, 0x0000(a2)              // a2 = match info
+        lbu     a2, 0x0001(a2)              // a2 = current stage ID
+        lli     v0, Stages.id.GREAT_BAY     // a2 = Stages.id.GREAT_BAY
+        bne     a2, v0, _success            // skip playing fgm if not Great Bay
+        nop
+        jal     FGM.play_                   // play "Song of Time" easter egg
+        lli     a0, 0x566                   // ~
+        b       _success                    // restart
         nop
 
         _no_salty_runback:
@@ -99,7 +115,7 @@ scope GameEnd {
 
         _success:
         li      t0, is_salty_runback        // t0 = address of is_salty_runback
-        li      t6, 0x0001                  // t6 = 1
+        lli     t6, 0x0001                  // t6 = 1
         sw      t6, 0x0000(t0)              // is_salty_runback = 1
         lw      t0, 0x0004(sp)              // ~
         lw      v0, 0x0008(sp)              // ~

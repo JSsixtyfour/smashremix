@@ -4,7 +4,7 @@ define __BONUS__()
 print "included Bonus.asm\n"
 
 scope Bonus {
-    constant NUM_BONUS_STAGES(30)
+    constant NUM_BONUS_STAGES(31)
 
     // @ Description
     // Sets up CSS for alternate Bonus modes
@@ -14,7 +14,7 @@ scope Bonus {
         beqz    t0, _begin                  // if Bonus 1/2, draw options - t0 = display on
         lli     t1, SinglePlayerModes.BONUS3_ID
         bne     t0, t1, _end                // if not Bonus 1/2/3, skip
-        lli     t0, 0x0001                  // t0 = display off
+        lli     t0, 0x0000                  // t0 = display on
 
         _begin:
         OS.save_registers()
@@ -119,6 +119,11 @@ scope Bonus {
         beqzl   t1, pc() + 8                // if Normal mode, hide STAGE string on init
         sw      r0, 0x0038(v0)              // turn off display
 
+        li      t0, SinglePlayerModes.singleplayer_mode_flag
+        lw      t0, 0x0000(t0)              // t0 = singleplayer mode flag
+        bnezl   t0, pc() + 8                // if not Bonus 1/2, hide STAGE string on init
+        sw      r0, 0x0038(v0)              // turn off display
+
         // Draw R button and Set Stage String
         Render.load_file(0xC5, Render.file_pointer_4)                 // load button images into file_pointer_4
         Render.draw_string(0x22, 0x1A, string_set_stage, Render.NOOP, 0x429D0000, 0x43590000, 0xFFFFFFFF, 0x3F500000, Render.alignment.LEFT)
@@ -174,6 +179,11 @@ scope Bonus {
         beqzl   t1, pc() + 8                // if Normal mode, skip rendering stock icon on init
         sw      r0, 0x0038(v0)              // turn off display
 
+        li      t0, SinglePlayerModes.singleplayer_mode_flag
+        lw      t0, 0x0000(t0)              // t0 = singleplayer mode flag
+        bnezl   t0, pc() + 8                // if not Bonus 1/2, skip rendering stock icon on init
+        sw      r0, 0x0038(v0)              // turn off display
+
         lw      t3, 0x0050(v1)              // t3 = character id array
         addiu   t3, t3, 0x0001              // t3 = address of stock icon 2 char_id
         lbu     t4, 0x0000(t3)              // t4 = character id, stock icon 2
@@ -221,15 +231,32 @@ scope Bonus {
         _return:
         OS.patch_end()
 
-        lli     a1, 0x0001                  // a1 = display off
+        lli     a1, 0x0000                  // a1 = display off
         li      t0, SinglePlayerModes.singleplayer_mode_flag
         lw      t0, 0x0000(t0)              // t0 = singleplayer mode flag
         beqzl   t0, pc() + 8                // if Bonus 1/2, turn display on
-        lli     a1, 0x0000                  // a1 = display on
+        addiu   a1, r0, -0x0001             // a1 = display on
 
-        jal     Render.toggle_group_display_
-        lli     a0, 0x0019                  // a0 = group with display objects
+        li      t0, mode
+        lw      t0, 0x0000(t0)              // t0 = mode (0 - Normal, 1 - Remix)
+        beqzl   t0, pc() + 8                // if Normal, turn display off
+        lli     a1, 0x0000                  // a1 = display off
 
+        OS.read_word(0x80046754, t0)        // t0 = group 0x19 head
+        li      t1, arrow_object
+        beqzl   t0, _end                    // skip if not initialized
+        sw      r0, 0x0000(t1)              // make sure arrow object is not set from before
+        lw      t0, 0x0000(t1)              // t0 = arrow object
+        beqz    t0, _end                    // skip if not created
+        nop
+        lw      t1, 0x0048(t0)              // t1 = STAGE string
+        sw      a1, 0x0038(t1)              // set display
+        lw      t1, 0x0044(t0)              // t1 = icons object
+        sw      a1, 0x0038(t1)              // set display
+        addiu   a1, a1, 0x0001
+        sw      a1, 0x007C(t1)              // set display
+
+        _end:
         j       _return
         swc1    f10, 0x005C(v0)             // original line 2
     }
@@ -275,6 +302,12 @@ scope Bonus {
         lli     t1, 0x0201                  // t1 = render flags (blur)
         beqzl   t2, pc() + 8                // if Normal, update render flags so stage arrows are not visible
         lli     t1, 0x0205                  // t1 = render flags (hide)
+
+        li      t3, SinglePlayerModes.singleplayer_mode_flag
+        lw      t3, 0x0000(t3)              // t3 = singleplayer mode flag
+        bnezl   t3, pc() + 8                // if not Bonus 1/2, update render flags so stage arrows are not visible
+        lli     t1, 0x0205                  // t1 = render flags (hide)
+
         sh      t1, 0x0024(t0)              // update render flags
         lw      t0, 0x0008(t0)              // t0 = stage right arrow image struct
         sh      t1, 0x0024(t0)              // update render flags
@@ -395,9 +428,12 @@ scope Bonus {
 
         li      t2, SinglePlayerModes.singleplayer_mode_flag
         lw      t2, 0x0000(t2)              // t0 = singleplayer mode flag
-        bnez    t2, _end                    // if not Bonus 1/2, skip
+        beqz    t2, _begin                  // if Bonus 1/2, begin
+        lli     a0, SinglePlayerModes.BONUS3_ID
+        bne     t2, a0, _end                // if not Bonus 1/2/3, skip
         nop
 
+        _begin:
         li      t2, mode
         lw      t2, 0x0000(t2)              // t2 = mode (0 - Normal, 1 - Remix)
         li      a1, arrow_object
@@ -448,12 +484,25 @@ scope Bonus {
         lli     t2, 0x0000                  // t2 = display off
         bnezl   t1, pc() + 8                // if not Normal, display icon object
         addiu   t2, r0, -0x0001             // t2 = display on
+
+        li      a2, SinglePlayerModes.singleplayer_mode_flag
+        lw      a2, 0x0000(a2)              // a2 = singleplayer mode flag
+        bnezl   a2, pc() + 8                // if not Bonus 1/2, always set display off
+        lli     t2, 0x0000                  // t2 = display off
+
         sw      t2, 0x0038(v0)              // turn display on/off
+        addiu   t1, t2, 0x0001              // t1 = display flag for 0x7C
+        sw      t1, 0x007C(v0)              // turn display on/off
         lw      v0, 0x0048(a1)              // v0 = STAGE string object
         b       _play_fgm
         sw      t2, 0x0038(v0)              // turn display on/off
 
         _stage_check:
+        li      a2, SinglePlayerModes.singleplayer_mode_flag
+        lw      a2, 0x0000(a2)              // a2 = singleplayer mode flag
+        bnez    a2, _end                    // if not Bonus 1/2, skip stage checks
+        nop
+
         lli     a2, 0x0008                  // a2 = left padding
         lli     a3, 0x0000                  // a3 = right padding
         jal     CharacterSelect.check_image_footer_press_ // v0 = 1 if button pressed, 0 if not
@@ -704,6 +753,7 @@ scope Bonus {
     db Stages.id.BTT_MARINA
     db Stages.id.BTT_DEDEDE
     db Stages.id.BTT_GOEMON
+    db Stages.id.BTT_BANJO
 
     db Stages.id.BTT_STG1
     OS.align(4)
@@ -740,6 +790,7 @@ scope Bonus {
     db Stages.id.BTP_MARINA
     db Stages.id.BTP_DEDEDE
     db Stages.id.BTP_GOEMON
+    db Stages.id.BTP_BANJO
 
     db Stages.id.BTP_POLY
     OS.align(4)
@@ -750,10 +801,10 @@ scope Bonus {
     db Character.id.FOX,        Character.id.PEPPY
     db Character.id.DK,         0x0
     db Character.id.SAMUS,      0x0
-    db Character.id.LUIGI,      0x0
+    db Character.id.LUIGI,      Character.id.MLUIGI
     db Character.id.LINK,       0x0
     db Character.id.YOSHI,      0x0
-    db Character.id.CAPTAIN,    0x0
+    db Character.id.CAPTAIN,    Character.id.DRAGONKING
     db Character.id.KIRBY,      0x0
     db Character.id.PIKACHU,    0x0
     db Character.id.JIGGLYPUFF, 0x0
@@ -775,7 +826,8 @@ scope Bonus {
     db Character.id.SHEIK,      0x0
     db Character.id.MARINA,     0x0
     db Character.id.DEDEDE,     0x0
-    db Character.id.GOEMON,     0x0
+    db Character.id.GOEMON,     Character.id.EBI
+    db Character.id.BANJO,      0x0
 
     db Character.id.NMARIO,     Character.id.PIANO
     OS.align(4)
@@ -787,20 +839,23 @@ scope Bonus {
     // 0x0001 - (3 bytes) Targets Time
     // 0x0004 - (byte) # Platforms
     // 0x0005 - (3 bytes) Platforms Time
-    constant REMIX_BONUS_HIGH_SCORE_TABLE_ORIGIN(origin() + 0x000C)
-    REMIX_BONUS_HIGH_SCORE_TABLE_BLOCK:; SRAM.block(NUM_BONUS_STAGES * Character.NUM_CHARACTERS * 0x8)
+    OS.align(16)
+    constant REMIX_BONUS_HIGH_SCORE_TABLE_ORIGIN(origin() + 0x0010)
+    REMIX_BONUS_HIGH_SCORE_TABLE_BLOCK:; SRAM.block(NUM_BONUS_STAGES * Character.NUM_CHARACTERS * 0x6)
 
     // initialize high score table
     pushvar origin, base
     origin REMIX_BONUS_HIGH_SCORE_TABLE_ORIGIN
 
+    // Targets: If 0x01 is 0x0A, then 0x02 is # of Targets, else the 3 bytes are the time
+    // Platforms: If 0x01 is 0x0A, then 0x02 is # of Platforms, else the 3 bytes are the time
     remix_bonus_high_score_table:
     define s(0)
     while {s} < NUM_BONUS_STAGES {
         define c(0)
         while {c} < Character.NUM_CHARACTERS {
-            dw 0x00034BC0                     // # Targets || Targets Time
-            dw 0x00034BC0                     // # Platforms || Platforms Time
+            db 0x0A, 0x00, 0x00               // Targets
+            db 0x0A, 0x00, 0x00               // Platforms
 
             evaluate c({c} + 1)
         }
@@ -809,6 +864,11 @@ scope Bonus {
     }
 
     pullvar base, origin
+
+    OS.align(16)
+    constant REMIX_BONUS3_HIGH_SCORE_TABLE_ORIGIN(origin() + 0x0010)
+    REMIX_BONUS3_HIGH_SCORE_TABLE_BLOCK:; SRAM.block(Character.NUM_CHARACTERS * 0x4)
+    constant REMIX_BONUS3_HIGH_SCORE_TABLE(REMIX_BONUS3_HIGH_SCORE_TABLE_BLOCK + 0x0010)
 }
 
 } // __BONUS__

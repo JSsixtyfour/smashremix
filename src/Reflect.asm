@@ -20,7 +20,7 @@ scope Reflect {
         constant MARINA(0x01)               // Marinas Absorb/Reflect
         constant DEDEDE(0x02)               // Dededes Absorb/Reflect
     }
-	
+
 	// @ Description
 	// These characters can reflect projectiles
 	// Used so character id checks don't take forever
@@ -48,7 +48,7 @@ scope Reflect {
 	// @ Description
 	// Hooks related to cpu behaviour with absorb and reflect
 	scope AI: {
-			
+
 		// @ Description
 		// Original routine does a character id check for Ness or Fox, and Kirby
 		scope extend_reflect_absorb_character_check_: {
@@ -56,10 +56,10 @@ scope Reflect {
 			j		extend_reflect_absorb_character_check_
 			addiu	at, r0, Character.id.NESS	// original line 1
 			OS.patch_end()
-		
+
 			// A1 = character ID (self)
 			// v1 = enemy character ID
-			
+
 			// check if enemy can reflect
 			li		at, Character.fighter_reflect.table	// at = reflect table
 			addu	at, at, v1							// at = fighters offset in table
@@ -73,7 +73,7 @@ scope Reflect {
 			addiu	at, r0, Character.id.JKIRBY	// at = character ID
 			bnel	at, a1, _shoot				// branch if ~
 			or		v0, a1, r0					// v0 = character id if not kirby
-			
+
 			_kirby_shoot:
 			lw		v0, 0x0ADC(s0)				// get kirby copied power id
 			_shoot:
@@ -95,7 +95,7 @@ scope Reflect {
 			lw		s6, 0x0008(s2)			// s6 = character ID
 			_return:
 			OS.patch_end()
-			
+
 			// s2 = player struct
 			// s6, s4 is safe
 			lli   	s4, Character.id.MARINA	// s4 = id.MARINA
@@ -111,20 +111,20 @@ scope Reflect {
 			j		_return
 			nop
 
-			
+
 			_marina:
 			lui		at, 0x41C8				// modify line 1 (float 25.0)
 			mtc1	at, f26					// original line 2
 			j		_return
 			nop
-			
+
 			// _lucas:
 			// lui		at, 0x41C8				// modify line 1 (float 25.0)
 			// mtc1	at, f26					// original line 2
 			// j		_return
 			// nop
 		}
-		
+
 		// @ Description
 		// Allows cpus with slow reflects or absorbs to react to the projectiles in time.
 		scope set_item_detection_radius_: {
@@ -133,7 +133,7 @@ scope Reflect {
 			lw		at, 0x0008(s2)			// at = character ID
 			_return:
 			OS.patch_end()
-			
+
 			// s2 = player struct
 			// at, s7 is safe
 			lli   	at, Character.id.MARINA	// s7 = id.MARINA
@@ -147,18 +147,18 @@ scope Reflect {
 			lui		at, 0x4110				// original line 1 (float 15.0)
 			j		_return
 			lui		s7, 0x8004				// original line 2
-			
+
 			_marina:
 			lui		at, 0x41C8				// modify line 1 (float 25.0)
 			j		_return
 			lui		s7, 0x8004				// original line 2
-			
+
 			// _lucas:
 			// lui		at, 0x41C8				// modify line 1 (float 25.0)
 			// j		_return
 			// lui		s7, 0x8004				// original line 2
 		}
-		
+
 		// @ Description
 		// Sets the cpus reflect/absorb flag when a hazardous projectile is near
 		scope extend_projectile_reflect_initial_: {
@@ -195,7 +195,7 @@ scope Reflect {
 			_normal:
 			j 		0x80136174					// original line 1
 			addiu	v0, r0, 0x0001				// original line 2
-			
+
 			// _lucas:
 			// li		t0, last_known_hazard_direction
 			// lbu     at, 0x000D(s2)              // at = player.port
@@ -233,7 +233,7 @@ scope Reflect {
 			nop
 			j      0x80135E9C					// attempt to absorb
 			lbu    t0, 0x0049(s1)             	// get cpu reflect flag
-			
+
 			_marina:
 			lw     v0, 0x084C(s2)         		// v0 = current item
 			bnez   v0, _normal			 		// no clanpot if holding an item
@@ -244,7 +244,7 @@ scope Reflect {
 			j      0x80135E9C					// attempt to absorb
 			lbu    t0, 0x0049(s1)            	// get cpu reflect flag
 		}
-		
+
 		// @ Description
 		// Sets the cpus reflect/absorb flag when a hazardous item is near
 		scope extend_item_reflect_initial_: {
@@ -256,7 +256,7 @@ scope Reflect {
 
 			// v0 = character id
 			// at = id.PolyNess
-			
+
 			// check if enemy can reflect
 			li		at, Character.fighter_reflect.table	// at = reflect table
 			addu	at, at, v0					// at = fighters offset in table
@@ -267,7 +267,7 @@ scope Reflect {
 			_normal:
 			j		0x80136148					// original line 1
 			nop
-			
+
 			_lucas:
 			li		t3, last_known_hazard_direction
 			lbu     at, 0x000D(s2)              // at = player.port
@@ -303,7 +303,7 @@ scope Reflect {
 			// nop
 			j 		0x80136140					// original fox logic 1
 			lbu		t3, 0x0049(s1)				// get reflect/absorb flag
-				
+
 			_marina:
 			lw     v0, 0x084C(s2)         		// v0 = current item
 			bnez   v0, _normal			 		// no clanpot if holding an item
@@ -315,12 +315,12 @@ scope Reflect {
 			j 		0x80136140					// original fox logic 1
 			lbu		t3, 0x0049(s1)				// get reflect/absorb flag
 		}
-		
+
 		// @ Description
 		// Used by Lucas so he can hit items/projectiles with bat
 		last_known_hazard_direction:
 		db	0, 0, 0, 0
-		
+
 		// @ Description
 		// Applies reflect/absorb if flag was previously set for cpu players
 		scope maintain_reflect_input_: {
@@ -363,7 +363,7 @@ scope Reflect {
 			_ness_absorb:
 			j      0x80137860                 	// take Ness branch (dsp)
 			lw      v0, 0x0024(a2)            	// v0 = current action id
-			
+
 			_lucas:
 			// Lucas will try using his Bat if grounded and idle
 			lw		v0, 0x014C(a2)				// v0 = player kinetic state
@@ -378,7 +378,7 @@ scope Reflect {
 			lli		at, Action.Walk3
 			bne		v0, at, _ness_absorb		// do normal absorb if not walk3
 			nop
-			
+
 			_bat:
 			bnez	v0, _ness_absorb			// do normal absorb if aerial
 			li		v0, last_known_hazard_direction
@@ -397,10 +397,10 @@ scope Reflect {
 			_piano_absorb:
 			lw      v0, 0x0024(a2)            	// v0 = current action id
 			slti    at, v0, 0x00E5            	// min absorb action
-			bnez    at, _normal               	// 
+			bnez    at, _normal               	//
 			slti    at, v0, 0x00EE            	// max absorb action
-			beqz    at, _normal               	// 
-			or      a0, a2, r0                	// 
+			beqz    at, _normal               	//
+			or      a0, a2, r0                	//
 			j       0x80137874                	// keep holding absorb
 			nop
 
@@ -454,11 +454,11 @@ scope Reflect {
 			_fox_reflect:
 			j      0x80138064
 			lw     v0, 0x0024(a0)             	// v0 = current action id
-			
+
 			// _lucas:
 			// // Lucas will try using his Bat if grounded
 			// lw		v0, 0x014C(a0)				// v0 = player kinetic state
-			// bnez	v0, _ness_absorb			// do normal absorb if aerial	
+			// bnez	v0, _ness_absorb			// do normal absorb if aerial
 			// li		v0, last_known_hazard_direction
 			// lbu     at, 0x000D(a0)              // at = player.port
 			// addu    v0, v0, at                  // v0 = Lucas's entry in last_known_hazard_direction
@@ -497,7 +497,7 @@ scope Reflect {
 			nop
 
 		}
-	
+
 	}
 
     // @ Description
@@ -621,7 +621,7 @@ scope Reflect {
 		nop
 		b		_original					// if here, then some other custom reflect type
 		nop
-		
+
 		_dedede:
         lw      a1, 0x0020(sp)              // a1 = projectile object
 		jal 	DededeNSP.suspend_projectile_
@@ -854,6 +854,12 @@ scope Reflect {
         _save_x_speed:
         sw      t6, 0x002C(v0)               // save speed
         _branch_skip:
+        // make this work with bombchu logic
+        lw      t6, 0x0024(v0)              // t6 = direction
+        sub     t6, r0, t6                  // t6 = direction, reversed
+        mtc1    t6, f6                      // ~
+        cvt.s.w f6, f6                      // f6 = float direction
+
         jr      ra                           // skip the rest of the routine
         or      v0, r0, r0                   // return 0
 

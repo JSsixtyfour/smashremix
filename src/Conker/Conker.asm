@@ -256,7 +256,7 @@ scope Conker {
 
     // Set crowd chant FGM.
     Character.table_patch_start(crowd_chant_fgm, Character.id.CONKER, 0x2)
-    dh  0x02B7              // generic cheering
+    dh  0x054C
     OS.patch_end()
 
     // Adds Greg's Hand to entry.
@@ -301,9 +301,10 @@ scope Conker {
 
     // Set default costumes
     Character.set_default_costumes(Character.id.CONKER, 0, 1, 4, 5, 2, 0, 3)
+    Teams.add_team_costume(YELLOW, CONKER, 0x6)
 
     // Shield colors for costume matching
-    Character.set_costume_shield_colors(CONKER, AZURE, PINK, RED, GREEN, BLACK, WHITE, NA, NA)
+    Character.set_costume_shield_colors(CONKER, AZURE, PINK, RED, GREEN, BLACK, WHITE, YELLOW, NA)
 
     // Set CPU behaviour
     Character.table_patch_start(ai_behaviour, Character.id.CONKER, 0x4)
@@ -444,5 +445,17 @@ scope Conker {
     // Set action strings
     Character.table_patch_start(action_string, Character.id.CONKER, 0x4)
     dw  Action.action_string_table
+    OS.patch_end()
+
+    // Set Magnifying Glass Scale Override
+    Character.table_patch_start(magnifying_glass_zoom, Character.id.CONKER, 0x2)
+    dh  0x005E
+    OS.patch_end()
+    
+    Character.table_patch_start(variants, Character.id.CONKER, 0x4)
+    db      Character.id.NONE
+    db      Character.id.NCONKER
+    db      Character.id.NONE
+    db      Character.id.NONE
     OS.patch_end()
 }

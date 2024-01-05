@@ -44,7 +44,7 @@ scope TimedStock {
 
     // @ Description
     // Correct scoring for matches with timer.
-    // This hook is used any time the timer reachs 0.
+    // This hook is used any time the timer reaches 0.
     // Score is adjusted as follows:
     //  - (KOs - deaths) for Time
     //  - (initial stock count - deaths + 1) << 0xC + (damage taken if stocks remaining) for Stock/Stamina

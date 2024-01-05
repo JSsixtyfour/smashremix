@@ -205,6 +205,94 @@ scope CharEnvColor {
         lo_alpha:;   create_custom_display_list(RENDER_MODE_ALPHA, RENDER_MODE_ALPHA)
     }
 
+    // Kazooie's left wing
+    scope custom_display_lists_struct_banjo_kazooie_wing_left: {
+        dw OS.FALSE     // 0x0000: initialized flag, high poly
+        dw hi_default   // 0x0004: pointer to default custom hi poly display list, or 0
+        dw hi_alpha     // 0x0008: pointer to alpha custom hi poly display list, or 0
+        dh 0x0940       // 0x000C: offset to part 0x12 in player struct
+        dh 0x0070       // 0x000E: offset to 1st set render mode command for high poly
+        dh 0x0148       // 0x0010: offset to 2nd set render mode command for high poly, or -1
+        dh 0xFFFF       // 0x0012: offset to 3rd set render mode command for high poly, or -1
+        dw OS.FALSE     // 0x0014: initialized flag, low poly
+        dw lo_default   // 0x0018: pointer to default custom lo poly display list, or 0
+        dw lo_alpha     // 0x001C: pointer to alpha custom lo poly display list, or 0
+        dh 0x0940       // 0x0020: offset to part 0x12 in player struct
+        dh 0x0070       // 0x0022: offset to 1st set render mode command for high poly
+        dh 0x0148       // 0x0024: offset to 2nd set render mode command for high poly, or -1
+        dh 0xFFFF       // 0x0026: offset to 3rd set render mode command for high poly, or -1
+        hi_default:; create_custom_display_list(0xC4113878, RENDER_MODE_DEFAULT)
+        hi_alpha:;   create_custom_display_list(RENDER_MODE_ALPHA, RENDER_MODE_ALPHA)
+        lo_default:; create_custom_display_list(0xC4113878, RENDER_MODE_DEFAULT)
+        lo_alpha:;   create_custom_display_list(RENDER_MODE_ALPHA, RENDER_MODE_ALPHA)
+    }
+
+    // Kazooie's left wing 2
+    scope custom_display_lists_struct_banjo_kazooie_wing_left_2: {
+        dw OS.FALSE     // 0x0000: initialized flag, high poly
+        dw hi_default   // 0x0004: pointer to default custom hi poly display list, or 0
+        dw hi_alpha     // 0x0008: pointer to alpha custom hi poly display list, or 0
+        dh 0x0944       // 0x000C: offset to part 0x13 in player struct
+        dh 0x0070       // 0x000E: offset to 1st set render mode command for high poly
+        dh 0xFFFF       // 0x0010: offset to 2nd set render mode command for high poly, or -1
+        dh 0xFFFF       // 0x0012: offset to 3rd set render mode command for high poly, or -1
+        dw OS.FALSE     // 0x0014: initialized flag, low poly
+        dw lo_default   // 0x0018: pointer to default custom lo poly display list, or 0
+        dw lo_alpha     // 0x001C: pointer to alpha custom lo poly display list, or 0
+        dh 0x0944       // 0x0020: offset to part 0x13 in player struct
+        dh 0x0070       // 0x0022: offset to 1st set render mode command for high poly
+        dh 0xFFFF       // 0x0024: offset to 2nd set render mode command for high poly, or -1
+        dh 0xFFFF       // 0x0026: offset to 3rd set render mode command for high poly, or -1
+        hi_default:; create_custom_display_list(0xC4113878)
+        hi_alpha:;   create_custom_display_list(RENDER_MODE_ALPHA)
+        lo_default:; create_custom_display_list(0xC4113878)
+        lo_alpha:;   create_custom_display_list(RENDER_MODE_ALPHA)
+    }
+
+    // Kazooie's right wing
+    scope custom_display_lists_struct_banjo_kazooie_wing_right: {
+        dw OS.FALSE     // 0x0000: initialized flag, high poly
+        dw hi_default   // 0x0004: pointer to default custom hi poly display list, or 0
+        dw hi_alpha     // 0x0008: pointer to alpha custom hi poly display list, or 0
+        dh 0x0948       // 0x000C: offset to part 0x14 in player struct
+        dh 0x0070       // 0x000E: offset to 1st set render mode command for high poly
+        dh 0x0148       // 0x0010: offset to 2nd set render mode command for high poly, or -1
+        dh 0xFFFF       // 0x0012: offset to 3rd set render mode command for high poly, or -1
+        dw OS.FALSE     // 0x0014: initialized flag, low poly
+        dw lo_default   // 0x0018: pointer to default custom lo poly display list, or 0
+        dw lo_alpha     // 0x001C: pointer to alpha custom lo poly display list, or 0
+        dh 0x0948       // 0x0020: offset to part 0x14 in player struct
+        dh 0x0070       // 0x0022: offset to 1st set render mode command for high poly
+        dh 0x0148       // 0x0024: offset to 2nd set render mode command for high poly, or -1
+        dh 0xFFFF       // 0x0026: offset to 3rd set render mode command for high poly, or -1
+        hi_default:; create_custom_display_list(0xC4113878, RENDER_MODE_DEFAULT)
+        hi_alpha:;   create_custom_display_list(RENDER_MODE_ALPHA, RENDER_MODE_ALPHA)
+        lo_default:; create_custom_display_list(0xC4113878, RENDER_MODE_DEFAULT)
+        lo_alpha:;   create_custom_display_list(RENDER_MODE_ALPHA, RENDER_MODE_ALPHA)
+    }
+
+    // Kazooie's right wing
+    scope custom_display_lists_struct_banjo_kazooie_wing_right_2: {
+        dw OS.FALSE     // 0x0000: initialized flag, high poly
+        dw hi_default   // 0x0004: pointer to default custom hi poly display list, or 0
+        dw hi_alpha     // 0x0008: pointer to alpha custom hi poly display list, or 0
+        dh 0x094C       // 0x000C: offset to part 0x15 in player struct
+        dh 0x0070       // 0x000E: offset to 1st set render mode command for high poly
+        dh 0xFFFF       // 0x0010: offset to 2nd set render mode command for high poly, or -1
+        dh 0xFFFF       // 0x0012: offset to 3rd set render mode command for high poly, or -1
+        dw OS.FALSE     // 0x0014: initialized flag, low poly
+        dw lo_default   // 0x0018: pointer to default custom lo poly display list, or 0
+        dw lo_alpha     // 0x001C: pointer to alpha custom lo poly display list, or 0
+        dh 0x094C       // 0x0020: offset to part 0x15 in player struct
+        dh 0x0070       // 0x0022: offset to 1st set render mode command for high poly
+        dh 0xFFFF       // 0x0024: offset to 2nd set render mode command for high poly, or -1
+        dh 0xFFFF       // 0x0026: offset to 3rd set render mode command for high poly, or -1
+        hi_default:; create_custom_display_list(0xC4113878)
+        hi_alpha:;   create_custom_display_list(RENDER_MODE_ALPHA)
+        lo_default:; create_custom_display_list(0xC4113878)
+        lo_alpha:;   create_custom_display_list(RENDER_MODE_ALPHA)
+    }
+
     scope custom_display_lists_struct_dk_hat: {
         dw OS.FALSE     // 0x0000: initialized flag, high poly
         dw hi_default   // 0x0004: pointer to default custom hi poly display list, or 0
@@ -289,6 +377,48 @@ scope CharEnvColor {
         lo_alpha:;   create_custom_display_list(RENDER_MODE_ALPHA, RENDER_MODE_ALPHA)
     }
 
+    scope custom_display_lists_struct_kazooie_hat: {
+        dw OS.FALSE     // 0x0000: initialized flag, high poly
+        dw hi_default   // 0x0004: pointer to default custom hi poly display list, or 0
+        dw hi_alpha     // 0x0008: pointer to alpha custom hi poly display list, or 0
+        dh 0x0900       // 0x000C: offset to part 0x02 in player struct
+        dh 0x0110       // 0x000E: offset to 1st set render mode command for high poly
+        dh 0x01F8       // 0x0010: offset to 2nd set render mode command for high poly, or -1
+        dh 0xFFFF       // 0x0012: offset to 3rd set render mode command for high poly, or -1
+        dw OS.FALSE     // 0x0014: initialized flag, low poly
+        dw lo_default   // 0x0018: pointer to default custom lo poly display list, or 0
+        dw lo_alpha     // 0x001C: pointer to alpha custom lo poly display list, or 0
+        dh 0x0900       // 0x0020: offset to part 0x02 in player struct
+        dh 0x0110       // 0x0022: offset to 1st set render mode command for high poly
+        dh 0x01F8       // 0x0024: offset to 2nd set render mode command for high poly, or -1
+        dh 0xFFFF       // 0x0026: offset to 3rd set render mode command for high poly, or -1
+        hi_default:; create_custom_display_list(0xC4113878, RENDER_MODE_DEFAULT)
+        hi_alpha:;   create_custom_display_list(RENDER_MODE_ALPHA, RENDER_MODE_ALPHA)
+        lo_default:; create_custom_display_list(0xC4113878, RENDER_MODE_DEFAULT)
+        lo_alpha:;   create_custom_display_list(RENDER_MODE_ALPHA, RENDER_MODE_ALPHA)
+    }
+
+    scope custom_display_lists_struct_kazooie_open_mouth_hat: {
+        dw OS.FALSE     // 0x0000: initialized flag, high poly
+        dw hi_default   // 0x0004: pointer to default custom hi poly display list, or 0
+        dw hi_alpha     // 0x0008: pointer to alpha custom hi poly display list, or 0
+        dh 0x0900       // 0x000C: offset to part 0x02 in player struct
+        dh 0x0110       // 0x000E: offset to 1st set render mode command for high poly
+        dh 0x01F8       // 0x0010: offset to 2nd set render mode command for high poly, or -1
+        dh 0xFFFF       // 0x0012: offset to 3rd set render mode command for high poly, or -1
+        dw OS.FALSE     // 0x0014: initialized flag, low poly
+        dw lo_default   // 0x0018: pointer to default custom lo poly display list, or 0
+        dw lo_alpha     // 0x001C: pointer to alpha custom lo poly display list, or 0
+        dh 0x0900       // 0x0020: offset to part 0x02 in player struct
+        dh 0x0110       // 0x0022: offset to 1st set render mode command for high poly
+        dh 0x01F8       // 0x0024: offset to 2nd set render mode command for high poly, or -1
+        dh 0xFFFF       // 0x0026: offset to 3rd set render mode command for high poly, or -1
+        hi_default:; create_custom_display_list(0xC4113878, RENDER_MODE_DEFAULT)
+        hi_alpha:;   create_custom_display_list(RENDER_MODE_ALPHA, RENDER_MODE_ALPHA)
+        lo_default:; create_custom_display_list(0xC4113878, RENDER_MODE_DEFAULT)
+        lo_alpha:;   create_custom_display_list(RENDER_MODE_ALPHA, RENDER_MODE_ALPHA)
+    }
+
     // @ Description
     // This checks the override table before reading the default env color.
     scope override_env_color_: {
@@ -361,6 +491,9 @@ scope CharEnvColor {
         lli     t9, Character.id.YLINK
         li      v0, custom_display_lists_struct_ylink
         beq     t2, t9, _fix_ylink          // skip to fixing YLINK
+        lli     t9, Character.id.BANJO
+        li      v0, custom_display_lists_struct_banjo_kazooie_wing_left
+        beq     t2, t9, _fix_banjo          // skip to fixing BANJO
         lli     t9, Character.id.SSONIC
         li      v0, custom_display_lists_struct_ssonic_0
         beq     t2, t9, _fix_ssonic         // skip to fixing SSONIC
@@ -389,6 +522,32 @@ scope CharEnvColor {
         b       _return
         nop
 
+        _fix_banjo:
+        addiu   sp, sp, -0x0010             // allocate stack space
+        sw      t1, 0x0004(sp)              // save return address
+
+        li      t1, _fix_banjo_2            // t1 is the address to return to
+        b       _fix
+        nop
+
+        _fix_banjo_2:
+        li      v0, custom_display_lists_struct_banjo_kazooie_wing_left_2
+        li      t1, _fix_banjo_3            // t1 is the address to return to
+        b       _fix
+        nop
+
+        _fix_banjo_3:
+        li      v0, custom_display_lists_struct_banjo_kazooie_wing_right
+        li      t1, _fix_banjo_4            // t1 is the address to return to
+        b       _fix
+        nop
+
+        _fix_banjo_4:
+        li      v0, custom_display_lists_struct_banjo_kazooie_wing_right_2
+        lw      t1, 0x0004(sp)              // t1 = return address
+        b       _fix
+        addiu   sp, sp, 0x0010             // allocate stack space
+
         _fix_kirby:
         lbu     t2, 0x0981(s8)              // t2 = kirby_hat_id
         lli     t3, Character.kirby_hat_id.DK
@@ -400,6 +559,12 @@ scope CharEnvColor {
         lli     t3, 0x001E                  // t3 = Sheik hat ID
         li      v0, custom_display_lists_struct_sheik_hat
         beq     t2, t3, _fix                // if copying Sheik, need to fix
+        lli     t3, 0x0026                  // t3 = Kazooie hat ID
+        li      v0, custom_display_lists_struct_kazooie_hat
+        beq     t2, t3, _fix                // if copying Kazooie, need to fix
+        lli     t3, 0x0027                  // t3 = Kazooie open mouth hat ID
+        li      v0, custom_display_lists_struct_kazooie_open_mouth_hat
+        beq     t2, t3, _fix                // if copying Kazooie open mouth, need to fix
         lli     t3, 0x001D                  // t3 = Sonic hat ID
         li      v0, custom_display_lists_struct_sonic_hat
         bne     t2, t3, _return             // if not copying Sonic, skip
@@ -416,6 +581,8 @@ scope CharEnvColor {
         lhu     t4, 0x000C(v0)              // t4 = offset to part pointer
         addu    t4, s8, t4                  // t4 = part pointer address
         lw      t2, 0x0000(t4)              // t2 = part address
+        beqz    t2, _return                 // if part is withheld, skip
+        nop
         lw      t3, 0x0050(t2)              // t3 = part display list
         beqz    t3, _return                 // if original part is hidden, skip
         lw      t7, 0x0000(v0)              // t7 = initialized flag
@@ -500,6 +667,10 @@ scope CharEnvColor {
         lli     a2, Character.id.YLINK
         beq     a0, a2, _clear              // if YLINK, clear YLINK's custom display lists
         nop
+        li      a1, custom_display_lists_struct_banjo_kazooie_wing_left
+        lli     a2, Character.id.BANJO
+        beq     a0, a2, _clear_banjo        // if BANJO, clear BANJO's custom display lists
+        nop
         li      a1, custom_display_lists_struct_ssonic_0
         lli     a2, Character.id.SSONIC
         beq     a0, a2, _clear_ssonic       // if SSONIC, clear SSONIC's custom display lists
@@ -525,6 +696,27 @@ scope CharEnvColor {
         b       _clear
         nop
 
+        _clear_banjo:
+        // clear extra display lists for Banjo
+        // left wing
+        sw      r0, 0x0000(a1)              // clear high poly initialized flag
+        sw      r0, 0x0014(a1)              // clear low poly initialized flag
+
+        // left wing 2
+        li      a1, custom_display_lists_struct_banjo_kazooie_wing_left_2
+        sw      r0, 0x0000(a1)              // clear high poly initialized flag
+        sw      r0, 0x0014(a1)              // clear low poly initialized flag
+
+        // right wing
+        li      a1, custom_display_lists_struct_banjo_kazooie_wing_right
+        sw      r0, 0x0000(a1)              // clear high poly initialized flag
+        sw      r0, 0x0014(a1)              // clear low poly initialized flag
+
+        // right wing 2
+        li      a1, custom_display_lists_struct_banjo_kazooie_wing_right_2
+        b       _clear
+        nop
+
         _clear_kirby:
         // clear extra display lists for Kirby
         // kirby DK hat
@@ -538,6 +730,16 @@ scope CharEnvColor {
 
         // kirby Sheik hat
         li      a1, custom_display_lists_struct_sheik_hat
+        sw      r0, 0x0000(a1)              // clear high poly initialized flag
+        sw      r0, 0x0014(a1)              // clear low poly initialized flag
+
+        // kirby Kazooie hat
+        li      a1, custom_display_lists_struct_kazooie_hat
+        sw      r0, 0x0000(a1)              // clear high poly initialized flag
+        sw      r0, 0x0014(a1)              // clear low poly initialized flag
+
+        // kirby Kazooie open mouth hat
+        li      a1, custom_display_lists_struct_kazooie_open_mouth_hat
         sw      r0, 0x0000(a1)              // clear high poly initialized flag
         sw      r0, 0x0014(a1)              // clear low poly initialized flag
 

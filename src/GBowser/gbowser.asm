@@ -63,7 +63,8 @@ scope GBowser {
     insert WALK2, "moveset/WALK2.bin"; Moveset.GO_TO(WALK2)                 // loops
     insert WALK3, "moveset/WALK3.bin"; Moveset.GO_TO(WALK3)                 // loops
     insert RUN, "moveset/RUN.bin"; Moveset.GO_TO(RUN)                       // loops
-	insert TURN, "moveset/TURN.bin"
+    insert TURN, "moveset/TURN.bin"
+    DASH:; insert "moveset/DASH.bin"
 
     // Insert AI attack options
     constant CPU_ATTACKS_ORIGIN(origin())
@@ -275,7 +276,7 @@ scope GBowser {
     Character.edit_action_parameters(GBOWSER,    Action.FTilt,           File.BOWSER_FTILT,          FTILT,                      -1)
     Character.edit_action_parameters(GBOWSER,    Action.FTiltLow,        File.BOWSER_FTILT_LOW,      FTILT_LOW,                  -1)
 
-    Character.edit_action_parameters(GBOWSER,    Action.Dash,            File.BOWSER_DASH,           -1,                         -1)
+    Character.edit_action_parameters(GBOWSER,    Action.Dash,            File.BOWSER_DASH,           DASH,                       -1)
     Character.edit_action_parameters(GBOWSER,    Action.Run,             File.BOWSER_RUN,            RUN,                        -1)
     Character.edit_action_parameters(GBOWSER,    Action.TurnRun,         File.BOWSER_TURN_RUN,       TURN_RUN,                   -1)
     Character.edit_action_parameters(GBOWSER,    Action.RunBrake,        File.BOWSER_RUN_BRAKE,      -1,                         -1)
@@ -309,7 +310,7 @@ scope GBowser {
 	Character.edit_action_parameters(GBOWSER,    0xDD,     				 File.GBOWSER_ENTRY_LEFT,   ENTRY,                       -1)
 
     // Modify Actions            // Action          // Staling ID   // Main ASM                 // Interrupt/Other ASM                  // Movement/Physics ASM                         // Collision ASM
-    Character.edit_action(GBOWSER, 0xDE,             -1,             0x8015B6D0,                 -1,                                     BowserUSP.ground_physics_,                      -1)
+    Character.edit_action(GBOWSER, 0xDE,             -1,             0x8015B6D0,                 -1,                                     BowserUSP.ground_physics_,                      0x800DDF44)
     Character.edit_action(GBOWSER, 0xDF,             -1,             0x8015B6F0,                 BowserUSP.air_direction_,               BowserUSP.air_physics_,                         -1)
     Character.edit_action(GBOWSER, 0xE0,             -1,             -1,                         -1,                                     -1,                                             -1)
     Character.edit_action(GBOWSER, 0xE2,             -1,             -1,                         -1,                                     BowserDSP.air_physics_,                         -1)
@@ -405,6 +406,8 @@ scope GBowser {
     dw  Bowser.Action.action_string_table
     OS.patch_end()
 
+    Teams.add_team_costume(YELLOW, GBOWSER, 0x5)
+
     // Shield colors for costume matching
     Character.table_patch_start(costume_shield_color, Character.id.GBOWSER, 0x4)
     dw Bowser.costume_shield_color
@@ -417,30 +420,30 @@ scope GBowser {
 
 	// Set CPU SD prevent routine
     Character.table_patch_start(ai_attack_prevent, Character.id.GBOWSER, 0x4)
-    dw    	AI.PREVENT_ATTACK.ROUTINE.BOWSER_USP_DSP	// no risky down or up specials
+    dw    	AI.PREVENT_ATTACK.ROUTINE.GBOWSER
     OS.patch_end()
 
     // Edit cpu attack behaviours
-    // edit_attack_behavior(table, attack, override, start_hb, end_hb, min_x, max_x, min_y, max_y)
+    // edit_attack_behavior(table, attack, override,         start_hb, end_hb, min_x, max_x, min_y, max_y)
     // Currently copying Bowser
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, BAIR,   -1,  10,  21,  -1, -1, -1, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DAIR,   -1,  8,   44,  -1, -1, -1, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPA,   -1,  24,  35,  -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPG,   -1,  8,   48,  -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSMASH, -1,  8,   39,  -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DTILT,  -1,  6,   22,  -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FSMASH, -1,  26,  32,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPG,   -1,  0,   48,  0, 600, -50, 200) // no DSPG
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSMASH, -1,  10,  39,  100, 800, 0, 350)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DTILT,  -1,  10,  22,  100, 800, -50, 300)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FSMASH, -1,  26,  36,  -100, 1200, 40, 700)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FTILT,  -1,  12,  15,  -1, -1, -1, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, GRAB,   -1,  0,  0,  0, 0, 0, 0) // no grab
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, JAB,    -1,  6,   9,   -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, JAB,    -1,  6,   9,   -20, 400, -1, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NAIR,   -1,  4,   31,  -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPA,   -1,  20,  80,  -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPG,   -1,  20,  80,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPA,   -1,  0,  0,  -1, -1, -1, -1) // no NSPA
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPG,   -1,  43,  80,  350, 600, 20, 400)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UAIR,   -1,  7,   32,  -1, -1, -1, -1)
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPA,   0x0D, 6,   50,  -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPG,   0x0D, 5,   49,  -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USMASH, -1,  15,  24,  -1, -1, -1, -1)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UTILT,  -1,  8,   17,  -1, -1, -1, -1)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPG,   0x0D, 5,   49,  -400, 400, 20, 325)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USMASH, -1, 23,  24,  -200, 150, 150, 1500)
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UTILT,  -1,  15,   17,  -200, 200, 300, 1500)
 
 
     // @ Description
@@ -462,4 +465,54 @@ scope GBowser {
         sw      t7, 0x0020(sp)              // store action id
     }
 
-   }
+    // he will not chase opponents while on Final Destination
+    // we could prevent random hopping at 0x80133EBC
+    scope prevent_aerial_chase: {
+        OS.patch_start(0xAD524, 0x80132AE4)
+        j       prevent_aerial_chase
+        swc1    f20, 0x0060(v1)             // set target x coordinate
+        _return:
+        OS.patch_end()
+        
+        lw      t6, 0x0008(s1)              // get character id
+        addiu   at, r0, Character.id.GBOWSER
+        bne     at, t6, _normal
+        addiu   at, r0, Global.GAMEMODE.CLASSIC
+
+        OS.read_word(Global.match_info, t6) // get game mode
+        lb      t6, 0x0000(t6)              // ~
+        bne     at, t6, _normal
+        nop
+
+        // if here, assume we are in remix 1P's final Boss on Final Destination
+        j       _return
+        sw      r0, 0x0064(v1)             // set target y coordinate to 0
+        
+        _normal:
+        j       _return
+        swc1    f22, 0x0064(v1)             // set target y coordinate
+    }
+
+    // @ Description
+    // prevent gboswer from dashing if a CPU. Could not find a better way to do this.
+    scope prevent_dash: {
+        OS.patch_start(0xB9760, 0x8013ED20)
+        jal     prevent_dash
+        lui     a3, 0x3F80                      // og line 1
+        _return:
+        OS.patch_end()
+
+        lw      t0, 0x0008(v0)               // t0 = character id
+        addiu   at, r0, Character.id.GBOWSER
+        bne     at, t0, _normal              // return if not gbowser
+        lb      t0, 0x0023(v0)               // t0 = player type (0 = player, 1 = CPU)
+        bnezl   t0, _normal
+        addiu   a1, r0, Action.Walk3         // Walk3 instead of Dash for GBOWSER
+
+        _normal:
+        jal     0x800E6F24
+        sw      v0, 0x0024(sp)
+        j       0x8013ED2C
+        nop
+    }
+}

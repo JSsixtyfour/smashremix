@@ -253,8 +253,8 @@
 093E Congo Falls BG
 093F Lucas Forward Tilt High
 0940 Lucas Forward Tilt Low
-0941 Great Bay SSS Header
-0942 Great Bay SSS Model
+0941 Battlefield DL Header
+0942 Battlefield DL Stage
 0943 Doctor Mario Backthrow
 0944 Dark Samus Target Header
 0945 Dark Samus Target Stage
@@ -1527,7 +1527,7 @@
 0E38 Classic Sonic Main
 0E39 Classic Sonic Character
 0E3A Classic Sonic Shield Pose
-0E3B REPLACE_REGULAR_ANIMATION
+0E3B Dragon King 1p Pose
 0E3C Classic Sonic Victory 1
 0E3D Super Sonic Victory 1
 0E3E Sonic Back Throw
@@ -2370,6 +2370,332 @@
 1183 Kirby Peppy NSP Shoot Air
 1184 Kirby Peppy NSP Charge Start Air
 1185 Kirby Peppy NSP Charge Loop Air
+1186 Meta Crystal Remix Stage
+1187 Meta Crystal Remix Header
+1188 Dark Samus Idle
+1189 Remix 1p Race to the Finish Header
+118A Remix 1p Race to the Finish Stage
+118B Remix 1p Race to the Finish File
+118C Grim Reapers Cavern BG
+118D Grim Reapers Cavern Stage
+118E Grim Reapers Cavern Header
+118F Banjo Main
+1190 Banjo Character
+1191 Banjo Idle
+1192 Banjo Walk1
+1193 Banjo Walk2
+1194 Banjo Walk3
+1195 Banjo WalkEnd
+1196 Banjo Dash
+1197 Banjo Run
+1198 Banjo RunBrake
+1199 Banjo Turn
+119A Banjo TurnRun
+119B Banjo JumpF
+119C Banjo JumpB
+119D Banjo JumpAerialF
+119E Banjo JumpAerialB
+119F Banjo Fall
+11A0 Banjo FallAerial
+11A1 Banjo Crouch
+11A2 Banjo CrouchIdle
+11A3 Banjo CrouchEnd
+11A4 Banjo Landing
+11A5 Banjo PlatDrop
+11A6 Banjo Teeter
+11A7 Banjo Teeterstart
+11A8 Banjo DamageHigh1
+11A9 Banjo DamageHigh2
+11AA Banjo DamageHigh3
+11AB Banjo DamageMid1
+11AC Banjo DamageMid2
+11AD Banjo DamageMid3
+11AE Banjo DamageLow1
+11AF Banjo DamageLow2
+11B0 Banjo DamageLow3
+11B1 Banjo DamageAir1
+11B2 Banjo DamageAir2
+11B3 Banjo DamageAir3
+11B4 Banjo DamageElec
+11B5 Banjo DamageFlyHigh
+11B6 Banjo DamageFlyMid
+11B7 Banjo DamageFlyLow
+11B8 Banjo DamageFlyTop
+11B9 Banjo DamageFlyRoll
+11BA Banjo Tumble
+11BB Banjo FallSpecial
+11BC Banjo EnterPipe
+11BD Banjo ExitPipe
+11BE Banjo ExitPipeWalk
+11BF Banjo CeilingBonk
+11C0 Banjo DownBounceD
+11C1 Banjo DownBounceU
+11C2 Banjo DownStandD
+11C3 Banjo DownStandU
+11C4 Banjo TechF
+11C5 Banjo TechB
+11C6 Banjo DownForwardD
+11C7 Banjo DownForwardU
+11C8 Banjo DownBackD
+11C9 Banjo DownBackU
+11CA Banjo DownAttackD
+11CB Banjo DownAttackU
+11CC Banjo Tech
+11CD Banjo ClangRecoil
+11CE Banjo CliffCatch
+11CF Banjo CliffWait
+11D0 Banjo CliffQuick
+11D1 Banjo CliffClimbQuick1
+11D2 Banjo CliffClimbQuick2
+11D3 Banjo CliffSlow
+11D4 Banjo CliffClimbSlow1
+11D5 Banjo CliffClimbSlow2
+11D6 Banjo CliffAttackQuick1
+11D7 Banjo CliffAttackQuick2
+11D8 Banjo CliffAttackSlow1
+11D9 Banjo CliffAttackSlow2
+11DA Banjo CliffEscapeQuick1
+11DB Banjo CliffEscapeQuick2
+11DC Banjo CliffEscapeSlow1
+11DD Banjo CliffEscapeSlow2
+11DE Banjo LightItemPickup
+11DF Banjo HeavyItemPickup
+11E0 Banjo ItemDrop
+11E1 Banjo ItemThrowDash
+11E2 Banjo ItemThrowF
+11E3 Banjo ItemThrowU
+11E4 Banjo ItemThrowD
+11E5 Banjo ItemThrowAirF
+11E6 Banjo ItemThrowAirU
+11E7 Banjo ItemThrowAirD
+11E8 Banjo HeavyItemThrow
+11E9 Banjo ItemNeutral
+11EA Banjo ItemTilt
+11EB Banjo ItemSmash
+11EC Banjo ItemDash
+11ED Banjo ItemShoot
+11EE Banjo ItemShootAir
+11EF Banjo HammerIdle
+11F0 Banjo HammerMove
+11F1 Banjo ShieldOn
+11F2 Banjo ShieldOff
+11F3 Banjo RollF
+11F4 Banjo RollB
+11F5 Banjo Stun
+11F6 Banjo Grab
+11F7 Banjo GrabPull
+11F8 Banjo ThrowF
+11F9 Banjo ThrowB
+11FA Banjo CapturePulled
+11FB Banjo ThrownDKPulled
+11FC Banjo ThrownMarioBros
+11FD Banjo ThrownDK
+11FE Banjo Thrown1
+11FF Banjo Thrown2
+1200 Banjo Taunt
+1201 Banjo Jab1
+1202 Banjo Jab2
+1203 Banjo DashAttack
+1204 Banjo FTiltHigh
+1205 Banjo FTiltMidHigh
+1206 Banjo FTilt
+1207 Banjo FTiltMidLow
+1208 Banjo FTiltLow
+1209 Banjo UTilt
+120A Banjo DTilt
+120B Banjo FSmash
+120C Banjo USmash
+120D Banjo DSmash
+120E Banjo AttackAirN
+120F Banjo AttackAirF
+1210 Banjo AttackAirB
+1211 Banjo AttackAirU
+1212 Banjo AttackAirD
+1213 Banjo LandingAirD
+1214 Banjo LandingAirB
+1215 Banjo Entry Left
+1216 Banjo Entry Right
+1217 Banjo Jab 3
+1218 Banjo Action_0DF
+1219 Banjo Action_0E0
+121A Banjo Neutral Special Begin
+121B Banjo Neutral Special Forward
+121C Banjo Neutral Special Backward
+121D Banjo Up Special Begin
+121E Banjo Up Special Attack
+121F Banjo Up Special Recoil
+1220 Banjo Up Special Landing
+1221 Banjo Up Special Attack End
+1222 Banjo Down Special Ground Air
+1223 Banjo Down Special Air
+1224 Banjo Down Special Landing
+1225 Banjo Down Special Loop
+1226 Banjo Down Special Ground
+1227 Banjo Victory 1
+1228 Banjo Victory 2
+1229 Banjo Victory 3
+122A Banjo Clap
+122B Banjo ContinueFall
+122C Banjo ContinueUp
+122D Banjo 1P Pose
+122E Kazooie Egg GFX
+122F Kazooie Egg Info
+1230 Polygon Dark Samus Main Character
+1231 Scuttle Town BG
+1232 Scuttle Town
+1233 Scuttle Town Header
+1234 Scuttle Town BG Night
+1235 Metal Luigi Main Character
+1236 Metal Luigi Character
+1237 Ebisumaru Main
+1238 Ebisumaru Character
+1239 Ebisumaru DSP Start
+123A Ebisumaru DSP Landing
+123B Ebisumaru DSP Recoil
+123C Ebisumaru Walk 1
+123D Ebisumaru Attack Aerial N
+123E Ebisumaru Up Special
+123F Ebisumaru Up Tilt
+1240 Ebisumaru Run
+1241 Ebisumaru Dash Attack
+1242 Big Boo's Haunt BG
+1243 Big Boo's Haunt Stage
+1244 Big Boo's Haunt Header
+1245 Yoshi's Island Melee BG
+1246 Yoshi's Island Melee Stage
+1247 Yoshi's Island Melee Header
+1248 Scuttletown Enemy Info
+1249 Scuttletown Enemy GFX
+124A Banjo Shield Pose
+124B Ebisumaru 1P Pose
+124C Ebisumaru NSP Attack
+124D Ebisumaru DSP Grounded
+124E Ebisumaru Dash
+124F Kirby Cube
+1250 Banjo Break the Targets Header
+1251 Banjo Break the Targets Stage
+1252 Banjo Entry Effects
+1253 Banjo 1p CPU Pose
+1254 Dark Samus TurnRun
+1255 Dark Samus RunBrake
+1256 Polygon Marth Main
+1257 Polygon Marth Character
+1258 Polygon Mewtwo Main
+1259 Polygon Mewtwo Character
+125A Polygon Dedede Main
+125B Polygon Dedede Character
+125C Spawned Fear BG
+125D Spawned Fear Stage
+125E Spawned Fear Header
+125F Smashville Remix BG
+1260 Smashville Remix Stage
+1261 Smashville Remix Header
+1262 Transition Smash Logo
+1263 Kirby Ebi Hat Meat
+1264 Polygon Young Link Main
+1265 Polygon Young Link Character
+1266 Banjo Board the Platforms Header
+1267 Banjo Board the Platforms Stage
+1268 Dragon King Main
+1269 Dragon King Character
+126A Dragon King CSS
+126B Dragon King Idle
+126C Dragon King USmash
+126D Dragon King FTiltHigh
+126E Dragon King FTilt
+126F Dragon King FTiltLow
+1270 Dragon King AttackAirB
+1271 Dragon King LandingAirB
+1272 Dragon King JumpB
+1273 Dragon King Fall
+1274 Dragon King DSmash
+1275 Dragon King AttackAirN
+1276 Banjo Board the Platforms Barrel Animations
+1277 Banjo Team Pose
+1278 Cacodemon
+1279 Pokefloats Header
+127A Pokefloats Stage
+127B Pokefloats BG
+127C Kirby Banjo Copy Neutral Special Start
+127D Kirby Banjo Copy Neutral Special Forward
+127E Kirby Banjo Copy Neutral Special Backward
+127F Dragon King AttackAirD
+1280 Dragon King JumpF
+1281 Dragon King JumpAerialF
+1282 Thunderball Hitbox
+1283 Thunderball Graphics
+1284 Dragon King JumpAerialB
+1285 Dragon King Taunt
+1286 Dragon King AttackAirF
+1287 Dragon King LandingAirF
+1288 Ebisumaru Taunt
+1289 Dragon King Victory 2
+128A Ebisumaru Entry
+128B Dragon King Neutral Special Ground
+128C Dragon King Down Special Ground
+128D Dragon King Down Special Air Begin
+128E Dragon King Down Special Air Loop
+128F Dragon King Down Special Air Landing (0x40000000)
+1290 Ebisumaru CSS
+1291 Ebisumaru Duo Pose
+1292 Goemon Duo Pose
+1293 Ebisumaru Victory 1
+1294 Dragon King Run
+1295 Dragon King Entry Left
+1296 Dragon King Entry Right
+1297 Dragon King Jab 1
+1298 Dragon King Jab 2
+1299 Dragon King Jab Loop Start
+129A Dragon King Jab Loop
+129B Dragon King Jab Loop End
+129C Dragon King UTilt
+129D Dragon King RunBrake
+129E Banjo Duo Pose
+129F Conker Duo Pose
+12A0 Dragon King FSmash High
+12A1 Dragon King FSmash Mid-High
+12A2 Dragon King FSmash
+12A3 Dragon King FSmash Mid-Low
+12A4 Dragon King FSmash Low
+12A5 Dragon King Neutral Special Air
+12A6 Dragon King AttackAirU
+12A7 Dragon King Up Special Ground
+12A8 Dragon King Up Special Air
+12A9 Dragon King Up Special Ground Throw
+12AA Dragon King Up Special Air Throw
+12AB Dragon King Up Special Air Landing Throw
+12AC Big Snowman Header
+12AD Big Snowman Stage
+12AE Big Snowman BG
+12AF Banjo Up Special Wall Splat
+12B0 Dragon King FTiltMidHigh
+12B1 Dragon King FTiltMidLow
+12B2 Dragon King Dash Attack
+12B3 Dragon King DTilt
+12B4 Dragon King JumpSquat
+12B5 Sheik Light Item Pickup
+12B6 Sheik Item Drop
+12B7 Sheik Item Shoot Ground
+12B8 Kirby Ebisumaru Neutral Special End
+12B9 Polygon Goemon Main
+12BA Polygon Goemon Model
+12BB Polygon Conker Main
+12BC Polygon Conker Model
+12BD Polygon Banjo Main
+12BE Polygon Banjo Model
+12BF Dragon King Shield Pose
+12C0 Dragon King Shield On
+12C1 Dragon King Shield Off
+12C2 Kirby Dragon King Neutral Special Ground
+12C3 Kirby Dragon King Neutral Special Air
+12C4 Dragon King FThrow
+12C5 Dragon King BThrow
+12C6 Dragon King Dash
+12C7 Banjo Ending Image 1
+12C8 Banjo Ending Image 2
+12C9 Ebisumaru Ending Image 1
+12CA Ebisumaru Ending Image 2
+12CB EPuff Main
 
 0611 CAPTAIN DeadU
 0611 CAPTAIN ScreenKO

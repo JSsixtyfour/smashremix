@@ -64,6 +64,11 @@ scope NLucas {
     Character.edit_action_parameters(NLUCAS, 0xDD,                   0x680,         0x80000000,                      0x00000000)
     Character.edit_action_parameters(NLUCAS, 0xDE,                   0x680,         0x80000000,                      0x00000000)
 
+    // Set action strings
+    Character.table_patch_start(action_string, Character.id.NLUCAS, 0x4)
+    dw  Lucas.Action.action_string_table
+    OS.patch_end()
+
     // Modify Actions            // Action          // Staling ID   // Main ASM                 // Interrupt/Other ASM          // Movement/Physics ASM         // Collision ASM
     Character.edit_action(NLUCAS, 0xE2,              -1,             -1,                         -1,                             0x800D8CCC,                       -1)
     Character.edit_action(NLUCAS, 0xE3,              -1,             -1,                         LucasNSP.air_move_,             -1,                               -1)

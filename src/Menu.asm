@@ -575,6 +575,14 @@ scope Menu {
         lhu     t5, 0x0034(at)              // t5 = blur
         sw      t5, 0x0040(sp)              // save blur
 
+        // clear any label object refs
+        lw      at, 0x0000(at)              // at = head
+        _clear_loop:
+        sw      r0, 0x0020(at)              // clear label ref
+        lw      at, 0x001C(at)              // at = next entry
+        bnez    at, _clear_loop             // loop until no more entries
+        nop
+
         _loop:
         lhu     t0, 0x002A(sp)              // t0 = current uly
         lhu     at, 0x002E(sp)              // at = max height
@@ -613,15 +621,37 @@ scope Menu {
         sw      t0, 0x004C(sp)              // save value object reference
         lw      at, 0x0010(sp)              // at = address of Menu.info()
         lw      t0, 0x0014(at)              // t0 = width
-        sll     a1, t0, 0x0003              // a1 = width * 8
+        sll     a1, t0, 0x0003              // a1 = width * 8 = approx horizontal width
+        srl     t1, t0, 0x0001              // t1 = width / 2
+        subu    a1, a1, t0                  // a1 = 7/8 width
         jal     Render.apply_max_width_     // apply max width
-        subu    a1, a1, t0                  // a1 = 7/8 width = max width
+        subu    a1, a1, t1                  // a1 = 13/16 width
 
         lw      t0, 0x004C(sp)              // t0 = value object
         beqz    t0, _next                   // if no value object, skip
         sw      t0, 0x006C(v0)              // save value object
         addiu   t1, v0, 0x006C              // t1 = address of reference to value object
         sw      t1, 0x0054(t0)              // save reference to value object in label object
+
+        lw      a0, 0x0020(s0)              // a0 = label object
+        lw      t1, 0x0074(a0)              // t1 = position struct
+        _loop_chars:
+        lw      t2, 0x0008(t1)              // t2 = next char, if exists
+        bnezl   t2, _loop_chars             // loop until we are on last char
+        or      t1, t2, r0                  // t1 = next char
+        lwc1    f2, 0x0058(t1)              // f2 = x position of last char
+        lui     at, 0x4180                  // at = buffer = 10
+        mtc1    at, f4                      // f4 = buffer = 10
+        add.s   f2, f2, f4                  // f2 = min x position of value string (w/o buffer)
+
+        lhu     a3, 0x002C(sp)              // a3 = urx
+        mtc1    a3, f4                      // f4 = urx
+        cvt.s.w f4, f4                      // f4 = urx, floating point
+        sub.s   f2, f4, f2                  // f2 = max width
+        lw      a0, 0x004C(sp)              // a0 = value object
+        trunc.w.s f2, f2                    // f2 = max width, decimal
+        jal     Render.apply_max_width_     // apply max width
+        mfc1    a1, f2                      // a1 = max width
 
         _next:
         lw      s0, 0x001C(s0)              // s0 = entry->next
@@ -1545,7 +1575,7 @@ scope Menu {
         sw      t3, 0x0014(sp)              // save registers
 
         move    t0, a0                      // t0 = first entry
-        addiu   a1, a1, 0x000C              // a1 = address of SRAM block data
+        addiu   a1, a1, 0x0010              // a1 = address of SRAM block data
         lli     t3, 0x0000                  // t3 = bits to shift left in word
 
         _loop:
@@ -1631,7 +1661,7 @@ scope Menu {
         sw      t3, 0x0014(sp)              // save registers
 
         move    t0, a0                      // t0 = first entry
-        addiu   a1, a1, 0x000C              // a1 = address of SRAM block data
+        addiu   a1, a1, 0x0010              // a1 = address of SRAM block data
         lli     t3, 0x0000                  // t3 = bit position in word
 
         _loop:

@@ -290,6 +290,11 @@ scope NBowser {
     float32 1.2
     OS.patch_end()
 
+    // Set action strings
+    Character.table_patch_start(action_string, Character.id.NBOWSER, 0x4)
+    dw  Bowser.Action.action_string_table
+    OS.patch_end()
+
 	// Set Kirby star damage
     Character.table_patch_start(kirby_inhale_struct, 0x8, Character.id.NBOWSER, 0xC)
     dw Character.kirby_inhale_struct.star_damage.DK

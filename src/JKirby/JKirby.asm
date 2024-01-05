@@ -160,6 +160,24 @@ scope JKirby {
     Character.add_new_action_params(JKIRBY, PEPPY_NSP_Air_Begin,        -1,     File.KIRBY_PEPPY_NSP_CHARGESTART_AIR, Kirby.PEPPY_NSP_BEGIN,        0)
     Character.add_new_action_params(JKIRBY, PEPPY_NSP_Air_Charge,       -1,     File.KIRBY_PEPPY_NSP_CHARGELOOP_AIR,Kirby.PEPPY_NSP_CHARGE,         0)
     Character.add_new_action_params(JKIRBY, PEPPY_NSP_Air_Shoot,        -1,     File.KIRBY_PEPPY_NSP_SHOOT_AIR, Kirby.PEPPY_NSP_SHOOT,              0)
+    Character.add_new_action_params(JKIRBY,  BANJO_NSP_Ground_Begin,     -1,    File.KIRBY_BANJO_NSP_START,     Kirby.BANJO_NSP_BEGIN,     0)
+    Character.add_new_action_params(JKIRBY,  BANJO_NSP_Ground_Forward,   -1,    File.KIRBY_BANJO_NSP_FORWARD,   Kirby.BANJO_NSP_FORWARD,   0x1C000000)
+    Character.add_new_action_params(JKIRBY,  BANJO_NSP_Ground_Backward,  -1,    File.KIRBY_BANJO_NSP_BACKWARD,  Kirby.BANJO_NSP_BACKWARD,  0)
+    Character.add_new_action_params(JKIRBY,  BANJO_NSP_Air_Begin,        -1,    File.KIRBY_BANJO_NSP_START,     Kirby.BANJO_NSP_BEGIN,     0)
+    Character.add_new_action_params(JKIRBY,  BANJO_NSP_Air_Forward,      -1,    File.KIRBY_BANJO_NSP_FORWARD,   Kirby.BANJO_NSP_FORWARD,   0x1C000000)
+    Character.add_new_action_params(JKIRBY,  BANJO_NSP_Air_Backward,     -1,    File.KIRBY_BANJO_NSP_BACKWARD,  Kirby.BANJO_NSP_BACKWARD,  0)
+    Character.add_new_action_params(JKIRBY,  EBI_NSP_Ground_Begin,       -1,     File.KIRBY_GOEMON_NSPG_BEGIN,   Kirby.EBI_NSP_BEGIN,       0)
+    Character.add_new_action_params(JKIRBY,  EBI_NSP_Ground_Wait,        -1,     File.KIRBY_GOEMON_NSPG_IDLE,    Kirby.EBI_NSP_WAIT,        0)
+    Character.add_new_action_params(JKIRBY,  EBI_NSP_Ground_Walk1,       -1,     File.KIRBY_GOEMON_NSPG_WALK_1,  Kirby.EBI_NSP_WAIT,        0)
+    Character.add_new_action_params(JKIRBY,  EBI_NSP_Ground_Walk2,       -1,     File.KIRBY_GOEMON_NSPG_WALK_2,  Kirby.EBI_NSP_WAIT,        0)
+    Character.add_new_action_params(JKIRBY,  EBI_NSP_Ground_BWalk1,      -1,     File.KIRBY_GOEMON_NSPG_BWALK_1, Kirby.EBI_NSP_WAIT,        0)
+    Character.add_new_action_params(JKIRBY,  EBI_NSP_Ground_BWalk2,      -1,     File.KIRBY_GOEMON_NSPG_BWALK_2, Kirby.EBI_NSP_WAIT,        0)
+    Character.add_new_action_params(JKIRBY,  EBI_NSP_Ground_End,         -1,     File.KIRBY_EBI_NSP_END,         Kirby.EBI_NSP_END,         0)
+    Character.add_new_action_params(JKIRBY,  EBI_NSP_Air_Begin,          -1,     File.KIRBY_GOEMON_NSPG_BEGIN,   Kirby.EBI_NSP_BEGIN,       0)
+    Character.add_new_action_params(JKIRBY,  EBI_NSP_Air_Wait,           -1,     File.KIRBY_GOEMON_NSPG_IDLE,    Kirby.EBI_NSP_WAIT,        0)
+    Character.add_new_action_params(JKIRBY,  EBI_NSP_Air_End,            -1,     File.KIRBY_EBI_NSP_END,         Kirby.EBI_NSP_END,         0)
+    Character.add_new_action_params(JKIRBY,  DRAGONKING_NSP_Ground,      -1,     File.KIRBY_DKING_NSP_G,         Kirby.DRAGONKING_NSP,      0x40000000)
+    Character.add_new_action_params(JKIRBY,  DRAGONKING_NSP_Air,         -1,     File.KIRBY_DKING_NSP_A,         Kirby.DRAGONKING_NSP,      0)
 
 
     // Add Actions                   // Action Name      // Base Action //Parameters                       // Staling ID    // Main ASM                 // Interrupt/Other ASM              // Movement/Physics ASM     // Collision ASM
@@ -271,8 +289,30 @@ scope JKirby {
     Character.add_new_action(JKIRBY, PEPPY_NSP_Air_Begin,       -1,     ActionParams.PEPPY_NSP_Air_Begin,      0x12,       PeppyNSP.begin_main_,           0x8015D464,                     0x800D90E0,                     PeppyNSP.air_begin_collision_)     
     Character.add_new_action(JKIRBY, PEPPY_NSP_Air_Charge,      -1,     ActionParams.PEPPY_NSP_Air_Charge,     0x12,       PeppyNSP.charge_main_,          PeppyNSP.air_charge_interrupt_, 0x800D90E0,                     PeppyNSP.air_charge_collision_)    
     Character.add_new_action(JKIRBY, PEPPY_NSP_Air_Shoot,       -1,     ActionParams.PEPPY_NSP_Air_Shoot,      0x12,       PeppyNSP.shoot_main_,           0,                              0x800D90E0,                     PeppyNSP.air_shoot_collision_)
-    
-    
+    Character.add_new_action(JKIRBY, BANJO_NSPBeginG,            -1,     ActionParams.BANJO_NSP_Ground_Begin,  0x12,        BanjoNSP.begin_main_,           0,                              0x800D8BB4,                 BanjoNSP.ground_begin_collision_)
+    Character.add_new_action(JKIRBY, BANJO_NSPForwardG,          -1,     ActionParams.BANJO_NSP_Ground_Forward, 0x12,        BanjoNSP.shoot_forward_main_,   0,                              0x800D8BB4,                 BanjoNSP.ground_shoot_forward_collision_)
+    Character.add_new_action(JKIRBY, BANJO_NSPBackwardG,         -1,     ActionParams.BANJO_NSP_Ground_Backward, 0x12,        BanjoNSP.shoot_backward_main_,  0,                              0x800D8BB4,                 BanjoNSP.ground_shoot_backward_collision_)
+    Character.add_new_action(JKIRBY, BANJO_NSPBeginA,            -1,     ActionParams.BANJO_NSP_Air_Begin,      0x12,        BanjoNSP.begin_main_,           0,                              0x800D90E0,                 BanjoNSP.air_begin_collision_)
+    Character.add_new_action(JKIRBY, BANJO_NSPForwardA,          -1,     ActionParams.BANJO_NSP_Air_Forward,    0x12,        BanjoNSP.shoot_forward_main_,   0,                              0x800D90E0,                 BanjoNSP.air_shoot_forward_collision_)
+    Character.add_new_action(JKIRBY, BANJO_NSPBackwardA,         -1,     ActionParams.BANJO_NSP_Air_Backward,   0x12,        BanjoNSP.shoot_backward_main_,  0,                              0x800D90E0,                 BanjoNSP.air_shoot_backward_collision_)
+    Character.add_new_action(JKIRBY, EBI_NSP_Ground_Begin,       -1,     ActionParams.EBI_NSP_Ground_Begin,  0x12,           EbiNSP.ground_begin_main_,   0,                              0x800D8BB4,                         EbiNSP.kirby_ground_collision_)
+    Character.add_new_action(JKIRBY, EBI_NSP_Ground_Wait,        -1,     ActionParams.EBI_NSP_Ground_Wait,   0x12,           EbiNSP.ground_wait_main_,    EbiNSP.ground_interrupt_,    0x800D8BB4,                         EbiNSP.kirby_ground_collision_)
+    Character.add_new_action(JKIRBY, EBI_NSP_Ground_Walk1,       -1,     ActionParams.EBI_NSP_Ground_Walk1,  0x12,           EbiNSP.ground_wait_main_,    EbiNSP.ground_interrupt_,    GoemonNSP.ground_walk_physics_,     EbiNSP.kirby_ground_collision_)
+    Character.add_new_action(JKIRBY, EBI_NSP_Ground_Walk2,       -1,     ActionParams.EBI_NSP_Ground_Walk2,  0x12,           EbiNSP.ground_wait_main_,    EbiNSP.ground_interrupt_,    GoemonNSP.ground_walk_physics_,     EbiNSP.kirby_ground_collision_)
+    Character.add_new_action(JKIRBY, EBI_NSP_Ground_BWalk1,      -1,     ActionParams.EBI_NSP_Ground_BWalk1, 0x12,           EbiNSP.ground_wait_main_,    EbiNSP.ground_interrupt_,    GoemonNSP.ground_back_walk_physics_, EbiNSP.kirby_ground_collision_)
+    Character.add_new_action(JKIRBY, EBI_NSP_Ground_BWalk2,      -1,     ActionParams.EBI_NSP_Ground_BWalk2, 0x12,           EbiNSP.ground_wait_main_,    EbiNSP.ground_interrupt_,    GoemonNSP.ground_back_walk_physics_, EbiNSP.kirby_ground_collision_)
+    Character.add_new_action(JKIRBY, EBI_NSP_Ground_End,         -1,     ActionParams.EBI_NSP_Ground_End,    0x12,           EbiNSP.end_main_,            0,                              0x800D8BB4,                         EbiNSP.kirby_ground_collision_)
+    Character.add_new_action(JKIRBY, EBI_NSP_Air_Begin,          -1,     ActionParams.EBI_NSP_Air_Begin,     0x12,           EbiNSP.air_begin_main_,      0,                              GoemonNSP.air_physics_,             EbiNSP.kirby_air_collision_)
+    Character.add_new_action(JKIRBY, EBI_NSP_Air_Wait,           -1,     ActionParams.EBI_NSP_Air_Wait,      0x12,           EbiNSP.air_wait_main_,       0,                              GoemonNSP.air_physics_,             EbiNSP.kirby_air_collision_)
+    Character.add_new_action(JKIRBY, EBI_NSP_Air_End,            -1,     ActionParams.EBI_NSP_Air_End,       0x12,           EbiNSP.end_main_,            0,                              GoemonNSP.air_physics_,             EbiNSP.kirby_air_collision_)
+    Character.add_new_action(JKIRBY, DRAGONKING_NSP_Ground,      -1,     ActionParams.DRAGONKING_NSP_Ground, 0x12,           DragonKingNSP.main_,         0,                              0x800D8CCC,                         DragonKingNSP.kirby_ground_collision_)
+    Character.add_new_action(JKIRBY, DRAGONKING_NSP_Air,         -1,     ActionParams.DRAGONKING_NSP_Air,    0x12,           DragonKingNSP.main_,         0,                              DragonKingNSP.physics_aerial_,      DragonKingNSP.kirby_air_collision_)
+
+    // Set crowd chant FGM.
+    Character.table_patch_start(crowd_chant_fgm, Character.id.JKIRBY, 0x2)
+    dh  0x0319
+    OS.patch_end()
+
     // Set action strings
     Character.table_patch_start(action_string, Character.id.JKIRBY, 0x4)
     dw  Action.KIRBY.action_string_table
