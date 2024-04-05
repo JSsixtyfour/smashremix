@@ -1634,7 +1634,7 @@ scope Toggles {
 
         _random_menu_song:
         lli     a0, Toggles.menu_music.MAX_VALUE - 4 // a0 - range (0, N-1) Menu Music values (excluding DEFAULT / RANDOM / RANDOM CLASSICS / RANDOM ALL / OFF)
-        jal     Global.get_random_int_      // v0 = (0, N-1)
+        jal     Global.get_random_int_safe_      // v0 = (0, N-1)
         nop
         b       _check_bgm                  // loop back and check again
         addiu   t0, v0, 1                   // t0++
@@ -1642,7 +1642,7 @@ scope Toggles {
         _random_menu_song_classics:
         lli     a0, Toggles.menu_music.MAX_VALUE - 4 // a0 - range (0, N-1) Menu Music values (excluding DEFAULT / RANDOM / RANDOM CLASSICS / RANDOM ALL / OFF)
         addiu   a0, a0, -4                  // also exclude MAIN / MAIN_MELEE / MAIN_BRAWL / MAIN_MENU2
-        jal     Global.get_random_int_      // v0 = (0, N-1)
+        jal     Global.get_random_int_safe_      // v0 = (0, N-1)
         nop
         addiu   v0, v0, 4                   // if we're here, we need to apply offset
         b       _check_bgm                  // loop back and check again
@@ -1658,7 +1658,7 @@ scope Toggles {
         bgez    a1, _play                   // play if any songs are ON
         sw      r0, 0x0000(a0)              // clear menu_randomizing_all flag
         // Easter Egg to handle if there were no songs to pick from
-        jal     Global.get_random_int_alt_  // v0 = (0, N-1)
+        jal     Global.get_random_int_safe_  // v0 = (0, N-1)
         addiu   a0, r0, 4                   // a0 = number of hidden Gameboy songs
         addiu   a1, v0, 0xA2                // a1 = random bgm_id + offset to Gameboy songs
         b       _play                       // play
@@ -2050,7 +2050,7 @@ scope Toggles {
     entry_footstool:;                   entry_bool("Footstool Jumping", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_air_dodge)
     entry_air_dodge:;                   entry("Air Dodging", Menu.type.INT, 0, 0, 0, 0, 0, 3, OS.NULL, string_table_air_dodge, OS.NULL, entry_jab_lock)
     entry_jab_lock:;                    entry_bool("Jab Locking", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_ledge_jump)
-    entry_ledge_jump:;                  entry_bool("Edge C-Jumping", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_perfect_shield)
+    entry_ledge_jump:;                  entry_bool("Ledge Jump", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_perfect_shield)
     entry_perfect_shield:;              entry_bool("Perfect Shielding", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_spot_dodge)
     entry_spot_dodge:;                  entry_bool("Spot Dodging", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_fast_fall_aerials)
     entry_fast_fall_aerials:;           entry_bool("Fast Fall Aerials", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_ledge_trump)
@@ -2856,7 +2856,6 @@ scope Toggles {
         li      v0, Global.current_screen   // v0 = address of current_screen (note: keep v0 for routine)
         lbu     a0, 0x0000(v0)              // a0 = current screens
         addiu   t1, r0, Global.screen._1P_CSS
-        li      t0, 0x80137F5C              // t0 = 1P routine
         beq     a0, t1, _save_css_routine_1p
         addiu   t1, r0, Global.screen.VS_CSS
         li      t0, 0x8013A664              // t0 = VS routine
@@ -2886,7 +2885,16 @@ scope Toggles {
         nop
 
         _save_css_routine_1p:
+        li      a0, 0x80138FB4              // a0 = address of current 1P settings
+        lw      t0, 0x0000(a0)              // t0 = difficulty level (0-4)
+        lw      t1, 0x0004(a0)              // t1 = stock count (0-4)
+
+        li      a0, 0x800A493A              // a0 = stored 1P settings
+        sb      t0, 0x0000(a0)              // update stored difficulty level
+        sb      t1, 0x0001(a0)              // update stored stock count
+
         li      a0, 0x80138EE8              // a0 = address of currently selected 1P character
+        li      t0, 0x80137F5C              // t0 = 1P routine
         _save_css_routine:
         jalr    t0                          // call save css routine
         nop

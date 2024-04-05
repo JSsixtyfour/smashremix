@@ -54,7 +54,7 @@ scope Ganondorf {
     insert VICTORY_POSE_2,"moveset/VICTORY_POSE_2.bin"
     insert VICTORY_POSE_3,"moveset/VICTORY_POSE_3.bin"
 	insert ONEP,"moveset/ONEP.bin"
-	insert ENTRY_1,"moveset/ENTRY_1.bin"
+    ENTRY_1:; insert "moveset/ENTRY_1.bin"
 	insert ENTRY_2,"moveset/ENTRY_2.bin"
     insert DOWN_STAND,"moveset/DOWN_STAND.bin"
 
@@ -111,10 +111,10 @@ scope Ganondorf {
     Character.edit_action_parameters(GND,   Action.AttackAirD,      -1,                         DAIR,                       -1)
     Character.edit_action_parameters(GND,   Action.LandingAirN,     0x66B,                      0x1720,                     -1)
     Character.edit_action_parameters(GND,   Action.LandingAirF,     0,                          0x80000000,                 -1)
-    Character.edit_action_parameters(GND,   0xE0,                   File.GND_ENTRY_1_LEFT,      ENTRY_1,                    0x40000000)
-	Character.edit_action_parameters(GND,   0xE1,                   File.GND_ENTRY_1_RIGHT,     ENTRY_1,                    0x40000000)
-	Character.edit_action_parameters(GND,   0xE2,                   File.GND_ENTRY_2_LEFT,      ENTRY_2,                    0x40000000)
-	Character.edit_action_parameters(GND,   0xE3,                   File.GND_ENTRY_2_RIGHT,      ENTRY_2,                   0x40000000)
+    Character.edit_action_parameters(GND,   0xE0,                   File.GND_ENTRY_1,           ENTRY_1,                    0x40000000)
+    Character.edit_action_parameters(GND,   0xE1,                   File.GND_ENTRY_1,           ENTRY_1,                    0x40000000)
+    Character.edit_action_parameters(GND,   0xE2,                   File.GND_ENTRY_2_LEFT,      ENTRY_2,                    0x40000000)
+    Character.edit_action_parameters(GND,   0xE3,                   File.GND_ENTRY_2_RIGHT,     ENTRY_2,                    0x40000000)
 	Character.edit_action_parameters(GND,   0xE4,                   -1,                         NSP_GROUND,                 -1)
     Character.edit_action_parameters(GND,   0xE5,                   -1,                         NSP_AIR,                    -1)
     Character.edit_action_parameters(GND,   0xE6,                   -1,                         DSP_GROUND,                 -1)
@@ -144,7 +144,7 @@ scope Ganondorf {
 
     // Set menu zoom size.
     Character.table_patch_start(menu_zoom, Character.id.GND, 0x4)
-    float32 1.2
+    float32 1.125
     OS.patch_end()
 
     // Remove entry script.

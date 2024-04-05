@@ -308,4 +308,9 @@ Character.edit_action_parameters(NSHEIK, Action.LandingAirX,             File.SH
     dw      AI.PREVENT_ATTACK.ROUTINE.NONE
     OS.patch_end()
 
+    // Set menu zoom size.
+    Character.table_patch_start(menu_zoom, Character.id.NSHEIK, 0x4)
+    float32 0.95
+    OS.patch_end()
+
 }

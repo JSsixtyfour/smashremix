@@ -4,7 +4,7 @@ constant SPAWN_ITEM(stage_setting_) // bomb is 0x80177D9C
 constant SHOW_GFX_WHEN_SPAWNED(OS.TRUE)
 constant PICKUP_ITEM_MAIN(pickup_item)
 constant PICKUP_ITEM_INIT(prepickup_) // prepickup
-constant DROP_ITEM(drop_item_)
+constant DROP_ITEM(throw_initial_)
 constant THROW_ITEM(throw_initial_)
 constant PLAYER_COLLISION(0)
 
@@ -159,21 +159,22 @@ scope stage_setting_: {
 
 }
 
-scope drop_item_: {
-    addiu   sp, sp, -0x18
-    sw      ra, 0x0014(sp)
-    sw      v0, 0x0010(sp)
-    sw      r0, 0x011C(v0)            // damage type = normal
-    jal     0x801745FC                // item drop subroutine for tomato
-    nop
-    lw      v0, 0x0010(sp)
-    sw      r0, 0x0140(v0)             // set kb to 0
-    sw      r0, 0x0144(v0)             // set kb to 0
-    sw      r0, 0x0148(v0)             // set kb to 0
-    lw      ra, 0x0014(sp)
-    jr      ra
-    addiu   sp, sp, 0x18
-} 
+// not used
+// scope drop_item_: {
+    // addiu   sp, sp, -0x18
+    // sw      ra, 0x0014(sp)
+    // sw      v0, 0x0010(sp)
+    // sw      r0, 0x011C(v0)            // damage type = normal
+    // jal     0x801745FC                // item drop subroutine for tomato
+    // nop
+    // lw      v0, 0x0010(sp)
+    // sw      r0, 0x0140(v0)             // set kb to 0
+    // sw      r0, 0x0144(v0)             // set kb to 0
+    // sw      r0, 0x0148(v0)             // set kb to 0
+    // lw      ra, 0x0014(sp)
+    // jr      ra
+    // addiu   sp, sp, 0x18
+// } 
 
 
 

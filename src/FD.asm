@@ -62,14 +62,29 @@ scope FD {
         _music_fix_return:
         OS.patch_end()
 
-        li      t0, Global.vs.stage         // t0 = address of stage_id
-        lbu     t0, 0x0000(t0)              // t0 = stage_id
+        li      t0, Global.match_info
+        lw      t0, 0x0000(t0)              // t0 = match info
+        lbu     t0, 0x0001(t0)              // t0 = current stage ID
         lli     t9, Stages.id.FINAL_DESTINATION
         beq     t0, t9, _final_destination  // if FD, branch to final destination music routines
         lli     t9, Stages.id.FINAL_DESTINATION_TENT
         beq     t0, t9, _final_destination  // if FD, branch to final destination music routines
         lli     t9, Stages.id.FINAL_DESTINATION_DL
-        bne     t0, t9, _end                // if not FDDL, then skip to end
+        beq     t0, t9, _final_destination  // if FDDL, branch to final destination music routines
+        nop
+
+        // Check for 1P mode FD (Final Stage)
+        li      t9, SinglePlayerModes.singleplayer_mode_flag    // t9 = singleplayer mode flag
+        lw      t9, 0x0000(t9)                   // t9 = 1P mode (0 = standard, 4 = Remix)
+        addiu   t0, r0, SinglePlayerModes.REMIX_1P_ID
+        beq     t9, t0, pc() + 16                // proceed checking if Remix 1P
+        nop
+        bnez    t9, _end                         // if not 1P or Remix 1P, then skip to end
+        nop
+        li      t9, SinglePlayerModes.STAGE_FLAG // load current stage address
+        lb      t9, 0x0000(t9)                   // load current stage
+        addiu   t0, r0, 13                       // t0 = Final Stage ID
+        bne     t9, t0, _end                     // if not on Final Stage, then skip to end
         nop
 
         _final_destination:

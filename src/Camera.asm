@@ -84,6 +84,8 @@ scope Camera {
         beq     at, v0, mkingdom_camera
         addiu   at, r0, Stages.id.BIG_SNOWMAN
         beq     at, v0, mkingdom_camera
+        addiu   at, r0, Stages.id.GYM_LEADER_CASTLE
+        beq     at, v0, mkingdom_camera
         addiu   at, r0, Stages.id.TOADSTURNPIKE
         bnel    at, v0, _end
 		addiu   t0, r0, 0                           // if here, use default camera index (0)
@@ -903,6 +905,10 @@ scope Camera {
         ori     t2, r0, Stages.id.HRC       // t2 = id.HRC
         beq     t0, t2, _frozen             // use frozen camera if stage = HRC
         nop
+        li      t1, fixed_pokefloats        // t1 = frozen camera parameters for POKEFLOATS
+        ori     t2, r0, Stages.id.POKEFLOATS// t2 = id.POKEFLOATS
+        beq     t0, t2, _frozen             // use frozen camera if stage = GB_LAND
+        nop
         OS.read_word(Toggles.entry_hazard_mode + 0x4, t1) // t1 = 1 if hazard_mode is 1 or 3, 0 otherwise
         andi    t1, t1, 0x0001              // t1 = 1 if hazard_mode is 1 or 3, 0 otherwise
         bnez    t1, _normal                 // if hazard_mode enabled, skip frozen camera for flat zones
@@ -911,10 +917,7 @@ scope Camera {
         ori     t2, r0, Stages.id.GB_LAND   // t2 = id.GB_LAND
         beq     t0, t2, _frozen             // use frozen camera if stage = GB_LAND
         nop
-        li      t1, fixed_pokefloats        // t1 = frozen camera parameters for POKEFLOATS
-        ori     t2, r0, Stages.id.POKEFLOATS// t2 = id.POKEFLOATS
-        beq     t0, t2, _frozen             // use frozen camera if stage = GB_LAND
-        nop
+
         li      t1, frozen_flat_zone_2      // t1 = frozen camera parameters for FLAT_ZONE_2
         ori     t2, r0, Stages.id.FLAT_ZONE_2 // t2 = id.FLAT_ZONE_2
         beq     t0, t2, _frozen             // use frozen camera if stage = FLAT_ZONE_2

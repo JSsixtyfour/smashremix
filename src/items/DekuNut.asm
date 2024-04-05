@@ -4,7 +4,7 @@ constant SPAWN_ITEM(spawn_deku_nut_) // bomb is 0x80177D9C
 constant SHOW_GFX_WHEN_SPAWNED(OS.TRUE)
 constant PICKUP_ITEM_MAIN(pickup_deku_nut)
 constant PICKUP_ITEM_INIT(prepickup_) // prepickup
-constant DROP_ITEM(drop_item_)        // same as Maxim Tomato, but removes damage type
+constant DROP_ITEM(throw_initial_)
 constant THROW_ITEM(throw_initial_)
 constant PLAYER_COLLISION(0)
 
@@ -172,23 +172,23 @@ scope prepickup_: {
 
 // @ Description
 // Custom item drop routine with vanilla logic too
-scope drop_item_: {
-    addiu   sp, sp, -0x18
-    sw      ra, 0x0014(sp)
-    sw      v0, 0x0010(sp)
+// scope drop_item_: {
+    // addiu   sp, sp, -0x18
+    // sw      ra, 0x0014(sp)
+    // sw      v0, 0x0010(sp)
 
-    sw      r0, 0x011C(v0)              // damage type = normal
+    // sw      r0, 0x011C(v0)              // damage type = normal
 
-    jal       0x801745FC                // item drop subroutine for tomato
-    nop
-    lw      v0, 0x0010(sp)
+    // jal       0x801745FC                // item drop subroutine for tomato
+    // nop
+    // lw      v0, 0x0010(sp)
 
-    sw      r0, 0x140(v0)               // set kb to 0
+    // sw      r0, 0x140(v0)               // set kb to 0
 
-    lw      ra, 0x0014(sp)
-    jr      ra
-    addiu   sp, sp, 0x18
-}
+    // lw      ra, 0x0014(sp)
+    // jr      ra
+    // addiu   sp, sp, 0x18
+// }
 
 // @ Description
 // based on bobbomb throw routine @ 0x80177590

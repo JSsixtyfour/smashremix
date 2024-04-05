@@ -752,7 +752,7 @@ scope SinglePlayerModes: {
         lw      t0, 0x0004(sp)                  // ~
 
         _allstar:
-        li      t0, 0x800A4AE7
+        li      t0, STAGE_FLAG
         lbu     t0, 0x0000(t0)                  // load from current progress of 1p ID
         bnez    t0, _1p
         lw      t0, 0x0004(sp)                  // ~
@@ -763,7 +763,7 @@ scope SinglePlayerModes: {
         nop
 
         _remix_1p:
-        li      t0, 0x800A4AE7
+        li      t0, STAGE_FLAG
         lbu     t0, 0x0000(t0)                  // load from current progress of 1p ID
         addiu   t6, r0, 0x000D
         beq     t0, t6, _giga
@@ -775,7 +775,8 @@ scope SinglePlayerModes: {
         lw       t6, 0x2EE0(at)                // original line 2
 
         _giga:
-        addiu   t0, r0, 0x0001
+        li      t0, 0x800A4AE8                 // 1p port
+        lbu     t0, 0x0000(t0)                 // load the point being used
         li      t6, 0x801938EC
         sw      t0, 0x0000(t6)                  // this ensures the game looks to Giga Bowser's hp to change stage and end level
         lw      t0, 0x0004(sp)                  // ~
@@ -1173,29 +1174,31 @@ scope SinglePlayerModes: {
         nop
         _return:
         OS.patch_end()
-
+        
+        li      t8, singleplayer_mode_flag      // t8 = singleplayer mode flag
+        lw      t8, 0x0000(t8)                  // t8 = 2 if multiman
+        addiu   at, r0, ALLSTAR_ID              // insert check
+        bne     t8, at, _skip_limbo             // if not allstar, branch
+        nop
+        
+        li      at, allstar_limbo
+        sw      t8, 0x0000(at)                  // set limbo to true
+        
+        _skip_limbo:
         li      at, SinglePlayer.high_score_enabled          // at = high_score_enabled
         lw      at, 0x0000(at)                  // at = high_score_enabled flag
         beqz    at, _normal                     // if high scores are not enabled, don't save
-        addiu   at, r0, MULTIMAN_ID             // insert chec
-        li      t8, singleplayer_mode_flag      // t8 = singleplayer mode flag
-        lw      t8, 0x0000(t8)                  // t8 = 2 if multiman
-
-
+        addiu   at, r0, MULTIMAN_ID             // insert check
+        
         beq     t8, at, _multiman               // if multiman, skip
         addiu   at, r0, CRUEL_ID                // insert check
         beq     t8, at, _cruel                  // if multiman, skip
-        addiu   at, r0, ALLSTAR_ID              // insert check
-        bne     t8, at, _normal                 // if not allstar, branch
         nop
-        li      at, allstar_limbo
-        sw      t8, 0x0000(at)                  // set limbo to true
-
+        
         _normal:
         lb      t8, 0x002B(a2)                  // original line 1
         j       _return
         addiu   at, r0, 0xFFFF                  // original line 2
-
 
         _cruel:
         addiu   sp, sp,-0x0018                  // allocate stack space
@@ -2694,8 +2697,8 @@ scope SinglePlayerModes: {
     dh  0x0909
 
     //  Giga Bowser
-    dw  0x00000608      // byte 1 team attack, byte 2 item spawn, byte 3 very easy cpu level, byte 4 easy cpu level
-    dw  0x0909091C      // byte 1 normal cpu level, byte 2 hard cpu level, byte 3 very hard cpu level, byte 4 opponent knockback ratio very easy
+    dw  0x00000305      // byte 1 team attack, byte 2 item spawn, byte 3 very easy cpu level, byte 4 easy cpu level
+    dw  0x0709091C      // byte 1 normal cpu level, byte 2 hard cpu level, byte 3 very hard cpu level, byte 4 opponent knockback ratio very easy
     dw  0x1D1E1F20      // byte 1 opponent easy knockback ratio, byte 2 opponent normal knockback ratio, byte 3 opponent hard knockback ratio, byte 4 opponent very hard knockback ratio
     dw  0x01010101      // byte 1 ally cpu level very easy, ally cpu level easy, ally cpu level normal, ally cpu level hard,
     dw  0x01090909      // byte 1 ally cpu level very hard, ally kb ratio very easy, ally kb ratio easy, ally kb ratio normal
@@ -4780,6 +4783,42 @@ scope SinglePlayerModes: {
         j        _return
         nop
         }
+        
+        // Correct Stage Text for Metal Mario Bros. Event
+        scope metal_bros_stage_text: {
+        OS.patch_start(0x12E028, 0x80134CE8)
+        j       metal_bros_stage_text
+        addiu   t7, r0, REMIX_1P_ID             // Remix ID put into s0
+        _return:
+        OS.patch_end()
+
+        li      t6, singleplayer_mode_flag      // t6 = singleplayer mode flag
+        lw      t6, 0x0000(t6)                  // t6 = 4 if Remix 1p
+        bne     t6, t7, _normal                 // if not Remix 1p, skip
+        nop
+
+        li      t6, STAGE_FLAG
+        lb      t6, 0x0000(t6)                  // load current stage of 1p
+        addiu   t7, r0, 0x000A
+        bne     t6, t7, _normal
+        nop
+
+        li      t6, metal_bros_flag
+        lbu     t6, 0x0000(t6)                  // load if metal bros
+        beqz    t6, _normal
+        nop
+
+        jal     0x80131F98                  // original line 1
+        addiu   a0, r0, 0x000A              // set text to function like normal for Metal Mario Bros
+        j        _return
+        nop
+
+        _normal:
+        jal     0x80131F98                  // original line 1
+        lw      a0, 0x0000(s2)              // original line 2, load stage of 1p
+        j        _return
+        nop
+        }
 
     // @ Description
     // Makes CPU 1 a giant in Remix 1P
@@ -6432,8 +6471,8 @@ scope SinglePlayerModes: {
     dh  0x0909
 
     //  Giga Bowser
-    dw  0x00000909      // byte 1 team attack, byte 2 item spawn, byte 3 very easy cpu level, byte 4 easy cpu level
-    dw  0x0909091E      // byte 1 normal cpu level, byte 2 hard cpu level, byte 3 very hard cpu level, byte 4 opponent knockback ratio very easy
+    dw  0x00000305      // byte 1 team attack, byte 2 item spawn, byte 3 very easy cpu level, byte 4 easy cpu level
+    dw  0x0709091E      // byte 1 normal cpu level, byte 2 hard cpu level, byte 3 very hard cpu level, byte 4 opponent knockback ratio very easy
     dw  0x1F1F2022      // byte 1 opponent easy knockback ratio, byte 2 opponent normal knockback ratio, byte 3 opponent hard knockback ratio, byte 4 opponent very hard knockback ratio
     dw  0x01010101      // byte 1 ally cpu level very easy, ally cpu level easy, ally cpu level normal, ally cpu level hard,
     dw  0x01090909      // byte 1 ally cpu level very hard, ally kb ratio very easy, ally kb ratio easy, ally kb ratio normal

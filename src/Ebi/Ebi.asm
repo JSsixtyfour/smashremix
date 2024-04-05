@@ -83,7 +83,7 @@ scope Ebi {
     IDLE:; dw 0
 
     TAUNT:;
-    Moveset.VOICE(0x523);
+    Moveset.HIDE_ITEM(); Moveset.VOICE(0x523);
     dw MODEL.WEAPON.CAMERA;  dw MODEL.FACE.BLUSH; Moveset.AFTER(20);
     dw 0x98007C00, 0x00000100, 0x00800000, 0x00000000 // flash gfx
     dw 0xB0C00000// overlay

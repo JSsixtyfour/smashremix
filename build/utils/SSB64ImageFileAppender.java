@@ -21,12 +21,12 @@ public class SSB64ImageFileAppender {
         try {
             // init BufferedImage
             this.bi = ImageIO.read(new File(filename));
-        
+
         } catch (IOException e) {
             // close when file is not present
             System.out.println("File not found!");
             System.exit(0);
-       
+
         } catch (Exception e) {
             // generic error catch
             System.out.println("Unknown error occured!");
@@ -78,8 +78,8 @@ public class SSB64ImageFileAppender {
             red = (getRed(argb8888) & 0xF8) >> 3;
             green = (getGreen(argb8888) & 0xF8) >> 3;
             blue = (getBlue(argb8888) & 0xF8) >> 3;
-            
-            // check for transparency 
+
+            // check for transparency
             alpha = getAlpha(argb8888);
             if (alpha > 0) {
                 alpha = 1;
@@ -88,14 +88,14 @@ public class SSB64ImageFileAppender {
             }
 
             // bit manipulation
-            // have 
+            // have
             // 000rrrrr
             // 000ggggg
             // 000bbbbb
             // 0000000a
-            // need 
+            // need
             // rrrrrggg
-            // ggbbbbba 
+            // ggbbbbba
             colorHigh = 0;
             colorHigh |= red << 3;
             colorHigh |= (green & 0x1D) >> 2;
@@ -126,15 +126,15 @@ public class SSB64ImageFileAppender {
         byte outArray[] = new byte[0];
 
         byte dataArray[] = rgba5551(rgbArray);
-        
+
         try {
             currentFile = Files.readAllBytes(Paths.get("./0A04.bin"));
             currentLength = currentFile.length;
-        
+
 	        // next pointer
 	        currentFile[currentLength - 0x14] = (byte) (((currentLength + dataArray.length + 0x10) / 4) >> 8);
 	        currentFile[currentLength - 0x13] = (byte) (((currentLength + dataArray.length + 0x10) / 4));
-	        
+
 	        outArray = new byte[dataArray.length + currentLength + 0x60];
 	        System.arraycopy(currentFile, 0, outArray, 0, currentLength);
         } catch (IOException ex) {
@@ -152,132 +152,132 @@ public class SSB64ImageFileAppender {
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
-       
+
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
-        
+
         data1 = j / 4;
-        
+
         System.arraycopy(dataArray, 0, outArray, j, dataArray.length);
         j += dataArray.length;
-        
+
         data2 = j / 4;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x28; // width
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x28; // width
-        
+
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
-        
-        
+
+
         pointer1 = (j + 60) / 4;
         outArray[j++] = (byte) (pointer1 >> 8); // pointer 1
         outArray[j++] = (byte) pointer1; // pointer 1
         outArray[j++] = (byte) (data1 >> 8); // data 1
         outArray[j++] = (byte) data1; // data 1
-        
+
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x1E; // height
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
-        
+
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
-        
+
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x28; // width
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x1E; // height
-        
-        
+
+
         // x scale
         outArray[j++] = (byte) 0x3F;
         outArray[j++] = (byte) 0x80;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
-        
+
         // y scale
         outArray[j++] = (byte) 0x3F;
         outArray[j++] = (byte) 0x80;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
-        
+
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
-        
+
         outArray[j++] = (byte) 0x02;
         outArray[j++] = (byte) 0x20;
         outArray[j++] = (byte) 0x12;
         outArray[j++] = (byte) 0x34;
 
-        
+
         // color
         outArray[j++] = (byte) 0xFF;
         outArray[j++] = (byte) 0xFF;
         outArray[j++] = (byte) 0xFF;
         outArray[j++] = (byte) 0xFF;
-        
+
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
-        
+
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
-        
+
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x01; // ?
-        
+
 
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x01;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x24;
-        
+
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x1E;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x1E;
-        
+
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x02;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
-        
+
         outArray[j++] = (byte) 0xFF;
         outArray[j++] = (byte) 0xFF;
         outArray[j++] = (byte) (data2 >> 8); // data 2
         outArray[j++] = (byte) data2; // data 2
-        
+
         // empty line
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
-        
+
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
-        
+
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
-        
+
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
@@ -302,15 +302,20 @@ public class SSB64ImageFileAppender {
         byte outArray[] = new byte[0];
 
         byte dataArray[] = rgba5551(rgbArray);
-        
+
         try {
             currentFile = Files.readAllBytes(Paths.get("./0A05.bin"));
             currentLength = currentFile.length;
-        
+
 	        // next pointer
-	        currentFile[currentLength - 0x14] = (byte) (((currentLength + dataArray.length + 0x10) / 4) >> 8);
-	        currentFile[currentLength - 0x13] = (byte) (((currentLength + dataArray.length + 0x10) / 4));
-	        
+            if (currentFile[currentLength - 0x14] == -1 && currentFile[currentLength - 0x13] == -1) {
+                currentFile[currentLength - 0x14] = (byte) (((currentLength + dataArray.length + 0x10) / 4) >> 8);
+                currentFile[currentLength - 0x13] = (byte) (((currentLength + dataArray.length + 0x10) / 4));
+            } else {
+                currentFile[currentLength - 0xC] = (byte) (((currentLength + dataArray.length + 0x10) / 4) >> 8);
+                currentFile[currentLength - 0xB] = (byte) (((currentLength + dataArray.length + 0x10) / 4));
+            }
+
 	        outArray = new byte[dataArray.length + currentLength + 0x60];
 	        System.arraycopy(currentFile, 0, outArray, 0, currentLength);
         } catch (IOException ex) {
@@ -328,132 +333,132 @@ public class SSB64ImageFileAppender {
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
-       
+
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
-        
+
         data1 = j / 4;
-        
+
         System.arraycopy(dataArray, 0, outArray, j, dataArray.length);
         j += dataArray.length;
-        
+
         data2 = j / 4;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x20; // width
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x20; // width
-        
+
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
-        
-        
+
+
         pointer1 = (j + 60) / 4;
         outArray[j++] = (byte) (pointer1 >> 8); // pointer 1
         outArray[j++] = (byte) pointer1; // pointer 1
         outArray[j++] = (byte) (data1 >> 8); // data 1
         outArray[j++] = (byte) data1; // data 1
-        
+
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x20; // height
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
-        
+
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
-        
+
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x20; // width
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x20; // height
-        
-        
+
+
         // x scale
         outArray[j++] = (byte) 0x3F;
         outArray[j++] = (byte) 0x80;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
-        
+
         // y scale
         outArray[j++] = (byte) 0x3F;
         outArray[j++] = (byte) 0x80;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
-        
+
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
-        
+
         outArray[j++] = (byte) 0x02;
         outArray[j++] = (byte) 0x20;
         outArray[j++] = (byte) 0x12;
         outArray[j++] = (byte) 0x34;
 
-        
+
         // color
         outArray[j++] = (byte) 0xFF;
         outArray[j++] = (byte) 0xFF;
         outArray[j++] = (byte) 0xFF;
         outArray[j++] = (byte) 0xFF;
-        
+
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
-        
+
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
-        
+
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x01; // ?
-        
+
 
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x01;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x24;
-        
+
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x20;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x20;
-        
+
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x02;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
-        
+
         outArray[j++] = (byte) 0xFF;
         outArray[j++] = (byte) 0xFF;
         outArray[j++] = (byte) (data2 >> 8); // data 2
         outArray[j++] = (byte) data2; // data 2
-        
+
         // empty line
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
-        
+
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
-        
+
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
-        
+
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
         outArray[j++] = (byte) 0x00;
@@ -486,8 +491,8 @@ public class SSB64ImageFileAppender {
 
     public void interleave(byte[] array) {
         // every other line needs to be interleaved
-    
-        // if standard bmp/image data looks like 
+
+        // if standard bmp/image data looks like
         // (line 0) AABBCCDD EEFFGGHH
         // (line 1) IIJJKKLL MMNNOOPP
         // (line 2) QQRRSSTT UUVVWWXX

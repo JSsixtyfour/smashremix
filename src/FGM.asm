@@ -365,7 +365,7 @@ scope FGM {
 
         predictors_moved:
         global variable predictors_moved_origin(origin())
-        variable SPACE_REQUIRED((new_sample_count - 0x280) * 0x4) // need a word for each new sample that overflows
+        variable SPACE_REQUIRED((new_sample_count - 0x288) * 0x4) // need a word for each new sample that overflows
         variable total_predictors_size(0)
         define n(1)
         while total_predictors_size < SPACE_REQUIRED {
@@ -786,19 +786,25 @@ scope FGM {
         origin  predictors_moved_origin
         variable predictors_origin(origin())
         variable start(PREDICTORS)
+        variable predictor_pc(pc() - PREDICTOR_PC)
         while {x} < {predictor_blocks} {
             origin  predictors_origin
-            variable predictor_pc(pc())
             insert  "../roms/original.z64", start, PREDICTOR_SIZE_{x}
             variable start(start + PREDICTOR_SIZE_{x})
-            variable new_offset(predictor_pc - PREDICTOR_PC + predictor_curr_pointer_info_{x})
+            variable new_offset(predictor_pc + predictor_curr_pointer_info_{x})
             variable predictors_origin(origin())
 
             // now fix the pointer to the predictors
             origin  PARAMETERS_MAP + 0x8 + (({x} - 1) * 0x10)
             dw      new_offset
             // now fix the pointer inside the predictors
-            origin  predictors_origin - 0x8
+            origin  predictors_origin - 0xC
+            // if there are loop params, need to update the pointer
+            if PREDICTOR_SIZE_{x} > 0xA8 {
+                dw      new_offset - 0x30
+            } else {
+                dw 0
+            }
             dw      new_offset + 0x18 - PREDICTOR_SIZE_{x}
             evaluate x({x} + 1)
         }

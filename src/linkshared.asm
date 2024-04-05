@@ -668,6 +668,10 @@ scope LinkShared {
         lui     at, 0x428E                  // at = float: 71
         beq     t1, t0, _end                // end if character id = JLINK
         nop
+        ori     t1, r0, Character.id.ELINK  // t1 = id.ELINK
+        lui     at, 0x4290                  // at = float: 72
+        beq     t1, t0, _end                // end if character id = ELINK
+        nop
         lui     at, 0x428A                  // at = float: 69 (original line 1)
 
         _end:

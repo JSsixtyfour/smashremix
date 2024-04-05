@@ -578,8 +578,8 @@
 0A83 Bowser Platforms Stage
 0A84 Giga Bowser Entry Right
 0A85 Giga Bowser Entry Left
-0A86 Ganondorf Entry 1 Right
-0A87 Ganondorf Entry 1 Left
+0A86 Ganondorf Entry 1
+0A87 Ganondorf Entry 1 Left (UNUSED/PLACEHOLDER)
 0A88 Ganondorf Entry 2 Right
 0A89 Ganondorf Entry 2 Left
 0A8A Bowser's Keep Header
@@ -2696,6 +2696,7 @@
 12C9 Ebisumaru Ending Image 1
 12CA Ebisumaru Ending Image 2
 12CB EPuff Main
+12CC Dark Samus CSS Idle
 
 0611 CAPTAIN DeadU
 0611 CAPTAIN ScreenKO

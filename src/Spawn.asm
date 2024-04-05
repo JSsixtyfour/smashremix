@@ -1863,8 +1863,8 @@ scope Spawn {
     // 2B - GANONS TOWER
     float32 -2200,  1954
     float32  1996,  1954
-    float32 -2200,  1954
-    float32  1996,  1954
+    float32 -1076,  1042
+    float32  0902,  1042
 
     // 2C - KALOS POKEMON LEAGUE
     float32 -2371,  0921

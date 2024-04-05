@@ -58,7 +58,7 @@ scope NDSamus {
        Character.edit_action(NDSAMUS, 0xDD,                 -1,             0x8013D994,                 0x00000000,                    0x00000000,                     0x00000000)
 
     // Modify Menu Action Parameters                // Action          // Animation                // Moveset Data             // Flags
-    Character.edit_menu_action_parameters(NDSAMUS,   0x0,               File.DARK_SAMUS_IDLE,      -1,                           -1)
+    Character.edit_menu_action_parameters(NDSAMUS,   0x0,               File.DSAMUS_IDLE_CSS,      -1,                          -1)
     Character.edit_menu_action_parameters(NDSAMUS,   0x1,               -1,                         DSamus.VICTORY,                     -1)
     Character.edit_menu_action_parameters(NDSAMUS,   0x2,               File.DSAMUS_VICTORY1,       DSamus.VICTORY1,                    -1)
     Character.edit_menu_action_parameters(NDSAMUS,   0x3,               File.DSAMUS_SELECT,         DSamus.SELECT,                      -1)

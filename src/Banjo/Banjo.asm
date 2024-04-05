@@ -154,8 +154,8 @@ scope Banjo {
     NSP_FORWARD:
 	dw 0xA0A80001;
 	dw 0xA0900001;
-    Moveset.VOICE(0x504)
     Moveset.WAIT(4);
+    Moveset.VOICE(0x504)
     Moveset.SET_FLAG(0);
     Moveset.WAIT(4)
     Moveset.SET_FLAG(1);
@@ -608,24 +608,24 @@ scope Banjo {
 
     // Edit cpu attack behaviours, original table is from Falcon
     // edit_attack_behavior(table, attack, override,	start_hb, end_hb, 	min_x, max_x, min_y, max_y)
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DAIR,  	-1,  6,     0,  -132, 276, -90, 329)	// 
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPA,   -1,  26,    0,  0, 100, 100, 330)       // 
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPG,   -1,  14,    0,  0, 100, 100, 330)       // 
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSMASH, -1,  10,    0,  -320, 320, -100, 300)	// 
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DTILT,  -1,  5,     0,  -50, 499, -100, 325)	// 
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, BAIR,   -1,  12,    0,  -40, 280, 100, 300)	    // 
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FSMASH, -1,  16,    0,  250, 1170, 50, 590)	    // 
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FTILT,  -1,  8,     0,  45, 560, -45, 270)	    // 
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, GRAB,   -1,  6,     0,  50, 240, 65, 355.0)	    // 
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, JAB,    -1,  4,     0,  25, 495, 280, 510)	    // 
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NAIR,   -1,  5,     0,  -192, 201, -30, 280)	// 
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPA,   -1,  14,    0,  200, 900, 100, 250)	    // 
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPG,   -1,  14,    0,  200, 900, 100, 250)	    // 
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UAIR,   -1,  7,     0,  50, 200, 128, 500)	    // 
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DAIR,  	-1,  6,     0,  -132, 276, -90, 329)	//
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPA,   -1,  26,    0,  0, 100, 100, 330)       //
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPG,   -1,  14,    0,  0, 100, 100, 330)       //
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSMASH, -1,  10,    0,  -320, 320, -100, 300)	//
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, DTILT,  -1,  5,     0,  -50, 499, -100, 325)	//
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, BAIR,   -1,  12,    0,  -40, 280, 100, 300)	    //
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FSMASH, -1,  16,    0,  250, 1170, 50, 590)	    //
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, FTILT,  -1,  8,     0,  45, 560, -45, 270)	    //
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, GRAB,   -1,  6,     0,  50, 240, 65, 355.0)	    //
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, JAB,    -1,  4,     0,  25, 495, 280, 510)	    //
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NAIR,   -1,  5,     0,  -192, 201, -30, 280)	//
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPA,   -1,  14,    0,  200, 900, 100, 250)	    //
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, NSPG,   -1,  14,    0,  200, 900, 100, 250)	    //
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UAIR,   -1,  7,     0,  50, 200, 128, 500)	    //
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPA,   -1,  0,     0,  89, 475, 242, 1000)     // no offensive up B
     AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USPG,   -1,  0,     0,  89, 475, 242, 1700)     // no offensive up B
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USMASH, -1,  12,    0,  -174, 243, 177, 940)	// 
-    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UTILT,  -1,  6,     0,  -274, 326, 196, 717)	// 
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, USMASH, -1,  12,    0,  -174, 243, 177, 940)	//
+    AI.edit_attack_behavior(CPU_ATTACKS_ORIGIN, UTILT,  -1,  6,     0,  -274, 326, 196, 717)	//
 
     // Set default costumes(id, costume_1, costume_2, costume_3, costume_4, red_team, blue_team, green_team)
     Character.set_default_costumes(Character.id.BANJO, 0, 2, 4, 5, 1, 2, 3)

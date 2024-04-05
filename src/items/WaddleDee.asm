@@ -215,6 +215,11 @@ scope stage_setting_: {
 	li      t1, minion_blast_zone_          // load waddle_dee blast zone routine
 	sw      t1, 0x0398(v1)                  // save routine to part of item special struct that carries unique blast wall destruction routines
 
+    //disable clang
+    lh      t0, 0x0158(v1)                  // t0 = clang bitfield
+    andi    t0, t0, 0x7FFF                  // disable clang
+    sh      t0, 0x0158(v1)                  // ~
+
 	// set direction
 	lw      t1, 0x0038(sp)                  // a0 = player object
 	lw      t1, 0x0084(t1)                  // t1 = player struct
@@ -1356,6 +1361,9 @@ scope check_for_targets_: {
 	lw		s0, 0x0008(a0)				// s0 = player owner
 	lw      s2, 0x0084(s0)              // s2 = player owner struct
 
+    beqz    s2, _player_loop_exit       // exit if no player owner (can happen against 1P Dedede Team)
+    nop
+
 	_player_loop:
 	beqz    s1, _player_loop_exit       // exit loop when s1 no longer holds an object pointer
 	nop
@@ -1755,29 +1763,42 @@ scope remove_minion_check_: {
 // slot 1 should always contain the oldest minion.
 scope minion_free_: {
     lw      v0, 0x0084(a0)                  // v0 = minion struct
-	lw      v1, 0x01C4(v0)                  // v1 = player owner object
-	lw      v1, 0x0084(v1)                  // v1 = player owner struct
-	lw		at, 0x0B20(v1)					// get held minion ptr
-	beql	at, a0, _continue				// branch if...
-	sw		r0, 0x0B20(v1)					// ...held minion = this minion
-	_continue:
-	lw      at, 0x0ADC(v1)                  // at = slot 1 minion object
-	beql    at, a0, _move_slot_2_to_slot_1
-	sw      r0, 0x0ADC(v1)                  // remove self from player struct
-	lw      at, 0x0AE0(v1)                  // at = slot 2 minion object
-	beql    at, a0, _end
-	sw      r0, 0x0AE0(v1)                  // remove self from player struct
+    lw      v1, 0x01C4(v0)                  // v1 = player owner object
 
-	// if here, no action needed.
-	_end:
-    jr      ra
-	nop
+    // check if owner is still around
+    OS.read_word(0x800466FC, t1)            // t1 = player object head
+    _player_loop:
+    beqz    t1, _end                        // exit loop when t1 no longer holds an object pointer
+    nop
+    beq     t1, v1, _free_minion            // loop if current player and target object match...
+    nop
 
-	_move_slot_2_to_slot_1:
-	lw      at, 0x0AE0(v1)                  // at = newest minion (or 0)
-	sw      at, 0x0ADC(v1)                  // overwrite slot 1 with it.
+    b       _player_loop                    // loop
+    lw      t1, 0x0004(t1)                  // t1 = next player object
+
+    _free_minion:
+    lw      v1, 0x0084(v1)                  // v1 = player owner struct
+    lw      at, 0x0B20(v1)                  // get held minion ptr
+    beql    at, a0, _continue               // branch if...
+    sw      r0, 0x0B20(v1)                  // ...held minion = this minion
+    _continue:
+    lw      at, 0x0ADC(v1)                  // at = slot 1 minion object
+    beql    at, a0, _move_slot_2_to_slot_1
+    sw      r0, 0x0ADC(v1)                  // remove self from player struct
+    lw      at, 0x0AE0(v1)                  // at = slot 2 minion object
+    beql    at, a0, _end
+    sw      r0, 0x0AE0(v1)                  // remove self from player struct
+
+    // if here, no action needed.
+    _end:
     jr      ra
-	sw      r0, 0x0AE0(v1)                  // clear value in slot 2
+    nop
+
+    _move_slot_2_to_slot_1:
+    lw      at, 0x0AE0(v1)                  // at = newest minion (or 0)
+    sw      at, 0x0ADC(v1)                  // overwrite slot 1 with it.
+    jr      ra
+    sw      r0, 0x0AE0(v1)                  // clear value in slot 2
 
 }
 

@@ -282,6 +282,12 @@ scope DragonKingHUD {
         lui     at, LOWER_Y                 // at = lower Y position
         OS.patch_end()
 
+        // when 0:00
+        OS.patch_start(0x8E478, 0x80112C78)
+        jal     adjust_timer_position_._digits_timeout
+        lui     at, LOWER_Y                 // at = lower Y position
+        OS.patch_end()
+
         OS.patch_start(0x8E888, 0x80113088)
         jal     adjust_timer_position_._colon
         addiu   a0, a0, 0x17C8              // original line 1
@@ -309,6 +315,29 @@ scope DragonKingHUD {
         lui     at, 0x3F00                  // original line 1
         jr      ra
         lui     a2, 0x8013                  // original line 2
+
+        _digits_timeout:
+        Toggles.read(entry_dragon_king_hud, t9) // t9 = 2 if off
+        lli     t5, 0x0002                  // t5 = 2 = off always
+        beq     t9, t5, _end_digits_timeout // if off, skip
+        lli     t5, 0x0001                  // t5 = 1 = always on
+        beql    t9, t5, _end_digits_timeout // if on, use Dragon King position
+        mtc1    at, f2                      // f2 = lower Y position
+
+        // if here, check if on a Dragon King stage
+        OS.read_word(Global.match_info, t9)
+        lbu     t9, 0x0001(t9)              // t9 = stage_id
+        lli     t5, Stages.id.DRAGONKING
+        beql    t9, t5, _end_digits_timeout // if Dragon King, use Dragon King position
+        mtc1    at, f2                      // f2 = lower Y position
+        lli     t5, Stages.id.DRAGONKING_REMIX
+        beql    t9, t5, _end_digits_timeout // if Dragon King Remix, use Dragon King position
+        mtc1    at, f2                      // f2 = lower Y position
+
+        _end_digits_timeout:
+        addiu   t3, t3, 0xEE54              // original line 1
+        jr      ra
+        addiu   t6, t7, 0x003C              // original line 2
 
         _colon:
         Toggles.read(entry_dragon_king_hud, t7) // t7 = 2 if off

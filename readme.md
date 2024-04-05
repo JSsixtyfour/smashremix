@@ -93,6 +93,9 @@ A menu for modifying certain character attributes is available on each panel.
 ##### Dpad ctrl
 - Available control schemes are: 'Stick Swap', 'Stickless', 'Stick Swap J', or 'Stickless J'
     - 'Stick Swap' switches Dpad and Stick inputs, and can be used in conjunction with 'Dpad Map'.
+    - 'J' options = Jump with Dpad Up
+    - You can hold B during Up Special for an alternate angle (works in all directions)
+      - Applies to: Fox, Falco, Wolf, Peppy, Mewtwo
 - Note: When using this, Shield is mapped to L and Taunt is mapped to Z.
 ##### Initial Damage
 - Allows setting the damage percent to begin the match with.
@@ -230,10 +233,10 @@ A menu for modifying certain character attributes is available on each panel.
 
 #### Toggle Name: Jab Locking
 
-### Edge C-Jumping
+### Ledge Jump
 - If enabled, you can press one of the C-Buttons to jump up while hanging from a ledge.
 
-#### Toggle Name: Edge C-Jumping
+#### Toggle Name: Ledge Jump
 
 ### Perfect Shielding
 - If enabled, you can perform perfect/power shielding against your opponents attacks.
@@ -392,7 +395,7 @@ When Special Model Display is Hitbox or Hitbox+, these changes are applied:
 - Players can change music tracks during a match with d-pad while the game is paused.
     - D-Pad Right cycles through the stage's music tracks.
     - D-Pad Down picks a random music track.
-	- Can view current track in Pause Legend.
+    - Can view current track in Pause Legend.
 
 ### Settings Menu Shorcut
 - Quickly access Settings from any CSS or SSS screen by holding 'L'.
@@ -691,35 +694,59 @@ _Random Toggles for All Stages_ | [Community]        | [Tournament]      | [Semi
 
 These stages are set to On in the Tournament profile:
 - Dream Land
+- Fray's Stage
+- Fray's Stage - Night
+- First Destination
+- Pokemon Stadium
+- Pokemon Stadium 2
 - Deku Tree
 - Kalos Pokemon League
-- Pokemon Stadium
+- Smashville
+- Goomba Road
+- Gym Leader Castle
+- Saffron City DL
+- Ganon's Tower
+- Glacial River Remix
+- Dr. Mario
 - Tal Tal Heights (Hazards Off)
 - Glacial River
-- Dr. Mario
-- Fray's Stage
-- Spiral Mountain
-- Mushroom Kingdom DL (Hazards Off)
-- Crateria
-- Smashville
+- Melrode
 - Yoshi's Story
+- Battlefield
 - Gerudo Valley
-- Hyrule Castle DL (Hazards Off)
-- Peach's Castle DL (Hazards Off)
-- Fray's Stage - Night
-- Goomba Road
-- Sector Z DL (Hazards Off)
-- Saffron City DL
-- Yoshi's Island DL (Hazards Off)
-- Zebes DL (Hazards Off)
+- WarioWare, Inc.
+- Delfino Plaza
+- Castle Siege
+- Spiral Mountain
+- Smashville Remix
+- Yoshi's Island DL
+- Yoshi's Island II
 - Planet Clancer
-- Final Destination DL
-- Duel Zone DL
-- Meta Crysal DL
+- Fountain of Dreams
+- Final Destination
+- Glacial River
+- Big Boo's Haunt
 - Green Hill Zone
-- Pokemon Stadium 2
+- New Pork City
+- Bowser's Keep
+- dataDyne Central (Movement Off)
+- Peach's Castle DL (Hazards Off)
+- Congo Jungle DL (Hazards Off)
+- Hyrule Castle DL (Hazards Off)
+- Zebes DL (Hazards Off)
+- Mushroom Kingdom DL (Hazards Off)
+- Duel Zone DL
+- Yoshi's Island DL (Hazards Off)
+- Dream Land (Hazards Off)
+- Sector Z DL (Hazards Off)
+- Saffron City DL (Hazards Off)
+- Final Destination DL
+- Meta Crysal DL
+- Mute City DL
 - Winter Dream Land
-- Glacial River Remix
+- Deku Tree DL
+- Crateria DL
+- Battlefield DL
 
 These stages are set to On in the Semi-Competitive profile:
 - Congo Jungle
@@ -731,13 +758,15 @@ These stages are set to On in the Semi-Competitive profile:
 - Mini Yoshi's Island
 - First Destination
 - Ganon's Tower
-- Kalos Pokemon League
+- Gym Leader Castle
 - Pokemon Stadium
 - Tal Tal Heights
 - Glacial River
 - WarioWare, Inc.
+- Battlefield
 - Dr. Mario
-- Great Bay
+- Dragon King
+- Fray's Stage
 - Tower of Heaven
 - Fountain of Dreams
 - Muda Kingdom
@@ -747,8 +776,8 @@ These stages are set to On in the Semi-Competitive profile:
 - Mad Monster Mansion
 - Bowser's Stadium
 - Delfino Plaza
+- Corneria
 - Kitchen Island
-- Crateria
 - Smashville
 - New Pork City
 - Norfair
@@ -762,18 +791,31 @@ These stages are set to On in the Semi-Competitive profile:
 - Yoshi's Island DL
 - Bowser's Keep
 - Windy
-- dataDyne
+- dataDyne Central
 - Planet Clancer
 - Castle Siege
 - Yoshi's Island II
 - Cool Cool Mountain SR
 - Cool Cool Mountain DL
-- Hyrule Castle SR
 - Mute City
+- Mushroom Kingdom SR
 - Green Hill Zone
+- Subcon
 - Pirate Land
 - Casino Night Zone
 - Metallic Madness
 - Pokemon Stadium 2
 - Norfair Remix
+- Tal Tal Heights Remix
+- Winter Dream Land
 - Glacial River Remix
+- Crateria DL
+- Twilight City
+- Melrode
+- Grim Reaper's Cavern
+- Scuttle Town
+- Big Boo's Haunt
+- Dinosaur Land
+- Spawned Fear
+- Smashville Remix
+- Big Snowman

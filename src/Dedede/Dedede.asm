@@ -98,6 +98,7 @@ scope Dedede {
     insert DOWNATTACK_D,"moveset/DOWNATTACK_D.bin"
     insert DOWNATTACK_U,"moveset/DOWNATTACK_U.bin"
 	insert LANDING_AIR_U,"moveset/LANDING_AIR_U.bin"
+    insert LANDING_AIR_D,"moveset/LANDING_AIR_D.bin"
 
     insert NSP_SUBROUTINE,"moveset/NSP_SUBROUTINE.bin"
     insert NSP_BEGIN,"moveset/NSP_BEGIN.bin"; Moveset.SUBROUTINE(NSP_SUBROUTINE); dw 0x00000000
@@ -477,7 +478,7 @@ Character.edit_action_parameters(DEDEDE, Action.LandingAirN,            File.DED
 Character.edit_action_parameters(DEDEDE, Action.LandingAirF,            File.DEDEDE_LANDING,                -1,                         -1)
 Character.edit_action_parameters(DEDEDE, Action.LandingAirB,            File.DEDEDE_LANDING_AIR_B,          -1,                         -1)
 Character.edit_action_parameters(DEDEDE, Action.LandingAirU,            File.DEDEDE_LANDING_AIR_U,          LANDING_AIR_U,              -1)
-Character.edit_action_parameters(DEDEDE, Action.LandingAirD,            File.DEDEDE_LANDING_AIR_D,          -1,                         -1)
+Character.edit_action_parameters(DEDEDE, Action.LandingAirD,            File.DEDEDE_LANDING_AIR_D,          LANDING_AIR_D,              -1)
 Character.edit_action_parameters(DEDEDE, Action.LandingAirX,            File.DEDEDE_LANDING,                -1,                         -1)
 
      Character.edit_action_parameters(DEDEDE, Action.USP_BEGIN,         File.DEDEDE_USP_BEGIN,              USP_BEGIN,                  0)

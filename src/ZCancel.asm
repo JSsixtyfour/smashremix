@@ -198,6 +198,11 @@ scope ZCancel {
         OS.patch_end()
         // s1 = player struct
         // t6 is safe
+        // at is boolean for a CPU z cancel that was set in 'AI.z_cancel_'
+
+        bnez    at, _cpu_z_cancel           // branch accordingly
+        nop
+
         li      t6, Toggles.entry_z_cancel_opts
         lw      t6, 0x0004(t6)              // t0 = 0 for DEFAULT, 1 for Disabled, 2 for Melee, 3 for Auto, 4 for Glide
         beqz    t6, _default                // branch accordingly
@@ -209,6 +214,21 @@ scope ZCancel {
         beq     at, t6, _z_cancel_success   // branch accordingly
         lli     at, 0x0004                  // t1 = 4 (Glide)
         beq     at, t6, _default            // branch accordingly
+        nop
+
+        // if we're here, this is a CPU z cancel
+        _cpu_z_cancel:
+        li      t6, Toggles.entry_z_cancel_opts
+        lw      t6, 0x0004(t6)              // t0 = 0 for DEFAULT, 1 for Disabled, 2 for Melee, 3 for Auto, 4 for Glide
+        beqz    t6, _z_cancel_success       // branch accordingly
+        lli     at, 0x0001                  // t1 = 1 (Disabled)
+        beq     at, t6, _return             // branch accordingly
+        lli     at, 0x0002                  // t1 = 2 (Melee)
+        beq     at, t6, _z_cancel_success   // branch accordingly
+        lli     at, 0x0003                  // t1 = 3 (Auto)
+        beq     at, t6, _z_cancel_success   // branch accordingly
+        lli     at, 0x0004                  // t1 = 4 (Glide)
+        beq     at, t6, _z_cancel_miss      // branch accordingly
         nop
 
         // Melee cancel window (7 frames instead of 11)

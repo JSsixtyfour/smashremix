@@ -108,8 +108,7 @@ scope Goemon {
     insert TECH, "moveset/TECH.bin"
     insert TECH_ROLL, "moveset/TECH_ROLL.bin"
     TEETER:; dw MODEL.FACE.HURT; Moveset.VOICE(0x440); Moveset.END();
-
-
+    insert CLIFF_ESCAPE_S2, "moveset/CLIFF_ESCAPE_S2.bin"
 
     DOWN_ATTACK_D:; dw MODEL.FACE.ATTACK; dw MODEL.PIPE.SHOW; insert "moveset/DOWN_ATTACK_D.bin"
     DOWN_ATTACK_U:; dw MODEL.FACE.ATTACK; dw MODEL.PIPE.SHOW; insert "moveset/DOWN_ATTACK_U.bin"
@@ -357,7 +356,7 @@ scope Goemon {
     Character.edit_action_parameters(GOEMON, Action.CliffAttackSlow2,       File.GOEMON_CLIFF_ATTACK_SLOW_2,    CLIFF_ATTACK_S,             -1)
     Character.edit_action_parameters(GOEMON, Action.CliffEscapeQuick2,      File.GOEMON_CLIFF_ESCAPE_QUICK_2,   -1,             -1)
     Character.edit_action_parameters(GOEMON, Action.CliffEscapeSlow1,       File.GOEMON_CLIFF_ESCAPE_SLOW_1,    -1,             -1)
-    Character.edit_action_parameters(GOEMON, Action.CliffEscapeSlow2,       File.GOEMON_CLIFF_ESCAPE_SLOW_2,    -1,             -1)
+    Character.edit_action_parameters(GOEMON, Action.CliffEscapeSlow2,       File.GOEMON_CLIFF_ESCAPE_SLOW_2,    CLIFF_ESCAPE_S2,            -1)
     Character.edit_action_parameters(GOEMON, Action.DownAttackD,            File.GOEMON_DOWN_ATTACK_D,          DOWN_ATTACK_D,  -1)
     Character.edit_action_parameters(GOEMON, Action.DownAttackU,            File.GOEMON_DOWN_ATTACK_U,          DOWN_ATTACK_U,  -1)
     Character.edit_action_parameters(GOEMON, Action.DownStandD,             File.GOEMON_DOWN_STAND_D,           -1,             -1)
@@ -456,7 +455,7 @@ scope Goemon {
     Character.add_new_action(GOEMON, DSPAirPull,        -1,             ActionParams.DSPAirPull,        0x1E,           GoemonDSP.pull_main_,           0,                              0x800D93E4,                         GoemonDSP.shared_air_collision_)
     Character.add_new_action(GOEMON, DSPAirWallPull,    -1,             ActionParams.DSPAirPull,        0x1E,           GoemonDSP.wall_pull_main_,      0,                              0x800D93E4,                         GoemonDSP.shared_air_collision_)
     Character.add_new_action(GOEMON, DSPAAttack,         -1,            ActionParams.DSPAAttack,        0x1E,           0x800D94E8,                     0,                              0x800D91EC,                         GoemonDSP.shared_air_collision_)
-    Character.add_new_action(GOEMON, DSPEnd,            -1,             ActionParams.DSPEnd,            0x1E,           0x800D94E8,                     0,                              0x800D9160,                         0x800DE99C)
+    Character.add_new_action(GOEMON, DSPEnd,            -1,             ActionParams.DSPEnd,            0x1E,           0x800D94E8,                     0,                              0x800D9160,                         0x800DE978)
 
     // Modify Menu Action Parameters                    // Action       // Animation                    // Moveset Data    // Flags
     Character.edit_menu_action_parameters(GOEMON,       0x0,            File.GOEMON_IDLE,               IDLE,           -1)

@@ -17,7 +17,7 @@
         dw 0,0,0,0
 
         shared_item_smash_table:
-        dw  16  // BeamSwordSmash
+        dw  14  // BeamSwordSmash
         dw  22  // BatSmash
         dw  7   // FanSmash
         dw  15  // StarRodSmash

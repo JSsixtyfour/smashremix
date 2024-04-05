@@ -228,6 +228,7 @@ scope GBowser {
     Character.edit_action_parameters(GBOWSER,    Action.FallAerial,      File.BOWSER_FALL2,           -1,                        -1)
     Character.edit_action_parameters(GBOWSER,    Action.AttackAirF,      File.BOWSER_FAIR,           FAIR,                       -1)
     Character.edit_action_parameters(GBOWSER,    Action.LandingAirF,     File.BOWSER_FAIR_LAND,      -1,                         -1)
+    Character.edit_action_parameters(GBOWSER,    Action.LandingAirN,     File.BOWSER_LANDING,        -1,                         -1)
     Character.edit_action_parameters(GBOWSER,    Action.Grab,            File.BOWSER_GRAB,           GRAB,                       0x10000000)
     Character.edit_action_parameters(GBOWSER,    Action.FSmash,          File.BOWSER_FSMASH,         FSMASH,                     0x40000000)
     Character.edit_action_parameters(GBOWSER,    Action.FSmashHigh,      0,                          0x80000000,                 0)

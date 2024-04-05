@@ -104,7 +104,7 @@ scope DSamus {
        Character.edit_action(DSAMUS, 0xE4,                 -1,             -1,                         0x80160370,                     -1,                             -1)
 
     // Modify Menu Action Parameters                // Action          // Animation                // Moveset Data             // Flags
-    Character.edit_menu_action_parameters(DSAMUS,   0x0,                File.DARK_SAMUS_IDLE,      -1,                          -1)
+    Character.edit_menu_action_parameters(DSAMUS,   0x0,                File.DSAMUS_IDLE_CSS,      -1,                          -1)
     Character.edit_menu_action_parameters(DSAMUS,   0x1,               -1,                         VICTORY,                     -1)
     Character.edit_menu_action_parameters(DSAMUS,   0x2,               File.DSAMUS_VICTORY1,       VICTORY1,                    -1)
     Character.edit_menu_action_parameters(DSAMUS,   0x3,               File.DSAMUS_SELECT,         SELECT,                      -1)

@@ -572,8 +572,8 @@ scope File {
 	constant STG_BOWSER_PLATFORM(0xA83)
 	constant GBOWSER_ENTRY_RIGHT(0xA84)
 	constant GBOWSER_ENTRY_LEFT(0xA85)
-	constant GND_ENTRY_1_RIGHT(0xA86)
-	constant GND_ENTRY_1_LEFT(0xA87)
+	constant GND_ENTRY_1(0xA86)
+	constant GND_ENTRY_UNUSED(0xA87) // PLACEHOLDER
 	constant GND_ENTRY_2_RIGHT(0xA88)
 	constant GND_ENTRY_2_LEFT(0xA89)
 	constant STG_BOWSERS_KEEP_HEADER(0xA8A)
@@ -2688,4 +2688,5 @@ scope File {
     constant EBI_VICTORY_IMAGE_BOTTOM(0x12C9)
     constant EBI_VICTORY_IMAGE_TOP(0x12CA)
     constant EPUFF_MAIN(0x12CB)
+    constant DSAMUS_IDLE_CSS(0x12CC)
  }

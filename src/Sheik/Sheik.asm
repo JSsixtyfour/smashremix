@@ -504,6 +504,11 @@ Character.edit_action_parameters(SHEIK, Action.LandingAirX,             File.SHE
     dh 0x1E
     OS.patch_end()
 
+    // Set menu zoom size.
+    Character.table_patch_start(menu_zoom, Character.id.SHEIK, 0x4)
+    float32 0.95
+    OS.patch_end()
+
     // Set rapid jab begin action.
     Character.table_patch_start(rapid_jab_begin_action, Character.id.SHEIK, 0x4)
     dw 0x8014F13C

@@ -2295,6 +2295,8 @@ scope Size {
             beq     a1, at, _apply_scale    // apply scale if J Luigi
             lli     at, Character.id.METAL
             beq     a1, at, _apply_scale    // apply scale if Metal Mario
+            lli     at, Character.id.MLUIGI
+            beq     a1, at, _apply_scale    // apply scale if Metal LUIGI
             lli     at, Character.id.CONKER
             beq     a1, at, _apply_scale    // apply scale if Conker
             nop
@@ -2478,6 +2480,10 @@ scope Size {
             lw      t5, 0x0044(sp)          // original line 2
 
             _link_ground_gfx:
+            // If Banjo, don't update z offset to spawn position
+            lw      t1, 0x0008(s0)          // t1 = char_id
+            lli     t7, Character.id.BANJO  // t7 = Character.id.BANJO
+            bnel    t1, t7, pc() + 8        // if not Banjo, skip updating z offset
             sw      t0, 0x0024(v1)          // original line 2 - set z offset
 
             // This one's a bit complicated... the update routine is set to 800FD714, which

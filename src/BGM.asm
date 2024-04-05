@@ -562,7 +562,7 @@ scope BGM {
         bgez    a1, _original               // play if any songs are ON
         sw      r0, 0x0000(a0)              // clear menu_randomizing_all flag
         // Easter Egg to handle if there were no songs to pick from
-        jal     Global.get_random_int_alt_  // v0 = (0, N-1)
+        jal     Global.get_random_int_safe_  // v0 = (0, N-1)
         addiu   a0, r0, 4                   // a0 = number of hidden Gameboy songs
         addiu   a1, v0, 0xA2                // a1 = random bgm_id + offset to Gameboy songs
         b       _original                   // play
@@ -570,7 +570,7 @@ scope BGM {
 
         _random_menu_song:
         lli     a0, Toggles.menu_music.MAX_VALUE - 4 // a0 - range (0, N-1) Menu Music values (excluding DEFAULT / RANDOM / RANDOM CLASSICS / RANDOM ALL / OFF)
-        jal     Global.get_random_int_alt_  // v0 = (0, N-1)
+        jal     Global.get_random_int_safe_  // v0 = (0, N-1)
         nop
         b       _check_music_value          // check again, using our spoofed value
         addiu   t0, v0, 1                   // t0 = random menu music value
@@ -578,7 +578,7 @@ scope BGM {
         _random_menu_song_classics:
         lli     a0, Toggles.menu_music.MAX_VALUE - 4 // a0 - range (0, N-1) Menu Music values (excluding DEFAULT / RANDOM / RANDOM CLASSICS / RANDOM ALL / OFF)
         addiu   a0, a0, -4                  // also exclude MAIN / MAIN_MELEE / MAIN_BRAWL / MAIN_MENU2
-        jal     Global.get_random_int_alt_  // v0 = (0, N-1)
+        jal     Global.get_random_int_safe_  // v0 = (0, N-1)
         nop
         addiu   v0, v0, 4                   // if we're here, we need to apply offset
         b       _check_music_value          // check again, using our spoofed value

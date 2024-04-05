@@ -35,8 +35,11 @@ scope InputDisplay {
         lw      at, 0x0000(s2)              // at = pointer to percent HUD object for port
         beqz    at, _next                   // skip if not turned on for port
         or      a1, s0, r0                  // a1 = port
-        jal     create_input_display_objects_
         lw      a0, 0x0074(at)              // a0 = image position struct for series logo
+        beqz    a0, _next                   // skip if image position struct does not exist (fixes allstar bug when dying simultaneously w/opponent)
+        nop
+        jal     create_input_display_objects_
+        nop
 
         _next:
         sltiu   at, s0, 0x0003              // at = 1 if more ports to check
@@ -939,6 +942,14 @@ scope InputDisplay {
         lui     at, 0x41F0                  // original line 1 - at = Y position
         OS.patch_end()
 
+        // when 0:00
+        OS.patch_start(0x8E468, 0x80112C68)
+        jal     adjust_timer_position_._digits
+        lui     at, 0x41F0                  // original line 1 - at = Y position
+        addu    t7, t5, t6                  // original line 2
+        lui     t3, 0x8013                  // original line 3
+        OS.patch_end()
+
         OS.patch_start(0x8E880, 0x80113080)
         jal     adjust_timer_position_._colon
         lui     at, 0x41F0                  // original line 1 - at = Y position
@@ -954,7 +965,7 @@ scope InputDisplay {
 
         _end_digits:
         jr      ra
-        mtc1    at, f2                      // original line 2 - f2 = Y position
+        mtc1    at, f2                      // original line 2 (line 4 for 0:00) - f2 = Y position
 
         _colon:
         li      a0, state_table
