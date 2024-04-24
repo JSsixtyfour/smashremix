@@ -44,6 +44,10 @@ scope Global {
     constant current_screen_frame_count(0x8003B6E4)
 
     // @ Description
+    // Word, frame count that never resets(?)
+    constant frame_counter(0x8003CB30)
+
+    // @ Description
     // Screen IDs
     scope screen {
         constant NO_CONTROLLER(0x00)
@@ -239,15 +243,9 @@ scope Global {
         sw      v1, 0x0014(sp)              // store a0, at, v0, v1 (for safety)
         sw      ra, 0x0018(sp)              // save ra
 
-        li      t8, 0x8003B6E4              // ~
-        lw      t8, 0x0000(t8)              // t8 = frame count for current screen
-        bnez    t8, _loop                   // if not first frame, continue
+        li      t8, frame_counter           // ~
+        lw      t8, 0x0000(t8)              // t8 = global frame count
         andi    t8, t8, 0x003F              // t8 = frame count % 64
-
-        // otherwise use count
-        jal     0x80033490                  // osGetCount
-        nop
-        andi    t8, v0, 0x003F              // t8 = count % 64
 
         _loop:
         // advances rng between 1 - 64 times based on frame count

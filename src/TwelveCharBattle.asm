@@ -3007,7 +3007,7 @@ scope TwelveCharBattle {
     dw 0xAC100001                           // Set Texture Form
     dw 0xD0000000                           // FSM = 0.0
     dw 0x00000000                           // End
-    // Moveset commands for defeated Sheik.
+    // Moveset commands for defeated Marina.
     defeated_moveset_marina:
     dw 0xAC000001                           // Set Texture Form
     dw 0xAC100001                           // Set Texture Form
@@ -3021,7 +3021,7 @@ scope TwelveCharBattle {
     dw 0x00000000                           // End
     // Moveset commands for defeated Sheik.
     defeated_moveset_sheik:
-    dw 0xAC000002                           // Set Texture Form
+    dw 0xAC000006                           // Set Texture Form
     dw 0xD0000000                           // FSM = 0.0
     dw 0x00000000                           // End
 

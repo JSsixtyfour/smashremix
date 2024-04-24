@@ -633,11 +633,9 @@ scope Wario {
 
     // @ Description
     // Forces Wario's body slam to beat any other hitbox on clang when the shoulder is invincible. (4/4)
-    // This patch is for the an unknown clang function. The function is almost identical to the
-    // hitbox vs projectile clang function but I'm not sure what it is actually for.
-    // TODO: figure out what this clang function is used for (800E35BC)
+    // This patch is for the hitbox vs item clang function.
     scope body_slam_clang_4_: {
-        OS.patch_start(0x5EE08, 0x800E2F50)
+        OS.patch_start(0x5EE08, 0x800E3608)
         j       body_slam_clang_4_
         nop
         _return:

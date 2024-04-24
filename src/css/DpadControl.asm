@@ -598,8 +598,17 @@ scope check_jump_type_running_: {
     sll     at, t2, 0x2
     addu    t7, t7, at
     lw      t7, LOWER(t7)
-    jalr    ra, t7                      // do characters ground NSP routine
-    lw      a0, 0x0004(a0)              // argument = player object
+    beqz    t7, _exit_initial       // exit if no NSP routine (idk why there wouldn't be one)
+    nop
+    // if here, polygon check
+    lw      at, 0x09C8(a0)          // at = attributes table
+    lh      at, 0x0102(at)          // at = up b enabled flag
+    beqz    at, _exit_initial
+    nop
+
+    // do usp
+    jalr    ra, t7                  // do characters ground NSP routine
+    lw      a0, 0x0004(a0)          // argument = player object
 
     _exit_initial:
     addiu   sp, sp, 0x18                // deallocate stackspace

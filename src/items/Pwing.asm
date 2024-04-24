@@ -141,6 +141,19 @@ scope handle_active_pwing_: {
     beqzl   at, subtract_timer      // branch if on ground
     sb      r0, 0x0000(t0)          // set pwing flag to FALSE
 
+    // Ebisumaru pwing fix
+    lw      at, 0x0008(a1)          // load character id
+    addiu   t8, r0, Character.id.EBI
+    bne     t8, at, _set_number_of_jumps
+    nop
+    
+    // if here, check if Ebisumaru is doing USP
+    addiu   t8, r0, Ebi.Action.USP
+    lw      at, 0x0024(a1)          // load current action
+    beq     at, t8, subtract_timer  // skip setting NUM jumps if Ebi USP
+    nop
+
+    _set_number_of_jumps:
     // Set the number of jumps required before Pwing activates based on the total number of jumps the character has
     lw      at, 0x09C8(a1)          // load attribute struct
     lw      at, 0x0064(at)          // at = number of jumps

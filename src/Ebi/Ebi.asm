@@ -500,6 +500,11 @@ scope Ebi {
     dw grounded_script_
     OS.patch_end()
 
+    // Set CPU NSP long range behaviour
+    Character.table_patch_start(ai_long_range, Character.id.EBI, 0x4)
+    dw      AI.LONG_RANGE.ROUTINE.NONE
+    OS.patch_end()
+
     grounded_script_: {
         sw      r0, 0x0ADC(v0)
         j       0x800DE44C

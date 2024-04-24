@@ -1801,6 +1801,9 @@ scope Toggles {
         addiu   sp, sp, -0x0020             // allocate stack space
         sw      ra, 0x0004(sp)              // ~
 
+        li      a0, shortcut_stored_screens // a0 = shortcut_stored_screens
+        sh      r0, 0x0000(a0)              // clear shortcut_stored_screens
+
         li      a0, info                    // a0 = info
         jal     show_super_menu_            // bring up super menu
         sw      v0, 0x0010(sp)              // save v0
@@ -1832,6 +1835,9 @@ scope Toggles {
         sw      ra, 0x0004(sp)              // ~
         sw      t0, 0x0008(sp)              // ~
         sw      t1, 0x000C(sp)              // save registers
+
+        li      a0, shortcut_stored_screens // a0 = shortcut_stored_screens
+        sh      r0, 0x0000(a0)              // clear shortcut_stored_screens
 
         lli     a0, Joypad.A | Joypad.START // a0 = button_mask
 
