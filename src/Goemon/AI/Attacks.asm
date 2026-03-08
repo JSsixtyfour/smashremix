@@ -25,32 +25,30 @@ OS.align(4)
 CPU_ATTACKS:
 // grounded attacks
 // add_attack_behaviour(table, attack, hitbox_start_frame, min_x, max_x, min_y, max_y)
-AI.add_attack_behaviour(JAB,    3, 77, 437, 75, 454)
-AI.add_attack_behaviour(FTILT,  12, 241, 851, 112, 231)
-AI.add_attack_behaviour(UTILT,  5, -251, 281, 237, 605)
-AI.add_attack_behaviour(DTILT,  5, -129, 415, -25, 444)
-AI.add_attack_behaviour(FSMASH, 9, -458, 587, -16, 595)
-AI.add_attack_behaviour(USMASH, 12, -196, 196, 93, 542)
+AI.add_attack_behaviour(JAB, 3, 77, 437, 75, 454)
+AI.add_attack_behaviour(UTILT, 5, -251, 281, 237, 605)
+AI.add_attack_behaviour(DTILT, 5, -129, 415, -25, 444)
+AI.add_attack_behaviour(GRAB, 6, 161, 311, 116, 266)
 AI.add_attack_behaviour(DSMASH, 7, -547, 493, -53, 226)
-AI.add_attack_behaviour(NSPG,   34, 1300, 3600, 50, 220)
-// AI.add_attack_behaviour(USPG,   0, 0, 0, 0, 0) // no attack
-AI.add_attack_behaviour(DSPG,   20+3, 233+500, 1683, 33, 181) // adding range and delay to make him use from a distance
-AI.add_attack_behaviour(GRAB,   6, 161, 311, 116, 266)
-// we can add new grounded attacks here
+AI.add_attack_behaviour(FSMASH, 9, -458, 587, -16, 595)
+AI.add_attack_behaviour(FTILT, 12, 241, 851, 112, 231)
+AI.add_attack_behaviour(USMASH, 12, -196, 196, 93, 542)
+AI.add_attack_behaviour(DSPG, 20+6, 1000, 1683, 33, 181) // adding range and delay to make him use from a distance
+AI.add_attack_behaviour(NSPG, 34, 1300, 3600, 50, 220)
 AI.add_custom_attack_behaviour(AI.ROUTINE.GOEMON_HELD_NSP, 35+10+8, 1000, 3600, 50, 250) // time: charge+release+travel time
+AI.add_custom_attack_behaviour(AI.ROUTINE.DASH_ATTACK, 8, 319, 1196, 42, 167)
 
 AI.END_ATTACKS() // end of grounded attacks
 
 // aerial attacks
 // add_attack_behaviour(table, attack, hitbox_start_frame, min_x, max_x, min_y, max_y)
-AI.add_attack_behaviour(NAIR,   3, -87, 170, 12, 221)
-AI.add_attack_behaviour(FAIR,   7, 79, 456, -19, 535)
-AI.add_attack_behaviour(UAIR,   6, -178, 232, 79, 518)
-AI.add_attack_behaviour(DAIR,   10, -66, 96, -331, 40)
-AI.add_attack_behaviour(NSPA,   34, 1300, 3600, 50, 220)
-// AI.add_attack_behaviour(USPA,   0, 0, 0, 0, 0) // no attack
-AI.add_attack_behaviour(DSPA,   20+3, 233+500, 1683, 33, 181) // adding range and delay to make him use from a distance
-// we can add new aerial attacks here
+AI.add_attack_behaviour(NAIR, 3, -87, 170, 12, 221)
+AI.add_attack_behaviour(UAIR, 6, -178, 232, 79, 518)
+AI.add_custom_attack_behaviour(AI.ROUTINE.FAIR, 7, 79, 456, -19, 535)
+AI.add_custom_attack_behaviour(AI.ROUTINE.BAIR, 10, -487, 206, -80, 457)
+AI.add_attack_behaviour(DAIR, 10, -66, 96, -331, 40)
+AI.add_attack_behaviour(DSPA, 20+6, 1000, 1683, 33, 181) // adding range and delay to make him use from a distance
+AI.add_attack_behaviour(NSPA, 34, 1300, 3600, 50, 220)
 AI.add_custom_attack_behaviour(AI.ROUTINE.GOEMON_HELD_NSP, 35+10+8, 1000, 3600, 50, 250) // time: charge+release+travel time
 
 AI.END_ATTACKS() // end of aerial attacks

@@ -31,7 +31,6 @@ scope NBowser {
 
     Character.edit_action_parameters(NBOWSER,    Action.Sleep,     		File.BOWSER_STUNNED,     	 Bowser.SLEEP,                     -1)
 	Character.edit_action_parameters(NBOWSER,    Action.Stun,     		File.BOWSER_STUNNED,     	 Bowser.STUN,                      -1)
-	Character.edit_action_parameters(NBOWSER,    Action.ShieldBreak,     -1,     					 Bowser.SHIELD_BREAK,              -1)
 	Character.edit_action_parameters(NBOWSER,    Action.Tech,     		File.BOWSER_TECH,     		 Bowser.TECH,              		-1)
 	Character.edit_action_parameters(NBOWSER,    Action.TechF,     		File.BOWSER_TECH_F,     	 Bowser.TECHF,              		-1)
 	Character.edit_action_parameters(NBOWSER,    Action.TechB,     		File.BOWSER_TECH_B,     	 Bowser.TECHF,              		-1)
@@ -88,7 +87,7 @@ scope NBowser {
     Character.edit_action_parameters(NBOWSER,    Action.WallBounce,      File.BOWSER_TUMBLE,          -1,                        -1)
     Character.edit_action_parameters(NBOWSER,    Action.Tumble,          File.BOWSER_TUMBLE,          -1,                        -1)
     Character.edit_action_parameters(NBOWSER,    Action.Tornado,         File.BOWSER_TUMBLE,          -1,                        -1)
-    Character.edit_action_parameters(NBOWSER,    Action.ShieldBreak,     File.BOWSER_DAMAGE_FLY_TOP,  -1,                        -1)
+    Character.edit_action_parameters(NBOWSER,    Action.ShieldBreak,     File.BOWSER_DAMAGE_FLY_TOP,  Bowser.SHIELD_BREAK,       -1)
     Character.edit_action_parameters(NBOWSER,    Action.ShieldBreakFall, File.BOWSER_TUMBLE,          -1,                        -1)
     Character.edit_action_parameters(NBOWSER,    Action.InhalePulled,    File.BOWSER_TUMBLE,          -1,                        -1)
     Character.edit_action_parameters(NBOWSER,    Action.InhaleSpat,      File.BOWSER_TUMBLE,          -1,                        -1)
@@ -102,7 +101,6 @@ scope NBowser {
     Character.edit_action_parameters(NBOWSER,    Action.ItemThrowDash,   File.BOWSER_ITEM_THROW_DASH, -1,                        -1)
 	Character.edit_action_parameters(NBOWSER,    Action.ItemThrowF,      File.BOWSER_ITEM_THROW_F,    -1,                        -1)
 	Character.edit_action_parameters(NBOWSER,    Action.ItemThrowB,      File.BOWSER_ITEM_THROW_F,    -1,                        -1)
-	Character.edit_action_parameters(NBOWSER,    Action.ItemThrowSmashF, File.BOWSER_ITEM_THROW_F,    -1,                        -1)
 	Character.edit_action_parameters(NBOWSER,    Action.ItemThrowSmashF, File.BOWSER_ITEM_THROW_F,    -1,                        -1)
 	Character.edit_action_parameters(NBOWSER,    Action.ItemThrowU,      File.BOWSER_ITEM_THROW_U,    -1,                        -1)
 	Character.edit_action_parameters(NBOWSER,    Action.ItemThrowSmashU, File.BOWSER_ITEM_THROW_U,    -1,                        -1)
@@ -163,12 +161,12 @@ scope NBowser {
 	Character.edit_action_parameters(NBOWSER,    Action.AttackAirF,      File.BOWSER_FAIR,           Bowser.FAIR,                       -1)
     Character.edit_action_parameters(NBOWSER,    Action.LandingAirF,     File.BOWSER_FAIR_LAND,      -1,                         -1)
     Character.edit_action_parameters(NBOWSER,    Action.LandingAirN,     File.BOWSER_LANDING,        -1,                         -1)
-    Character.edit_action_parameters(NBOWSER,    Action.LandingAirN,     File.BOWSER_LANDING,        -1,                         -1)
+    Character.edit_action_parameters(NBOWSER,    Action.LandingAirX,     File.BOWSER_LANDING,        -1,                         -1)
     Character.edit_action_parameters(NBOWSER,    Action.Grab,            File.BOWSER_GRAB,           Bowser.GRAB,                       0x10000000)
     Character.edit_action_parameters(NBOWSER,    Action.FSmash,          File.BOWSER_FSMASH,         Bowser.FSMASH,                     0x40000000)
     Character.edit_action_parameters(NBOWSER,    Action.FSmashHigh,      0,                          0x80000000,                 0)
     Character.edit_action_parameters(NBOWSER,    Action.FSmashLow,       0,                          0x80000000,                 0)
-    Character.edit_action_parameters(NBOWSER,    Action.DSmash,          -1,                         Bowser.DSMASH,                     -1)
+    Character.edit_action_parameters(NBOWSER,    Action.DSmash,          File.BOWSER_DSMASH,         Bowser.DSMASH,                     -1)
                                      
     Character.edit_action_parameters(NBOWSER,    Action.GrabPull,        File.BOWSER_PULL,           Bowser.GRAB_PULL,                  0x10000000)
     Character.edit_action_parameters(NBOWSER,    Action.ThrowB,          File.BOWSER_BTHROW,         Bowser.BTHROW,                     0x10000000)
@@ -202,9 +200,7 @@ scope NBowser {
                                      
     Character.edit_action_parameters(NBOWSER,    Action.UTilt,           File.BOWSER_UTILT,          Bowser.UTILT,                      -1)
     Character.edit_action_parameters(NBOWSER,    Action.USmash,          File.BOWSER_USMASH,         Bowser.USMASH,                     -1)
-                                     
-	Character.edit_action_parameters(NBOWSER,    Action.DSmash,          File.BOWSER_DSMASH,         -1,                     	-1)
-                                     
+                                                                          
     Character.edit_action_parameters(NBOWSER,    Action.Teeter,          File.BOWSER_TEETER_LOOP,    Bowser.TEETER,                     -1)
     Character.edit_action_parameters(NBOWSER,    Action.TeeterStart,     File.BOWSER_TEETER_START,   -1,                         -1)
                                      

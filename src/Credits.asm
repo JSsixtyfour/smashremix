@@ -18,7 +18,7 @@ scope Credits {
 
     // credits speed is faster when start button is pressed
     OS.patch_start(0x187EB4, 0x8013A7B4)
-    dw 0x3DCCCCCD   // speed = 0.1 (was 0.05)
+    dw 0x3DE147AE   // speed = 0.11 (was 0.05)
     OS.patch_end()
 
     // make the credits move twice as fast
@@ -310,8 +310,9 @@ scope Credits {
     add_title("Developer")
     add_name("MarioReincarnate", "Let's just say you owe him|lunch", remix)
     add_name("Cyjorg", "Stage Engine", remix)
-    add_name("Halofactory", "That's the way she goes.", remix)
-    add_name("Shino", "Parry, Special Zoom, Rage,|CPU AI improvements,|Refactoring, tools,|scripting, modding engine", remix)
+    add_name("Halofactory", "Way of the road, buddy", remix)
+    add_name("Shino", "Parry, Special Zoom, Rage,|CPU AI wizard,|Refactoring, tools,|scripting, modding engine", remix)
+    add_name("goombapatrol", "Is this a work in progress?|nop", remix)
 
     add_title("Lead Artist")
     add_name("Sope", "Should lay off the alcohol|tbh", remix)
@@ -343,7 +344,7 @@ scope Credits {
     add_name("Adrian Garcia", "Dark Samus Textures", remix)
     add_name("M-1", "Wolf Model, Gerudo Valley", remix)
     add_name("TheQuickSlash", "\dDork\d -Sope|oFTo | https://youtu.be/ | widZEAJc0QM", remix)
-    add_name("Halofactory", "Sheik, Ebisumaru,|Dark Samus Models,|Smashville V2", remix)
+    add_name("Halofactory", "Sheik, Polygon Sheik|Models|Stage Modeling", remix)
     add_name("Jay6T4", "Metal Luigi Model", remix)
     add_name("HeronNobody", "Ebisumaru and Roy Models", remix)
     add_name("OniFox", "Roy and Dark Samus Models", remix)
@@ -420,10 +421,12 @@ scope Credits {
     add_name("Retro64", "Dr. Mario, Kitchen Island,|Onett, New Pork City,|Bowser's Keep, Windy,|Casino Night Zone", remix)
     add_name("TheQuickSlash", "dataDyne, Castle Siege,|Edo Town, Big Snowman", remix)
     add_name("ownsoldier", "Rith Essa", remix)
-    add_name("Halofactory", "Dracula's Castle,|Reverse Castle", remix)
+    add_name("Halofactory", "Smashville, Drac's Castle,|Mad Monster Rework|Shading on Ganon's Tower|and Frosty Village ", remix)
     add_name("Pringles", "First Destination Remix,|Big Boo's Haunt, RTTF|Remix", remix)
     add_name("HeronNobody", "Melrode, Deku Tree,|Crateria, Big Snowman", remix)
     add_name("Sam the Salmon", "Pigmask Fortress, N. Sanity|Beach, Snow Go, Windy|Shading, N64 Remix|Shading, Melrode Shading", remix)
+    add_name("OniFox", "Hyrule Temple Rework", remix)
+    add_name("Maafia", "Autumn How to Play", remix)
 
     add_title("Voice Artists")
     add_name("Zarkpudd", "Narration", remix)
@@ -438,6 +441,7 @@ scope Credits {
     add_name("FaxMeAppleJuice", "Regional Variant Porting", remix)
     add_name("goombapatrol", "Accessibility, 1P Practice,|Tripping, D-Pad Support,|Magic Kirby, PKMN Toggles,|P-Wing, Stopwatch, etc.", remix)
     add_name("VetriTheRetri", "Credits: Looks like Vetri", remix)
+    add_name("Krix08", "Extended VS Stats|Volume Toggles|Sleeping, Tripping Failed Z|Cancel Punishments", remix)
 
     add_title("Consultants")
     add_name("Madao", "Moveset Consultant", remix)
@@ -460,6 +464,7 @@ scope Credits {
     add_name("ALM5252", "Dr. Luigi Consultant", remix)
     add_name("LMG", "Original UI Design|Consultant", remix)
     add_name("TheNewJGG", "Sonic Car Model", remix)
+    add_name("Mark Kurko", "Project Dream:|Lost MIDI", remix)
 
     add_title("Playtesters")
     add_name("Abnormal Adept", "", remix)
@@ -497,7 +502,7 @@ scope Credits {
     add_name("Loz", "", remix)
     add_name("jonnjonn", "", remix)
     add_name("Kaki", "", remix)
-    add_name("Maafia", "Playtester Tourney|Regular", remix)
+    add_name("Maafia", "Playtester Tourney|Regular|\dTo my two brothers,|Abdul and Hameed,|I love you both.\d", remix)
     add_name("SushiiZ", "", remix)
     add_name("JaimeHR", "Playtester Tourney Champ|Playtester Tourney|Regular", remix)
     add_name("MojoMonkey", "", remix)
@@ -571,6 +576,16 @@ scope Credits {
     add_name("Imakuni", "", remix)
     add_name("Mist", "", remix)
     add_name("KYOP", "", remix)
+    add_name("Julianmario", "", remix)
+    add_name("Matthew McClesky", "", remix)
+    add_name("Ashley!", "", remix)
+    add_name("sONIC1098", "", remix)
+    add_name("DesertYoshi", "", remix)
+    add_name("surname 05", "", remix)
+    add_name("pigma1", "", remix)
+    add_name("Vard", "", remix)
+    add_name("Lendri B. Mujina", "", remix)
+    add_name("Fred C.", "", remix)
 
 
     add_title("Original Sequencing Musical Credits")

@@ -28,7 +28,8 @@ scope TwelveCharBattle {
                 starting_stocks:; db 0x00        // starting stocks this game
                 ending_stocks:; db 0x00          // ending stocks this game
                 portrait_id:; db 0xFF            // portrait_id of this character
-                damage_taken:; dw 0x00           // damage taken this game TODO: Not implemented, maybe won't be, but this word is important to keep
+                was_random:; db OS.FALSE         // boolean indicating if the match was started via the Random portrait
+                spacer:; db 0, 0, 0              // spacer
             }
             evaluate n({n} + 1)
         }
@@ -1610,6 +1611,54 @@ scope TwelveCharBattle {
     }
 
     // @ Description
+    // Sets the given portrait_id for the given port to the given character
+    // @ Arguments
+    // a0 - portrait_id
+    // a1 - port
+    // a2 - char_id
+    scope set_portrait_: {
+        addiu   sp, sp, -0x020              // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+        sw      t2, 0x0008(sp)              // ~
+        sw      t3, 0x000C(sp)              // ~
+        sw      t4, 0x0010(sp)              // ~
+        sw      t5, 0x0014(sp)              // ~
+        sw      a0, 0x0018(sp)              // ~
+        sw      a1, 0x001C(sp)              // ~
+
+        lli     t2, NUM_PRESETS * 0x10      // offset to custom char sets
+        sll     t3, a1, 0x0004              // t3 = offset to port's custom char set
+        addu    t2, t2, t3                  // t2 = offset to char set
+        li      t3, character_set_table
+        addu    t3, t3, t2                  // t3 = char set entry
+        lw      t2, 0x0000(t3)              // t2 = id_table
+        addu    t2, t2, a0                  // t2 = address of the portrait's char_id
+        sb      a2, 0x0000(t2)              // update portrait's char_id
+        li      t5, CharacterSelect.portrait_offset_by_character_table
+        sll     t2, a2, 0x0002              // t2 = offset to portrait offset
+        addu    t5, t5, t2                  // t5 = portrait offset address
+        lw      t5, 0x0000(t5)              // t5 = portrait offset
+        lw      t2, 0x0004(t3)              // t2 = portrait offset table
+        sll     t4, a0, 0x0002              // t4 = offset to portrait's portrait offset (lol)
+        addu    t2, t2, t4                  // t2 = address of the portrait's portrait offset
+        sw      t5, 0x0000(t2)              // update portrait's portrait offset
+
+        lw      a0, 0x0008(t3)              // a0 = portrait_id_table
+        jal     update_portrait_id_table_
+        lw      a1, 0x0000(t3)              // a1 = id_table
+
+        lw      ra, 0x0004(sp)              // restore registers
+        lw      t2, 0x0008(sp)              // ~
+        lw      t3, 0x000C(sp)              // ~
+        lw      t4, 0x0010(sp)              // ~
+        lw      t5, 0x0014(sp)              // ~
+        lw      a0, 0x0018(sp)              // ~
+        lw      a1, 0x001C(sp)              // ~
+        jr      ra
+        addiu   sp, sp, 0x020               // deallocate stack space
+    }
+
+    // @ Description
     // Force Free-for-all mode with Stock (no timer) when entering CSS
     // Also sets up portrait_id field in CSS player structs for handling duplicates in custom char sets
     scope force_ffa_and_stock_: {
@@ -1722,6 +1771,9 @@ scope TwelveCharBattle {
         lli     a0, VsRemixMenu.mode.SMASHKETBALL
         beql    t0, a0, _default            // if Smashketball, play "Smashketball"
         lli     a0, FGM.announcer.css.SMASHKETBALL
+        lli     a0, VsRemixMenu.mode.TUG_OF_WAR
+        beql    t0, a0, _default            // if Tug of War, play "Tug of War"
+        lli     a0, FGM.announcer.css.TUG_OF_WAR
 
         li      t0, twelve_cb_flag
         lw      t0, 0x0000(t0)              // t0 = 1 if 12cb mode
@@ -1765,6 +1817,9 @@ scope TwelveCharBattle {
         lli     a0, VsRemixMenu.mode.SMASHKETBALL
         beql    t0, a0, _do_jump            // if Smashketball, play "Smashketball"
         lli     a0, FGM.announcer.css.SMASHKETBALL
+        lli     a0, VsRemixMenu.mode.TUG_OF_WAR
+        beql    t0, a0, _do_jump            // if Tug of War, play "Tug of War"
+        lli     a0, FGM.announcer.css.TUG_OF_WAR
 
         lli     a0, FGM.announcer.css.TEAM_BATTLE // a0 = default Team Battle announcer call
 
@@ -1826,11 +1881,14 @@ scope TwelveCharBattle {
         beql    t4, t5, _end_vs             // if 12cb mode, use custom image
         lli     t9, 0x2048                  // t9 = offset to "12-Char. Battle" image
         lli     t5, VsRemixMenu.mode.TAG_TEAM
-        beql    t4, t5, _end_vs             // if Squard Strike mode, use custom image
+        beql    t4, t5, _end_vs             // if Tag Team mode, use custom image
         lli     t9, 0x2738                  // t9 = offset to "Tag Team" image
         lli     t5, VsRemixMenu.mode.KOTH
         beql    t4, t5, _end_vs             // if King of the Hill mode, use custom image
         lli     t9, 0x29A8                  // t9 = offset to "King of the Hill" image
+        lli     t5, VsRemixMenu.mode.TUG_OF_WAR
+        beql    t4, t5, _end_vs             // if Tug of War mode, use custom image
+        lli     t9, 0x30F0                  // t9 = offset to "Tug of War" image
         lli     t5, VsRemixMenu.mode.SMASHKETBALL
         bne     t4, t5, _end_vs             // if not Smashketball mode, don't change offset
         OS.read_word(Smashketball.type, t4) // t4 = Smashketball type (yes, delay slot)
@@ -1858,6 +1916,9 @@ scope TwelveCharBattle {
         lli     t5, VsRemixMenu.mode.KOTH
         beql    t1, t5, _end_results        // if King of the Hill mode, use custom image
         lli     t8, 0x29A8                  // t8 = offset to "King of the Hill" image
+        lli     t5, VsRemixMenu.mode.TUG_OF_WAR
+        beql    t1, t5, _end_results        // if Tug of War mode, use custom image
+        lli     t8, 0x30F0                  // t8 = offset to "Tug of War" image
         lli     t5, VsRemixMenu.mode.SMASHKETBALL
         bne     t1, t5, _end_results        // if not Smashketball mode, don't change offset
         OS.read_word(Smashketball.type, t1) // t1 = Smashketball type (yes, delay slot)
@@ -1913,6 +1974,8 @@ scope TwelveCharBattle {
         OS.read_word(VsRemixMenu.vs_mode_flag, t4) // t4 = vs_mode_flag
         lli     a0, VsRemixMenu.mode.TAG_TEAM
         beq     t4, a0, _squad_strike_decrement // if Tag Team, wrap to a different value
+        lli     a0, VsRemixMenu.mode.TUG_OF_WAR
+        beq     t4, a0, _tug_of_war_decrement // if Tug of War, wrap to a different value
         li      t4, twelve_cb_flag
         lw      t4, 0x0000(t4)              // t4 = 1 if 12cb mode
         beqz    t4, _allow_decrement_end    // if not 12cb mode, allow change and skip updating config
@@ -1956,10 +2019,18 @@ scope TwelveCharBattle {
         jr      ra
         addiu   t4, r0, 0x0005              // original line 2, modified to set to 6
 
+        _tug_of_war_decrement:
+        beqzl   v1, pc() + 8                // if decrementing to below 1 stocks, ensure we wrap
+        lli     v1, 0x0000                  // v1 = 0, so we wrap at the next bgezl
+        jr      ra
+        addiu   t4, r0, 24                  // original line 2, modified to set to 25
+
         _increment:
         OS.read_word(VsRemixMenu.vs_mode_flag, at) // at = vs_mode_flag
         lli     a0, VsRemixMenu.mode.TAG_TEAM
         beq     at, a0, _squad_strike_increment // if Tag Team, set a different max
+        lli     a0, VsRemixMenu.mode.TUG_OF_WAR
+        beq     at, a0, _tug_of_war_increment // if Tug of War, set a different max
         li      at, twelve_cb_flag
         lw      at, 0x0000(at)              // at = 1 if 12cb mode
         beqz    at, _allow_increment_end    // if not 12cb mode, allow change and skip updating config
@@ -2004,6 +2075,12 @@ scope TwelveCharBattle {
         addiu   v1, v1, 0x0001              // original line 2
         jr      ra
         slti    at, v1, 0x0006              // original line 3, modified to have a max of 6 stocks
+
+        _tug_of_war_increment:
+        lli     t0, 0x0000                  // t0 = 0 (the value to wrap to)
+        addiu   v1, v1, 0x0001              // original line 2
+        jr      ra
+        slti    at, v1, 25                  // original line 3, modified to have a max of 25 stocks
     }
 
     // @ Description
@@ -2073,8 +2150,19 @@ scope TwelveCharBattle {
         li      t0, config.p1.match
         lli     t3, 23                      // t3 = 23 matches
         _loop_1:
+        lbu     a0, 0x0003(t0)              // a0 = portrait_id
         sw      t2, 0x0000(t0)              // update this game in match struct, part 1
-        sw      r0, 0x0004(t0)              // update this game in match struct, part 1
+        // check for random
+        lbu     a1, 0x0004(t0)              // a1 = 1 if this should be the random portrait
+        beqz    a1, _loop_1_next            // if not the random portrait, skip
+        sw      r0, 0x0004(t0)              // update this game in match struct, part 2
+
+        // set the portrait tables to show the random portrait again
+        lli     a1, 0x0000                  // a1 = port
+        jal     set_portrait_
+        lli     a2, Character.id.PLACEHOLDER // a2 = char_id
+
+        _loop_1_next:
         addiu   t3, t3, -0x0001             // t3--
         bnez    t3, _loop_1                 // loop over all games in match struct
         addiu   t0, t0, 0x0008              // move to next game
@@ -2082,11 +2170,31 @@ scope TwelveCharBattle {
         li      t0, config.p2.match
         lli     t3, 23                      // t3 = 23 matches
         _loop_2:
+        lbu     a0, 0x0003(t0)              // a0 = portrait_id
         sw      t2, 0x0000(t0)              // update this game in match struct, part 1
-        sw      r0, 0x0004(t0)              // update this game in match struct, part 1
+        // check for random
+        lbu     a1, 0x0004(t0)              // a1 = 1 if this should be the random portrait
+        beqz    a1, _loop_2_next            // if not the random portrait, skip
+        sw      r0, 0x0004(t0)              // update this game in match struct, part 2
+
+        // set the portrait tables to show the random portrait again
+        lli     a1, 0x0001                  // a1 = port
+        jal     set_portrait_
+        lli     a2, Character.id.PLACEHOLDER // a2 = char_id
+
+        _loop_2_next:
         addiu   t3, t3, -0x0001             // t3--
         bnez    t3, _loop_2                 // loop over all games in match struct
         addiu   t0, t0, 0x0008              // move to next game
+
+        lli     a0, 0x0000                  // a0 = port_id
+        lli     a1, OS.FALSE                // don't increment
+        jal     update_character_set_
+        lli     a2, OS.TRUE                 // a2 = redraw? yes
+        lli     a0, 0x0001                  // a0 = port_id
+        lli     a1, OS.FALSE                // don't increment
+        jal     update_character_set_
+        lli     a2, OS.TRUE                 // a2 = redraw? yes
 
         // toggle display items
         lli     a0, setup_.GROUP_STARTED    // a0 = group of items that should only display when battle has started
@@ -2305,8 +2413,9 @@ scope TwelveCharBattle {
     // @ Arguments
     // a0 - port_id
     // a1 - increment? 0 if no, 1 or -1 if yes
+    // a2 - redraw? 0 if no, 1 if yes
     scope update_character_set_: {
-        addiu   sp, sp,-0x0020              // allocate stack space
+        addiu   sp, sp,-0x0030              // allocate stack space
         sw      ra, 0x0004(sp)              // save registers
         sw      a0, 0x0008(sp)              // ~
         sw      a2, 0x000C(sp)              // ~
@@ -2400,9 +2509,9 @@ scope TwelveCharBattle {
         jal     update_portrait_id_table_
         lw      a1, 0x0000(t3)              // a1 = id_table
 
-        // Check incrementing flag
-        lw      a1, 0x001C(sp)              // a1 = increment?
-        beqz    a1, _portraits              // if not incrementing, skip
+        // Check redrawing flag
+        lw      a1, 0x000C(sp)              // a1 = redraw?
+        beqz    a1, _portraits              // if not redrawing, skip
         nop
 
         // update character id and panel preview based on new character set
@@ -2410,7 +2519,7 @@ scope TwelveCharBattle {
         li      t3, CharacterSelect.CSS_PLAYER_STRUCT // t3 = p1 css player struct
         bnezl   a0, pc() + 8                // adjust address for p2
         addiu   t3, t3, 0x00BC              // t3 = p2 css player struct
-        sw      t3, 0x001C(sp)              // remember css player struct
+        sw      t3, 0x0020(sp)              // remember css player struct
         lw      t0, 0x0048(t3)              // t0 = selected character_id
         lli     at, Character.id.NONE
         beq     t0, at, _portraits          // if no character is selected, skip
@@ -2433,7 +2542,7 @@ scope TwelveCharBattle {
         lw      s1, 0x0008(sp)              // s1 = panel index
 
         _update_panel:
-        lw      a1, 0x001C(sp)              // a1 = css player struct
+        lw      a1, 0x0020(sp)              // a1 = css player struct
         sw      v0, 0x0048(a1)              // save character_id
 
         lw      a0, 0x0008(sp)              // a0 = panel index
@@ -2478,7 +2587,7 @@ scope TwelveCharBattle {
         lw      v1, 0x0014(sp)              // ~
         lw      s1, 0x0018(sp)              // ~
         lw      a1, 0x001C(sp)              // ~
-        addiu   sp, sp, 0x0020              // deallocate stack space
+        addiu   sp, sp, 0x0030              // deallocate stack space
 
         jr      ra
         nop
@@ -2590,8 +2699,9 @@ scope TwelveCharBattle {
         nop
 
         lli     a0, 0x0000                  // a0 = player 1
-        jal     update_character_set_
         lli     a1, 0x0001                  // a1 = increment? yes, to right
+        jal     update_character_set_
+        lli     a2, OS.TRUE                 // a2 = redraw? yes
         b       _play_sound
         nop
 
@@ -2608,8 +2718,9 @@ scope TwelveCharBattle {
         nop
 
         lli     a0, 0x0000                  // a0 = player 1
-        jal     update_character_set_
         addiu   a1, r0, -0x0001             // a1 = increment? yes, to left
+        jal     update_character_set_
+        lli     a2, OS.TRUE                 // a2 = redraw? yes
         b       _play_sound
         nop
 
@@ -2626,8 +2737,9 @@ scope TwelveCharBattle {
         nop
 
         lli     a0, 0x0001                  // a0 = player 2
-        jal     update_character_set_
         lli     a1, 0x0001                  // a1 = increment? yes, to right
+        jal     update_character_set_
+        lli     a2, OS.TRUE                 // a2 = redraw? yes
         b       _play_sound
         nop
 
@@ -2644,8 +2756,9 @@ scope TwelveCharBattle {
         nop
 
         lli     a0, 0x0001                  // a0 = player 2
-        jal     update_character_set_
         addiu   a1, r0, -0x0001             // a1 = increment? yes, to left
+        jal     update_character_set_
+        lli     a2, OS.TRUE                 // a2 = redraw? yes
 
         _play_sound:
         // audial feedback
@@ -3110,8 +3223,8 @@ scope TwelveCharBattle {
     add_defeat_parameters(0x51D,                        defeated_moveset,           0)          // 0x18 - NJIGGLY
     add_defeat_parameters(0x6AF,                        defeated_moveset,           0)          // 0x19 - NNESS
     add_defeat_parameters(0x34F,                        defeated_moveset_donkey,    0)          // 0x1A - GDONKEY
-    add_defeat_parameters(0,                            0x80000000,                 0)          // 0x1B - PLACEHOLDER
-    add_defeat_parameters(0,                            0x80000000,                 0)          // 0x1C - PLACEHOLDER
+    add_defeat_parameters(0x617,                        defeated_moveset_captain,   0)          // 0x1B - RANDOM
+    add_defeat_parameters(0,                            0x80000000,                 0)          // 0x1C - NONE
     add_defeat_parameters(0x2B1,                        defeated_moveset_fox_link,  0)          // 0x1D - FALCO
     add_defeat_parameters(0x617,                        defeated_moveset_captain,   0)          // 0x1E - GND
     add_defeat_parameters(0x48A,                        defeated_moveset_fox_link,  0)          // 0x1F - YLINK
@@ -3151,7 +3264,7 @@ scope TwelveCharBattle {
     add_defeat_parameters(File.GOEMON_DOWN_STAND_U,     defeated_moveset_mario,     0)          // 0x41 - GOEMON
     add_defeat_parameters(0x2B1,                        defeated_moveset_fox_link,  0)          // 0x42 - PEPPY
     add_defeat_parameters(0x2B1,                        defeated_moveset_fox_link,  0)          // 0x43 - SLIPPY
-    add_defeat_parameters(File.BANJO_DOWN_STND_U,       defeated_moveset_donkey,     0)          // 0x44 - BANJO
+    add_defeat_parameters(File.BANJO_DOWN_STND_U,       defeated_moveset_donkey,    0)          // 0x44 - BANJO
     add_defeat_parameters(0x222,                        defeated_moveset,           0)          // 0x45 - METAL LUIGI
     add_defeat_parameters(File.GOEMON_DOWN_STAND_U,     defeated_moveset_mario,     0)          // 0x46 - EBI
     add_defeat_parameters(0x617,                        defeated_moveset_captain,   0)          // 0x47 - DRAGONKING
@@ -3550,13 +3663,40 @@ scope TwelveCharBattle {
         lui     t4, 0x1C00                  // t4 = reset value for game
         sh      t4, 0x0000(t1)              // reset game (but keep portrait_id)
         sb      r0, 0x0002(t1)              // ~
+        lbu     t4, 0x0004(t1)              // t4 = was_random
         li      t1, config.stocks_by_portrait_id
         addu    t1, t1, t3                  // t1 = address of stocks remaining for this character
         sb      t2, 0x0000(t1)              // reset stocks remaining for this character
 
+        // handle Random - but only if it was the first game for the portrait
+        beqz    t4, _next                   // if it wasn't random, skip
+        nop
+
+        addiu   sp, sp, -0x0020             // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+        sw      at, 0x0008(sp)              // ~
+        sw      t6, 0x000C(sp)              // ~
+        sw      a0, 0x0010(sp)              // ~
+        sw      a1, 0x0014(sp)              // ~
+        sw      a2, 0x0018(sp)              // ~
+
+        or      a0, t3, r0                  // a0 = portrait_id
+        or      a1, at, r0                  // a1 = port
+        jal     set_portrait_
+        lli     a2, Character.id.PLACEHOLDER // a2 = char_id
+
+        lw      ra, 0x0004(sp)              // restore registers
+        lw      at, 0x0008(sp)              // ~
+        lw      t6, 0x000C(sp)              // ~
+        lw      a0, 0x0010(sp)              // ~
+        lw      a1, 0x0014(sp)              // ~
+        lw      a2, 0x0018(sp)              // ~
+        addiu   sp, sp, 0x0020              // deallocate stack space
+
+        _next:
         li      t0, config.p2.match
         beqz    at, _loop                   // loop to reset both players
-        addiu   at, at, 0x0001              // t1 = game struct
+        addiu   at, at, 0x0001              // at = next player
 
         _end:
         jr      ra
@@ -3957,6 +4097,7 @@ scope TwelveCharBattle {
         lw      t1, 0x0048(t0)              // t1 = char_id
         lli     t3, Character.id.NONE       // t3 = id.NONE
         beq     t1, t3, _end                // skip if not actually hovering over a portrait
+        _check_a_c:
         andi    t1, t8, Joypad.A | Joypad.CU | Joypad.CD | Joypad.CL | Joypad.CR // check if A or any C button pressed
         bnez    t1, _end                    // if A or any C button pressed this frame, skip cycling portrait since it will get selected
         nop
@@ -4038,16 +4179,50 @@ scope TwelveCharBattle {
         bnez    t1, _do_update              // if released, update all portraits
         nop
 
-        andi    t1, t8, Joypad.DU           // dpad up
-        bnez    t1, _preset                 // if pressed, update all portraits to one of the presets
-        nop
-
         andi    t1, t8, Joypad.DD           // dpad down
         bnez    t1, _randomize              // if pressed, update all portraits randomly
         nop
 
+        li      t3, copy_timer              // t3 = copy_timer for p1
+        bnezl   t2, pc() + 8                // based on the port, use the appropriate address
+        addiu   t3, t3, 0x0002              // t3 = copy_timer for p2
+        lw      t1, 0x004C(sp)              // t1 = input struct
+        lhu     t1, 0x0006(t1)              // t1 = released button mask
+        andi    t1, t1, Joypad.DU           // DU
+        bnez    t1, _preset_maybe           // branch if released, and either change preset or do nothing (depending on duration held)
+        nop
+        lw      t1, 0x004C(sp)              // t1 = input struct
+        lhu     t1, 0x0000(t1)              // t1 = held button mask
+        andi    t1, t1, Joypad.DU           // DU
+        bnez    t1, _copycat                // branch if held, otherwise reset copy_timer
+        nop
+        sh      r0, 0x0000(t3)              // ~
+
         b       _end                        // nothing pressed, don't update portraits
         nop
+
+        // if released before 60 frames do preset
+        // if held for 60 frames do copy
+        // if released after 60 frames do nothing
+        _preset_maybe:
+        lh      t1, 0x0000(t3)              // t1 = timer for copy
+        sltiu   t1, t1, 0x003C              // t1 = 1 if timer < 60, 0 otherwise
+        bnez    t1, _preset                 // if not held long enough, update all portraits to one of the presets...
+        sh      r0, 0x0000(t3)              // (clear timer regardless)
+        b       _end                        // ...otherwise, do nothing (so as to not send extra press after copying)
+        nop
+
+        _copycat:
+        lh      t1, 0x0000(t3)              // t1 = timer for copy
+        addiu   t1, t1, 0x0001              // t1++
+        sh      t1, 0x0000(t3)              // save updated timer
+        lli     t3, 60                      // t3 = 60
+        bne     t1, t3, _end                // branch if we've not held it for exactly 1 second
+        nop
+        li      t1, copying_flag            // t1 = copying_flag
+        lli     t7, OS.TRUE
+        b       _randomize                  // take randomize path, and copy other player's portraits
+        sw      t7, 0x0000(t1)              // set copying flag to true
 
         _held_Z_R:
         li      t1, portrait_cycle_timer    // t1 = portrait_cycle_timer for p1
@@ -4182,6 +4357,7 @@ scope TwelveCharBattle {
         lw      t3, 0x0004(t0)              // t3 = portrait_offset_table
         li      t4, CharacterSelect.portrait_offset_by_character_table
         lli     t7, NUM_SLOTS               // t7 = loop index
+        lli     v0, 0x0000                  // v0 = column index
 
         addiu   sp, sp,-0x0020              // allocate stack space
         sw      t0, 0x0004(sp)              // save registers
@@ -4192,55 +4368,23 @@ scope TwelveCharBattle {
         sw      t1, 0x0008(sp)              // ~
         sw      t3, 0x0010(sp)              // ~
         sw      t7, 0x0018(sp)              // ~
+        sw      v0, 0x001C(sp)              // ~
 
-        jal     Global.get_random_int_      // v0 = random character_id
-        lli     a0, Character.NUM_CHARACTERS
-
-        lli     t0, Character.id.BOSS
-        beq     v0, t0, _loop_randomize     // if Master Hand, get a different ID
-        lli     t0, Character.id.SANDBAG
-        beq     v0, t0, _loop_randomize     // if Sandbag, get a different ID
-        lli     t0, Character.id.PLACEHOLDER
-        beq     v0, t0, _loop_randomize     // if invalid, get a different ID
-        lli     t0, Character.id.NONE
-        beq     v0, t0, _loop_randomize     // if invalid, get a different ID
+        li      t0, copying_flag            // t0 = copying_flag
+        lw      t0, 0x0000(t0)              // t0 = 1 if copying, 0 if randomizing
+        bnez    t0, _peek                   // branch accordingly (get id from other player)
+        nop
+        jal     get_random_char_id_
+        nop
+        b       _next
         nop
 
-        // Check toggle to see if we should include variants
-        li      t0, Toggles.entry_variant_random
-        lw      t0, 0x0004(t0)              // t0 = random select (0 = DEFAULT, 1 = BONUS, 2 = ALL VARIANTS, 3 = VANILLA)
-        lli     t2, 0x0002                  // t2 = 'ALL'
-        beq     t0, t2, _next               // if random select with variants is 'ALL', then skip variant checks
-        lli     t2, 0x0003                  // t2 = 'VANILLA'
-        bne     t0, t2, _check_variants     // branch if 'DEFAULT' or 'BONUS'
-        slti    t2, v0, Character.id.NESS + 1  // t2 = 1 if v0 = Vanilla character ID
-        beqz    t2, _loop_randomize         // if v0 was not a vanilla character then get a different ID...
-        nop
-        b       _next                       // ...otherwise use this character and skip variant checks
-        nop
-
-        _check_variants:
-        li      t2, Character.variant_type.table
-        addu    t2, t2, v0                  // t2 = address of variant type of character
-        lbu     t2, 0x0000(t2)              // t2 = variant type of character
-        beqz    t2, _next                   // continue if not a variant
-        nop
-        beqz    t0, _loop_randomize         // if random select is 'DEFAULT', get a different ID...
-        nop                                 // ...otherwise, check for Special variants
-        lli     t0, Character.variant_type.SPECIAL
-        bne     t2, t0, _loop_randomize     // get a different ID if not a Bonus character
-        nop
-        // safety check (not all 'SPECIAL' characters are 'Bonus')
-        lli     t0, Character.id.METAL
-        beq     v0, t0, _loop_randomize     // if this character, get a different ID
-        lli     t0, Character.id.GDONKEY
-        beq     v0, t0, _loop_randomize     // "
-        lli     t0, Character.id.GBOWSER
-        beq     v0, t0, _loop_randomize     // "
-        lli     t0, Character.id.SSONIC
-        beq     v0, t0, _loop_randomize     // "
-        lli     t0, Character.id.MLUIGI
-        beq     v0, t0, _loop_randomize     // "
+        _peek:
+        lli     t3, 0xDC                    // offset to other player's table
+        bnezl   t2, pc() + 8                // if player 2, flip offset to -0xDC
+        sub     t3, r0, t3                  // t3 = -0xDC
+        addu    t4, t1, t3                  // t4 = address of corresponding slot in other player's table
+        lbu     v0, 0x0000(t4)              // v0 = character id to reference
         nop
 
         _next:
@@ -4254,11 +4398,25 @@ scope TwelveCharBattle {
         sll     t5, v0, 0x0002              // t5 = offset in portrait_offset_by_character_table
         addu    t4, t4, t5                  // t4 = address of portrait offset to use
         lw      t5, 0x0000(t4)              // t5 = portrait offset to use
-        sb      v0, 0x0000(t1)              // update character_id
-        sw      t5, 0x0000(t3)              // update portrait offset
+        sb      v0, 0x0000(t1)              // update character_id, p1
+        sb      v0, 0x0004(t1)              // update character_id, p2
+        sw      t5, 0x0000(t3)              // update portrait offset, p1
+        sw      t5, 0x0010(t3)              // update portrait offset, p2
+
+        lw      v0, 0x001C(sp)              // v0 = column index
+        addiu   v0, v0, 0x0001              // v0 = column index + 1
+        sltiu   t5, v0, 0x0004              // t5 = 1 if v0 < 4 (column index)
+        bnez    t5, _check_loop_counter     // if haven't filled last column, skip jumping to next row
         addiu   t7, t7, -0x0001             // t7--
+
+        addiu   t7, t7, -0x0004             // t7 = loop index - 4 (next row)
+        addiu   t3, t3, 0x0010              // t3 = next row's portrait offset entry
+        addiu   t1, t1, 0x0004              // t1 = next row's id_table entry
+        lli     v0, 0x0000                  // reset column index to 0
+
+        _check_loop_counter:
         addiu   t3, t3, 0x0004              // t3++
-        bnez    t7, _loop_randomize
+        bgtz    t7, _loop_randomize
         addiu   t1, t1, 0x0001              // t1++
 
         lw      t0, 0x0004(sp)              // restore registers
@@ -4272,14 +4430,17 @@ scope TwelveCharBattle {
         lw      a1, 0x0000(t0)              // a1 = id_table
 
         or      a0, r0, t2                  // a0 = port_id
-        jal     update_character_set_
         lli     a1, OS.FALSE                // don't increment
+        jal     update_character_set_
+        lli     a2, OS.FALSE                // a2 = redraw? no
 
         // audial feedback
         jal     0x800269C0
         lli     a0, FGM.menu.SCROLL         // play sound
 
         _end:
+        li      t0, copying_flag            // t0 = copying_flag
+        sw      r0, 0x0000(t0)              // clear flag
         lw      ra, 0x0004(sp)              // restore registers
         lw      t0, 0x0008(sp)              // ~
         lw      t1, 0x000C(sp)              // ~
@@ -4298,6 +4459,75 @@ scope TwelveCharBattle {
 
         jr      ra
         nop
+    }
+
+    // @ Description
+    // Gets a random char_id
+    scope get_random_char_id_: {
+        addiu   sp, sp, -0x0010             // allocate stack space
+        sw      ra, 0x0004(sp)              // save registers
+
+        _roll:
+        jal     Global.get_random_int_safe_ // v0 = random character_id
+        lli     a0, Character.NUM_CHARACTERS
+
+        lli     t0, Character.id.BOSS
+        beq     v0, t0, _roll               // if Master Hand, get a different ID
+        lli     t0, Character.id.SANDBAG
+        beq     v0, t0, _roll               // if Sandbag, get a different ID
+        // lli     t0, Character.id.PLACEHOLDER
+        // beq     v0, t0, _roll               // if invalid, get a different ID
+        lli     t0, Character.id.NONE
+        beq     v0, t0, _roll               // if invalid, get a different ID
+        nop
+
+        // Check toggle to see if we should include variants
+        li      t0, Toggles.entry_variant_random
+        lw      t0, 0x0004(t0)              // t0 = random select (0 = DEFAULT, 1 = BONUS, 2 = ALL VARIANTS, 3 = VANILLA)
+        lli     t2, 0x0002                  // t2 = 'ALL'
+        beq     t0, t2, _end                // if random select with variants is 'ALL', then skip variant checks
+        lli     t2, 0x0003                  // t2 = 'VANILLA'
+        bne     t0, t2, _check_variants     // branch if 'DEFAULT' or 'BONUS'
+        slti    t2, v0, Character.id.NESS + 1  // t2 = 1 if v0 = Vanilla character ID
+        beqz    t2, _roll                   // if v0 was not a vanilla character then get a different ID...
+        nop
+        b       _check_recent_randoms       // ...otherwise use this character and skip variant checks
+        nop
+
+        _check_variants:
+        li      t2, Character.variant_type.table
+        addu    t2, t2, v0                  // t2 = address of variant type of character
+        lbu     t2, 0x0000(t2)              // t2 = variant type of character
+        beqz    t2, _check_recent_randoms   // continue if not a variant
+        nop
+        beqz    t0, _roll                   // if random select is 'DEFAULT', get a different ID...
+        nop                                 // ...otherwise, check for Special variants
+        lli     t0, Character.variant_type.SPECIAL
+        bne     t2, t0, _roll               // get a different ID if not a Bonus character
+        nop
+        // safety check (not all 'SPECIAL' characters are 'Bonus')
+        lli     t0, Character.id.METAL
+        beq     v0, t0, _roll               // if this character, get a different ID
+        lli     t0, Character.id.GDONKEY
+        beq     v0, t0, _roll               // "
+        lli     t0, Character.id.GBOWSER
+        beq     v0, t0, _roll               // "
+        lli     t0, Character.id.SSONIC
+        beq     v0, t0, _roll               // "
+        lli     t0, Character.id.MLUIGI
+        beq     v0, t0, _roll               // "
+        nop
+
+        _check_recent_randoms:
+        jal     CharacterSelect._recent_randoms_lookup  // check recent randoms
+        nop                                             // returns a1 = 0 if we need to roll again
+        beqzl   a1, _roll                               // branch accordingly
+        nop
+
+        _end:
+        lw      ra, 0x0004(sp)              // restore registers
+        jr      ra
+        addiu   sp, sp, 0x0010              // deallocate stack space
     }
 
     // @ Description
@@ -4632,6 +4862,52 @@ scope TwelveCharBattle {
         lw      a0, 0x0004(v0)              // random dpad icon legend object
         sw      v0, 0x0030(a0)              // save reference to random dpad icon
 
+        // Draw dpad up icon copy text
+        lli     a0, 0x1C                    // room
+        lli     a1, 0x16                    // group
+        li      a2, string_dpad_up_copy     // string
+        lli     a3, 0x0000                  // routine (Render.NOOP)
+        lui     s1, 0x432D                  // ulx (p2)
+        lw      s2, 0x0010(sp)              // ~
+        lw      t3, 0x0080(s2)              // t3 = token_id
+        beqzl   t3, pc() + 8                // if p1, update X position
+        lui     s1, 0x42D2                  // ulx (p1)
+        lui     s2, 0x4357                  // uly
+        addiu   s3, r0, -0x0001             // color (0xFFFFFFFF)
+        lui     s4, 0x3F50                  // scale
+        lli     s5, Render.alignment.LEFT   // alignment
+        lli     s6, Render.string_type.TEXT
+        jal     Render.draw_string_
+        lli     t8, 0x0001                  // blur
+        lw      s1, 0x000C(sp)              // s1 = object reference
+        lw      a0, 0x0000(s1)              // a0 = indicators object reference
+        sw      v0, 0x0050(a0)              // save reference
+
+        // Draw copy dpad icon
+        or      a0, v0, r0                  // a0 = object reference
+        li      a1, Render.file_pointer_2   // a1 = CSS images file address pointer
+        lw      a1, 0x0000(a1)              // a1 = CSS images file address
+        addiu   a1, a1, 0x0218              // a2 = address of d-pad image footer TODO: make constant
+        jal     Render.TEXTURE_INIT_        // v0 = RAM address of texture struct
+        addiu   sp, sp, -0x0030             // allocate stack space for TEXTURE_INIT_
+        addiu   sp, sp, 0x0030              // restore stack space
+
+        lui     t0, 0x42BA                  // t0 = ulx
+        sw      t0, 0x0058(v0)              // save ulx
+        lui     t0, 0x4356                  // t0 = uly
+        sw      t0, 0x005C(v0)              // save uly
+        lli     t0, 0x0201                  // t0 = render flags
+        sh      t0, 0x0024(v0)              // turn on blur
+        li      t0, 0x848484FF              // color
+        sw      t0, 0x0028(v0)              // set color
+        li      t0, 0x303030FF              // palette
+        sw      t0, 0x0060(v0)              // set palette
+        lui     t0, 0x3F40                  // t0 = scale
+        sw      t0, 0x0018(v0)              // set x scale
+        sw      t0, 0x001C(v0)              // set y scale
+        lw      a0, 0x0004(v0)              // copy dpad icon legend object
+        sw      v0, 0x0030(a0)              // save reference to copy dpad icon
+
         Render.draw_rectangle(0x1C, 0x16, 0x62, 0xBC, 2, 2, Color.high.YELLOW, OS.FALSE)
         lw      s1, 0x000C(sp)              // s1 = object reference
         lw      a0, 0x0000(s1)              // a0 = indicators object reference
@@ -4640,7 +4916,10 @@ scope TwelveCharBattle {
         lw      s1, 0x000C(sp)              // s1 = object reference
         lw      a0, 0x0000(s1)              // a0 = indicators object reference
         sw      v0, 0x004C(a0)              // save reference
-
+        Render.draw_rectangle(0x1C, 0x16, 0x62, 0xD8, 2, 2, 0xFFFFFFFF, OS.FALSE)
+        lw      s1, 0x000C(sp)              // s1 = object reference
+        lw      a0, 0x0000(s1)              // a0 = indicators object reference
+        sw      v0, 0x0054(a0)              // save reference
         lw      ra, 0x0004(sp)              // restore registers
         lw      s0, 0x0008(sp)              // ~
         lw      s1, 0x000C(sp)              // ~
@@ -4681,10 +4960,16 @@ scope TwelveCharBattle {
         lw      t0, 0x0030(t0)              // t0 = random dpad icon image struct
         sw      t1, 0x0058(t0)              // save X position
 
+        lw      t0, 0x0050(a0)              // t0 = copy dpad icon legend object
+        lw      t0, 0x0030(t0)              // t0 = copy dpad icon image struct
+        sw      t1, 0x0058(t0)              // save X position
+
         lw      t0, 0x0048(a0)              // t0 = dpad up rectangle object
         lli     t1, 0x00A6                  // t1 = X position
         sw      t1, 0x0030(t0)              // save X position
         lw      t0, 0x004C(a0)              // t0 = dpad down rectangle object
+        sw      t1, 0x0030(t0)              // save X position
+        lw      t0, 0x0054(a0)              // t0 = dpad up (hold) rectangle object
         sw      t1, 0x0030(t0)              // save X position
 
         sw      r0, 0x0010(s1)              // reset timer to 0
@@ -4715,8 +5000,17 @@ scope TwelveCharBattle {
         lw      a0, 0x0000(s1)              // a0 = object address
         beqz    a0, _next                   // if there's not an object, skip destroying it
         nop
+
         jal     Render.DESTROY_OBJECT_      // destroy object
-        lw      a0, 0x004C(a0)              // a0 = dpad down rectangle object
+        lw      a0, 0x0054(a0)              // a0 = dpad up (hold) rectangle object
+
+        lw      a0, 0x0000(s1)              // a0 = object address
+        jal     Render.DESTROY_OBJECT_      // destroy object
+        lw      a0, 0x0050(a0)              // a0 = dpad up (hold) legend string object
+
+        lw      a0, 0x0000(s1)              // a0 = object address
+        jal     Render.DESTROY_OBJECT_      // destroy object
+        lw      a0, 0x004C(a0)              // a0 = dpad down legend string object
 
         lw      a0, 0x0000(s1)              // a0 = object address
         jal     Render.DESTROY_OBJECT_      // destroy object
@@ -4783,12 +5077,14 @@ scope TwelveCharBattle {
         lui     s4, 0x4366                  // s4 = lry
 
         lli     a0, 0x0000                  // a0 = p1
-        jal     update_character_set_
         lli     a1, OS.FALSE                // a1 = increment? no
+        jal     update_character_set_
+        lli     a2, OS.FALSE                // a2 = redraw? no
 
         lli     a0, 0x0001                  // a0 = p1
-        jal     update_character_set_
         lli     a1, OS.FALSE                // a1 = increment? no
+        jal     update_character_set_
+        lli     a2, OS.FALSE                // a2 = redraw? no
 
         jal     CharacterSelect.draw_portraits_
         lli     a0, OS.TRUE                 // a0 = 12cb flag
@@ -4944,6 +5240,7 @@ scope TwelveCharBattle {
     string_update_all:; String.insert(": Set All")
     string_dpad_up_legend:; String.insert(": Presets")
     string_dpad_down_legend:; String.insert(": Random")
+    string_dpad_up_copy:; String.insert(": Copy")
 
     // @ Description
     // Pointers to custom objects
@@ -4995,6 +5292,44 @@ scope TwelveCharBattle {
         sb      t2, 0x0001(t0)              // save starting stocks
         sb      t2, 0x0002(t0)              // save ending stocks
 
+        li      t3, CharacterSelect.random_char_flag_vs
+        addu    t2, t3, a1                  // t2 = random char flag address
+        lbu     t3, 0x0000(t2)              // t3 = random char flag
+        beqz    t3, _next                   // if not random, then skip
+        sb      t3, 0x0004(t0)              // save random char flag in game struct
+
+        sw      a0, 0x0008(sp)              // save registers
+        sw      a1, 0x000C(sp)              // ~
+        sw      at, 0x0010(sp)              // ~
+
+        sb      r0, 0x0000(t2)              // clear random char flag
+        lli     t2, NUM_PRESETS * 0x10      // offset to custom char sets
+        sll     t3, a1, 0x0004              // t3 = offset to port's custom char set
+        addu    t2, t2, t3                  // t2 = offset to char set
+        li      t3, character_set_table
+        addu    t3, t3, t2                  // t3 = char set entry
+        lw      t2, 0x0000(t3)              // t2 = id_table
+        lbu     t4, 0x0003(t0)              // t4 = portrait_id
+        addu    t2, t2, t4                  // t2 = address of the portrait's char_id
+        sb      a0, 0x0000(t2)              // update portrait's char_id
+        li      t5, CharacterSelect.portrait_offset_by_character_table
+        sll     t2, a0, 0x0002              // t2 = offset to portrait offset
+        addu    t5, t5, t2                  // t5 = portrait offset address
+        lw      t5, 0x0000(t5)              // t5 = portrait offset
+        lw      t2, 0x0004(t3)              // t2 = portrait offset table
+        sll     t4, t4, 0x0002              // t4 = offset to portrait's portrait offset (lol)
+        addu    t2, t2, t4                  // t2 = address of the portrait's portrait offset
+        sw      t5, 0x0000(t2)              // update portrait's portrait offset
+
+        lw      a0, 0x0008(t3)              // a0 = portrait_id_table
+        jal     update_portrait_id_table_
+        lw      a1, 0x0000(t3)              // a1 = id_table
+
+        lw      a0, 0x0008(sp)              // restore registers
+        lw      a1, 0x000C(sp)              // ~
+        lw      at, 0x0010(sp)              // ~
+
+        _next:
         li      t3, Global.vs.p2
         li      t0, config.p2.match
         beqz    a1, _loop                   // loop to initialize both players
@@ -5050,11 +5385,11 @@ scope TwelveCharBattle {
         addiu       t2, r0, Stamina.STAMINA_MODE    // stamina mode
         bne         t2, t1, _original       // if not stamina mode, skip
         nop
-        
+
         addiu       t1, r0, 0xFFFF          // out of stocks flag
         beql        t4, t1, _original       // compare current stock count against out of stock flag
         addu        t5, t4, r0              // set t5 to 0xFFFF to prevent second KO issues when character sent over top blast zone after stamina being exausted
-        
+
         _original:
         li      t0, StockMode.previous_stock_count_table
         addu    t0, t0, a0                  // t0 = address of port's previous stock count
@@ -5106,6 +5441,13 @@ scope TwelveCharBattle {
     // Timer for cycling portraits with held buttons to control speed of cycling.
     portrait_cycle_timer:
     dh -0x0001, -0x0001     // p1, p2
+
+    // @ Description
+    // Timer for copy (and Flag to indicate if we are currently copying)
+    copy_timer:
+    dh 0, 0                 // p1, p2
+    copying_flag:
+    dw 0
 
 }
 

@@ -93,55 +93,6 @@ scope Japan {
         nop
     }
 
-    constant DI_NORMAL(0x0)
-    constant DI_JAPANESE(0x1)
-    constant DI_ULTIMATE(0x2)
-
-    // @ Description
-    // Toggle for Japanese Style DI.
-    // The percent effect of DI is different in the international vs J versions, the format of the coding is very similar to DK's Cargo hold
-    // In the US 0x40066666 (2.09999990463) and in Japan 0x3fc00000 (1.5)
-    // US Version, thus allowing for greater DI distance
-    scope japanese_di_: {
-        OS.patch_start(0xBB31C, 0x801408DC)
-        j       japanese_di_
-        nop
-        japanese_di_end_:
-        OS.patch_end()
-
-        lui     at, 0x8019                  // original line 1
-        lwc1    f0, 0xC0E0(at)              // original line 2
-
-        Toggles.single_player_guard(Toggles.entry_di, japanese_di_end_)
-        li      at, Toggles.entry_di       // ~
-        lw      at, 0x0004(at)             // at = di toggle value
-
-        addiu   t7, r0, DI_JAPANESE
-        beq    at, t7, di_japanese
-        nop
-
-        addiu   t7, r0, DI_ULTIMATE
-        beq    at, t7, di_ultimate
-        nop
-
-        // It's set to an unknown value? Do nothing.
-        j      japanese_di_end_          // return
-        nop
-
-        di_japanese:
-        lui     at, 0x3FC0                  // Japanese coding part 1
-        mtc1    at, f0                      // Japanese coding part 2
-        j      japanese_di_end_          // return
-        nop
-
-        di_ultimate:
-        // This is not accurate, it's just weaker (S)DI
-        lui     at, 0x3F19                  // Ultimate coding part 1
-        mtc1    at, f0                      // Ultimate coding part 2
-        j      japanese_di_end_          // return
-        nop
-    }
-
     constant SHIELDSTUN_NORMAL(0x0)
     constant SHIELDSTUN_JAPANESE(0x1)
     constant SHIELDSTUN_MELEE(0x2)
@@ -259,7 +210,7 @@ scope Japan {
         OS.patch_end()
 
         lwc1    f4, 0x0060(v1)              // original line 1
-        lwc1    f0, 0x0030(t6)              // original line 1
+        lwc1    f0, 0x0030(t6)              // original line 2
         Toggles.single_player_guard(Toggles.entry_momentum_slide, momentum_slide_end_)
         j       0x8013F150
         nop
@@ -267,6 +218,38 @@ scope Japan {
         _end:
         j       momentum_slide_end_                          // return
         nop
+    }
+
+    // 801498A4+68
+    // @ Description
+    // Toggle for Japanese stun formula
+    // The formula for U stun is  (400 - percentage) + 90. The J formula is  (400 - percentage) + 60.
+    scope japanese_stun_mash: {
+        OS.patch_start(0xC434C, 0x8014990C)
+        jal   japanese_stun_mash
+        addiu   a1, a1, 0x005A  // original line 2 (U = 90)
+        OS.patch_end()
+
+        Toggles.single_player_guard(Toggles.entry_j_stun_sleep, 0x8014E3EC)
+
+        j       0x8014E3EC      // ftCommonCaptureTrappedInitBreakoutVars (modified original line 1) 
+        addiu   a1, a1, -30     // J, FTCOMMON_FURASLEEP_BREAKOUT_WAIT_MIN = 60 (subtracts 30 from U formula for convenience)
+    }
+
+    // 801499A4+44
+    // @ Description
+    // Toggle for Japanese sleep formula
+    // The formula for U sleep is (300 - percentage) + 75. The J formula is (300 - percentage) + 40.
+    scope japanese_sleep_mash: {
+        OS.patch_start(0xC4428, 0x801499E8)
+        jal   japanese_sleep_mash
+        addiu   a1, a1, 0x004B  // original line 2 (U, FTCOMMON_FURAFURA_BREAKOUT_WAIT_MIN = 75)
+        OS.patch_end()
+
+        Toggles.single_player_guard(Toggles.entry_j_stun_sleep, 0x8014E3EC)
+
+        j       0x8014E3EC      // ftCommonCaptureTrappedInitBreakoutVars (modified original line 1) 
+        addiu   a1, a1, -35     // J, FTCOMMON_FURAFURA_BREAKOUT_WAIT_MIN = 40 (subtracts 35 from U formula for convenience)
     }
 
     // @ Description

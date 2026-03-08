@@ -216,6 +216,9 @@ scope Hitbox {
         //lbu     at, 0x0023(s0)              // at = player type
         //beqz    at, _original               // skip if player type = hmn
         nop
+        // OS.read_word(SinglePlayerModes.saved_difficulty, t6)   // get difficulty
+        // beqz    t6, _original               // allow grabbing giga bowser on very easy
+        // nop
         // if Giga Bowser is being controlled by a CPU in Remix 1P
         b       _j_0x800E60A0               // force non-grabbable
         nop
@@ -734,6 +737,10 @@ scope Hitbox {
         beq     t5, at, _fix_1p             // if (screen id = 1p screens) then apply the fix
         addiu   t5, r0, Global.screen._1P_LOADING_SCREEN  // t5 = 1p vs screen id
         beq     t5, at, _fix                // if (screen id = 1p vs) then apply the fix
+        addiu   t5, r0, Global.screen.INTRO_1  // t5 = intro opening screen id
+        beq     t5, at, _fix                // if (screen id = intro opening) then apply the fix
+        addiu   t5, r0, Global.screen.INTRO_11  // t5 = intro running screen id
+        beq     t5, at, _fix                // if (screen id = intro running) then apply the fix
         slti    t5, at, 0x0010              // if (screen id < 0x10)...
         bnez    t5, _original               // ...then branch to original (not on a CSS)
         slti    t5, at, 0x0015              // if (screen id is between 0x10 and 0x14)...

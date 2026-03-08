@@ -185,7 +185,6 @@ scope TagTeam {
     add_preload(Character.id.SAMUS, 0x15D) // Samus Grapple
     add_preload(Character.id.JSAMUS, 0x15D) // Samus Grapple
     add_preload(Character.id.ESAMUS, 0x15D) // Samus Grapple
-    add_preload(Character.id.DSAMUS, 0x15D) // Samus Grapple
     add_preload(Character.id.LUIGI, 0xDE) // Luigi Fireball Hitbox
     add_preload(Character.id.MLUIGI, 0xDE) // Luigi Fireball Hitbox
     add_preload(Character.id.JLUIGI, File.JLUIGI_PROJECTILE_HITBOX)
@@ -228,7 +227,11 @@ scope TagTeam {
     add_preload(Character.id.SLIPPY, File.SLIPPY_LASER_HITBOX)
     add_preload(Character.id.PEPPY, File.PEPPY_LASER_HITBOX)
     add_preload(Character.id.PEPPY, File.PEPPY_GRENADE_HITBOX)
-    add_preload(Character.id.DRAGONKING, File.THUNDERBALL_HITBOX)
+    add_preload(Character.id.DRAGONKING, 0x15B) // Pikachu FSMash GFX & Dragon Ball GFX
+    add_preload(Character.id.PIKACHU, 0x15B) // Pikachu FSMash GFX & Dragon Ball GFX
+    add_preload(Character.id.NPIKACHU, 0x15B) // Pikachu FSMash GFX & Dragon Ball GFX
+    add_preload(Character.id.JPIKA, 0x15B) // Pikachu FSMash GFX & Dragon Ball GFX
+    add_preload(Character.id.EPIKA, 0x15B) // Pikachu FSMash GFX & Dragon Ball GFX
     add_preload(Character.id.PEACH, File.PEACH_TURNIP_INFO)
     add_preload(Character.id.LANKY, File.LANKY_PROJECTILE_HITBOX)
     add_preload(Character.id.SONIC, File.SONIC_SPRING_HITBOX)
@@ -414,7 +417,7 @@ scope TagTeam {
         sw      t0, 0x0000(at)              // set stock_count_table
 
         // only reset previous_stock_count_table if coming from menu
-        OS.read_byte(Global.current_screen, at) // at = current screen
+        OS.read_byte(Global.previous_screen, at) // at = current screen
         lli     t0, Global.screen.VS_GAME_MODE_MENU
         bne     at, t0, _set_chars          // if not coming from menu, skip
         nop
@@ -603,6 +606,9 @@ scope TagTeam {
         lbu     t0, 0x0000(at)              // t0 = char_id
         bne     t0, t1, _next               // if not Random, skip
         sw      at, 0x000C(sp)              // save current slot
+
+        li      a0, CharacterSelect._recent_randoms_lookup.placeholder_port
+        sw      t6, 0x0000(a0)              // store port in flag
 
         jal     CharacterSelect.get_random_char_id_
         nop

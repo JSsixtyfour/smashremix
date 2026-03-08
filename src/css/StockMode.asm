@@ -38,6 +38,8 @@ scope onchange_handler: {
     beqz    t0, _check_reset            // if normal vs mode, check if resetting
     lli     t1, VsRemixMenu.mode.TWELVE_CB
     beq     t0, t1, _check_reset        // if 12cb mode, check if resetting
+    lli     t1, VsRemixMenu.mode.TUG_OF_WAR
+    beq     t0, t1, _check_reset        // if Tug of War mode, check if resetting
     lli     t1, VsRemixMenu.mode.TAG_TEAM
     beq     t0, t1, _tag_team           // if Tag Team, handle
     nop

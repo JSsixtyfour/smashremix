@@ -88,9 +88,15 @@ scope StockMode {
         bltzl   a1, _end                    // if a1 < 0 then keep t8 and update previous stock count value
         sb      t8, 0x0000(a0)              // update previous stock count
 
+        // allow higher values than stock if Tug of War
+        lli     t1, VsRemixMenu.mode.TUG_OF_WAR
+        OS.read_word(VsRemixMenu.vs_mode_flag, a0) // a0 = vs_mode_flag
+        beql    a0, t1, _end                // if Tug of War, use previous stock count
+        or      t8, a1, r0                  // t8 = previous stock count
+
         // otherwise, use previous stock count value
         sltu    a0, a1, t8                  // a0 = 0 if too high
-        bnezl   a0, _end                    // if not too high, use manual stock count
+        bnezl   a0, _end                    // if not too high, use previous stock count
         or      t8, a1, r0                  // t8 = previous stock count
 
         _end:

@@ -95,7 +95,6 @@ scope Bowser {
 
     Character.edit_action_parameters(BOWSER,    Action.Sleep,     		File.BOWSER_STUNNED,     	 SLEEP,                     -1)
 	Character.edit_action_parameters(BOWSER,    Action.Stun,     		File.BOWSER_STUNNED,     	 STUN,                      -1)
-	Character.edit_action_parameters(BOWSER,    Action.ShieldBreak,     -1,     					 SHIELD_BREAK,              -1)
 	Character.edit_action_parameters(BOWSER,    Action.Tech,     		File.BOWSER_TECH,     		 TECH,              		-1)
 	Character.edit_action_parameters(BOWSER,    Action.TechF,     		File.BOWSER_TECH_F,     	 TECHF,              		-1)
 	Character.edit_action_parameters(BOWSER,    Action.TechB,     		File.BOWSER_TECH_B,     	 TECHF,              		-1)
@@ -152,7 +151,7 @@ scope Bowser {
     Character.edit_action_parameters(BOWSER,    Action.WallBounce,      File.BOWSER_TUMBLE,          -1,                        -1)
     Character.edit_action_parameters(BOWSER,    Action.Tumble,          File.BOWSER_TUMBLE,          -1,                        -1)
     Character.edit_action_parameters(BOWSER,    Action.Tornado,         File.BOWSER_TUMBLE,          -1,                        -1)
-    Character.edit_action_parameters(BOWSER,    Action.ShieldBreak,     File.BOWSER_DAMAGE_FLY_TOP,  -1,                        -1)
+    Character.edit_action_parameters(BOWSER,    Action.ShieldBreak,     File.BOWSER_DAMAGE_FLY_TOP,  SHIELD_BREAK,              -1)
     Character.edit_action_parameters(BOWSER,    Action.ShieldBreakFall, File.BOWSER_TUMBLE,          -1,                        -1)
     Character.edit_action_parameters(BOWSER,    Action.InhalePulled,    File.BOWSER_TUMBLE,          -1,                        -1)
     Character.edit_action_parameters(BOWSER,    Action.InhaleSpat,      File.BOWSER_TUMBLE,          -1,                        -1)
@@ -166,7 +165,6 @@ scope Bowser {
     Character.edit_action_parameters(BOWSER,    Action.ItemThrowDash,   File.BOWSER_ITEM_THROW_DASH, -1,                        -1)
 	Character.edit_action_parameters(BOWSER,    Action.ItemThrowF,      File.BOWSER_ITEM_THROW_F,    -1,                        -1)
 	Character.edit_action_parameters(BOWSER,    Action.ItemThrowB,      File.BOWSER_ITEM_THROW_F,    -1,                        -1)
-	Character.edit_action_parameters(BOWSER,    Action.ItemThrowSmashF, File.BOWSER_ITEM_THROW_F,    -1,                        -1)
 	Character.edit_action_parameters(BOWSER,    Action.ItemThrowSmashF, File.BOWSER_ITEM_THROW_F,    -1,                        -1)
 	Character.edit_action_parameters(BOWSER,    Action.ItemThrowU,      File.BOWSER_ITEM_THROW_U,    -1,                        -1)
 	Character.edit_action_parameters(BOWSER,    Action.ItemThrowSmashU, File.BOWSER_ITEM_THROW_U,    -1,                        -1)
@@ -232,7 +230,7 @@ scope Bowser {
     Character.edit_action_parameters(BOWSER,    Action.FSmash,          File.BOWSER_FSMASH,         FSMASH,                     0x40000000)
     Character.edit_action_parameters(BOWSER,    Action.FSmashHigh,      0,                          0x80000000,                 0)
     Character.edit_action_parameters(BOWSER,    Action.FSmashLow,       0,                          0x80000000,                 0)
-    Character.edit_action_parameters(BOWSER,    Action.DSmash,          -1,                         DSMASH,                     -1)
+    Character.edit_action_parameters(BOWSER,    Action.DSmash,          File.BOWSER_DSMASH,         DSMASH,                     -1)
 
     Character.edit_action_parameters(BOWSER,    Action.GrabPull,        File.BOWSER_PULL,           GRAB_PULL,                  0x10000000)
     Character.edit_action_parameters(BOWSER,    Action.ThrowF,          File.BOWSER_IDLE,           0x80000000,                 0x00000000)
@@ -267,8 +265,6 @@ scope Bowser {
 
     Character.edit_action_parameters(BOWSER,    Action.UTilt,           File.BOWSER_UTILT,          UTILT,                      -1)
     Character.edit_action_parameters(BOWSER,    Action.USmash,          File.BOWSER_USMASH,         USMASH,                     -1)
-
-	Character.edit_action_parameters(BOWSER,    Action.DSmash,          File.BOWSER_DSMASH,         -1,                     	-1)
 
     Character.edit_action_parameters(BOWSER,    Action.Teeter,          File.BOWSER_TEETER_LOOP,    TEETER,                     -1)
     Character.edit_action_parameters(BOWSER,    Action.TeeterStart,     File.BOWSER_TEETER_START,   -1,                         -1)
@@ -453,10 +449,11 @@ scope Bowser {
     dw  Action.action_string_table
     OS.patch_end()
 
+    Character.set_default_costumes(Character.id.BOWSER, 0, 1, 2, 3, 1, 6, 4)
     Teams.add_team_costume(YELLOW, BOWSER, 0x5)
 
     // Shield colors for costume matching
-    Character.set_costume_shield_colors(BOWSER, GREEN, RED, BLUE, BLACK, ORANGE, YELLOW, NA, NA)
+    Character.set_costume_shield_colors(BOWSER, GREEN, RED, BLUE, BLACK, ORANGE, YELLOW, AZURE, NA)
 
     // Set Remix 1P ending music
     Character.table_patch_start(remix_1p_end_bgm, Character.id.BOWSER, 0x2)

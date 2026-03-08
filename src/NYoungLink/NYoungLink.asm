@@ -13,7 +13,6 @@ scope NYoungLink {
     Character.edit_action_parameters(NYLINK, Action.CliffAttackSlow2, -1,                        YoungLink.EDGEATTACKS,                -1)
     Character.edit_action_parameters(NYLINK, Action.Stun,             -1,                        YoungLink.STUN,                       -1)
     Character.edit_action_parameters(NYLINK, Action.Sleep,            -1,                        YoungLink.ASLEEP,                     -1)
-    Character.edit_action_parameters(NYLINK, Action.Grab,             -1,                        YoungLink.GRAB,                       -1)
     Character.edit_action_parameters(NYLINK, Action.Grab,            File.YLINK_GRAB,           YoungLink.GRAB,                       0x10000000)
     Character.edit_action_parameters(NYLINK, Action.GrabPull,        File.YLINK_GRAB_PULL,      YoungLink.GRAB_PULL,                  0x10000000)
     Character.edit_action_parameters(NYLINK, Action.Teeter,           -1,                        YoungLink.TEETERING,                  -1)

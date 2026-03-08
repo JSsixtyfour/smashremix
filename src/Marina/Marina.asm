@@ -669,7 +669,7 @@ scope Marina {
     Teams.add_team_costume(YELLOW, MARINA, 0x5)
 
     // Shield colors for costume matching
-    Character.set_costume_shield_colors(MARINA, RED, MAGENTA, BLUE, GREEN, PURPLE, YELLOW, NA, NA)
+    Character.set_costume_shield_colors(MARINA, RED, MAGENTA, BLUE, GREEN, PURPLE, YELLOW, ORANGE, NA)
 
     // Set action strings
     Character.table_patch_start(action_string, Character.id.MARINA, 0x4)

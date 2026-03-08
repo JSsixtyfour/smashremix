@@ -1708,12 +1708,17 @@ scope Costumes {
     include "costumes/Jigglypuff.asm"
 
     include "costumes/YoungLink.asm"
+    include "costumes/Wario.asm"
+    include "costumes/Bowser.asm"
     include "costumes/Wolf.asm"
     include "costumes/Conker.asm"
+    include "costumes/Mewtwo.asm"
     include "costumes/Sheik.asm"
     include "costumes/Marina.asm"
     include "costumes/Goemon.asm"
     include "costumes/Slippy.asm"
+    include "costumes/Banjo.asm"
+    include "costumes/Peach.asm"
 
     include "costumes/NMario.asm"
     include "costumes/NFox.asm"

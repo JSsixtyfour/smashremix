@@ -64,6 +64,7 @@ scope NDSamus {
     Character.edit_menu_action_parameters(NDSAMUS,   0x3,               File.DSAMUS_SELECT,         DSamus.SELECT,                      -1)
     Character.edit_menu_action_parameters(NDSAMUS,   0x4,               File.DSAMUS_SELECT,         DSamus.SELECT,                      -1)
     Character.edit_menu_action_parameters(NDSAMUS,   0x5,               -1,                         DSamus.CLAP,                        -1)
+    Character.edit_menu_action_parameters(NDSAMUS,   0xD,               File.DSAMUS_1P_POSE,        0x80000000,                  -1)
     Character.edit_menu_action_parameters(NDSAMUS,   0xE,               File.DSAMUS_1P_CPU_POSE,    0x80000000,                  -1)
 
     // Set menu zoom size.

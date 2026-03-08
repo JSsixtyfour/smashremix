@@ -9,7 +9,6 @@ scope GBowser {
     insert USPA, "moveset/USPA.bin"
     insert NSP, "moveset/NSP.bin"
     insert GRAB_RELEASE_DATA,"moveset/GRAB_RELEASE_DATA.bin"
-    insert GRAB_PULL, "moveset/GRAB_PULL.bin"
     GRAB:; Moveset.THROW_DATA(GRAB_RELEASE_DATA); insert "moveset/GRAB.bin"
     insert FTHROW_DATA, "moveset/FTHROW_DATA.bin"
     FTHROW:; Moveset.THROW_DATA(FTHROW_DATA); insert "moveset/FTHROW.bin"
@@ -36,11 +35,6 @@ scope GBowser {
     insert JAB2, "moveset/JAB2.bin"
     insert JAB3, "moveset/JAB3.bin"
     insert UAIR, "moveset/UAIR.bin"
-    insert VICTORY1, "moveset/VICTORY1.bin"
-    insert CSS, "moveset/CSS.bin"
-    insert JUMP1, "moveset/JUMP1.bin"
-    insert JUMP2, "moveset/JUMP2.bin"
-    insert TAUNT, "moveset/TAUNT.bin"
     insert DASH_ATTACK, "moveset/DASH_ATTACK.bin"
     insert DOWNATTACK_D, "moveset/DOWNATTACK_D.bin"
     insert DOWNATTACK_U, "moveset/DOWNATTACK_U.bin"
@@ -49,17 +43,7 @@ scope GBowser {
     insert EDGEATTACKF2, "moveset/EDGEATTACKF2.bin"
     insert EDGEATTACKS1, "moveset/EDGEATTACKS1.bin"
     insert EDGEATTACKS2, "moveset/EDGEATTACKS2.bin"
-    insert VICTORY2, "moveset/VICTORY2.bin"
-    insert TURN_RUN, "moveset/TURN_RUN.bin"
-    insert STUN, "moveset/STUN.bin"; Moveset.GO_TO(STUN)                    // loops
-    insert SLEEP, "moveset/SLEEP.bin"; Moveset.GO_TO(SLEEP)                 // loops
-    insert SPARKLE,"moveset/SPARKLE.bin"; Moveset.GO_TO(SPARKLE)            // loops
-    insert SHIELD_BREAK,"moveset/SHIELD_BREAK.bin"; Moveset.GO_TO(SPARKLE)  // loops
-    insert TECH, "moveset/TECH.bin"
-    insert TECHF, "moveset/TECHF.bin"
-    insert TEETER, "moveset/TEETER.bin"
     insert ENTRY, "moveset/ENTRY.bin"
-    insert CLAP, "moveset/CLAP.bin"
     insert WALK2, "moveset/WALK2.bin"; Moveset.GO_TO(WALK2)                 // loops
     insert WALK3, "moveset/WALK3.bin"; Moveset.GO_TO(WALK3)                 // loops
     insert RUN, "moveset/RUN.bin"; Moveset.GO_TO(RUN)                       // loops
@@ -70,35 +54,34 @@ scope GBowser {
     include "AI/Attacks.asm"
 
     // Modify Action Parameters                  // Action                 // Animation                 // Moveset Data             // Flags
-    Character.edit_action_parameters(GBOWSER,    Action.Entry,             File.BOWSER_IDLE,            -1,                        -1)
-    Character.edit_action_parameters(GBOWSER,    Action.ReviveWait,        File.BOWSER_IDLE,            -1,                        -1)
-    Character.edit_action_parameters(GBOWSER,    0x06,                     File.BOWSER_IDLE,            -1,                        -1)
+    Character.edit_action_parameters(GBOWSER,    Action.Entry,             File.BOWSER_IDLE,            -1,                         -1)
+    Character.edit_action_parameters(GBOWSER,    Action.ReviveWait,        File.BOWSER_IDLE,            -1,                         -1)
+    Character.edit_action_parameters(GBOWSER,    0x06,                     File.BOWSER_IDLE,            -1,                         -1)
 
     Character.edit_action_parameters(GBOWSER,    Action.Walk1,             File.BOWSER_WALK1,           -1,                         -1)
-    Character.edit_action_parameters(GBOWSER,    Action.Walk2,             File.BOWSER_WALK2,           WALK2,                     -1)
-    Character.edit_action_parameters(GBOWSER,    Action.Walk3,             File.BOWSER_WALK3,           WALK3,                     -1)
+    Character.edit_action_parameters(GBOWSER,    Action.Walk2,             File.BOWSER_WALK2,           WALK2,                      -1)
+    Character.edit_action_parameters(GBOWSER,    Action.Walk3,             File.BOWSER_WALK3,           WALK3,                      -1)
 
-    Character.edit_action_parameters(GBOWSER,    Action.DamageHigh1,       File.BOWSER_DAMAGE_HIGH_1,   -1,                        -1)
-    Character.edit_action_parameters(GBOWSER,    Action.DamageHigh2,       File.BOWSER_DAMAGE_HIGH_2,   -1,                        -1)
-    Character.edit_action_parameters(GBOWSER,    Action.DamageHigh3,       File.BOWSER_DAMAGE_HIGH_3,   -1,                        -1)
-    Character.edit_action_parameters(GBOWSER,    Action.DamageMid1,        File.BOWSER_DAMAGE_MID_1,    -1,                        -1)
-    Character.edit_action_parameters(GBOWSER,    Action.DamageMid2,        File.BOWSER_DAMAGE_MID_2,    -1,                        -1)
-    Character.edit_action_parameters(GBOWSER,    Action.DamageMid3,        File.BOWSER_DAMAGE_MID_3,    -1,                        -1)
-    Character.edit_action_parameters(GBOWSER,    Action.DamageLow1,        File.BOWSER_DAMAGE_LOW_1,    -1,                        -1)
-    Character.edit_action_parameters(GBOWSER,    Action.DamageLow2,        File.BOWSER_DAMAGE_LOW_2,    -1,                        -1)
-    Character.edit_action_parameters(GBOWSER,    Action.DamageLow3,        File.BOWSER_DAMAGE_LOW_3,    -1,                        -1)
-    Character.edit_action_parameters(GBOWSER,    Action.DamageAir1,        File.BOWSER_DAMAGE_AIR_1,    -1,                        -1)
-    Character.edit_action_parameters(GBOWSER,    Action.DamageAir2,        File.BOWSER_DAMAGE_AIR_2,    -1,                        -1)
-    Character.edit_action_parameters(GBOWSER,    Action.DamageAir3,        File.BOWSER_DAMAGE_AIR_3,    -1,                        -1)
-    Character.edit_action_parameters(GBOWSER,    Action.DamageElec1,       File.BOWSER_DAMAGE_ELEC,     -1,                        -1)
-    Character.edit_action_parameters(GBOWSER,    Action.DamageElec2,       File.BOWSER_DAMAGE_ELEC,     -1,                        -1)
+    Character.edit_action_parameters(GBOWSER,    Action.DamageHigh1,       File.BOWSER_DAMAGE_HIGH_1,   -1,                         -1)
+    Character.edit_action_parameters(GBOWSER,    Action.DamageHigh2,       File.BOWSER_DAMAGE_HIGH_2,   -1,                         -1)
+    Character.edit_action_parameters(GBOWSER,    Action.DamageHigh3,       File.BOWSER_DAMAGE_HIGH_3,   -1,                         -1)
+    Character.edit_action_parameters(GBOWSER,    Action.DamageMid1,        File.BOWSER_DAMAGE_MID_1,    -1,                         -1)
+    Character.edit_action_parameters(GBOWSER,    Action.DamageMid2,        File.BOWSER_DAMAGE_MID_2,    -1,                         -1)
+    Character.edit_action_parameters(GBOWSER,    Action.DamageMid3,        File.BOWSER_DAMAGE_MID_3,    -1,                         -1)
+    Character.edit_action_parameters(GBOWSER,    Action.DamageLow1,        File.BOWSER_DAMAGE_LOW_1,    -1,                         -1)
+    Character.edit_action_parameters(GBOWSER,    Action.DamageLow2,        File.BOWSER_DAMAGE_LOW_2,    -1,                         -1)
+    Character.edit_action_parameters(GBOWSER,    Action.DamageLow3,        File.BOWSER_DAMAGE_LOW_3,    -1,                         -1)
+    Character.edit_action_parameters(GBOWSER,    Action.DamageAir1,        File.BOWSER_DAMAGE_AIR_1,    -1,                         -1)
+    Character.edit_action_parameters(GBOWSER,    Action.DamageAir2,        File.BOWSER_DAMAGE_AIR_2,    -1,                         -1)
+    Character.edit_action_parameters(GBOWSER,    Action.DamageAir3,        File.BOWSER_DAMAGE_AIR_3,    -1,                         -1)
+    Character.edit_action_parameters(GBOWSER,    Action.DamageElec1,       File.BOWSER_DAMAGE_ELEC,     -1,                         -1)
+    Character.edit_action_parameters(GBOWSER,    Action.DamageElec2,       File.BOWSER_DAMAGE_ELEC,     -1,                         -1)
 
-    Character.edit_action_parameters(GBOWSER,    Action.Sleep,             File.BOWSER_STUNNED,         SLEEP,                     -1)
-    Character.edit_action_parameters(GBOWSER,    Action.Stun,              File.BOWSER_STUNNED,         STUN,                      -1)
-    Character.edit_action_parameters(GBOWSER,    Action.ShieldBreak,       -1,                          SHIELD_BREAK,              -1)
-    Character.edit_action_parameters(GBOWSER,    Action.Tech,              File.BOWSER_TECH,            TECH,                      -1)
-    Character.edit_action_parameters(GBOWSER,    Action.TechF,             File.BOWSER_TECH_F,          TECHF,                      -1)
-    Character.edit_action_parameters(GBOWSER,    Action.TechB,             File.BOWSER_TECH_B,          TECHF,                      -1)
+    Character.edit_action_parameters(GBOWSER,    Action.Sleep,             File.BOWSER_STUNNED,         Bowser.SLEEP,               -1)
+    Character.edit_action_parameters(GBOWSER,    Action.Stun,              File.BOWSER_STUNNED,         Bowser.STUN,                -1)
+    Character.edit_action_parameters(GBOWSER,    Action.Tech,              File.BOWSER_TECH,            Bowser.TECH,                -1)
+    Character.edit_action_parameters(GBOWSER,    Action.TechF,             File.BOWSER_TECH_F,          Bowser.TECHF,               -1)
+    Character.edit_action_parameters(GBOWSER,    Action.TechB,             File.BOWSER_TECH_B,          Bowser.TECHF,               -1)
 
     Character.edit_action_parameters(GBOWSER,    Action.EnterPipe,         File.BOWSER_ENTER_PIPE,      -1,                        -1)
     Character.edit_action_parameters(GBOWSER,    Action.ExitPipe,          File.BOWSER_EXIT_PIPE,       -1,                        -1)
@@ -152,12 +135,12 @@ scope GBowser {
     Character.edit_action_parameters(GBOWSER,    Action.WallBounce,        File.BOWSER_TUMBLE,          -1,                        -1)
     Character.edit_action_parameters(GBOWSER,    Action.Tumble,            File.BOWSER_TUMBLE,          -1,                        -1)
     Character.edit_action_parameters(GBOWSER,    Action.Tornado,           File.BOWSER_TUMBLE,          -1,                        -1)
-    Character.edit_action_parameters(GBOWSER,    Action.ShieldBreak,       File.BOWSER_DAMAGE_FLY_TOP,  -1,                        -1)
+    Character.edit_action_parameters(GBOWSER,    Action.ShieldBreak,       File.BOWSER_DAMAGE_FLY_TOP,  Bowser.SHIELD_BREAK,       -1)
     Character.edit_action_parameters(GBOWSER,    Action.ShieldBreakFall,   File.BOWSER_TUMBLE,          -1,                        -1)
     Character.edit_action_parameters(GBOWSER,    Action.InhalePulled,      File.BOWSER_TUMBLE,          -1,                        -1)
     Character.edit_action_parameters(GBOWSER,    Action.InhaleSpat,        File.BOWSER_TUMBLE,          -1,                        -1)
     Character.edit_action_parameters(GBOWSER,    Action.InhaleCopied,      File.BOWSER_TUMBLE,          -1,                        -1)
-    Character.edit_action_parameters(GBOWSER,    Action.FalconDivePulled,  File.BOWSER_DAMAGE_HIGH_3,  -1,                        -1)
+    Character.edit_action_parameters(GBOWSER,    Action.FalconDivePulled,  File.BOWSER_DAMAGE_HIGH_3,   -1,                        -1)
     Character.edit_action_parameters(GBOWSER,    0xB4,                     File.BOWSER_TUMBLE,          -1,                        -1)
 
     Character.edit_action_parameters(GBOWSER,    Action.LightItemPickup,   File.BOWSER_LIGHT_ITEM_PICK, -1,                        -1)
@@ -167,7 +150,7 @@ scope GBowser {
     Character.edit_action_parameters(GBOWSER,    Action.ItemThrowF,        File.BOWSER_ITEM_THROW_F,    -1,                        -1)
     Character.edit_action_parameters(GBOWSER,    Action.ItemThrowB,        File.BOWSER_ITEM_THROW_F,    -1,                        -1)
     Character.edit_action_parameters(GBOWSER,    Action.ItemThrowSmashF,   File.BOWSER_ITEM_THROW_F,    -1,                        -1)
-    Character.edit_action_parameters(GBOWSER,    Action.ItemThrowSmashF,   File.BOWSER_ITEM_THROW_F,    -1,                        -1)
+    Character.edit_action_parameters(GBOWSER,    Action.ItemThrowSmashB,   File.BOWSER_ITEM_THROW_F,    -1,                        -1)
     Character.edit_action_parameters(GBOWSER,    Action.ItemThrowU,        File.BOWSER_ITEM_THROW_U,    -1,                        -1)
     Character.edit_action_parameters(GBOWSER,    Action.ItemThrowSmashU,   File.BOWSER_ITEM_THROW_U,    -1,                        -1)
     Character.edit_action_parameters(GBOWSER,    Action.ItemThrowD,        File.BOWSER_ITEM_THROW_D,    -1,                        -1)
@@ -207,13 +190,13 @@ scope GBowser {
     Character.edit_action_parameters(GBOWSER,    Action.Thrown1,         File.BOWSER_THROWN_1,        -1,                         -1)
     Character.edit_action_parameters(GBOWSER,    Action.Thrown2,         File.BOWSER_THROWN_2,        -1,                         -1)
 
-    Character.edit_action_parameters(GBOWSER,    Action.Taunt,           File.BOWSER_TAUNT,          TAUNT,                      -1)
+    Character.edit_action_parameters(GBOWSER,    Action.Taunt,           File.BOWSER_TAUNT,          Bowser.TAUNT,               -1)
 
-    Character.edit_action_parameters(GBOWSER,    Action.Turn,            File.BOWSER_TURN,           TURN,                       -1)
+    Character.edit_action_parameters(GBOWSER,    Action.Turn,            File.GBOWSER_TURN,          TURN,                       -1)
     Character.edit_action_parameters(GBOWSER,    Action.Jab1,            File.BOWSER_JAB1,           JAB1,                       -1)
     Character.edit_action_parameters(GBOWSER,    Action.Jab2,            File.BOWSER_JAB2,           JAB2,                       -1)
     Character.edit_action_parameters(GBOWSER,    Action.DTilt,           File.BOWSER_DTILT,          DTILT,                      -1)
-    Character.edit_action_parameters(GBOWSER,    Action.AttackAirN,      File.BOWSER_NAIR,           NAIR,                       -1)
+    Character.edit_action_parameters(GBOWSER,    Action.AttackAirN,      File.GBOWSER_ATTACK_AIR_N,  NAIR,                       -1)
 
     Character.edit_action_parameters(GBOWSER,    Action.Idle,            File.BOWSER_IDLE,           -1,                         0x00000000)
     Character.edit_action_parameters(GBOWSER,    Action.JumpSquat,       File.BOWSER_LANDING,       -1,                         0x00000000)
@@ -228,22 +211,22 @@ scope GBowser {
     Character.edit_action_parameters(GBOWSER,    Action.LandingAirF,     File.BOWSER_FAIR_LAND,      -1,                         -1)
     Character.edit_action_parameters(GBOWSER,    Action.LandingAirN,     File.BOWSER_LANDING,        -1,                         -1)
     Character.edit_action_parameters(GBOWSER,    Action.LandingAirX,     File.BOWSER_LANDING,        -1,                         -1)
-    Character.edit_action_parameters(GBOWSER,    Action.Grab,            File.BOWSER_GRAB,           GRAB,                       0x10000000)
+    Character.edit_action_parameters(GBOWSER,    Action.Grab,            File.GBOWSER_GRAB,          GRAB,                       0x10000000)
     Character.edit_action_parameters(GBOWSER,    Action.FSmash,          File.BOWSER_FSMASH,         FSMASH,                     0x40000000)
     Character.edit_action_parameters(GBOWSER,    Action.FSmashHigh,      0,                          0x80000000,                 0)
     Character.edit_action_parameters(GBOWSER,    Action.FSmashLow,       0,                          0x80000000,                 0)
-    Character.edit_action_parameters(GBOWSER,    Action.DSmash,          -1,                         DSMASH,                     -1)
+    Character.edit_action_parameters(GBOWSER,    Action.DSmash,          File.GBOWSER_DSMASH,        DSMASH,                     -1)
 
-    Character.edit_action_parameters(GBOWSER,    Action.GrabPull,        File.BOWSER_PULL,           GRAB_PULL,                  0x10000000)
+    Character.edit_action_parameters(GBOWSER,    Action.GrabPull,        File.BOWSER_PULL,           Bowser.GRAB_PULL,           0x10000000)
     Character.edit_action_parameters(GBOWSER,    Action.ThrowB,          File.BOWSER_BTHROW,         BTHROW,                     0x10000000)
     Character.edit_action_parameters(GBOWSER,    Action.ThrownMarioBros, File.BOWSER_THROWN_MARIO,   -1,                         -1)
 
-    Character.edit_action_parameters(GBOWSER,    Action.ShieldOn,        File.BOWSER_SHIELD_ON,       -1,                        -1)
-    Character.edit_action_parameters(GBOWSER,    Action.ShieldOff,       File.BOWSER_SHIELD_OFF,       -1,                       -1)
-    Character.edit_action_parameters(GBOWSER,    Action.ShieldDrop,      File.BOWSER_SHIELD_DROP,       -1,                      -1)
-	Character.edit_action_parameters(GBOWSER,    Action.Pass, 			 File.BOWSER_SHIELD_DROP,   	-1,                      -1)
-    Character.edit_action_parameters(GBOWSER,    Action.RollF,           File.BOWSER_ROLL_F,           -1,                       -1)
-    Character.edit_action_parameters(GBOWSER,    Action.RollB,           File.BOWSER_ROLL_B,           -1,                       -1)
+    Character.edit_action_parameters(GBOWSER,    Action.ShieldOn,        File.BOWSER_SHIELD_ON,      -1,                        -1)
+    Character.edit_action_parameters(GBOWSER,    Action.ShieldOff,       File.BOWSER_SHIELD_OFF,     -1,                        -1)
+    Character.edit_action_parameters(GBOWSER,    Action.ShieldDrop,      File.BOWSER_SHIELD_DROP,    -1,                        -1)
+	Character.edit_action_parameters(GBOWSER,    Action.Pass, 			 File.BOWSER_SHIELD_DROP,    -1,                        -1)
+    Character.edit_action_parameters(GBOWSER,    Action.RollF,           File.BOWSER_ROLL_F,         -1,                        -1)
+    Character.edit_action_parameters(GBOWSER,    Action.RollB,           File.BOWSER_ROLL_B,         -1,                        -1)
 
     Character.edit_action_parameters(GBOWSER,    0xE0,                   File.BOWSER_BOMB_GROUND,    DSP_GROUND,                 -1)
     Character.edit_action_parameters(GBOWSER,    0xE1,                   File.BOWSER_BOMB_LAND,      DSP_LAND,                   -1)
@@ -260,31 +243,29 @@ scope GBowser {
 
     Character.edit_action_parameters(GBOWSER,    Action.AttackAirB,      File.BOWSER_BAIR,           BAIR,                       -1)
     Character.edit_action_parameters(GBOWSER,    Action.LandingAirB,     File.BOWSER_BAIR_LANDING,   -1,                         -1)
-    Character.edit_action_parameters(GBOWSER,    Action.AttackAirU,      File.BOWSER_UAIR,           UAIR,                       -1)
-    Character.edit_action_parameters(GBOWSER,    Action.AttackAirD,      File.BOWSER_DAIR,           DAIR,                       0x00000000)
+    Character.edit_action_parameters(GBOWSER,    Action.AttackAirU,      File.GBOWSER_ATTACK_AIR_U,  UAIR,                       -1)
+    Character.edit_action_parameters(GBOWSER,    Action.AttackAirD,      File.GBOWSER_ATTACK_AIR_D,  DAIR,                       0x00000000)
     Character.edit_action_parameters(GBOWSER,    Action.LandingAirD,     File.BOWSER_DAIR_LAND,      DAIR_LAND,                  0x00000000)
 
-    Character.edit_action_parameters(GBOWSER,    Action.UTilt,           File.BOWSER_UTILT,          UTILT,                      0x00000000)
-    Character.edit_action_parameters(GBOWSER,    Action.USmash,          File.BOWSER_USMASH,         USMASH,                     -1)
+    Character.edit_action_parameters(GBOWSER,    Action.UTilt,           File.GBOWSER_UTILT,         UTILT,                      0x00000000)
+    Character.edit_action_parameters(GBOWSER,    Action.USmash,          File.GBOWSER_USMASH,        USMASH,                     -1)
 
-    Character.edit_action_parameters(GBOWSER,    Action.DSmash,          File.BOWSER_DSMASH,         -1,                         -1)
-
-    Character.edit_action_parameters(GBOWSER,    Action.Teeter,          File.BOWSER_TEETER_LOOP,    TEETER,                     -1)
+    Character.edit_action_parameters(GBOWSER,    Action.Teeter,          File.BOWSER_TEETER_LOOP,    Bowser.TEETER,              -1)
     Character.edit_action_parameters(GBOWSER,    Action.TeeterStart,     File.BOWSER_TEETER_START,   -1,                         -1)
 
-    Character.edit_action_parameters(GBOWSER,    Action.FTiltHigh,       File.BOWSER_FTILT_HIGH,     FTILT_HIGH,                 -1)
-    Character.edit_action_parameters(GBOWSER,    Action.FTilt,           File.BOWSER_FTILT,          FTILT,                      -1)
-    Character.edit_action_parameters(GBOWSER,    Action.FTiltLow,        File.BOWSER_FTILT_LOW,      FTILT_LOW,                  -1)
+    Character.edit_action_parameters(GBOWSER,    Action.FTiltHigh,       File.GBOWSER_FTILT_HIGH,    FTILT_HIGH,                 -1)
+    Character.edit_action_parameters(GBOWSER,    Action.FTilt,           File.GBOWSER_FTILT,         FTILT,                      -1)
+    Character.edit_action_parameters(GBOWSER,    Action.FTiltLow,        File.GBOWSER_FTILT_LOW,     FTILT_LOW,                  -1)
 
     Character.edit_action_parameters(GBOWSER,    Action.Dash,            File.BOWSER_DASH,           DASH,                       -1)
     Character.edit_action_parameters(GBOWSER,    Action.Run,             File.BOWSER_RUN,            RUN,                        -1)
-    Character.edit_action_parameters(GBOWSER,    Action.TurnRun,         File.BOWSER_TURN_RUN,       TURN_RUN,                   -1)
+    Character.edit_action_parameters(GBOWSER,    Action.TurnRun,         File.BOWSER_TURN_RUN,       Bowser.TURN_RUN,            -1)
     Character.edit_action_parameters(GBOWSER,    Action.RunBrake,        File.BOWSER_RUN_BRAKE,      -1,                         -1)
     Character.edit_action_parameters(GBOWSER,    Action.DashAttack,      File.BOWSER_DASH_ATTACK,    DASH_ATTACK,                -1)
-    Character.edit_action_parameters(GBOWSER,    Action.JumpF,           File.BOWSER_JUMPF,          JUMP1,                      -1)
-    Character.edit_action_parameters(GBOWSER,    Action.JumpB,           File.BOWSER_JUMPB,          JUMP1,                      -1)
-    Character.edit_action_parameters(GBOWSER,    Action.JumpAerialB,     File.BOWSER_JUMP2_B,        JUMP2,                      0x00000000)
-    Character.edit_action_parameters(GBOWSER,    Action.JumpAerialF,     File.BOWSER_JUMP2,          JUMP2,                      -1)
+    Character.edit_action_parameters(GBOWSER,    Action.JumpF,           File.BOWSER_JUMPF,          Bowser.JUMP1,               -1)
+    Character.edit_action_parameters(GBOWSER,    Action.JumpB,           File.BOWSER_JUMPB,          Bowser.JUMP1,               -1)
+    Character.edit_action_parameters(GBOWSER,    Action.JumpAerialB,     File.BOWSER_JUMP2_B,        Bowser.JUMP2,               0x00000000)
+    Character.edit_action_parameters(GBOWSER,    Action.JumpAerialF,     File.BOWSER_JUMP2,          Bowser.JUMP2,               -1)
 
     Character.edit_action_parameters(GBOWSER,    Action.BeamSwordNeutral, File.BOWSER_SWING_NEUTRAL, -1,                         -1)
     Character.edit_action_parameters(GBOWSER,    Action.BeamSwordTilt,   File.BOWSER_SWING_TILT,     -1,                         -1)
@@ -323,10 +304,10 @@ scope GBowser {
 
     // Modify Menu Action Parameters                // Action           // Animation                // Moveset Data             // Flags
     Character.edit_menu_action_parameters(GBOWSER,    0x0,               File.BOWSER_IDLE,           -1,                            -1)
-    Character.edit_menu_action_parameters(GBOWSER,    0x1,               File.BOWSER_DANCE,          VICTORY2,                      -1)
-    Character.edit_menu_action_parameters(GBOWSER,    0x2,               File.BOWSER_CSS,            CSS,                           -1)
-    Character.edit_menu_action_parameters(GBOWSER,    0x3,               File.BOWSER_LAUGH,          VICTORY1,                      -1)
-    Character.edit_menu_action_parameters(GBOWSER,    0x5,               File.BOWSER_CLAP,           CLAP,                          -1)
+    Character.edit_menu_action_parameters(GBOWSER,    0x1,               File.BOWSER_DANCE,          Bowser.VICTORY2,               -1)
+    Character.edit_menu_action_parameters(GBOWSER,    0x2,               File.BOWSER_CSS,            Bowser.CSS,                    -1)
+    Character.edit_menu_action_parameters(GBOWSER,    0x3,               File.BOWSER_LAUGH,          Bowser.VICTORY1,               -1)
+    Character.edit_menu_action_parameters(GBOWSER,    0x5,               File.BOWSER_CLAP,           Bowser.CLAP,                   -1)
     Character.edit_menu_action_parameters(GBOWSER,    0xD,               File.BOWSER_1P,             -1,                            -1)
     Character.edit_menu_action_parameters(GBOWSER,    0xE,               File.GBOWSER_1P_CPU,        -1,                            -1)
     Character.edit_menu_action_parameters(GBOWSER,    0x9,               File.BOWSER_CONTINUE_FALL,  -1,                            -1)
@@ -486,6 +467,11 @@ scope GBowser {
         nop
 
         // if here, remix 1p giga bowser
+        // check if very easy
+        //OS.read_word(SinglePlayerModes.saved_difficulty, t0)   // get difficulty
+        //beqz    t0, _KO                             // if 0 (very easy, KO Gbowser)
+        //nop
+
         addiu   sp, sp, -0x0028                 // allocate stack space
         sw      a1, 0x0004(sp)                  // save registers
         sw      a2, 0x0008(sp)                  // ~

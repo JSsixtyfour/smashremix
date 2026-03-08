@@ -10,6 +10,7 @@ scope Fireball: {
     constant NORMAL_HIT_GFX_INST_ID_ADDRESS(0x8012DF20)
     constant NORMAL_HIT_GFX_INST_ID(0x49)
     constant DR_MARIO_EFFECT_GFX_INST_ID(0x81)
+    constant DR_LUIGI_EFFECT_GFX_INST_ID(0x97)
 
     // @ Description
     // Macro to set up a struct for a cloned fireball
@@ -90,13 +91,13 @@ scope Fireball: {
         pullvar base, origin
 
         OS.save_registers()
-        lw      t0, 0x010C (v1)             // t0 = projectile type
-        ori     t1, r0, Capsule.TYPE        // t1 = Capsule.TYPE
-        beq     t0, t1, _capsule            // branch if type = Capsule.TYPE
-        ori     t1, r0, Book.TYPE           // t1 = Book.TYPE
-        beq     t0, t1, _book               // branch if type = Book.TYPE
-        lw      t0, 0x000C(v1)              // t0 = projectile ID
-        addiu   t1, r0, 0x1008              // Banjos egg ID
+        lw      t0, 0x010C (v1)                 // t0 = projectile type
+        ori     t1, r0, Capsule.TYPE            // t1 = Capsule.TYPE
+        beq     t0, t1, _capsule                // branch if type = Capsule.TYPE
+        ori     t1, r0, Book.TYPE               // t1 = Book.TYPE
+        beq     t0, t1, _book                   // branch if type = Book.TYPE
+        lw      t0, 0x000C(v1)                  // t0 = projectile ID
+        addiu   t1, r0, Projectile.id.BANJO_EGG // Banjos egg ID
         beq     t1, t0, _egg
         nop
 
@@ -119,6 +120,11 @@ scope Fireball: {
         addiu   a0, a0, 0x001C              // modified original logic
         li      a1, NORMAL_HIT_GFX_INST_ID_ADDRESS
         lli     a2, DR_MARIO_EFFECT_GFX_INST_ID
+        lw      v1, 0x0084(t6)              // v1 = projectile struct
+        lw      v1, 0x02A0(v1)              // v1 = our special little Dr. Luigi flag
+        addiu   t0, r0, 1                   // t0 = 1
+        beql    v1, t0, pc() + 8            // if 1, then this is Dr. Luigi
+        lli     a2, DR_LUIGI_EFFECT_GFX_INST_ID
         sb      a2, 0x0000(a1)              // temporarilty update the GFX_INSTRUCTIONS_ID for "normal hit" gfx
         or      a1, r0, r0                  // a1 = 0
         lw      a2, 0x000C(sp)              // a2 = projectile struct
@@ -169,16 +175,16 @@ scope Fireball: {
         _bounce_effect_return:
         pullvar base, origin
 
-        addiu   sp, sp,-0x0010              // allocate stack space
-        sw      t0, 0x0004(sp)              // ~
-        sw      t1, 0x0008(sp)              // store t0, t1
-        lw      t0, 0x010C (v0)             // t0 = projectile type
-        ori     t1, r0, Capsule.TYPE        // t1 = Capsule.TYPE
-        beq     t0, t1, _capsule            // branch if type = Capsule.TYPE
-        ori     t1, r0, Book.TYPE           // t1 = Book.TYPE
-        beq     t0, t1, _book               // branch if type = Book.TYPE
-        lw      t0, 0x000C(v0)              // check projectile ID
-        addiu   t1, r0, 0x1008              // Banjos egg ID
+        addiu   sp, sp,-0x0010                  // allocate stack space
+        sw      t0, 0x0004(sp)                  // ~
+        sw      t1, 0x0008(sp)                  // store t0, t1
+        lw      t0, 0x010C (v0)                 // t0 = projectile type
+        ori     t1, r0, Capsule.TYPE            // t1 = Capsule.TYPE
+        beq     t0, t1, _capsule                // branch if type = Capsule.TYPE
+        ori     t1, r0, Book.TYPE               // t1 = Book.TYPE
+        beq     t0, t1, _book                   // branch if type = Book.TYPE
+        lw      t0, 0x000C(v0)                  // check projectile ID
+        addiu   t1, r0, Projectile.id.BANJO_EGG // Banjos egg ID
         beq     t1, t0, _egg
         nop
 
@@ -220,9 +226,9 @@ scope Fireball: {
         _return:
         OS.patch_end()
 
-        addiu   t4, r0, 0x1008              // t4 = banjo egg projectile id
-        bne     t4, t3, _normal             // branch to normal logic if not Banjos egg
-        addu    at, at, t2                  // og line 1
+        addiu   t4, r0, Projectile.id.BANJO_EGG // t4 = banjo egg projectile id
+        bne     t4, t3, _normal                 // branch to normal logic if not Banjos egg
+        addu    at, at, t2                      // og line 1
 
         // banjo egg
         lh      t4, 0x0082(t0)              // get current collision result
@@ -495,6 +501,38 @@ scope Fireball: {
             li      t6, KIRBY_FIREBALL_SUBROUTINE // t6 = KIRBY_FIREBALL_SUBROUTINE (original lines 1&2)
             b       _capsule_check
             nop
+        }
+        
+        // 801687A0+6C
+        // @ Description
+        // Saves a value of 1 in the projectile struct when Dr. Luigi uses neutral special
+        // to help determine the GFX used on hit.
+        scope capsule_flag: {
+            OS.patch_start(0xE324C, 0x8016880C)
+            j       capsule_flag
+            lw      at, 0x002C(sp)              // at = player struct
+            nop
+            _return:
+            OS.patch_end()
+
+            lw      t2, 0x0008(at)              // t2 = character id
+            lli     v1, Character.id.KIRBY      // v1 = id.KIRBY
+            beql    t2, v1, _drl_check          // if Kirby, get held power character_id
+            lw      t2, 0x0ADC(at)              // t2 = character id of copied power
+            lli     v1, Character.id.JKIRBY     // v1 = id.JKIRBY
+            beql    t2, v1, _drl_check          // if J Kirby, get held power character_id
+            lw      t2, 0x0ADC(at)              // t2 = character id of copied power
+
+            _drl_check:
+            lw      v1, 0x0084(v0)              // v1 = projectile struct, original line 1
+            addiu   at, r0, 0x0001              // at = 1, original line 3
+            addiu   t2, t2, -Character.id.DRL   // branch if Dr. Luigi
+            beqzl   t2, _end                    // ~
+            sw      at, 0x02A0(v1)              // set flag to 1 
+
+            _end:
+            j       _return                     // return
+            lw      t2, 0x0038(sp)              // original line 2
         }
     }
 

@@ -126,6 +126,8 @@ scope PikaShared {
         _usp_zip2: {
             jal 0x80132758 // execute AI command
             lli a1, AI.ROUTINE.POINT_STICK_TO_TARGET // arg1 = point to target
+            b _end
+            nop
         }
 
         _end:
@@ -138,6 +140,59 @@ scope PikaShared {
     dw recovery_logic; OS.patch_end()
     Character.table_patch_start(recovery_logic, Character.id.JPIKA, 0x4)
     dw recovery_logic; OS.patch_end()
+
+    scope cpu_post_process: {
+        OS.routine_begin(0x20)
+
+        // Apply only for lv10 CPUs
+        lbu     t0, 0x13(a0) // t0 = cpu level
+        slti    t0, t0, 10 // t0 = 0 if 10 or greater
+        bnez    t0, _end // skip if not lv10
+        nop
+
+        lw at, 0x24(a0) // at = action id
+        lli t0, Action.PIKACHU.QuickAttackStart
+        beq t0, at, _usp_zip_down
+        lli t0, Action.PIKACHU.QuickAttack
+        beq t0, at, _usp_zip_down
+        lli t0, Action.PIKACHU.QuickAttackEnd
+        beq t0, at, _usp_zip_down
+        lli t0, Action.PIKACHU.QuickAttackStartAir
+        beq t0, at, _usp_zip_down
+        lli t0, Action.PIKACHU.QuickAttackAir
+        beq t0, at, _usp_zip_down
+        lli t0, Action.PIKACHU.QuickAttackEndAir
+        beq t0, at, _usp_zip_down
+        nop
+
+        b _end // no actions matched
+        nop
+
+        _usp_zip_down:
+        // check if Pikachu is above clipping
+        addiu at, r0, -1 // at = 0xFFFFFFF
+        lw v0, 0x00EC(a0) // get current clipping below player
+        beq at, v0, _end // skip if not above clipping
+        nop
+
+        jal 0x80132758 // execute AI command
+        lli a1, AI.ROUTINE.NULL // arg1 = point to target
+
+        addiu at, r0, 0xFFB0 // min stick Y value (down)
+        sb at, 0x01C9(a0) // save CPU stick y
+
+        sb r0, 0x01C8(a0) // CPU stick x = 0
+
+        _end:
+        OS.routine_end(0x20)
+    }
+    // Assign custom recovery logic to all Pikas
+    Character.table_patch_start(cpu_post_process, Character.id.PIKACHU, 0x4)
+    dw cpu_post_process; OS.patch_end()
+    Character.table_patch_start(cpu_post_process, Character.id.EPIKA, 0x4)
+    dw cpu_post_process; OS.patch_end()
+    Character.table_patch_start(cpu_post_process, Character.id.JPIKA, 0x4)
+    dw cpu_post_process; OS.patch_end()
 
     // character ID check add for when Pika Clones perform rapid jab
     scope rapid_jab_fix_1: {

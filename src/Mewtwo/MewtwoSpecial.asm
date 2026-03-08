@@ -1320,7 +1320,6 @@ scope MewtwoNSP {
 
     OS.align(16)
     projectile_struct:
-    constant SBALL_ID(0x1002)
     dw 0x00000000                           // unknown
     dw 0x00000002                           // projectile id
     dw Character.MTWO_file_8_ptr            // address of Mewtwo's file 8 pointer

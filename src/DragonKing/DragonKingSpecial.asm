@@ -1,4 +1,4 @@
-// DrgaonKing.asm
+// DragonKing.asm
 
 // This file contains file inclusions, action edits, and assembly for Dragon King.
 
@@ -34,9 +34,8 @@ scope DragonKingUSP {
         sw      r0, 0x0180(a0)              // temp variable 2 = 0
         sw      r0, 0x0184(a0)              // temp variable 3 = 0
         lw      ra, 0x0014(sp)              // load ra
-        addiu   sp, sp, 0x0028              // deallocate stack space
         jr      ra                          // return
-        nop
+        addiu   sp, sp, 0x0028              // deallocate stack space
     }
 
     // @ Description
@@ -71,9 +70,8 @@ scope DragonKingUSP {
         and     v1, v1, t6                  // ~
         sb      v1, 0x018D(a0)              // disable fast fall flag
         lw      ra, 0x0014(sp)              // load ra
-        addiu   sp, sp, 0x0028              // deallocate stack space
         jr      ra                          // return
-        nop
+        addiu   sp, sp, 0x0028              // deallocate stack space
     }
 
     // @ Description
@@ -101,9 +99,8 @@ scope DragonKingUSP {
         sw      r0, 0x0184(a0)              // temp variable 3 = 0
         sw      r0, 0x0B18(a0)              // turn frame timer = 0
         lw      ra, 0x001C(sp)              // load ra
-        addiu   sp, sp, 0x0020              // deallocate stack space
         jr      ra                          // return
-        nop
+        addiu   sp, sp, 0x0020              // deallocate stack space
     }
 
     // @ Description
@@ -143,9 +140,8 @@ scope DragonKingUSP {
         swc1    f4, 0x0048(a0)              // store updated x velocity
         swc1    f6, 0x004C(a0)              // store updated y velocity
         lw      ra, 0x001C(sp)              // load ra
-        addiu   sp, sp, 0x0020              // deallocate stack space
         jr      ra                          // return
-        nop
+        addiu   sp, sp, 0x0020              // deallocate stack space
     }
 
     // @ Description
@@ -169,9 +165,8 @@ scope DragonKingUSP {
         sw      r0, 0x0180(a0)              // temp variable 2 = 0
         sw      r0, 0x0184(a0)              // temp variable 3 = 0
         lw      ra, 0x001C(sp)              // load ra
-        addiu   sp, sp, 0x0020              // deallocate stack space
         jr      ra                          // return
-        nop
+        addiu   sp, sp, 0x0020              // deallocate stack space
     }
 
     // @ Description
@@ -186,9 +181,8 @@ scope DragonKingUSP {
         lw      t6, 0x0830(a0)              // ~
         sw      t6, 0x0840(a0)              // update captured player?
         lw      ra, 0x001C(sp)              // load ra
-        addiu   sp, sp, 0x0020              // deallocate stack space
         jr      ra                          // return
-        nop
+        addiu   sp, sp, 0x0020              // deallocate stack space
     }
 
     // @ Description
@@ -321,9 +315,8 @@ scope DragonKingUSP {
         jal     0x800DDDDC                  // common ground collision subroutine (transition on no floor, slide-off)
         nop
         lw      ra, 0x0014(sp)              // load ra
-        addiu   sp, sp, 0x0018              // deallocate stack space
         jr      ra                          // return
-        nop
+        addiu   sp, sp, 0x0018              // deallocate stack space
     }
 
     // @ Description
@@ -351,9 +344,8 @@ scope DragonKingUSP {
         jal     0x8015E310                  // command grab setup (yoshi)
         lw      a0, 0x0084(a0)              // a0 = player struct
         lw      ra, 0x001C(sp)              // load ra
-        addiu   sp, sp, 0x0020              // deallocate stack space
         jr      ra                          // return
-        nop
+        addiu   sp, sp, 0x0020              // deallocate stack space
     }
 
     // @ Description
@@ -365,9 +357,8 @@ scope DragonKingUSP {
         jal     0x800DE6E4                  // common air collision subroutine (transition on landing, no ledge grab)
         nop
         lw      ra, 0x0014(sp)              // load ra
-        addiu   sp, sp, 0x0018              // deallocate stack space
         jr      ra                          // return
-        nop
+        addiu   sp, sp, 0x0018              // deallocate stack space
     }
 
     // @ Description
@@ -447,9 +438,8 @@ scope DragonKingNSP {
         lw      a0, 0x0084(a0)
         sw      r0, 0x0B20(a0)              // reset referenced gfx object
         lw      ra, 0x001C(sp)
-        addiu   sp, sp, 0x28
         jr      ra
-        nop
+        addiu   sp, sp, 0x28
     }
 
     // @ Description
@@ -471,9 +461,8 @@ scope DragonKingNSP {
         lw      a0, 0x0084(a0)
         sw      r0, 0x0B20(a0)              // reset referenced gfx object
         lw      ra, 0x001C(sp)
-        addiu   sp, sp, 0x28
         jr      ra
-        nop
+        addiu   sp, sp, 0x28
     }
 
     // @ Description
@@ -495,9 +484,8 @@ scope DragonKingNSP {
         lw      a0, 0x0084(a0)
         sw      r0, 0x0B20(a0)              // reset referenced gfx object
         lw      ra, 0x001C(sp)
-        addiu   sp, sp, 0x28
         jr      ra
-        nop
+        addiu   sp, sp, 0x28
     }
 
     // @ Description
@@ -519,9 +507,8 @@ scope DragonKingNSP {
         lw      a0, 0x0084(a0)
         sw      r0, 0x0B20(a0)              // reset referenced gfx object
         lw      ra, 0x001C(sp)
-        addiu   sp, sp, 0x28
         jr      ra
-        nop
+        addiu   sp, sp, 0x28
     }
 
     // @ Description
@@ -546,9 +533,8 @@ scope DragonKingNSP {
         nop
 
         lw      ra, 0x0014(sp)
-        addiu   sp, sp, 0x18
         jr      ra
-        nop
+        addiu   sp, sp, 0x18
     }
 
     // @ Description
@@ -650,9 +636,8 @@ scope DragonKingNSP {
 
         _end:
         lw      ra, 0x0014(sp)
-        addiu   sp, sp, 0x20
         jr      ra
-        nop
+        addiu   sp, sp, 0x20
     }
     // 8012E1D4 GFX STRUCT
 
@@ -800,9 +785,8 @@ scope DragonKingNSP {
         lw      t0, 0x0004(sp)              // ~
         lw      t1, 0x0008(sp)              // ~
         lw      ra, 0x000C(sp)              // load t0, t1, ra
-        addiu 	sp, sp, 0x0018				// deallocate stack space
         jr      ra                          // return
-        nop
+        addiu 	sp, sp, 0x0018				// deallocate stack space
     }
 
     // @ Description
@@ -909,9 +893,8 @@ scope DragonKingNSP {
     li              at, destroy_ball_on_hit_    // ~
     sw              at, 0x09EC(a0)              // store on hit routine in player struct
     lw              ra, 0x0014(sp)              // load ra
-    addiu           sp, sp, 0x0028              // deallocate stack space
     jr              ra
-    nop
+    addiu           sp, sp, 0x0028              // deallocate stack space
     }
 
     // @ Description
@@ -995,9 +978,8 @@ scope DragonKingDSP {
         jal     0x800E0830                  // unknown common subroutine
         lw      a0, 0x0020(sp)              // a0 = player object
         lw      ra, 0x001C(sp)              // load ra
-        addiu   sp, sp, 0x0020              // deallocate stack space
         jr      ra                          // return
-        nop
+        addiu   sp, sp, 0x0020              // deallocate stack space
     }
 
     // @ Description
@@ -1040,9 +1022,8 @@ scope DragonKingDSP {
         jal     0x800D9480                  // common main subroutine (transition on animation end)
         nop
         lw      ra, 0x0014(sp)              // load ra
-        addiu   sp, sp, 0x0018              // deallocate stack space
         jr      ra                          // return
-        nop
+        addiu   sp, sp, 0x0018              // deallocate stack space
     }
 
     // @ Description
@@ -1101,7 +1082,7 @@ scope DragonKingDSP {
         lw      ra, 0x000C(sp)              // ~
         lw      a0, 0x0010(sp)              // load t0, t1, ra, a0
         jr      ra                          // return
-        addiu 	sp, sp, 0x0018				// deallocate stack space
+        addiu   sp, sp, 0x0018              // deallocate stack space
     }
 
     // @ Description

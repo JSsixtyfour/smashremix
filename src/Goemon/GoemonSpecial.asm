@@ -1192,9 +1192,8 @@ scope GoemonNSP {
 
     OS.align(16)
     ryo_projectile_struct:
-    constant RYO_ID(0x1004)
     dw 0x00000000                           // unknown
-    dw RYO_ID                               // projectile id
+    dw Projectile.id.GOEMON_RYO             // projectile id
     dw Character.GOEMON_file_6_ptr          // address of goemon's file 6 pointer
     dw 0x00000000                           // offset to hitbox
     dw 0x12450000                           // Render routine
@@ -1210,7 +1209,7 @@ scope GoemonNSP {
 
     fire_effect_projectile_struct:
     dw 0x00000000                           // unknown
-    dw RYO_ID                               // projectile id
+    dw Projectile.id.GOEMON_RYO             // projectile id
     dw Character.GOEMON_file_6_ptr          // address of goemon's file 6 pointer
     dw 0x00000080                           // offset to hitbox
     dw 0x12480000                           // Render routine
@@ -1226,7 +1225,7 @@ scope GoemonNSP {
 
     sparkle_effect_projectile_struct:
     dw 0x00000000                           // unknown
-    dw RYO_ID                               // projectile id
+    dw Projectile.id.GOEMON_RYO             // projectile id
     dw Character.GOEMON_file_6_ptr          // address of goemon's file 6 pointer
     dw 0x000000C0                           // offset to hitbox
     dw 0x12480000                           // Render routine

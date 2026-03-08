@@ -1203,4 +1203,110 @@ scope Sonic {
         jr      ra
         nop
     }
+
+    scope recovery_logic: {
+        OS.routine_begin(0x20)
+        sw a0, 0x10(sp)
+
+        mtc1 r0, f0 // guarantee f0 = 0
+
+        lw t0, 0x78(a0) // load location vector
+        lwc1 f2, 0x0(t0) // f2 = location X
+        lwc1 f4, 0x4(t0) // f4 = location Y
+
+        // check closest ledge in X
+        scope ledge_check: {
+            lwc1 f6, 0x01CC+0x4C(a0) // load nearest LEFT ledge X
+            lwc1 f8, 0x01CC+0x54(a0) // load nearest RIGHT ledge X
+
+            sub.s f6, f6, f2
+            abs.s f6, f6 // f6 = abs(distance) to left ledge
+
+            sub.s f8, f8, f2
+            abs.s f8, f8 // f8 = abs(distance) to right ledge
+
+            c.le.s f6, f8
+            nop
+            bc1f _right
+            nop
+
+            _left:
+            lwc1 f6, 0x01CC+0x4C(a0) // load nearest LEFT ledge X
+            lwc1 f8, 0x01CC+0x50(a0) // load nearest LEFT ledge Y
+            
+            b _check_end
+            nop
+
+            _right:
+            lwc1 f6, 0x01CC+0x54(a0) // load nearest RIGHT ledge X
+            lwc1 f8, 0x01CC+0x58(a0) // load nearest RIGHT ledge Y
+
+            _check_end:
+        }
+
+        sub.s f14, f6, f2 // f14 = x diff
+        sub.s f12, f8, f4 // f12 = y diff
+
+        // skip if air speed is up (to not cut a jump short)
+        lwc1 f20, 0x004C(a0) // f20 = y speed
+        c.le.s f20, f0 // y speed < 0?
+        nop
+        bc1f _end // if so, skip
+        nop
+
+        // check if too close to use nsp
+        lui at, 0x451C
+        mtc1 at, f22 // f22 = 2496.0
+
+        abs.s f16, f14 // f16 = abs(x distance to ledge)
+
+        c.le.s f16, f22 // if distance to ledge is lower than 2496.0
+        nop
+        bc1t _end // do not go for NSP if already close to ledge
+        nop
+
+        // check if high enough to NSP
+        // check if we have jumps left
+        lw t0, 0x09C8(a0) // t0 = attribute pointer
+        lw t0, 0x0064(t0) // t0 = max jumps
+        lb t1, 0x0148(a0) // t1 = jumps used
+
+        beq t0, t1, _no_jump // used all jumps already
+        nop
+
+        _has_jump:
+        lui at, 0x0000
+        mtc1 at, f22 // f22 = 0.0
+        b _check_distance
+        nop
+
+        _no_jump:
+        lui at, 0xC4BB
+        mtc1 at, f22 // f22 = -1496.0
+
+        _check_distance:
+        c.le.s f12, f22 // if N units or more above ledge
+        nop
+        bc1t _nsp
+        nop
+
+        b _end // no conditions matched, skip
+        nop
+
+        _nsp:
+        swc1 f6, 0x01CC+0x60(a0) // save new target x = ledge x
+        swc1 f8, 0x01CC+0x64(a0) // save new target y = ledge y
+
+        jal 0x80132758 // execute AI command
+        lli a1, AI.ROUTINE.NSP_TOWARDS // arg1 = NSP
+
+        b _end
+        nop
+
+        _end:
+        lw a0, 0x10(sp)
+        OS.routine_end(0x20)
+    }
+    Character.table_patch_start(recovery_logic, Character.id.SONIC, 0x4)
+    dw recovery_logic; OS.patch_end()
 }

@@ -2396,7 +2396,7 @@ scope CharacterSelectDebugMenu {
         _check_toggles:
         li      t0, Toggles.block_gameplay
         lw      t1, 0x0010(t0)              // t1 = current Gameplay toggles values, word 1
-        li      t2, 0xFFF7FF3F              // t2 = 0xFFF7FF3F = mask to ignore improved AI and J sounds (make sure to update this if Gameplay toggles changed)
+        li      t2, 0xFFEFFF7F              // t2 = 0xFFEFFF7F = mask to ignore improved AI and J sounds (make sure to update this if Gameplay toggles changed)
         and     t1, t1, t2                  // t1 = current Gameplay toggles values, ignoring J sounds (make sure to update this if Gameplay toggles changed)
         lli     t2, 0x0000                  // t2 = default values (make sure to update this if Gameplay toggles changed)
         bnel    t1, t2, _end                // if current values don't match the defaults, then can't save high scores!

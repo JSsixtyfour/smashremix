@@ -654,15 +654,25 @@ scope Stamina {
         beqz    t8, _end
         nop
 
-        lw     t8, 0x0008(s1)              // load character id
+        lw      t8, 0x0008(s1)              // load character id
         addiu   t7, r0, Character.id.GBOWSER          // original line 1 replaced with Giga Bowser, instead of Master Hand
         bne     t8, t7, _end
         nop
 
-        addiu   t8, r0, 0x012C          // load 300 hitpoints amount
-        lw      t7, 0x002C(s1)          // load player percent
-        slt     t8, t8, t7              // if total hitpoints are less than total percent set t8
-        bne     t8, r0, _end_hp         // jump to end if total percent is less than total hit points
+        li      t8, 0x800A493A              // place pointer to current difficulty in t1
+        lbu     t8, 0x0000(t8)              // load current difficulty
+        slti    t7, t8, 0x0002
+        bnezl   t7, _gb_check               // if less than medium difficulty, branch
+        addiu   t8, r0, 0x00C8              // load 200 hitpoints amount
+        slti    t7, t8, 0x0004              // check if less than Very Hard
+        bnezl   t7, _gb_check               // if less than medium difficulty, branch
+        addiu   t8, r0, 0x00FA              // set to 250
+        addiu   t8, r0, 0x012C              // load 300 hitpoints amount
+        
+        _gb_check:
+        lw      t7, 0x002C(s1)              // load player percent
+        slt     t8, t8, t7                  // if total hitpoints are less than total percent set t8
+        bne     t8, r0, _end_hp             // jump to end if total percent is less than total hit points
         nop
 
         _end:

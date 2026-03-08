@@ -232,7 +232,7 @@ scope CharacterSelect {
     dw  0x15F00 + 0x200                     // 0x1E - GND
     dw  0x186D0 + 0x200                     // 0x1F - YLINK
     dw  0xC838 + 0x200                      // 0x20 - DRM
-    dw  0xC440 + 0x200                      // 0x21 - WARIO
+    dw  0x12B70 + 0x200                     // 0x21 - WARIO
     dw  0x14440 + 0x200                     // 0x22 - DARK SAMUS
     dw  0x0                                 // 0x23 - ELINK
     dw  0x0                                 // 0x24 - JSAMUS
@@ -256,7 +256,7 @@ scope CharacterSelect {
     dw  0x4DB0 + 0x200                      // 0x36 - PIANO
     dw  0x76A0 + 0x200                      // 0x37 - WOLF
     dw  0x110F0 + 0x200                     // 0x38 - CONKER
-    dw  0x19080 + 0x200                     // 0x39 - MEWTWO
+    dw  0x184E0 + 0x200                     // 0x39 - MEWTWO
     dw  0x15200 + 0x200                     // 0x3A - MARTH
     dw  0x16320 + 0x22260 + 0x170E8 + 0x200 // 0x3B - SONIC
     dw  0x49F8 + 0x200                      // 0x3C - SANDBAG
@@ -1160,8 +1160,7 @@ scope CharacterSelect {
         bnezl   s0, pc() + 8                // if random select is not 'DEFAULT', then include
         addiu   a0, a0, NUM_BONUS_CHARS     // a0 = all slots including bonus
 
-        li      s0, TwelveCharBattle.twelve_cb_flag
-        lw      s0, 0x0000(s0)              // s0 = 1 if 12cb
+        OS.read_word(TwelveCharBattle.twelve_cb_flag, s0) // s0 = 1 if 12cb
         bnezl   s0, pc() + 8                // if 12cb, use correct slot count
         addiu   a0, r0, TwelveCharBattle.NUM_SLOTS // original line 2 modified to include all slots
 
@@ -1170,8 +1169,7 @@ scope CharacterSelect {
         // v0 = random number between 0 and NUM_SLOTS
 
         // Check if 12cb and if so check if character is defeated/invalid for port or not
-        li      s0, TwelveCharBattle.twelve_cb_flag
-        lw      s0, 0x0000(s0)              // s0 = 1 if 12cb
+        OS.read_word(TwelveCharBattle.twelve_cb_flag, s0) // s0 = 1 if 12cb
         beqz    s0, _not_12cb               // if not 12cb, skip defeated check
         nop
 
@@ -1237,7 +1235,7 @@ scope CharacterSelect {
         or      a1, r0, v0                  // a1 = character_id
         beqz    v0, _get_random_id          // if the character is invalid for port then get a new random number
         lw      v0, 0x0008(sp)              // restore v0
-        b       _end                        // skip variants check, keep new character_id
+        b       _check_recent_randoms       // skip variants check, keep new character_id
         nop
 
         _not_12cb:
@@ -1262,11 +1260,11 @@ scope CharacterSelect {
         lli     v1, 0x0002                  // v1 = 'ALL'
         beq     s0, v1, _check_variants     // branch to determine id taking variants into account
         lli     v1, 0x0003                  // v1 = 'VANILLA'
-        bne     s0, v1, _end                // branch if 'DEFAULT' or 'BONUS'
+        bne     s0, v1, _check_recent_randoms  // branch if 'DEFAULT' or 'BONUS'
         slti    v1, v0, Character.id.NESS + 1  // v1 = 1 if v0 = Vanilla character ID
         beqz    v1, _get_random_id          // if v0 was not a vanilla character then get a new number...
         nop
-        b       _end                        // ...otherwise use this character
+        b       _check_recent_randoms       // ...otherwise use this character
         nop
 
         _check_variants:
@@ -1274,7 +1272,7 @@ scope CharacterSelect {
         jal     Global.get_random_int_safe_ // get random number for variant offset
         addiu   a0, r0, 0x0005              // a0 = 5
         // v0 = random number between 0 and 4
-        beqzl   v0, _end                    // if 0, just use original character
+        beqzl   v0, _check_recent_randoms   // if 0, just use original character
         addu    v0, r0, s0                  // v0 = character id (not a variant)
         // otherwise we check for variants
         addiu   v0, v0, -0x0001             // v0 = offset in variants array
@@ -1284,20 +1282,26 @@ scope CharacterSelect {
         addu    a0, a0, v0                  // a0 = address of variant
         lbu     a0, 0x0000(a0)              // a0 = variant character id
         lli     v0, Character.id.NONE       // v0 = Character.id.NONE
-        beql    a0, v0, _end                // if there is no variant, then use the original character
+        beql    a0, v0, _check_recent_randoms // if there is no variant, then use the original character
         srl     v0, s0, 0x0002              // v0 = character id (not a variant)
 
         lli     v0, Character.id.BOSS
-        bnel    a0, v0, _end                // valid variant if not Master Hand
-        addu    v0, r0, a0                  // v0 = character id (variant)
+        bnel    a0, v0, _check_recent_randoms // valid variant if not Master Hand
+        addu    v0, r0, a0                    // v0 = character id (variant)
 
         li      v1, CharacterSelectDebugMenu.PlayerTag.string_table + (20 * 4)
         lw      v1, 0x0000(v1)              // v1 = 20th tag
         lbu     v1, 0x0000(v1)              // v1 = first character
-        beqzl   v1, _end                    // if blank, not a valid variant
+        beqzl   v1, _check_recent_randoms   // if blank, not a valid variant
         srl     v0, s0, 0x0002              // v0 = character id (not a variant)
 
         addu    v0, r0, a0                  // v0 = character id (variant)
+
+        _check_recent_randoms:
+        jal     _recent_randoms_lookup      // check recent randoms
+        nop                                 // returns a1 = 0 if we need to roll again
+        beqzl   a1, _get_random_id          // branch accordingly
+        lw      v0, 0x0008(sp)              // restore v0
 
         _end:
         lw      ra, 0x0004(sp)              // ~
@@ -1309,6 +1313,93 @@ scope CharacterSelect {
 
         jr      ra                          // return
         nop                                 // ~
+    }
+
+    // @ Description
+    // lower the odds of picking same character multiple times within a window
+    constant RRL_NUM_SLOTS(6)
+    scope _recent_randoms_lookup: {
+        // v0 = pending character ID
+        // s1 = port_id (usually)
+
+        // note: s1 isn't always port_id (*cough* Training) so load it from flag instead
+        // this flag indicates if we are randomizing for Placeholder '?'
+        li      a1, placeholder_port        // a1 = address of placeholder_port
+        lw      a0, 0x0000(a1)              // a0 = port 0-3, or -1 if flag unset
+        bltzl   a0, _return                 // skip if flag unset (randomizing via panel, 12cb Dpad, or 'L')
+        lli     a1, OS.TRUE                 // set flag to indicate we don't need reroll
+
+        // or      a0, r0, s1                  // a0 = port_id
+        sll     a0, a0, 3                   // a0 = a0 * 8 (port offset)
+        li      a1, recent_randoms_table    // a1 = recent_randoms_table
+        add     s0, a1, a0                  // s0 = recent_randoms_table + port offset
+
+        lb      a1, 0x0007(s0)              // a1 = index
+        add     a0, a1, s0                  // a0 = recent_randoms_table + index offset
+        sb      v0, 0x0000(a0)              // store pending character ID in table in this offset slot
+
+        // loop through table and check for matches
+        lli     at, RRL_NUM_SLOTS           // at = number of slots to loop through
+        or      a0, r0, r0                  // clear a0
+        _recent_randoms_table_read:
+        addiu   at, at, -1                  // at--
+        bltzl   at, _check_recent_count     // branch if we are done looping
+        nop
+        addu    a1, s0, at                  // a1 = next entry in table
+        lb      a1, 0x0000(a1)              // a1 = character ID entry in table
+        beql    a1, v0, pc() + 8            // increment counter if character ID matches
+        addiu   a0, a0, 1                   // a0++
+        b       _recent_randoms_table_read  // loop
+        nop
+
+        _check_recent_count:
+        addiu   a1, a0, -1                  // a1 = number of matches - 1 (excluding itself)
+        blezl   a1, _update_recent_index    // branch if no matches in table (no need to roll)
+        nop
+
+        addiu   sp, sp,-0x0010              // allocate stack space
+        sw      s0, 0x0004(sp)              // ~
+        sw      v0, 0x0008(sp)              // ~
+        sw      ra, 0x000C(sp)              // save registers
+        jal     Global.get_random_int_safe_ // get random number
+        nop                                 // a0 = number of matches (lower odds the more in table)
+        // probability for 1 = 50%, 2 = 33%, etc
+        or      a1, r0, v0                  // a1 = random number between 0 and number of matches
+        lw      s0, 0x0004(sp)              // ~
+        lw      v0, 0x0008(sp)              // restore v0 (character ID)
+        lw      ra, 0x000C(sp)              // restore registers
+        addiu   sp, sp, 0x0010              // deallocate stack space
+
+        bnezl   a1, _return                 // if number is not 0, set flag to roll another Character ID
+        lli     a1, OS.FALSE                // ~
+
+        _update_recent_index:
+        lb      a1, 0x0007(s0)              // a1 = index
+        addiu   a1, a1, 1                   // a1++
+        sltiu   v1, a1, 6                   // v1 = 1 if < 6
+        beqzl   v1, pc() + 8                // wrap index if needed
+        or      a1, r0, r0                  // ~
+        sb      a1, 0x0007(s0)              // update index in table
+
+        li      a1, placeholder_port        // a1 = address of placeholder_port
+        addiu   s0, r0, -1                  // s0 = -1
+        sw      s0, 0x0000(a1)              // reset flag (for next time)
+
+        lli     a1, OS.TRUE                 // set flag to indicate success
+
+        _return:
+        jr      ra
+        nop
+
+        // table containing most recent X characters for each port ; also an empty slot and loop index
+        recent_randoms_table:
+        db -1,-1,-1,-1,-1,-1,0,0
+        db -1,-1,-1,-1,-1,-1,0,0
+        db -1,-1,-1,-1,-1,-1,0,0
+        db -1,-1,-1,-1,-1,-1,0,0
+        // flag indicating if we are coming here from '?', with active port stored
+        placeholder_port:
+        dw -1
     }
 
     // @ Description
@@ -1354,10 +1445,13 @@ scope CharacterSelect {
         sw      a0, 0x0014(sp)              // ~
         sw      a1, 0x0018(sp)              // save registers
 
+        OS.read_word(TwelveCharBattle.twelve_cb_flag, t0) // t0 = 1 if 12cb mode
+        bnez    t0, _get_portrait_id        // skip if 12cb
         lli     t0, Character.id.PLACEHOLDER
         beq     t0, a0, _random_bookend     // if random selected, can skip stuff below
         nop
 
+        _get_portrait_id:
         // get portrait id
         li      t0, portrait_id_table_pointer
         lw      t0, 0x0000(t0)              // t0 = portrait_id_table
@@ -2982,6 +3076,7 @@ scope CharacterSelect {
         constant NONE(0x00000818)
         constant BONUS_BOOKEND(0x00003B28)
         constant RANDOM_BOOKEND(0x000053E8)
+        constant RANDOM(0x000301F8 + 0x10)
         // original
         constant MARIO(0x00001078)
         constant FOX(0x00002138)
@@ -3878,7 +3973,7 @@ scope CharacterSelect {
     dw portrait_offsets.NJIGGLY                 // Polygon Jigglypuff
     dw portrait_offsets.NNESS                   // Polygon Ness
     dw portrait_offsets.GDONKEY                 // Giant Donkey Kong
-    dw portrait_offsets.NONE                    // (Placeholder)
+    dw portrait_offsets.RANDOM                  // (Placeholder)
     dw portrait_offsets.NONE                    // None (Placeholder)
     // add space for new characters
     fill (portrait_offset_by_character_table + (Character.NUM_CHARACTERS * 0x4)) - pc()
@@ -5540,9 +5635,16 @@ scope CharacterSelect {
         lw      t5, 0xBD80(t5)              // t5 = stock count
         beqzl   t0, pc() + 8                // if no stocks remaining, set to global stock count
         or      t8, t5, r0                  // t8 = stock count
-        sltu    t6, t8, t5                  // t6 = 1 if stocks remaining < stocks count
+
+        // if Tug of War, high counts are ok
+        lli     t6, VsRemixMenu.mode.TUG_OF_WAR
+        OS.read_word(VsRemixMenu.vs_mode_flag, t0) // t0 = vs_mode_flag
+        beq     t0, t6, _check_manual       // if Tug of War, don't compare against stock count
+        sltu    t6, t8, t5                  // t6 = 1 if stocks remaining < stock count
         beqzl   t6, pc() + 8                // if stocks remaining >= stock count, then set to stock count
         or      t8, t5, r0                  // t8 = stock count
+
+        _check_manual:
         lli     t6, StockMode.mode.MANUAL
         beql    t6, t7, pc() + 8            // if stock mode is manual, then set stock count
         sb      t8, 0x0000(a2)              // update stocks remaining
@@ -6605,7 +6707,7 @@ scope CharacterSelect {
         bne     t9, t4, _end_vs             // if not random, skip
         nop
 
-        addiu   sp, sp,-0x0040              // allocate stack space
+        addiu   sp, sp,-0x0050              // allocate stack space
         sw      ra, 0x0004(sp)              // save registers
         sw      a0, 0x0008(sp)              // ~
         sw      s1, 0x000C(sp)              // ~
@@ -6621,9 +6723,30 @@ scope CharacterSelect {
         // 0x0034(sp) used below
         sw      t1, 0x0038(sp)              // ~
         sw      t0, 0x003C(sp)              // ~
+        sw      s0, 0x0040(sp)              // ~
 
-        jal     get_random_char_id_
+        _vs_loop:
+        lli     s1, 0x00BC                  // s1 = size of VS CSS Panel Struct
+        multu   s1, v1                      // mflo = offset to port's panel struct
+        li      s0, CSS_PLAYER_STRUCT       // s0 = VS CSS Panel Struct, p1
+        mflo    s1                          // s1 = offset to ports panel struct
+        addu    s0, s0, s1                  // s0 = port's VS CSS Panel Struct (expected in get_random_char_id)
+
+        OS.read_word(TwelveCharBattle.twelve_cb_flag, t0) // t0 = 1 if 12cb
+        li      t1, get_random_char_id_     // t1 = get random routine based on css layout
+        li      t2, TwelveCharBattle.get_random_char_id_ // t1 = get random routine not based on css layout
+        bnezl   t0, pc() + 8                // if 12cb, use 12cb routine
+        or      t1, t2, r0                  // t1 = get random routine
+
+        li      a0, _recent_randoms_lookup.placeholder_port
+        sw      v1, 0x0000(a0)              // store port in flag
+
+        jalr    t1
         or      s1, v1, r0                  // s1 = port (expected in get_random_char_id)
+
+        lli     t9, Character.id.PLACEHOLDER
+        beql    v0, t9, _vs_loop            // if Random was rolled (can happen in 12cb), then roll again
+        lw      v1, 0x002C(sp)              // restore port to v1
 
         or      t9, v0, r0                  // t9 = char_id
         sw      v0, 0x0034(sp)              // save char_id
@@ -6683,7 +6806,8 @@ scope CharacterSelect {
         lw      a1, 0x0030(sp)              // ~
         lw      t1, 0x0038(sp)              // ~
         lw      t0, 0x003C(sp)              // ~
-        addiu   sp, sp, 0x0040              // deallocate stack space
+        lw      s0, 0x0040(sp)              // ~
+        addiu   sp, sp, 0x0050              // deallocate stack space
 
         li      at, random_char_flag_vs
         addu    at, at, v1                  // at = address of random_char_flag_vs
@@ -6706,6 +6830,9 @@ scope CharacterSelect {
         bne     t2, t0, _check_human        // if CPU is not random, skip
         nop
 
+        li      t0, _recent_randoms_lookup.placeholder_port
+        OS.read_word(0x80138898, v1)        // v1 = cpu port
+        sw      v1, 0x0000(t0)              // store port in flag
         jal     get_random_char_id_
         nop
 
@@ -6730,6 +6857,9 @@ scope CharacterSelect {
         bne     t8, t0, _end_training       // if Human is not random, skip
         nop
 
+        li      t0, _recent_randoms_lookup.placeholder_port
+        OS.read_word(0x80138894, v1)        // v1 = human port
+        sw      v1, 0x0000(t0)              // store port in flag
         jal     get_random_char_id_
         nop
         lw      a0, 0x0008(sp)              // ~
@@ -6766,6 +6896,9 @@ scope CharacterSelect {
         bne     a0, t4, _end_1p             // if not random, skip
         nop
 
+        li      a0, _recent_randoms_lookup.placeholder_port
+        OS.read_word(0x80138FA8, t4)        // t4 = '1P' active port (hard coded address)
+        sw      t4, 0x0000(a0)              // store port in flag
         jal     get_random_char_id_
         nop
 
@@ -6795,6 +6928,10 @@ scope CharacterSelect {
         addiu   sp, sp,-0x0030              // allocate stack space
         sw      ra, 0x0004(sp)              // save registers
         sw      v0, 0x0008(sp)              // ~
+
+        li      a0, _recent_randoms_lookup.placeholder_port
+        OS.read_word(0x801376F8, t4)        // t4 = 'BONUS' active port (t6?)
+        sw      t4, 0x0000(a0)              // store port in flag
 
         jal     get_random_char_id_
         nop

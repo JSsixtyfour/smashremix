@@ -455,4 +455,137 @@ scope DKShared {
     dw  0x00000000
     dw  0x000014E4          // offset
     dw  0x00000000
+
+    scope cpu_post_process: {
+        OS.routine_begin(0x20)
+        sw a0, 0x10(sp)
+
+        // Check CPU level for vanilla characters
+        lbu t1, 0x0013(a0) // t1 = cpu level
+        addiu t1, t1, -10 // t1 = 0 if level 10
+        bnezl t1, _end // if not lv10, skip
+        nop
+
+        // If performing any DSP action, release inputs
+        // for us to avoid a DSP loop
+        lw at, 0x24(a0) // at = action id
+        lli t0, Action.DK.HandSlapStart
+        beq t0, at, _no_input
+        lli t0, Action.DK.HandSlapLoop
+        beq t0, at, _no_input
+        lli t0, Action.DK.HandSlapEnd
+        beq t0, at, _no_input
+        // if performing USP, check if going offstage
+        lli t0, Action.DK.SpinningKong
+        beq t0, at, ground_check
+        lli t0, Action.DK.SpinningKongAir
+        beq t0, at, ground_check
+        nop
+
+        b _end
+        nop
+
+        scope ground_check: {
+            addiu sp, sp, -0x20
+            sw a0, 0x18(sp)
+
+            lli v0, 0x1 // default to safe to move
+
+            // check if above clipping
+            addiu at, r0, -1 // at = 0xFFFFFFF
+            lw t0, 0xEC(a0) // get current clipping below player
+            beq at, t0, _ground_check_end // skip if not above clipping
+            nop
+
+            // create vec3 at sp+0x4
+            // based on position + 200 in the x axis towards movement speed direction
+            lw t0, 0x78(a0) // load location vector
+            lwc1 f2, 0x0(t0) // f2 = location X
+            swc1 f2, 0x4(sp) // vec3.x = location X
+            lwc1 f2, 0x4(t0) // f2 = location Y
+            swc1 f2, 0x8(sp) // vec3.y = location Y
+            lwc1 f2, 0x8(t0) // f2 = location Z
+            swc1 f2, 0xC(sp) // vec3.z = location Z
+
+            // get kinetic state
+            lw at, 0x14C(a0) // at = kinetic state
+            lwc1 f2, 0x48(a0) // f2 = air x velocity
+            mfc1 at, f2 // at = x velocity
+            beqz at, _ground_check_end // if x velocity = 0, skip
+            nop
+
+            abs.s f4, f2 // f4 = abs(x velocity)
+
+            mtc1 r0, f0
+            c.eq.s f4, f0 // if f4 == 0
+            nop
+            bc1t _ground_check_end // skip to avoid div by 0
+            nop
+
+            div.s f2, f2, f4 // f2 = sign(x velocity)
+
+            lui at, 0x43C8 // at = 400.0F
+            mtc1 at, f4
+            mul.s f4, f2, f4 // f4 = sign(x velocity) * 400.0F
+
+            lwc1 f2, 0x4(sp) // vec3.x
+            add.s f2, f2, f4 // vec3.x += sign(x velocity) * 400.0F
+            swc1 f2, 0x4(sp) // store back
+
+            jal 0x800F8FFC
+            addiu a0, sp, 0x4 // position vector to check
+
+            _ground_check_end:
+            lw a0, 0x18(sp)
+            addiu sp, sp, 0x20
+        }
+        // if moving offstage(v0 == 0), hold towards stage
+        beqz v0, _cancel_velocity
+        nop
+        b _end
+        nop
+
+        _no_input:
+        jal 0x80132758 // execute AI command
+        lli a1, AI.ROUTINE.NULL // arg1 = NULL
+        b _end
+        nop
+
+        _cancel_velocity:
+        jal 0x80132758 // execute AI command
+        lli a1, AI.ROUTINE.NULL // arg1 = point to target
+
+        sb r0, 0x01C9(a0) // save CPU stick y
+
+        // get kinetic state
+        lw at, 0x14C(a0) // at = kinetic state
+        lwc1 f2, 0x48(a0) // f2 = air x velocity
+        mfc1 at, f2 // at = x velocity
+        nop
+
+        abs.s f4, f2 // f4 = abs(x velocity)
+        div.s f2, f2, f4 // f2 = sign(x velocity)
+
+        mtc1 r0, f0
+        c.le.s f2, f0 // if sign(x velocity) <= 0
+        nop
+        bc1f _move_left
+        nop
+        // move right
+        addiu at, r0, 0x50
+        sb at, 0x01C8(a0) // CPU stick x = right
+        b _end
+        nop
+        _move_left:
+        addiu at, r0, 0xFFB0
+        sb at, 0x01C8(a0) // CPU stick x = left
+
+        _end:
+        lw a0, 0x10(sp)
+        OS.routine_end(0x20)
+    }
+    Character.table_patch_start(cpu_post_process, Character.id.DK, 0x4)
+    dw cpu_post_process; OS.patch_end()
+    Character.table_patch_start(cpu_post_process, Character.id.JDK, 0x4)
+    dw cpu_post_process; OS.patch_end()
 }

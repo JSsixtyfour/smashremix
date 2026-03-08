@@ -89,8 +89,8 @@ scope Item {
     // throw_routine - toutine to run when item is thrown
     // collision_routine - routine to run during item collision (like star)
     macro add_item(item, item_info_array, item_info_array_origin, spawn_routine, show_gfx_when_spawned, main_pickup_routine, pre_pickup_routine, drop_routine, throw_routine, collision_routine) {
-        evaluate n(current_item)
-        evaluate item_id(current_item + 0x2D)
+        evaluate n(Item.current_item)
+        evaluate item_id(Item.current_item + 0x2D)
 
         constant {item}.id({item_id})
 
@@ -103,40 +103,40 @@ scope Item {
         dw {item_id}
 
         // update spawn routine table
-        origin EXTENDED_ITEM_SPAWN_TABLE_ORIGIN + (current_item * 0x4)
+        origin Item.EXTENDED_ITEM_SPAWN_TABLE_ORIGIN + (Item.current_item * 0x4)
         dw {spawn_routine}
 
         // update item info table
-        origin ITEM_INFO_ARRAY_TABLE_ORIGIN + (current_item * 0x4)
+        origin Item.ITEM_INFO_ARRAY_TABLE_ORIGIN + (Item.current_item * 0x4)
         dw {item_info_array}
 
         // update item pickup routine table
-        origin ITEM_PICKUP_TABLE_ORIGIN + (current_item * 0x4)
+        origin Item.ITEM_PICKUP_TABLE_ORIGIN + (Item.current_item * 0x4)
         dw {main_pickup_routine}
 
         // update item drop routine table
-        origin ITEM_DROP_TABLE_ORIGIN + (current_item * 0x4)
+        origin Item.ITEM_DROP_TABLE_ORIGIN + (Item.current_item * 0x4)
         dw {drop_routine}
 
         // update item throw routine table
-        origin ITEM_THROW_TABLE_ORIGIN + (current_item * 0x4)
+        origin Item.ITEM_THROW_TABLE_ORIGIN + (Item.current_item * 0x4)
         dw {throw_routine}
 
         // update item player collision routine table
-        origin PLAYER_COLLISION_TABLE_ORIGIN + (current_item * 0x4)
+        origin Item.PLAYER_COLLISION_TABLE_ORIGIN + (Item.current_item * 0x4)
         dw {collision_routine}
 
         // update item pre-pickup routine table
-        origin EXTENDED_ITEM_PRE_PICKUP_TABLE_ORIGIN + (current_item * 0x4)
+        origin Item.EXTENDED_ITEM_PRE_PICKUP_TABLE_ORIGIN + (Item.current_item * 0x4)
         dw {pre_pickup_routine}
 
         // update spawn GFX table
-        origin SPAWN_GFX_TABLE_ORIGIN + current_item
+        origin Item.SPAWN_GFX_TABLE_ORIGIN + Item.current_item
         db {show_gfx_when_spawned}
 
         pullvar base, origin
 
-        global variable current_item(current_item + 1)
+        global variable current_item(Item.current_item + 1)
     }
 
     // @ Description
@@ -145,7 +145,7 @@ scope Item {
     // @ Arguments
     // item - the name of the scope containing the required constants and routines
     macro add_item(item) {
-        add_item({item}, {item}.item_info_array, {item}.ITEM_INFO_ARRAY_ORIGIN, {item}.SPAWN_ITEM, {item}.SHOW_GFX_WHEN_SPAWNED, {item}.PICKUP_ITEM_MAIN, {item}.PICKUP_ITEM_INIT, {item}.DROP_ITEM, {item}.THROW_ITEM, {item}.PLAYER_COLLISION)
+        Item.add_item({item}, {item}.item_info_array, {item}.ITEM_INFO_ARRAY_ORIGIN, {item}.SPAWN_ITEM, {item}.SHOW_GFX_WHEN_SPAWNED, {item}.PICKUP_ITEM_MAIN, {item}.PICKUP_ITEM_INIT, {item}.DROP_ITEM, {item}.THROW_ITEM, {item}.PLAYER_COLLISION)
     }
 
     // @ Description
@@ -868,6 +868,25 @@ scope Item {
             jr      ra
             nop
         }
+    }
+
+    // @ Description
+    // Update item frequency regardless if all items are 'OFF'
+    // Note: Vanilla behaviour is lazy and will only do it if at least 1 Item is enabled
+    scope always_update_item_frequency_: {
+        OS.patch_start(0x128FEC, 0x80132A4C)
+        j       always_update_item_frequency_
+        nop                                            // original line 2
+        _return:
+        OS.patch_end()
+
+        jal     0x80132988          // original line 1 ('mnVSItemSwitchCheckAllTogglesOff')
+        nop                         // returns v0 = 1 if no items are enabled
+        li      t6, 0x80133420      // t6 = address of current item frequency
+        lw      t6, 0x0000(t6)      // t6 = current item frequency
+        li      a1, 0x800A4D08      // update item frequency
+        j       _return
+        sb      t6, 0x001C(a1)      // ~
     }
 
     // @ Description
@@ -2646,7 +2665,8 @@ scope Item {
         addiu   a3, a3, -Global.screen.VS_BATTLE // a3 = 0 if vs mode
         bnezl   a3, _end                    // skip if screen_id != vs mode
         nop
-
+        beqz    a2, _end                    // skip if no items are enabled (safety if frequency is not 'OFF')
+        nop
         li      t3, Toggles.entry_item_containers
         lw      t3, 0x0004(t3)              // t3 = entry_item_containers (0 if DEFAULT, 1 if OFF, 2 if NO_EXPLODE, 3 if ALL_EXPLODE)
         beqzl   t3, _update_mask            // branch if DEFAULT

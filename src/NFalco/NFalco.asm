@@ -51,6 +51,8 @@ scope NFalco {
     
     Character.edit_action_parameters(NFALCO,    0xDF,                0x282,            0x80000000,                      0x00000000)
     Character.edit_action_parameters(NFALCO,    0xE0,                0x282,            0x80000000,                      0x00000000)
+    Character.edit_action_parameters(NFALCO, Action.FOX.Appear1,     File.FALCO_IDLE,  0x80000000,                 0)
+    Character.edit_action_parameters(NFALCO, Action.FOX.Appear2,     File.FALCO_IDLE,  0x80000000,                 0)
 
     // Modify Actions            // Action          // Staling ID   // Main ASM                 // Interrupt/Other ASM          // Movement/Physics ASM         // Collision ASM
     Character.edit_action(NFALCO, 0xDF,              -1,             0x8013D994,                 0x00000000,                    0x00000000,                     0x00000000)

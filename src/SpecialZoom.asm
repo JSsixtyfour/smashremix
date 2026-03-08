@@ -1,4 +1,82 @@
 scope Zoom {
+
+    // offset_y:
+    // dw 0x0
+
+    // // 80172CA4+EC
+    // scope hat_test: {
+        // OS.patch_start(0xED7D0, 0x80172D90)
+        // j hat_test
+        // nop
+        // _return:
+        // OS.patch_end()
+
+        // // v1 = bone index to attach to
+        // // s2 = fighter struct
+
+        // _loop_prepare:
+        // or t0, r0, r0 // i
+        // addiu t1, s2, 0x5BC // first hurtbox definition address
+
+        // _loop:
+        // lw t2, 0xC(t1) // t2 = hit type
+        // lli at, 0x2
+        // beq at, t2, _loop_end // found hit type = 2, exit loop
+        // nop
+        // _loop_goto_next:
+        // addiu t0, t0, 0x1 // i += 1
+        // b _loop
+        // addiu t1, t1, 0x2C // point to next entry (entry size: 2C)
+        // _loop_end:
+
+        // lw t0, 0x4(t1) // t0 = attach bone id
+        // or v1, r0, t0 // attach bone = head bone we found
+
+        // // size is at 20, 24, 28
+        // lw at, 0x24(t1) // load size y
+        // mtc1 at, f2
+        // lw at, 0x18(t1) // load offset y
+        // mtc1 at, f4
+        // add.s f2, f2, f4
+        // li t0, offset_y
+        // swc1 f2, 0x0(t0) // save offset Y for later
+        
+        // _original:
+        // sll t3, v1, 0x2
+        // addu v0, s2, t3
+
+        // j       _return
+        // nop
+    // }
+
+    // // 80172CA4+138
+    // scope hat_test_2: {
+        // OS.patch_start(0xED81C, 0x80172DDC)
+        // j hat_test_2
+        // nop
+        // _return:
+        // OS.patch_end()
+
+        // li t0, offset_y
+        // lwc1 f2, 0x0(t0) // load offset
+
+        // lw at, 0x74(s1) // load item's first bone
+        // lw at, 0x10(at) // a0 = item second joint (joint 1)
+        
+        // // pos = 1C, 20, 24
+        // lwc1 f4, 0x20(at) // load current offset
+        // add.s f4, f4, f2
+        // swc1 f4, 0x20(at) // save new offset
+
+        // _original:
+        // addu v0, v0, t8
+        // lw v0, 0x95D0(v0)
+
+        // j       _return
+        // nop
+    // }
+
+
     constant ZOOM_DURATION(0x0028)
 
     zoom_timer:

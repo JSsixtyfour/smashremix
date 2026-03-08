@@ -707,6 +707,34 @@ scope LinkShared {
         nop
     }
 
+    // 80163F40+48
+    // @ Description
+    // Modifies J Link's aerial drift during special fall
+    scope up_special_aerial_drift_: {
+        OS.patch_start(0xDEA38, 0x80163FF8)
+        j       up_special_aerial_drift_
+        nop
+        nop
+        nop
+        _return:
+        OS.patch_end()
+
+        // a0 = player struct
+        lw      a1, 0x0008(a0)                  // at = character id
+        addiu   a1, a1, -Character.id.JLINK     // ~
+        beqzl   a1, _end                        // take branch if J Link
+        lui     a1, 0x3F40                      // a1 = float: 0.75
+
+        lui     a1, 0x3F19                      // a1 = float: 0.6 (original line 1)
+        ori     a1, a1,0x999A                   // ~ (original line 4)
+
+        _end:
+        addiu   t7, r0, 0x0001                  // original line 2
+        sw      t7, 0x10(sp)                    // original line 3
+        j       _return                         // return
+        nop
+    }
+
 	// @ Description
 	// Adds Link Variants to a Character ID check and pull out more bombs
 	scope cpu_pull_out_bombs_: {
@@ -790,4 +818,160 @@ scope LinkShared {
         jr      ra
         mtc1    a1, f12                     // original line 2
     }
+
+    scope cpu_post_process: {
+        OS.routine_begin(0x20)
+        sw a0, 0x10(sp)
+
+        // If YLINK, continue
+        lli t0, Character.id.YLINK
+        lw t1, 0x8(a0) // t1 = character id
+        beq t0, t1, _continue
+        nop
+
+        // Check CPU level for vanilla characters
+        lbu t1, 0x0013(a0) // t1 = cpu level
+        addiu t1, t1, -10 // t1 = 0 if level 10
+        bnezl t1, _end // if not lv10, skip
+        nop
+
+        _continue:
+        // If going for NSP, check if boomerang is available
+        lw t0, 0x1D4(a0) // t0 = ft_com->p_command
+        li t1, AI.command_table // load command table base address
+
+        lw at, AI.ATTACK_TABLE.NSPG.INPUT << 2(t1)
+        beq t0, at, boomerang_check
+        lw at, AI.ATTACK_TABLE.NSPA.INPUT << 2(t1)
+        beq t0, at, boomerang_check
+        nop
+
+        b _end
+        nop
+
+        scope boomerang_check: {
+            lw at, 0xADC(a0) // at = fighter_vars.link.boomerang_gobj
+            beqz at, _end // if no boomerang object, we can spawn one
+            nop
+
+            _no_input:
+            // If there's a boomerang out, skip using NSP
+            jal 0x80132758 // execute AI command
+            lli a1, AI.ROUTINE.NULL // arg1 = NULL
+            b _end
+            nop
+
+            _end:
+        }
+
+        _end:
+        lw a0, 0x10(sp)
+        OS.routine_end(0x20)
+    }
+    Character.table_patch_start(cpu_post_process, Character.id.LINK, 0x4)
+    dw cpu_post_process; OS.patch_end()
+    Character.table_patch_start(cpu_post_process, Character.id.JLINK, 0x4)
+    dw cpu_post_process; OS.patch_end()
+    Character.table_patch_start(cpu_post_process, Character.id.ELINK, 0x4)
+    dw cpu_post_process; OS.patch_end()
+    Character.table_patch_start(cpu_post_process, Character.id.YLINK, 0x4)
+    dw cpu_post_process; OS.patch_end()
 }
+
+// This one is just for the regular Links, pull bomb when up far and away from stage
+scope recovery_logic: {
+    OS.routine_begin(0x20)
+    sw a0, 0x10(sp)
+
+    // Check CPU level for vanilla characters
+    lbu t1, 0x0013(a0) // t1 = cpu level
+    addiu t1, t1, -10 // t1 = 0 if level 10
+    bnezl t1, _end // if not lv10, skip
+    nop
+
+    lw at, 0x84C(a0) // at = held item
+    bnez at, _end // branch to end if holding an item
+
+    mtc1 r0, f0 // guarantee f0 = 0
+
+    lw t0, 0x78(a0) // load location vector
+    lwc1 f2, 0x0(t0) // f2 = location X
+    lwc1 f4, 0x4(t0) // f4 = location Y
+
+    // check closest ledge in X
+    scope ledge_check: {
+        lwc1 f6, 0x01CC+0x4C(a0) // load nearest LEFT ledge X
+        lwc1 f8, 0x01CC+0x54(a0) // load nearest RIGHT ledge X
+
+        sub.s f6, f6, f2
+        abs.s f6, f6 // f6 = abs(distance) to left ledge
+
+        sub.s f8, f8, f2
+        abs.s f8, f8 // f8 = abs(distance) to right ledge
+
+        c.le.s f6, f8
+        nop
+        bc1f _right
+        nop
+
+        _left:
+        lwc1 f6, 0x01CC+0x4C(a0) // load nearest LEFT ledge X
+        lwc1 f8, 0x01CC+0x50(a0) // load nearest LEFT ledge Y
+        
+        b _check_end
+        nop
+
+        _right:
+        lwc1 f6, 0x01CC+0x54(a0) // load nearest RIGHT ledge X
+        lwc1 f8, 0x01CC+0x58(a0) // load nearest RIGHT ledge Y
+
+        _check_end:
+    }
+
+    sub.s f14, f6, f2 // f14 = x diff
+    sub.s f12, f8, f4 // f12 = y diff
+
+    // check if too close to use DSP
+    lui at, 0x44FA
+    mtc1 at, f22 // f22 = 2000.0
+
+    abs.s f16, f14 // f16 = abs(x distance to ledge)
+
+    c.le.s f16, f22 // if distance to ledge is lower than 1000.0
+    nop
+    bc1t _end // do not go for NSP if already close to ledge
+    nop
+
+    // check if up high
+    // in this case, go for DSP
+    lui at, 0xC4FA
+    mtc1 at, f22 // f22 = -2000.0
+
+    c.le.s f12, f22 // if 2000 units or more above ledge
+    nop
+    bc1t _dsp
+    nop
+
+    b _end // no conditions matched, skip
+    nop
+
+    _dsp:
+    swc1 f6, 0x01CC+0x60(a0) // save new target x = ledge x
+    swc1 f8, 0x01CC+0x64(a0) // save new target y = ledge y
+
+    jal 0x80132758 // execute AI command
+    lli a1, AI.ATTACK_TABLE.DSPA.INPUT // arg1 = DSP
+
+    b _end
+    nop
+
+    _end:
+    lw a0, 0x10(sp)
+    OS.routine_end(0x20)
+}
+Character.table_patch_start(recovery_logic, Character.id.LINK, 0x4)
+dw recovery_logic; OS.patch_end()
+Character.table_patch_start(recovery_logic, Character.id.JLINK, 0x4)
+dw recovery_logic; OS.patch_end()
+Character.table_patch_start(recovery_logic, Character.id.ELINK, 0x4)
+dw recovery_logic; OS.patch_end()

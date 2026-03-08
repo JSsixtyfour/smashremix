@@ -106,7 +106,6 @@ scope NWolf {
 	Character.edit_action_parameters(NWOLF,    Action.Walk1,      	 File.WOLF_WALK1,   		 Wolf.IDLE,                     	-1)
 	Character.edit_action_parameters(NWOLF,    Action.Walk2,      	 File.WOLF_WALK2,   		 Wolf.IDLE,                     -1)
 	Character.edit_action_parameters(NWOLF,    Action.Walk3,      	 File.WOLF_WALK3,   		 Wolf.IDLE,                     -1)
-    Character.edit_action_parameters(NWOLF,    Action.Idle,           File.WOLF_IDLE,             -1,                         -1)
     Character.edit_action_parameters(NWOLF,    Action.JumpSquat,      File.WOLF_JUMP_SQUAT,        -1,                      -1)
     Character.edit_action_parameters(NWOLF,    Action.ShieldJumpSquat, File.WOLF_JUMP_SQUAT,        -1,                      -1)
 	Character.edit_action_parameters(NWOLF,    Action.LandingLight,   File.WOLF_JUMP_SQUAT,        -1,                      -1)

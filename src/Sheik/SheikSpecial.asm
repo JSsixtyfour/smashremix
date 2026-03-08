@@ -1991,9 +1991,8 @@ scope SheikNSP {
 
     OS.align(16)
     needle_projectile_struct:
-    constant NEEDLE_ID(0x1003)
     dw 0x00000000                           // unknown
-    dw NEEDLE_ID                            // projectile id
+    dw Projectile.id.SHEIK_NEEDLE           // projectile id
     dw Character.SHEIK_file_6_ptr           // address of Sheik's file 6 pointer
     dw 0x00000000                           // offset to hitbox
     dw 0x12470000                           // This determines z axis rotation? (samus is 1246)

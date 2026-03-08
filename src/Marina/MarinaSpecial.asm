@@ -2413,32 +2413,32 @@ scope MarinaDSP {
     // @ Returns
     // v0 - clanpot charge level
     scope get_projectile_level_: {
-        lw      t0, 0x000C(a0)              // t0 = projectile id
-        lli     at, 0x2                     // at = charge shot id
-        beq     t0, at, _charge_shot        // branch if projectile = charge shot
-        lli     at, 0x0005                  // at = yoshi egg id
-        beql    t0, at, _end                // branch if projectile = yoshi egg...
-        lli     v0, 0x0002                  // ...and return 2
-        lli     at, 0x0007                  // at = link boomerang id
-        beql    t0, at, _end                // branch if projectile = link boomerang...
-        lli     v0, 0x0002                  // ...and return 2
-        lli     at, 0x000B                  // at = pikachu thunder head id
-        beql    t0, at, _end                // branch if projectile = pikachu thunder head...
-        lli     v0, 0x0002                  // ...and return 2
-        lli     at, 0x000C                  // at = pikachu thunder tail id
-        beql    t0, at, _end                // branch if projectile = pikachu thunder tail...
-        lli     v0, 0x0002                  // ...and return 2
-        lli     at, 0x0012                  // at = arwing shot id
-        beql    t0, at, _end                // branch if projectile = arwing shot...
-        lli     v0, 0x0004                  // ...and return 4
-        lli     at, 0x1005                  // at = pirate land cannonball id
-        beql    t0, at, _end                // branch if projectile = pirate land cannonball...
-        lli     v0, 0x0004                  // ...and return 4
-        lli     at, 0x1009                  // at = golden gun bullet
-        beql    t0, at, _end                // branch if projectile = golden gun bullet...
-        lli     v0, 0x0004                  // ...and return 4
-        b       _end                        // for all other projectiles...
-        lli     v0, 0x0001                  // ...return 1
+        lw      t0, 0x000C(a0)                          // t0 = projectile id
+        lli     at, 0x2                                 // at = charge shot id
+        beq     t0, at, _charge_shot                    // branch if projectile = charge shot
+        lli     at, 0x0005                              // at = yoshi egg id
+        beql    t0, at, _end                            // branch if projectile = yoshi egg...
+        lli     v0, 0x0002                              // ...and return 2
+        lli     at, 0x0007                              // at = link boomerang id
+        beql    t0, at, _end                            // branch if projectile = link boomerang...
+        lli     v0, 0x0002                              // ...and return 2
+        lli     at, 0x000B                              // at = pikachu thunder head id
+        beql    t0, at, _end                            // branch if projectile = pikachu thunder head...
+        lli     v0, 0x0002                              // ...and return 2
+        lli     at, 0x000C                              // at = pikachu thunder tail id
+        beql    t0, at, _end                            // branch if projectile = pikachu thunder tail...
+        lli     v0, 0x0002                              // ...and return 2
+        lli     at, 0x0012                              // at = arwing shot id
+        beql    t0, at, _end                            // branch if projectile = arwing shot...
+        lli     v0, 0x0004                              // ...and return 4
+        lli     at, Projectile.id.PIRATELAND_CANNONBALL // at = pirate land cannonball id
+        beql    t0, at, _end                            // branch if projectile = pirate land cannonball...
+        lli     v0, 0x0004                              // ...and return 4
+        lli     at, Projectile.id.GOLDENGUN_BULLET      // at = golden gun bullet
+        beql    t0, at, _end                            // branch if projectile = golden gun bullet...
+        lli     v0, 0x0004                              // ...and return 4
+        b       _end                                    // for all other projectiles...
+        lli     v0, 0x0001                              // ...return 1
 
         _charge_shot:
         lw      t0, 0x02A4(a0)              // t0 = charge shot level
@@ -2571,9 +2571,9 @@ scope MarinaDSP {
     db 4    // 4 - ClanBomb
     db 1    // 5 - Waddle Dee
     db 1    // 6 - Waddle Doo
-    db 2    // 7 - Gordo
+    db 3    // 7 - Gordo
     db 0    // 8 - Cloud
-    db 1    // 9 - Flashbang
+    db 2    // 9 - Flashbang
     db 1    // 10 - Turnip
     OS.align(4)
 

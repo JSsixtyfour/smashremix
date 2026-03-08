@@ -239,7 +239,7 @@ scope Wario {
     Teams.add_team_costume(YELLOW, WARIO, 0x0)
 
     // Shield colors for costume matching
-    Character.set_costume_shield_colors(WARIO, YELLOW, BLUE, TURQUOISE, PINK, LIME, WHITE, NA, NA)
+    Character.set_costume_shield_colors(WARIO, YELLOW, BLUE, TURQUOISE, PINK, LIME, WHITE, GREEN, BLACK)
 
     // Set Kirby star damage
     Character.table_patch_start(kirby_inhale_struct, 0x8, Character.id.WARIO, 0xC)
@@ -672,4 +672,142 @@ scope Wario {
         j       _return                     // return
         lw      a2, 0x0018(sp)              // load a2
     }
+
+    scope recovery_logic: {
+        OS.routine_begin(0x20)
+        sw a0, 0x10(sp)
+
+        // if currently doing NSP, hold UP
+        lw at, 0x24(a0) // at = action id
+        lli t0, Action.BodySlamAir
+        beq at, t0, _hold_up
+        nop
+
+        lw t0, 0x78(a0) // load location vector
+        lwc1 f2, 0x0(t0) // f2 = location X
+        lwc1 f4, 0x4(t0) // f4 = location Y
+
+        mtc1 r0, f0 // guarantee f0 = 0
+
+        // check closest ledge in X
+        scope ledge_check: {
+            lwc1 f6, 0x01CC+0x4C(a0) // load nearest LEFT ledge X
+            lwc1 f8, 0x01CC+0x54(a0) // load nearest RIGHT ledge X
+
+            sub.s f6, f6, f2
+            abs.s f6, f6 // f6 = abs(distance) to left ledge
+
+            sub.s f8, f8, f2
+            abs.s f8, f8 // f8 = abs(distance) to right ledge
+
+            c.le.s f6, f8
+            nop
+            bc1f _right
+            nop
+
+            _left:
+            lwc1 f6, 0x01CC+0x4C(a0) // load nearest LEFT ledge X
+            lwc1 f8, 0x01CC+0x50(a0) // load nearest LEFT ledge Y
+            
+            b _check_end
+            nop
+
+            _right:
+            lwc1 f6, 0x01CC+0x54(a0) // load nearest RIGHT ledge X
+            lwc1 f8, 0x01CC+0x58(a0) // load nearest RIGHT ledge Y
+
+            _check_end:
+        }
+
+        sub.s f14, f6, f2 // f14 = x diff
+        sub.s f12, f8, f4 // f12 = y diff
+
+        // check if too close to use nsp
+        lui at, 0x451C
+        mtc1 at, f22 // f22 = 2496.0
+
+        abs.s f16, f14 // f16 = abs(x distance to ledge)
+
+        c.le.s f16, f22 // if distance to ledge is lower than 2496.0
+        nop
+        bc1t _end // do not go for NSP if already close to ledge
+        nop
+
+        // check if up high
+        // in this case, go for NSP
+        lui at, 0xC47A
+        mtc1 at, f22 // f22 = -1000.0
+
+        c.le.s f12, f22 // if 1000 units or more above ledge
+        nop
+        bc1t _nsp
+        nop
+
+        // check if not that high but still have a jump
+        lw t0, 0x09C8(a0) // t0 = attribute pointer
+        lw t0, 0x0064(t0) // t0 = max jumps
+        lb t1, 0x0148(a0) // t1 = jumps used
+
+        beq t0, t1, _no_jump // used all jumps already
+        nop
+
+        _has_jump:
+        lui at, 0x44BB
+        mtc1 at, f22 // f22 = 1496.0
+        b _check_distance
+        nop
+
+        _no_jump:
+        lui at, 0x4348
+        mtc1 at, f22 // f22 = 200.0
+
+        _check_distance:
+        c.le.s f22, f12 // if at most N units below ledge
+        nop
+        bc1f _nsp
+        nop
+
+        b _end // no conditions matched, skip
+        nop
+
+        _nsp:
+        swc1 f6, 0x01CC+0x60(a0) // save new target x = ledge x
+        swc1 f8, 0x01CC+0x64(a0) // save new target y = ledge y
+
+        jal 0x80132758 // execute AI command
+        lli a1, AI.ROUTINE.NSP_TOWARDS // arg1 = NSP
+
+        b _end
+        nop
+
+        // when doing NSP, hold up and towards ledge
+        _hold_up:
+        jal 0x80132758 // execute AI command
+        lli a1, AI.ROUTINE.NULL // arg1 = NULL so our inputs are not overridden
+
+        lli at, 0x50 // max stick Y value (up)
+        sb at, 0x01C9(a0) // save CPU stick y
+
+        c.lt.s f14, f0 // if x diff < 0
+        nop
+        bc1t _hold_left // if x diff < 0, hold left
+        nop
+
+        _hold_right:
+        lli at, 0x50 // max stick X value (right)
+        b _apply_x // apply X value
+        nop
+        
+        _hold_left:
+        addiu at, r0, 0xFFB0 // max stick X value (left)
+
+        _apply_x:
+        sb at, 0x01C8(a0) // save CPU stick x
+
+        _end:
+        lw a0, 0x10(sp)
+        OS.routine_end(0x20)
+    }
+    Character.table_patch_start(recovery_logic, Character.id.WARIO, 0x4)
+    dw recovery_logic; OS.patch_end()
 }

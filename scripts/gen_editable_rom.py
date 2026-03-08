@@ -98,7 +98,7 @@ def parse_file_definitions():
     files = {}
     pattern = r'constant\s+(\w+)\((0x[0-9A-Fa-f]+)\)'
 
-    with open('src/File.asm', 'r') as f:
+    with open('src/File.asm', 'r', encoding='utf-8') as f:
         for line in f:
             if 'constant' in line:
                 match = re.search(pattern, line)
@@ -114,7 +114,7 @@ def parse_character_definitions():
     characters = {}
     pattern = r'define_character\((.*?)\)'
 
-    with open('src/Character.asm', 'r') as f:
+    with open('src/Character.asm', 'r', encoding='utf-8') as f:
         for line in f:
             # Skip comments or macro definitions
             if line.strip().startswith('//') or line.strip().startswith('macro'):
@@ -150,7 +150,7 @@ def parse_actions():
     actions = {}
     pattern = r'constant\s+(\w+)\((0x[0-9A-Fa-f]+)\)'
 
-    with open('src/Action.asm', 'r') as f:
+    with open('src/Action.asm', 'r', encoding='utf-8') as f:
         for line in f:
             match = re.search(pattern, line)
             if match:
@@ -194,7 +194,7 @@ class EditableROMGenerator:
         for root, _, files in os.walk('src'):
             for file in files:
                 if file.endswith('.asm'):
-                    with open(os.path.join(root, file), 'r') as f:
+                    with open(os.path.join(root, file), 'r', encoding='utf-8') as f:
                         lines = [
                             line for line in f if not line.strip().startswith('//')]
                         content = ''.join(lines)
@@ -308,7 +308,7 @@ class EditableROMGenerator:
         animation_files = self.get_character_animation_definitions()
         print(animation_files)
 
-        with open(f'{self.temp_dir.name}/inject_files.csv', 'w') as f:
+        with open(f'{self.temp_dir.name}/inject_files.csv', 'w', encoding='utf-8') as f:
             f.write(
                 "Mode,FileNumberHex,NewFilePath,Compressed,InternalFileTableOffsetBytes,InternalFileResourceOffsetBytes,ReqFilesFile,CompressionLevel\n"
             )
@@ -368,7 +368,7 @@ class EditableROMGenerator:
 
                 entry = self.entries[int(remix_file, 16)]
 
-                with open(f"{self.temp_dir.name}/{remix_file}.txt", "w") as reqlist:
+                with open(f"{self.temp_dir.name}/{remix_file}.txt", "w", encoding='utf-8') as reqlist:
                     for i in range(0, (len(entry.idx) >> 1)*2, 2):
                         file_id = int.from_bytes(entry.idx[i:i+2])
 

@@ -20,6 +20,15 @@ scope Stereo {
         _return:
         OS.patch_end()
 
+
+        // Sector z remix fix
+        OS.read_word(Global.match_info, a1)
+        lbu     a1, 0x0001(a1)                // a1 = stage_id
+        lli     t6, Stages.id.SECTOR_Z_REMIX
+        beql    t6, a1, _end                  // if SECTOR_Z_REMIX, center the SFX (the plat is at extreme right of stage)
+        lli     v0, 0x0080                    // v0 = center
+
+        // HRC fix
         lli     a1, SinglePlayerModes.HRC_ID
         li      t6, SinglePlayerModes.singleplayer_mode_flag
         lw      t6, 0x0000(t6)                // t6 = singleplayer_mode_flag

@@ -152,7 +152,9 @@ scope Peach {
 
     ENTRY:
     dw MODEL.WEAPON.PRSL_OPEN;
-    Moveset.WAIT(77);
+    Moveset.AFTER(42);
+    dw 0x5C000001
+    Moveset.AFTER(77);
     dw MODEL.WEAPON.PRSL_CLS;
     dw 0;
 
@@ -239,7 +241,6 @@ scope Peach {
     include "AI/Attacks.asm"
 
     // Modify Action Parameters             // Action                       // Animation                    // Moveset Data             // Flags
-    Character.edit_action_parameters(PEACH, Action.DeadU,                   File.PEACH_TUMBLE,              -1,                         -1)
     Character.edit_action_parameters(PEACH, Action.DeadU,                   File.PEACH_TUMBLE,              -1,                         -1)
     Character.edit_action_parameters(PEACH, Action.ScreenKO,                File.PEACH_TUMBLE,              -1,                         -1)
     Character.edit_action_parameters(PEACH, Action.Entry,                   File.PEACH_IDLE,                -1,                         -1)
@@ -541,7 +542,8 @@ scope Peach {
     Teams.add_team_costume(YELLOW, PEACH, 1)
 
     // Shield colors for costume matching
-    Character.set_costume_shield_colors(PEACH, MAGENTA, YELLOW, RED, BLUE, GREEN, PURPLE, PINK, NA)
+    Character.set_costume_shield_colors(PEACH, MAGENTA, YELLOW, RED, BLUE, GREEN, PURPLE, PINK, WHITE, ORANGE, NA, NA, NA)
+	
 
     // Set action strings
     Character.table_patch_start(action_string, Character.id.PEACH, 0x4)
@@ -570,11 +572,6 @@ scope Peach {
 
     // Set Charge Smash attacks entry
     ChargeSmashAttacks.set_charged_smash_attacks(Character.id.PEACH, charge_smash_frames)
-
-    // Set CPU NSP long range behaviour
-    Character.table_patch_start(ai_long_range, Character.id.PEACH, 0x4)
-    dw      AI.LONG_RANGE.ROUTINE.NONE
-    OS.patch_end()
 
     // @ Description
     // Allows Peach's float to not be restored when grabbing the ledge
@@ -652,4 +649,118 @@ scope Peach {
         nop
     }
 
+    scope recovery_logic: {
+        OS.routine_begin(0x20)
+        sw a0, 0x10(sp)
+
+        mtc1 r0, f0 // guarantee f0 = 0
+
+        lw t0, 0x78(a0) // load location vector
+        lwc1 f2, 0x0(t0) // f2 = location X
+        lwc1 f4, 0x4(t0) // f4 = location Y
+
+        // check closest ledge in X
+        scope ledge_check: {
+            lwc1 f6, 0x01CC+0x4C(a0) // load nearest LEFT ledge X
+            lwc1 f8, 0x01CC+0x54(a0) // load nearest RIGHT ledge X
+
+            sub.s f6, f6, f2
+            abs.s f6, f6 // f6 = abs(distance) to left ledge
+
+            sub.s f8, f8, f2
+            abs.s f8, f8 // f8 = abs(distance) to right ledge
+
+            c.le.s f6, f8
+            nop
+            bc1f _right
+            nop
+
+            _left:
+            lwc1 f6, 0x01CC+0x4C(a0) // load nearest LEFT ledge X
+            lwc1 f8, 0x01CC+0x50(a0) // load nearest LEFT ledge Y
+            
+            b _check_end
+            nop
+
+            _right:
+            lwc1 f6, 0x01CC+0x54(a0) // load nearest RIGHT ledge X
+            lwc1 f8, 0x01CC+0x58(a0) // load nearest RIGHT ledge Y
+
+            _check_end:
+        }
+
+        sub.s f14, f6, f2 // f14 = x diff
+        sub.s f12, f8, f4 // f12 = y diff
+
+        // if currently jumping or floating, hold jump button
+        lw at, 0x24(a0) // at = action id
+        lli t0, Action.JumpAerialF
+        beq at, t0, _hold_jump
+        lli t0, Action.Float
+        beq at, t0, _hold_jump
+        lli t0, Action.FallAerial
+        beq at, t0, _hold_jump
+        nop
+
+        // check if too close to use nsp
+        lui at, 0x44FA
+        mtc1 at, f22 // f22 = 2000.0
+
+        abs.s f16, f14 // f16 = abs(x distance to ledge)
+
+        c.le.s f16, f22 // if distance to ledge is lower than 2000.0
+        nop
+        bc1t _end // do not go for NSP if already close to ledge
+        nop
+
+        // check if up high
+        // in this case, go for NSP
+        lui at, 0xC4FA
+        mtc1 at, f22 // f22 = -2000.0
+
+        c.le.s f12, f22 // if 2000 units or more above ledge
+        nop
+        bc1t _nsp
+        nop
+
+        b _end // no conditions matched, skip
+        nop
+
+        _nsp:
+        swc1 f6, 0x01CC+0x60(a0) // save new target x = ledge x
+        swc1 f8, 0x01CC+0x64(a0) // save new target y = ledge y
+
+        jal 0x80132758 // execute AI command
+        lli a1, AI.ROUTINE.NSP_TOWARDS // arg1 = NSP
+
+        b _end
+        nop
+
+        // when double jumping, hold a jump button to float
+        _hold_jump:
+        // check if too close in X to keep floating
+        lui at, 0x447A
+        mtc1 at, f22 // f22 = 1000.0
+        abs.s f16, f14 // f16 = abs(x distance to ledge)
+        c.le.s f16, f22 // if distance to ledge is lower than 1000.0
+        nop
+        bc1t _release_jump // release jump button if already close to ledge
+        nop
+        lh at, 0x01C6(a0) // at = buttons pressed
+        ori at, at, 0x0008 // press C UP
+        sh at, 0x01C6(a0) // save pressed buttons mask
+        b _end
+        nop
+
+        _release_jump:
+        lh at, 0x01C6(a0) // at = buttons pressed
+        andi at, at, 0xFFF0 // release C UP
+        sh at, 0x01C6(a0) // save pressed buttons mask
+
+        _end:
+        lw a0, 0x10(sp)
+        OS.routine_end(0x20)
+    }
+    Character.table_patch_start(recovery_logic, Character.id.PEACH, 0x4)
+    dw recovery_logic; OS.patch_end()
 }

@@ -15,6 +15,7 @@ scope VsRemixMenu {
         constant TAG_TEAM(0x2)
         constant KOTH(0x3)
         constant SMASHKETBALL(0x4)
+        constant TUG_OF_WAR(0x5)
     }
 
     page_flag:
@@ -93,7 +94,8 @@ scope VsRemixMenu {
     dw 0;           db 0x10, mode.TAG_TEAM,     0x1, 0x0; dh 0x4305, 0x4292; dw 0x00007D38 // Tag Team
     dw 0;           db 0x10, mode.KOTH,         0x1, 0x0; dh 0x42AA, 0x42E0; dw 0x000084B8 // King of the Hill
     dw 0;           db 0x10, mode.SMASHKETBALL, 0x1, 0x0; dh 0x428E, 0x4317; dw 0x00008C38 // Smashketball
-    constant PAGE_2_MAX(0x3)
+    dw 0;           db 0x10, mode.TUG_OF_WAR,   0x1, 0x0; dh 0x4260, 0x433E; dw 0x000093B8 // Tug of War
+    constant PAGE_2_MAX(0x4)
 
     // @ Description
     // The following patches enable a new button on the VS Game Mode menu (on page 1)
@@ -127,22 +129,16 @@ scope VsRemixMenu {
         addiu   v1, v1, 0x4980              // original line 2
 
         _wrap_fix_up:
-        OS.read_word(page_flag, t8)         // t8 = page flag
-        addiu   t7, r0, 0x0004              // t7 = 4 = max button index
         jr      ra
-        subu    t7, t7, t8                  // t7 = 4 if page 1, 3 if page 2
+        addiu   t7, r0, 0x0004              // t7 = 4 = max button index
 
         _wrap_fix_down:
-        OS.read_word(page_flag, t8)         // t8 = page flag
-        addiu   at, r0, 0x0004              // at = 4 = max button index
         jr      ra
-        subu    at, at, t8                  // at = 4 if page 1, 3 if page 2
+        addiu   at, r0, 0x0004              // at = 4 = max button index
 
         _wrap_fix_down_timer:
-        OS.read_word(page_flag, t8)         // t8 = page flag
-        addiu   at, r0, 0x0003              // at = 4 = max button index
         jr      ra
-        subu    at, at, t8                  // at = 4 if page 1, 3 if page 2
+        addiu   at, r0, 0x0003              // at = 4 = max button index
     }
 
     // @ Description
@@ -276,12 +272,12 @@ scope VsRemixMenu {
         j       render_menu_buttons_
         nop
         _return:
+        jal     create_menu_button_
+        lli     a0, 0x0004                  // a0 = 5 (Remix Modes)
         // only draw on first page
         OS.read_word(page_flag, a0)         // a0 = page_flag
         bnez    a0, _finish                 // if on the 2nd page, don't draw
         nop
-        jal     create_menu_button_
-        lli     a0, 0x0004                  // a0 = 5 (Remix Modes)
         jal     0x80132238                  // mnVSModeMakeRuleValue()
         nop
         jal     0x80132BA0                  // mnVSModeMakeTimeStockValue()
@@ -446,8 +442,11 @@ scope VsRemixMenu {
         OS.read_word(global_teams, at)      // at = default VS teams flag (yes, delay slot)
         beqz    t0, _check_teams            // if default VS, use at
         lli     t1, mode.KOTH
-        bne     t0, t1, _end                // if not KOTH, skip
-        OS.read_word(KingOfTheHill.teams, at) // at = KOTH teams flag, yes, delay slot
+        OS.read_word(KingOfTheHill.teams, at) // at = KOTH teams flag
+        beq     t0, t1, _check_teams        // if KOTH, check teams
+        lli     t1, mode.TUG_OF_WAR
+        bne     t0, t1, _end                // if not TUG_OF_WAR, skip
+        OS.read_word(TugOfWar.teams, at)    // at = TUG_OF_WAR teams flag, yes, delay slot
         _check_teams:
         beqz    at, _end                    // if not teams, skip
         nop
@@ -512,7 +511,7 @@ scope VsRemixMenu {
         sw      t0, 0x0000(at)              // set stock_count_table
 
         // only reset previous_stock_count_table if coming from menu
-        OS.read_byte(Global.current_screen, at) // at = current screen
+        OS.read_byte(Global.previous_screen, at) // at = current screen
         lli     t0, Global.screen.VS_GAME_MODE_MENU
         bne     at, t0, _end                // if not coming from menu, skip
         nop
@@ -538,6 +537,7 @@ scope VsRemixMenu {
         dw TagTeam.before_css_setup_        // Tag Team
         dw KingOfTheHill.before_css_setup_  // KOTH
         dw Smashketball.before_css_setup_   // Smashketball
+        dw TugOfWar.before_css_setup_       // Tug of War
     }
 
     // @ Description
@@ -619,6 +619,7 @@ scope VsRemixMenu {
         dw TagTeam.leave_css_setup_         // Tag Team
         dw KingOfTheHill.leave_css_setup_   // KOTH
         dw Smashketball.leave_css_setup_    // Smashketball
+        dw TugOfWar.leave_css_setup_        // Tug of War
     }
 
     // @ Description
@@ -675,6 +676,7 @@ scope VsRemixMenu {
         dw TagTeam.start_match_setup_       // Tag Team
         dw KingOfTheHill.start_match_setup_ // KOTH
         dw Smashketball.start_match_setup_  // Smashketball
+        dw TugOfWar.start_match_setup_      // Tug of War
     }
 
     // @ Description
@@ -989,7 +991,7 @@ scope VsRemixMenu {
     scope update_announcer_on_toggle_: {
         OS.patch_start(0x13363C, 0x801353BC)
         OS.read_word(VsRemixMenu.vs_mode_flag, t0) // t0 = vs_mode_flag
-        bnez    t0, _skip_announcer         // if Tag Team, KOTH or Smashketball, skip announcer call
+        bnez    t0, _skip_announcer         // if Tag Team, KOTH, Smashketball or Tug of War, skip announcer call
         lli     a0, FGM.announcer.css.FREE_FOR_ALL
         bnezl   t6, pc() + 8                // if teams, use teams call
         lli     a0, FGM.announcer.css.TEAM_BATTLE

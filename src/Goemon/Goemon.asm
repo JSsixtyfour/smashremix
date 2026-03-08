@@ -344,7 +344,7 @@ scope Goemon {
     Character.edit_action_parameters(GOEMON,    Action.Dash,            File.GOEMON_DASH,           -1,                         -1)
     Character.edit_action_parameters(GOEMON,    Action.Run,             File.GOEMON_RUN,            -1,                         -1)
     Character.edit_action_parameters(GOEMON,    Action.RunBrake,        File.GOEMON_RUN_BRAKE,      -1,                         -1)
-    //Character.edit_action_parameters(GOEMON,    Action.Turn,            File.GOEMON_TURN,           -1,                         -1)
+    // Character.edit_action_parameters(GOEMON,    Action.Turn,            File.GOEMON_TURN,           -1,                         -1)
     Character.edit_action_parameters(GOEMON,    Action.TurnRun,         File.GOEMON_TURN_RUN,       -1,                         -1)
 
     Character.edit_action_parameters(GOEMON,    Action.JumpSquat,       File.GOEMON_JUMPSQUAT,      -1,                         0)

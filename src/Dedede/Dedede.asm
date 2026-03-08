@@ -382,7 +382,7 @@ Character.edit_action_parameters(DEDEDE, Action.ItemThrowAirD,           File.DE
 Character.edit_action_parameters(DEDEDE, Action.ItemThrowAirSmashF,      File.DEDEDE_ITEM_THROW_AIR,          -1,                         -1)
 Character.edit_action_parameters(DEDEDE, Action.ItemThrowAirSmashB,      File.DEDEDE_ITEM_THROW_AIR,          -1,                         -1)
 Character.edit_action_parameters(DEDEDE, Action.ItemThrowAirSmashU,      File.DEDEDE_ITEM_THROW_AIR_U,        -1,                         -1)
-Character.edit_action_parameters(DEDEDE, Action.ItemThrowAirSmashF,      File.DEDEDE_ITEM_THROW_AIR_D,        -1,                         -1)
+Character.edit_action_parameters(DEDEDE, Action.ItemThrowAirSmashD,      File.DEDEDE_ITEM_THROW_AIR_D,        -1,                         -1)
 Character.edit_action_parameters(DEDEDE, Action.HeavyItemThrowF,         File.DEDEDE_HEAVY_ITEM_THROW,        -1,                         -1)
 Character.edit_action_parameters(DEDEDE, Action.HeavyItemThrowB,         File.DEDEDE_HEAVY_ITEM_THROW,        -1,                         -1)
 Character.edit_action_parameters(DEDEDE, Action.HeavyItemThrowSmashF,    File.DEDEDE_HEAVY_ITEM_THROW,        -1,                         -1)
@@ -485,8 +485,6 @@ Character.edit_action_parameters(DEDEDE, Action.LandingAirX,            File.DED
      Character.edit_action_parameters(DEDEDE, Action.USP_MOVE,          File.DEDEDE_USP_LOOP,               USP_MOVE,                   0)
      Character.edit_action_parameters(DEDEDE, Action.USP_LAND,          File.DEDEDE_USP_LAND,               USP_LAND,                   0)
      Character.edit_action_parameters(DEDEDE, Action.USP_CANCEL,        File.DEDEDE_USP_CANCEL,             0x80000000,                 0)
-     //Character.edit_action_parameters(DEDEDE, Action.USP_MOVE,               File.DEDEDE_USP_LOOP,                                 USP_MOVE,                 0x00000000)
-     //Character.edit_action_parameters(DEDEDE, Action.USP_LAND,               File.DEDEDE_USP_LAND,                             USP_LAND,                    0)
 
     Character.edit_action_parameters(DEDEDE, Action.NSP_BEGIN_GROUND,   File.DEDEDE_NSP_BEGIN,              NSP_BEGIN,                  0x00000000)// 0x1C000000)
     Character.edit_action_parameters(DEDEDE, Action.NSP_LOOP_GROUND,    File.DEDEDE_NSP_LOOP,               NSP_INHALE,                 0x00000000)// 0x1C000000)
@@ -851,4 +849,94 @@ Character.edit_action_parameters(DEDEDE, Action.LandingAirX,            File.DED
 		nop
 	}
 
+    scope recovery_logic: {
+        OS.routine_begin(0x20)
+        sw a0, 0x10(sp)
+
+        lw t0, 0x78(a0) // load location vector
+        lwc1 f2, 0x0(t0) // f2 = location X
+        lwc1 f4, 0x4(t0) // f4 = location Y
+
+        mtc1 r0, f0 // guarantee f0 = 0
+
+        // check closest ledge in X
+        scope ledge_check: {
+            lwc1 f6, 0x01CC+0x4C(a0) // load nearest LEFT ledge X
+            lwc1 f8, 0x01CC+0x54(a0) // load nearest RIGHT ledge X
+
+            sub.s f6, f6, f2
+            abs.s f6, f6 // f6 = abs(distance) to left ledge
+
+            sub.s f8, f8, f2
+            abs.s f8, f8 // f8 = abs(distance) to right ledge
+
+            c.le.s f6, f8
+            nop
+            bc1f _right
+            nop
+
+            _left:
+            lwc1 f6, 0x01CC+0x4C(a0) // load nearest LEFT ledge X
+            lwc1 f8, 0x01CC+0x50(a0) // load nearest LEFT ledge Y
+            
+            b _check_end
+            nop
+
+            _right:
+            lwc1 f6, 0x01CC+0x54(a0) // load nearest RIGHT ledge X
+            lwc1 f8, 0x01CC+0x58(a0) // load nearest RIGHT ledge Y
+
+            _check_end:
+        }
+
+        sub.s f14, f6, f2 // f14 = x diff
+        sub.s f12, f8, f4 // f12 = y diff
+
+        // check if too far to bother
+        lui at, 0x453B
+        mtc1 at, f22 // f22 = ~3000.0
+
+        abs.s f16, f14 // f16 = abs(x distance to ledge)
+
+        c.le.s f22, f16 // if distance to ledge is lower than ~3000.0
+        nop
+        bc1t _end // do not go for DSP if too far
+        nop
+
+        // check if up high
+        // in this case, go for DSP
+        lui at, 0xC496
+        mtc1 at, f22 // f22 = -1200.0
+
+        c.le.s f12, f22 // if 1200 units or more above ledge
+        nop
+        bc1t _up_high
+        nop
+
+        b _end // no conditions matched, skip
+        nop
+
+        _up_high:
+        // if both 0x0ADC(a0) and 0x0AE0(a0) != 0, skip to _end
+        lw t0, 0x0ADC(a0) // load minion pointer 1
+        lw t1, 0x0AE0(a0) // load minion pointer 2
+        and t0, t0, t1
+        bnez t0, _end // both minions are already out, do not DSP again
+        nop
+
+        swc1 f6, 0x01CC+0x60(a0) // save new target x = ledge x
+        swc1 f8, 0x01CC+0x64(a0) // save new target y = ledge y
+
+        jal 0x80132758 // execute AI command
+        lli a1, AI.ROUTINE.DSP // arg1 = DSP
+
+        b _end
+        nop
+
+        _end:
+        lw a0, 0x10(sp)
+        OS.routine_end(0x20)
+    }
+    Character.table_patch_start(recovery_logic, Character.id.DEDEDE, 0x4)
+    dw recovery_logic; OS.patch_end()
 }

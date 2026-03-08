@@ -953,12 +953,10 @@ scope BanjoNSP {
         addiu   sp, sp, 0x0020              // deallocate stack space
     }
 
-    constant EGG_ID(0x1008)
-
     OS.align(16)
     forward_egg_projectile_struct:
     dw 0x00000000                           // unknown
-    dw EGG_ID                               // projectile id
+    dw Projectile.id.BANJO_EGG              // projectile id
     dw Character.BANJO_file_9_ptr           // address of Banjo's file 8 pointer
     dw 0x00000000                           // offset to hitbox
     dw 0x12470000                           // This determines z axis rotation? (samus is 1246)
@@ -990,7 +988,7 @@ scope BanjoNSP {
     OS.align(16)
     backward_egg_projectile_struct:
     dw 0x00000000                           // unknown
-    dw EGG_ID                               // projectile id
+    dw Projectile.id.BANJO_EGG              // projectile id
     dw Character.BANJO_file_9_ptr           // address of Banjo's file 8 pointer
     dw 0x00000000                           // offset to hitbox
     dw 0x12470000                           // This determines z axis rotation? (samus is 1246)

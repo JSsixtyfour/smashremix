@@ -68,6 +68,9 @@ scope TimedStock {
         nop
 
         _stock:
+        OS.read_word(VsRemixMenu.vs_mode_flag, t6) // t6 = vs_mode_flag
+        lli     t7, VsRemixMenu.mode.TUG_OF_WAR
+        beq     t6, t7, _tug_of_war         // if Tug of War, use custom logic
         sll     v1, a0, 0x0002              // (original) v1 = offset = player * 4
         lui     t6, 0x8014                  // (original) t6 = address of ?
         addu    t6, t6, v1                  // (original) t6 = address of ? + offset
@@ -76,11 +79,12 @@ scope TimedStock {
         addu    t7, t7, a0                  // t7 = address of initial stock count
         lbu     t7, 0x0000(t7)              // t7 = initial stock count
         subu    v0, t7, t6                  // v0 = initial stock count - deaths
-
         addiu   v0, v0, 0x0001              // v0 = stocks remaining at end of match
+
         beqz    v0, _end                    // if no stocks remaining, skip adding damage/h.p.
         sll     v0, v0, 0x000C              // v0 = v0 << 0xC = v0 * 0x1000
 
+        _add_damage_to_score:
         li      t6, Global.vs.p1            // t6 = vs struct for p1
         lli     v1, Global.vs.P_DIFF        // v1 = Global.vs.P_DIFF
         multu   v1, a0                      // v1 = offset to px
@@ -90,15 +94,34 @@ scope TimedStock {
         b       _end
         subu    v0, v0, v1                  // v0 = score
 
+        _tug_of_war:
+        li      t6, Global.vs.p1            // t6 = vs struct for p1
+        lli     v1, Global.vs.P_DIFF        // v1 = Global.vs.P_DIFF
+        multu   v1, a0                      // v1 = offset to px
+        mflo    v1                          // ~
+        addu    t6, t6, v1                  // t6 = Global.vs.px
+        lbu     v0, 0x000B(t6)              // v0 = ending stocks, 0-based
+        addiu   v0, v0, 0x0001              // v0 = stocks remaining at end of match
+        sll     v0, v0, 0x0018              // v0 = v0 << 0x18 = v0 * 0x1000000
+        sll     v1, a0, 0x0002              // v1 = offset = player * 4
+        lui     t6, 0x8014                  // t6 = address of ?
+        addu    t6, t6, v1                  // t6 = address of ? + offset
+        lw      t7, 0x9B90(t6)              // t7 = deaths
+        lw      t6, 0x9B80(t6)              // t6 = KOs
+        subu    v1, t6, t7                  // v1 = score = KOs - deaths
+        sll     v1, v1, 0x000C              // v1 = v1 << 0x0x = v1 * 0x1000
+        b       _add_damage_to_score
+        addu    v0, v0, v1                  // v0 = score = remaining stocks * 0x1000000 + (KOs - deaths) * 0x1000
+
         _time:
-        sll     v1, a0, 0x0002              // (original) v1 = offset = player * 4
+        sll     v1, a0, 0x0002              // v1 = offset = player * 4
 
         // check mode
         OS.read_word(VsRemixMenu.vs_mode_flag, t6) // t6 = vs_mode_flag
         lli     t7, VsRemixMenu.mode.KOTH
         beq     t6, t7, _koth               // if King of the Hill, use custom logic
         lli     t7, VsRemixMenu.mode.SMASHKETBALL
-        beq     t6, t7, _smaskhetball       // if Smashketball, use custom logic
+        beq     t6, t7, _smashketball       // if Smashketball, use custom logic
         lui     t6, 0x8014                  // (original) t6 = address of ?
         addu    t6, t6, v1                  // (original) t6 = address of ? + offset
         lw      t7, 0x9B90(t6)              // (original) t7 = deaths
@@ -115,7 +138,7 @@ scope TimedStock {
         jr      ra
         lw      v0, 0x0000(t6)              // v0 = score = time on hill
 
-        _smaskhetball:
+        _smashketball:
         li      t6, Smashketball.winner_scores
         addu    t6, t6, v1                  // t6 = score address
         jr      ra

@@ -26,7 +26,9 @@ scope ZCancel {
             constant BURY(6)
             constant LAUGH_TRACK(7)
             constant EGG(8)
-            constant RANDOM(9)
+            constant SLEEP(9)
+            constant TRIP(10)
+            constant RANDOM(11)
         }
 
         OS.patch_start(0xCB488, 0x80150A48)
@@ -68,6 +70,8 @@ scope ZCancel {
         dw  _bury
         dw  _laugh
         dw  _egg
+        dw  _sleep
+        dw  _trip
         dw  _random
 
         _on:
@@ -186,6 +190,41 @@ scope ZCancel {
         b       _end                     // branch to end
         lw      t9, 0x0028(v1)           // original line 2
 
+        _trip:
+        lbu     at, 0x000D(v1)              // at = player index (0 - 3)
+        li      a1, Tripping.tripping.player_trip_flag
+        addu    a1, a1, at                  // a1 = address of trip flag for this player
+        sb      at, 0x0000(a1)              // at = clear trip flag (just in case)
+
+        addiu   a1, r0, 0x0008              // a1 = 8 frames (note: hitstun needs to be higher value than 'action frame' count)
+        sh      a1, 0x0B1A(v1)              // a1 = put player in hitstun
+
+        addiu   a1, r0, Action.DamageLow3   // a1 = DamageLow3 action (0x02D)
+        or      a2, r0, r0                  // a2(starting frame) = 0
+        lui     a3, 0x3F80                  // a3(frame speed multiplier) = 1.0
+        jal     0x800E6F24                  // change action
+        sw      r0, 0x0010(sp)              // argument 4 = 0
+
+        // play sound effect
+        jal     FGM.play_                   // play sfx
+        lli     a0, 0x0456                  // tripstart
+
+        lw      v1, 0x001C(sp)              // restore player struct
+        lbu     at, 0x000D(v1)              // at = player index (0 - 3)
+        li      t0, Tripping.tripping.player_trip_flag
+        addu    t0, t0, at                  // t0 = address of trip flag for this player
+        addiu   at, r0, 0x0001
+        sb      at, 0x0000(t0)              // at = update trip flag (true)
+
+        j       0x80150AF0 + 0x4            // and skip to end
+        lw      ra, 0x0014(sp)
+
+        _sleep:
+        jal     0x801499A4               // set fighter status to sleep
+        nop
+        j       0x80150AF0 + 0x4         // and skip to end
+        lw      ra, 0x0014(sp)
+
         _last_known_speed_value:
         dw 0
     }
@@ -248,11 +287,27 @@ scope ZCancel {
         nop
 
         _z_cancel_success:
+        li      at, VsStats.z_cancel_success_tracker
+        lbu     t6, 0x000D(v1)          // t6 = player index (0 - 3)
+        sll     t6, t6, 0x0002          // t6 = player index * 4
+        addu    at, at, t6              // at = address of successful z-cancels for this player
+        lw      t6, 0x0000(at)          // t6 = successful z-cancel count
+        addiu   t6, t6, 0x0001          // increment
+        sw      t6, 0x0000(at)          // store updated z-cancel count
+
         // bnezl   at, 0x80150AC0       // original line 1 (need to 'j' instead of 'b')
         j       0x80150AC0              // original line 1, modified
         lui     at, 0xC1A0              // original line 2
 
         _z_cancel_miss:
+        li      at, VsStats.z_cancel_miss_tracker
+        lbu     t6, 0x000D(v1)          // t6 = player index (0 - 3)
+        sll     t6, t6, 0x0002          // t6 = player index * 4
+        addu    at, at, t6              // at = address of missed z-cancels for this player
+        lw      t6, 0x0000(at)          // t6 = missed z-cancel count
+        addiu   t6, t6, 0x0001          // increment
+        sw      t6, 0x0000(at)          // store updated z-cancel count
+
         // check for 'Glide'
         li      t6, Toggles.entry_z_cancel_opts
         lw      t6, 0x0004(t6)          // t0 = 0 for DEFAULT, 1 for Disabled, 2 for Melee, 3 for Auto, 4 for Glide

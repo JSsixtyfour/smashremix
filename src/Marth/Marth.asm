@@ -553,4 +553,131 @@ scope Marth {
         j       0x8013DCCC                  // jump to Link's entry routine to load entry object
         nop
     }
+
+    scope recovery_logic: {
+        OS.routine_begin(0x20)
+        sw a0, 0x10(sp)
+
+        lw t0, 0x78(a0) // load location vector
+        lwc1 f2, 0x0(t0) // f2 = location X
+        lwc1 f4, 0x4(t0) // f4 = location Y
+
+        // check closest ledge in X
+        scope ledge_check: {
+            lwc1 f6, 0x01CC+0x4C(a0) // load nearest LEFT ledge X
+            lwc1 f8, 0x01CC+0x54(a0) // load nearest RIGHT ledge X
+
+            sub.s f6, f6, f2
+            abs.s f6, f6 // f6 = abs(distance) to left ledge
+
+            sub.s f8, f8, f2
+            abs.s f8, f8 // f8 = abs(distance) to right ledge
+
+            c.le.s f6, f8
+            nop
+            bc1f _right
+            nop
+
+            _left:
+            lwc1 f6, 0x01CC+0x4C(a0) // load nearest LEFT ledge X
+            lwc1 f8, 0x01CC+0x50(a0) // load nearest LEFT ledge Y
+            
+            b _check_end
+            nop
+
+            _right:
+            lwc1 f6, 0x01CC+0x54(a0) // load nearest RIGHT ledge X
+            lwc1 f8, 0x01CC+0x58(a0) // load nearest RIGHT ledge Y
+
+            _check_end:
+        }
+
+        sub.s f14, f6, f2 // f14 = x diff
+        sub.s f12, f8, f4 // f12 = y diff
+
+        // if currently doing NSP1, point to ledge
+        lw at, 0x24(a0) // at = action id
+        lli t0, Action.NSPA_1
+        beq at, t0, _nsp1
+        nop
+
+        mtc1 r0, f0 // guarantee f0 = 0
+
+        // skip if air speed is up (to not cut a jump short)
+        lwc1 f20, 0x004C(a0) // f20 = y speed
+        c.le.s f20, f0 // y speed < 0?
+        nop
+        bc1f _end // if so, skip
+        nop
+
+        // check if too close to use nsp
+        lui at, 0x447A
+        mtc1 at, f22 // f22 = 1000.0
+
+        abs.s f16, f14 // f16 = abs(x distance to ledge)
+
+        c.le.s f16, f22 // if distance to ledge is lower than 1000.0
+        nop
+        bc1t _end // do not go for NSP if already close to ledge
+        nop
+
+        // Check if X speed is not max. Skip when not at max air speed
+        lw t6, 0x9C8(a0) // t6 = attribute pointer
+        lwc1 f22, 0x50(t6) // f22 = max air speed X
+        lwc1 f24, 0x54(t6) // f24 = air friction
+        sub.s f22, f22, f24 // f22 = max air speed X - air friction
+        lwc1 f24, 0x48(a0) // f24 = X speed
+        abs.s f24, f24 // f24 = |X speed|
+
+        c.lt.s f24, f22 // if x speed < max x speed
+        nop
+        bc1t _end // skip
+        nop
+
+        // check if up high first
+        lui at, 0xC47A
+        mtc1 at, f22 // f22 = -1000.0
+
+        c.le.s f12, f22 // if 1000 units or more above ledge
+        nop
+        bc1t _nsp
+        nop
+
+        // check if not too low
+        lui at, 0x447A
+        mtc1 at, f22 // f22 = 1000.0
+
+        c.le.s f22, f12 // if at most 1000 units below ledge
+        nop
+        bc1f _nsp
+        nop
+
+        b _end // no conditions matched, skip
+        nop
+
+        _nsp:
+        swc1 f6, 0x01CC+0x60(a0) // save new target x = ledge x
+        swc1 f8, 0x01CC+0x64(a0) // save new target y = ledge y
+
+        jal 0x80132758 // execute AI command
+        lli a1, AI.ROUTINE.NSP_TOWARDS // arg1 = NSP
+
+        b _end
+        nop
+
+        _nsp1:
+        swc1 f6, 0x01CC+0x60(a0) // save new target x = ledge x
+        swc1 f8, 0x01CC+0x64(a0) // save new target y = ledge y
+
+        jal 0x80132758 // execute AI command
+        lli a1, AI.ROUTINE.POINT_STICK_TO_TARGET // arg1 = point to ledge
+
+        _end:
+        lw a0, 0x10(sp)
+        OS.routine_end(0x20)
+    }
+    Character.table_patch_start(recovery_logic, Character.id.MARTH, 0x4)
+    dw recovery_logic; OS.patch_end()
+    Character.table_patch_start(recovery_logic, Character.id.ROY, 0x4)
+    dw recovery_logic; OS.patch_end()
 }

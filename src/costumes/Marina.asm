@@ -20,8 +20,8 @@ scope marina_costumes {
     fill 4 + (NUM_PARTS - 1) * 8
 
     Costumes.define_part(1, 3, Costumes.part_type.PALETTE)                            // part 0x01_0 - Skirt
-    Costumes.add_part_image(1, 1, Costumes.part_type.PRIM_COLOR)                      // part 0x01_1 - Pelvis
-    Costumes.add_part_image(1, 2, Costumes.part_type.PRIM_COLOR)                      // part 0x01_2 - Skirt
+    Costumes.add_part_image(1, 1, Costumes.part_type.PRIM_COLOR)                      // part 0x01_1 - Pelvis (hi poly) / Skirt (lo poly)
+    Costumes.add_part_image(1, 2, Costumes.part_type.PRIM_COLOR)                      // part 0x01_2 - Skirt (hi poly)
     Costumes.define_part(2, 2, Costumes.part_type.PALETTE)                            // part 0x02_1 - Torso Armour
     Costumes.add_part_image(2, 1, Costumes.part_type.PRIM_COLOR)                      // part 0x02_2 - Torso
     Costumes.define_part(4, 3, Costumes.part_type.PALETTE)                            // part 0x04_0 - L Shoulder
@@ -88,6 +88,7 @@ scope marina_costumes {
 
 		Costumes.set_palette_for_part(0, 1, 0, palette_1)
         Costumes.set_prim_color_for_part(0, 1, 1, color_body)
+        Costumes.set_prim_color_for_part_lo(0, 1, 1, color_armour) // lo poly skirt
         Costumes.set_prim_color_for_part(0, 1, 2, color_armour)
 		Costumes.set_palette_for_part(0, 2, 0, palette_1)
         Costumes.set_prim_color_for_part(0, 2, 1, color_body)

@@ -229,9 +229,9 @@ scope AI {
         swc1 f6, 0x60(t0)
 
         _end:
-        lw t5,0x14c(s0) // original line 1
+        lw t5, 0x14c(s0) // original line 1
         j   _return
-        lw t0,0x44(sp) // original line 2
+        lw t0, 0x44(sp) // original line 2
     }
 
     // @ Description
@@ -592,11 +592,17 @@ scope AI {
         nop
 
         _fail:
-        move    a0, s0                      // a0 - player object
         jal     tech_fail_                  // don't tech
-        nop
+        move    a0, s0                      // a0 - player object
+
+        li      t0, VsStats.tech_miss_tracker
+        lbu     t2, 0x000D(s1)              // t2 = player index (0 - 3)
+        sll     t2, t2, 0x0002              // t2 = player index * 4
+        addu    t0, t0, t2                  // t0 = address of missed techs for this player
+        lw      t2, 0x0000(t0)              // t2 = missed tech count
+        addiu   t2, t2, 0x0001              // increment
         b       _end
-        nop
+        sw      t2, 0x0000(t0)              // store updated tech count
 
         _original:
         jal     tech_roll_og_               // original line 1
@@ -607,7 +613,7 @@ scope AI {
         move    a0, s0                      // original line 6
         bnezl   v0, _end                    // original line 7
         nop                                 // original line 8
-        jal     tech_fail_                  // original line 9
+        jal     _fail                       // original line 9, modified
         move    a0, s0                      // original line 10
         nop                                 // original line 11
 
@@ -879,6 +885,7 @@ scope AI {
         addiu   sp, sp, -0x18 // save variables
         sw      a0, 0x4(sp)
         sw      v0, 0x8(sp)
+        sw      v1, 0xC(sp)
 
         // if the cpu checks in all frames where it thinks it makes sense to charge
         // and we check for a single value to let it pass,
@@ -890,6 +897,7 @@ scope AI {
 
         lw      a0, 0x4(sp)
         lw      v0, 0x8(sp)
+        lw      v1, 0xC(sp)
         addiu   sp, sp, 0x18 // restore variables
 
         // if random returns anything other than 0, do not initiate charge
@@ -1028,6 +1036,12 @@ scope AI {
         nop
         OS.patch_end()
 
+        lli     at, Character.id.DONKEY
+        beq     v1, at, dk
+        nop
+        lli     at, Character.id.JDK
+        beq     v1, at, dk
+        nop
         lli     at, Character.id.DSAMUS
         beq     v1, at, dsamus
         nop
@@ -1039,6 +1053,10 @@ scope AI {
         nop
 
         b _check_giant_dk // no additional characters matched
+        nop
+
+        dk:
+        j       0x80136C0C+0x3C // DK's block
         nop
 
         dsamus:
@@ -1788,10 +1806,111 @@ scope AI {
     END();
     add_cpu_input_routine(NSP_TOWARDS)
 
+    FAIR:
+    UNPRESS_Z(); UNPRESS_A(); UNPRESS_B(); STICK_Y(0);
+    AI.STICK_X(0x83)
+    AI.PRESS_A(1)
+    AI.STICK_X(0x7F) // stick towards opponent
+    AI.UNPRESS_A(0)
+    END();
+    add_cpu_input_routine(FAIR)
+
+    BAIR:
+    UNPRESS_Z(); UNPRESS_A(); UNPRESS_B(); STICK_Y(0);
+    AI.STICK_X(0x84)
+    AI.PRESS_A(1)
+    AI.STICK_X(0x7F) // stick towards opponent
+    AI.UNPRESS_A(0)
+    END();
+    add_cpu_input_routine(BAIR)
+
+    DASH_GRAB:
+    UNPRESS_Z(); UNPRESS_A(); UNPRESS_B(); STICK_Y(0);
+    AI.STICK_X(0, 1) // reset stick x
+    AI.STICK_X(0x7F, 1) // dash towards opponent for 1f
+    CUSTOM(4); // wait for turnaround to finish if needed
+    AI.STICK_X(0x7F, 3) // dash towards opponent for more 3f (total: 4)
+    AI.PRESS_Z(0)
+    AI.PRESS_A(1) // press grab
+    AI.STICK_X(0)
+    AI.UNPRESS_Z(0)
+    AI.UNPRESS_A(0)
+    END();
+    add_cpu_input_routine(DASH_GRAB)
+
+    DASH_USMASH:
+    UNPRESS_Z(); UNPRESS_A(); UNPRESS_B(); STICK_Y(0);
+    AI.STICK_X(0, 1) // reset stick x
+    AI.STICK_X(0x7F, 1) // dash towards opponent for 1f
+    CUSTOM(4); // wait for turnaround to finish if needed
+    AI.STICK_X(0x7F, 3) // dash towards opponent for more 3f (total: 4)
+    CUSTOM(1) // press C
+    UNPRESS_A(1); // wait 1f
+    CUSTOM(2) // unpress C
+    AI.STICK_Y(0x78, 0) // stick up
+    AI.PRESS_A(1) // upsmash
+    AI.STICK_X(0)
+    AI.UNPRESS_Z(0)
+    AI.UNPRESS_A(0)
+    END();
+    add_cpu_input_routine(DASH_USMASH)
+
+    DASH_ATTACK:
+    UNPRESS_Z(); UNPRESS_A(); UNPRESS_B(); STICK_Y(0);
+    AI.STICK_X(0x7F, 5) // dash towards opponent for 5f
+    AI.PRESS_A(1) // dash attack
+    AI.STICK_Y(0)
+    AI.UNPRESS_A(0)
+    END();
+    add_cpu_input_routine(DASH_ATTACK)
+
+    USP_TOWARDS:
+    UNPRESS_Z(); UNPRESS_A(); UNPRESS_B();
+    AI.STICK_Y(0x78, 0) // stick up
+    AI.STICK_X(0x7F, 0) // stick X autofull towards target
+    AI.PRESS_B(1) // upB
+    AI.STICK_Y(0)
+    AI.STICK_X(0)
+    AI.UNPRESS_B(0)
+    END();
+    add_cpu_input_routine(USP_TOWARDS);
+
     POINT_STICK_TO_TARGET:
     CUSTOM(3);
     END();
     add_cpu_input_routine(POINT_STICK_TO_TARGET);
+
+    JUMPCANCEL_UPSMASH:
+    UNPRESS_Z(); UNPRESS_A(); UNPRESS_B(); STICK_Y(0);
+    CUSTOM(1) // press C
+    UNPRESS_A(1); // wait 1f
+    CUSTOM(2) // unpress C
+    AI.STICK_Y(0x78, 0) // stick up
+    AI.PRESS_A(1) // upsmash
+    AI.STICK_X(0)
+    AI.UNPRESS_Z(0)
+    AI.UNPRESS_A(0)
+    END();
+    add_cpu_input_routine(JUMPCANCEL_UPSMASH)
+
+    JUMPCANCEL_USP:
+    UNPRESS_Z(); UNPRESS_A(); UNPRESS_B(); STICK_Y(0);
+    CUSTOM(1) // press C
+    UNPRESS_B(1); // wait 1f
+    CUSTOM(2) // unpress C
+    AI.STICK_Y(0x78, 0) // stick up
+    AI.PRESS_B(1) // upB
+    AI.STICK_X(0)
+    AI.UNPRESS_Z(0)
+    AI.UNPRESS_B(0)
+    END();
+    add_cpu_input_routine(JUMPCANCEL_USP)
+
+    // Empty input to avoid getting inputs overriten
+    // Especially useful with recovery_logic functions
+    NULL:
+    END();
+    add_cpu_input_routine(NULL);
 
     // Training Spam Mode routines
 
@@ -2146,39 +2265,65 @@ scope AI {
         lli t2,0x82 // AUTOHALF_AWAY
         beq v1, t2, autohalf_away
         nop
+        lli t2,0x83 // FORWARDS (facing direction)
+        beq v1, t2, forwards
+        nop
+        lli t2,0x84 // BACKWARDS (opposite to facing direction)
+        beq v1, t2, backwards
+        nop
 
         b _original
         nop
 
         autofull_away: // 0x81
-        lw      t7, 0x8e8(a0) // fighter struct's joint 0 bone
-        lwc1    f4, 0x1c(t7) // player X
-        lwc1    f6, 0x60(t0) // target X
-        addiu   t8, r0, 0x50 // t8 = 80
-        c.lt.s  f4, f6 // player X < target X
-        nop
-        bc1fl   autofull_away_continue
-        nop
-        addiu   t8, r0, 0xFFB0 // t8 = -80
-        autofull_away_continue:
-        sb      t8,0x1c8(a0) // save cpu stick X
-        j 0x80131C68+0x8D4 // jump out of the switch like the other commands
-        addiu   a2,a2,1
+            lw      t7, 0x8e8(a0) // fighter struct's joint 0 bone
+            lwc1    f4, 0x1c(t7) // player X
+            lwc1    f6, 0x60(t0) // target X
+            addiu   t8, r0, 0x50 // t8 = 80
+            c.lt.s  f4, f6 // player X < target X
+            nop
+            bc1fl   autofull_away_continue
+            nop
+            addiu   t8, r0, 0xFFB0 // t8 = -80
+            autofull_away_continue:
+            sb      t8,0x1c8(a0) // save cpu stick X
+            j 0x80131C68+0x8D4 // jump out of the switch like the other commands
+            addiu   a2,a2,1
 
         autohalf_away: // 0x82
-        lw      t7, 0x8e8(a0) // fighter struct's joint 0 bone
-        lwc1    f4, 0x1c(t7) // player X
-        lwc1    f6, 0x60(t0) // target X
-        addiu   t8, r0, 0x28 // t8 = 40
-        c.lt.s  f4, f6 // player X < target X
-        nop
-        bc1fl   autohalf_away_continue
-        nop
-        addiu   t8, r0, 0xFFD8 // t8 = -40
-        autohalf_away_continue:
-        sb      t8,0x1c8(a0) // save cpu stick X
-        j 0x80131C68+0x8D4 // jump out of the switch like the other commands
-        addiu   a2,a2,1
+            lw      t7, 0x8e8(a0) // fighter struct's joint 0 bone
+            lwc1    f4, 0x1c(t7) // player X
+            lwc1    f6, 0x60(t0) // target X
+            addiu   t8, r0, 0x28 // t8 = 40
+            c.lt.s  f4, f6 // player X < target X
+            nop
+            bc1fl   autohalf_away_continue
+            nop
+            addiu   t8, r0, 0xFFD8 // t8 = -40
+            autohalf_away_continue:
+            sb      t8,0x1c8(a0) // save cpu stick X
+            j 0x80131C68+0x8D4 // jump out of the switch like the other commands
+            addiu   a2,a2,1
+
+        forwards: // 0x83
+            lw t7, 0x44(a0) // ft = facing direction
+            bgez t7, forwards_continue // if facing right, continue
+            addiu t8, r0, 0x50 // t8 = 80
+            addiu t8, r0, 0xFFB0 // t8 = -80
+            forwards_continue:
+            sb t8, 0x1c8(a0) // save cpu stick X
+            j 0x80131C68+0x8D4 // jump out of the switch like the other commands
+            addiu a2,a2,1
+
+        backwards: // 0x84
+            lw t7, 0x44(a0) // ft = facing direction
+            bgez t7, backwards_continue // if facing right, continue
+            addiu t8, r0, 0xFFB0 // t8 = -80
+            addiu t8, r0, 0x50 // t8 = 80
+            backwards_continue:
+            sb t8, 0x1c8(a0) // save cpu stick X
+            j 0x80131C68+0x8D4 // jump out of the switch like the other commands
+            addiu a2,a2,1
 
         _original:
         // original lines:
@@ -2241,6 +2386,7 @@ scope AI {
             constant index(3)
 
             lw t0, 0x78(a0) // load location vector
+            mtc1 r0, f0 // load zero into f0
             lwc1 f2, 0x0(t0) // f2 = location X
             lwc1 f4, 0x4(t0) // f4 = location Y
 
@@ -2255,31 +2401,36 @@ scope AI {
             sub.s f14, f8, f4 // dy = target_y - player_y
 
             // dx^2 + dy^2
-            mul.s f16, f12, f12
-            mul.s f18, f14, f14
-            add.s f20, f16, f18
+            mul.s f2, f12, f12
+            mul.s f4, f14, f14
+            add.s f6, f2, f4
 
             // if distance == 0, stick = (0, 0)
-            c.eq.s f20, f0
+            c.eq.s f6, f0
             bc1t _zero
             nop
 
             // magnitude = sqrt(dx^2 + dy^2)
-            sqrt.s f22, f20
+            sqrt.s f8, f6
+
+            // if magnitude == 0
+            c.eq.s f8, f0
+            bc1t _zero
+            nop
 
             // scale = max / magnitude
-            div.s f24, f10, f22
+            div.s f0, f10, f8
 
             // scaled dx/dy
-            mul.s f26, f12, f24
-            mul.s f28, f14, f24
+            mul.s f2, f12, f0
+            mul.s f4, f14, f0
 
             // convert to integers (truncate)
-            cvt.w.s f26, f26
-            cvt.w.s f28, f28
-            mfc1 at, f26
+            cvt.w.s f2, f2
+            cvt.w.s f4, f4
+            mfc1 at, f2
             sb at, 0x01C8(a0) // save CPU stick_x
-            mfc1 at, f28
+            mfc1 at, f4
             sb at, 0x01C9(a0) // save CPU stick_y
             j 0x8013253C          // back to original routine
             nop
@@ -2291,11 +2442,33 @@ scope AI {
             nop
         }
 
+        // halts commands from processing until out of turning animation
+        scope TURNAROUND_WAIT: {
+            constant index(4)
+            lw      t7, 0x0024(a0)          // t7 = current action
+            addiu   t6, r0, Action.Turn     // t6 = Action
+            beql    t6, t7, _turning        // branch if action matches
+            addiu   t6, r0, Action.TurnRun  // t6 = Action
+            beql    t6, t7, _turning        // branch if action matches
+            nop
+
+            _end:
+            j       0x8013253C          // back to original routine
+            nop
+
+            _turning:
+            addiu   at, r0, 0x0001      // a1 = 1
+            sh      at, 0x0006(t0)      // wait 1 frame
+            j       0x8013254C          // exit command processing
+            addiu   a2, a2, -0x0002     // read this command next frame
+        }
+
         table:                  // Command
         dw JUMPSQUAT_WAIT       // 0xFE00
         dw PRESS_C              // 0xFE01
         dw UNPRESS_C            // 0xFE02
         dw STICK_TO_TARGET      // 0xFE03
+        dw TURNAROUND_WAIT      // 0xFE04
 
         scope extend_routines: {
             OS.patch_start(0x1065BC, 0x8018BB7C)
@@ -2444,41 +2617,41 @@ scope AI {
 
     // hooks at LONG_RANGE.ROUTINE.NSP_SHOOT
     // prevents pikachu from using neutral B, can be added for other characters neutral B attacks
-    scope LVL_10_skip_shoot: {
-        OS.patch_start(0xB3764, 0x80138D24)
-        j       LVL_10_skip_shoot
-        nop
-        _return:
-        OS.patch_end();
+    // scope LVL_10_skip_shoot: {
+    //     OS.patch_start(0xB3764, 0x80138D24)
+    //     j       LVL_10_skip_shoot
+    //     nop
+    //     _return:
+    //     OS.patch_end();
 
-        // s0 = player struct
+    //     // s0 = player struct
 
-        lbu     t6, 0x0013(s0)              // t6 = cpu level
-        slti    t6, t6, 10                  // t6 = 0 if 10 or greater
-        bnez    t6, _shoot                  // branch if not level 10
-        lw      t6, 0x0008(s0)              // t6 = character/fighter id
+    //     lbu     t6, 0x0013(s0)              // t6 = cpu level
+    //     slti    t6, t6, 10                  // t6 = 0 if 10 or greater
+    //     bnez    t6, _shoot                  // branch if not level 10
+    //     lw      t6, 0x0008(s0)              // t6 = character/fighter id
 
-        // if here, level 10. check character id
-        addiu   at, r0, Character.id.PIKA   // at = pikas ID
-        beq     at, t6, _no_shoot           // branch if pika
-        addiu   at, r0, Character.id.EPIKA  // at = epikas ID
-        beq     at, t6, _no_shoot           // branch if epika
-        addiu   at, r0, Character.id.JPIKA  // at = jpikas ID
-        beq     at, t6, _no_shoot           // branch if jpika
-        nop
+    //     // if here, level 10. check character id
+    //     addiu   at, r0, Character.id.PIKA   // at = pikas ID
+    //     beq     at, t6, _no_shoot           // branch if pika
+    //     addiu   at, r0, Character.id.EPIKA  // at = epikas ID
+    //     beq     at, t6, _no_shoot           // branch if epika
+    //     addiu   at, r0, Character.id.JPIKA  // at = jpikas ID
+    //     beq     at, t6, _no_shoot           // branch if jpika
+    //     nop
 
-        b _shoot // by default, shoot as usual
-        nop
+    //     b _shoot // by default, shoot as usual
+    //     nop
 
-        _no_shoot:
-        j       LONG_RANGE.ROUTINE.NONE
-        nop
+    //     _no_shoot:
+    //     j       LONG_RANGE.ROUTINE.NONE
+    //     nop
 
-        _shoot:
-        lbu     t6, 0x0035(v1)          // og line 1
-        j       _return
-        addiu   t7, t6, 0x0001          // og line 2
-    }
+    //     _shoot:
+    //     lbu     t6, 0x0035(v1)          // og line 1
+    //     j       _return
+    //     addiu   t7, t6, 0x0001          // og line 2
+    // }
 
     // @ Description
     // Location of vanilla cpus attack arrays
@@ -3037,23 +3210,23 @@ scope AI {
 
             // @ Description
             // Prevents 10 pikas from using neutral special.
-            scope LVL_10_PREVENT_NSP: {
-                // t1 = current cpu attack command
-                addiu   at, r0, ATTACK_TABLE.NSPG.INPUT // at = special command input
-                bne     t1, at, _allow_attack       // allow the attack if it is not nsp
-                nop
-                lbu     at, 0x0013(s0)              // at = cpu level
-                slti    at, at, 10                  // at = 0 if 10 or greater
-                beqz    at, _prevent_nsp            // allow DSP if LVL 10
-                nop
-                _allow_attack:
-                j       0x80133520                  // jump to original routine
-                nop
+            // scope LVL_10_PREVENT_NSP: {
+            //     // t1 = current cpu attack command
+            //     addiu   at, r0, ATTACK_TABLE.NSPG.INPUT // at = special command input
+            //     bne     t1, at, _allow_attack       // allow the attack if it is not nsp
+            //     nop
+            //     lbu     at, 0x0013(s0)              // at = cpu level
+            //     slti    at, at, 10                  // at = 0 if 10 or greater
+            //     beqz    at, _prevent_nsp            // allow DSP if LVL 10
+            //     nop
+            //     _allow_attack:
+            //     j       0x80133520                  // jump to original routine
+            //     nop
 
-                _prevent_nsp:
-                j       0x80133A14                  // No DSP if < LVL 10
-                nop
-            }
+            //     _prevent_nsp:
+            //     j       0x80133A14                  // No DSP if < LVL 10
+            //     nop
+            // }
 
             // @ Description
             // Prevents 10 Fox from using up special offensively
@@ -3366,36 +3539,75 @@ scope AI {
     // Level 10 stuff
     // General LVL 10 AI hooks
     scope level_ten: {
+        // 80132EC8+274
+        // This allows us to have a unique attack table for lv10 CPUs. Could be expanded to other unique tables too.
+        // This is where it loads the entry in the table, so we can override the value or keep the original.
+        // The current goal here is to have custom attack config tables for Vanilla characters.
+        scope custom_attacks_table: {
+            OS.patch_start(0xADB7C, 0x8013313C)
+            j custom_attacks_table
+            // not editing line 2 because it collides with other patch
+            _return:
+            OS.patch_end()
+
+            // Check CPU level
+            lbu t9, 0x13(s0) // t9 = cpu level
+            addiu t9, t9, -10 // t9 = 0 if level 10
+            bnezl t9, _original // if not lv10, skip
+            nop
+
+            // check for entries in the lv10_ai_behaviour table
+            lw t9, 8(s0) // t9 = character id
+            sll t0, t9, 2 // 
+            li at, Character.lv10_ai_behaviour.table
+            addu t0, t0, at // t0 = entry
+            lw at, 0x0000(t0) // at = characters entry in jump table
+            beqz at, _original // skip if no entry
+            nop
+            or s2, r0, at // use address from custom table
+
+            _original:
+            beqz t7, _j_2A0 // original line 1: this is for a grounded/aerial check on the following lines
+            nop
+
+            _end:
+            j _return+0x4
+            nop            
+
+            _j_2A0:
+            j 0x80132EC8+0x2A0
+            nop
+        }
 
         // @ Description
         // Hook where jab subroutine checks if player has input a grab during frame 1-2 of jab
         scope auto_jab_grab_: {
             OS.patch_start(0xC48BC, 0x80149E7C)
             j       auto_jab_grab_
-            lb      t3, 0x0023(a0)                  // t3 = player type (0 = player, 1 = CPU)
+            lb      t7, 0x0023(a0)                  // t7 = player type (0 = player, 1 = CPU)
             OS.patch_end()
 
-            beqz    t3, _normal                     // branch if player type = player
-            lb      t3, 0x0013(a0)                  // t3 = cpu level
-            slti    t3, t3, 10                      // t3 = 0 if level 10 or above
-            bnez    t3, _normal
+            beqz    t7, _normal                     // branch if player type = player
+            lb      t7, 0x0013(a0)                  // t7 = cpu level
+            slti    t7, t7, 10                      // t7 = 0 if level 10 or above
+            bnez    t7, _normal
             nop
 
             // level 10
-            lw      t3, 0x001C(a0)                  // t3 = current frame
-            slti    t3, t3, 3                       // t3 = 0 if 3 or greater
+            lw      t7, 0x001C(a0)                  // t7 = current frame
+            slti    t7, t7, 3                       // t7 = 0 if 3 or greater
 
-            bnez    t3, _normal
+            bnez    t7, _normal
             nop
 
-            li      t3, Toggles.entry_single_button_mode
-            lw      t3, 0x0004(t3)                  // t3 = single_button_mode (0 if OFF, 1 if 'A', 2 if 'B', 3 if 'R', 4 if 'A+C', 5 if 'B+C', 6 if 'R+C')
-            beqz    t3, _auto_grab                  // branch if Single Button Mode is disabled
-            sltiu   t1, t3, 4                       // t1 = 0 if including 'C' button
+            li      t7, Toggles.entry_single_button_mode
+            lw      t7, 0x0004(t7)                  // t7 = single_button_mode (0 if OFF, 1 if 'A', 2 if 'B', 3 if 'R', 4 if 'A+C', 5 if 'B+C', 6 if 'R+C')
+            beqz    t7, _auto_grab                  // branch if Single Button Mode is disabled
+            sltiu   t1, t7, 4                       // t1 = 0 if including 'C' button
             beqzl   t1, pc() + 8                    // if so, subtract 3 to get corresponding main button value
-            addiu   t3, t3, -3                      // ~
+            addiu   t7, t7, -3                      // ~
             addiu   t1, r0, 0x0003                  // t1 = 3 ('R')
-            bne     t1, t3, _normal                 // don't have CPU auto grab if Single Button Mode 'A' or 'B'
+            bne     t1, t7, _normal                 // don't have CPU auto grab if Single Button Mode 'A' or 'B'
             nop
 
             _auto_grab:
@@ -3510,6 +3722,196 @@ scope AI {
             j       0x80137768          // original branch
             or      v0, r0, r0          // original branch line 2
 
+        }
+
+        // ftComputerProcessAll 8013A834+50
+        // This runs after ftComputerProcessTrait, ftComputerProcessBehavior, ftComputerProcessObjective
+        // and before ftComputerUpdateInputs
+        // which is all updates the CPU has in a frame
+        // This patch lets us add one more routine to the CPU processing
+        scope cpu_post_process: {
+            OS.patch_start(0xB52C4, 0x8013A884)
+            j cpu_post_process
+            nop
+            _return:
+            OS.patch_end()
+
+            jal 0x8013A38C
+            or a0, s0, s0 // a0 = player struct
+
+            // Make it so CPUs mash the start button when dead to respawn on team battles
+            scope _check_respawn: {
+                Toggles.read(entry_improved_ai, t0)
+                beqz t0, _end // skip if not enabled
+                nop
+
+                lw t0, 0x0024(s0) // t0 = current action
+
+                // check if dead: state = 4 (nFTCommonStatusSleep)
+                addiu t1, r0, 4 // t1 = 4
+                bne t0, t1, _end // branch if not dead
+                nop
+
+                // spam the start button to respawn
+                li t5, Global.current_screen_frame_count // ~
+                lw t5, 0x0000(t5) // t5 = global frame count
+                andi t5, t5, 0x0010 // every 16 frames
+                beqz t5, _start_mash_release
+                lh at, 0x01C6(s0) // at = buttons pressed
+                _start_mash_press:
+                b _dsp_mash_apply
+                ori at, at, Joypad.START // press START
+                _start_mash_release:
+                andi at, at, 0x0000 // release all buttons
+                _dsp_mash_apply:
+                sh at, 0x01C6(s0) // save button press mask
+
+                _end:
+            }
+
+            // if set to dash attack but can't initiate a dash, cancel the action
+            scope _check_if_dash_attack_input_is_possible: {
+                lw t0, 0x1D4(s0) // t0 = ft_com->p_command
+                li t1, AI.command_table // load command table base address
+
+                lw at, AI.ROUTINE.DASH_ATTACK << 2(t1)
+                beq t0, at, _dash_attacking
+                nop
+                b _end // exit if not going for dash attack
+                nop
+
+                _dash_attacking:
+                lw t0, 0x24(s0) // t0 = current action
+                addiu t1, r0, Action.Idle
+                beq t0, t1, _end // can dash attack from this state
+                addiu t1, r0, Action.Run
+                beq t0, t1, _end // can dash attack from this state
+                nop
+
+                _cannot_dash_attack:
+                jal 0x80132758 // execute AI command
+                lli a1, AI.ROUTINE.NULL // cancel action
+
+                _end:
+            }
+
+            // if set to usp or upsmash while dashing/running, do a jump-cancelled up special or up smash
+            scope _dash_usmash_usp: {
+                lbu at, 0x0013(s0) // at = cpu level
+                slti at, at, 10 // at = 0 if 10 or greater
+                bnez at, _end // skip if not lv10
+                nop
+                
+                lw t0, 0x24(s0) // t0 = current action
+                addiu t1, r0, Action.Dash // t1 = dash action
+                beq t0, t1, check_command
+                addiu t1, r0, Action.Run // t1 = run action
+                beq t0, t1, check_command
+                nop
+                bne t0, t1, _end // exit if not dashing or running
+                nop
+
+                check_command:
+                lw t0, 0x1D4(s0) // t0 = ft_com->p_command
+                li t1, AI.command_table // load command table base address
+
+                lw at, AI.ATTACK_TABLE.USMASH.INPUT << 2(t1)
+                beq t0, at, _dash_upsmash
+                lw at, AI.ATTACK_TABLE.USPG.INPUT << 2(t1)
+                beq t0, at, _dash_usp
+                nop
+                b _end // exit if not using upsmash or usp
+                nop
+
+                _dash_upsmash:
+                jal 0x80132758 // execute AI command
+                lli a1, AI.ROUTINE.JUMPCANCEL_UPSMASH // arg1
+                b _end
+                nop
+
+                _dash_usp:
+                jal 0x80132758 // execute AI command
+                lli a1, AI.ROUTINE.JUMPCANCEL_USP // arg1
+
+                _end:
+            }
+
+            scope _custom_usp_command: {
+                // if using USPA while offstage, change to USP_TOWARDS
+                lbu at, 0x0013(s0) // at = cpu level
+                slti at, at, 10 // at = 0 if 10 or greater
+                bnez at, _end // skip if not lv10
+                nop
+                
+                check_command:
+                lw t0, 0x1D4(s0) // t0 = ft_com->p_command
+                li t1, AI.command_table // load command table base address
+
+                lw at, AI.ATTACK_TABLE.USPA.INPUT << 2(t1)
+                beq t0, at, _custom_usp
+                nop
+                b _end // exit if not using upsmash or usp
+                nop
+
+                _custom_usp:
+                jal 0x80132758 // execute AI command
+                lli a1, AI.ROUTINE.USP_TOWARDS // arg1
+                b _end
+                nop
+
+                _end:
+            }
+
+            // Check for a post process function for this character ID
+            scope _post_process_function: {
+                // check for entries in the cpu_post_process table
+                lw t9, 8(s0) // t9 = character id
+                sll t0, t9, 2 // 
+                li at, Character.cpu_post_process.table
+                addu t0, t0, at // t0 = entry
+                lw at, 0x0000(t0) // at = characters entry in jump table
+
+                beqz at, _end // skip if no entry
+                nop
+
+                jalr at // jump to custom routine
+                or a0, s0, s0 // a0 = player struct
+
+                _end:
+            }
+
+            _end:
+            j _return
+            nop
+        }
+
+        // ftComputerProcessTrait 8013A63C+DC
+        // Here, from time to time the game does rand(3) and sets behavior to either default, unk2, ally, captain
+        // lv10 forces the result to 0 (default) so the objective keeps being "attack"
+        scope force_objective_attack: {
+            OS.patch_start(0xB5158, 0x8013A718)
+            j force_objective_attack
+            sh t9,0x14(v1) // original line 2
+            _return:
+            OS.patch_end()
+
+            lbu at, 0x0013(a0) // at = cpu level
+            slti at, at, 10 // at = 0 if 10 or greater
+            bnez at, _vanilla // branch if not lv10
+            nop
+
+            // level 10
+            or v0, r0, r0 // force 0
+            b _end
+            nop
+
+            _vanilla:
+            jal 0x80018910 // original line 1: get random short
+            nop
+        
+            _end:
+            j _return
+            nop
         }
 
         // // ftComputerProcessAll 8013A834+10
@@ -3768,6 +4170,34 @@ scope AI {
                         nop
                     }
 
+                    // check if there's ground below this ledge
+                    // if so, skip it
+                    _check_ground_below: {
+                        addiu sp, sp, -0x20
+
+                        // create a vec3 at 0x4(sp)
+                        // make it just below ledge pos
+                        swc1 f4, 0x4(sp) // x
+                        
+                        lui at, 0x4248 // at = 50.0
+                        mtc1 at, f20 // f20 = 50.0
+                        sub.s f20, f6, f20 // f20 = ledge.y - 50.0
+                        swc1 f20, 0x8(sp) // y
+
+                        sw r0, 0xC(sp) // z
+
+                        jal 0x800F8FFC // func_ovl2_800F8FFC(Vec3f *position) (check if there's ground below)
+                        addiu a0, sp, 0x4 // a0 = ledge pos vec3
+
+                        addiu sp, sp, 0x20
+                        lwc1 f0, {pos_x} // restore pos_x
+                        lwc1 f2, {pos_y} // restore pos_y
+                        lwc1 f4, 0x0(s2) // restore edge_pos.x
+                        lwc1 f6, 0x4(s2) // restore edge_pos.y
+                        bnez v0, _next_iter // if v0 != 0, there's ground below
+                        nop
+                    }
+
                     sub.s f8, f0, f4 // f8 = x distance
                     sub.s f10, f2, f6 // f10 = y distance
 
@@ -3918,9 +4348,23 @@ scope AI {
                 bnezl   t1, _original            // if not lv10, skip
                 nop
 
-                addiu   t0, s0, 0x1cc // t0 = ftcomputer struct
+                // if in special fall, we always go for the recovery logic
+                lw      t0, 0x0024(a0) // get current action
+                lli     t1, Action.FallSpecial
+                beq     t0, t1, _improved_logic
+                nop
+
+                // if all jumps used, also go for recovery logic
+                // a lot of times when USP is used the player loses all jumps
+                // so this helps them start looking for a place to land sooner
+                lw      t0, 0x9C8(a0)   // t0 = attribute pointer
+                lw      t0, 0x064(t0)   // t0 = max jumps
+                lb      t1, 0x148(a0)   // jumps used
+                bge     t1, t0, _improved_logic
+                nop
 
                 // t0 = cpu struct
+                addiu   t0, s0, 0x1cc // t0 = ftcomputer struct
                 // check if current behavior == nFTComputerObjectiveRecover
                 lbu     t2, 0(t0) // current behavior
                 lli     t1, 0x4 // nFTComputerObjectiveRecover
@@ -3937,6 +4381,7 @@ scope AI {
 
                 constant gMapEdgeBounds(0x80131308)
 
+                _improved_logic:
                 addiu   sp, sp, -0x30
 
                 define recovery_direction_int(0x4(sp))
@@ -4174,7 +4619,7 @@ scope AI {
                 bc1tl above_ledge // if true, above ledge
                 nop
 
-                below_ledge: {
+                scope below_ledge: {
                     _check_if_using_usp:
                     // if up special was used/is being used, we follow a different logic
                     lb t0, 0x1CC+0x49(a0) // t0 = com->is_attempt_specialhi_recovery
@@ -4188,30 +4633,21 @@ scope AI {
                         // and hope the stage has a wall we can slide up
                         // This covers cases where the character is under the stage, moving away to avoid a pineapple
                         // but they just have to upB at this point. So they would upB away from the stage and SD.
-                        lwc1    f6, 0x01CC+0x0060(a0) // target X (ledge X)
-                        lw      t1, 0x78(a0) // load location vector
-                        lwc1    f8, 0x0(t1) // f8 = location X
+                        lw t0, 0x44(a0) // facing direction
+                        lw t1, {recovery_direction_int}
 
-                        lui     at, 0x8000
-
-                        sub.s   f6, f6, f8 // f6 = ledge X - location X
-                        mfc1    t0, f6 // t0 = ledge X - location X
-                        and     t0, t0, at // t0 = sign(t0)
-
-                        mfc1    t1, f10 // t1 = recovery direction (float)
-                        and     t1, t1, at // t1 = sign(t1)
-
-                        bne     t0, t1, _end // If signs match, we're on the correct side. Do nothing special
+                        beq t0, t1, _end // if facing the ledge, just point to ledge
                         nop
 
                         // if not in the correct side, let's force the CPU to hold to the correct recovery direction
+                        // set ledge xy to player's xy + diagonal up and towards ledge
                         lw t1, 0x78(a0) // load location vector
                         lwc1 f8, 0x0(t1) // f8 = location X
-                        lui at, LEDGE_PADDING // load constant
+                        lui at, 0x447A // at = 1000.0
                         mtc1 at, f4 // f4 = constant
                         mul.s f4, f4, f10 // f4 = f4 * recovery direction
                         sub.s f8, f8, f4 // f8 = location - constant pointing to the ledge
-                        swc1 f8, 0x01CC+0x0060(a0) // target X = X - constant towards ledge
+                        swc1 f8, 0x01CC+0x0060(a0) // target X = our X - constant towards ledge
 
                         b _end // point towards ledge X, Y to avoid using it in the wrong way
                         nop
@@ -4284,7 +4720,31 @@ scope AI {
                     nop
                 }
 
-                above_ledge: {
+                scope above_ledge: {
+                    _check_if_using_usp:
+                    // if up special was used/is being used, we follow a different logic
+                    lb t0, 0x1CC+0x49(a0) // t0 = com->is_attempt_specialhi_recovery
+
+                    beqz t0, above_ledge_continue // if not using recovery move, skip
+                    nop
+
+                    _using_usp: {
+                        // in case we're using USP from above the ledge
+                        // let's point inwards towards the stage instead of the ledge itself
+                        // this helps characters like Fox to avoid SDing by pointing towards ledge and overshooting down
+                        lwc1 f6, 0x01CC+0x0060(a0) // f6 = target X (ledge X)
+                        lui at, LEDGE_PADDING
+                        mtc1 at, f4
+                        neg.s f4, f4 // invert direction
+                        mul.s f4, f10 // multiply by direction
+                        add.s f6, f6, f4 // add padding in X
+                        swc1 f6, 0x01CC+0x0060(a0) // save target X with inwards padding
+
+                        b _end // point towards ledge X, Y to avoid using it in the wrong way
+                        nop
+                    }
+
+                    above_ledge_continue:
                     lw t0, {ledge_grabbable} // t0 = ledge grabbable
                     beqz t0, above_ledge_facing_away // if not grabbable, consider ourselves facing away
                     nop
@@ -4315,10 +4775,10 @@ scope AI {
                     swc1 f6, 0x01CC+0x0064(a0) // target Y = ledge Y - ledge grab Y
 
                     // target X = ledge X (previously set already)
-
-                    _end:
-                    addiu sp, sp, 0x30
                 }
+                
+                _end:
+                addiu sp, sp, 0x30
 
                 _original:
                 lw t8,0x8e8(s0)
@@ -4345,17 +4805,50 @@ scope AI {
             // a0 = fighter struct
 
             // Check CPU level
-            lbu     t1, 0x0013(a0)           // t1 = cpu level
-            addiu   t1, t1, -10              // t1 = 0 if level 10
-            bnezl   t1, _original            // if not lv10, skip
+            lbu     t1, 0x0013(a0)  // t1 = cpu level
+            addiu   t1, t1, -10     // t1 = 0 if level 10
+            bnezl   t1, _original   // if not lv10, skip
             nop
 
-            j   0x80134E98+0x87C // skip fastfall
+            // there's this ft_com->ftcom_flags_0x4A_b0 variable that marks if the CPU already attempted to fastfall
+            // this is redundant and has a big issue: the CPU will mark it as 1 when it tries to fastfall during hitstun
+            // by setting it to 0, we make it so the CPU can try to fastfall again
+            lw t0, 0x44(sp)
+            lbu t6, 0x4a(t0)
+            andi t7, t6, 0xFF7F
+            sb t7, 0x4a(t0)
+
+            lw t1, 0x9C8(a0) // t1 = attribute pointer
+            lw t1, 0x064(t1) // t1 = max jumps
+            lb at, 0x148(a0) // jumps used
+            beq at, t1, _skip_fastfall // if jumps used = max jumps, we can't fastfall
+            nop
+
+            lw t1, 0x1CC+0x6C(a0) // opponent struct
+            beqz t1, _original // if there's no opponent, we can fastfall
+            addiu at, r0, -1 // at = 0xFFFFFFF
+            lw t1, 0xEC(t1) // get current clipping below opponent
+            beq at, t1, _skip_fastfall // opponent is offstage if clipping below is -1, don't fastfall
+            nop
+
+            lwc1 f2, 0xF0(a0) // f2 = distance to platform directly under character (negative if above ground)
+            lui at, 0xC4FA // ~
+            mtc1 at, f4 // f4 = -2000.0
+            c.lt.s f2, f4 // if distance > 2000.0
+            nop
+            bc1fl _skip_fastfall // do not fastfall if very close to the ground, like on a shorthop
+            nop
+
+            b _original // all tests passed
+            nop
+
+            _skip_fastfall:
+            j 0x80134E98+0x87C // skip fastfall
             nop
 
             _original:
-            jal     0x80132564 // ftComputerSetCommandWait
-            lli     a1, 0x27 // fastfall command
+            jal 0x80132564 // ftComputerSetCommandWait
+            lli a1, 0x27 // fastfall command
 
             j   _return
             nop
@@ -4520,6 +5013,12 @@ scope AI {
 
             sub.s   f4, f4, f6 // f4 = my Y - target Y in the next frame
 
+            lui     at, 0x4396 // 300.0
+            mtc1    at, f2     // move to f2
+            c.le.s  f4, f2     // true if Y diff < constant
+            nop
+            bc1tl   diff_very_low
+            nop
             lui     at, 0x4416 // 600.0
             mtc1    at, f2     // move to f2
             c.le.s  f4, f2     // true if Y diff < constant
@@ -4534,6 +5033,10 @@ scope AI {
             nop
             b diff_high
             nop
+
+            diff_very_low:
+            b _end
+            lli     a1, AI.ROUTINE.MOVE
 
             diff_low:
             b _end
@@ -4578,7 +5081,7 @@ scope AI {
                 sw      ra, 0xC(sp)
 
                 jal     Global.get_random_int_      // v0 = (random value)
-                lli     a0, 0x78                    // a0 = random max = 120
+                lli     a0, 200                    // a0 = random max = 200
 
                 or      t0, r0, v0  // t0 = random result
 
@@ -4628,33 +5131,906 @@ scope AI {
             }
         }
 
-        // ftComputerCheckFindTarget 801392C8+A0
+        // ftComputerFollowObjectiveAttack 801392C8+AC
         scope extend_attack_check_range: {
-            OS.patch_start(0xB3DA8, 0x80139368)
-            j       extend_attack_check_range
+            OS.patch_start(0xB3DB4, 0x80139374)
+            j extend_attack_check_range
+            lwc1 f4, 0x68(v1) // original line 1: load distance to target to f4
+            _return:
+            OS.patch_end()
+
+            // Check CPU level
+            lbu at, 0x0013(a0) // t0 = cpu level
+            addiu at, at, -10 // t0 = 0 if level 10
+            bnez at, _end // if lv != 10, go with original range
+            nop
+
+            lui at, 0x44FA // load constant
+            mtc1 at, f10 // f10 = 2000.0
+
+            _end:
+            j _return
+            add.s f16, f8, f10 // original line 2: cpu "view" range = ((random * 300.0F)(f8) + 1200.0F(f10))) 
+        }
+
+        // ftComputerFollowObjectiveAttack 801397F4+AC
+        scope extend_attack_check_range_2: {
+            OS.patch_start(0xB42E0, 0x801398A0)
+            j extend_attack_check_range_2
+            lwc1 f4, 0x68(v1) // original line 1: load distance to target to f4
+            _return:
+            OS.patch_end()
+
+            // Check CPU level
+            lbu at, 0x0013(a0) // t0 = cpu level
+            addiu at, at, -10 // t0 = 0 if level 10
+            bnez at, _end // if lv != 10, go with original range
+            nop
+
+            lui at, 0x44FA // load constant
+            mtc1 at, f10 // f10 = 2000.0
+
+            _end:
+            j _return
+            add.s f16, f8, f10 // original line 2: cpu "view" range = ((random * 300.0F)(f8) + 1200.0F(f10))) 
+        }
+
+        // 80132EC8+2BC
+        // Vanilla does some weird decisions when predicting the opponent's position based on their movement
+        // In X, it uses the current facing direction when it doesn't affect the opponent's trajectory
+        // In Y, it uses gravity for the opponent even when grounded, which might even be why the CPU loves down smash so much
+        scope fix_movement_prediction: {
+            OS.patch_start(0xADBC4, 0x80133184)
+            j fix_movement_prediction
+            mtc1 a0, f4 // original line 1: a0 = hit_frame (int)
+            _return:
+            OS.patch_end()
+
+            // can't use t1!
+
+            // Check CPU level
+            lbu t0, 0x0013(s0) // t0 = cpu level
+            addiu t0, t0, -10 // t0 = 0 if level 10
+            beqz t0, _fixed // if lv10, perform fixed logic
+            nop
+
+            _vanilla:
+            j _return
+            lwc1 f10, 0x18c(sp) // original line 2: f10 = target_vel_x
+
+            _fixed:
+            // When dashing or running, ignore any attack options that are not: dash attack, grab, upsmash, nsp, usp
+            scope check_skip_move: {
+                lw at, 0x24(s0) // at = current action
+                lli t0, Action.Dash
+                beq at, t0, _running
+                lli t0, Action.Run
+                beq at, t0, _running
+                lli t0, Action.RunBrake
+                beq at, t0, _running
+                nop
+                b _continue_move // not running
+                nop
+
+                _running:
+                lw at, 0(s2) // at = input command we're considering here
+
+                // check if we're checking an input that can be executed out of a run
+                lli t0, AI.ATTACK_TABLE.GRAB.INPUT
+                beq at, t0, _continue_move
+                lli t0, AI.ATTACK_TABLE.USMASH.INPUT
+                beq at, t0, _continue_move
+                lli t0, AI.ATTACK_TABLE.USPG.INPUT
+                beq at, t0, _continue_move
+                lli t0, AI.ATTACK_TABLE.NSPG.INPUT
+                beq at, t0, _continue_move
+                lli t0, AI.ROUTINE.DASH_ATTACK
+                beq at, t0, _continue_move
+                nop
+
+                // if we're running and the current action is not possible out of a dash/run,
+                // do not consider this action
+                _skip_move:
+                lw a0, 4(s2)
+                j 0x80132EC8+0xB50
+                nop
+
+                _continue_move:
+            }
+            // Should save predicted pos at x=170(sp) y=16C(sp)
+            scope x: {
+                // vanilla predict_pos_x = ((target_pos_x + (target_vel_x * comattack->hit_start_frame)) - (this_pos_x + (this_vel_x * comattack->hit_start_frame)))
+                // here we're considering us doing an attack and the opponent just doing what they're currently doing
+                // so for us, if we're grounded we consider ground friction will be active while we perform our move
+                // for the opponent, we keep the simple vanilla approach and just project their movement based on current speed
+                cvt.s.w f2, f4 // f2 = hit_frame (float)
+                
+                scope predict_my_x: {
+                    lwc1 f18, 0x1ac(sp) // f18 = this_pos_x
+                    lwc1 f4, 0x1a4(sp) // f4 = this_vel_x
+
+                    mtc1 r0, f0 // ensure f0 = 0.0
+
+                    c.eq.s f4, f0
+                    nop
+                    bc1t _end // if xspeed = 0, skip calculations
+                    nop
+
+                    lw at, 0x14c(s0) // at = grounded status
+                    bnez at, _calc_pos // if aerial, set friction to 0
+                    mtc1 r0, f10 // f10 = friction = 0
+
+                    _get_friction:
+                    lw t3, 0xF4(s0) // t3 = ground friction
+                    li at, 0xFFFF00FF // at = filter for ground type
+                    and at, t3, at // at = ground type
+                    sll at, at, 0x2 // at = at * 4
+                    li t3, Surface.friction_table // t3 = Remix version of dMPCollisionMaterialFrictions
+                    addu t3, at, t3 // t3 = address of the current ground's friction
+                    lwc1 f16, 0x0(t3) // f16 = ground friction
+
+                    lw at, 0x9C8(s0) // at = attributes pointer
+                    lwc1 f20, 0x24(at) // f20 = character friction
+
+                    mul.s f10, f16, f20 // f10 = friction = (ground friction * character friction)
+
+                    _calc_pos:
+                    or at, r0, a0 // at = hit_frame (int)
+                    
+                    _loop_start: {
+                        // if at <= 0, end loop
+                        blez at, _loop_end
+                        nop
+                        add.s f18, f18, f4 // f18 = this_pos_x += this_vel_x
+
+                        // decrease speed by friction, check if became zero/crossed over
+                        c.le.s f4, f0
+                        nop
+                        bc1t _negative_speed
+                        nop
+                        _positive_speed:
+                        sub.s f4, f4, f10 // speed -= friction
+                        c.le.s f4, f0 // check if speed crossed over zero
+                        nop
+                        bc1t _loop_end
+                        nop
+                        b _friction_applied
+                        nop
+
+                        _negative_speed:
+                        add.s f4, f4, f10 // speed += friction
+                        c.le.s f0, f4 // check if speed crossed over zero
+                        nop
+                        bc1t _loop_end
+                        nop
+                        _friction_applied:
+
+                        _continue_loop:
+                        addiu at, at, -1 // hit_frame-=1
+                        b _loop_start
+                        nop
+                    }
+                    _loop_end:
+                    _end:
+                }
+
+                lwc1 f10, 0x18c(sp) // f10 = target_vel_x
+                lwc1 f16, 0x194(sp) // f16 = target_pos_x
+                mul.s f6, f2, f10 // f6 = hit_frame * target_vel_x
+                add.s f8, f16, f6 // f8 = target_pos_x + (target_vel_x * hit_frame)
+
+                sub.s f16, f8, f18 // f16 = ((target_pos_x + (target_vel_x * hit_frame)) - (this_pos_x)
+                swc1 f16, 0x170(sp) // save final predicted X
+            }
+            scope y: {
+                scope predict_my_y: {
+                    // if grounded, skip calculations and return our current Y pos as predicted Y
+                    lw at, 0x14c(s0)
+                    beqz at, _end
+                    lwc1 f0, 0x1a8(sp) // f0 = this_pos_y = current y
+
+                    // calculate predicted Y based on gravity and velocity
+                    or at, r0, a0 // at = hit_frame (int)
+                    lwc1 f0, 0x1a8(sp) // f0 = this_pos_y
+                    lwc1 f16, 0x1a0(sp) // f16 = this_vel_y
+                    lwc1 f4, 0x198(sp) // f4 = this_gravity
+                    lwc1 f6, 0x19c(sp) // f6 = this_max_fall_speed (negative)
+                    lwc1 f8, 0xF0(s0) // f8 = distance to platform directly under character (negative if above ground)
+                    mtc1 r0, f10 // f10 = 0
+                    add.s f18, f0, f8 // f18 = ground Y
+                    lw t2, 0xEC(s0) // t2 = current clipping below player (-1 if offstage)
+
+                    _loop_start: {
+                        // if at <= 0, end loop
+                        blez at, _loop_end
+                        nop
+                        add.s f0, f0, f16 // f0 = this_pos_y += this_vel_y
+                        sub.s f8, f8, f16 // f8 = distance to ground -= this_vel_y (this distance is negative)
+
+                        // if distance from ground >= 0, we'd be grounded, so end loop
+                        _ground_check:
+                        bltz t2, _ground_check_end // if there's no ground below, skip this check
+                        nop
+                        c.le.s f10, f8
+                        nop
+                        bc1tl _loop_end
+                        mov.s f0, f18 // final pos y = ground y
+                        _ground_check_end:
+
+                        sub.s f16, f16, f4 // this_vel_y -= this_gravity
+                        // if this_vel_y > this_max_fall_speed, this_vel_y = this_max_fall_speed
+                        c.le.s f16, f6
+                        nop
+                        bc1f _continue_loop
+                        nop
+                        _cap_fall_speed:
+                        mov.s f16, f6 // this_vel_y = this_max_fall_speed
+                        _continue_loop:
+                        addiu at, at, -1 // hit_frame-=1
+                        b _loop_start
+                        nop
+                    }
+                    _loop_end:
+
+                    _end:
+                }
+
+                scope predict_other_y: {
+                    // if grounded, skip calculations and return their current Y pos as predicted Y
+                    lw t0, 0x1b0(sp) // t0 = other struct
+                    lw at, 0x14c(t0)
+                    beqz at, _end
+                    lwc1 f4, 0x190(sp) // f4 = target_pos_y = current y
+
+                    // calculate predicted Y based on gravity and velocity
+                    or at, r0, a0 // at = hit_frame (int)
+                    lwc1 f4, 0x190(sp) // f4 = target_pos_y
+                    lwc1 f16, 0x188(sp) // f16 = target_vel_y
+                    lwc1 f12, 0x180(sp) // f12 = target_gravity
+                    lwc1 f6, 0x184(sp) // f6 = target_max_fall_speed (negative)
+                    lwc1 f8, 0xF0(t0) // f8 = distance to platform directly under character (negative if above ground)
+                    mtc1 r0, f10 // f10 = 0
+                    add.s f18, f4, f8 // f18 = ground Y
+                    lw t2, 0xEC(t0) // t2 = current clipping below player (-1 if offstage)
+
+                    _loop_start: {
+                        // if at <= 0, end loop
+                        blez at, _loop_end
+                        nop
+                        add.s f4, f4, f16 // f4 = target_pos_y += target_vel_y
+                        sub.s f8, f8, f16 // f8 = distance to ground -= target_vel_y (this distance is negative)
+
+                        // if distance from ground >= 0, we'd be grounded, so end loop
+                        _ground_check:
+                        bltz t2, _ground_check_end // if there's no ground below, skip this check
+                        nop
+                        c.le.s f10, f8
+                        nop
+                        bc1tl _loop_end
+                        mov.s f4, f18 // final pos y = ground y
+                        _ground_check_end:
+
+                        sub.s f16, f16, f12 // target_vel_y -= target_gravity
+                        // if target_vel_y > target_max_fall_speed, target_vel_y = target_max_fall_speed
+                        c.le.s f16, f6
+                        nop
+                        bc1f _continue_loop
+                        nop
+                        _cap_fall_speed:
+                        mov.s f16, f6 // target_vel_y = target_max_fall_speed
+                        _continue_loop:
+                        addiu at, at, -1 // hit_frame-=1
+                        b _loop_start
+                        nop
+                    }
+                    _loop_end:
+
+                    _end:
+                }
+
+                sub.s f6, f4, f0 // f6 = predict_pos_y
+                swc1 f6, 0x16c(sp)
+            }
+
+            lw a1, 0x8(s0) // a1 = input command
+            lw a3,0x44(s0) // a3 = facing direction
+            lw a0, 4(s2)
+            j 0x80132EC8+0x534 // skip original logic
+            or t2, r0, r0 // is_attempt_cliffcatch = FALSE;
+        }
+
+        // CPUs will wait to be in nFTCommonStatusFall when using multiple double jumps,
+        // resulting in them falling more than necessary and SDing
+        // here we add a check if the current update function is ftCommonJumpAerialProcUpdate (used for any kind of aerial jump)
+        // Here, we're below ledge and want to see if we can try jumping again
+        // 80134E98 + 6B8
+        scope fix_multi_doublejump_usage: {
+            OS.patch_start(0xAFF90, 0x80135550)
+            j fix_multi_doublejump_usage
             nop
             _return:
             OS.patch_end()
 
             // Check CPU level
-            lbu     at, 0x0013(a0)           // t0 = cpu level
-            addiu   at, at, -10              // t0 = 0 if level 10
-            beqz    at, _extended_range      // if lv = 10, set custom range
+            lbu t1, 0x0013(s0) // t1 = cpu level
+            addiu t1, t1, -10 // t1 = 0 if level 10
+            bnez t1, _original // if not lv10, perform original logic
             nop
 
-            // level != 10, use original range
-            _original_range:
-            b       _end
-            lui     at, 0x4496 // original line 1: at = 1200.0
+            _lv10:
+            li t1, 0x8013FB00 // ftCommonJumpAerialProcUpdate
+            lw at, 0x9D4(s0) // at = current proc_update function
+            beq t1, at, _b_6c0 // ok to jump
+            lli at, 0x3A // original line 0: ftStatus_Common_FallSpecial
 
-            _extended_range:
-            b       _end
-            lui     at, 0x453b // at = ~3000.0 (2992.0)
+            _original:
+            bnel v0, at, _b_6d4 // original line 1: fp->status_info.status_id == ftStatus_Common_FallSpecial
+            lbu t8, 0x0(t0) // original line 2
 
             _end:
-            mtc1    at, f10 // original line 2: move at to f10 as fixed range (to be summed to random(300))
             j       _return
             nop
+
+            _b_6d4:
+            // skip jump
+            j 0x80134E98+0x6D4
+            nop
+
+            _b_6c0:
+            // jump
+            j 0x80134E98+0x6C0
+            nop
+        }
+
+        // 80132EC8+8BC
+        scope weight_attack_options: {
+            OS.patch_start(0xAE1C4, 0x80133784)
+            j weight_attack_options
+            nop
+            _return:
+            OS.patch_end()
+
+            lw t7, 0x0000(s2) // original line 1
+            sll a0, s1, 0x2 // original line 2
+
+            // Check CPU level
+            lbu t0, 0x0013(s0) // t0 = cpu level
+            addiu t0, t0, -10 // t0 = 0 if level 10
+            bnez t0, _end // if not lv10, perform original logic
+            nop
+            
+            addu t9, sp, a0
+            sw t7, 0x10C(t9) // save input type to this slot
+
+            // s2 = current input config
+            // 0xBC(sp+a0) = address for chance
+
+            addu t0, sp, a0 // t0 = chance address
+            lui at, 0x3F80
+            sw at, 0xBC(t0) // initial chance = 1.0
+
+            lw t4, 0x1CC+0x6C(s0) // opponent struct
+            beqz t4, _b_b4c
+            nop
+
+            scope _check_landing: {
+                // if we're going to land before the move comes out, do not go for it
+                lw t2, 0xEC(s0) // t2 = current clipping below player (-1 if offstage)
+                bltz t2, _end // if no ground below, skip check
+                nop
+
+                lw at, 0x14c(s0) // if grounded, skip checks
+                beqz at, _end
+                nop
+
+                // calculate predicted Y based on gravity and velocity
+                lw at, 0x4(s2) // at = move start frame
+                lwc1 f0, 0x1a8(sp) // f0 = this_pos_y
+                lwc1 f16, 0x1a0(sp) // f16 = this_vel_y
+                lwc1 f4, 0x198(sp) // f4 = this_gravity
+                lwc1 f6, 0x19c(sp) // f6 = this_max_fall_speed (negative)
+                lwc1 f8, 0xF0(s0) // f8 = distance to platform directly under character (negative if above ground)
+                mtc1 r0, f10 // f10 = 0
+
+                _loop_start: {
+                    // if at <= 0, end loop
+                    blez at, _not_landing
+                    nop
+                    add.s f0, f0, f16 // f0 = this_pos_y += this_vel_y
+                    sub.s f8, f8, f16 // f8 = distance to ground -= this_vel_y (this distance is negative)
+
+                    // if distance from ground >= 0, we'd be grounded, so end loop
+                    _ground_check:
+                    c.le.s f10, f8
+                    nop
+                    bc1f _ground_check_end
+                    nop
+                    b _landing // we're going to land before the move comes out
+                    nop
+                    _ground_check_end:
+
+                    sub.s f16, f16, f4 // this_vel_y -= this_gravity
+                    // if this_vel_y > this_max_fall_speed, this_vel_y = this_max_fall_speed
+                    c.le.s f16, f6
+                    nop
+                    bc1f _continue_loop
+                    nop
+                    _cap_fall_speed:
+                    mov.s f16, f6 // this_vel_y = this_max_fall_speed
+                    _continue_loop:
+                    addiu at, at, -1 // hit_frame-=1
+                    b _loop_start
+                    nop
+                }
+                _landing:
+                sw r0, 0xBC(t0) // discard this move
+
+                _not_landing:
+                _end:
+            }
+
+            scope _check_combo: {
+                // only check if the opponent is in hitstun
+                lw t6, 0x18c(t4) // fp->is_hitstun (and other flags)
+                andi t6, t6, 0x1 // get is_hitstun bit
+                beqz t6, _not_combo
+                nop
+
+                lw t2, 0xB18(t4) // t2 = opponent's hitstun timer
+
+                scope _check_opponent_landing: {
+                    // if the opponent is in tumble and going to land, consider it a dropped combo
+                    // if grounded, skip calculations and return their current Y pos as predicted Y
+                    or v0, r0, r0 // v0 = in how many frames the opponent will land
+
+                    lw at, 0xEC(t4) // at = current clipping below player (-1 if offstage)
+                    bltz at, _end // if there's no ground below, skip this check
+                    nop
+
+                    lw at, 0x14c(t4) // if grounded, skip checks
+                    beqz at, _end
+                    nop
+
+                    // only check if the opponent will have a chance to tech
+                    lw t6, 0x24(t4) // opponent's current action
+                    sltiu at, t6, Action.DamageFlyHigh // at = 1 if next action < DamageFlyHigh
+                    bnez at, _end // skip if next action is below ground teching range
+                    sltiu at, t6, Action.Tumble + 1 // at = 1 if next action =< Tumble
+                    beqz at, _end // skip if next action is not within ground teching range
+                    nop
+
+                    // calculate predicted Y based on gravity and velocity
+                    lw at, 0x4(s2) // at = move start frame
+                    lwc1 f4, 0x190(sp) // f4 = target_pos_y
+                    lwc1 f16, 0x188(sp) // f16 = target_vel_y
+                    lwc1 f12, 0x180(sp) // f12 = target_gravity
+                    lwc1 f6, 0x184(sp) // f6 = target_max_fall_speed (negative)
+                    lwc1 f8, 0xF0(t4) // f8 = distance to platform directly under character (negative if above ground)
+                    mtc1 r0, f10 // f10 = 0
+
+                    _loop_start: {
+                        // if at <= 0, end loop
+                        blez at, _not_landing
+                        nop
+                        // if hitstun would end before landing, skip
+                        beq v0, t2, _end
+                        nop
+
+                        add.s f4, f4, f16 // f4 = target_pos_y += target_vel_y
+                        sub.s f8, f8, f16 // f8 = distance to ground -= target_vel_y (this distance is negative)
+
+                        // if distance from ground >= 0, we'd be grounded, so end loop
+                        _ground_check:
+                        c.le.s f10, f8
+                        nop
+                        bc1f _ground_check_end
+                        nop
+                        b _landing // they're going to land before the move comes out
+                        nop
+                        _ground_check_end:
+
+                        sub.s f16, f16, f12 // target_vel_y -= target_gravity
+                        // if target_vel_y > target_max_fall_speed, target_vel_y = target_max_fall_speed
+                        c.le.s f16, f6
+                        nop
+                        bc1f _continue_loop
+                        nop
+                        _cap_fall_speed:
+                        mov.s f16, f6 // target_vel_y = target_max_fall_speed
+                        _continue_loop:
+                        addiu at, at, -1 // hit_frame-=1
+                        addiu v0, v0, 0x1 // frames until landing += 1
+                        b _loop_start
+                        nop
+                    }
+                    _landing:
+                    // if the opponent is in a damage animation that leads to tech
+                    // and will land during this hitstun time,
+                    // consider the time to land as the true hitstun
+                    addiu t2, v0, -1 // t2 = opponent's hitstun timer->frames until landing - 1
+
+                    _not_landing:
+                    _end:
+                }
+
+                lw t1, 0x4(s2) // t1 = move start frame
+                addiu t2, t2, 0x2 // give a 2 frame window for almost combos
+                ble t1, t2, _combo // if the move will combo
+                nop
+
+                // check for true block strings
+                lw t2, 0x24(t4) // t2 = target action
+                addiu at, r0, Action.ShieldStun
+                beq t2, at, _opponent_shielding
+                nop
+
+                b _not_combo // not shielding
+                nop
+
+                _opponent_shielding:
+                lwc1 f2, 0xb34(t4) // f2 = opponent's shieldstun timing (float)
+                trunc.w.s f2, f2
+                mfc1 t2, f2
+                ble t1, t2, _combo // if the move will hit before they can release it
+                nop
+                b _not_combo
+                nop
+
+                _combo:
+                // if the move will combo but we'll have plenty hitstun remaining, opt to not go for it sometimes
+                // trying to get the cpu to use the hitstun duration better for positioning and go for better combos
+                // instead of picking the first option that becomes available
+                lw t1, 0x4(s2) // t1 = move start frame
+                lw t2, 0x40(t4) // t2 = opponent's hitstun timer
+                subu t2, t2, t1 // t2 = hitstun diff
+                lli t1, 0x2 // if the move will hit with less than 2 frames remaining, I'll let you just go for it
+                blt t2, t1, _combo_continue
+                nop
+
+                addiu sp, sp, -0x18 // save registers
+                sw a0, 0x4(sp)
+                sw v0, 0x8(sp)
+                sw v1, 0xC(sp)
+                jal Global.get_random_int_  // v0 = (random value)
+                or a0, r0, t2 // rand(hitstun_diff) - the bigger the remaining difference, less likely to go for it
+                or at, r0, v0 // move rand result to at
+                lw a0, 0x4(sp)
+                lw v0, 0x8(sp)
+                lw v1, 0xC(sp)
+                addiu sp, sp, 0x18 // restore registers
+                bnez at, _zero_odds
+                nop
+
+                _combo_continue:
+                // if the move will combo, increase odds of using it
+                lui at, 0x447A //
+                mtc1 at, f4 // f4 = 1000.0
+
+                lwc1 f8, 0xBC(t0) // f8 = current value for detect_ranges_x (chance of using this move)
+                mul.s f4, f4, f8 // f4 = chance * multiplier
+                swc1 f4, 0xBC(t0) // save new chance
+
+                b _end
+                nop
+
+                _zero_odds:
+                b _end
+                sw r0, 0xBC(t0) // discard this move
+
+                _not_combo:
+                // If the move we're looking at will not combo
+                // We check for its starting frame
+                // A lot of times these slow moves are the first ones that get considered by the CPU
+                // For example: if they jump towards the opponent, at a long distance they think "my 40f move will hit if I start it now"
+                // So we decrease the odds these moves are even considered
+                // With that, it gives the character a chance to move closer to the opponent and open up for other quick options instead
+                // If it's part of a combo, we don't get here and just let it rip
+                scope _less_hard_reads: {
+                    lw t1, 0x4(s2) // t1 = move start frame
+
+                    jal Global.get_random_float // f0 = random float (0.0-1.0)
+                    nop
+
+                    lli t2, 30
+                    bge t1, t2, _30
+                    lli t2, 20
+                    bge t1, t2, _20
+                    lli t2, 15
+                    bge t1, t2, _15
+                    nop
+
+                    b _end
+                    nop
+
+                    _15:
+                    b _check_odds
+                    lui at, 0x3E00 // 0.125
+
+                    _20:
+                    b _check_odds
+                    lui at, 0x3D00 // 0.03125
+
+                    _30:
+                    b _check_odds
+                    lui at, 0x3C80 // 0.015625
+
+                    _check_odds:
+                    mtc1 at, f2
+                    c.lt.s f0, f2 // if rand() < threshold
+                    nop
+                    bc1fl _zero_odds // discard move if false
+                    nop
+                    b _end // do not discard move
+                    nop
+
+                    _zero_odds:
+                    sw r0, 0xBC(t0) // discard this move
+
+                    _end:
+                }
+                _end:
+            }
+
+            scope _less_odds_slow_moves: {
+                _opponent_offstage:
+                addiu at, r0, -1 // at = 0xFFFFFFF
+                lw t1, 0x00EC(t4) // get current clipping below player
+                beq at, t1, _advantage // opponent is offstage if clipping below is -1, so we're in advantage
+                nop
+
+                _state_check:
+                lw t1, 0x24(t4) // t1 = target action
+                lli t2, Action.DownBounceD
+                beq t1, t2, _advantage
+                lli t2, Action.DownBounceU
+                beq t1, t2, _advantage
+                lli t2, Action.ShieldBreak
+                beq t1, t2, _advantage
+                lli t2, Action.ShieldBreakFall
+                beq t1, t2, _advantage
+                lli t2, Action.StunLandD
+                beq t1, t2, _advantage
+                lli t2, Action.StunLandU
+                beq t1, t2, _advantage
+                lli t2, Action.StunStartD
+                beq t1, t2, _advantage
+                lli t2, Action.StunStartU
+                beq t1, t2, _advantage
+                lli t2, Action.Stun
+                beq t1, t2, _advantage
+                lli t2, Action.Sleep
+                beq t1, t2, _advantage
+                lli t2, Action.FallSpecial
+                beq t1, t2, _advantage
+                lli t2, Action.EggLay
+                beq t1, t2, _advantage
+                lli t2, Action.EggLayPulled
+                beq t1, t2, _advantage
+                lli t2, Action.CapturePulled
+                beq t1, t2, _advantage
+                lli t2, Action.RollF
+                beq t1, t2, _small_advantage
+                lli t2, Action.RollB
+                beq t1, t2, _small_advantage
+                lli t2, Action.Tech
+                beq t1, t2, _small_advantage
+                lli t2, Action.TechF
+                beq t1, t2, _small_advantage
+                lli t2, Action.TechB
+                beq t1, t2, _small_advantage
+                nop
+
+                _percent_check:
+                lw at, 0x2C(t4) // at = opponent's damage/percentage/%
+                lli t1, 150
+                bgt at, t1, _normal // at very high %, even fast moves will KO. So "normal"
+                lli t1, 90
+                bgt at, t1, _small_advantage // at high %, prioritize stronger moves
+                nop
+
+                _normal:
+                lw t1, 0x4(s2) // t1 = move start frame
+                mtc1 t1, f4 //
+                cvt.s.w f4, f4 // f4 = float(move start frame)
+                mul.s f4, f4 // f4^2
+                lwc1 f8, 0xBC(t0) // f8 = current value for detect_ranges_x (chance of using this move)
+                div.s f8, f8, f4 // f8 = chance / start frame (chance decreases with starting frame)
+                swc1 f8, 0xBC(t0) // save new chance
+                b _end
+                nop
+
+                _small_advantage:
+                lw t1, 0x4(s2) // t1 = move start frame
+                mtc1 t1, f4 //
+                cvt.s.w f4, f4 // f4 = float(move start frame)
+                lwc1 f8, 0xBC(t0) // f8 = current value for detect_ranges_x (chance of using this move)
+                mul.s f8, f8, f4 // f8 = chance * start frame (chance increases with starting frame)
+                swc1 f8, 0xBC(t0) // save new chance
+                b _end
+                nop
+
+                _advantage:
+                lw t1, 0x4(s2) // t1 = move start frame
+                mtc1 t1, f4 //
+                cvt.s.w f4, f4 // f4 = float(move start frame)
+                mul.s f4, f4 // f4^2
+                lwc1 f8, 0xBC(t0) // f8 = current value for detect_ranges_x (chance of using this move)
+                mul.s f8, f8, f4 // f8 = chance * start frame ^ 2 (chance increases with starting frame)
+                swc1 f8, 0xBC(t0) // save new chance
+
+                _end:
+            }
+            
+            scope _check_shield: {
+                lw at, 0x0(s2) // action input
+                lli t1, 28 // grab input command
+                beq at, t1, _shield_action_check
+                lli t1, AI.ROUTINE.DASH_GRAB
+                beq at, t1, _shield_action_check
+                nop
+                b _end
+                nop
+
+                _shield_action_check:
+                lw t1, 0x24(t4) // opponent's current action
+                addiu at, r0, Action.Shield
+                beq t1, at, _continue
+                addiu at, r0, Action.ShieldStun
+                beq t1, at, _continue
+                addiu at, r0, Action.ShieldOn
+                beq t1, at, _continue
+                nop
+                b _end // no actions matched
+                nop
+
+                _continue:
+                // if the opponent is shielding, prioritize grabs
+                lui at, 0x447A //
+                mtc1 at, f4 // f4 = 1000.0
+
+                lwc1 f8, 0xBC(t0) // f8 = current value for detect_ranges_x (chance of using this move)
+                mul.s f4, f4, f8 // f4 = chance * multiplier
+                swc1 f4, 0xBC(t0) // save new chance
+
+                _end:
+            }
+
+            jal _custom_weight_table
+            nop
+
+            b _b_b4c
+            addiu s1, s1, 1
+
+            _end:
+            jal _custom_weight_table
+            nop
+            j _return
+            nop
+
+            _b_b4c:
+            j 0x80132EC8+0xB4C
+            nop
+
+            scope _custom_weight_table: {
+                // if a character has a custom weight table, use it to modify the chance of using this move
+                addiu sp, sp, -0x10 // save ra
+                sw ra, 0x4(sp) // ~
+
+                lw t0, 0x8(s0) // t0 = character ID
+                sll t0, t0, 2
+                li at, Character.cpu_attack_weight.table
+                addu t0, t0, at // t0 = entry
+                lw t0, 0x0(t0) // load characters entry in table
+                beqz t0, _custom_weight_table_end // skip if no entry
+                nop
+                addu at, sp, a0 // at = chance address
+                lwc1 f2, 0xBC+0x10(at) // f2 = current value for detect_ranges_x (chance of using this move)
+                jalr t0 // jump to custom function
+                nop
+                addu t0, sp, a0 // t0 = chance address
+                swc1 f2, 0xBC+0x10(t0) // save new chance
+                _custom_weight_table_end:
+
+                lw ra, 0x4(sp) // ~
+                jr ra
+                addiu sp, sp, 0x10 // restore ra
+            }
+        }
+
+        // 80132EC8+C88
+        // Here the CPU tracks recently used inputs and changes the perceived range on repeated use
+        // since we add different options for inputs, we're going to skip this check
+        scope skip_repeated_input_check: {
+            OS.patch_start(0xAE590, 0x80133B50)
+            j skip_repeated_input_check
+            nop
+            _return:
+            OS.patch_end()
+
+            // Check CPU level
+            lbu     t0, 0x0013(s0) // t0 = cpu level
+            addiu   t0, t0, -10 // t0 = 0 if level 10
+            bnez    t0, _original // if not lv10, perform original logic
+            nop
+
+            // skip switch statement
+            b _b_f60 // go to the "default" option at the end of the switch
+            nop
+
+            _original:
+            beqz at, _b_f60 // original line 1
+            sll t5, t5, 0x2 // original line 2
+            b _end
+            nop
+
+            _b_f60:
+            j 0x80132EC8+0xF60
+            sll t5, t5, 0x2 // original line 2
+            
+            _end:
+            j       _return
+            nop
+        }
+
+        // 80132EC8+FD0
+        // Here we already have the input for the CPU to use
+        // but before using it, the CPU checks if this same move was used 4 times in a row
+        // if so, it skips the input and jumps instead
+        scope skip_repeated_input_skip: {
+            OS.patch_start(0xAE8D8, 0x80133E98)
+            j skip_repeated_input_skip
+            nop
+            _return:
+            OS.patch_end()
+
+            // Check CPU level
+            lbu     at, 0x0013(s0) // t0 = cpu level
+            addiu   at, at, -10 // t0 = 0 if level 10
+            bnez    at, _original // if not lv10, perform original logic
+            nop
+
+            _lv10:
+            j 0x80132EC8+0x1008 // not checking for the 4x inputs, just branching as always false
+            sb r0, 0x37(v1)
+
+            _original:
+            bnel t5, t6, _j_1008 // original line 1
+            sb r0, 0x37(v1) // original line 2
+            b _end
+            nop
+
+            _j_1008:
+            j 0x80132EC8+0x1008
+            sb r0, 0x37(v1) // original line 2
+
+            _end:
+            j       _return
+            nop
+        }
+
+        // 80132EC8+10FC
+        // Here we already have the input for the CPU to use
+        // but before using it, the CPU checks if this same move was used 4 times in a row
+        // if so, it skips the input and jumps instead
+        scope no_attack_when_all_odds_eq_zero: {
+            OS.patch_start(0xAEA04, 0x80133FC4)
+            j no_attack_when_all_odds_eq_zero
+            lw ra,0x54(sp)
+            _return:
+            OS.patch_end()
+
+            // Check CPU level
+            lbu at, 0x0013(s0) // t0 = cpu level
+            addiu at, at, -10 // t0 = 0 if level 10
+            bnez at, _original // if not lv10, perform original logic
+            nop
+
+            j 0x80132EC8+0x1108
+            or v0, r0, r0 // return FALSE
+
+            _original:
+            j 0x80132EC8+0x1108
+            lw ra,0x54(sp)
         }
 
         // @ Description
@@ -4862,7 +6238,7 @@ scope AI {
 
             advantage:
             jal     Global.get_random_int_  // v0 = (random value)
-            lli     a0, 0x8                 // v0 = 0-7 -- 2/8 shorthop, 6/8 nothing (most probably an attack)
+            lli     a0, 0x10                 // v0 = 0-15 -- 2/15 shorthop, 13/15 nothing (most probably an attack)
             lw      a0, 0x0048(sp)          // restore player struct
 
             lli     at, 0x0
@@ -4879,13 +6255,13 @@ scope AI {
 
             not_advantage:
             jal     Global.get_random_int_  // v0 = (random value)
-            lli     a0, 0xA                 // v0 = 0-9
+            lli     a0, 0x10                 // v0 = 0-15
             lw      a0, 0x0048(sp)          // restore player struct
 
-            // 1/10 roll
-            // 3/10 shorthop
-            // 3/10 pivot
-            // 3/10 nothing (most probably an attack)
+            // 1/15 roll
+            // 3/15 shorthop
+            // 3/15 pivot
+            // 8/15 nothing (most probably an attack)
 
             beq     v0, r0, _end
             nop // roll
@@ -4930,52 +6306,52 @@ scope AI {
             addiu   v0, r0, 0x0000       // ~
         }
 
-        // Add characters to roll spam jump-table
-        // KIRBY
-        Character.table_patch_start(close_quarter_combat, Character.id.KIRBY, 0x4)
-        dw     stop_roll_spam_._kirby; OS.patch_end()
-        // EKIRBY
-        Character.table_patch_start(close_quarter_combat, Character.id.JKIRBY, 0x4)
-        dw     stop_roll_spam_._kirby; OS.patch_end()
-        // NKIRBY
-        Character.table_patch_start(close_quarter_combat, Character.id.NKIRBY, 0x4)
-        dw     stop_roll_spam_._kirby; OS.patch_end()
-        // PUFF
-        Character.table_patch_start(close_quarter_combat, Character.id.JIGGLYPUFF, 0x4)
-        dw     stop_roll_spam_._puff; OS.patch_end()
-        // JPUFF
-        Character.table_patch_start(close_quarter_combat, Character.id.JPUFF, 0x4)
-        dw     stop_roll_spam_._puff; OS.patch_end()
-        // EPUFF
-        Character.table_patch_start(close_quarter_combat, Character.id.EPUFF, 0x4)
-        dw     stop_roll_spam_._puff; OS.patch_end()
-        // FOX
-        Character.table_patch_start(close_quarter_combat, Character.id.FOX, 0x4)
-        dw     stop_roll_spam_._fox; OS.patch_end()
-        // JFOX
-        Character.table_patch_start(close_quarter_combat, Character.id.JFOX, 0x4)
-        dw     stop_roll_spam_._fox; OS.patch_end()
-        // FALCO
-        Character.table_patch_start(close_quarter_combat, Character.id.FALCO, 0x4)
-        dw     stop_roll_spam_._fox; OS.patch_end()
-        // WOLF
-        Character.table_patch_start(close_quarter_combat, Character.id.WOLF, 0x4)
-        dw     stop_roll_spam_._fox; OS.patch_end()
-        // NESS
-        Character.table_patch_start(close_quarter_combat, Character.id.NESS, 0x4)
-        dw     stop_roll_spam_._ness; OS.patch_end()
-        // NNESS
-        Character.table_patch_start(close_quarter_combat, Character.id.NNESS, 0x4)
-        dw     stop_roll_spam_._ness; OS.patch_end()
-        // JNESS
-        Character.table_patch_start(close_quarter_combat, Character.id.JNESS, 0x4)
-        dw     stop_roll_spam_._ness; OS.patch_end()
-        // LUCAS
-        Character.table_patch_start(close_quarter_combat, Character.id.LUCAS, 0x4)
-        dw     stop_roll_spam_._lucas; OS.patch_end()
-        // SLIPPY
-        Character.table_patch_start(close_quarter_combat, Character.id.SLIPPY, 0x4)
-        dw     stop_roll_spam_._fox; OS.patch_end()
+        // // Add characters to roll spam jump-table
+        // // KIRBY
+        // Character.table_patch_start(close_quarter_combat, Character.id.KIRBY, 0x4)
+        // dw     stop_roll_spam_._kirby; OS.patch_end()
+        // // EKIRBY
+        // Character.table_patch_start(close_quarter_combat, Character.id.JKIRBY, 0x4)
+        // dw     stop_roll_spam_._kirby; OS.patch_end()
+        // // NKIRBY
+        // Character.table_patch_start(close_quarter_combat, Character.id.NKIRBY, 0x4)
+        // dw     stop_roll_spam_._kirby; OS.patch_end()
+        // // PUFF
+        // Character.table_patch_start(close_quarter_combat, Character.id.JIGGLYPUFF, 0x4)
+        // dw     stop_roll_spam_._puff; OS.patch_end()
+        // // JPUFF
+        // Character.table_patch_start(close_quarter_combat, Character.id.JPUFF, 0x4)
+        // dw     stop_roll_spam_._puff; OS.patch_end()
+        // // EPUFF
+        // Character.table_patch_start(close_quarter_combat, Character.id.EPUFF, 0x4)
+        // dw     stop_roll_spam_._puff; OS.patch_end()
+        // // FOX
+        // Character.table_patch_start(close_quarter_combat, Character.id.FOX, 0x4)
+        // dw     stop_roll_spam_._fox; OS.patch_end()
+        // // JFOX
+        // Character.table_patch_start(close_quarter_combat, Character.id.JFOX, 0x4)
+        // dw     stop_roll_spam_._fox; OS.patch_end()
+        // // FALCO
+        // Character.table_patch_start(close_quarter_combat, Character.id.FALCO, 0x4)
+        // dw     stop_roll_spam_._fox; OS.patch_end()
+        // // WOLF
+        // Character.table_patch_start(close_quarter_combat, Character.id.WOLF, 0x4)
+        // dw     stop_roll_spam_._fox; OS.patch_end()
+        // // NESS
+        // Character.table_patch_start(close_quarter_combat, Character.id.NESS, 0x4)
+        // dw     stop_roll_spam_._ness; OS.patch_end()
+        // // NNESS
+        // Character.table_patch_start(close_quarter_combat, Character.id.NNESS, 0x4)
+        // dw     stop_roll_spam_._ness; OS.patch_end()
+        // // JNESS
+        // Character.table_patch_start(close_quarter_combat, Character.id.JNESS, 0x4)
+        // dw     stop_roll_spam_._ness; OS.patch_end()
+        // // LUCAS
+        // Character.table_patch_start(close_quarter_combat, Character.id.LUCAS, 0x4)
+        // dw     stop_roll_spam_._lucas; OS.patch_end()
+        // // SLIPPY
+        // Character.table_patch_start(close_quarter_combat, Character.id.SLIPPY, 0x4)
+        // dw     stop_roll_spam_._fox; OS.patch_end()
         // // PIANO
         // Character.table_patch_start(close_quarter_combat, Character.id.PIANO, 0x4)
         // dw     stop_roll_spam_._end; OS.patch_end()
@@ -5069,84 +6445,78 @@ scope AI {
         //     nop
         // }
 
-        // @ Description
-        // Adds DSP for LVL 10 JigglyPuffs to use
-        scope Puff_DSP_: {
+        // // @ Description
+        // // Adds DSP for LVL 10 JigglyPuffs to use
+        // scope Puff_DSP_: {
+        //     // These patches will prevent non-level 10 puffs from using DSP
+        //     // JIGGLYPUFF
+        //     Character.table_patch_start(ai_attack_prevent, Character.id.JIGGLYPUFF, 0x4)
+        //     dw PREVENT_ATTACK.ROUTINE.PUFF_DSP
+        //     OS.patch_end()
 
-            // These patches will prevent non-level 10 puffs from using DSP
-            // JIGGLYPUFF
-            Character.table_patch_start(ai_attack_prevent, Character.id.JIGGLYPUFF, 0x4)
-            dw      PREVENT_ATTACK.ROUTINE.PUFF_DSP
-            OS.patch_end()
+        //     // JPUFF
+        //     Character.table_patch_start(ai_attack_prevent, Character.id.JPUFF, 0x4)
+        //     dw PREVENT_ATTACK.ROUTINE.PUFF_DSP
+        //     OS.patch_end()
 
-            // JPUFF
-            Character.table_patch_start(ai_attack_prevent, Character.id.JPUFF, 0x4)
-            dw      PREVENT_ATTACK.ROUTINE.PUFF_DSP
-            OS.patch_end()
+        //     // EPUFF
+        //     Character.table_patch_start(ai_attack_prevent, Character.id.EPUFF, 0x4)
+        //     dw PREVENT_ATTACK.ROUTINE.PUFF_DSP
+        //     OS.patch_end()
 
-
-            // EPUFF
-            Character.table_patch_start(ai_attack_prevent, Character.id.EPUFF, 0x4)
-            dw      PREVENT_ATTACK.ROUTINE.PUFF_DSP
-            OS.patch_end()
-
-
-            // Add DSP as an option to Puffs attack behaviour table
-            constant CPU_ATTACKS_ORIGIN(0x1026A4)
-            constant dsp_padding(40)
-            edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPA,   -1,  1,   1,  -130 - dsp_padding, 130 + dsp_padding, 20 - dsp_padding, 280 + dsp_padding)
-            edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPG,   -1,  1,   1, -130 - dsp_padding, 130 + dsp_padding, 20 - dsp_padding, 280 + dsp_padding)
-
-        }
+        //     // Add DSP as an option to Puffs attack behaviour table
+        //     constant CPU_ATTACKS_ORIGIN(0x1026A4)
+        //     constant dsp_padding(40)
+        //     edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPA,   -1,  1,   1,  -130 - dsp_padding, 130 + dsp_padding, 20 - dsp_padding, 280 + dsp_padding)
+        //     edit_attack_behavior(CPU_ATTACKS_ORIGIN, DSPG,   -1,  1,   1, -130 - dsp_padding, 130 + dsp_padding, 20 - dsp_padding, 280 + dsp_padding)
+        // }
 
         // @ Description
         // Removes NSP for LVL 10 Pikas
-        scope Pika_NSP_: {
+        // scope Pika_NSP_: {
 
-            // These patches will prevent non-level 10 puffs from using DSP
-            // PIKA
-            Character.table_patch_start(ai_attack_prevent, Character.id.PIKA, 0x4)
-            dw      PREVENT_ATTACK.ROUTINE.LVL_10_PREVENT_NSP
-            OS.patch_end();
+        //     // These patches will prevent non-level 10 puffs from using DSP
+        //     // PIKA
+        //     Character.table_patch_start(ai_attack_prevent, Character.id.PIKA, 0x4)
+        //     dw      PREVENT_ATTACK.ROUTINE.LVL_10_PREVENT_NSP
+        //     OS.patch_end();
 
-            // JPIKA
-            Character.table_patch_start(ai_attack_prevent, Character.id.JPIKA, 0x4)
-            dw      PREVENT_ATTACK.ROUTINE.LVL_10_PREVENT_NSP
-            OS.patch_end();
+        //     // JPIKA
+        //     Character.table_patch_start(ai_attack_prevent, Character.id.JPIKA, 0x4)
+        //     dw      PREVENT_ATTACK.ROUTINE.LVL_10_PREVENT_NSP
+        //     OS.patch_end();
 
-            // EPIKA
-            Character.table_patch_start(ai_attack_prevent, Character.id.EPIKA, 0x4)
-            dw      PREVENT_ATTACK.ROUTINE.LVL_10_PREVENT_NSP
-            OS.patch_end();
+        //     // EPIKA
+        //     Character.table_patch_start(ai_attack_prevent, Character.id.EPIKA, 0x4)
+        //     dw      PREVENT_ATTACK.ROUTINE.LVL_10_PREVENT_NSP
+        //     OS.patch_end();
 
-        }
+        // }
 
 
         // @ Description
         // Helps level 10 Fox not spam his up special
         scope Fox_USP_: {
-
             // These patches will allow LVL 10 fox to not rely on his up special
-            // JIGGLYPUFF
+            // FOX
             Character.table_patch_start(ai_attack_prevent, Character.id.FOX, 0x4)
-            dw      PREVENT_ATTACK.ROUTINE.FOX_USP
+            dw PREVENT_ATTACK.ROUTINE.FOX_USP
             OS.patch_end()
 
             // JFOX
             Character.table_patch_start(ai_attack_prevent, Character.id.JFOX, 0x4)
-            dw      PREVENT_ATTACK.ROUTINE.FOX_USP
+            dw PREVENT_ATTACK.ROUTINE.FOX_USP
             OS.patch_end()
 
             // SLIPPY
             Character.table_patch_start(ai_attack_prevent, Character.id.SLIPPY, 0x4)
-            dw      PREVENT_ATTACK.ROUTINE.FOX_USP
+            dw PREVENT_ATTACK.ROUTINE.FOX_USP
             OS.patch_end()
 
             // FALCO
             Character.table_patch_start(ai_attack_prevent, Character.id.FALCO, 0x4)
-            dw      PREVENT_ATTACK.ROUTINE.FOX_USP
+            dw PREVENT_ATTACK.ROUTINE.FOX_USP
             OS.patch_end()
-
         }
 
         // @ Description
@@ -5843,11 +7213,16 @@ scope AI {
 
                 lbu     t8, 0x0013(s0)      // original line
                 slti    at, t8, 10          // at = 0 if 10 or greater
-                beqzl   at, pc() + 8
+                beqzl   at, _lv10
                 lli     t8, 9               // if above 9, clamp to 9
 
+                _original:
                 j       _return + 0x8
                 lui     at, 0x3f80          // original line 3
+
+                _lv10:
+                j       _return + 0x8
+                lui     at, 0x3f60          // original line 3, but underestimate collision size (0.875 instead of 1.0)
             }
 
             // while hanging on cliff

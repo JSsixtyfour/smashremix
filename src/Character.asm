@@ -2887,7 +2887,7 @@ scope Character {
         Teams.add_team_costume(YELLOW, {name}, 0x6)
 
         // Shield colors for costume matching
-        Character.set_costume_shield_colors({name}, PURPLE, RED, GREEN, BLUE, BLACK, WHITE, YELLOW, NA)
+        Character.set_costume_shield_colors({name}, PURPLE, RED, TURQUOISE, BLUE, BLACK, WHITE, YELLOW, NA)
 
         // Remove entry script.
         Character.table_patch_start(entry_script, Character.id.{name}, 0x4)
@@ -2931,6 +2931,40 @@ scope Character {
     }
 
     // @ Description
+    // Jump table for CPU post processing logic
+    scope cpu_post_process {
+        OS.align(4)
+        table:
+        constant TABLE_ORIGIN(origin())
+        fill (Character.NUM_CHARACTERS * 0x4)
+        OS.align(4)
+    }
+
+    // @ Description
+    // Jump table for CPU attack weight modifications (odds)
+    // s0 = character struct
+    // s2 = current input config (dw input_id, dw start_frame, dw [unused], float32 min_x, float32 max_x, float32 min_y, float32 max_y)
+    // t0, t1, t2, t3 = safe to use
+    // f2 = weight multiplier (starts with calculated value, can be further modified or completely reset)
+    scope cpu_attack_weight {
+        OS.align(4)
+        table:
+        constant TABLE_ORIGIN(origin())
+        fill (Character.NUM_CHARACTERS * 0x4)
+        OS.align(4)
+    }
+
+    // @ Description
+    // Jump table for custom attacks table for lv10 cpus only
+    scope lv10_ai_behaviour {
+        OS.align(4)
+        table:
+        constant TABLE_ORIGIN(origin())
+        fill (Character.NUM_CHARACTERS * 0x4)
+        OS.align(4)
+    }
+
+    // @ Description
     // Jump table for running a function when the character is hit
     // Sonic for example recovers his ability to upB again
     scope on_hit {
@@ -2939,6 +2973,58 @@ scope Character {
         constant TABLE_ORIGIN(origin())
         fill (Character.NUM_CHARACTERS * 0x4)
         OS.align(4)
+    }
+
+    // @ Description
+    // Runs a function when the action is changed
+    // This runs after the change itself, so the new action is already set in the character struct
+    // The action's update functions only run starting from the next frame, so this is a "frame 0" hook
+    // All registers are safe to use since after this it just loads the needed ones and returns
+    // Arguments:
+    // - a0 = character struct
+    // - a1 = new action id
+    scope on_action_changed {
+        OS.align(4)
+        table:
+        constant TABLE_ORIGIN(origin())
+        fill (Character.NUM_CHARACTERS * 0x4)
+        OS.align(4)
+
+        // ftMainSetStatus: 800E6F24 + B80
+        scope on_action_changed_hook: {
+            OS.patch_start(0x632A4, 0x800E7AA4)
+            jal on_action_changed_hook
+            nop
+            _return:
+            OS.patch_end()
+
+            // Initialize Charged Smash Attacks logic
+            // on action change
+            jal ChargeSmashAttacks.smash_attack_start
+            or a0, s1, r0 // argument 0 = character struct
+
+            // 0x94(sp) = action to change to
+            // s1 = player struct
+
+            lw t0, 0x0008(s1) // t0 = character id
+
+            // Check if character has an entry in the table
+            li t2, on_action_changed.table
+            sll t1, t0, 2
+            addu t1, t2, t1
+            lw t1, 0x0000(t1) // t1 = pointer to entry for this character
+            beqz t1, _end // if no entry, skip
+            nop
+
+            or a0, s1, r0 // argument 0 = character struct
+            jalr t1 // call function
+            lw a1, 0x94(sp) // argument 1 = new action id
+
+            _end:
+            lw ra, 0x1c(sp) // original line 1: restore ra
+            j _return // return
+            lw s0, 0x14(sp) // original line 2: restore s0
+        }
     }
 
     // @ Description
@@ -2999,92 +3085,85 @@ scope Character {
     }
 
     // @ Description
+	// This table stores Yoshi egg colors, used if not vanilla color or matching costume
+	scope yoshi_egg_color {
+		OS.align(4)
+		table:
+		constant TABLE_ORIGIN(origin())
+		fill (Character.NUM_CHARACTERS * 0x2)
+		OS.align(4)
+	}
+
+    // @ Description
     // Replacement for shared actions
     // Use when an action that is usually shared should have unique function slots
-    scope shared_action_replace {
-        variable NUM_SHARED_ACTION_REPLACEMENTS(0)
+    // Data format:
+    // [XXXXYYYY]...[FFFF]
+    // 0xXXXX - Original action id
+    // 0xYYYY - New action id
+    // End with original action id = 0xFFFF
+    scope action_replace_map {
+        OS.align(4)
+        table:
+        constant TABLE_ORIGIN(origin())
+        fill (Character.NUM_CHARACTERS * 0x4)
+        OS.align(4)
 
-        macro create_table(shared_action) {
-            evaluate num(NUM_SHARED_ACTION_REPLACEMENTS)
-            global variable SHARED_ACTION_REPLACEMENT_ACTION_{num}(Action.{shared_action})
-            global define SHARED_ACTION_REPLACEMENT_LABEL_{num}({shared_action})
-
-            scope {shared_action} {
-                OS.align(4)
-                table:
-                global variable SHARED_ACTION_REPLACEMENT_TABLE_{num}(origin())
-                constant TABLE_ORIGIN(origin())
-                fill (Character.NUM_CHARACTERS * 0x4)
-                OS.align(4)
-            }
-
-            global variable NUM_SHARED_ACTION_REPLACEMENTS(NUM_SHARED_ACTION_REPLACEMENTS+1)
-        }
-
-        create_table(UTilt)
-        create_table(FTilt)
-        create_table(FTiltHigh)
-        create_table(FTiltMidHigh)
-        create_table(FTiltMidLow)
-        create_table(FTiltLow)
-        create_table(DTilt)
-        create_table(Jab1)
-        create_table(Jab2)
-        create_table(Dash)
-        create_table(DashAttack)
-        create_table(AttackAirN)
-        create_table(AttackAirF)
-        create_table(AttackAirB)
-        create_table(AttackAirU)
-        create_table(AttackAirD)
-        create_table(FSmashHigh)
-        create_table(FSmashMidHigh)
-        create_table(FSmash)
-        create_table(FSmashMidLow)
-        create_table(FSmashLow)
-        create_table(USmash)
-        create_table(DSmash)
-        create_table(CrouchIdle)
-
-        // ftMainSetStatus: 800E6F24 + 30
+        // Here, we change action based on the replacement table
+        // We don't change the actual action id in the character struct
+        // so it still works with other checks elsewhere
+        // ftMainSetStatus: 800E6F24 + 44
         scope replace_action: {
-            OS.patch_start(0x62754, 0x800E6F54)
-            jal     replace_action
-            nop
+            OS.patch_start(0x62798, 0x800E6F98)
+            jal replace_action
+            sw t3, 0x24(s1) // original line 1: save action id on character struct
             _return:
             OS.patch_end()
 
-            // a1 = action to change to
+            // t3/0x94(sp) = action to change to
             // s1 = character struct
 
-            lw  t0, 0x0008(s1)  // t0 = character id
+            // t4 = unsafe to use
 
-            define n(0)
-            while {n} < NUM_SHARED_ACTION_REPLACEMENTS {
-                // If not respective action, skip
-                lli     t2, SHARED_ACTION_REPLACEMENT_ACTION_{n}
-                bne     a1, t2, _after_action_{SHARED_ACTION_REPLACEMENT_LABEL_{n}}_check
-                nop
+            lw  t0, 0x0008(s1) // t0 = character id
 
-                sll     t1, t0, 2
-                li      at, shared_action_replace.{SHARED_ACTION_REPLACEMENT_LABEL_{n}}.table
-                addu    t1, t1, at                              // t1 = entry
-                lw      at, 0x0000(t1)                          // at = characters entry in jump table
-                beqz    at, _after_action_{SHARED_ACTION_REPLACEMENT_LABEL_{n}}_check         // skip if no entry
-                nop
-                or      a1, r0, at
-                sw      a1, 0x94(sp) // save over original action
-                b _end
-                nop
+            // Check if character has a replacement table
+            li      t2, action_replace_map.table
+            sll     t1, t0, 2
+            addu    t1, t2, t1
+            lw      t1, 0x0000(t1) // t1 = pointer to replacement table for this character
+            beqz    t1, _end // if no table, skip
 
-                _after_action_{SHARED_ACTION_REPLACEMENT_LABEL_{n}}_check: // label for skip
-                evaluate n({n}+1)
-            }
+            // index = 0
+            or t2, r0, r0
+
+            // Go through each entry in the replacement table
+            // until we find the action id in the first half or reach the end
+            _replacement_loop:
+            addu    t5, t1, t2 // t5 = table + index
+            lhu     t6, 0x0000(t5) // t6 = original action id
+            lli     t7, 0xFFFF
+            beq     t6, t7, _end // end of table, not found
+            nop
+            beq     t6, t3, _found_replacement
+            nop
+            addiu   t2, t2, 0x4 // index += 4
+            b       _replacement_loop
+            nop
+
+            _found_replacement:
+            lhu     t6, 0x0002(t5) // t6 = replacement action id
+            or      t3, r0, t6
+            sw      t3, 0x94(sp) // save over original action id
 
             _end:
-            sw      r0, 0x7c(sp)    // original line 1
-            sw      t7, 0x84(sp)    // original line 2
-            j       _return         // return
+            beq a1, t4, _j_8C // original line 2
+            nop
+            j _return // return
+            nop
+
+            _j_8C:
+            j 0x800E6F24+0x8C
             nop
         }
     }
@@ -3605,7 +3684,7 @@ scope Character {
     // 0x21 - WARIO
     define_character(WARIO, MARIO, File.WARIO_MAIN, 0x0CA, 0, File.WARIO_CHARACTER, 0x12A, 0x0CC, 0x164, 0x129, 0, 0x51C, 2, OS.FALSE, OS.TRUE, Stages.id.BTT_WARIO, Stages.id.BTP_WARIO, Stages.id.BTT_JIGGLYPUFF, Stages.id.BTP_JIGGLYPUFF,sound_type.U, variant_type.NA)
     // 0x22 - DSAMUS
-    define_character(DSAMUS, SAMUS, File.DSAMUS_MAIN, 0x0D8, 0, File.DSAMUS_CHARACTER, 0x142, 0x15D, File.DSAMUS_SECONDARY, 0, 0, 0x6BC, 3, OS.TRUE, OS.TRUE, Stages.id.BTT_DS, Stages.id.BTP_DS, Stages.id.BTT_LUCAS, Stages.id.BTP_LUCAS2, sound_type.U, variant_type.SPECIAL)
+    define_character(DSAMUS, SAMUS, File.DSAMUS_MAIN, 0x0D8, 0, File.DSAMUS_CHARACTER, 0x142, File.DSAMUS_ENTRY, File.DSAMUS_SECONDARY, 0, 0, 0x6BC, 3, OS.TRUE, OS.TRUE, Stages.id.BTT_DS, Stages.id.BTP_DS, Stages.id.BTT_LUCAS, Stages.id.BTP_LUCAS2, sound_type.U, variant_type.SPECIAL)
     // 0x23 - ELINK
     define_character(ELINK, LINK, File.ELINK_MAIN, 0x0E0, 0, 0x144, 0x147, 0x0E2, 0x161, 0x145, 0, 0x708, 0, OS.TRUE, OS.TRUE, Stages.id.BTT_LINK, Stages.id.BTP_LINK, Stages.id.BTT_YL, Stages.id.BTP_YL, sound_type.U, variant_type.E)
     // 0x24 - JSAMUS
@@ -3680,7 +3759,7 @@ scope Character {
     // 0x46 - EBISUMARU
     define_character(EBI, MARIO, File.EBISUMARU_MAIN, 0x0CA, 0, File.EBISUMARU_CHARACTER, File.GOEMON_SHIELD_POSE, File.GOEMON_RYO_HITBOX, File.GOEMON_CLOUD_INFO, File.GOEMON_RYO_GRAPHIC, File.GOEMON_ENTRY_GFX, 0x9C0, 20, OS.TRUE, OS.TRUE, Stages.id.BTT_GOEMON, Stages.id.BTP_GOEMON, Stages.id.BTT_GOEMON, Stages.id.BTP_GOEMON, sound_type.U, variant_type.SPECIAL)
     // 0x47 - DRAGONKING
-    define_character(DRAGONKING, CAPTAIN, File.DRAGONKING_MAIN, 0x0EB, 0, File.DRAGONKING_CHARACTER, File.DRAGONKING_SHIELD_POSE, 0, 0x15B, 0x14D, 0, 0x488, 5, OS.TRUE, OS.TRUE, Stages.id.BTT_FALCON, Stages.id.BTP_FALCON, Stages.id.BTT_GND, Stages.id.BTP_GND, sound_type.J, variant_type.SPECIAL)
+    define_character(DRAGONKING, CAPTAIN, File.DRAGONKING_MAIN, 0x0EB, 0, File.DRAGONKING_CHARACTER, File.DRAGONKING_SHIELD_POSE, 0, 0x15B, 0x14D, 0, 0x5F4, 5, OS.TRUE, OS.TRUE, Stages.id.BTT_FALCON, Stages.id.BTP_FALCON, Stages.id.BTT_GND, Stages.id.BTP_GND, sound_type.J, variant_type.SPECIAL)
     // 0x48 - CRASH
     define_character(CRASH, MARIO, File.CRASH_MAIN, 0x0CA, 0, File.CRASH_CHARACTER, File.CRASH_SHIELD_POSE, 0x0CC, File.CRASH_SPIN_GFX, File.CRASH_ENTRY, 0, 0x5CC, 9, OS.FALSE, OS.TRUE, Stages.id.BTT_CRASH, Stages.id.BTP_CRASH, Stages.id.BTT_JIGGLYPUFF, Stages.id.BTP_JIGGLYPUFF,sound_type.U, variant_type.NA)
     // 0x49 - PEACH

@@ -392,4 +392,236 @@ scope YoshiShared {
     dw Character.DEDEDE_file_7_ptr
     OS.copy_segment(0x103D6C, 0x40)
 
+    scope recovery_logic: {
+        OS.routine_begin(0x20)
+        sw a0, 0x10(sp)
+
+        // Check CPU level for vanilla characters
+        lbu t1, 0x0013(a0) // t1 = cpu level
+        addiu t1, t1, -10 // t1 = 0 if level 10
+        bnezl t1, _end // if not lv10, skip
+        nop
+
+        // Only go for it when double jumping back to stage
+        lw at, 0x24(a0) // at = action id
+        lli t0, Action.JumpAerialF
+        bne t0, at, _end
+        nop
+
+        // skip if air speed is down
+        mtc1 r0, f0 // guarantee f0 = 0
+        lwc1 f20, 0x004C(a0) // f20 = y speed
+        c.le.s f20, f0 // y speed < 0?
+        nop
+        bc1t _end // if so, skip
+        nop
+
+        lw t0, 0x78(a0) // load location vector
+        lwc1 f2, 0x0(t0) // f2 = location X
+        lwc1 f4, 0x4(t0) // f4 = location Y
+
+        // check closest ledge in X
+        scope ledge_check: {
+            lwc1 f6, 0x01CC+0x4C(a0) // load nearest LEFT ledge X
+            lwc1 f8, 0x01CC+0x54(a0) // load nearest RIGHT ledge X
+
+            sub.s f6, f6, f2
+            abs.s f6, f6 // f6 = abs(distance) to left ledge
+
+            sub.s f8, f8, f2
+            abs.s f8, f8 // f8 = abs(distance) to right ledge
+
+            c.le.s f6, f8
+            nop
+            bc1f _right
+            nop
+
+            _left:
+            lwc1 f6, 0x01CC+0x4C(a0) // load nearest LEFT ledge X
+            lwc1 f8, 0x01CC+0x50(a0) // load nearest LEFT ledge Y
+            
+            b _check_end
+            nop
+
+            _right:
+            lwc1 f6, 0x01CC+0x54(a0) // load nearest RIGHT ledge X
+            lwc1 f8, 0x01CC+0x58(a0) // load nearest RIGHT ledge Y
+
+            _check_end:
+        }
+
+        sub.s f14, f6, f2 // f14 = x diff
+        sub.s f12, f8, f4 // f12 = y diff
+
+        lw t6, 0x9C8(a0) // t6 = character attributes
+        lwc1 f20, 0xB0(t6) // f20 = ledge grab Y
+        add.s f20, f4, f20 // f20 = Y + ledge grab Y
+
+        lw t0, 0x44(a0) // t0 = player facing direction (int)
+        mtc1 t0, f10
+        cvt.s.w f10, f10 // f10 = facing direction (float)
+
+        lwc1 f22, 0xB0(t6) // f22 = ledge grab X
+        mul.s f10, f10, f22 // f10 = facing direction * ledge grab X
+        add.s f22, f2, f10 // f22 = X + facing direction * ledge grab X
+
+        // check if ledge Y + ledge grab Y is above ledge Y
+        c.le.s f20, f8 // f20 <= ledge Y?
+        nop
+        bc1t _end // if not, skip
+        nop
+
+        // check if Y > ledge Y (don't dsp if already above ledge Y)
+        c.le.s f8, f4 // ledge Y <= Y?
+        nop
+        bc1t _end // if not, skip
+        nop
+
+        // check if ledge grab X is beyond ledge X in the facing direction
+        // we can use the x diff to determine this
+        // first check if the x diff is positive or negative
+        c.lt.s f14, f0 // if x diff < 0
+        nop
+        bc1t _going_left // if x diff < 0, hold left
+        nop
+
+        _going_right:
+        // check if ledge grab X > ledge X
+        // if so, dsp
+        c.le.s f22, f6 // f22 <= ledge X?
+        nop
+        bc1f _dsp // if not, dsp
+        nop
+        b _end
+        nop
+        
+        _going_left:
+        // check if ledge grab X < ledge X
+        // if so, dsp
+        c.le.s f6, f22 // ledge X <= ledge grab X?
+        nop
+        bc1f _dsp // if not, dsp
+        nop
+        b _end
+        nop
+
+        _dsp:
+        jal 0x80132758 // execute AI command
+        lli a1, AI.ROUTINE.DSP // arg1 = DSP
+
+        b _end
+        nop
+
+        _end:
+        lw a0, 0x10(sp)
+        OS.routine_end(0x20)
     }
+    Character.table_patch_start(recovery_logic, Character.id.YOSHI, 0x4)
+    dw recovery_logic; OS.patch_end()
+    Character.table_patch_start(recovery_logic, Character.id.JYOSHI, 0x4)
+    dw recovery_logic; OS.patch_end()
+
+    scope cpu_post_process: {
+        OS.routine_begin(0x20)
+        sw a0, 0x10(sp)
+
+        // Apply only for lv10 CPUs
+        lbu t0, 0x13(a0) // t0 = cpu level
+        slti t0, t0, 10 // t0 = 0 if 10 or greater
+        bnez t0, _end // skip if not lv10
+        nop
+
+        // If going for NSP, check if the opponent is not already trapped in an egg
+        lw t0, 0x1D4(a0) // t0 = ft_com->p_command
+        li t1, AI.command_table // load command table base address
+
+        lw at, AI.ATTACK_TABLE.NSPG.INPUT << 2(t1)
+        beq t0, at, nsp_check
+        lw at, AI.ATTACK_TABLE.NSPA.INPUT << 2(t1)
+        beq t0, at, nsp_check
+        nop
+
+        b _end
+        nop
+
+        scope nsp_check: {
+            lw at, 0x01FC(a0) // get target player object
+
+            beqz at, _end // if no target object, skip
+            nop
+
+            lw at, 0x84(at) // at = target struct
+
+            // skip if the opponent is in one of these states
+            lw t0, 0x24(at) // t0 = target action id
+            lli t1, Action.EggLay
+            beq t0, t1, _no_input
+            lli t1, Action.EggLayPulled
+            beq t0, t1, _no_input
+            nop
+
+            b _end // all tests passed, use nsp
+            nop
+
+            _no_input:
+            // skip DSP
+            jal 0x80132758 // execute AI command
+            lli a1, AI.ROUTINE.NULL // arg1 = NULL
+
+            _end:
+        }
+
+        _end:
+        lw a0, 0x10(sp)
+        OS.routine_end(0x20)
+    }
+    Character.table_patch_start(cpu_post_process, Character.id.YOSHI, 0x4)
+    dw cpu_post_process; OS.patch_end()
+    Character.table_patch_start(cpu_post_process, Character.id.JYOSHI, 0x4)
+    dw cpu_post_process; OS.patch_end()
+
+    scope cpu_attack_weight: {
+        // s0 = character struct
+        // s2 = current input config (dw input_id, dw start_frame, dw [unused], float32 min_x, float32 max_x, float32 min_y, float32 max_y)
+        // f2 = weight multiplier (starts with calculated value, can be further modified or completely reset)
+        OS.routine_begin(0x20)
+
+        // Check CPU level
+        lbu t0, 0x13(s0) // t0 = cpu level
+        addiu t0, t0, -10 // t0 = 0 if level 10
+        bnez t0, _end // if not lv10, perform original logic
+        nop
+
+        lw t0, 0x0(s2) // t0 = input id
+        addiu at, r0, AI.ATTACK_TABLE.NSPG.INPUT
+        beq t0, at, _nsp
+        nop
+        b _end // no attack matched
+        nop
+
+        _nsp:
+        // nsp more often vs shielding opponents
+        lw t4, 0x1CC+0x6C(s0) // opponent struct
+        lw t1, 0x24(t4) // opponent's current action
+        addiu at, r0, Action.Shield
+        beq t1, at, _nsp_continue
+        addiu at, r0, Action.ShieldStun
+        beq t1, at, _nsp_continue
+        addiu at, r0, Action.ShieldOn
+        beq t1, at, _nsp_continue
+        nop
+        b _end // opponent not shielding, skip
+        nop
+        _nsp_continue:
+        lui at, 0x42C8 // at = 100.0
+        b _end
+        mtc1 at, f2 // f2 = new weight (override)
+
+        _end:
+        OS.routine_end(0x20)
+    }
+    Character.table_patch_start(cpu_attack_weight, Character.id.YOSHI, 0x4)
+    dw cpu_attack_weight; OS.patch_end()
+    Character.table_patch_start(cpu_attack_weight, Character.id.JYOSHI, 0x4)
+    dw cpu_attack_weight; OS.patch_end()
+}

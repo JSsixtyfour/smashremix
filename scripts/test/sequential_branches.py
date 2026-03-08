@@ -34,7 +34,7 @@ class CodeAnalysis:
         self.pseudoinstructions_after_branches = []
 
     def analyze_file(self, file_path: str):
-        with open(file_path) as f:
+        with open(file_path, encoding='utf-8') as f:
             prev_command_branch = False
             prev_command = ""
             prev_command_line = -1

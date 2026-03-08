@@ -129,6 +129,12 @@ scope Smashketball {
     dw 0
 
     // @ Description
+    // Holds the player spawn for each player
+    // See Spawn.asm for explanation
+    player_spawns:
+    db 2, 0, 0, 0
+
+    // @ Description
     // Runs when entering the CSS
     scope before_css_setup_: {
         addiu   sp, sp, -0x0010             // allocate stack space
@@ -230,9 +236,87 @@ scope Smashketball {
         lli     t0, Stages.id.SOCCER        // t0 = SOCCER stage_id
         sb      t0, 0x0000(at)              // restore stage
 
+        // Set up spawns
+        li      t0, player_spawns + 1       // t0 = player_spawns, but starting at p2 (p1 will always be 0)
+        li      t6, spawn_table             // t6 = spawn_table
+        lli     t7, 0x0000                  // t7 = position in spawn table for home (number of players on home team)
+        lli     t8, 0x0003                  // t8 = position in spawn table for away (3 - number of players on away team)
+        addiu   t9, r0, -0x0001             // t9 = home team (-1 when not set yet)
+
+        // if present, p1 is always in S3
+        OS.read_word(CharacterSelect.CSS_PLAYER_STRUCT + 0x84, t1) // t1 = p1 type
+        sltiu   at, t1, 0x0002              // at = 1 if man/cpu
+        beqz    at, _p2                     // skip if NA
+        OS.read_word(CharacterSelect.CSS_PLAYER_STRUCT + 0x40, t1) // t1 = p1 team (yes, delay slot)
+        or      t9, r0, t1                  // t9 = home team
+        addiu   t7, t7, 0x0001              // t7 = count of home team players
+        _p2:
+        OS.read_word(CharacterSelect.CSS_PLAYER_STRUCT + 0xBC + 0x84, t1) // t1 = p2 type
+        sltiu   at, t1, 0x0002              // at = 1 if man/cpu
+        beqz    at, _p3                     // skip if NA
+        OS.read_word(CharacterSelect.CSS_PLAYER_STRUCT + 0xBC + 0x40, t1) // t1 = p2 team (yes delay slot)
+        bltzl   t9, pc() + 8                // if home team not set yet, set now
+        or      t9, r0, t1                  // t9 = home team
+
+        bne     t9, t1, _away_p2            // if away team, handle differently
+        addu    t5, t6, t7                  // t5 = address of spawn for p2
+        b       _set_spawn_p2
+        addiu   t7, t7, 0x0001              // t7 = next spawn position address for home team
+
+        _away_p2:
+        addu    t5, t6, t8                  // t5 = address of spawn for p2
+        addiu   t8, t8, -0x0001             // t8 = next spawn position address for away team
+
+        _set_spawn_p2:
+        lb      t5, 0x0000(t5)              // t5 = spawn for p2
+        sb      t5, 0x0000(t0)              // set p2 spawn
+
+        _p3:
+        OS.read_word(CharacterSelect.CSS_PLAYER_STRUCT + (0xBC * 2) + 0x84, t1) // t1 = p3 type
+        sltiu   at, t1, 0x0002              // at = 1 if man/cpu
+        beqz    at, _p4                     // skip if NA
+        addiu   t0, t0, 0x0001              // t0 = p3 spawn address
+        OS.read_word(CharacterSelect.CSS_PLAYER_STRUCT + (0xBC * 2) + 0x40, t1) // t1 = p3 team
+        bltzl   t9, pc() + 8                // if home team not set yet, set now
+        or      t9, r0, t1                  // t9 = home team
+
+        bne     t9, t1, _away_p3            // if away team, handle differently
+        addu    t5, t6, t7                  // t5 = address of spawn for p3
+        b       _set_spawn_p3
+        addiu   t7, t7, 0x0001              // t7 = next spawn position address for home team
+
+        _away_p3:
+        addu    t5, t6, t8                  // t5 = address of spawn for p3
+        addiu   t8, t8, -0x0001             // t8 = next spawn position address for away team
+
+        _set_spawn_p3:
+        lb      t5, 0x0000(t5)              // t5 = spawn for p3
+        sb      t5, 0x0000(t0)              // set p3 spawn
+
+        _p4:
+        OS.read_word(CharacterSelect.CSS_PLAYER_STRUCT + (0xBC * 3) + 0x84, t1) // t1 = p4 type
+        sltiu   at, t1, 0x0002              // at = 1 if man/cpu
+        beqz    at, _end                    // skip if NA
+        addiu   t0, t0, 0x0001              // t0 = p4 spawn address
+        OS.read_word(CharacterSelect.CSS_PLAYER_STRUCT + (0xBC * 3) + 0x40, t1) // t1 = p4 team
+
+        addu    t5, t6, t7                  // t5 = address of spawn for p4
+        bnel    t9, t1, _set_spawn_p4       // if away team, handle differently
+        addu    t5, t6, t8                  // t5 = address of spawn for p4
+
+        _set_spawn_p4:
+        lb      t5, 0x0000(t5)              // t5 = spawn for p4
+        sb      t5, 0x0000(t0)              // set p4 spawn
+
+        _end:
         lw      ra, 0x0004(sp)              // restore registers
         jr      ra
         addiu   sp, sp, 0x0010              // deallocate stack space
+
+        // home team left to right: 2, 0, 1
+        // away team right to left: 3, 1, 0
+        spawn_table:
+        db 2, 0, 1, 3
     }
 
     // @ Description

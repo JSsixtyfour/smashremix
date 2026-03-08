@@ -98,6 +98,14 @@ scope Boot {
         _play_fgm:
         jal     0x800269C0              // original line 1
         andi    a0, v0, 0xFFFF          // original line 2
+
+        lli     a0, 0x0000              // a0 = unknown, set to 0
+        jal     BGM.set_volume_         // update BGM volume
+        lli     a1, 0x7800              // a1 = volume
+
+        jal     FGM.set_volume_         // update FGM volume
+        lli     a0, 0x7800              // a0 = volume
+
         mflo    ra                      // restore ra
         jr      ra
         nop
@@ -158,7 +166,7 @@ scope Boot {
         nop
     }
 
-    string_version:; String.insert("Smash Remix v2.0.0")
+    string_version:; String.insert("Smash Remix v2.0.1")
 
     // @ Description
     // Use larger logo black backsplash

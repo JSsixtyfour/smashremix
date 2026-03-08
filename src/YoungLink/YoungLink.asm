@@ -52,7 +52,6 @@ scope YoungLink {
     Character.edit_action_parameters(YLINK, Action.CliffAttackSlow2, -1,                        EDGEATTACKS,                -1)
     Character.edit_action_parameters(YLINK, Action.Stun,             -1,                        STUN,                       -1)
     Character.edit_action_parameters(YLINK, Action.Sleep,            -1,                        ASLEEP,                     -1)
-    Character.edit_action_parameters(YLINK, Action.Grab,             -1,                        GRAB,                       -1)
     Character.edit_action_parameters(YLINK, Action.Grab,            File.YLINK_GRAB,            GRAB,                       0x10000000)
     Character.edit_action_parameters(YLINK, Action.GrabPull,        File.YLINK_GRAB_PULL,       GRAB_PULL,                  0x10000000)
     Character.edit_action_parameters(YLINK, Action.Teeter,           -1,                        TEETERING,                  -1)
@@ -174,8 +173,11 @@ scope YoungLink {
     dh {MIDI.id.CLOCKTOWN}
     OS.patch_end()
 
-    up_special_landing_fsm:
+    ylink_usp_landing_fsm:
     float32 0.33                // 25 frames of landing lag
+
+    jlink_usp_landing_fsm:
+    float32 0.75                // 11 frames of landing lag
 
     // @ Description
     // modifies a subroutine which determines the speed of Link's boomerang
@@ -267,8 +269,13 @@ scope YoungLink {
         sw      t1, 0x0008(sp)              // store t0, t1
         lw      t0, 0x0008(a0)              // t0 = character id
         ori     t1, r0, Character.id.YLINK  // t1 = id.YLINK
-        li      a1, up_special_landing_fsm  // ~
+        li      a1, ylink_usp_landing_fsm   // ~
         lwc1    f8, 0x0000(a1)              // f8 = YLINK landing fsm value
+        beq     t1, t0, _end                // end if character id = YLINK
+        nop
+        ori     t1, r0, Character.id.JLINK  // t1 = id.JLINK
+        li      a1, jlink_usp_landing_fsm   // ~
+        lwc1    f8, 0x0000(a1)              // f8 = JLINK landing fsm value
         beq     t1, t0, _end                // end if character id = YLINK
         nop
         li      a1, 0x8018CA28              // ~

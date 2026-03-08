@@ -944,6 +944,49 @@ scope Training {
         nop
     }
 
+    // @ Description
+    // Disables HUD from drawing if entry_disable_hud = ALL
+    // Note: Menu is still accessible
+    scope disable_hud_: {
+        OS.patch_start(0x116D70, 0x80190550)
+        j       disable_hud_._init
+        lui     t6, 0x8019                      // original line 1
+        _init_return:
+        OS.patch_end()
+
+        OS.patch_start(0x113A4C, 0x8018D22C)
+        j       disable_hud_._leave_menu
+        nop
+        _leave_menu_return:
+        OS.patch_end()
+
+        _init:
+        // check HUD toggle
+        OS.read_word(Toggles.entry_disable_hud + 0x4, a0) // a0 = entry_disable_hud (0 if OFF, 1 if PAUSE, 2 if ALL)
+        andi    a0, a0, 0x0002                  // a0 = 1 if entry_disable_hud = 2
+        beqz    a0, _init_end                   // branch if not 'ALL' hud disabled
+        nop                                     // otherwise, disable drawing of hud
+        jal     0x80113F74                      // subroutine disables drawing of game hud
+        addiu   a0, r0, 0x0001                  // argument = don't draw
+
+        _init_end:
+        j       _init_return                    // return
+        addiu   t6, t6, 0x086c                  // original line 2
+
+        _leave_menu:
+        // check HUD toggle
+        OS.read_word(Toggles.entry_disable_hud + 0x4, v0) // v0 = entry_disable_hud (0 if OFF, 1 if PAUSE, 2 if ALL)
+        andi    v0, v0, 0x0002                  // v0 = 1 if entry_disable_hud = 2
+        bnez    v0, _leave_menu_end             // skip showing hud if 'ALL' hud disabled
+        sw      v1, 0x0018(sp)                  // original line 2 (need to save register regardless)
+        jal     0x80113f74                      // original line 1 (show hud)
+        nop
+
+        _leave_menu_end:
+        j       _leave_menu_return
+        nop
+}
+
     //init_struct_p1:; fill 0x40
     //init_struct_p2:; fill 0x40
     //init_struct_p3:; fill 0x40
@@ -1023,7 +1066,7 @@ scope Training {
         li      t0, allow_reset             // ~
         lw      t1, 0x0000(t0)              // t1 = current allow_reset flag
         lli     t2, OS.TRUE                 // t2 = TRUE
-        bne     t1, t2, _check_dd           // if allow_reset != TRUE, skip
+        bne     t1, t2, _check_frame_advance// if allow_reset != TRUE, skip
         sw      t2, 0x0000(t0)              // allow_reset = TRUE
         // check for a DPAD LEFT press, reset if detected
         lli     a0, Joypad.DL               // a0 - button_mask
@@ -1031,7 +1074,7 @@ scope Training {
         lli     a2, Joypad.PRESSED          // a2 - type
         jal     Joypad.check_buttons_all_   // v0 - bool dd_pressed
         nop
-        beqz    v0, _check_dd               // if (!dl_pressed), skip
+        beqz    v0, _check_frame_advance    // if (!dl_pressed), skip
         nop
 
         _quick_reset:
@@ -1048,6 +1091,8 @@ scope Training {
         sb      t1, 0x0C2A(t0)              // set this to 1 for reset instead of exit
         li      t0, Global.screen_interrupt // ~
         sw      t1, 0x0000(t0)              // generate screen_interrupt
+        b       _skip_input                 // skip checking for other dpad presses
+        nop
 
         // TODO: Experimental quick reset function, disabled since it's not stable for now.
         // TODO: If you run this function while a player is dead, their percent will no longer be drawn.
@@ -1141,30 +1186,6 @@ scope Training {
         // lwc1    f6, 0x0014(sp)              // load f4, f6
         // addiu   sp, sp, 0x0018              // deallocate stack space
 
-        _check_dd:
-        li      t0, entry_dpad_menu
-        lw      t0, 0x0004(t0)              // t0 = 0 if dpad options for du, dr and dd are enabled
-        bnez    t0, _check_frame_advance    // don't check dpad presses if dpad menu is off
-        nop
-
-        // check for a DPAD DOWN press, cycles through special model display if detected
-        lli     a0, Joypad.DD               // a0 - button_mask
-        lli     a1, 000069                  // a1 - whatever you like!
-        lli     a2, Joypad.PRESSED          // a2 - type
-        jal     Joypad.check_buttons_all_   // v0 - bool dd_pressed
-        nop
-        beqz    v0, _check_frame_advance    // if (!dd_pressed), skip
-        nop
-        li      t1, Toggles.entry_special_model
-        lw      t0, 0x0004(t1)              // t0 = 0 for off, 1 for hitbox_mode, 2 for hitbox+model, 3 for ecb
-        addiu   t0, t0, 0x0001              // t0 = 1, 2, 3, or 4
-        lli     t2, 0x0004                  // t2 = 4
-        beql    t0, t2, _update_model_display
-        addu    t0, r0, r0                  // turn off special model display
-
-        _update_model_display:
-        sw      t0, 0x0004(t1)              // store updated model display
-
         _check_frame_advance:
         li      t1, freeze                  // t1 = freeze
         li      t2, du_pressed              // t2 = du_pressed
@@ -1179,6 +1200,18 @@ scope Training {
         bnezl   t0, _skip_input             // don't check dpad presses if dpad menu is off
         sw      r0, 0x0000(t1)              // clear freeze if these dpad controls are off
 
+        _check_dr:
+        // check for a DPAD RIGHT press and store the result
+        // note: we prioritize DPAD RIGHT in cases where multiple are pressed at once
+        lli     a0, Joypad.DR               // a0 - button_mask
+        lli     a1, 000069                  // a1 - whatever you like!
+        lli     a2, Joypad.TURBO            // a2 - type
+        jal     Joypad.check_buttons_all_   // v0 - bool dr_pressed
+        nop
+        sw      v0, 0x0000(t3)              // store bool dr_pressed
+        bnez    v0, _skip_input             // skip checking for other dpad presses if DR is pressed
+        nop
+
         _check_du:
         // check for a DPAD UP press and store the result
         lli     a0, Joypad.DU               // a0 - button_mask
@@ -1188,14 +1221,24 @@ scope Training {
         nop
         sw      v0, 0x0000(t2)              // store bool du_pressed
 
-        _check_dr:
-        // check for a DPAD RIGHT press and store the result
-        lli     a0, Joypad.DR               // a0 - button_mask
+        _check_dd:
+        // check for a DPAD DOWN press, cycles through special model display if detected
+        lli     a0, Joypad.DD               // a0 - button_mask
         lli     a1, 000069                  // a1 - whatever you like!
-        lli     a2, Joypad.TURBO            // a2 - type
-        jal     Joypad.check_buttons_all_   // v0 - bool dr_pressed
+        lli     a2, Joypad.PRESSED          // a2 - type
+        jal     Joypad.check_buttons_all_   // v0 - bool dd_pressed
         nop
-        sw      v0, 0x0000(t3)              // store bool dr_pressed
+        beqz    v0, _skip_input             // if (!dd_pressed), skip
+        nop
+        li      t1, Toggles.entry_special_model
+        lw      t0, 0x0004(t1)              // t0 = 0 for off, 1 for hitbox_mode, 2 for hitbox+model, 3 for ecb
+        addiu   t0, t0, 0x0001              // t0 = 1, 2, 3, or 4
+        lli     t2, 0x0004                  // t2 = 4
+        beql    t0, t2, _update_model_display
+        addu    t0, r0, r0                  // turn off special model display
+
+        _update_model_display:
+        sw      t0, 0x0004(t1)              // store updated model display
 
         _skip_input:
         // replicate the original branch if skip_advance = true
@@ -1204,6 +1247,9 @@ scope Training {
         sw      ra, 0x006C(sp)              // save ra
 
         _load_du:
+        li      t1, freeze                  // t1 = freeze
+        li      t2, du_pressed              // t2 = du_pressed
+        li      t3, dr_pressed              // t3 = dr_pressed
         // toggle freeze if a dpad up input is given
         lw      t4, 0x0000(t2)              // t4 = bool du_pressed
         beqz    t4, _load_dr                // if (!du_pressed), load_dr
@@ -2752,6 +2798,41 @@ scope Training {
     }
 
     // @ Description
+    // This allows us to preserve menu selections when resetting (CPU option, Item selected, Speed)
+    // Note: 'View' is not trivial to retain cleanly (function checks when menu is open) so that still gets reset*
+    scope handle_reset_menu_selections_: {
+        OS.patch_start(0x1144D4, 0x8018DCB4)
+        j       handle_reset_menu_selections_
+        sw      r0, 0x0004(t0)  // original line 2 (damage)
+        _return:
+        OS.patch_end()
+
+        // nop some of these lines out (we clear within function instead)
+        OS.patch_start(0x1144E4, 0x8018DCC4)
+        nop                     // sw    r0, 0x0014(t0) reset cpu to stand
+        nop                     // sw    r0, 0x0018(t0) reset speed to 1/1
+        sw      t9, 0x001C(t0)  // original line (reset view to normal)
+        sb      r0, 0x00D3(t0)  // original line (lagtic_wait)
+        sb      r0, 0x00D4(t0)  // original line (frameadvance_wait)
+        sb      r0, 0x00D5(t0)  // original line (item_spawn_wait)
+        nop                     // sw    r0, 0x0010(t0) reset item to none
+        OS.patch_end()
+
+        li      t7, entry_preserve_menu_selections
+        lw      t7, 0x0004(t7)  // t0 = 0 if default, 1 if preserve
+        bnez    t7, _end        // skip clearing menu values if we are preserving
+        nop
+        sw      r0, 0x0000(t0)  // original line 1 (reset cursor index)
+        sw      r0, 0x0014(t0)  // reset cpu to stand
+        sw      r0, 0x0018(t0)  // reset speed to 1/1
+        sw      r0, 0x0010(t0)  // reset item to none
+
+        _end:
+        j       _return
+        lw      t7, 0x0000(a2)  // restore t7
+    }
+
+    // @ Description
     // Strings used to explain advance_frame_ shortcuts
     dpad_pause:; db "Toggle Pause", 0x00
     dpad_frame:; db "Frame Advance", 0x00
@@ -3091,8 +3172,8 @@ scope Training {
     dw char_0x40            // DEDEDE
     dw char_0x41            // GOEMON
     dw char_0x44            // BANJO
-    dw char_0x48            // CRASH
     dw char_0x49            // PEACH
+    dw char_0x48            // CRASH
 
     dw char_0x2A            // J MARIO
     dw char_0x29            // J FOX
@@ -3162,6 +3243,8 @@ scope Training {
     dw char_Px13            // POLYGON PEACH
     dw char_Px14            // POLYGON CRASH
 
+    dw string_random        // RANDOM
+
     // @ Description
     // Training character id is really the order they are displayed in
     // constant names are loosely based on the debug names for characters
@@ -3205,8 +3288,8 @@ scope Training {
         register_character_id(DEDEDE);
         register_character_id(GOEMON);
         register_character_id(BANJO);
-        register_character_id(CRASH);
         register_character_id(PEACH);
+        register_character_id(CRASH);
 
         // j characters
         register_character_id(JMARIO);
@@ -3312,8 +3395,8 @@ scope Training {
     db Character.id.DEDEDE
     db Character.id.GOEMON
     db Character.id.BANJO
-    db Character.id.CRASH
     db Character.id.PEACH
+    db Character.id.CRASH
 
     db Character.id.JMARIO
     db Character.id.JFOX
@@ -3384,6 +3467,8 @@ scope Training {
     db Character.id.NPEACH
     db Character.id.NCRASH
 
+    db Character.id.PLACEHOLDER // Random
+
     char_id_to_entry_id:
     db id.MARIO
     db id.FOX
@@ -3412,7 +3497,7 @@ scope Training {
     db id.NJIGGLY
     db id.NNESS
     db id.GDONKEY
-    db Character.id.NONE         // Not used
+    db char_id_to_entry_id - entry_id_to_char_id - 1 // Random (always last)
     db Character.id.NONE         // Not used
     db id.FALCO
     db id.GND
@@ -3578,7 +3663,7 @@ scope Training {
         define spawn_func(Training.spawn_func_{player}_)
         define percent(Training.struct.port_{player}.percent)
 
-        Menu.entry("Character:", Menu.type.INT, 0, 0, char_id_to_entry_id - entry_id_to_char_id - 1, OS.NULL, OS.NULL, string_table_char, {character}, entry_costume_p{player})
+        Menu.entry("Character:", Menu.type.INT, 0, 0, char_id_to_entry_id - entry_id_to_char_id - 2, OS.NULL, OS.NULL, string_table_char, {character}, entry_costume_p{player})
         entry_costume_p{player}:; Menu.entry("Costume:", Menu.type.INT, 0, 0, 5, OS.NULL, OS.NULL, OS.NULL, {costume}, entry_type_p{player})
         entry_type_p{player}:; Menu.entry("Type:", Menu.type.INT, 2, 0, 2, OS.NULL, OS.NULL, string_table_type, {type}, entry_spawn_p{player})
         entry_spawn_p{player}:; Menu.entry("Spawn:", Menu.type.INT, 0, 0, 4, OS.NULL, OS.NULL, string_table_spawn, {spawn_id}, entry_set_custom_spawn_p{player})
@@ -3824,7 +3909,8 @@ scope Training {
     entry_di_practice_mode:; Menu.entry_bool("DI Practice Mode:", OS.FALSE, entry_spam_practice)
     entry_spam_practice:; Menu.entry("Spam Practice:", Menu.type.INT, 0, 0, SPAM_PRACTICE_MAX, OS.NULL, OS.NULL, string_table_spam_practice, OS.NULL, entry_spam_interval)
     entry_spam_interval:; Menu.entry("Spam Interval:", Menu.type.INT, 1, 1, 999, OS.NULL, OS.NULL, OS.NULL, OS.NULL, entry_spam_interval_random)
-    entry_spam_interval_random:; Menu.entry_bool("Spam Interval Random:", OS.FALSE, OS.NULL)
+    entry_spam_interval_random:; Menu.entry_bool("Spam Interval Random:", OS.FALSE, entry_preserve_menu_selections)
+    entry_preserve_menu_selections:; Menu.entry_bool("Preserve Menu Selections:", OS.FALSE, OS.NULL)
 
     // @ Description
     // Holds the initial value of the special model display toggle

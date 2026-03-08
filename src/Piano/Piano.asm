@@ -110,7 +110,6 @@ scope Piano {
     Character.edit_action_parameters(PIANO, Action.ShieldDrop,          File.PIANO_PLAT_DROP,       -1,                         -1)
     Character.edit_action_parameters(PIANO, Action.Teeter,              File.PIANO_TEETER,          0x80000000,                 -1)
     Character.edit_action_parameters(PIANO, Action.TeeterStart,         File.PIANO_TEETER_START,    TEETER_START,               -1)
-    Character.edit_action_parameters(PIANO, Action.Teeter,              File.PIANO_TEETER,          0x80000000,                 -1)
     Character.edit_action_parameters(PIANO, Action.DamageHigh1,         File.PIANO_DMG_1,           DMG_1,                      -1)
     Character.edit_action_parameters(PIANO, Action.DamageHigh2,         File.PIANO_DMG_2,           DMG_2,                      -1)
     Character.edit_action_parameters(PIANO, Action.DamageHigh3,         File.PIANO_DMG_3,           DMG_3,                      -1)

@@ -11,8 +11,6 @@ constant DROP_ITEM(0)
 constant THROW_ITEM(0)
 constant PLAYER_COLLISION(0)
 
-constant PROJECTILE_ID(0x100A)
-
 constant ITEM_INFO_ARRAY_ORIGIN(origin())
 item_info_array:
 dw 0                                        // 0x00 - item ID
@@ -235,7 +233,7 @@ scope waddle_doo_attack_main: {
 }
 
 constant BEAM_STAR_COUNT(4)
-constant BEAM_STAR_DAMAGE(3)
+constant BEAM_STAR_DAMAGE(2)
 constant BEAM_TIME_BETWEEN_DESTROY(1)
 constant BEAM_CHILD_ANGLE_OFFSET(0x3ED0)
 constant BEAM_START_UP(10)	// after created
@@ -417,7 +415,7 @@ scope star_stage_setting: {
 
         // s4 = projectile struct
         lw      t8, 0x000C(s4)          // t8 = projectile ID
-        addiu   at, r0, PROJECTILE_ID   // at = projectile ID
+        addiu   at, r0, Projectile.id.DEDEDE_WADDLEDOO_BEAM	// at = projectile ID
 
         bne     at, t8, _normal         // normal logic if not Waddle Doo's Beam projectile ID
         nop
@@ -802,7 +800,7 @@ scope beam_main: {
 // currently a copy of star rod projectile @ 8018A1C4
 beam_info_array:
 dw 0x00000000        // ?
-dw PROJECTILE_ID     // projectile id
+dw Projectile.id.DEDEDE_WADDLEDOO_BEAM // projectile id
 dw 0x8018D040        // pointer to file 0xFB
 dw 0x000004D4        // offset in file
 dw 0x1C000000        // rendering routine index ?

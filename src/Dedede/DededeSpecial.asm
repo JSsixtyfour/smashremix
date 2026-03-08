@@ -2464,11 +2464,11 @@ scope DededeNSP {
     dh Reflect.reflect_type.CUSTOM          // reflect type
     dw 0x00000000                           // not sure
     float32 0                               // 0x08 local offset x
-    dw 0x43900000                           // 0x0C local offset y
+    float32 318                             // 0x0C local offset y
     float32 250                             // 0x10 local offset z
-    dw 0x44000000                           // 0x14 size x
-    dw 0x43900000                           // 0x18 size y
-    dw 0x437A0000                           // 0x1C size z
+    float32 480                             // 0x14 size x
+    float32 330                             // 0x18 size y
+    float32 330                             // 0x1C size z
     dw 0x18000000                           // 0x?? hp value maybe
 	OS.align(16)
 

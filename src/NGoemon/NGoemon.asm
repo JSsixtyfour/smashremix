@@ -31,7 +31,6 @@ scope NGoemon {
     Character.edit_action_parameters(NGOEMON,    Action.Dash,            File.GOEMON_DASH,           -1,                         -1)
     Character.edit_action_parameters(NGOEMON,    Action.Run,             File.GOEMON_RUN,            -1,                         -1)
     Character.edit_action_parameters(NGOEMON,    Action.RunBrake,        File.GOEMON_RUN_BRAKE,      -1,                         -1)
-    //Character.edit_action_parameters(GOEMON,    Action.Turn,            File.GOEMON_TURN,           -1,                         -1)
     Character.edit_action_parameters(NGOEMON,    Action.TurnRun,         File.GOEMON_TURN_RUN,       -1,                         -1)
 
     Character.edit_action_parameters(NGOEMON,    Action.JumpSquat,       File.GOEMON_JUMPSQUAT,      -1,                         0)
@@ -98,7 +97,6 @@ scope NGoemon {
     Character.edit_action_parameters(NGOEMON,    Action.ThrowB,          File.GOEMON_THROW_BACKWARD, Goemon.BTHROW,                     -1)
     Character.edit_action_parameters(NGOEMON,    Goemon.Action.Jab3,            File.GOEMON_JAB3,           Goemon.JAB_3,                      -1)
     Character.edit_action_parameters(NGOEMON,    Goemon.Action.USP,             File.GOEMON_USP_LOOP,       Goemon.USP_IDLE,                    0)
-    // Character.edit_action_parameters(GOEMON,    Action.USPTurn,         0x1FB,                      0x80000000,               0)
     Character.edit_action_parameters(NGOEMON,    Goemon.Action.USPAttack,       File.GOEMON_USP_ATTACK,     Goemon.USP_ATTACK,                  0)
     Character.edit_action_parameters(NGOEMON,    Goemon.Action.USPJump,         File.GOEMON_USP_JUMP,       Goemon.USP_JUMP,                    0)
     Character.edit_action_parameters(NGOEMON,    Goemon.Action.USPEscape,       File.GOEMON_USP_ESCAPE,     Goemon.USP_ESCAPE,                  0)

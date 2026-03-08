@@ -308,7 +308,7 @@ Character.edit_action_parameters(SHEIK, Action.ItemThrowAirU,           File.SHE
 // Character.edit_action_parameters(SHEIK, Action.ItemThrowAirSmashF,      File.SHEIK_ITEM_THROW_AIR,          -1,                         -1)
 // Character.edit_action_parameters(SHEIK, Action.ItemThrowAirSmashB,      File.SHEIK_ITEM_THROW_AIR,          -1,                         -1)
 Character.edit_action_parameters(SHEIK, Action.ItemThrowAirSmashU,      File.SHEIK_ITEM_THROW_AIR_U,        -1,                         -1)
-// Character.edit_action_parameters(SHEIK, Action.ItemThrowAirSmashF,      File.SHEIK_ITEM_THROW_AIR_D,        -1,                         -1)
+// Character.edit_action_parameters(SHEIK, Action.ItemThrowAirSmashD,      File.SHEIK_ITEM_THROW_AIR_D,        -1,                         -1)
 // Character.edit_action_parameters(SHEIK, Action.HeavyItemThrowF,         File.SHEIK_HEAVY_ITEM_THROW,        -1,                         -1)
 // Character.edit_action_parameters(SHEIK, Action.HeavyItemThrowB,         File.SHEIK_HEAVY_ITEM_THROW,        -1,                         -1)
 // Character.edit_action_parameters(SHEIK, Action.HeavyItemThrowSmashF,    File.SHEIK_HEAVY_ITEM_THROW,        -1,                         -1)
@@ -579,4 +579,76 @@ Character.edit_action_parameters(SHEIK, Action.LandingAirX,             File.SHE
         j       0x800E9A60                  // return
         lw      a3, 0x001C(sp)              // load a3
     }
+
+    // Custom recovery logic
+    scope recovery_logic: {
+        OS.routine_begin(0x20)
+
+        lw t0, 0x78(a0) // load location vector
+        lwc1 f2, 0x0(t0) // f2 = location X
+        lwc1 f4, 0x4(t0) // f4 = location Y
+
+        mtc1 r0, f0 // guarantee f0 = 0
+
+        // check if facing ledge
+        scope direction_check: {
+            lw t0, 0x44(a0) // t0 = player facing direction
+
+            bltz t0, _recovering_left
+            nop
+
+            _recovering_right:
+            lwc1 f6, 0x01CC+0x4c(a0) // load nearest LEFT ledge X
+            lwc1 f8, 0x01CC+0x50(a0) // load nearest LEFT ledge Y
+
+            sub.s f14, f6, f2 // f14 = x diff
+            sub.s f12, f8, f4 // f12 = y diff
+
+            c.le.s f14, f0 // if going reverse, skip
+            nop
+            bc1t _end // do not try to DSP when not facing ledge
+            nop
+            
+            b _check_end
+            nop
+
+            _recovering_left:
+            lwc1 f6, 0x01CC+0x54(a0) // load nearest RIGHT ledge X
+            lwc1 f8, 0x01CC+0x58(a0) // load nearest RIGHT ledge Y
+
+            sub.s f14, f6, f2 // f14 = x diff
+            sub.s f12, f8, f4 // f12 = y diff
+
+            c.le.s f0, f14 // if going reverse, skip
+            nop
+            bc1t _end // do not try to DSP when not facing ledge
+            nop
+
+            _check_end:
+        }
+
+
+        lw at, 0xADC(a0) // flag to know if aerial dsp was already used
+        bnez at, _end // if aerial dsp was already used, skip. Not worth even when high up
+        nop
+
+        lui at, 0x44FA
+        mtc1 at, f22 // f22 = 2000.0 (approximately how much Sheik moves forwards with DSP
+
+        abs.s f16, f14 // f16 = abs(x distance to ledge)
+
+        c.le.s f16, f22 // if distance to ledge is lower than 2000.0
+        nop
+        bc1t _end // do not go for DSP if already close to ledge
+        nop
+
+        _execute_ai_command:
+        jal 0x80132758 // execute AI command
+        lli a1, AI.ROUTINE.DSP // arg1 = DSP
+
+        _end:
+        OS.routine_end(0x20)
+    }
+    Character.table_patch_start(recovery_logic, Character.id.SHEIK, 0x4)
+    dw recovery_logic; OS.patch_end()
 }

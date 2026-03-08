@@ -114,6 +114,7 @@ scope DSamus {
     insert TAUNT, "moveset/TAUNT.bin"
     insert TECH_ROLL,"moveset/TECH_ROLL.bin"
     insert TECH,"moveset/TECH.bin"
+    ENTRY:; insert "moveset/ENTRY.bin"
 
     WALK:
     dw MODEL.HAND_L.CLOSED; dw 0
@@ -193,16 +194,18 @@ scope DSamus {
     Character.edit_action_parameters(DSAMUS, Action.FSmashMidLow,                   -1,                         FSMASHMIDDOWN,              -1)
     Character.edit_action_parameters(DSAMUS, Action.FSmashLow,                      -1,                         FSMASHDOWN,                 -1)
     Character.edit_action_parameters(DSAMUS, Action.Taunt,                          File.DSAMUS_TAUNT,          TAUNT,                      -1)
-    Character.edit_action_parameters(DSAMUS, Action.ScrewAttack,                           -1,                         UP_SPECIAL_GROUND,          -1)
-    Character.edit_action_parameters(DSAMUS, Action.ScrewAttackAir,                        -1,                         UP_SPECIAL_AIR,             -1)
-    Character.edit_action_parameters(DSAMUS, Action.ChargeShotCharging,                    File.DSAMUS_NSP_CHARGE,     CHARGE,                     -1)
-    Character.edit_action_parameters(DSAMUS, Action.ChargeShotStart,                       File.DSAMUS_NSP_START,      -1,                         -1)
-    Character.edit_action_parameters(DSAMUS, Action.ChargeShotShooting,                    File.DSAMUS_NSP_SHOOT,      -1,                         -1)
-    Character.edit_action_parameters(DSAMUS, Action.ChargeShotStartAir,                    File.DSAMUS_NSP_START_AIR,  -1,                         -1)
-    Character.edit_action_parameters(DSAMUS, Action.ChargeShotShootingAir,                 File.DSAMUS_NSP_SHOOT_AIR,  -1,                         -1)
-    Character.edit_action_parameters(DSAMUS, Action.BoostBall,                             -1,                         DSP_GROUND,                 -1)
-    Character.edit_action_parameters(DSAMUS, Action.BoostBallJump,                         -1,                         DSP_GROUND,                 -1)
+    Character.edit_action_parameters(DSAMUS, Action.ScrewAttack,                    -1,                         UP_SPECIAL_GROUND,          -1)
+    Character.edit_action_parameters(DSAMUS, Action.ScrewAttackAir,                 -1,                         UP_SPECIAL_AIR,             -1)
+    Character.edit_action_parameters(DSAMUS, Action.ChargeShotCharging,             File.DSAMUS_NSP_CHARGE,     CHARGE,                     -1)
+    Character.edit_action_parameters(DSAMUS, Action.ChargeShotStart,                File.DSAMUS_NSP_START,      -1,                         -1)
+    Character.edit_action_parameters(DSAMUS, Action.ChargeShotShooting,             File.DSAMUS_NSP_SHOOT,      -1,                         -1)
+    Character.edit_action_parameters(DSAMUS, Action.ChargeShotStartAir,             File.DSAMUS_NSP_START_AIR,  -1,                         -1)
+    Character.edit_action_parameters(DSAMUS, Action.ChargeShotShootingAir,          File.DSAMUS_NSP_SHOOT_AIR,  -1,                         -1)
+    Character.edit_action_parameters(DSAMUS, Action.BoostBall,                      -1,                         DSP_GROUND,                 -1)
+    Character.edit_action_parameters(DSAMUS, Action.BoostBallJump,                  -1,                         DSP_GROUND,                 -1)
     Character.edit_action_parameters(DSAMUS, Action.EggLay,                         File.DARK_SAMUS_IDLE,       -1,                         -1)
+    Character.edit_action_parameters(DSAMUS, Action.Appear1,                        File.DSAMUS_APPEAR_L,       ENTRY,                      0x40000008)
+    Character.edit_action_parameters(DSAMUS, Action.Appear2,                        File.DSAMUS_APPEAR_R,       ENTRY,                      0x40000008)
 
     // Add Action Parameters                // Action Name      // Base Action          // Animation                // Moveset Data             // Flags
     Character.add_new_action_params(DSAMUS, NSPChargeAir,       -1,                     File.DSAMUS_NSP_CHARGE_AIR, NSP_CHARGE,                 0)
@@ -228,6 +231,7 @@ scope DSamus {
     Character.edit_menu_action_parameters(DSAMUS,   0x3,               File.DSAMUS_SELECT,         SELECT,                      -1)
     Character.edit_menu_action_parameters(DSAMUS,   0x4,               File.DSAMUS_SELECT,         SELECT,                      -1)
     Character.edit_menu_action_parameters(DSAMUS,   0x5,               -1,                         CLAP,                        -1)
+    Character.edit_menu_action_parameters(DSAMUS,   0xD,               File.DSAMUS_1P_POSE,        0x80000000,                  -1)
     Character.edit_menu_action_parameters(DSAMUS,   0xE,               File.DSAMUS_1P_CPU_POSE,    0x80000000,                  -1)
 
     // Set crowd chant FGM.

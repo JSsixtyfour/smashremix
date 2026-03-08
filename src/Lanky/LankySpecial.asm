@@ -366,9 +366,8 @@ scope LankyNSP {
 
     OS.align(16)
     grape_projectile_struct:
-    constant NUT_ID(0x1001)
     dw 0x00000000                           // unknown
-    dw NUT_ID                               // projectile id
+    dw Projectile.id.LANKY_NUT              // projectile id
     dw Character.LANKY_file_6_ptr           // address of conker's file 6 pointer
     dw 0x00000000                           // offset to hitbox
     dw 0x12470000                           // This determines z axis rotation? (samus is 1246)

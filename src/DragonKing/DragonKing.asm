@@ -182,7 +182,6 @@ scope DragonKing {
     Character.edit_action_parameters(DRAGONKING,    Action.TechB,           -1,                             TECH_ROLL,                  -1)
     Character.edit_action_parameters(DRAGONKING,    Action.RollF,           -1,                             ROLLF,                      -1)
     Character.edit_action_parameters(DRAGONKING,    Action.RollB,           -1,                             ROLLB,                      -1)
-    Character.edit_action_parameters(DRAGONKING,    Action.TeeterStart,     -1,                             0x80000000,                 -1)
 
     Character.edit_action_parameters(DRAGONKING,    Action.JumpSquat,       File.DKING_JUMPSQUAT,           -1,                         -1)
     Character.edit_action_parameters(DRAGONKING,    Action.ShieldJumpSquat, File.DKING_JUMPSQUAT,           -1,                         -1)
@@ -199,7 +198,6 @@ scope DragonKing {
     Character.edit_action_parameters(DRAGONKING,    Action.JabLoopStart,    File.DKING_JAB_LOOP_START,      0x80000000,                 0x40000000)
     Character.edit_action_parameters(DRAGONKING,    Action.JabLoop,         File.DKING_JAB_LOOP,            JAB_LOOP,                   -1)
     Character.edit_action_parameters(DRAGONKING,    Action.JabLoopEnd,      File.DKING_JAB_LOOP_END,        0x80000000,                 -1)
-    Character.edit_action_parameters(DRAGONKING,    Action.TeeterStart,     -1,                             0x80000000,                 -1)
     Character.edit_action_parameters(DRAGONKING,    Action.DashAttack,      File.DKING_DASH_ATTACK,         DASH_ATTACK,                -1)
     Character.edit_action_parameters(DRAGONKING,    Action.FTiltHigh,       File.DKING_FTILT_HIGH,          FTILT_HIGH,                 -1)
     Character.edit_action_parameters(DRAGONKING,    Action.FTiltMidHigh,    File.DKING_FTILT_MID_HIGH,      FTILT_MID_HIGH,             -1)

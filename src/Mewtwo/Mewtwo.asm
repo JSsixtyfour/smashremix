@@ -371,7 +371,7 @@ scope Mewtwo {
     Teams.add_team_costume(YELLOW, MTWO, 0x4)
 
     // Shield colors for costume matching
-    Character.set_costume_shield_colors(MTWO, PURPLE, GREEN, RED, BLUE, YELLOW, CYAN, NA, NA)
+    Character.set_costume_shield_colors(MTWO, PURPLE, GREEN, RED, BLUE, YELLOW, CYAN, PINK, NA)
 
     // Remove entry script.
     Character.table_patch_start(entry_script, Character.id.MTWO, 0x4)

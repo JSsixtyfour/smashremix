@@ -55,6 +55,33 @@ scope Size {
     second_jumping_height_multiplier:;      float32 0.0395604
     weight_multiplier:;                     float32 -0.24
 
+
+    // @ Description
+    // Adjusts the respawn platform size
+    scope adjust_respawn_platform: {
+        OS.patch_start(0x7F878, 0x80104078)
+        j       adjust_respawn_platform
+        nop
+        _return:
+        OS.patch_end()
+        
+        // a0 = player obj
+        // f12 = current respawn platform multiplier
+        li      t7, multiplier_table    // t7 = multiplier_table
+        lw      a0, 0x0084(a0)          // a0 = player struct
+        lbu     t6, 0x000D(a0)          // t6 = port
+        sll     t6, t6, 0x0002          // t6 = index = port * 4
+        addu    t7, t7, t6              // t7 = &multiplier_table[index]
+        lwc1    f14, 0x0000(t7)         // f16 = multiplier
+        mul.s   f12, f12, f14           // respawn platform multiplier *= size multiplier
+        nop
+        
+        // return
+        lui     a0, 0x8013              // og line 1
+        j       _return
+        addiu   a0, a0, 0xE770          // og line 2
+    }
+
     // @ Description
     // Adjusts the height of the player label.
     scope adjust_player_label_: {

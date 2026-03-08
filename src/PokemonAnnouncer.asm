@@ -1587,6 +1587,55 @@ scope PokemonAnnouncer {
         lui     t3, 0x800A              // original line 2
     }
     
+    // Taunt announcement
+    scope taunt_announcement_: {
+        OS.patch_start(0xC9130, 0x8014E6F0)
+        j       taunt_announcement_
+        nop
+        return:
+        OS.patch_end()
+        
+        addiu   sp, sp, -0x0030
+        sw      v0, 0x0008(sp)
+        
+        jal     toggle_announcer_
+        nop
+        
+        bnez    v0, _end
+        nop
+        
+        sw      a0, 0x0014(sp)
+        sw      v1, 0x0010(sp)
+        sw      a1, 0x000C(sp)
+        sw      t1, 0x0018(sp)
+
+        _pokemon:       
+        li      a2, taunt_call
+        addiu   a0, r0, STANDARD
+        jal     announcer_main_
+        addiu   a1, r0, 0x0001          // decimal 1 possible integers
+        
+        bnez    v0, _no_sound
+        nop
+        
+        jal     0x800269C0              // play fgm
+        addu    a0, r0, v1              // get announcement ID by adding item ID to t9
+        
+        
+        _no_sound:
+        lw      a0, 0x0014(sp)
+        lw      v1, 0x0010(sp)
+        lw      a1, 0x000C(sp)
+        lw      t1, 0x0018(sp)
+        
+        _end: 
+        lw      v0, 0x0008(sp)
+        addiu   sp, sp, 0x0030
+        addiu   at, r0, 0x0016      // original line 1
+        j       return
+        lw      v1, 0x0008(v0)      // original line 2
+    }
+    
     // "Head on collision" for clangs
     scope clang_announcement_: {
         OS.patch_start(0x5DED8, 0x800E26D8)
@@ -2571,6 +2620,9 @@ scope PokemonAnnouncer {
     
     body_slam_call:
     add_announcement(0x51, 0x5CF, 0x708, 0x1)       // Body Slam
+    
+    taunt_call:
+    add_announcement(0x52, 0x608, 0x708, 0x1)       // It's Getting Pumped Up
     
     dig_match_history:
     db 0x00

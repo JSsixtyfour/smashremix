@@ -20,7 +20,7 @@ You must place your legally acquired patched ROM in the 'roms' folder for this t
 #### Toggle Name: _Hitstun_
 
 ### Hitlag
-- Available Hitstun options are: 'Normal', 'Japanese', 'Melee', 'Ultimate', 'None'
+- Available Hitlag options are: 'Normal', 'Japanese', 'Melee', 'Ultimate', 'None'
 
 #### Toggle Name: _Hitlag_
 
@@ -57,7 +57,7 @@ Computer controlled players have received a variety of improvements.
 - Metal Mario, Giant DK, and polygon versions of the original cast are available via d-pad up or down.
 - Japanese versions of the original cast are available via d-pad left.
 - European versions of some of the original cast are available via d-pad right.
-- Giga Bowser, Mad Piano, Super Sonic, Peppy, Slippy, Metal Luigi, Ebisumaru, and Dragon King are available via d-pad up.
+- Giga Bowser, Super Sonic, and Metal Luigi are available via d-pad up.
 - Polygon versions of some of the remix cast are available via d-pad down.
 
 ### Character Select Debug Menu
@@ -393,7 +393,7 @@ Load a curated list of tracks.
 ### Alternate Music
 - Custom stages have up to two alternate tracks that will play at random.
 - The "Occasional" alternate track plays more frequently than the "Rare" alternate track.
-- The music track can be forced by holding a C button when choosing the stage: C-up = Default, C-left = Occasional, C-right = Rare
+- The music track can be forced by holding a C button when choosing the stage: C-up = Default, C-left = Occasional, C-right = Rare, C-down = Rare2
 
 ### Random Stage Switch
 - Changes possible outcomes of pressing RANDOM on the stage select screen.
@@ -412,11 +412,11 @@ Load a curated list of stages.
 - No Variants: All stages except for variants, Dream Land Beta 1 and 2 and How to Play. (Fray's Stage Night is included.)
 - Staff Picks: Favorites of the contributors of Smash Remix.
 
-### Random Select With Variants
-- By default, the variants (Metal Mario, Giant DK, polygons, J/E regional versions) are not included in the random character select that occurs when toggling the CPU button on the character select screen.
-- This toggle allows for them to be included.
+### Random Select
+- By default, the variants (Metal Mario, Giant DK, polygons, J/E regional versions) and bonus characters (Dark Samus, Lucas, Mad Piano, etc.) are not included in the random character select that occurs when toggling the CPU button on the character select screen or by using the '?' slot.
+- This toggle allows for them each to be included, as well as selecting from Vanilla only.
 
-#### Toggle Name: _Random Select With Variants_
+#### Toggle Name: _Random Select_
 
 ### Player Tags
 - Can store up to 20 names (which are be selected via Character Menu Panel).
@@ -515,6 +515,16 @@ When Special Model Display is Hitbox or Hitbox+, these changes are applied:
 
 #### Toggle Name: _Music Title at Match Start_
 
+### BGM Volume
+- Sets the volume of music. Volume ranges from 0-10, with 10 being default.
+
+#### Toggle Name: _BGM Volume_
+
+### SFX Volume
+- Sets the volume of sound effects. Volume ranges from 0-10, with 10 being default.
+
+#### Toggle Name: _SFX Volume_
+
 ### Disable Anti-Aliasing
 - Turn off anti-aliasing.
 
@@ -572,6 +582,11 @@ When Special Model Display is Hitbox or Hitbox+, these changes are applied:
 
 #### Toggle Name: _Screenshake_
 
+### BlastZone GFX
+- Allows shrinking or disabling the blast zone visual effects.
+
+#### Toggle Name: _BlastZone GFX_
+
 ## Training Mode
 ### Custom Menu
 - Pressing Z while the menu is open will open the custom training menu. This menu allows you to access special settings for each port.
@@ -589,6 +604,7 @@ When Special Model Display is Hitbox or Hitbox+, these changes are applied:
     - CPU DI Strength: Set CPU DI Strength. (High, Medium, Low, Random)
     - CPU DI Direction: Set CPU DI Direction. (Left, Right, Up, Down, Toward, Away, Random)
     - D-Pad Controls: Toggles the Training D-pad functions. (On, Reset Only, Disabled)
+    - Preserve menu selections: Allows player to keep Vanilla Menu selections when resetting.
 
 ### D-Pad Shortcuts
 - Pressing up on the d-pad will pause/unpause the game.
@@ -632,6 +648,11 @@ Many `Gameplay Settings` contain options that enable Japanese behavior: Hitstun,
 - Use the Japanese version's shield stun value.
 
 #### Toggle Name: _Japanese Shield Stun_
+
+### Japanese Stun/Sleep
+- Use the Japanese version's formulas for stun and sleep duration.
+
+#### Toggle Name: _Japanese Stun/Sleep_
 
 ## Single Player Modes
 
@@ -713,6 +734,7 @@ L Selects Random Character | Off                | Off               | Off       
 PK Thunder Reflect Crash Fix  | On              | On                | On                | On
 Flash Guard                | Off                | Off               | Off               | OFf
 Screenshake                | Default            | Default           | Default           | Default
+BlastZone GFX              | Default            | Default           | Default           | Default
 
 #### Gameplay Settings
 Toggle                     | Community          | Tournament        | Netplay           | Japanese
@@ -721,6 +743,7 @@ Hitstun                    | Normal             | Normal            | Normal    
 Hitlag                     | Normal             | Normal            | Normal            | Japanese
 DI                         | Normal             | Normal            | Normal            | Japanese
 Japanese Sounds            | Default            | Default           | Default           | Always
+Japanese Stun/Sleep        | Default            | Default           | Default           | On
 Momentum Slide             | Off                | Off               | Off               | On
 Shield Stun                | Normal             | Normal            | Normal            | Japanese
 Z-Cancel                   | Default            | Default           | Default           | Default
@@ -755,6 +778,8 @@ Random Music                    | Off                | Off               | On   
 Salty Runback Preserves Song    | Off                | Off               | Off               | Off
 Menu Music                      | DEFAULT            | DEFAULT           | 64                | DEFAULT
 Music Title at Match Start      | On                 | Off               | On                | On
+BGM Volume                      | 10                 | 10                | 10                | 10
+SFX Volume                      | 10                 | 10                | 10                | 10
 _Random Toggles for All Tracks_ | On                 | On                | On                | On
 
 #### Stage Settings

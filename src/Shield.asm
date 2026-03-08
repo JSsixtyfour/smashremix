@@ -250,8 +250,16 @@ scope Shield {
         beql    a0, t7, _set_palette_shield // if Vanilla, use original color
         lli     a0, Shield.color.DEFAULT    // a0 = original color
         lli     t7, Shield.color.COSTUME    // t7 = match costume
-        bne     a0, t7, _set_palette_shield // if a custom color is selected, pull that color
+        beq     a0, t7, _costume_shield     // if costume color is selected, pull that color
         lw      t7, 0x0008(a2)              // t7 = char_id
+
+        li      a0, Character.yoshi_egg_color.table
+        sll     t7, t7, 0x0001              // t7 = char_id * 2
+        addu    a0, t7, a0                  // a0 = entry in yoshi_egg_color.table
+        b       _set_palette_shield         // use color from table
+        lhu     a0, 0x0000(a0)              // load characters entry in jump table
+
+        _costume_shield:
         li      v1, Character.costume_shield_color.table
         sll     t7, t7, 0x0002              // t7 = offset for character's costume shield color array pointer
         addu    v1, v1, t7                  // v1 = costume shield color array pointer for character
@@ -304,8 +312,16 @@ scope Shield {
         beql    a0, at, _set_palette_roll   // if Vanilla, use original color
         lli     a0, Shield.color.DEFAULT    // a0 = original color
         lli     at, Shield.color.COSTUME    // at = match costume
-        bne     a0, at, _set_palette_roll   // if a custom color is selected, pull that color
+        beq     a0, at, _costume_roll       // if costume color is selected, pull that color
         lw      at, 0x0008(a2)              // at = char_id
+
+        li      a0, Character.yoshi_egg_color.table
+        sll     at, at, 0x0001              // at = char_id * 2
+        addu    a0, at, a0                  // a0 = entry in yoshi_egg_color.table
+        b       _set_palette_roll           // use color from table
+        lhu     a0, 0x0000(a0)              // load characters entry in jump table
+
+        _costume_roll:
         li      v1, Character.costume_shield_color.table
         sll     at, at, 0x0002              // at = offset for character's costume shield color array pointer
         addu    v1, v1, at                  // v1 = costume shield color array pointer for character
@@ -356,8 +372,16 @@ scope Shield {
         beql    a0, at, _set_palette_eggthrow // if Vanilla, use original color
         lli     a0, Shield.color.DEFAULT    // a0 = original color
         lli     at, Shield.color.COSTUME    // at = match costume
-        bne     a0, at, _set_palette_eggthrow // if a custom color is selected, pull that color
+        beq     a0, at, _costume_eggthrow   // if costume color is selected, pull that color
         lw      at, 0x0008(s0)              // at = char_id
+
+        li      a0, Character.yoshi_egg_color.table
+        sll     at, at, 0x0001              // at = char_id * 2
+        addu    a0, at, a0                  // a0 = entry in yoshi_egg_color.table
+        b       _set_palette_eggthrow       // use color from table
+        lhu     a0, 0x0000(a0)              // load characters entry in jump table
+
+        _costume_eggthrow:
         li      a1, Character.costume_shield_color.table
         sll     at, at, 0x0002              // at = offset for character's costume shield color array pointer
         addu    a1, a1, at                  // a1 = costume shield color array pointer for character
@@ -442,8 +466,16 @@ scope Shield {
         beql    a0, t8, _set_palette_egglay // if Vanilla, use original color
         lli     a0, Shield.color.DEFAULT    // a0 = original color
         lli     t8, Shield.color.COSTUME    // t8 = match costume
-        bne     a0, t8, _set_palette_egglay // if a custom color is selected, pull that color
+        beq     a0, t8, _costume_egglay     // if costume color is selected, pull that color
         lw      t8, 0x0008(t9)              // t8 = char_id
+
+        li      a0, Character.yoshi_egg_color.table
+        sll     t8, t8, 0x0001              // t8 = char_id * 2
+        addu    a0, t8, a0                  // a0 = entry in yoshi_egg_color.table
+        b       _set_palette_egglay         // use color from table
+        lhu     a0, 0x0000(a0)              // load characters entry in jump table
+
+        _costume_egglay:
         li      v1, Character.costume_shield_color.table
         sll     t8, t8, 0x0002              // t8 = offset for character's costume shield color array pointer
         addu    v1, v1, t8                  // v1 = costume shield color array pointer for character
@@ -496,9 +528,17 @@ scope Shield {
         lli     t6, Shield.color.VANILLA    // t6 = Vanilla Smash
         beql    a0, t6, _set_palette_entry  // if Vanilla, use original color
         lli     a0, Shield.color.DEFAULT    // a0 = original color
-        lli     t6, Shield.color.COSTUME    // t6 = mt6ch costume
-        bne     a0, t6, _set_palette_entry  // if a custom color is selected, pull tht6 color
+        lli     t6, Shield.color.COSTUME    // t6 = match costume
+        beq     a0, t6, _costume_entry      // if costume color is selected, pull that color
         lw      t6, 0x0008(s0)              // t6 = char_id
+
+        li      a0, Character.yoshi_egg_color.table
+        sll     t6, t6, 0x0001              // t6 = char_id * 2
+        addu    a0, t6, a0                  // a0 = entry in yoshi_egg_color.table
+        b       _set_palette_entry          // use color from table
+        lhu     a0, 0x0000(a0)              // load characters entry in jump table
+
+        _costume_entry:
         li      a1, Character.costume_shield_color.table
         sll     t6, t6, 0x0002              // t6 = offset for character's costume shield color array pointer
         addu    a1, a1, t6                  // a1 = costume shield color array pointer for character

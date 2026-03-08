@@ -2,8 +2,7 @@
 
 // This file contains shared functions by Jigglypuff and Kirby Clones.
 
-scope JigglypuffKirbyShared {
-
+scope JigglypuffKirbyShared: {
 
 	constant kirby_jump_multiplier_table(0x80188578)// NA, NA, 60.0, 52.0, 47.0, 40.0
 	constant puff_jump_multiplier_table(0x80188588)	// NA, NA, 60.0, 40.0, 20.0, 0.0
@@ -423,7 +422,7 @@ scope JigglypuffKirbyShared {
     //    _kirby_taunt_2:
     //    j       0x8014E738                  // routine for kirby taunt
     //    addiu   a1, r0, 0x00BD              // original line 2
-    }
+    // }
 
     // character ID check add for when Pikachu and Jigglypuff Clones use spawn on stage.
     scope pokemon_spawn_fix: {
@@ -756,10 +755,52 @@ scope JigglypuffKirbyShared {
 
         lli     t0, Character.id.JKIRBY         // at = JKIRBY
         lw      t7, 0x0008(v0)                  // t7 = character id
-        beql    t0, t7, _end                    // take branch if j kirby
+        beql    t0, t7, _end                    // take branch if J Kirby
         addiu   t9, r0, 0x32                    // 50 HP in hex, J version
 
         addiu   t9, r0, 0x26                    // original line 2, 38 HP in hex, U version
+
+        _end:
+        j       _return                         // return
+        nop
+    }
+
+    // 80161368+C
+    // Modifies J Kirby's rock form to apply a color overlay based on same remaining HP as J Version
+    scope kirby_rock_2: {
+        OS.patch_start(0xDBDB4, 0x80161374)
+        j       kirby_rock_2
+        lw      v1, 0x30(v0)                  // original line 1
+        _return:
+        OS.patch_end()
+
+        lw      at, 0x0008(v0)                  // at = character id
+        addiu   at, at, -Character.id.JKIRBY    // ~
+        beqzl   at, _end                        // take branch if J Kirby
+        slti    at, v1, 0x19                    // 25 HP in hex, J version
+
+        slti    at, v1, 0x16                    // original line 2, 22 HP in hex, U version
+
+        _end:
+        j       _return                         // return
+        nop
+    }
+
+    // 801614B4+30
+    // Modifies J Kirby's rock form to have the same minimum aerial duration as he does in the J Version
+    scope kirby_rock_3: {
+        OS.patch_start(0xDBF24, 0x801614E4)
+        j       kirby_rock_3
+        lh      a0, 0x0B18(v1)                  // original line 1
+        _return:
+        OS.patch_end()
+
+        lw      at, 0x0008(v1)                  // at = character id
+        addiu   at, at, -Character.id.JKIRBY    // ~
+        beqzl   at, _end                        // take branch if J Kirby
+        slti    at, a0, 0x92                    // 160 - 14 frames in hex, J version
+
+        slti    at, a0, 0x8E                    // original line 2, 160 - 18 frames in hex, U version
 
         _end:
         j       _return                         // return
@@ -850,4 +891,367 @@ scope JigglypuffKirbyShared {
 
     // kirby shares hardcodings with various characters, check the other files to ensure updated
 
+    scope recovery_logic: {
+        OS.routine_begin(0x20)
+        sw a0, 0x10(sp)
+
+        // Check CPU level for vanilla characters
+        lbu t1, 0x0013(a0) // t1 = cpu level
+        addiu t1, t1, -10 // t1 = 0 if level 10
+        bnezl t1, _end // if not lv10, skip
+        nop
+
+        // if currently doing NSP, hold UP
+        lw at, 0x24(a0) // at = action id
+        lli t0, Action.JIGGLY.PoundAir
+        beq at, t0, _hold_up
+        nop
+
+        lw t0, 0x78(a0) // load location vector
+        lwc1 f2, 0x0(t0) // f2 = location X
+        lwc1 f4, 0x4(t0) // f4 = location Y
+
+        mtc1 r0, f0 // guarantee f0 = 0
+
+        // check closest ledge in X
+        scope ledge_check: {
+            lwc1 f6, 0x01CC+0x4C(a0) // load nearest LEFT ledge X
+            lwc1 f8, 0x01CC+0x54(a0) // load nearest RIGHT ledge X
+
+            sub.s f6, f6, f2
+            abs.s f6, f6 // f6 = abs(distance) to left ledge
+
+            sub.s f8, f8, f2
+            abs.s f8, f8 // f8 = abs(distance) to right ledge
+
+            c.le.s f6, f8
+            nop
+            bc1f _right
+            nop
+
+            _left:
+            lwc1 f6, 0x01CC+0x4C(a0) // load nearest LEFT ledge X
+            lwc1 f8, 0x01CC+0x50(a0) // load nearest LEFT ledge Y
+            
+            b _check_end
+            nop
+
+            _right:
+            lwc1 f6, 0x01CC+0x54(a0) // load nearest RIGHT ledge X
+            lwc1 f8, 0x01CC+0x58(a0) // load nearest RIGHT ledge Y
+
+            _check_end:
+        }
+
+        sub.s f14, f6, f2 // f14 = x diff
+        sub.s f12, f8, f4 // f12 = y diff
+
+        // check if too close to use nsp
+        lui at, 0x447A
+        mtc1 at, f22 // f22 = 1000.0
+
+        abs.s f16, f14 // f16 = abs(x distance to ledge)
+
+        c.le.s f16, f22 // if distance to ledge is lower than 1000.0
+        nop
+        bc1t _end // do not go for NSP if already close to ledge
+        nop
+
+        // check if up high first
+        // in this case, go for NSP
+        lui at, 0xC4FA
+        mtc1 at, f22 // f22 = -2000.0
+
+        c.le.s f12, f22 // if 2000 units or more above ledge
+        nop
+        bc1t _nsp
+        nop
+
+        lw at, 0x24(a0) // at = action id
+        lli t0, Action.JumpAerialF
+        beq at, t0, _nsp
+        lli t0, Action.JIGGLY.Jump2
+        beq at, t0, _nsp
+        lli t0, Action.JIGGLY.Jump3
+        beq at, t0, _nsp
+        lli t0, Action.JIGGLY.Jump4
+        beq at, t0, _nsp
+        lli t0, Action.JIGGLY.Jump5
+        beq at, t0, _nsp
+        // Skiping last jump since here we want to be able to grab the ledge
+        // lli t0, Action.JIGGLY.Jump6
+        // beq at, t0, _nsp
+        nop
+
+        b _end // no conditions matched, skip
+        nop
+
+        _nsp:
+        swc1 f6, 0x01CC+0x60(a0) // save new target x = ledge x
+        swc1 f8, 0x01CC+0x64(a0) // save new target y = ledge y
+
+        jal 0x80132758 // execute AI command
+        lli a1, AI.ROUTINE.NSP_TOWARDS // arg1 = NSP
+
+        b _end
+        nop
+
+        // when doing NSP, hold up and towards ledge
+        _hold_up:
+        jal 0x80132758 // execute AI command
+        lli a1, AI.ROUTINE.NULL // arg1 = NULL so our inputs are not overridden
+
+        lli at, 0x50 // max stick Y value (up)
+        sb at, 0x01C9(a0) // save CPU stick y
+
+        c.lt.s f14, f0 // if x diff < 0
+        nop
+        bc1t _hold_left // if x diff < 0, hold left
+        nop
+
+        _hold_right:
+        lli at, 0x50 // max stick X value (right)
+        b _apply_x // apply X value
+        nop
+        
+        _hold_left:
+        addiu at, r0, 0xFFB0 // max stick X value (left)
+
+        _apply_x:
+        sb at, 0x01C8(a0) // save CPU stick x
+
+        _end:
+        lw a0, 0x10(sp)
+        OS.routine_end(0x20)
     }
+    Character.table_patch_start(recovery_logic, Character.id.JIGGLYPUFF, 0x4)
+    dw recovery_logic; OS.patch_end()
+    Character.table_patch_start(recovery_logic, Character.id.JPUFF, 0x4)
+    dw recovery_logic; OS.patch_end()
+    Character.table_patch_start(recovery_logic, Character.id.EPUFF, 0x4)
+    dw recovery_logic; OS.patch_end()
+
+    scope cpu_post_process: {
+        OS.routine_begin(0x20)
+        sw a0, 0x10(sp)
+
+        // Apply only for lv10 CPUs
+        lbu t0, 0x13(a0) // t0 = cpu level
+        slti t0, t0, 10 // t0 = 0 if 10 or greater
+        bnez t0, _end // skip if not lv10
+        nop
+
+        // If going for DSP
+        lw t0, 0x1D4(a0) // t0 = ft_com->p_command
+        li t1, AI.command_table // load command table base address
+
+        lw at, AI.ATTACK_TABLE.DSPG.INPUT << 2(t1)
+        beq t0, at, dsp_check
+        lw at, AI.ATTACK_TABLE.DSPA.INPUT << 2(t1)
+        beq t0, at, dsp_check
+        nop
+
+        b _end
+        nop
+
+        scope dsp_check: {
+            lw at, 0x01FC(a0) // get target player object
+
+            beqz at, _end // if no target object, skip
+            nop
+
+            lw at, 0x84(at) // at = target struct
+
+            // skip if the opponent is in shield
+            lw t0, 0x24(at) // t0 = target action id
+            lli t1, Action.ShieldOn
+            beq t0, t1, _no_input
+            lli t1, Action.Shield
+            beq t0, t1, _no_input
+            lli t1, Action.ShieldStun
+            beq t0, t1, _no_input
+            nop
+
+            // skip if target is below 30%
+            lw t0, 0x2C(at) // t0 = target percentage
+            lli at, 30
+            blt t0, at, _no_input // if percentage < 30, no input
+            nop
+
+            b _end // all tests passed, use dsp
+            nop
+
+            _no_input:
+            // skip DSP
+            jal 0x80132758 // execute AI command
+            lli a1, AI.ROUTINE.NULL // arg1 = NULL
+
+            _end:
+        }
+
+        _end:
+        lw a0, 0x10(sp)
+        OS.routine_end(0x20)
+    }
+    Character.table_patch_start(cpu_post_process, Character.id.JIGGLYPUFF, 0x4)
+    dw cpu_post_process; OS.patch_end()
+    Character.table_patch_start(cpu_post_process, Character.id.JPUFF, 0x4)
+    dw cpu_post_process; OS.patch_end()
+    Character.table_patch_start(cpu_post_process, Character.id.EPUFF, 0x4)
+    dw cpu_post_process; OS.patch_end()
+
+    scope cpu_post_process_kirby: {
+        OS.routine_begin(0x20)
+        sw a0, 0x10(sp)
+
+        // Apply only for lv10 CPUs
+        lbu t0, 0x13(a0) // t0 = cpu level
+        slti t0, t0, 10 // t0 = 0 if 10 or greater
+        bnez t0, _end // skip if not lv10
+        nop
+
+        lw at, 0x24(a0) // at = action id
+        lli t0, Action.KIRBY.Stone
+        beq t0, at, _dsp_logic
+        lli t0, Action.KIRBY.StoneFall
+        beq t0, at, _dsp_logic
+        lli t0, Action.KIRBY.StoneLanding
+        beq t0, at, _dsp_logic
+        lli t0, Action.KIRBY.StoneFall2
+        beq t0, at, _dsp_logic
+        nop
+        b _end
+        nop
+
+        scope _dsp_logic: {
+            addiu at, r0, -1 // at = 0xFFFFFFF
+            lw t0, 0xEC(a0) // get current clipping below player
+            beq at, t0, _cancel_dsp // cancel if no ground below
+            nop
+
+            lw t0, 0x14C(a0) // t0 = kinetic state
+            beqz t0, _cancel_dsp // if grounded, cancel dsp
+            nop
+
+            jal Character.get_hitbox_collision_flags_ // v0 = collision flags for all active hitboxes
+            nop
+
+            andi v0, v0, 0x00F0 // v0 != 0 if hitbox collision has occured
+            bnez v0, _cancel_dsp // if the move has hit something, cancel dsp
+            nop
+
+            b _end // all tests passed, do not cancel dsp yet
+            nop
+
+            _cancel_dsp:
+            // mash B so we get out of DSP quickly
+            li t5, Global.current_screen_frame_count // ~
+            lw t5, 0x0000(t5) // t5 = global frame count
+            andi t5, t5, 0x0001
+            beqz t5, _dsp_mash_release
+            lh at, 0x01C6(a0) // at = buttons pressed
+            _dsp_mash_press:
+            b _dsp_mash_apply
+            ori at, at, 0x4000 // press B
+            _dsp_mash_release:
+            andi at, at, 0x0000 // release all buttons
+            _dsp_mash_apply:
+            sh at, 0x01C6(a0) // save press B mask
+
+            jal 0x80132758 // execute AI command
+            lli a1, AI.ROUTINE.NULL
+
+            _end:
+        }
+
+        _end:
+        lw a0, 0x10(sp)
+        OS.routine_end(0x20)
+    }
+    Character.table_patch_start(cpu_post_process, Character.id.KIRBY, 0x4)
+    dw cpu_post_process_kirby; OS.patch_end()
+    Character.table_patch_start(cpu_post_process, Character.id.JKIRBY, 0x4)
+    dw cpu_post_process_kirby; OS.patch_end()
+
+    scope cpu_attack_weight: {
+        // s0 = character struct
+        // s2 = current input config (dw input_id, dw start_frame, dw [unused], float32 min_x, float32 max_x, float32 min_y, float32 max_y)
+        // f2 = weight multiplier (starts with calculated value, can be further modified or completely reset)
+        OS.routine_begin(0x20)
+
+        // Check CPU level
+        lbu t0, 0x13(s0) // t0 = cpu level
+        addiu t0, t0, -10 // t0 = 0 if level 10
+        bnez t0, _end // if not lv10, perform original logic
+        nop
+
+        lw t0, 0x0(s2) // t0 = input id
+        addiu at, r0, AI.ATTACK_TABLE.NSPG.INPUT
+        beq t0, at, _nsp
+        nop
+        b _end // no attack matched
+        nop
+
+        _nsp:
+        // NSP less often
+        // Since it has a lot of startup, puff will spam it when trying to land a KO
+        lui at, 0x3D80 // at = 0.0625
+        mtc1 at, f4
+        b _end
+        mul.s f2, f2, f4 // f2 = new weight
+
+        _end:
+        OS.routine_end(0x20)
+    }
+    Character.table_patch_start(cpu_attack_weight, Character.id.JIGGLYPUFF, 0x4)
+    dw cpu_attack_weight; OS.patch_end()
+    Character.table_patch_start(cpu_attack_weight, Character.id.JPUFF, 0x4)
+    dw cpu_attack_weight; OS.patch_end()
+    Character.table_patch_start(cpu_attack_weight, Character.id.EPUFF, 0x4)
+    dw cpu_attack_weight; OS.patch_end()
+
+    scope cpu_attack_weight_kirby: {
+        // s0 = character struct
+        // s2 = current input config (dw input_id, dw start_frame, dw [unused], float32 min_x, float32 max_x, float32 min_y, float32 max_y)
+        // f2 = weight multiplier (starts with calculated value, can be further modified or completely reset)
+        OS.routine_begin(0x20)
+
+        // Check CPU level
+        lbu t0, 0x13(s0) // t0 = cpu level
+        addiu t0, t0, -10 // t0 = 0 if level 10
+        bnez t0, _end // if not lv10, perform original logic
+        nop
+
+        lw t0, 0x0(s2) // t0 = input id
+        addiu at, r0, AI.ATTACK_TABLE.NSPG.INPUT
+        beq t0, at, _nsp
+        nop
+        b _end // no attack matched
+        nop
+
+        _nsp:
+        // nsp more often vs shielding opponents
+        lw t4, 0x1CC+0x6C(s0) // opponent struct
+        lw t1, 0x24(t4) // opponent's current action
+        addiu at, r0, Action.Shield
+        beq t1, at, _nsp_continue
+        addiu at, r0, Action.ShieldStun
+        beq t1, at, _nsp_continue
+        addiu at, r0, Action.ShieldOn
+        beq t1, at, _nsp_continue
+        nop
+        b _end // opponent not shielding, skip
+        nop
+        _nsp_continue:
+        lui at, 0x42C8 // at = 100.0
+        b _end
+        mtc1 at, f2 // f2 = new weight (override)
+
+        _end:
+        OS.routine_end(0x20)
+    }
+    Character.table_patch_start(cpu_attack_weight, Character.id.KIRBY, 0x4)
+    dw cpu_attack_weight_kirby; OS.patch_end()
+    Character.table_patch_start(cpu_attack_weight, Character.id.JKIRBY, 0x4)
+    dw cpu_attack_weight_kirby; OS.patch_end()
+}

@@ -301,11 +301,42 @@ scope SamusShared {
         lli     t8, Character.id.CRASH      // t8 = CRASH
         beq     t6, t8, _crash              // If Crash, load different anim struct
         lui     a0, 0x8013                  // otherwise, use original one - original line 2
+        lli     t8, Character.id.DSAMUS     // t8 = DSAMUS
+        beq     t6, t8, _dsamus              // If Dark Samus, load different anim struct
+        lui     a0, 0x8013                  // otherwise, use original one - original line 2
         j       _return
         addiu   a0, a0, 0xE67C              // original line 4 - a0 = Samus anim gfx struct
 
         _crash:
         li      a0, crash_entry_anim_gfx_struct
+        j       _return
+        nop
+
+        _dsamus:
+        li      a0, dsamus_entry_anim_gfx_struct
+        j       _return
+        nop
+    }
+
+    scope get_grapple_anim_gfx_struct: {
+        OS.patch_start(0x7D688, 0x80101E88)
+        j       get_grapple_anim_gfx_struct
+        sw      ra, 0x0014(sp)              // original line 1
+        _return:
+        jal     0x800FDAFC                  // original line 3
+        nop                                 // a0 is set below
+        OS.patch_end()
+
+        // s0 = player struct
+        lw      t6, 0x0008(s0)              // t6 = char_id
+        lli     t8, Character.id.DSAMUS     // t8 = DSAMUS
+        beq     t6, t8, _dsamus             // If Dark Samus, load different anim struct
+        lui     a0, 0x8013                  // otherwise, use original one - original line 2
+        j       _return
+        addiu   a0, a0, 0xE29C              // original line 4 - a0 = Samus anim gfx struct
+
+        _dsamus:
+        li      a0, dsamus_grapple_anim_gfx_struct
         j       _return
         nop
     }
@@ -325,6 +356,31 @@ scope SamusShared {
     dw  0x00000002
     dw  Character.DSAMUS_file_7_ptr
     OS.copy_segment(0x103A7C, 0x28)
+
+    dsamus_entry_anim_gfx_struct:
+    dw 0x040A0000
+    dw Character.DSAMUS_file_6_ptr
+    dw 0x1C00001C
+    dw 0x00000000
+    dw 0x800FD568
+    dw 0x80014768
+    dw 0x00000BD0
+    dw 0x00000000
+    dw 0x000022F0
+    dw 0x00000000
+
+    dsamus_grapple_anim_gfx_struct:
+    dw 0x060F0000
+    dw Character.DSAMUS_file_6_ptr
+    dw 0x4F00002E
+    dw 0x00000000
+    dw 0x8000DF34
+    dw 0x80014768
+    // the original data from file 0x15D was moved to the end of the new file
+    dw 0x00000380 + 0x2970
+    dw 0x00000210 + 0x2970
+    dw 0x00000410 + 0x2970
+    dw 0x00000480 + 0x2970
 
     // J Samus
 

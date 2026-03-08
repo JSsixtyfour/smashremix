@@ -8,7 +8,9 @@ scope NGanondorf {
 
     // Modify Action Parameters             // Action               // Animation                // Moveset Data             // Flags
     Character.edit_action_parameters(NGND,   Action.Idle,            -1,                        Ganondorf.IDLE,                       -1)
+    Character.edit_action_parameters(NGND,   Action.ReviveWait,      -1,                        Ganondorf.IDLE,                       -1)
     Character.edit_action_parameters(NGND,   Action.Run,             -1,                        Ganondorf.RUN,                        -1)
+    Character.edit_action_parameters(NGND,   Action.Teeter,          -1,                        Ganondorf.TEETER,                     -1)
     Character.edit_action_parameters(NGND,   Action.JumpAerialF,     -1,                        Ganondorf.JUMP2,                      -1)
     Character.edit_action_parameters(NGND,   Action.JumpAerialB,     -1,                        Ganondorf.JUMP2,                      -1)
     Character.edit_action_parameters(NGND,   Action.DownBounceD,     -1,                        Ganondorf.DOWN_BOUNCE,                -1)
@@ -64,12 +66,13 @@ scope NGanondorf {
     Character.edit_action(NGND, 0xE1,              -1,             0x8013D994,                 0x00000000,                    0x00000000,                     0x00000000)
 
     // Modify Menu Action Parameters             // Action          // Animation                // Moveset Data             // Flags
+    Character.edit_menu_action_parameters(NGND,   0x0,               -1,                        Ganondorf.IDLE,         -1)
     Character.edit_menu_action_parameters(NGND,   0x1,               -1,                        0x80000000,             -1)
     Character.edit_menu_action_parameters(NGND,   0x2,               File.GND_SELECT,           0x80000000,             -1)
     Character.edit_menu_action_parameters(NGND,   0x3,               File.GND_VICTORY1,         0x80000000,             -1)
     Character.edit_menu_action_parameters(NGND,   0x4,               -1,                        0x80000000,             -1)
-    Character.edit_menu_action_parameters(NGND,   0xE,               File.GND_1P_CPU,           0x80000000,                       -1)
-    Character.edit_menu_action_parameters(NGND,   0xD,               File.GND_POSE_1P,          0x80000000,                       -1)
+    Character.edit_menu_action_parameters(NGND,   0xE,               File.GND_1P_CPU,           0x80000000,             -1)
+    Character.edit_menu_action_parameters(NGND,   0xD,               File.GND_POSE_1P,          0x80000000,             -1)
 
     // Set menu zoom size.
     Character.table_patch_start(menu_zoom, Character.id.NGND, 0x4)

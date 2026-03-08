@@ -2186,6 +2186,20 @@ scope Render {
         beq     t0, t1, _bonus              // if (screen_id = bonus), jump to _bonus
         nop
 
+        // Intro Opening
+        lli     t1, 0x001C                  // t1 = intro scene 1 screen_id
+        beq     t0, t1, _intro_scene        // if (screen_id = intro scene 1), jump to _intro_scene
+        // Intro Kirby
+        lli     t1, 0x0025                  // t1 = intro Kirby screen_id
+        beq     t0, t1, _intro_scene        // if (screen_id = intro Kirby), jump to _intro_scene
+        // Intro Running
+        lli     t1, 0x0026                  // t1 = intro running screen_id
+        beq     t0, t1, _intro_scene        // if (screen_id = intro running), jump to _intro_scene
+        // Intro Clash
+        lli     t1, 0x002B                  // t1 = intro clash screen_id
+        beq     t0, t1, _intro_scene        // if (screen_id = intro clash), jump to _intro_scene
+        nop
+
         _low_screens:
         // Mode Select
         lli     t1, 0x0007                  // t1 = Mode Select screen_id
@@ -2286,6 +2300,8 @@ scope Render {
         nop
         jal     Smashketball.setup_         // Setup Smashketball functionality
         nop
+        jal     TugOfWar.setup_             // Setup TugOfWar functionality
+        nop
         jal     Item.clear_active_custom_items_
         nop
         jal     GFXRoutine.port_override.clear_gfx_override_table_
@@ -2347,6 +2363,13 @@ scope Render {
 
         _bonus_css:
         jal     Bonus.setup_
+        nop
+
+        b       _end
+        nop
+
+        _intro_scene:
+        jal     Hitbox.setup_
         nop
 
         b       _end
@@ -2438,8 +2461,13 @@ scope Render {
         jal     Toggles.mode_select_setup_
         sw      r0, 0x0000(t0)                  // safeguard clear twelve_cb_flag
 
+        b       _end
+        nop
+
         _1p_pose:
         jal     GFXRoutine.port_override.clear_gfx_override_table_
+        nop
+        jal     Hitbox.setup_
         nop
 
         b       _end

@@ -1127,7 +1127,7 @@
 0CA6 Mewtwo 1p CPU Pose
 0CA7 Mewtwo Team Pose
 0CA8 Dark Samus 1p CPU Pose
-0CA9 Dark Samus Team Pose
+0CA9 Dark Samus 1p Pose
 0CAA Lucas 1p CPU Pose
 0CAB Lucas Team Pose
 0CAC Young Link 1p CPU Pose
@@ -3324,6 +3324,23 @@
 153B Kirby Super Sonic NSP Move
 153C Dragon King Ending Image 1
 153D Dragon King Ending Image 2
+153E Stage Icons 2
+153F Dark Samus Entry
+1540 Dark Samus AppearL
+1541 Dark Samus AppearR
+1542 Autumn How to Play Header
+1543 Autumn How to Play Stage
+1544 Giga Bowser Grab
+1545 Giga Bowser USmash
+1546 Giga Bowser DSmash
+1547 Giga Bowser AttackAirN
+1548 Giga Bowser AttackAirU
+1549 Giga Bowser AttackAirD
+154A Giga Bowser UTilt
+154B Giga Bowser FTiltHigh
+154C Giga Bowser FTilt
+154D Giga Bowser FTiltLow
+154E Giga Bowser Turn
 
 0611 CAPTAIN DeadU
 0611 CAPTAIN ScreenKO

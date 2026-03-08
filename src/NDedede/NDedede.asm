@@ -165,7 +165,7 @@ Character.edit_action_parameters(NDEDEDE, Action.ItemThrowAirD,           File.D
 Character.edit_action_parameters(NDEDEDE, Action.ItemThrowAirSmashF,      File.DEDEDE_ITEM_THROW_AIR,          -1,                         -1)
 Character.edit_action_parameters(NDEDEDE, Action.ItemThrowAirSmashB,      File.DEDEDE_ITEM_THROW_AIR,          -1,                         -1)
 Character.edit_action_parameters(NDEDEDE, Action.ItemThrowAirSmashU,      File.DEDEDE_ITEM_THROW_AIR_U,        -1,                         -1)
-Character.edit_action_parameters(NDEDEDE, Action.ItemThrowAirSmashF,      File.DEDEDE_ITEM_THROW_AIR_D,        -1,                         -1)
+Character.edit_action_parameters(NDEDEDE, Action.ItemThrowAirSmashD,      File.DEDEDE_ITEM_THROW_AIR_D,        -1,                         -1)
 Character.edit_action_parameters(NDEDEDE, Action.HeavyItemThrowF,         File.DEDEDE_HEAVY_ITEM_THROW,        -1,                         -1)
 Character.edit_action_parameters(NDEDEDE, Action.HeavyItemThrowB,         File.DEDEDE_HEAVY_ITEM_THROW,        -1,                         -1)
 Character.edit_action_parameters(NDEDEDE, Action.HeavyItemThrowSmashF,    File.DEDEDE_HEAVY_ITEM_THROW,        -1,                         -1)
@@ -268,8 +268,6 @@ Character.edit_action_parameters(NDEDEDE, Action.LandingAirX,            File.DE
      Character.edit_action_parameters(NDEDEDE, Action.USP_MOVE,          File.DEDEDE_USP_LOOP,               Dedede.USP_MOVE,                   0)
      Character.edit_action_parameters(NDEDEDE, Action.USP_LAND,          File.DEDEDE_USP_LAND,               Dedede.USP_LAND,                   0)
      Character.edit_action_parameters(NDEDEDE, Action.USP_CANCEL,        File.DEDEDE_USP_CANCEL,             0x80000000,                 0)
-     //Character.edit_action_parameters(NDEDEDE, Action.USP_MOVE,        File.DEDEDE_USP_LOOP,               Dedede.USP_MOVE,                 0x00000000)
-     //Character.edit_action_parameters(NDEDEDE, Action.USP_LAND,        File.DEDEDE_USP_LAND,               Dedede.USP_LAND,                    0)
 
     Character.edit_action_parameters(NDEDEDE, Action.NSP_BEGIN_GROUND,   File.DEDEDE_NSP_BEGIN,              Dedede.NSP_BEGIN,                  0x00000000)// 0x1C000000)
     Character.edit_action_parameters(NDEDEDE, Action.NSP_LOOP_GROUND,    File.DEDEDE_NSP_LOOP,               Dedede.NSP_INHALE,                 0x00000000)// 0x1C000000)

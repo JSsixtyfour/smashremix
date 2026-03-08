@@ -80,6 +80,24 @@ scope LedgeTrump {
 
     }
 
+    // @ Description
+    // Adds a hook to ledge grab logic that increments VS Stats ledge tracker
+    scope track_ledge_grabs: {
+        OS.patch_start(0x59E88, 0x800DE688)
+        jal     track_ledge_grabs
+        addiu   t3, r0, 0x0001          // og line 1
+        _return:
+        OS.patch_end()
 
+        sw      t3, 0x0064(s1)          // og line 2
+        li      s1, VsStats.ledge_grab_tracker
+        lbu     v0, 0x000D(v0)          // v0 = player index (0 - 3)
+        sll     v0, v0, 0x0002          // v0 = player index * 4
+        addu    s1, s1, v0              // s1 = address of ledge grab count for this player
+        lw      v0, 0x0000(s1)          // v0 = ledge grab count
+        addiu   v0, v0, 0x0001          // increment
+        j       _return
+        sw      v0, 0x0000(s1)          // store updated ledge grab count
+    }
 
 }

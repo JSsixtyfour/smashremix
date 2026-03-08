@@ -154,7 +154,6 @@ scope Wolf {
 	Character.edit_action_parameters(WOLF,    Action.Walk1,      	 File.WOLF_WALK1,   		 IDLE,                     	-1)
 	Character.edit_action_parameters(WOLF,    Action.Walk2,      	 File.WOLF_WALK2,   		 IDLE,                     -1)
 	Character.edit_action_parameters(WOLF,    Action.Walk3,      	 File.WOLF_WALK3,   		 IDLE,                     -1)
-    Character.edit_action_parameters(WOLF,    Action.Idle,           File.WOLF_IDLE,             -1,                         -1)
     Character.edit_action_parameters(WOLF,    Action.JumpSquat,      File.WOLF_JUMP_SQUAT,        -1,                      -1)
     Character.edit_action_parameters(WOLF,    Action.ShieldJumpSquat, File.WOLF_JUMP_SQUAT,        -1,                      -1)
 	Character.edit_action_parameters(WOLF,    Action.LandingLight,   File.WOLF_JUMP_SQUAT,        -1,                      -1)

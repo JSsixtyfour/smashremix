@@ -52,7 +52,6 @@ constant KNOCKBACK_ANGLE(7)
 constant PROJECTILE_SPEED(0x4396)       // 300
 constant FRAME_SPEED_MULTIPLIER(0x3F00) // 0.5
 constant ON_HIT_FGM(FGM.item.BAT)       // on hit fgm
-constant PROJECTILE_ID(0x1009)
 
 // @ Description
 // I copied the original routine for raygun and modified it
@@ -125,20 +124,20 @@ scope pickup_item: {
 
 OS.align(16)
 golden_bullet_projectile_struct:
-dw 0x00000000              // unknown
-dw PROJECTILE_ID           // projectile id
-dw projectile_info_pointer // address of display / hitbox file
-dw 0x00000000              // offset to hitbox
-dw 0x1C000000              // Rendering routine
-dw 0x801758BC              // main subroutine for the projectile, handles duration and other things. (default 0x80168540) (samus 0x80168F98)
-dw 0x80175914              // collides with clipping. (0x801685F0 - Mario) (0x80169108 - Samus)
-dw 0                       // collides with a hurtbox. (og = 0x80175958)
-dw 0                       // collides with a shield. (og = 0x80175958)
-dw 0x80175988              // collides with edges of a shield and bounces off
-dw 0                       // collides/clangs with a hitbox. (og = 0x80175958)
-dw 0x80175A00              // collides with Fox's reflector (default 0x80168748)
-dw 0                       // collides with Ness's psi magnet (og = 0x80175958)
-dw 0, 0, 0                 // empty
+dw 0x00000000                       // unknown
+dw Projectile.id.GOLDENGUN_BULLET   // projectile id
+dw projectile_info_pointer          // address of display / hitbox file
+dw 0x00000000                       // offset to hitbox
+dw 0x1C000000                       // Rendering routine
+dw 0x801758BC                       // main subroutine for the projectile, handles duration and other things. (default 0x80168540) (samus 0x80168F98)
+dw 0x80175914                       // collides with clipping. (0x801685F0 - Mario) (0x80169108 - Samus)
+dw 0                                // collides with a hurtbox. (og = 0x80175958)
+dw 0                                // collides with a shield. (og = 0x80175958)
+dw 0x80175988                       // collides with edges of a shield and bounces off
+dw 0                                // collides/clangs with a hitbox. (og = 0x80175958)
+dw 0x80175A00                       // collides with Fox's reflector (default 0x80168748)
+dw 0                                // collides with Ness's psi magnet (og = 0x80175958)
+dw 0, 0, 0                          // empty
 
 OS.align(16)
 projectile_info:

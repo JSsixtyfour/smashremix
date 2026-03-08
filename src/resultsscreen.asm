@@ -139,13 +139,27 @@ scope ResultsScreen {
         OS.patch_end()
 
         // v1 is offset in table (character id * 4)
+        // t0 is the base file address
 
         li      t7, series_logo_offset_table  // t7 = series_logo_offset_table address
         addu    t7, t7, v1                    // t7 = address of logo offset
-        lw      t7, 0x0000(t7)                // t7 = logo offset
+        lw      t7, 0x0000(t7)                // t7 = logo offset, almost
+        srl     a2, t7, 0x0018                // a2 = logo file index
+        beqz    a2, _set_address              // if file index 0, then t0 is the file address
+        addiu   a2, a2, -0x0001               // a2 = index of file in base file array
+
+        // If here, we need to get the base address of a different logo file.
+        li      a0, FILE_ARRAY_START          // a0 = offset to base file array
+        sll     a2, a2, 0x0002                // a2 = offset to base file address
+        addu    a0, t0, a0                    // a0 = base file array
+        addu    a0, a0, a2                    // a0 = address of base file address
+        lw      t0, 0x0000(a0)                // t0 = base file address
+
+        _set_address:
+        sll     t7, t7, 0x0008                // t7 = offset shifted so the the first byte is gone
 
         jr      ra                            // return
-        nop
+        srl     t7, t7, 0x0008                // t7 = offset to icon image footer
     }
 
     // @ Description
@@ -157,13 +171,27 @@ scope ResultsScreen {
         OS.patch_end()
 
         // t8 is offset in table (character id * 4)
+        // t2 is the base file address
 
         li      t5, series_logo_zoom_table   // t5 = series_logo_zoom_table address
         addu    t5, t5, t8                    // t5 = address of logo zoom offset
-        lw      t5, 0x0000(t5)                // t5 = logo offset
+        lw      t5, 0x0000(t5)                // t5 = logo offset, almost
+        srl     a1, t5, 0x0018                // a1 = logo file index
+        beqz    a1, _set_address              // if file index 0, then t2 is the file address
+        addiu   a1, a1, -0x0001               // a1 = index of file in base file array
+
+        // If here, we need to get the base address of a different logo file.
+        li      a0, FILE_ARRAY_START          // a0 = offset to base file array
+        sll     a1, a1, 0x0002                // a1 = offset to base file address
+        addu    a0, t2, a0                    // a0 = base file array
+        addu    a0, a0, a1                    // a0 = address of base file address
+        lw      t2, 0x0000(a0)                // t2 = base file address
+
+        _set_address:
+        sll     t5, t5, 0x0008                // t5 = offset shifted so the the first byte is gone
 
         jr      ra                            // return
-        nop
+        srl     t5, t5, 0x0008                // t5 = offset to icon image footer
     }
 
     // @ Description
@@ -171,17 +199,33 @@ scope ResultsScreen {
     scope winner_logo_color_fix_: {
         OS.patch_start(0x151E88, 0x80132CE8)
         jal     winner_logo_color_fix_
+        lw      t4, 0xA058(t4)                // original line 4 - t4 = base file address
+        cvt.s.w f4, f4                        // original line 3
         nop
         OS.patch_end()
 
         // t1 is offset in table (character id * 4)
+        // t4 is the base file address
 
         li      t3, series_logo_color_table    // t3 = series_logo_color_table address
         addu    t3, t3, t1                    // t3 = address of logo offset
-        lw      t3, 0x0000(t3)                // t3 = logo offset
+        lw      t3, 0x0000(t3)                // t3 = logo offset, almost
+        srl     a1, t3, 0x0018                // a1 = logo file index
+        beqz    a1, _set_address              // if file index 0, then t4 is the file address
+        addiu   a1, a1, -0x0001               // a1 = index of file in base file array
+
+        // If here, we need to get the base address of a different logo file.
+        li      a0, FILE_ARRAY_START          // a0 = offset to base file array
+        sll     a1, a1, 0x0002                // a1 = offset to base file address
+        addu    a0, t4, a0                    // a0 = base file array
+        addu    a0, a0, a1                    // a0 = address of base file address
+        lw      t4, 0x0000(a0)                // t4 = base file address
+
+        _set_address:
+        sll     t3, t3, 0x0008                // t3 = offset shifted so the the first byte is gone
 
         jr      ra                            // return
-        nop
+        srl     t3, t3, 0x0008                // t3 = offset to icon image footer
     }
 
     // @ Description
@@ -416,6 +460,15 @@ scope ResultsScreen {
         j       _return                     // return
         nop
     }
+
+    // @ Description
+    // These help us have more than one file for results screen logos.
+    // File 1 is the vanilla file (0x23).
+    // We can define a reqlist for File 1 to pull in additional files.
+    // We define the offset to the reqlist location in File 1 so we can find it in game.
+    constant FILE_1(0x00000000)
+    constant FILE_2(0x01000000)
+    constant FILE_ARRAY_START(0x00000000) // TODO
 
     // @ Description
     // Logo offsets in file 0x23

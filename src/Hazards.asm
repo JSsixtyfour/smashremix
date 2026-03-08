@@ -4319,9 +4319,8 @@ scope Hazards {
 
     OS.align(16)
     cannonball_projectile_struct:
-    constant CANNONBALL_ID(0x1005)
     dw 0x00000000                           // unknown
-    dw CANNONBALL_ID                        // projectile id
+    dw Projectile.id.PIRATELAND_CANNONBALL  // projectile id
     dw 0x00000000                           // address of cannonball file
     dw 0x00000000                           // offset to hitbox
     dw 0x12480000                           // This determines z axis rotation? (samus is 1246)
@@ -5282,21 +5281,20 @@ scope Hazards {
 
     OS.align(16)
     robot_bee_laser_projectile_struct:
-    constant BEE_LASER_ID(0x1006)
-    dw 0x00000000                           // unknown, (0x02000000 Pikachu's thunderbolt)
-    dw BEE_LASER_ID                         // projectile id
-    dw 0x00000000                           // address of Bee Laser file
-    dw 0x00000000                           // offset to hitbox
-    dw 0x1C000000                           // This determines z axis rotation? (samus is 1246), (Pikachu's thunderbolt) 0x1C000000    = pikachu
-    dw robot_bee_laser_main_                // This is the main subroutine for the projectile, handles duration and other things. (default 0x80168540) (samus 0x80168F98)
-    dw robot_bee_laser_collision_           // This function runs when the projectile collides with clipping. (0x801685F0 - Mario) (0x80169108 - Samus)
-    dw robot_bee_laser_hit_                 // This function runs when the projectile collides with a hurtbox.
-    dw 0                                    // This function runs when the projectile collides with a shield.
-    dw 0                                    // This function runs when the projectile collides with edges of a shield and bounces off
-    dw 0                                    // This function runs when the projectile collides/clangs with a hitbox.
-    dw robot_bee_laser_reflect_             // This function runs when the projectile collides with Fox's reflector (default 0x80168748)
-    dw 0x80168964                           // This function runs when the projectile collides with Ness's psi magnet
-    OS.copy_segment(0x103904, 0x0C)         // empty
+    dw 0x00000000                               // unknown, (0x02000000 Pikachu's thunderbolt)
+    dw Projectile.id.METALLICMADNESS_BEELASER   // projectile id
+    dw 0x00000000                               // address of Bee Laser file
+    dw 0x00000000                               // offset to hitbox
+    dw 0x1C000000                               // This determines z axis rotation? (samus is 1246), (Pikachu's thunderbolt) 0x1C000000    = pikachu
+    dw robot_bee_laser_main_                    // This is the main subroutine for the projectile, handles duration and other things. (default 0x80168540) (samus 0x80168F98)
+    dw robot_bee_laser_collision_               // This function runs when the projectile collides with clipping. (0x801685F0 - Mario) (0x80169108 - Samus)
+    dw robot_bee_laser_hit_                     // This function runs when the projectile collides with a hurtbox.
+    dw 0                                        // This function runs when the projectile collides with a shield.
+    dw 0                                        // This function runs when the projectile collides with edges of a shield and bounces off
+    dw 0                                        // This function runs when the projectile collides/clangs with a hitbox.
+    dw robot_bee_laser_reflect_                 // This function runs when the projectile collides with Fox's reflector (default 0x80168748)
+    dw 0x80168964                               // This function runs when the projectile collides with Ness's psi magnet
+    OS.copy_segment(0x103904, 0x0C)             // empty
 
     OS.align(16)
 
@@ -6167,11 +6165,11 @@ scope Hazards {
         nop
 
         _0x801666BC:
-        lw      t8, 0x000C(s2)              // load projectile ID
-        ori     t6, r0, CHAINCHOMP_ID       // place chain chomp ID in
-        bne     t8, t6, _normal             // if not chain chomp don't do extra stuff
-        addiu   t8, r0, 0x0019              // refresh period timer
-        sb      t8, 0x0000(t9)              // save counter amount
+        lw      t8, 0x000C(s2)                                  // load projectile ID
+        ori     t6, r0, Projectile.id.RAINBOWROAD_CHAINCHOMP    // place chain chomp ID in
+        bne     t8, t6, _normal                                 // if not chain chomp don't do extra stuff
+        addiu   t8, r0, 0x0019                                  // refresh period timer
+        sb      t8, 0x0000(t9)                                  // save counter amount
 
         _normal:
         lw      t8, 0x0004(sp)
@@ -6202,9 +6200,9 @@ scope Hazards {
         sw      t0, 0x0004(sp)
         sw      t1, 0x0008(sp)
 
-        lw      t0, 0x000C(a2)              // load projectile ID
-        ori     t1, CHAINCHOMP_ID           // place chain chomp ID in
-        bne     t0, t1, _end                // go through normal checks if not chain chomp
+        lw      t0, 0x000C(a2)                              // load projectile ID
+        addiu   t1, r0, Projectile.id.RAINBOWROAD_CHAINCHOMP    // place chain chomp ID in
+        bne     t0, t1, _end                                // go through normal checks if not chain chomp
         lw      t0, 0x0004(sp)
 
         lw      t1, 0x0008(sp)
@@ -6388,9 +6386,8 @@ scope Hazards {
 
     OS.align(16)
     chainchomp_projectile_struct:
-    constant CHAINCHOMP_ID(0x1007)
     dw 0x00000000                           // unknown
-    dw CHAINCHOMP_ID                        // projectile id
+    dw Projectile.id.RAINBOWROAD_CHAINCHOMP // projectile id
     dw 0x00000000                           // address of chainchomphitbox file
     dw 0x00000000                           // offset to hitbox
     dw 0x1C000000                           // This determines z axis rotation? (samus is 1246)
@@ -9231,9 +9228,8 @@ scope Hazards {
 
     OS.align(16)
     thunderball_projectile_struct:
-    constant THUNDERBALL_ID(0x1009)
     dw 0x00000000                           // unknown, (0x02000000 Pikachu's thunderbolt)
-    dw THUNDERBALL_ID                       // projectile id
+    dw Projectile.id.CACODEMON_THUNDERBALL  // projectile id
     dw 0x00000000                           // address of Thunderball file
     dw 0x00000000                           // offset to hitbox
     dw 0x12470000                           // This determines z axis rotation? (samus is 1246), (Pikachu's thunderbolt) 0x1C000000    = pikachu
@@ -9615,6 +9611,162 @@ scope Hazards {
         lw      a0, 0x0B1C(s0)              // og line 2
         j       _return
         nop
+    }
+
+
+
+    // makes the Congo Falls barrel apply a hitbox while exiting the barrel
+    scope congo_falls_hazard: {
+        OS.patch_start(0xBEBDC, 0x8014419C)
+        j       congo_falls_hazard
+        nop
+        _return:
+        OS.patch_end()
+        
+        OS.read_word(Global.match_info, t2)          // t2 = Global.match_info
+        lbu     t2, 0x0001(t2)                      // t2 = stage id
+        addiu   at, r0, Stages.id.FALLS         
+        bne     at, t2, _end                        // skip to end if not congo falls
+        nop
+        //_congo_falls:
+        li      at, _congo_falls_hitbox_moveset
+        sw      at, 0x086C(s0)          // update moveset pointer
+
+        _end:
+        addiu   t2, r0, 0x0010      // og line 1
+        j       _return
+        sw      r0, 0x0174(s0)      // og line 2
+        
+
+        _congo_falls_hitbox_moveset:
+        //bone_id, ID_1, ID_2, x, y, z, size, hit_ground, hit_air, damage, shield_damage, damage_type, clang, base_kb, fixed_kb, kb_scaling, kb_angle, sfx_type, sfx_level)
+        // Moveset.HITBOX(0, 0, 0, 0, 0, 0, 250, 1, 1, 6, 10, 0, 0, 50, 50, 2, 361, 0, 1);
+        dw 0x0C0000C0, 0x01F40000, 0x00000000, 0x5A496003, 0x0A201E00;
+        Moveset.WAIT(50);
+        Moveset.END_HITBOXES();
+        dw 0;
+        
+    }
+
+    mmm_thank_you:
+    dw 0
+
+    // @ Description
+    // This establishes bounce surface main routine
+    scope mmm_setup: {
+        addiu   sp, sp,-0x0060              // allocate stack space
+        sw      ra, 0x0024(sp)              // ~
+        sw      s0, 0x0028(sp)              // store ra, s0
+
+        li      s0, 0x801313F0              // load hardcoded space used by hazards, generally for pointers
+        sw      r0, 0x0060(s0)              // clear under_water flags and frenzy turns
+
+        sw      s0, 0x0020(sp)              // hardcoded space used by hazards, generally for pointers
+
+        li      a1, mmm_main                // routine
+        addiu   a2, r0, 0x0001              // group
+        addiu   a0, r0, 0x03F2              // object id
+
+        jal     Render.CREATE_OBJECT_       // create object
+        lui     a3, 0x8000                  // unknown
+
+        sw      v0, 0x0050(sp)              // save object address
+        addiu   t6, r0, 0xFFFF
+        or      s0, v0, r0
+        sw      t6, 0x0010(sp)
+        or      a0, v0, r0
+        lw      a1, 0x0030(sp)
+        addiu   a2, r0, 0x0004
+
+        lui     t7, 0x8013
+        lw      t7, 0x13F0(t7)
+        lw      t8, 0x0028(sp)
+        or      a0, s0, r0
+        or      a2, r0, r0
+        addiu   a3, r0, 0x001C
+        sw      r0, 0x0010(sp)
+        sw      r0, 0x0014(sp)
+
+        li      at, mmm_thank_you
+        sw      r0, 0x0000(at)              // reset flag
+
+        lw      ra, 0x0024(sp)              // ~
+        lw      s0, 0x0028(sp)              // load ra, s0
+        jr      ra
+        addiu   sp, sp, 0x0060              // deallocate stack space
+    }
+
+    // @ Description
+    // Main function for mmm
+    scope mmm_main: {
+        addiu   sp, sp, -0x0050             // allocate stack space
+        sw      ra, 0x0024(sp)              // ~
+        sw      s0, 0x0028(sp)              // ~
+        sw      s1, 0x002C(sp)              // store ra, s0, s1
+
+        OS.read_word(mmm_thank_you, at)     // at = thank you collected flag
+        bnez    at, _end                    // skip if already done
+
+        or      s0, r0, r0                  // current port = 0
+        lli     s1, 0x0003                  // final iteration = 0x3
+
+        _loop:
+        jal     Character.port_to_struct_   // v0 = player struct for current port
+        or      a0, s0, r0                  // a0 = current port
+        beqz    v0, _loop_end               // skip if no struct found for current port
+        nop
+
+        // if the player is present
+        sw      v0, 0x003C(sp)              // 0x003C(sp) = px struct
+        
+        lw      at, 0x0024(v0)              // action id
+        addiu   t0, r0, Action.Taunt
+        bne     at, t0, _loop_end
+        nop
+
+        // player is taunting
+        lw      t0, 0x00EC(v0)              // get clipping id
+        addiu   at, r0, 2                   // clipping id 2
+        bne     t0, at, _loop_end
+        nop
+        // check position
+        lw      v1, 0x0004(v0)              // v1 = player obj
+        lw      v1, 0x0074(v1)              // = location struct
+        lwc1    f10, 0x001C(v1)             // f10 = x coordinate
+        lui     at, 0x44D4                  // 1700ish
+        mtc1    at, f12
+        c.le.s  f12, f10                    // ~
+        nop                                 // ~
+        bc1fl   _end                        // end if 
+        nop
+
+        lui     at, 0x4502                  // 2080
+        mtc1    at, f12
+        c.le.s  f10, f12                    // ~
+        nop                                 // ~
+        bc1fl   _end                        // end if 
+        nop
+
+        // easter egg
+        FGM.play(0x564)
+        
+        li      v0, mmm_thank_you
+        addiu   at, r0, 1
+        sw      a0, 0x0000(v0)              // overwrite flag
+
+        b       _end
+        nop
+
+        _loop_end:
+        bne     s0, s1, _loop               // loop if final iteration has not been reached
+        addiu   s0, s0, 0x0001              // iterate current port
+
+        _end:
+        lw      ra, 0x0024(sp)              // ~
+        lw      s0, 0x0028(sp)              // ~
+        lw      s1, 0x002C(sp)              // load ra, s0, s1
+        jr      ra                          // return
+        addiu   sp, sp, 0x0050              // deallocate stack space
     }
 
 } // __HAZARDS__

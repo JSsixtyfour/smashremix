@@ -50,7 +50,7 @@ class CodeAnalysis:
 
     def load_jump_addresses(self, file_path: str):
         jump_addresses = set()
-        with open(file_path) as f:
+        with open(file_path, encoding='utf-8') as f:
             for line in f:
                 address = int(line.strip(), 16)
                 jump_addresses.add(address)
@@ -64,7 +64,7 @@ class CodeAnalysis:
 
         patch_stack = []
 
-        with open(log_file) as f:
+        with open(log_file, encoding='utf-8') as f:
             for line in f:
                 if match := patch_start_pattern.match(line):
                     rom_address = int(match.group(1), 16)
@@ -79,7 +79,7 @@ class CodeAnalysis:
                         self.patches.append(patch)
 
     def analyze_file(self, file_path: str):
-        with open(file_path) as f:
+        with open(file_path, encoding='utf-8') as f:
             for line_number, line in enumerate(f, start=1):
                 self.analyze_line(line, file_path, line_number)
 

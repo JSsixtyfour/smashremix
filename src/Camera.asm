@@ -125,13 +125,13 @@ scope Camera {
         beq     t0, t9, _bonus_cam                  // branch if camera mode = BONUS
         nop
 
-        // check if training mode
-        li      t0, Global.match_info               // ~ 0x800A50E8
-        lw      t0, 0x0000(t0)                      // t0 = match_info
-        lb      t0, 0x0000(t0)                      // t0 = match type
-        ori     t2, r0, 0x0007                      // t2 = training id
-        beq     t0, t2, _end                        // never use fixed/scene camera if in training mode
-        nop
+        // check if training mode(?)
+        //li      t0, Global.match_info               // ~ 0x800A50E8
+        //lw      t0, 0x0000(t0)                      // t0 = match_info
+        //lb      t0, 0x0000(t0)                      // t0 = match type
+        //ori     t2, r0, 0x0007                      // t2 = training id
+        //beq     t0, t2, _end                        // never use fixed/scene camera if in training mode
+        //nop
 
         addiu   t0, r0, type.FIXED                  // at = type.FIXED
         beq     t0, t9, _fixed_cam                  // branch if camera mode = FIXED
@@ -215,6 +215,12 @@ scope Camera {
         // RTTF
         li      t1, fixed_rttf                      // t1 = fixed camera parameters for RACE_TO_THE_FINISH
         ori     t2, r0, Stages.id.RACE_TO_THE_FINISH// t2 = id.RACE_TO_THE_FINISH
+        beq     t0, t2, _set_fixed_camera_values    // fix fixed camera if stage = ~
+        nop
+
+        // REMIX RTTF
+        li      t1, fixed_remix_rttf                // t1 = fixed camera parameters for REMIX_RTTF
+        ori     t2, r0, Stages.id.REMIX_RTTF        // t2 = id.REMIX_RTTF
         beq     t0, t2, _set_fixed_camera_values    // fix fixed camera if stage = ~
         nop
 
@@ -908,7 +914,7 @@ scope Camera {
     // @ Description
     // Routine runs after "3, 2, 1 GO!". Disables HUD from drawing if entry_disable_hud = ALL
     scope disable_hud_: {
-        OS.patch_start(0x8DA28 ,0x80112228)
+        OS.patch_start(0x8DA28, 0x80112228)
         j       disable_hud_
         nop
         OS.patch_end()
@@ -1284,6 +1290,16 @@ scope Camera {
     float32 38                              // camera zoom/fov
     float32 0                               // unused
 
+    fixed_remix_rttf:                       // remix race to the finish
+    float32 0                               // camera x position
+    float32 4400                            // camera y position
+    float32 23120                           // camera z position
+    float32 0                               // camera focal x position
+    float32 400                             // camera focal y position
+    float32 0                               // camera focal z position
+    float32 38                              // camera zoom/fov
+    float32 0                               // unused
+
     fixed_rest:                             // allstar rest area
     float32 0                               // camera x position
     float32 1850                            // camera y position
@@ -1370,7 +1386,7 @@ scope Camera {
     // hook at routine that reads a flag to determine if player is off screen for pause routine.
     // if flag = 0, then analog stick doesnt draw on top of screen.
     scope pause_disable_control_flag_: {
-        OS.patch_start(0x8FA30 ,0x80114230)
+        OS.patch_start(0x8FA30, 0x80114230)
         j   pause_disable_control_flag_
         nop
         _return:

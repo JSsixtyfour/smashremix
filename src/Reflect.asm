@@ -224,12 +224,12 @@ scope Reflect {
 
 			_ness_absorb:
 			// s7 = projectile object
-			lw     v0, 0x0084(s7)             	// v0 = projectile struct
-			lw     v0, 0x000C(v0)             	// v0 = projectile ID
-			lli    at, 0x1003                 	// at = Sheiks projectile id
-			beq    v0, at, _normal            	// don't absorb if Sheiks needle
-			lli    at, 0x1001                 	// at = Conkers projectile id
-			beq    v0, at, _normal            	// don't absorb if Conker's nut
+			lw     v0, 0x0084(s7)             	  // v0 = projectile struct
+			lw     v0, 0x000C(v0)             	  // v0 = projectile ID
+			lli    at, Projectile.id.SHEIK_NEEDLE // at = Sheiks projectile id
+			beq    v0, at, _normal            	  // don't absorb if Sheiks needle
+			lli    at, Projectile.id.CONKER_NUT   // at = Conkers projectile id
+			beq    v0, at, _normal            	  // don't absorb if Conker's nut
 			nop
 			j      0x80135E9C					// attempt to absorb
 			lbu    t0, 0x0049(s1)             	// get cpu reflect flag
@@ -522,23 +522,23 @@ scope Reflect {
         nop
 
         // if here, reflect type is CUSTOM
-        lw      t2, 0x000C(s8)              // t2 = projectile id
-        lli     at, 0x0003                  // at = samus bomb id
-        beq     at, t2, _override           // force reflect if projectile id = samus bomb
-        lli     at, 0x000B                  // at = pikachu thunder head id
-        beq     at, t2, _override           // force reflect if projectile id = pikachu thunder head
-        lli     at, 0x000C                  // at = pikachu thunder tail id
-        beq     at, t2, _override           // force reflect if projectile id = pikachu thunder tail
-        lli     at, 0x0017                  // at = onix rock id
-        beq     at, t2, _override           // force reflect if projectile id = onix rock
-        lli     at, 0x001B                  // at = blastoise shot id
-        beq     at, t2, _override           // force reflect if projectile id = blastoise shot
-        lli     at, 0x001D                  // at = koffing emission id
-        beq     at, t2, _override           // force reflect if projectile id = koffing emission
-        lli     at, 0x1005                  // at = pirate land cannonball id
-        beq     at, t2, _override           // force reflect if projectile id = pirate land cannonball
-        lli     at, 0x1006                  // at = robot bee laser id
-        beq     at, t2, _override           // force reflect if projectile id = robot bee laser
+        lw      t2, 0x000C(s8)              				// t2 = projectile id
+        lli     at, 0x0003                  				// at = samus bomb id
+        beq     at, t2, _override           				// force reflect if projectile id = samus bomb
+        lli     at, 0x000B                  				// at = pikachu thunder head id
+        beq     at, t2, _override           				// force reflect if projectile id = pikachu thunder head
+        lli     at, 0x000C                  				// at = pikachu thunder tail id
+        beq     at, t2, _override           				// force reflect if projectile id = pikachu thunder tail
+        lli     at, 0x0017                  				// at = onix rock id
+        beq     at, t2, _override           				// force reflect if projectile id = onix rock
+        lli     at, 0x001B                  				// at = blastoise shot id
+        beq     at, t2, _override           				// force reflect if projectile id = blastoise shot
+        lli     at, 0x001D                  				// at = koffing emission id
+        beq     at, t2, _override           				// force reflect if projectile id = koffing emission
+        lli     at, Projectile.id.PIRATELAND_CANNONBALL 	// at = pirate land cannonball id
+        beq     at, t2, _override           				// force reflect if projectile id = pirate land cannonball
+        lli     at, Projectile.id.METALLICMADNESS_BEELASER 	// at = robot bee laser id
+        beq     at, t2, _override           				// force reflect if projectile id = robot bee laser
         nop
 
         // this projectile's reflect behaviour shouldn't be overridden, so continue normally
@@ -766,7 +766,7 @@ scope Reflect {
     scope projectile_direction_fix_custom_: {
         OS.patch_start(0xE2B2C, 0x801680EC)
         j      projectile_direction_fix_custom_
-        addiu   at, r0, 0x1002              // at = sonic spring projectile id (sonic spring uses fox laser reflect routine)
+        addiu   at, r0, Projectile.id.SONIC_SPRING // at = sonic spring projectile id (sonic spring uses fox laser reflect routine)
         _return:
         OS.patch_end()
 

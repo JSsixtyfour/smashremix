@@ -744,6 +744,14 @@ scope Toggles {
         _exit_super_menu:
         jal     save_                       // save toggles
         nop
+
+        lli     a0, 0x0000                  // a0 = unknown, set to 0
+        jal     BGM.set_volume_             // update BGM volume
+        lli     a1, 0x7800                  // a1 = volume
+
+        jal     FGM.set_volume_             // update FGM volume
+        lli     a0, 0x7800                  // a0 = volume
+
         // check if we got here by using the 'L' shortcut, and retrieve current_screen if so
         li      t3, shortcut_stored_screens    // t3 = shortcut_stored_screens
         lbu     a0, 0x0000(t3)                 // a0 = 0 if we didn't use 'L' shortcut
@@ -785,6 +793,12 @@ scope Toggles {
         lw      t1, 0x0010(v0)              // t1 = a_function routine
         li      t2, play_menu_music_        // t2 = play_menu_music_
         beql    t1, t2, pc() + 8            // if on the menu music entry, display Play legend
+        lli     t3, 0x0000                  // t3 = display on
+        li      t2, update_bgm_volume       // t2 = update_bgm_volume
+        beql    t1, t2, pc() + 8            // if on this entry, display Play legend
+        lli     t3, 0x0000                  // t3 = display on
+        li      t2, update_fgm_volume       // t2 = update_fgm_volume
+        beql    t1, t2, pc() + 8            // if on this entry, display Play legend
         lli     t3, 0x0000                  // t3 = display on
         li      t2, preview_bgm_            // t2 = preview_bgm_
         beql    t1, t2, pc() + 8            // if on a track entry, display Play legend
@@ -1010,7 +1024,7 @@ scope Toggles {
             update_block_size(4)
         } else if {max} <= 31 {
             update_block_size(5)
-        } else if {max} <= 64 {
+        } else if {max} <= 63 {
             update_block_size(6)
         } else if {max} <= 127 {
             update_block_size(7)
@@ -1071,7 +1085,7 @@ scope Toggles {
         global define TOGGLE_{n}_DEFAULT_TE({default_te})
         global define TOGGLE_{n}_DEFAULT_NE({default_ne})
         global define TOGGLE_{n}_DEFAULT_JP({default_jp})
-        update_block_size({max})
+        update_block_size_based_on_max({max})
         Menu.entry({title}, {type}, {default_ce}, {min}, {max}, {a_function}, {extra}, {string_table}, {copy_address}, {next})
     }
 
@@ -1178,6 +1192,8 @@ scope Toggles {
     bury:; db "Bury", 0x00
     laugh_track:; db "Laugh Track", 0x00
     egg:; db "Egg", 0x00
+    sleep:; db "Sleep", 0x00
+    trip:; db "Trip", 0x00
     _random:; db "Random", 0x00
     OS.align(4)
 
@@ -1191,6 +1207,8 @@ scope Toggles {
     dw bury
     dw laugh_track
     dw egg
+    dw sleep
+    dw trip
     dw _random
 
     // @ Description
@@ -1561,6 +1579,16 @@ scope Toggles {
     light:; db "LIGHT", 0x00
     OS.align(4)
 
+    string_table_blastzone_gfx:
+    dw default
+    dw off
+    dw reduced
+
+    // @ Description
+    // Blastzone GFX strings
+    reduced:; db "REDUCED", 0x00
+    OS.align(4)
+
     // @ Description
     // Pokemon Stadium Announcer strings
     announcer_mode_pokemon:; db "STADIUM", 0x00
@@ -1689,6 +1717,24 @@ scope Toggles {
     dw sw_backfire_no
 
     // @ Description
+    // BGM/SFX Volume strings
+    num_0:; db "0", 0x00
+    OS.align(4)
+
+    string_table_volume:
+    dw num_0
+    dw num_1
+    dw num_2
+    dw num_3
+    dw num_4
+    dw num_5
+    dw num_6
+    dw num_7
+    dw num_8
+    dw num_9
+    dw num_10
+
+    // @ Description
     // Press 'A' Handler for 'default_cpu_level' menu item
     // Allows us to refresh already-set CPU levels without reboot
     scope set_cpu_level: {
@@ -1732,7 +1778,7 @@ scope Toggles {
         sw      t0, 0x000C(sp)              // ~
         sw      ra, 0x0010(sp)              // save registers
 
-        // 0 if off, 1 if '7% Damage', 2 if 'Lava Floor', 3 if 'Shield-Break', 4 if 'Instant K.O.', 5 if 'Force Taunt', 6 if 'Bury', 7 if 'Laugh Track', 8 if 'Egg', 9 if 'Random'
+        // 0 if off, 1 if '7% Damage', 2 if 'Lava Floor', 3 if 'Shield-Break', 4 if 'Instant K.O.', 5 if 'Force Taunt', 6 if 'Bury', 7 if 'Laugh Track', 8 if 'Egg', 9 if 'Sleep', 10 if 'Trip', 11 if 'Random'
         li      t0, Toggles.entry_punish_on_failed_z_cancel
         lw      t0, 0x0004(t0)
         addiu   a0, r0, 1                   // a0 = (7% damage)
@@ -1759,7 +1805,13 @@ scope Toggles {
         addiu   a0, r0, 8                   // a0 = (Egg)
         beql    a0, t0, _play
         lli     a0, 0x24B                   // a0 - fgm_id
-        addiu   a0, r0, 9                   // a0 = (random)
+        addiu   a0, r0, 9                   // a0 = (Sleep)
+        beql    a0, t0, _play
+        lli     a0, 0x23C                   // a0 - fgm_id
+        addiu   a0, r0, 10                  // a0 = (Trip)
+        beql    a0, t0, _play
+        lli     a0, 0x456                   // a0 - fgm_id
+        lli     a0, ZCancel._cruel_z_cancel.CRUEL_Z_CANCEL_MODE.RANDOM
         beql    a0, t0, _play
         lli     a0, 0x3A                    // a0 - fgm_id
         bnez    t0, _end                    // safety branch
@@ -2141,6 +2193,52 @@ scope Toggles {
         nop
     }
 
+    // @ Description
+    // Update BGM volume when 'A' is pressed
+    scope update_bgm_volume: {
+        addiu   sp, sp,-0x0020              // allocate stack space
+        sw      ra, 0x0008(sp)              // save registers
+
+        lli     a0, 0x0000                  // a0 = unknown, set to 0
+        jal     BGM.set_volume_             // update BGM volume
+        lli     a1, 0x7800                  // a1 = volume
+
+        li      a0, Toggles.entry_play_music
+        lw      a0, 0x0004(a0)              // a0 = 0 if music is toggled off
+        beqz    a0, _end                    // branch accordingly
+        nop
+        li      a0, BGM.safe_id             // a0 = address of safe bgm_id
+        lw      a0, 0x0000(a0)              // a0 = current bgm_id (-1 if not playing)
+        addiu   a0, a0, 1                   // a0 = 0 if not playing
+        bnez    a0, _end                    // branch accordingly
+        nop
+        // reset music if no music was playing
+        jal     play_menu_music_            // reset menu music
+        lli     v0, 0x0000                  // forces a reset
+
+        _end:
+        lw      ra, 0x0008(sp)              // restore registers
+        jr      ra
+        addiu   sp, sp, 0x0020              // deallocate stack space
+    }
+
+    // @ Description
+    // Update FGM volume when 'A' is pressed
+    scope update_fgm_volume: {
+        addiu   sp, sp,-0x0020              // allocate stack space
+        sw      ra, 0x0008(sp)              // save registers
+
+        jal     FGM.set_volume_             // update FGM volume
+        lli     a0, 0x7800                  // a0 = volume
+
+        jal     FGM.play_                   // play test sound
+        lli     a0, 0x020                   // a0 - fgm_id
+
+        lw      ra, 0x0008(sp)              // restore registers
+        jr      ra
+        addiu   sp, sp, 0x0020              // deallocate stack space
+    }
+
     string_table_gallery:
     dw mario
     dw dk
@@ -2308,7 +2406,8 @@ scope Toggles {
     entry_dpad_css_control:;            entry_bool("Dpad CSS Cursor Control", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_pk_thunder_reflect_crash_fix)
     entry_pk_thunder_reflect_crash_fix:;entry_bool("PK Thunder Reflect Crash Fix", OS.TRUE, OS.TRUE, OS.TRUE, OS.TRUE, entry_flash_guard)
     entry_flash_guard:;                 entry_bool("Flash Guard", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_screenshake)
-    entry_screenshake:;                 entry("Screenshake", Menu.type.INT, OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, 0, 2, OS.NULL, string_table_screenshake, OS.NULL, OS.NULL)
+    entry_screenshake:;                 entry("Screenshake", Menu.type.INT, OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, 0, 2, OS.NULL, string_table_screenshake, OS.NULL, entry_blastzone_gfx)
+    entry_blastzone_gfx:;               entry("BlastZone GFX", Menu.type.INT, 0, 0, 0, 0, 0, 2, OS.NULL, string_table_blastzone_gfx, OS.NULL, OS.NULL)
 
     evaluate num_remix_toggles(num_toggles)
     evaluate remix_toggles_block_size(block_size)
@@ -2320,11 +2419,12 @@ scope Toggles {
     entry_hitstun:;                     entry("Hitstun", Menu.type.INT, OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, 0, 1, OS.NULL, string_table_hitstun, OS.NULL, entry_hitlag)
     entry_hitlag:;                      entry("Hitlag", Menu.type.INT, OS.FALSE, OS.FALSE, OS.FALSE, OS.TRUE, 0, 4, OS.NULL, string_table_hitlag, OS.NULL, entry_di)
     entry_di:;                          entry("DI", Menu.type.INT, 0, 0, 0, 1, 0, 2, OS.NULL, string_table_di, OS.NULL, entry_japanese_sounds)
-    entry_japanese_sounds:;             entry("Japanese Sounds", Menu.type.INT, 0, 0, 0, 1, 0, 2, OS.NULL, string_table_frequency, OS.NULL, entry_momentum_slide)
+    entry_japanese_sounds:;             entry("Japanese Sounds", Menu.type.INT, 0, 0, 0, 1, 0, 2, OS.NULL, string_table_frequency, OS.NULL, entry_j_stun_sleep)
+    entry_j_stun_sleep:;                entry_bool("Japanese Stun/Sleep", OS.FALSE, OS.FALSE, OS.FALSE, OS.TRUE, entry_momentum_slide)
     entry_momentum_slide:;              entry_bool("Momentum Slide", OS.FALSE, OS.FALSE, OS.FALSE, OS.TRUE, entry_shieldstun)
     entry_shieldstun:;                  entry("Shield Stun", Menu.type.INT, 0, 0, 0, 1, 0, 4, OS.NULL, string_table_shieldstun, OS.NULL, entry_z_cancel_opts)
     entry_z_cancel_opts:;               entry("Z-Cancel", Menu.type.INT, OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, 0, 4, OS.NULL, string_table_z_cancel_opts, OS.NULL, entry_punish_on_failed_z_cancel)
-    entry_punish_on_failed_z_cancel:;   entry("Punish Failed Z-Cancel", Menu.type.INT, OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, 0, 9, punish_fgm_, string_table_failed_z_cancel, OS.NULL, entry_improved_ai)
+    entry_punish_on_failed_z_cancel:;   entry("Punish Failed Z-Cancel", Menu.type.INT, OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, 0, 11, punish_fgm_, string_table_failed_z_cancel, OS.NULL, entry_improved_ai)
     entry_improved_ai:;                 entry_bool("Improved AI", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_tripping)
     entry_tripping:;                    entry("Tripping", Menu.type.INT, 0, 0, 0, 0, 0, 3, OS.NULL, string_table_tripping, OS.NULL, entry_rage)
     entry_rage:;                        entry("Rage", Menu.type.INT, 0, 0, 0, 0, 0, 4, OS.NULL, string_table_rage, OS.NULL, entry_footstool)
@@ -2360,7 +2460,9 @@ scope Toggles {
     entry_random_music:;                    entry_bool("Random Music", OS.FALSE, OS.FALSE, OS.TRUE, OS.FALSE, entry_preserve_salty_song)
     entry_preserve_salty_song:;             entry_bool("Salty Runback Preserves Song", OS.FALSE, OS.FALSE, OS.FALSE, OS.FALSE, entry_menu_music)
     entry_menu_music:;                      entry("Menu Music", Menu.type.INT, 0, 0, 1, 0, 0, menu_music.MAX_VALUE, play_menu_music_, string_table_menu_music, OS.NULL, entry_show_music_title)
-    entry_show_music_title:;                entry_bool("Music Title at Match Start", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_load_profile_music)
+    entry_show_music_title:;                entry_bool("Music Title at Match Start", OS.TRUE, OS.FALSE, OS.TRUE, OS.TRUE, entry_bgm_volume)
+    entry_bgm_volume:;                      entry("BGM Volume", Menu.type.INT, 10, 10, 10, 10, 0, 10, update_bgm_volume, string_table_volume, OS.NULL, entry_fgm_volume)
+    entry_fgm_volume:;                      entry("SFX  Volume", Menu.type.INT, 10, 10, 10, 10, 0, 10, update_fgm_volume, string_table_volume, OS.NULL, entry_load_profile_music)
     evaluate LOAD_PROFILE_MUSIC_ENTRY_ORIGIN(origin())
     entry_load_profile_music:;              entry("Load Profile:", Menu.type.INT, 0, 0, 0, 0, 0, 0, load_sub_profile_, num_toggles, string_table_music_profile, OS.NULL, entry_random_music_title)
     entry_random_music_title:;              Menu.entry_title("Random Music Toggles:", toggle_all_, entry_random_music_bonus)

@@ -6,7 +6,6 @@ scope NPeach {
 
     // Modify Action Parameters             // Action                       // Animation                    // Moveset Data                 // Flags
     Character.edit_action_parameters(NPEACH, Action.DeadU,                   File.PEACH_TUMBLE,              -1,                               -1)
-    Character.edit_action_parameters(NPEACH, Action.DeadU,                   File.PEACH_TUMBLE,              -1,                               -1)
     Character.edit_action_parameters(NPEACH, Action.ScreenKO,                File.PEACH_TUMBLE,              -1,                               -1)
     Character.edit_action_parameters(NPEACH, Action.Entry,                   File.PEACH_IDLE,                -1,                               -1)
     Character.edit_action_parameters(NPEACH, 0x006,                          File.PEACH_IDLE,                -1,                               -1)

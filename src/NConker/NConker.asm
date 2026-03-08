@@ -23,7 +23,6 @@ scope NConker {
     Character.edit_action_parameters(NCONKER, Action.Revive2,            File.CONKER_DOWNSTANDU,         -1,                         -1)
     Character.edit_action_parameters(NCONKER, Action.DownBounceU,        File.CONKER_DOWNBOUNCEU,        -1,                         -1)
     Character.edit_action_parameters(NCONKER, Action.StunLandU,          File.CONKER_DOWNBOUNCEU,        -1,                         -1)
-    Character.edit_action_parameters(NCONKER, Action.StunLandU,          File.CONKER_DOWNBOUNCEU,        -1,                         -1)
     Character.edit_action_parameters(NCONKER, Action.DownAttackD,        File.CONKER_DOWNATTACKD,        Conker.DOWNATTACKD,                -1)
     Character.edit_action_parameters(NCONKER, Action.Tech,               -1,                             Conker.TECH,                       -1)
     Character.edit_action_parameters(NCONKER, Action.TechF,              File.CONKER_TECHF,              Conker.TECH_ROLL,                  -1)

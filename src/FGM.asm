@@ -181,6 +181,55 @@ scope FGM {
         addiu   a0, r0, {sfx}
     }
 
+    // @ Description
+    // Sets FGM volume
+    // @ Arguments
+    // a0 - volume, max = 30720 (0x7800)
+    constant set_volume_(0x80020E64)
+
+    // @ Description
+    // Edits function 0x80020E64 (Set FGM Volume) to take into account the master SFX volume toggle
+    // a0 - volume, max = 30720 (0x7800)
+    scope master_fgm_volume: {
+        OS.patch_start(0x21A64, 0x80020E64)
+        addiu   sp, sp, -0x0018                 // original line 1
+        sw      ra, 0x0014(sp)                  // original line 3
+        jal     master_fgm_volume
+        nop
+        nop
+        nop
+        nop
+        _return:
+        OS.patch_end()
+
+        li      at, Toggles.entry_fgm_volume    // at = address of master SFX volume
+        lw      at, 0x0004(at)                  // at = master SFX volume (0 to 10)
+        beqzl   at, _srl                        // branch if volume is 0
+        or      a1, r0, r0                      // a1 = 0
+        mtc1    at, f4                          // ~
+        cvt.s.w f4, f4                          // f4 = master SFX volume fp
+        lui     at, 0x4120                      // ~
+        mtc1    at, f0                          // f0 = 10.0
+        div.s   f2, f4, f0                      // f2 = (master SFX volume / 10.0)
+        mtc1    a0, f0                          // ~
+        cvt.s.w f0, f0                          // f0 = new volume fp
+        mul.s   f0, f0, f2                      // f0 = new volume * f2 (master SFX volume / 10.0)
+        cvt.w.s f4, f0                          // f4 = (word)f0
+        mfc1    a0, f4                          // a0 = updated volume
+
+        sltiu   at, a0, 0x7801                  // original line 2
+        //bnez    at, 0x80020E80                // original line 4 (need to update branch address)
+        bnez    at, _srl                        // original line 4, modified
+        or      a1, a0, r0                      // original line 5
+        //b       0x80020E88                    // original line 6 (need to 'j' instead of 'b')
+        j       _return+8                       // original line 6, modified
+        addiu   a0, r0, 0x007F                  // original line 7
+
+        _srl:
+        j       _return
+        nop
+    }
+
     // Extended Sound Effects
 
     print "=============================== SOUND FILES ==============================\n"
@@ -1622,7 +1671,7 @@ scope FGM {
     add_sound(DragonKing/sounds/SLEEP, SAMPLE_RATE_16000, FGM_TYPE_SLEEP, 0, 0x120)
     add_sound(Ganondorf/sounds/PLACEHOLDER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1) // UNUSED, REPLACE WITH ADD_SOUND OR ADD_SOUND_AVANCED
     add_sound(Ebi/sounds/EBI_SELECT, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
-    add_sound(Ganondorf/sounds/PLACEHOLDER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1) // UNUSED, REPLACE WITH ADD_SOUND OR ADD_SOUND_AVANCED
+    add_sound(sounds/misc/thank_you, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound(Ganondorf/sounds/PLACEHOLDER, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1) // UNUSED, REPLACE WITH ADD_SOUND OR ADD_SOUND_AVANCED
     add_sound(sounds/misc/song_of_time, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound(sounds/misc/meow, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
@@ -1786,6 +1835,7 @@ scope FGM {
     add_sound(sounds/misc/dne_remit, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
     add_sound_advanced(TimerBackfireEnd, sounds/misc/dne_remit, sounds/misc/timer_fgm_microcode, 0x12, sounds/misc/timer_sfx_microcode, 0xD, OS.FALSE, 0, 0, 0, OS.FALSE)  // note: the sfx_microcode here is the generic sfx microcode that gets used by the VOICE type fgm
     add_fgm(DEATH, Crash/sounds/DEATH, 0x11, 0x498, -1, -1, -1) // note: the sfx_id here and the length in the microcode are hard coded based on Crash WOAH
+    add_sound(sounds/stadium/PUMPED, SAMPLE_RATE_16000, FGM_TYPE_VOICE, 0, -1)
 
     // This is always last
     write_sounds()
@@ -1964,6 +2014,7 @@ scope FGM {
             constant KOTH(775)
             constant SMASHKETBALL(776)
             constant TAG_TEAM(783)
+            constant TUG_OF_WAR(479)
         }
 
         scope team {

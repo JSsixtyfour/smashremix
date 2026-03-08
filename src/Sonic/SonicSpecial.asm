@@ -1434,11 +1434,11 @@ scope SonicUSP {
         lw      a0, 0x007C(sp)              // original line 1 - a0 = projectile object
         OS.patch_end()
 
-        lw      a2, 0x0084(a0)              // a2 = projectile special struct
-        lw      a2, 0x000C(a2)              // a2 = projectile ID
-        lli     a3, SONIC_ID                // a3 = spring projectile ID
-        beql    a2, a3, _end                // if spring, change room to 0x000B
-        lli     a2, 0x000B                  // a2 = 0x000B (room)
+        lw      a2, 0x0084(a0)                  // a2 = projectile special struct
+        lw      a2, 0x000C(a2)                  // a2 = projectile ID
+        lli     a3, Projectile.id.SONIC_SPRING  // a3 = spring projectile ID
+        beql    a2, a3, _end                    // if spring, change room to 0x000B
+        lli     a2, 0x000B                      // a2 = 0x000B (room)
 
         lli     a2, 0x000E                  // original line 2 - a2 = 0x000E (room)
 
@@ -1768,6 +1768,8 @@ scope SonicUSP {
         beq     t4, at, _fox_falco  // if JFox, need to do action checks
         lli     at, Character.id.FALCO
         beq     t4, at, _fox_falco  // if Falco, need to do action checks
+        lli     at, Character.id.PEPPY
+        beq     t4, at, _peppy      // if Peppy, need to do action checks
         lli     at, Character.id.KIRBY
         beq     t4, at, _kirby      // if Kirby, need to do action checks
         lli     at, Character.id.JKIRBY
@@ -1793,6 +1795,13 @@ scope SonicUSP {
         nop
 
         b       _draw_smoke_gfx
+        nop
+
+        _peppy:
+        lli     t4, Action.FOX.FireFoxAir  // same as PEPPY.Action.FireHareAir
+        beq     t3, t4, _change_action
+        nop
+        b        _draw_smoke_gfx
         nop
 
         _fox_falco:
@@ -1988,9 +1997,8 @@ scope SonicUSP {
 
     OS.align(16)
     spring_projectile_struct:
-    constant SONIC_ID(0x1002)
     dw 0x00000000                           // unknown
-    dw SONIC_ID                             // projectile id
+    dw Projectile.id.SONIC_SPRING           // projectile id
     dw Character.SONIC_file_6_ptr           // address of sonic's file 6 pointer
     dw 0x00000000                           // 00000000
     dw 0x12470000                           // This determines z axis rotation? (samus is 1246)
